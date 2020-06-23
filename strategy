@@ -1,3 +1,7 @@
+Overall project stuff:
+1.  Used to get started
+2.  Laravel debug bar for debugging (check axios stuff)
+
 Delmar:
 
 assessment
@@ -274,7 +278,7 @@ home () {
 
 Which types of classes should be Facades???
 
-It *might* be cleaner to actually instantiate the classes in the contstructor so you konw what you're using
+It *might* be cleaner to actually instantiate the classes in the constructor so you konw what you're using
 
 In Foundation/helpers.php we have functions which resolve to factory classes.  So, for example, this is why I can type view('welcome') or View::make('welcome');
 function view($view = null, $data = [], $mergeData = [])
@@ -813,7 +817,7 @@ alert(`Hello ${name}`); //with back ticks you can add variable names
 
 let age;
 alert(age);  //you'll get undefined
-alert(blah); //you'll et null
+alert(blah); //you'll get null
 value = String(value); to convert to a string
 value = Number(true) becomes 1
 
