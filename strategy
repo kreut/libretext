@@ -1,0 +1,1089 @@
+Delmar:
+
+assessment
+dynamic decision trees -- online assessment and remediation (deliver problem and evaluate)
+Not wired in (API)
+students run the decision trees (individualized tracking)
+analysis
+Tie it into a gradebook!!! (LMS...)
+(Possible integration with Hypothesis later on)
+
+
+Summer session...
+
+Mark:
+Can we charge just one tax rate?  What is it?
+Does it matter if it's online or not?
+What information do we have to legally collect?
+
+Quaderno --- They have a payout thing already!!!!
+https://zapier.com/apps/quaderno/integrations/stripe
+
+
+
+Need a VAT number...
+European students? VAT tax? --- what to do?
+
+Avalara?
+
+
+
+
+7 hours a day
+
+Activity                            # hours
+Research frameworkds                2 hours
+Get laravel up and running          4 hours
+Laravel Tutorial                    6 hours
+Sublime Text                        1 hour
+Other tutorial                      44.5 hours
+
+CHECK OUT THE VIDEO ABOUT LARAVEL 7!!!!!
+
+
+
+https://github.com/alexeymezenin/laravel-best-practices#follow-laravel-naming-conventions
+
+
+To get the auth and css stuff:
+
+composer require laravel/ui
+php artisan ui vue --auth
+npm install
+npm run dev
+
+https://stackoverflow.com/questions/58111841/auth-pages-not-getting-css-in-laravel
+
+
+
+
+$user = User::find(32);
+$user->name = "TestUser";
+$user->state = "Texas";
+$user->location->address = "123 test address"; //This line is a pre-defined relationship
+
+$user->save(); WILL NOT save the location since it's in a "related model";
+HOWEVER:  $user->push();  will save all to the database
+User::findOrFail($user);
+
+Stop the server if you change the env file.
+npm run dev if you change any of the front end stuff
+Then you can clear config cache
+php artisan config:clear
+php artisan migrate:fresh  --- if you change the database
+php artisan make:model Profile -m ---- make a new model and -m(igration) for the database
+4. Seed stuff and add tinker to run cool command line stuff
+with "php artisan tinker" command:  https://laravel-news.com/laravel-tinker
+6. php artisan serve is the built in
+https://blog.programster.org/netbeans-adding-support-for-laravel
+Need to have @csrf or you'll get a 419 error
+protected $guarded = [];  tells laravel about the mass assignment issue: basically I'll take care of things since for the posts I'm explicitly saying what's coming in
+auth()->user()->posts()->create($data); adds in the user_id before submitting to the database
+
+public function __contruct() {
+$this->middleware('auth');
+}
+makes sure that you're always logged in.
+
+Run php artisan storage:link once to link up files to the public directory
+
+Laravel: testing is built in and so is the API.  But does this make sense to do this???
+composer require intervention/image  for image manipulation
+
+//To return the $post as an
+//Also does the FindOrFail for us
+public function show(\App\Post $post)
+{
+
+
+return view('posts.show',[
+'post' => $post
+]);
+}
+
+OR
+
+public function show(\App\Post $post)
+{
+
+
+return view('posts.show', compact('post')); ///compact funtion creates the above array
+}
+
+
+What does;  Route::get('/profile/{user}', 'ProfilesController@index')->name('profile.show'); the name do?
+
+
+With App at the top, I don't need to type \App\User
+use App\User;
+use Illuminate\Http\Request;
+
+class ProfilesController extends Controller
+{
+     public function index(User $user)
+    {
+
+
+        return view('profiles.index',compact($user));
+    }
+
+    public function edit(User $user)
+    {
+    return view('profiles.edit', compact($user));
+    }
+}
+
+@method('PATCH') needed in update forms since you can't actually do this in the method of the form
+
+protected $guarded = [];
+
+php artisan make:policy ProfilePolicy -m policy  creates a ProfilePolicy for the policy model
+
+ public function update(User $user, policy $policy)
+    {
+        return $user->id == $profile->user_id;
+    }
+ Then..... public function edit(User $user)
+    {
+    $this->authorize('update', $user->profile);
+    return view('profiles.edit', compact('user'));
+    }
+
+  Then, for things in the View:
+
+              @can('update', $user->profile)
+            <a href="/profile/{{ $user->id }}/edit">Edit Profile</a>
+            @endcan
+
+Important:
+
+Route::get('/p/create', 'PostsController@create');
+Route::get('/p/{post}', 'PostsController@show');
+
+works, but
+
+Route::get('/p/{post}', 'PostsController@show');
+Route::get('/p/create', 'PostsController@create');
+
+wouldn't have worked since the first one is matched first. Put the VARIABLE at the end.
+
+Create a new array $data by updating the 'image' key...
+array_merge(
+    $data,
+    ['image' => $imagePath]
+
+
+boot() method are event listeners for the model.  Here, we take the user and add a default title.
+    protected static function boot() {
+
+
+        static::created(function ($user) {
+            $user->profile()->create([
+                'title' => $user->username
+            ]);
+        });
+    }
+
+npm run watch to check for changes in vue stuff
+npm run dev to do it once
+
+Pivot tables:
+Naming convention is alphabetical order, lower case with underscore
+php artisan make:migration create_profile_user_pivot_table --create profile_user
+
+****NOtice above that
+{{ !!  !! }}  won't escape the data
+
+php artisan make:model Project -mc  creates the migration AND the controller
+
+App\Assignment::where('completed', false)->get()
+php artisan make:controller CustomersController --model=Customer  will create a controller with the restful stuff along with the associated model
+Look up browser validation: "required"
+If you would like model binding to use a default database column other than id when retrieving a given model class, you may override the getRouteKeyName method on the Eloquent model:
+
+/**
+ * Get the route key for the model.
+ *
+ * @return string
+ */
+public function getRouteKeyName()
+{
+    return 'slug';
+}
+
+{{ route('articles.show', $article) }}  ...used in the view where the 2nd argument tells it which one...either $article or the id!
+
+factory(App\User::class, 5)->create();   create 5 fake users
+php  artisan make:factor ArticleFactory -m Article  to create a factory based on the model
+
+factory(App\Article::class, 5)->create(['user_id' => 1]) to create 5 articles for this user
+use pluck() to get the value from a collection
+
+php artisan route:list to list the routes
+
+composer require laravel/ui --dev for the UI (why --dev?)
+
+php artisan ui vue --auth  (get the auth scaffolding with vue as the frontend)
+
+   @auth
+   Hello {{ Auth::user()->name }}
+   @else
+   Laravel
+   @endauth
+
+You can also use @guest
+ $tags->where('name','php')  gets from a collection
+ App\Tag::where('name','php')->first()  goes to the database...
+Collections example
+   $items = collect([1, 2, 3, 4, 5, 6, 7])
+   $items->filter(function ($item) { return $item <5; });
+
+  $items->filter(function ($item) { return $item % 2 === 0; })->map(function ($item) { return $item * 3; });
+
+   Illuminate\Support\Collection {#3086
+     all: [
+       1 => 6,
+       3 => 12,
+       5 => 18,
+     ],
+   }
+
+Get the articles with associated tags
+    $articles = App\Article::with('tags')->get();
+
+$articles->pluck('tags')->flatten()->pluck('name') (Episode 36 around 9 minutes)
+or
+$articles->pluck('tags.*.name')->flatten()->unique()->map(function($item) { return ucwords($item); })
+$articles->pluck('tags.*.name')->flatten()
+Stripe webhooks you shouldn't do VerifyCsrfToken.php
+return view('welcome') is the same as "return View::make('welcome')"; ---- View::make are static classes BUT can be tested.  Convenient since you don't have to instantiate
+In the Facades, it says @see "some directory".  This is where all of the methods are
+
+\File is the same as use Illuminate\Support\Facades\File;  In other words, the front slash is a Global alias.
+
+use \Illuminate\Filesystem\Filesystem
+home(Filesystem $file) {
+  $file->get('index.php')
+}
+
+is the same as
+use Illuminate\Support\Facades\File;
+home () {
+  File::get('index.php')
+}
+
+Which types of classes should be Facades???
+
+It *might* be cleaner to actually instantiate the classes in the contstructor so you konw what you're using
+
+In Foundation/helpers.php we have functions which resolve to factory classes.  So, for example, this is why I can type view('welcome') or View::make('welcome');
+function view($view = null, $data = [], $mergeData = [])
+    {
+        $factory = app(ViewFactory::class);
+
+        if (func_num_args() === 0) {
+            return $factory;
+        }
+
+        return $factory->make($view, $data, $mergeData);
+    }
+
+Illuminate/Contracts/Container/BindingResolutionException with message 'Target class [example] does not exist.' if you didn't yet put it in the AppServiceProvider
+
+For a "flash session":
+return redirect('/contact')
+        ->with('message', 'Email Sent!')
+
+Then, @if (session('message'))
+<div>
+  {{ session('message') }}
+</div>
+@endif
+
+Check out 43 for Mailtrap which is a free email tester
+To create the markdown file for the email: php artisan make:mail Contact --markdown=emails.contact
+
+To customize Laravel's markdown: php artisan vendor:publish --tag=laravel-mail
+Can be done with gitub stuff
+Run the seeder:  php artisan db:seed --class=UserSeeder
+
+
+return back();
+
+Move conditional logic OUT of view and controller and into the model
+ The ? makes the User optional...
+
+ public function update(?User $user, Post $post)
+    {
+        return optional($user)->id === $post->user_id;
+    }
+
+One way to set up auth stuff if you don't want to do it as authorize in the controller.
+Route:get('conversations/{conversation}', 'ConversationsController@show')->middleware('can:view,conversation');
+App\Ability::firstOrCreate(['name' => 'edit_forum'])
+$this->belongsToMany(Ability::class)->withTimestamps(); //don't forget the timestamps
+
+Same thing!!!
+$user->roles()->get()
+$user->roles
+
+To go from user to roles to abilities:
+$user->roles->map->abilities->flatten()->pluck('name')->unique();
+(Higher order collections)
+
+auth()->loginUsingId(4));
+$this->roles()->sync($role, false)  sync will only add roles in the array that aren't already assigned to the user without dropping
+Maybe use: https://github.com/spatie/laravel-permission for permissions?
+
+Tweety
+laravel new tweety
+cd tweety
+composer require laravel/ui
+php artisan ui vue --auth
+npm install && npm run dev
+
+DB_CONNECTION=mysql
+DB_HOST=localhost
+DB_PORT=3306
+DB_DATABASE=tweety
+DB_USERNAME=root
+DB_PASSWORD=root
+
+php artisan migrate
+
+Then set up the header and layout stuff
+@include('_sidebar-links') is the convention
+###Having flex just in the middle makes it expand as much as it needs to to fill the rest of the page
+<div class="flex">
+    <div>
+        @include('_sidebar-links')
+    </div>
+    <div class="flex-1">2</div>
+    <div>
+        @include('_friends-list')
+    </div>
+</div>
+
+
+php artisan make:model Tweet -fcm  to make a factory, contoroller, and model
+
+To get a fake user_id see below...
+
+$factory->define(Tweet::class, function (Faker $faker) {
+    return [
+         return [
+             'user_id' => factory(App\User::class)
+             'body' => $faker->sentence,
+         ];
+    ];
+});
+
+public function getAvatarAttribute()
+    {
+        return "https://i.pravatar.cc/40?u=" . $this->email;
+    }
+
+ You can then access user->avatar
+
+After validating, the request gets saved to an array:
+public function store()
+    {
+        $attributes = request()->validate(['body' => 'required|max:255']);
+        Tweet::create([
+            'user_id' => auth()->id(),
+            'body' => $attributes['body']
+        ]);
+    }
+
+Big Gotcha:
+It will assume the name of the pivot table in the many to many relationship.  If it's different,
+you'll need to state it explicitly!!!!
+ public function follows()
+    {
+                return $this->belongsToMany(User::class, 'follows', 'user_id', 'following_user_id');
+    }
+
+ public function follows()
+    {
+        return $this->belongsToMany(User::class, 'follows', 'user_id', 'following_user_id');
+    }
+
+    public function follow(User $user)
+    {
+        $this->follows()->save($user)
+
+    }
+
+
+ factory('App\User')->create()  OR factory(App:User::class)->create()
+
+  public const HOME = '/tweets';  This is hardcoded and should be changed
+
+Apply the same authentication logic to a group (or it can be done in controllers):
+Route::middleware('auth')->group(function() {
+    Route::get('/tweets', 'TweetController@index')->name('home');
+    Route::post('/tweets', 'TweetController@store')->middleware('auth');
+});
+
+public function timeline()
+    {
+        //user's tweets and the tweets of everyone they follow
+        $ids = $this->follows->pluck('id');
+        //EVEN better: $ids = $this->follows()->pluck('users.id'); because the first gets all the users then plucks the ids while the second just gets the id info. I had to specify the table as users.id or I would get an ambiguous field error
+        $ids->push($this->id);//the user's ids
+        return Tweet::whereIn('user_id', $ids)->latest()->get();
+
+OR
+
+ $friends = $this->follows()->pluck('users.id');
+        return Tweet::whereIn('user_id', $friends)
+                ->orWhere('user_id',$this->id)
+                ->latest()
+                ->get();
+
+    }
+
+GREAT way to check database queries!
+Put this in the web.php file to list them
+
+DB::listen(function($query){
+    var_dump($query->sql, $query->bindings);
+});
+
+Using a named route:
+
+a href="{{ route('profile', $tweet->user) }}">
+zepplin for css?
+
+$user->created_at->diffForHumans()   will show difference for humans (HOW to get diff to pop up in phpStorm?)
+
+
+ use Notifiable, Followable;  //Followable is a Trait which is a way to group similar methods horizontally in php
+
+
+ public function unfollow(User $user) {
+        $this->follows()->detach($user);
+    }
+
+<x-follow-button :user="$user"></x-follow-button> Pass the user variable into the follow-button component
+
+
+Added:
+"autoload": {
+        "psr-4": {
+            "App\\": "app/"
+        },
+        "classmap": [
+            "database/seeds",
+            "database/factories"
+        ]
+        "files": [
+            "app/helpers.php"
+        ]
+    },
+
+    to the composer file to get the app/helpers.php file loaded.  This is where I put my helper functions!
+THEN: composer dump-autoload
+
+current_user was defined as auth()->user() above...
+  if ($user->isNot(current_user())) {
+        abort(404);
+
+or.... abort_if($user->isNot(current_user()), 404)
+
+CLEANEST WAY for authorization:
+1. Create a policy
+2. Put the middleware in the webroute file.
+
+Example.
+class UserPolicy
+{
+    use HandlesAuthorization;
+
+    public function edit(User $currentUser, User $user)
+    {
+        return $currentUser->is($user);
+    }
+}
+    Route::get('/profiles/{user:name}/edit', 'ProfileController@edit')->middleware('can:edit,user');
+
+Then in a view:
+
+     @can ('edit', $user)
+                    <a href="{{ $user->path('edit') }}"
+                            class="text-black text-xs border-gray-300 rounded-full  py-2 px-4"
+                    >Edit Profile
+                    </a>
+      @endcan
+
+This way, if you change who can authorize, you just need to do it in one place
+
+When you do traits, the "use" statement goes inside the class: the whole point is single inheritance
+'alpha_dash' validation just allows letters, numbers and dashes...good for usernames!
+
+I got the following error:
+General error: 1364 Field 'username' doesn't have a default value
+Reason was that I forgot to add 'username' to protected fillable:
+protected $fillable = [
+                'name', 'email', 'password',
+            ];
+
+While $fillable serves as a “white list” of attributes that should be mass assignable,
+you may also choose to use $guarded. The $guarded property should contain an array of
+attributes that you do not want to be mass assignable. All other attributes not in the
+array will be mass assignable. So, $guarded functions like a “black list”. Of course,
+you should use either $fillable or $guarded — not both.
+
+<div class="border border-gray-300 rounded-lg">
+    @forelse($tweets as $tweet)
+        @include('_tweet')
+    @empty
+        <p class="p-4">No tweets yet</p>
+    @endforelse
+
+</div>
+https://laracasts.com/series/how-to-be-awesome-in-phpstorm
+
+https://fideloper.com/laravel-raw-queries
+
+Form password confirmations, using the following convention:
+
+ <input class="border border-gray-400 p-2 w-full"
+                  type="text"
+                  name="password_confirmation"
+                  id=""
+                  required>
+  To validate uniqueness but not worrying about the current user:
+ 'username' => ['string', 'required', 'max:255', Rule::unique('users')->ignore($user)
+The validation will then look like:
+request()->validate([
+            'password' => ['string', 'required', 'min:8', 'max:255', 'confirmed']
+        );
+
+FILESYSTEM_DRIVER=public  ---- to put the uploaded file in a different directory
+php artisan storage:link --- connects to the public directory
+
+I think that $guarded = [] is WAYYYY easier.  This basically says that I trust what I'm going to put in.
+asset()
+The asset function generates a URL for an asset using the current scheme of the request (HTTP or HTTPS):
+
+$url = asset('img/photo.jpg');
+
+$get_this ?: $if_this_doesn't_exist
+
+  ['users' => User::paginate('5')]
+Pagination:  $users->links()
+
+$users->skip(1); --- don't use the first user
+$users->each(function($user) { factory('App\Tweet', 10)->create(['user_id' => $user->id]);}
+
+updateOrCreate
+
+To spit out all DB queries:  DB::listen(function ($sql) { var_dump($sql->sql, $sql->bindings); });
+DB::enableQueryLog();
+DB::getQueryLog();
+
+Assumption is to look for "user_id", but you can override:
+$this->hasMany(Post::class, 'person_id');//would have looked for user_id in the user Model
+
+php artisan make:migration create_post_tag_table --create=post_tag
+$post->tags()->attach(2)  will take attach tag_id to my post in the pivot table
+$post->tags()->detach(2); will remove it
+
+Can also do:
+$post->tags->attach([1,2]);
+or
+$tag = App\Tag::first();
+$post->tags()->attach($tag);
+
+Need withTimestamps() in the model if you want them in the pivot table...
+
+$this->belongsToMany(Post::class)->withTimestamps();
+
+To make sure duplicates don't occur, use specific primary
+Also add in foreign keys...
+$table->primary(['post_id', 'tag_id']);
+$table->primary(['post_id', 'tag_id']);
+$table->unsignedBigInteger('post_id');
+$table->unsignedBigInteger('tag_id');
+$table->timestamps();
+
+$table->foreign('post_id')->references('id')->on('posts')->onDelete('cascade');
+$table->foreign('tag_id')->references('id')->on('tags')->onDelete('cascade');
+
+
+namespace App\Providers;
+
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\ServiceProvider;
+
+class AppServiceProvider extends ServiceProvider
+{
+    /**
+     * Register any application services.
+     *
+     * @return void
+     */
+    public function register()
+    {
+        //
+    }
+
+    /**
+     * Bootstrap any application services.
+     *
+     * @return void
+     */
+    public function boot()
+    {
+        DB::listen(function ($query) {
+            // $query->sql
+            // $query->bindings
+            // $query->time
+        });
+    }
+}
+
+
+FOR Debugging, USE: composer require barryvdh/laravel-debugbar --dev
+
+
+Example of creating an associated value on the fly
+$factory->define(User::class, function (Faker $faker) {
+    return [
+        'name' => $faker->name,
+        'email' => $faker->unique()->safeEmail,
+        'email_verified_at' => now(),
+        'password' => '$2y$10$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uheWG/igi', // password
+        'remember_token' => Str::random(10),
+        'affiliation_id' => function () {
+        return factory(App\Affiliation::class)->create()->id;//get the id of a newly created Affiliation
+        }
+    ];
+});
+
+Users have posts
+Users have affiliations
+Given an affiliation (liberal), we can get to the post through the user table
+since the user table has the affiliation id and the post has the user_id
+class Affiliation extends Model
+{
+    public function posts()
+    {
+        return $this->hasManyThrough(Post::class, User::class);
+    }
+}
+
+You can use whereBlah to get specific ones:
+
+App\User::whereEmail('colby10@example.com')->first()
+
+If a video can belong to say a Collection or a series then we need more info:
+
+Schema::create('videos', function (Blueprint $table) {
+            $table->id();
+            $table->morphs('watchable');
+            $table->string('title');
+            $table->text('description');
+            $table->string('url');
+            $table->timestamps();
+        });
+
+The morphs makes it "polymorphic";
+Then in the say Series model you can have:
+
+   public function videos() {
+        return $this->morphMany(Video::class, 'watchable');//watchable is whatever you called the column
+    }
+}
+
+Then to go the other way:
+
+class Video extends Model
+{
+    public function watchable()
+    {
+
+        return $this->morphTo();
+    }
+}
+//So if you get a particular video, and do watchable() on it, it can tell you if
+it's part of some Collection or Series
+
+In your database you would have the class name like App\Series in the watchable column.
+But, you can create a morphMap in the AppServiceProvider to overwrite.
+
+If you have many to many, you can do a polymorphic many to many
+DB::transaction(function(){
+
+
+}
+
+Unit Test --- basic functionality: no database or API
+it_takes_a_comma_separated_array_and_turns_it_into_an_array
+Mock --- fake Mailer, Database --- these are called Collaborators (example of test double)
+Stub ---
+203
+
+Stub - an object that provides predefined answers to method calls.
+
+Mock - an object on which you set expectations.
+
+Fake - an object with limited capabilities (for the purposes of testing), e.g. a fake web service.
+
+Test Dummy - stand in to adhere to a contract --- phpspec will create this for you in the constructor
+
+https://github.com/laracasts/TestDummy to create Dummies
+behat for test driven development
+Use Laravel for CRON jobs!
+
+<div id="root">
+    <input type="text" id="input" v-model="message"/>
+    <p>The value of the message is {{ message }}.</p>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
+<script>
+
+    new Vue({
+        el: '#root',
+        data: {
+            message: 'Hello World'
+        }
+
+    });
+</script>
+
+2 ways to put Vue stuff in a list
+  <ul>
+       <li v-for="name in names">{{ name }}</li>
+   </ul>
+    <ul>
+        <li v-for="name in names" v-text="name"></li>
+    </ul>
+
+v-on:click or @click
+v-bind:title or :title
+
+When to use METHODS
+To call a function when an event happen in the DOM
+To call a function from the computed or watchers when something happens in your component.
+You need to pass parameters
+When to use COMPUTED PROPERTIES
+You need to compose new data from existing data sources
+You need to reference a value directly in your template
+You call the same function more than once in your template
+
+The computed ones will *not* update below while the methods will
+
+ computed: {
+            reversedMessage() {
+                return this.message.split('').reverse().join('');
+            },
+            incompleteTasks() {
+                return this.tasks.filter(task => !task.completed);
+            }
+        },
+methods: {
+            addName() {
+                this.names.push(this.newName);
+                this.newName = '';
+            },
+            toggleClass() {
+                this.isLoading = true;
+
+            }
+
+ Laravel automatically converts returned arrays into json!
+@submit.prevent="onSubmit"  to prevent the default action
+
+The type and language attributes are not required. <script src="javascriptfile.js">
+
+
+Don't need use strict if you use classes and modules
+'use strict';
+Strict mode helps out in a couple ways:
+
+It catches some common coding bloopers, throwing exceptions.
+It prevents, or throws errors, when relatively "unsafe" actions are taken (such as gaining access to the global object).
+It disables features that are confusing or poorly thought out.
+Also note you can apply "strict mode" to the whole file... Or you can use it only for a specific function (still quoting from John Resig's article):
+
+let name = 'John';
+alert(`Hello ${name}`); //with back ticks you can add variable names
+
+let age;
+alert(age);  //you'll get undefined
+alert(blah); //you'll et null
+value = String(value); to convert to a string
+value = Number(true) becomes 1
+
+let counter = 1;
+let a = ++counter; //increases counter and returns 2
+let counter = 1;
+let a = counter++ //increases counter and returns 1 (ie the old value)
+++counter and counter++ by themselves are the same: both increase counter by 1
+x = a ?? b is the same as x = (a !== null && a !== undefined) ? a : b;
+
+for (let i = 0; i < 3; i++) { // shows 0, then 1, then 2
+  alert(i);
+}
+
+// if age isn't bigger than 18 then do the confirm
+function checkAge(age) {
+  return (age > 18) || confirm('Did parents allow you?');
+}
+
+let sum = (a, b) => a + b;
+let double = n => n * 2;//don't need parenthesis since it's one input
+let sayHi = () => alert("Hello!");
+let sum = (a, b) => {  // the curly brace opens a multiline function
+  let result = a + b;
+  return result; // if we use curly braces, then we need an explicit "return"
+};
+
+
+Uppy for uploads?
+Get a Form helper class
+Something for a flow chart (maybe?): https://github.com/Jeffreyrn/vue-simple-flowchart
+
+https://javascript.info/coding-style
+https://en.wikipedia.org/wiki/JSDoc for comments: https://www.jetbrains.com/help/phpstorm/creating-jsdoc-comments.html
+
+To write tests, the code should be organized in such a way that every function has a clearly described task, well-defined input and output.
+That means a good architecture from the beginning.
+
+Babel is a transpiler. It rewrites modern JavaScript code into the previous standard.
+
+Actually, there are two parts in Babel:
+
+First, the transpiler program, which rewrites the code. The developer runs it on their own computer. It rewrites the code into the older standard. And then the code is delivered to the website for users. Modern project build systems like webpack provide means to run transpiler automatically on every code change, so that it’s very easy to integrate into development process.
+
+Second, the polyfill.
+
+New language features may include new built-in functions and syntax constructs. The transpiler rewrites the code, transforming syntax constructs into older ones. But as for new built-in functions, we need to implement them. JavaScript is a highly dynamic language, scripts may add/modify any functions, so that they behave according to the modern standard.
+
+A script that updates/adds new functions is called “polyfill”. It “fills in” the gap and adds missing implementations.
+
+Two interesting polyfills are:
+
+core js that supports a lot, allows to include only needed features.
+polyfill.io service that provides a script with polyfills, depending on the features and user’s browser.
+So, if we’re going to use modern language features, a transpiler and a polyfill are necessary.
+
+delete user.age; //to remove a property
+We can also use multiword property names, but then they must be quoted
+
+let user = { name: "John", age: 30 };
+
+alert( "age" in user ); // true, user.age exists
+Better than checking undefined:
+
+let obj = {
+  test: undefined
+};
+
+alert( obj.test ); // it's undefined, so - no such property?
+
+alert( "test" in obj ); // true, the property does exist!
+
+//making it let key keeps the scope within the for
+for (let key in user) {
+  // keys
+  alert( key );
+}
+
+isEmpty(obj) checks if an object has no properties
+
+let user = { name: 'John' };
+let admin = user;  //here we've created a reference.  Change one and both are changed.
+admin.name = 'Pete'; // changed by the "admin" reference
+alert(user.name); // 'Pete', changes are seen from the "user" reference
+var "hoists" to the top which can be confusing
+let is "block" defined so it is defined within braces
+const names = ['a', 'b'];
+names = ['c', 'd'] will give an error
+but names.push('Mike') won't!
+
+Default to Let unless you're SURE that it won't be changed
+task => {
+this  would refer to the same thing outside of the function!  not the case with the fucntion syntax
+}
+
+the return key is implicit:
+
+let names = ['matt', 'john'];
+names = names.map(function(name) { return name + ' is cool';}
+becomes
+names = names.map(name => name + ' is cool';);
+or even
+names = names.map(name => `${name} is cool`;);
+
+"..." is rest  ie get the rest of the numbers and turn into an array
+reduce reduces an array
+function sum(...numbers) {
+    return numbers.reduce((prev, current) => prev + current);
+}
+
+console.log(sum(1, 2, 3));
+
+"spread" is just the opposite.  It takes an array and spreads it out to single values
+let name = 'Foo';
+let template = `
+    <p>Here is my ${name} bar.</p>
+`
+
+Object shorthand:
+class getPerson() {
+let name = 'John';
+let age = '25';
+
+return {name, age} //will actually return {name: name, age: age}
+}
+
+For Vue, you can write:
+
+import HomeView from './components/home-view.vue';
+import AlertView from './components/alert-view.vue';
+
+new Vue({
+    components: {
+    Homeview, Alert ///don't have to write Homeview: Homeview, Alert: Alert
+}
+})
+
+let person = {
+name: 'Karen',
+age: 32,
+results: ['foo', 'bar'],
+count: 30
+}
+
+let {results, count} = person //name and age get assigned (object destructuring) PHP has extract(['name' => 'Jeff']) will produce $name = 'Jeff'
+pulls off the variables you want
+instead of
+let results = person.results;
+let count = person.count;
+
+You can even do this in an argument:
+function doThis({results, count}){
+
+}
+
+class User {
+    constructor(username, email) {
+
+    this.username = username;
+    this.email = email;
+    }
+    get foo() {
+        return 'foo';
+    }
+    static register(username, email) {
+        //do stuff
+    }
+}
+
+User::register('some_username', 'email@emailcom');//can't use 'this' inside the class
+user.foo
+
+export default some_class
+then
+import some_class from 'location of file'
+
+otherwise...
+
+export some_class
+import {some_class} fom 'location of file'
+
+You can import more than one thing from a file (class, variable, etc)
+
+You can also write:
+some_class {
+
+
+}
+
+export default some_class
+
+let timer = new Promise(function (resolve, reject) {
+  console.log('Init promise');
+  setTimeout(function() {
+    console.log('Timeout done.');
+  resolve(); ///calling resolve will have it do the "then" below
+  }, 2000);
+  });
+
+timer.then(function() {
+  console.log('Proceed now that the timer is done.');
+})
+
+OR
+
+let timer = function(length) {
+ return new Promise(function (resolve, reject) { //here we return the Promise
+  console.log('Init promise');
+  setTimeout(function() {
+    console.log('Timeout done.');
+  resolve();
+  }, length);
+  });
+
+}
+timer(2000).then(function() {
+  console.log('Proceed now that the timer is done.');
+})
+
+//instead of doing the indexOf -1 business
+if (title.includes('blah')) {
+  console.log('yep');
+}
+
+if (title.startsWith('blah')) {
+  console.log('yep');
+}
+
+if (title.endsWith('blah')) {
+  console.log('yep');
+}
+
+Array stuff
+[1, 2, 3, 4, 5].includes(5)
+[1. 2. 3. 4. 5].find(function(item) {
+return item > 3; //will return 4
+}
+or even
+
+[1. 2. 3. 4. 5].find(item => item > 3); //will return 4
+}
+
+findIndex will return the index
+
+function *range(start, end) {
+
+while (start < end) {
+    yield start;
+    start++
+}
+}
+
+let iterator = range(1, 5))
+console.log(iterator.next());
+
+for (let i of iterator) console.log(i)
+
+OR
+console.log(
+[..range(1,5]);
+
+
+let items = new Set([1, 2, 3, 3]);
+will just return [1, 2, 3]
+.size
+.add(6)
+.add(9)
+items.forEach(item => console.log(item))  OR for (
+items.clear()
+[..set] converts the Set to an array
+[..set].filter(tag => tag.length > 3);
+new Set[..set]'
+'
