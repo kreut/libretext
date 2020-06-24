@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class AssignmentController extends Controller
 {
@@ -14,7 +15,11 @@ class AssignmentController extends Controller
      */
     public function index()
     {
-        return auth()->user();
+        //todo it gets assignments in ascending order
+       return response(DB::table('assignments')
+           ->orderBy('due_date', 'asc')
+           ->get());
+
     }
 
     /**
