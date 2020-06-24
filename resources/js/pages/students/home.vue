@@ -1,6 +1,6 @@
 <template>
   <div>
-    {{ assignments }}
+    <b-table striped hover :items="assignments"></b-table>
   </div>
 </template>
 
