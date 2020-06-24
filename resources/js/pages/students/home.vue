@@ -5,15 +5,25 @@
 </template>
 
 <script>
+import axios from 'axios'
 
 export default {
   middleware: 'auth',
   data: () => ({
-    assignments: 'My assignments'
+    assignments: ''
   }),
   mounted () {
-    alert('start by doing a get to students/home which will get all assignments for the first course')
+    try {
+      //todo: turn this into a function and call that way
+      axios.get('/api/assignments').then(
+        response => this.assignments = response.data
+      );
+    } catch (error) {
+      // todo: force error
+      alert(error.response)
+    }
   },
+  methods: {},
   metaInfo () {
     return { title: this.$t('home') }
   }

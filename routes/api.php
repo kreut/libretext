@@ -22,7 +22,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
     //student stuff
-    //Route::get('/assignments/{user}/{course}', 'AssignmentController@current');START:
+    Route::get('/assignments', 'AssignmentController@index');
 });
 
 Route::group(['middleware' => 'guest:api'], function () {
