@@ -1,6 +1,10 @@
 <template>
 <div>
-  <b-table striped hover :items="assignments"></b-table>
+  <b-table striped hover :fields="fields" :items="assignments">
+    <template v-slot:cell(name)="data">
+      <a :href="`/assignments/${data.item.id}`">{{ data.item.name }}</a>
+    </template>
+  </b-table>
 </div>
 </template>
 
@@ -10,6 +14,10 @@
   export default {
     middleware: 'auth',
     data: () => ({
+      fields: [
+        {key: 'name', label: 'Assessment'},
+        'due_date'
+  ],
       assignments: []
     }),
     mounted () {
