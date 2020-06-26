@@ -6,6 +6,7 @@ export default [
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/assignments/:assignmentId', name: 'assignments.show', component: page('students/assignments.show.vue') },
   { path: '/courses/:courseId/assignments', name: 'students.home', component: page('students/home.vue') },
+  { path: '/courses/create', name: 'instructors.courses.create', component: page('instructors/courses.create.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
   { path: '/register', name: 'register', component: page('auth/register.vue') },
   { path: '/password/reset', name: 'password.request', component: page('auth/password/email.vue') },
