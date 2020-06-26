@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Course;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreCourse;
 
 class CourseController extends Controller
 {
@@ -33,10 +34,11 @@ class CourseController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreCourse $request)
     {
+        //todo: check the validation rules
+        $validated = $request->validated();
 
-        return response($request);
     }
 
     /**
