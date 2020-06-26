@@ -12,33 +12,57 @@
           id="name"
           v-model="form.name"
           type="text"
-          required
-        ></b-form-input>
+        >
+        </b-form-input>
+      </b-form-group>
+
+      <b-form-group
+        id="start_date"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Start Date"
+        label-for="Start Date"
+      >
+        <b-form-datepicker
+          v-model="form.start_date"
+          class="mb-2">
+        </b-form-datepicker>
+      </b-form-group>
+
+      <b-form-group
+        id="end_date"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="End Date"
+        label-for="End Date"
+      >
+        <b-form-datepicker
+          v-model="form.end_date"
+          class="mb-2">
+        </b-form-datepicker>
       </b-form-group>
 
 
       <b-button type="submit" variant="primary">Submit</b-button>
       <b-button type="reset" variant="danger">Reset</b-button>
     </b-form>
-    <b-card class="mt-3" header="Form Data Result">
-      <pre class="m-0">{{ form }}</pre>
-    </b-card>
   </div>
 </template>
-
 
 
 <script>
   export default {
     middleware: 'auth',
 
-    metaInfo () {
-      return { title: this.$t('My Courses') }
+    metaInfo() {
+      return {title: this.$t('My Courses')}
     },
     data() {
       return {
         form: {
           name: '',
+          start_date: '',
+          end_date: ''
         },
         show: true
       }
