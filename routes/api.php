@@ -21,8 +21,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
-    //student stuff
+    //student
     Route::get('/assignments', 'AssignmentController@index');
+
+    //instructor
+    Route::post('/courses', function() {
+       return ['sfsdfd'];
+    });
 });
 
 Route::group(['middleware' => 'guest:api'], function () {
