@@ -15,7 +15,8 @@
     middleware: 'auth',
     data: () => ({
       fields: [
-        {key: 'name', label: 'Assessment'},
+        {key: 'name', label: 'Assignment'},
+        'available_on',
         'due_date'
   ],
       assignments: []
