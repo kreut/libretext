@@ -51,6 +51,8 @@
 
 
 <script>
+  import Form from 'vform'
+
   export default {
     middleware: 'auth',
 
@@ -59,18 +61,20 @@
     },
     data() {
       return {
-        form: {
+        form: new Form({
           name: '',
           start_date: '',
           end_date: ''
-        },
+        }),
         show: true
       }
     },
     methods: {
-      createCourse(evt) {
+      async createCourse(evt) {
         evt.preventDefault()
-        alert(JSON.stringify(this.form))
+
+        const {data} = await this.form.post('/api/courses')
+        console.log(data);
       },
       onReset(evt) {
         evt.preventDefault()

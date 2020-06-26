@@ -24,7 +24,7 @@ class CourseController extends Controller
      */
     public function create()
     {
-        dd(request());
+
     }
 
     /**
@@ -35,7 +35,8 @@ class CourseController extends Controller
      */
     public function store(Request $request)
     {
-        //
+
+        return response($request);
     }
 
     /**
