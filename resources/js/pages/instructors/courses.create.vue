@@ -1,54 +1,62 @@
 <template>
-  <div class="row">
-    <div class="col-lg-8 m-auto">
-      <card :title="$t('login')">
-        <form @submit.prevent="createCourse" @keydown="form.onKeydown($event)">
-          <!-- Email -->
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
-            <div class="col-md-7">
-              <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control" type="email" name="email">
-              <has-error :form="form" field="email" />
-            </div>
-          </div>
+  <div>
+    <b-form @submit="createCourse" @reset="onReset" v-if="show">
+      <b-form-group
+        id="name"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Name"
+        label-for="name"
+      >
+        <b-form-input
+          id="name"
+          v-model="form.name"
+          type="text"
+          required
+        ></b-form-input>
+      </b-form-group>
 
-          <div class="form-group row">
-            <div class="col-md-7 offset-md-3 d-flex">
-              <!-- Submit Button -->
-              <v-button :loading="form.busy">
-                {{ $t('login') }}
-              </v-button>
 
-            </div>
-          </div>
-        </form>
-      </card>
-    </div>
+      <b-button type="submit" variant="primary">Submit</b-button>
+      <b-button type="reset" variant="danger">Reset</b-button>
+    </b-form>
+    <b-card class="mt-3" header="Form Data Result">
+      <pre class="m-0">{{ form }}</pre>
+    </b-card>
   </div>
 </template>
 
-<script>
-  import Form from 'vform'
-  import LoginWithGithub from '~/components/LoginWithGithub'
 
+
+<script>
   export default {
     middleware: 'auth',
 
     metaInfo () {
-      return { title: this.$t('login') }
+      return { title: this.$t('My Courses') }
     },
-
-    data: () => ({
-      form: new Form({
-        email: ''
-      })
-    }),
-
+    data() {
+      return {
+        form: {
+          name: '',
+        },
+        show: true
+      }
+    },
     methods: {
-      async createCourse () {
-        // Submit the form.
-        const { data } = await this.form.post('/api/courses')
-      console.log(data);
+      createCourse(evt) {
+        evt.preventDefault()
+        alert(JSON.stringify(this.form))
+      },
+      onReset(evt) {
+        evt.preventDefault()
+        // Reset our form values
+        this.form.name = ''
+        // Trick to reset/clear native browser form validation state
+        this.show = false
+        this.$nextTick(() => {
+          this.show = true
+        })
       }
     }
   }

@@ -25,9 +25,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments', 'AssignmentController@index');
 
     //instructor
-    Route::post('/courses', function() {
-       return ['sfsdfd'];
-    });
+    Route::post('/courses', 'CourseController@create');
 });
 
 Route::group(['middleware' => 'guest:api'], function () {
