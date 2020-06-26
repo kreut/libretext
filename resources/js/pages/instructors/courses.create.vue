@@ -12,8 +12,11 @@
           id="name"
           v-model="form.name"
           type="text"
+          :class="{ 'is-invalid': form.errors.has('name') }"
+          @keydown="form.errors.clear('name')"
         >
         </b-form-input>
+        <has-error :form="form" field="name"></has-error>
       </b-form-group>
 
       <b-form-group
@@ -25,8 +28,11 @@
       >
         <b-form-datepicker
           v-model="form.start_date"
-          class="mb-2">
+          class="mb-2"
+          :class="{ 'is-invalid': form.errors.has('start_date') }"
+          v-on:shown="form.errors.clear('start_date')">
         </b-form-datepicker>
+        <has-error :form="form" field="start_date"></has-error>
       </b-form-group>
 
       <b-form-group
@@ -38,8 +44,12 @@
       >
         <b-form-datepicker
           v-model="form.end_date"
-          class="mb-2">
+          class="mb-2"
+          :class="{ 'is-invalid': form.errors.has('end_date') }"
+          @click="form.errors.clear('end_date')"
+          v-on:shown="form.errors.clear('end_date')">
         </b-form-datepicker>
+        <has-error :form="form" field="end_date"></has-error>
       </b-form-group>
 
 
@@ -73,13 +83,19 @@
       async createCourse(evt) {
         evt.preventDefault()
 
-        const {data} = await this.form.post('/api/courses')
-        console.log(data);
+        try {
+          const { data } = await this.form.post('/api/courses')
+        } catch (error){
+          console.info(error.response.data.errors)
+        }
+
       },
       onReset(evt) {
         evt.preventDefault()
         // Reset our form values
         this.form.name = ''
+        this.form.start_date = ''
+        this.form.end_date = ''
         // Trick to reset/clear native browser form validation state
         this.show = false
         this.$nextTick(() => {

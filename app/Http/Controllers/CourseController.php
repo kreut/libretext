@@ -39,7 +39,7 @@ class CourseController extends Controller
         //todo: check the validation rules
         $data = $request->validated();
         $data['user_id'] = auth()->user()->id;
-        return Course::create($data);
+        return response(Course::create($data));
     }
 
     /**
