@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Course;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreCourse;
+use Illuminate\Support\Facades\DB;
 
 class CourseController extends Controller
 {
@@ -15,7 +16,11 @@ class CourseController extends Controller
      */
     public function index()
     {
-        //
+        //todo it gets courses in descending order
+        return response(DB::table('courses')
+            ->where('user_id', auth()->user()->id)
+            ->orderBy('start_date', 'desc')
+            ->get());
     }
 
     /**

@@ -10,7 +10,8 @@ let student_paths  = [
   ]
 
 let instructor_paths = [
-  { path: '/courses/create', name: 'instructors.courses.create', component: page('instructors/courses.create.vue') }
+  { path: '/courses/create', name: 'courses.create', component: page('instructors/courses.create.vue') },
+  { path: '/courses', name: 'courses.show', component: page('instructors/courses.index.vue') }
   ]
 
 let general_paths  = [

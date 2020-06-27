@@ -25,6 +25,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments', 'AssignmentController@index');
 
     //instructor
+    Route::get('/courses', 'CourseController@index');
     Route::post('/courses', 'CourseController@store');
 });
 

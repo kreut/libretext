@@ -16,6 +16,7 @@ class AssignmentController extends Controller
     public function index()
     {
         //todo it gets assignments in ascending order
+        //todo just get them for the specific course
        return response(DB::table('assignments')
            ->orderBy('due_date', 'asc')
            ->get());
