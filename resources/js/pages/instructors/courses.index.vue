@@ -41,7 +41,7 @@
             >
               <b-form-datepicker
                 v-model="form.start_date"
-                class="mb-2"
+                :min="min"
                 :class="{ 'is-invalid': form.errors.has('start_date') }"
                 v-on:shown="form.errors.clear('start_date')">
               </b-form-datepicker>
@@ -57,6 +57,7 @@
             >
               <b-form-datepicker
                 v-model="form.end_date"
+                :min="min"
                 class="mb-2"
                 :class="{ 'is-invalid': form.errors.has('end_date') }"
                 @click="form.errors.clear('end_date')"
@@ -79,6 +80,7 @@
   import axios from 'axios'
   import Form from "vform";
 
+  const now = new Date()
   export default {
     middleware: 'auth',
     data: () => ({
@@ -88,8 +90,7 @@
         'end_date'
       ],
       courses: [],
-      name: '',
-      nameState: null,
+      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         name: '',
         start_date: '',
@@ -115,11 +116,13 @@
         async createCourse(evt) {
           try {
             const { data } = await this.form.post('/api/courses')
+            console.log(this.courses)
             resetModal()
             // Hide the modal manually
             this.$nextTick(() => {
               this.$bvModal.hide('modal-add-course')
             })
+
           } catch (error){
             console.info(error.response.data.errors)
           }
