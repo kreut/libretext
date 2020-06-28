@@ -1,31 +1,70 @@
 <template>
   <div>
     <div class="row mb-4 float-right">
-      <b-button v-b-modal.modal-prevent-closing>Add Course</b-button>
+      <b-button v-b-modal.modal-add-course>Add Course</b-button>
     </div>
       <b-modal
-        id="modal-prevent-closing"
+        id="modal-add-course"
         ref="modal"
-        title="Submit Your Name"
+        title="Add Course"
         @show="resetModal"
         @hidden="resetModal"
         @ok="handleOk"
+        ok-title="Submit"
+
       >
-        <form ref="form" @submit.stop.prevent="handleSubmit">
-          <b-form-group
-            :state="nameState"
-            label="Name"
-            label-for="name-input"
-            invalid-feedback="Name is required"
-          >
-            <b-form-input
-              id="name-input"
-              v-model="name"
-              :state="nameState"
-              required
-            ></b-form-input>
-          </b-form-group>
-        </form>
+        <b-form ref="form" @submit="createCourse">
+            <b-form-group
+              id="name"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Name"
+              label-for="name"
+            >
+              <b-form-input
+                id="name"
+                v-model="form.name"
+                type="text"
+                :class="{ 'is-invalid': form.errors.has('name') }"
+                @keydown="form.errors.clear('name')"
+              >
+              </b-form-input>
+              <has-error :form="form" field="name"></has-error>
+            </b-form-group>
+
+            <b-form-group
+              id="start_date"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Start Date"
+              label-for="Start Date"
+            >
+              <b-form-datepicker
+                v-model="form.start_date"
+                class="mb-2"
+                :class="{ 'is-invalid': form.errors.has('start_date') }"
+                v-on:shown="form.errors.clear('start_date')">
+              </b-form-datepicker>
+              <has-error :form="form" field="start_date"></has-error>
+            </b-form-group>
+
+            <b-form-group
+              id="end_date"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="End Date"
+              label-for="End Date"
+            >
+              <b-form-datepicker
+                v-model="form.end_date"
+                class="mb-2"
+                :class="{ 'is-invalid': form.errors.has('end_date') }"
+                @click="form.errors.clear('end_date')"
+                v-on:shown="form.errors.clear('end_date')">
+              </b-form-datepicker>
+              <has-error :form="form" field="end_date"></has-error>
+            </b-form-group>
+        </b-form>
       </b-modal>
 
     <b-table striped hover :fields="fields" :items="courses">
@@ -38,6 +77,7 @@
 
 <script>
   import axios from 'axios'
+  import Form from "vform";
 
   export default {
     middleware: 'auth',
@@ -50,37 +90,39 @@
       courses: [],
       name: '',
       nameState: null,
+      form: new Form({
+        name: '',
+        start_date: '',
+        end_date: ''
+      }),
     }),
     mounted() {
       this.getCourses();
 
     },
     methods: {
-      checkFormValidity() {
-        const valid = this.$refs.form.checkValidity()
-        this.nameState = valid
-        return valid
-      },
       resetModal() {
-        this.name = ''
-        this.nameState = null
+        this.form.name = ''
+        this.form.start_date = ''
+        this.form.end_date = ''
       },
       handleOk(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
-        this.handleSubmit()
+        this.createCourse(bvModalEvt)
       },
-      handleSubmit() {
-        // Exit when the form isn't valid
-        if (!this.checkFormValidity()) {
-          return
-        }
-        //do something...
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide('modal-prevent-closing')
-        })
+        async createCourse(evt) {
+          try {
+            const { data } = await this.form.post('/api/courses')
+            resetModal()
+            // Hide the modal manually
+            this.$nextTick(() => {
+              this.$bvModal.hide('modal-add-course')
+            })
+          } catch (error){
+            console.info(error.response.data.errors)
+          }
       },
       getCourses() {
         try {
