@@ -79,15 +79,35 @@
 <script>
   import axios from 'axios'
   import Form from "vform";
+let formatDate = value => {
+  let date_pieces = value.split('-')
+  let month = date_pieces[1]
+  let day = date_pieces[2].split(' ')[0]//get rid of the time piece 2020-06-21 00:00:00
+  let year = date_pieces[0]
+  return month + '-' + day + '-' + year
+}
 
   const now = new Date()
   export default {
     middleware: 'auth',
     data: () => ({
       fields: [
-        {key: 'name', label: 'Course'},
-        'start_date',
-        'end_date'
+        {
+          key: 'name',
+          label: 'Course'
+        },
+        {
+          key: 'start_date',
+          formatter: value => {
+            return formatDate(value)
+          }
+        },
+        {
+          key: 'end_date',
+          formatter: value => {
+            return formatDate(value)
+          }
+        },
       ],
       courses: [],
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
@@ -116,15 +136,15 @@
         async createCourse(evt) {
           try {
             const { data } = await this.form.post('/api/courses')
-            console.log(this.courses)
-            resetModal()
+            this.getCourses()
+            this.resetModal()
             // Hide the modal manually
             this.$nextTick(() => {
               this.$bvModal.hide('modal-add-course')
             })
 
           } catch (error){
-            console.info(error.response.data.errors)
+            console.log(error)
           }
       },
       getCourses() {
