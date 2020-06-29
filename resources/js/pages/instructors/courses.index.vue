@@ -76,7 +76,7 @@
         <div class="mb-0">
           <span class="pr-1"><b-icon icon="file-earmark-text" ></b-icon></span>
           <span class="pr-1"> <b-icon icon="file-spreadsheet" ></b-icon></span>
-          <span class="pr-1"> <b-icon icon="pencil" ></b-icon></span>
+          <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil" ></b-icon></span>
           <b-icon icon="trash" ></b-icon>
         </div>
       </template>
@@ -131,6 +131,9 @@ let formatDate = value => {
 
     },
     methods: {
+      editCourse(course) {
+        alert(course.name)git
+      },
       resetModal() {
         this.form.name = ''
         this.form.start_date = ''
