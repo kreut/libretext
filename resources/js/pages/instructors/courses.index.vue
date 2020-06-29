@@ -72,6 +72,14 @@
       <template v-slot:cell(name)="data">
         <a :href="`/courses/${data.item.id}`">{{ data.item.name }}</a>
       </template>
+      <template v-slot:cell(actions)="data">
+        <div class="mb-0">
+          <span class="pr-1"><b-icon icon="file-earmark-text" ></b-icon></span>
+          <span class="pr-1"> <b-icon icon="file-spreadsheet" ></b-icon></span>
+          <span class="pr-1"> <b-icon icon="pencil" ></b-icon></span>
+          <b-icon icon="trash" ></b-icon>
+        </div>
+      </template>
     </b-table>
   </div>
 </template>
@@ -108,6 +116,7 @@ let formatDate = value => {
             return formatDate(value)
           }
         },
+        'actions'
       ],
       courses: [],
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),

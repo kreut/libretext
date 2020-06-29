@@ -3,7 +3,7 @@ import store from '~/store'
 import router from '~/router'
 import i18n from '~/plugins/i18n'
 import App from '~/components/App'
-import BootstrapVue from 'bootstrap-vue'
+import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
@@ -12,6 +12,7 @@ import '~/plugins'
 import '~/components'
 
 Vue.use(BootstrapVue)
+Vue.use(BootstrapVueIcons)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
