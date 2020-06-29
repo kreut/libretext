@@ -119,6 +119,7 @@ let formatDate = value => {
         'actions'
       ],
       courses: [],
+      courseAction: 'Add',
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         name: '',
@@ -132,7 +133,11 @@ let formatDate = value => {
     },
     methods: {
       editCourse(course) {
-        alert(course.name)git
+        this.courseAction = 'Update'
+        this.$bvModal.show('modal-add-course')
+        this.form.name = course.name
+        this.form.start_date = course.start_date
+        this.form.end_date = course.end_date
       },
       resetModal() {
         this.form.name = ''
@@ -147,7 +152,9 @@ let formatDate = value => {
       },
         async createCourse(evt) {
           try {
-            const { data } = await this.form.post('/api/courses')
+            let endpoint = (this.courseAction === 'Add') ? '/api/courses' : 'sdfdsf'
+            const { data } = await this.form.post(endpoint)
+            this.courseAction = 'Add' //change back from edit
             this.getCourses()
             this.resetModal()
             // Hide the modal manually
