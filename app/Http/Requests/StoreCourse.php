@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StoreCourse extends FormRequest
 {
@@ -23,8 +24,12 @@ class StoreCourse extends FormRequest
      */
     public function rules()
     {
+
         return [
-            'name' => 'required|unique:courses|max:255',
+            'name' => ['required',
+            'max:255',
+            Rule::unique('courses', 'name')->ignore($this->route('course')->id)
+            ],
             'start_date' => 'required|date|after_or_equal:' . date('Y-m-d'),
             'end_date' => 'required|date|after:start_date'
         ];

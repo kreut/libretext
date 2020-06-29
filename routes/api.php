@@ -27,6 +27,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     //instructor
     Route::get('/courses', 'CourseController@index');
     Route::post('/courses', 'CourseController@store');
+    Route::post('/courses/{course}', 'CourseController@update');
 });
 
 Route::group(['middleware' => 'guest:api'], function () {

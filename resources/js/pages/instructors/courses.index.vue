@@ -6,7 +6,7 @@
       <b-modal
         id="modal-add-course"
         ref="modal"
-        title="Add Course"
+        title="Course Details"
         @show="resetModal"
         @hidden="resetModal"
         @ok="handleOk"
@@ -119,7 +119,7 @@ let formatDate = value => {
         'actions'
       ],
       courses: [],
-      courseAction: 'Add',
+      courseId: false, //if there's a courseId it's an update
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         name: '',
@@ -133,7 +133,7 @@ let formatDate = value => {
     },
     methods: {
       editCourse(course) {
-        this.courseAction = 'Update'
+        this.courseId = course.id
         this.$bvModal.show('modal-add-course')
         this.form.name = course.name
         this.form.start_date = course.start_date
@@ -152,9 +152,8 @@ let formatDate = value => {
       },
         async createCourse(evt) {
           try {
-            let endpoint = (this.courseAction === 'Add') ? '/api/courses' : 'sdfdsf'
+            let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
             const { data } = await this.form.post(endpoint)
-            this.courseAction = 'Add' //change back from edit
             this.getCourses()
             this.resetModal()
             // Hide the modal manually
@@ -172,7 +171,8 @@ let formatDate = value => {
             response => this.courses = response.data
           )
         } catch (error) {
-          alert(error.response)
+          alert(error.message)
+
         }
       }
     },
