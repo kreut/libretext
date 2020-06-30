@@ -3,17 +3,17 @@
 namespace App\Http\Controllers;
 
 use App\Course;
-use App\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
+use App\Exceptions\Handler;
+use \Exception;
 
 class CourseController extends Controller
 {
     /**
      * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
      */
     public function index()
     {
@@ -52,7 +52,7 @@ class CourseController extends Controller
 
         $request->validated();
         $data = $request->except('user_id');//make sure they don't do this!
-      $course->update($data);
+        $course->update($data);
     }
 
     /**
@@ -61,11 +61,20 @@ class CourseController extends Controller
      *
      * @param Course $course
      * @param Request $request
+     * @throws Exception
      */
-
     public function destroy(Course $course, Request $request)
     {
-        $course->delete();
+        $result['success'] = false;
+        try {
+            $course->delete();
+            $result['success'] = true;
+            $result['message'] = "The course $course->name has been deleted";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $result['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
+        }
     }
 
 }

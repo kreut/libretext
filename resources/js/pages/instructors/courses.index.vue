@@ -156,7 +156,8 @@
       },
       async handleDeleteCourse() {
         try {
-          await axios.delete('/api/courses/' + this.courseId)
+         const { result }  = await axios.delete('/api/courses/' + this.courseId)
+
           this.getCourses()
           this.resetModal()
           // Hide the modal manually
