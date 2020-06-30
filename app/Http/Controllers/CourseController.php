@@ -24,11 +24,14 @@ class CourseController extends Controller
     }
 
     /**
+     *
      * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     *
+     * @param StoreCourse $request
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
+
     public function store(StoreCourse $request)
     {
         //todo: check the validation rules
@@ -51,9 +54,9 @@ class CourseController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Course $course
-     * @return \Illuminate\Http\Response
+     * @param StoreCourse $request
+     * @param Course $course
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function update(StoreCourse $request, Course $course)
     {
