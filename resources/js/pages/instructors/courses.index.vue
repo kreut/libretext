@@ -7,8 +7,8 @@
       id="modal-course-details"
       ref="modal"
       title="Course Details"
-      @ok="handleOk"
-      @hidden="resetModal"
+      @ok="submitCourseInfo"
+      @hidden="resetModalForms"
       ok-title="Submit"
 
     >
@@ -72,7 +72,7 @@
       ref="modal"
       title="Yes, delete course!"
       @ok="handleDeleteCourse"
-      @hidden="resetModal"
+      @hidden="resetModalForms"
       ok-title="Yes, delete course!"
 
     >
@@ -158,19 +158,10 @@
         try {
           const { data } = await axios.delete('/api/courses/' + this.courseId)
           this.$noty[data.type](data.message)
-          this.getCourses()
-          this.resetModal()
-          // Hide the modal manually
-          this.$nextTick(() => {
-            this.$bvModal.hide('modal-delete-course')
-          })
+          this.resetAll('modal-delete-course')
         } catch (error) {
           console.log(error)
         }
-
-
-
-
       },
       editCourse(course) {
         this.courseId = course.id
@@ -179,30 +170,34 @@
         this.form.start_date = course.start_date
         this.form.end_date = course.end_date
       },
-      resetModal() {
+      resetModalForms() {
         this.form.name = ''
         this.form.start_date = ''
         this.form.end_date = ''
         this.courseId = false
         this.form.errors.clear()
       },
-      handleOk(bvModalEvt) {
+      resetAll(modalId)  {
+        this.getCourses()
+        this.resetModalForms()
+        // Hide the modal manually
+        this.$nextTick(() => {
+          this.$bvModal.hide(modalId)
+        })
+      },
+      submitCourseInfo(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
-        this.createCourse(bvModalEvt)
+        this.createCourse()
       },
-      async createCourse(evt) {
+      async createCourse() {
         try {
           let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
           const { data } =  await this.form.post(endpoint)
           this.$noty[data.type](data.message)
-          this.getCourses()
-          this.resetModal()
-          // Hide the modal manually
-          this.$nextTick(() => {
-            this.$bvModal.hide('modal-course-details')
-          })
+          this.resetAll('modal-course-details')
+
         } catch (error) {
           console.log(error)
         }

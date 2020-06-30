@@ -96,11 +96,11 @@ class CourseController extends Controller
         try {
             $course->delete();
             $response['type'] = 'success';
-            $response['message'] = "The course $course->name has been deleted.";
+            $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error removing <strong>$course->name</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
     }
