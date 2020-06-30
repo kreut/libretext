@@ -24,14 +24,15 @@ class StoreCourse extends FormRequest
      */
     public function rules()
     {
-
-        return [
+        $rules = [
             'name' => ['required',
-            'max:255',
-            Rule::unique('courses', 'name')->ignore($this->route('course')->id)
-            ],
+                'max:255'],
             'start_date' => 'required|date|after_or_equal:' . date('Y-m-d'),
             'end_date' => 'required|date|after:start_date'
         ];
+        if ($this->route('course')) {
+            array_push($rules['name'], Rule::unique('courses', 'name')->ignore($this->route('course')->id));
+        }
+        return $rules;
     }
 }

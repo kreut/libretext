@@ -1,15 +1,14 @@
 <template>
   <div>
     <div class="row mb-4 float-right">
-      <b-button v-b-modal.modal-add-course>Add Course</b-button>
+      <b-button v-b-modal.modal-course-details>Add Course</b-button>
     </div>
       <b-modal
-        id="modal-add-course"
+        id="modal-course-details"
         ref="modal"
         title="Course Details"
-        @show="resetModal"
-        @hidden="resetModal"
         @ok="handleOk"
+        @hidden="resetModal"
         ok-title="Submit"
 
       >
@@ -134,7 +133,7 @@ let formatDate = value => {
     methods: {
       editCourse(course) {
         this.courseId = course.id
-        this.$bvModal.show('modal-add-course')
+        this.$bvModal.show('modal-course-details')
         this.form.name = course.name
         this.form.start_date = course.start_date
         this.form.end_date = course.end_date
@@ -143,6 +142,8 @@ let formatDate = value => {
         this.form.name = ''
         this.form.start_date = ''
         this.form.end_date = ''
+        this.courseId = false
+        this.form.errors.clear()
       },
       handleOk(bvModalEvt) {
         // Prevent modal from closing
@@ -158,7 +159,7 @@ let formatDate = value => {
             this.resetModal()
             // Hide the modal manually
             this.$nextTick(() => {
-              this.$bvModal.hide('modal-add-course')
+              this.$bvModal.hide('modal-course-details')
             })
 
           } catch (error){

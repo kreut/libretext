@@ -57,7 +57,9 @@ class CourseController extends Controller
      */
     public function update(StoreCourse $request, Course $course)
     {
-        $data = $request->validated();
+
+        $request->validated();
+        $data = $request->except('user_id');//make sure they don't do this!
         return response($course->update($data));
     }
 
