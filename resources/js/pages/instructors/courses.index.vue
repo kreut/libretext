@@ -67,6 +67,46 @@
         </b-form>
       </b-modal>
 
+    <b-modal
+      id="modal-delete-course"
+      ref="modal"
+      title="Delete Course"
+      @ok="handleDeleteCourse"
+      @hidden="resetModal"
+      ok-title="Delete"
+
+    >
+      <p>By deleting the course, you will also delete:</p>
+      <ol>
+        <li>All assignments associated with the course</li>
+      <li>All submitted student responses</li>
+      <li>All student grades</li>
+      </ol>
+      <p>Please verify that this is what you want to do by entering your password below.</p>
+      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <b-form ref="form" @submit="deleteCourse">
+
+        <b-form-group
+          id="password"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Password"
+          label-for="password"
+        >
+          <b-form-input
+            id="password"
+            v-model="deleteForm.password"
+            type="text"
+            :class="{ 'is-invalid': deleteForm.errors.has('password') }"
+            @keydown="pdeleteForm.errors.clear('password')"
+          >
+          </b-form-input>
+          <has-error :form="form" field="password"></has-error>
+        </b-form-group>
+
+      </b-form>
+    </b-modal>
+
     <b-table striped hover :fields="fields" :items="courses">
       <template v-slot:cell(name)="data">
         <a :href="`/courses/${data.item.id}`">{{ data.item.name }}</a>
@@ -76,7 +116,7 @@
           <span class="pr-1"><b-icon icon="file-earmark-text" ></b-icon></span>
           <span class="pr-1"> <b-icon icon="file-spreadsheet" ></b-icon></span>
           <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil" ></b-icon></span>
-          <b-icon icon="trash" ></b-icon>
+          <b-icon icon="trash" v-b-modal.modal-delete-course></b-icon>
         </div>
       </template>
     </b-table>
@@ -125,6 +165,9 @@ let formatDate = value => {
         start_date: '',
         end_date: ''
       }),
+      deleteForm: new Form({
+        password: ''
+      }),
     }),
     mounted() {
       this.getCourses();
@@ -144,6 +187,10 @@ let formatDate = value => {
         this.form.end_date = ''
         this.courseId = false
         this.form.errors.clear()
+      },
+      openDeleteCourseModal(course){
+
+
       },
       handleOk(bvModalEvt) {
         // Prevent modal from closing
