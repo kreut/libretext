@@ -4,6 +4,7 @@ import router from '~/router'
 import i18n from '~/plugins/i18n'
 import App from '~/components/App'
 import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
+import VueNoty from 'vuejs-noty'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
@@ -11,8 +12,11 @@ import 'bootstrap-vue/dist/bootstrap-vue.css'
 import '~/plugins'
 import '~/components'
 
+import 'vuejs-noty/dist/vuejs-noty.css' //https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
+
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
+Vue.use(VueNoty)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

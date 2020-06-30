@@ -103,7 +103,7 @@
 
 <script>
   import axios from 'axios'
-  import Form from "vform";
+  import Form from "vform"
 
   let formatDate = value => {
     let date_pieces = value.split('-')
@@ -156,8 +156,8 @@
       },
       async handleDeleteCourse() {
         try {
-         const { result }  = await axios.delete('/api/courses/' + this.courseId)
-
+          const { data } = await axios.delete('/api/courses/' + this.courseId)
+          this.$noty[data.result](data.message)
           this.getCourses()
           this.resetModal()
           // Hide the modal manually

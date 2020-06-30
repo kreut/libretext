@@ -65,16 +65,17 @@ class CourseController extends Controller
      */
     public function destroy(Course $course, Request $request)
     {
-        $result['success'] = false;
+        $data['result'] = 'error';
         try {
             $course->delete();
-            $result['success'] = true;
-            $result['message'] = "The course $course->name has been deleted";
+            $data['result'] = 'success';
+            $data['message'] = "The course $course->name has been deleted.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $result['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
+            $data['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
         }
+        return $data;
     }
 
 }
