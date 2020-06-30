@@ -28,54 +28,44 @@ class CourseController extends Controller
      *
      * Store a newly created resource in storage.
      *
-     *
      * @param StoreCourse $request
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @param Course $course
      */
 
-    public function store(StoreCourse $request)
+    public function store(StoreCourse $request, Course $course)
     {
         //todo: check the validation rules
         $data = $request->validated();
         $data['user_id'] = auth()->user()->id;
-        return response(Course::create($data));
+        $course->create($data);
     }
 
     /**
-     * Display the specified resource.
      *
-     * @param \App\Course $course
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Course $course)
-    {
-        //
-    }
-
-    /**
      * Update the specified resource in storage.
      *
      * @param StoreCourse $request
      * @param Course $course
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      */
     public function update(StoreCourse $request, Course $course)
     {
 
         $request->validated();
         $data = $request->except('user_id');//make sure they don't do this!
-        return response($course->update($data));
+      $course->update($data);
     }
 
     /**
+     *
      * Remove the specified resource from storage.
      *
-     * @param \App\Course $course
-     * @return \Illuminate\Http\Response
+     * @param Course $course
+     * @param Request $request
      */
+
     public function destroy(Course $course, Request $request)
     {
-    dd($course);
-
+        $course->delete();
     }
+
 }
