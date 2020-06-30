@@ -12,16 +12,18 @@ use \Exception;
 class CourseController extends Controller
 {
     /**
-     * Display a listing of the resource.
      *
+     * Get the authenticated user's courses
+     *
+     * @param Course $course
+     * @return mixed
      */
-    public function index()
+    public function index(Course $course)
     {
-        //todo it gets courses in descending order
-        return response(DB::table('courses')
-            ->where('user_id', auth()->user()->id)
-            ->orderBy('start_date', 'desc')
-            ->get());
+        return $course->where('user_id', auth()->user()->id)
+                     ->orderBy('start_date', 'desc')
+                     ->get();
+
     }
 
     /**
