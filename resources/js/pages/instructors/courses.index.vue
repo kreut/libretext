@@ -157,7 +157,7 @@
       async handleDeleteCourse() {
         try {
           const { data } = await axios.delete('/api/courses/' + this.courseId)
-          this.$noty[data.result](data.message)
+          this.$noty[data.type](data.message)
           this.getCourses()
           this.resetModal()
           // Hide the modal manually
@@ -167,6 +167,8 @@
         } catch (error) {
           console.log(error)
         }
+
+
 
 
       },
@@ -193,7 +195,8 @@
       async createCourse(evt) {
         try {
           let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
-          await this.form.post(endpoint)
+          const { data } =  await this.form.post(endpoint)
+          this.$noty[data.type](data.message)
           this.getCourses()
           this.resetModal()
           // Hide the modal manually

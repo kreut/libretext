@@ -35,9 +35,21 @@ class CourseController extends Controller
     public function store(StoreCourse $request, Course $course)
     {
         //todo: check the validation rules
-        $data = $request->validated();
-        $data['user_id'] = auth()->user()->id;
-        $course->create($data);
+        $response['type'] = 'error';
+        try {
+            $data = $request->validated();
+            $data['user_id'] = auth()->user()->id;
+
+            $course->create($data);
+            $response['type'] = 'success';
+            $response['message'] = "The course <strong>$request->name</strong> has been created.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -49,10 +61,18 @@ class CourseController extends Controller
      */
     public function update(StoreCourse $request, Course $course)
     {
-
-        $request->validated();
-        $data = $request->except('user_id');//make sure they don't do this!
-        $course->update($data);
+        $response['type'] = 'error';
+        try {
+            $request->validated();
+            $course->update($request->except('user_id'));
+            $response['type'] = 'success';
+            $response['message'] = "The course <strong>$course->name</strong> has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -65,17 +85,17 @@ class CourseController extends Controller
      */
     public function destroy(Course $course, Request $request)
     {
-        $data['result'] = 'error';
+        $response['type'] = 'error';
         try {
             $course->delete();
-            $data['result'] = 'success';
-            $data['message'] = "The course $course->name has been deleted.";
+            $response['type'] = 'success';
+            $response['message'] = "The course $course->name has been deleted.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $data['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error removing $course->name.  Please try again or contact us for assistance.";
         }
-        return $data;
+        return $response;
     }
 
 }
