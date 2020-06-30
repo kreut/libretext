@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\User;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
@@ -72,8 +73,9 @@ class CourseController extends Controller
      * @param \App\Course $course
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Course $course)
+    public function destroy(Course $course, Request $request)
     {
-        //
+    dd($course);
+
     }
 }

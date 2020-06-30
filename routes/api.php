@@ -28,6 +28,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/courses', 'CourseController@index');
     Route::post('/courses', 'CourseController@store');
     Route::post('/courses/{course}', 'CourseController@update');
+    Route::delete('/courses/{course}', 'CourseController@destroy');
 });
 
 Route::group(['middleware' => 'guest:api'], function () {
