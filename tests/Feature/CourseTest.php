@@ -22,6 +22,25 @@ class CourseTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
+    public function can_delete_a_course_if_you_are_the_owner(){
+
+
+}
+
+    public function cannot_delete_a_course_if_you_are_not_the_owner(){
+
+
+    }
+
+    public function can_update_the_course_if_you_are_the_owner() {
+
+
+    }
+
+    public function cannot_update_a_course_if_you_are_not_the_owner(){
+
+
+    }
 
 
 }
