@@ -30,6 +30,8 @@ class CourseController extends Controller
      *
      * @param StoreCourse $request
      * @param Course $course
+     * @return mixed
+     * @throws Exception
      */
 
     public function store(StoreCourse $request, Course $course)
@@ -56,8 +58,11 @@ class CourseController extends Controller
      *
      * Update the specified resource in storage.
      *
+     *
      * @param StoreCourse $request
      * @param Course $course
+     * @return mixed
+     * @throws Exception
      */
     public function update(StoreCourse $request, Course $course)
     {
@@ -79,8 +84,10 @@ class CourseController extends Controller
      *
      * Remove the specified resource from storage.
      *
+     *
      * @param Course $course
      * @param Request $request
+     * @return mixed
      * @throws Exception
      */
     public function destroy(Course $course, Request $request)
