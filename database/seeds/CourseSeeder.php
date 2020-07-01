@@ -4,6 +4,7 @@ use Illuminate\Database\Seeder;
 use Carbon\Carbon;
 use App\User;
 use App\Course;
+use Faker\Factory;
 
 class CourseSeeder extends Seeder
 {
@@ -14,7 +15,7 @@ class CourseSeeder extends Seeder
      */
     public function run()
     {
-        $faker = \Faker\Factory::create();
+        $faker = Factory::create();
         $user = User::find(1);
         $start_date = Carbon::now();
         for($i=0; $i<=2; $i++):
