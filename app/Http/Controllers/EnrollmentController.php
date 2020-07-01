@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Enrollments;
+use App\Enrollment;
 use Illuminate\Http\Request;
 
-class EnrollmentsController extends Controller
+class EnrollmentController extends Controller
 {
     /**
      * Display a listing of the resource.
@@ -41,10 +41,10 @@ class EnrollmentsController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Enrollments  $enrollments
+     * @param  \App\Enrollment  $enrollment
      * @return \Illuminate\Http\Response
      */
-    public function show(Enrollments $enrollments)
+    public function show(Enrollment $enrollment)
     {
         //
     }
@@ -52,10 +52,10 @@ class EnrollmentsController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Enrollments  $enrollments
+     * @param  \App\Enrollment  $enrollment
      * @return \Illuminate\Http\Response
      */
-    public function edit(Enrollments $enrollments)
+    public function edit(Enrollment $enrollment)
     {
         //
     }
@@ -64,10 +64,10 @@ class EnrollmentsController extends Controller
      * Update the specified resource in storage.
      *
      * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Enrollments  $enrollments
+     * @param  \App\Enrollment  $enrollment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Enrollments $enrollments)
+    public function update(Request $request, Enrollment $enrollment)
     {
         //
     }
@@ -75,10 +75,10 @@ class EnrollmentsController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Enrollments  $enrollments
+     * @param  \App\Enrollment  $enrollment
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Enrollments $enrollments)
+    public function destroy(Enrollment $enrollment)
     {
         //
     }
