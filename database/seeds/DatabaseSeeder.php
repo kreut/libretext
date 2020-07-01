@@ -6,6 +6,8 @@ use App\User;
 use App\Course;
 use App\Enrollment;
 use App\Assignment;
+use App\Role;
+
 class DatabaseSeeder extends Seeder
 {
     /**
@@ -17,11 +19,17 @@ class DatabaseSeeder extends Seeder
     {
 
         //users
+        $my_user_id = 1;
         User::create([
                 'name' => 'Eric Kean',
                 'email' => 'me@me.com',
                 'password' => '$2y$10$yGJn0yActFr2GKvCDnMSMu/ICqG.wfveJgjG1iM.1mjZjteAMUd/G'
             ]);
+
+        Role::create([
+            'user_id' => $my_user_id,
+            'name' => 'instructor'
+        ]);
 
         $faker = \Faker\Factory::create();
         for($i=0; $i<=10; $i++):
@@ -39,7 +47,7 @@ class DatabaseSeeder extends Seeder
             $start_date = Carbon::now();
             Course::create([
                     'name' => $faker->text(15),
-                    'user_id' => 1,
+                    'user_id' => $my_user_id,
                     'start_date' => $start_date->format('Y-m-d'),
                     'end_date' => $start_date->add('2 years')->format('Y-m-d')
                 ]);
@@ -47,11 +55,15 @@ class DatabaseSeeder extends Seeder
         endfor;
 
         //enrollment
-        foreach (\App\User::all() as $user) {
+        foreach (User::all()->where('id', '>',  $my_user_id) as $user) {
             Enrollment::create([
                     'user_id' => $user->id,
                     'course_id' => 1
                 ]);
+            Role::create([
+                'user_id' => $user->id,
+                'name' => 'student'
+            ]);
         }
 
         //assignments
