@@ -26,10 +26,10 @@ class Course extends Model
             'course_id', //foreign key on enrollments table
             'id', //foreign key on users table
             'id', //local key in courses table
-            'id'); //local key in enrollments table
+            'user_id'); //local key in enrollments table
     }
     public function assignments() {
-        return $this->hasMany('App\Assignment');
+        return $this->hasMany('App\Assignment')->orderBy('due_date', 'asc');
     }
 
 

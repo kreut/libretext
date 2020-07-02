@@ -50,17 +50,13 @@ class GradeController extends Controller
     public function show(Course $course)
     {
         //get all user_ids for the user enrolled in the course
-
-
-        return $course->enrolledUsers;
-
-        foreach ($course->enrollments as $key => $user) {
-
+        foreach ($course->enrolledUsers as $key => $user) {
             $enrolled_users[$user->id] = $user->name;
         }
-      return $enrolled_users;
+
         //get all assignments in the course
         $assignments = $course->assignments;//get all the info
+
         $grades = $course->grades;
 
         //organize the grades by user_id and assignment
@@ -70,18 +66,17 @@ class GradeController extends Controller
         }
 
         //now fill in the actual grades
-        $all_grades = [];
-        foreach ($enrolled_users as $enrolled_user) {
+        $grades = [];
+        foreach ($enrolled_users as $user_id => $name) {
+            $user_grades = [];
             foreach ($assignments as $assignment) {
-                $all_grades[$enrolled_user][$assignment->id] = $grades_by_user_and_assignment[$enrolled_user][$assignment->id] ?? null;
+                $user_grades[$assignment->id] = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? null;
             }
+            $grades[] = array_merge(['user_id' => $user_id, 'name' => $name], ['grades' => $user_grades]);
+
         }
 
-        return $all_grades;
-
-        //get all grades in the course and make the keys the user, and the next level the assignment key
-        //foreach user, loop through the assignments and add if they exist
-
+        return compact('grades', 'assignments');
 
     }
 
