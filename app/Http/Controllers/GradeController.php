@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Grade;
 use App\Course;
+use App\Enrollment;
 use Illuminate\Http\Request;
 
 class GradeController extends Controller
@@ -31,7 +32,7 @@ class GradeController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -49,26 +50,34 @@ class GradeController extends Controller
     public function show(Course $course)
     {
         //get all user_ids for the user enrolled in the course
-        $enrolled_users = $course->enrollments->pluck('user_id')->toArray();
+
+
+        return $course->enrolledUsers;
+
+        foreach ($course->enrollments as $key => $user) {
+
+            $enrolled_users[$user->id] = $user->name;
+        }
+      return $enrolled_users;
         //get all assignments in the course
         $assignments = $course->assignments;//get all the info
         $grades = $course->grades;
 
         //organize the grades by user_id and assignment
         $grades_by_user_and_assignment = [];
-        foreach ($grades as $grade){
+        foreach ($grades as $grade) {
             $grades_by_user_and_assignment[$grade->user_id][$grade->assignment_id] = $grade->grade;
         }
 
         //now fill in the actual grades
         $all_grades = [];
-        foreach ($enrolled_users as $enrolled_user){
-            foreach ($assignments as $assignment){
+        foreach ($enrolled_users as $enrolled_user) {
+            foreach ($assignments as $assignment) {
                 $all_grades[$enrolled_user][$assignment->id] = $grades_by_user_and_assignment[$enrolled_user][$assignment->id] ?? null;
             }
         }
 
-       return $all_grades;
+        return $all_grades;
 
         //get all grades in the course and make the keys the user, and the next level the assignment key
         //foreach user, loop through the assignments and add if they exist
@@ -79,7 +88,7 @@ class GradeController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Grade  $grade
+     * @param \App\Grade $grade
      * @return \Illuminate\Http\Response
      */
     public function edit(Grade $grade)
@@ -90,8 +99,8 @@ class GradeController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Grade  $grade
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Grade $grade
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Grade $grade)
@@ -102,7 +111,7 @@ class GradeController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Grade  $grade
+     * @param \App\Grade $grade
      * @return \Illuminate\Http\Response
      */
     public function destroy(Grade $grade)

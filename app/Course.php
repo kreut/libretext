@@ -20,10 +20,14 @@ class Course extends Model
         return $this->hasManyThrough('App\Grade', 'App\Assignment');
     }
 
-    public function enrollments() {
-        return $this->hasMany('App\Enrollment');
+    public function enrolledUsers() {
+        return $this->hasManyThrough('App\User',
+            'App\Enrollment',
+            'course_id', //foreign key on enrollments table
+            'id', //foreign key on users table
+            'id', //local key in courses table
+            'id'); //local key in enrollments table
     }
-
     public function assignments() {
         return $this->hasMany('App\Assignment');
     }
