@@ -12,4 +12,11 @@ class Course extends Model
      * @var array
      */
     protected $fillable = ['name', 'start_date', 'end_date', 'user_id'];
+
+    /**
+     * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
+     */
+    public function grades() {
+        return $this->hasManyThrough('App\Grade', 'App\Assignment');
+    }
 }

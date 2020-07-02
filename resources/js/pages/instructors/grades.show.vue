@@ -13,16 +13,24 @@
   export default {
     middleware: 'auth',
     data: () => ({
+      courseId: '',
       fields: [],
       grades: []
     }),
     mounted() {
+      this.courseId = this.$route.params.id
       this.getGrades();
-
     },
     methods: {
       getGrades() {
-        this.grades = ['f']
+
+        try {
+          axios.get('/api/grades/' + this.courseId).then(
+            response => this.grades = response.data
+          )
+        } catch (error) {
+          alert(error.message)
+        }
       }
 
     }

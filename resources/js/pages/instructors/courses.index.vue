@@ -93,7 +93,7 @@
         <div class="mb-0">
           <span class="pr-1"><b-icon icon="file-earmark-text"></b-icon></span>
           <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
-          <span class="pr-1" v-on:click="editCourse(data.item.id)"><b-icon icon="pencil"></b-icon></span>
+          <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
           <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
         </div>
       </template>
@@ -166,12 +166,12 @@
           console.log(error)
         }
       },
-      editCourse(courseId) {
-        this.courseId = courseId
-        this.$bvModal.show('modal-course-details')
+      editCourse(course) {
+        this.courseId = course.id;
         this.form.name = course.name
         this.form.start_date = course.start_date
         this.form.end_date = course.end_date
+        this.$bvModal.show('modal-course-details')
       },
       resetModalForms() {
         this.form.name = ''
@@ -213,7 +213,6 @@
           )
         } catch (error) {
           alert(error.message)
-
         }
       }
     },

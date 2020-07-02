@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Grade;
+use App\Course;
 use Illuminate\Http\Request;
 
 class GradeController extends Controller
@@ -44,9 +45,10 @@ class GradeController extends Controller
      * @param  \App\Grade  $grade
      * @return \Illuminate\Http\Response
      */
-    public function show(Grade $grade)
+    public function show(Course $course)
     {
-        //
+    return $course->grades;
+
     }
 
     /**
