@@ -40,14 +40,39 @@ class GradeController extends Controller
     }
 
     /**
-     * Display the specified resource.
      *
-     * @param  \App\Grade  $grade
-     * @return \Illuminate\Http\Response
+     * Show the grades for a given course
+     *
+     * @param Course $course
+     * @return array
      */
     public function show(Course $course)
     {
-    return $course->grades;
+        //get all user_ids for the user enrolled in the course
+        $enrolled_users = $course->enrollments->pluck('user_id')->toArray();
+        //get all assignments in the course
+        $assignments = $course->assignments;//get all the info
+        $grades = $course->grades;
+
+        //organize the grades by user_id and assignment
+        $grades_by_user_and_assignment = [];
+        foreach ($grades as $grade){
+            $grades_by_user_and_assignment[$grade->user_id][$grade->assignment_id] = $grade->grade;
+        }
+
+        //now fill in the actual grades
+        $all_grades = [];
+        foreach ($enrolled_users as $enrolled_user){
+            foreach ($assignments as $assignment){
+                $all_grades[$enrolled_user][$assignment->id] = $grades_by_user_and_assignment[$enrolled_user][$assignment->id] ?? null;
+            }
+        }
+
+       return $all_grades;
+
+        //get all grades in the course and make the keys the user, and the next level the assignment key
+        //foreach user, loop through the assignments and add if they exist
+
 
     }
 

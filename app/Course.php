@@ -19,4 +19,14 @@ class Course extends Model
     public function grades() {
         return $this->hasManyThrough('App\Grade', 'App\Assignment');
     }
+
+    public function enrollments() {
+        return $this->hasMany('App\Enrollment');
+    }
+
+    public function assignments() {
+        return $this->hasMany('App\Assignment');
+    }
+
+
 }
