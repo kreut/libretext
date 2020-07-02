@@ -1,6 +1,6 @@
 <template>
   <div>
-   Hello!
+    {{ grades }}
   </div>
 </template>
 <script>
@@ -13,38 +13,18 @@
   export default {
     middleware: 'auth',
     data: () => ({
-      fields: [
-        {
-          key: 'name',
-          label: 'Course'
-        },
-        {
-          key: 'start_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        },
-        {
-          key: 'end_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        },
-        'actions'
-      ],
-      courses: [],
-      courseId: false, //if there's a courseId it's an update
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      form: new Form({
-        name: '',
-        start_date: '',
-        end_date: ''
-      })
+      fields: [],
+      grades: []
     }),
     mounted() {
-      this.getCourses();
+      this.getGrades();
 
     },
-    methods: {}
+    methods: {
+      getGrades() {
+        this.grades = ['f']
+      }
+
+    }
   }
   </script>
