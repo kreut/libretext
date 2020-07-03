@@ -1,6 +1,6 @@
 <template>
   <div>
-    {{ grades }}
+    <b-table striped hover :items="items"></b-table>
   </div>
 </template>
 <script>
@@ -15,7 +15,8 @@
     data: () => ({
       courseId: '',
       fields: [],
-      grades: []
+      grades: [],
+      items: []
     }),
     mounted() {
       this.courseId = this.$route.params.id
@@ -26,7 +27,11 @@
 
         try {
           axios.get('/api/grades/' + this.courseId).then(
-            response => this.grades = response.data
+            response => {
+              this.items = response.data
+
+              }
+
           )
         } catch (error) {
           alert(error.message)

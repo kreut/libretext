@@ -66,17 +66,17 @@ class GradeController extends Controller
         }
 
         //now fill in the actual grades
-        $grades = [];
+        $rows = [];
         foreach ($enrolled_users as $user_id => $name) {
-            $user_grades = [];
+           $columns = [];
             foreach ($assignments as $assignment) {
-                $user_grades[$assignment->id] = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? null;
+                $grade = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
+                $columns[$assignment->id] = $grade;
             }
-            $grades[] = array_merge(['user_id' => $user_id, 'name' => $name], ['grades' => $user_grades]);
-
+            $columns['name'] = $name;
+            $rows[] = $columns;
         }
-
-        return compact('grades', 'assignments');
+        return $rows;
 
     }
 
