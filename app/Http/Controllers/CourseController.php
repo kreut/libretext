@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\CourseAccessCode;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
@@ -36,15 +37,21 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course)
+    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
         try {
+
             $data = $request->validated();
             $data['user_id'] = auth()->user()->id;
 
             $course->create($data);
+
+            CourseAccessCode::create( ['course' => $course->id,
+            'access_code' => $course_access_code->createCourseAccessCode()]);
+
+
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
 
