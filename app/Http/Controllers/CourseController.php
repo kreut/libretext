@@ -22,8 +22,8 @@ class CourseController extends Controller
     public function index(Course $course)
     {
         return $course->where('user_id', auth()->user()->id)
-                     ->orderBy('start_date', 'desc')
-                     ->get();
+            ->orderBy('start_date', 'desc')
+            ->get();
 
     }
 
@@ -42,18 +42,17 @@ class CourseController extends Controller
         //todo: check the validation rules
         $response['type'] = 'error';
         try {
+            DB::transaction(function () use ($request, $course, $course_access_code) {
+                $data = $request->validated();
+                $data['user_id'] = auth()->user()->id;
 
-            $data = $request->validated();
-            $data['user_id'] = auth()->user()->id;
-
-            $new_course = $course->create($data);
-            $course_access_code->create( ['course_id' => $new_course->id,
-            'access_code' => $course_access_code->createCourseAccessCode()]);
-
+                $new_course = $course->create($data);
+                $course_access_code->create(['course_id' => $new_course->id,
+                    'access_code' => $course_access_code->createCourseAccessCode()]);
+            });
 
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
-
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
