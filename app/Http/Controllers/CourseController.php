@@ -3,7 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\User;
 use App\CourseAccessCode;
+use App\Enrollment;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
@@ -40,18 +42,26 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code)
+    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, User $user, Enrollment $enrollment)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($request, $course, $course_access_code) {
+            DB::transaction(function () use ($request, $course, $course_access_code, $user, $enrollment) {
                 $data = $request->validated();
                 $data['user_id'] = auth()->user()->id;
-
+                //create the course
                 $new_course = $course->create($data);
+                //create the access code
                 $course_access_code->create(['course_id' => $new_course->id,
                     'access_code' => $course_access_code->createCourseAccessCode()]);
+                //create a test student
+                $fake_student = $user->create(['last_name' => 'Student',
+                    'first_name' => 'Fake'
+                ]);
+                //enroll the fake student
+                $enrollment->create(['user_id' => $fake_student->id,
+                    'course_id' => $new_course->id]);
             });
 
             $response['type'] = 'success';

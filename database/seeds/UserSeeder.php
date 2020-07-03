@@ -21,6 +21,8 @@ class UserSeeder extends Seeder
         ]);
 
         $faker = Factory::create();
+        User::create(['first_name' => 'Fake',
+        'last_name' => 'Student']);
 
         for($i=0; $i<=9; $i++):
             User::create([

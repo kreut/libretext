@@ -17,8 +17,9 @@ class GradeSeeder extends Seeder
     {
         $faker = Factory::create();
         $assignments = Assignment::all();
+        $num_users = count(User::all());
         foreach ($assignments as $assignment) {
-            $randId = $faker->numberBetween(1, 10);
+            $randId = $faker->numberBetween(1, $num_users+1);
             $users = User::where('id', '>', $randId)->get();
             foreach ($users as $user) {
                 Grade::create([
