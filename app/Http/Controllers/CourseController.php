@@ -46,9 +46,8 @@ class CourseController extends Controller
             $data = $request->validated();
             $data['user_id'] = auth()->user()->id;
 
-            $course->create($data);
-
-            CourseAccessCode::create( ['course' => $course->id,
+            $new_course = $course->create($data);
+            $course_access_code->create( ['course_id' => $new_course->id,
             'access_code' => $course_access_code->createCourseAccessCode()]);
 
 
