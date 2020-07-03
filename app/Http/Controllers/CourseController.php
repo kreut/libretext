@@ -14,15 +14,17 @@ class CourseController extends Controller
 {
     /**
      *
-     * Get the authenticated user's courses
+     *  Get the authenticated user's courses
      *
      * @param Course $course
-     * @return mixed
+     * @return \Illuminate\Support\Collection
      */
     public function index(Course $course)
     {
-        return $course->where('user_id', auth()->user()->id)
-            ->orderBy('start_date', 'desc')
+        return DB::table('courses')
+            ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+            ->select('courses.*', 'course_access_codes.access_code')
+            ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
             ->get();
 
     }
@@ -33,6 +35,7 @@ class CourseController extends Controller
      *
      * @param StoreCourse $request
      * @param Course $course
+     * @param CourseAccessCode $course_access_code
      * @return mixed
      * @throws Exception
      */
@@ -97,11 +100,15 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, Request $request)
+    public function destroy(Course $course, CourseAccessCode $course_access_code)
     {
+
         $response['type'] = 'error';
         try {
-            $course->delete();
+            DB::transaction(function () use ($course, $course_access_code) {
+                $course_access_code->where('course_id', '=', $course->id)->delete();
+                $course->delete();
+            });
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch (Exception $e) {

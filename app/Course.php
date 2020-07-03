@@ -32,5 +32,4 @@ class Course extends Model
         return $this->hasMany('App\Assignment')->orderBy('due_date', 'asc');
     }
 
-
 }

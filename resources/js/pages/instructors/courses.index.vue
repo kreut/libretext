@@ -134,6 +134,10 @@
             return formatDate(value)
           }
         },
+        {
+          key: 'access_code',
+          label: 'Access Code'
+        },
         'actions'
       ],
       courses: [],
