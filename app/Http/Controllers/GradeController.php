@@ -56,7 +56,6 @@ class GradeController extends Controller
 
         //get all assignments in the course
         $assignments = $course->assignments;//get all the info
-
         $grades = $course->grades;
 
         //organize the grades by user_id and assignment
@@ -76,7 +75,16 @@ class GradeController extends Controller
             $columns['name'] = $name;
             $rows[] = $columns;
         }
-        return $rows;
+
+        $fields = [ ['key' =>'name',
+            'label' => 'name',
+            'sortable' => true,
+            'stickyColumn' => true]];
+        foreach ($assignments as $assignment) {
+            $field = ['key' => "$assignment->id", 'label' => $assignment->name];
+            array_push($fields, $field);
+        }
+        return compact('rows', 'fields');
 
     }
 

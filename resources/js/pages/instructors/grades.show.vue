@@ -1,6 +1,15 @@
 <template>
   <div>
-    <b-table striped hover :items="items"></b-table>
+    <b-table striped
+             hover
+             fixed
+             :items="items"
+             :fields="fields"
+             :sort-by.sync="sortBy"
+             :sort-desc.sync="sortDesc"
+             sort-icon-left
+             responsive="sm"
+    ></b-table>
   </div>
 </template>
 <script>
@@ -13,6 +22,8 @@
   export default {
     middleware: 'auth',
     data: () => ({
+      sortBy: 'name',
+      sortDesc: false,
       courseId: '',
       fields: [],
       grades: [],
@@ -28,7 +39,8 @@
         try {
           axios.get('/api/grades/' + this.courseId).then(
             response => {
-              this.items = response.data
+              this.items = response.data.rows
+              this.fields = response.data.fields
 
               }
 
