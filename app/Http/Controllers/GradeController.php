@@ -56,6 +56,11 @@ class GradeController extends Controller
 
         //get all assignments in the course
         $assignments = $course->assignments;//get all the info
+
+        if ($assignments->isEmpty()) {
+            return ['hasAssignment'=> false];
+    }
+
         $grades = $course->grades;
 
         //organize the grades by user_id and assignment
@@ -67,7 +72,7 @@ class GradeController extends Controller
         //now fill in the actual grades
         $rows = [];
         foreach ($enrolled_users as $user_id => $name) {
-           $columns = [];
+            $columns = [];
             foreach ($assignments as $assignment) {
                 $grade = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
                 $columns[$assignment->id] = $grade;
@@ -76,7 +81,7 @@ class GradeController extends Controller
             $rows[] = $columns;
         }
 
-        $fields = [ ['key' =>'name',
+        $fields = [['key' => 'name',
             'label' => 'name',
             'sortable' => true,
             'stickyColumn' => true]];
@@ -84,7 +89,7 @@ class GradeController extends Controller
             $field = ['key' => "$assignment->id", 'label' => $assignment->name];
             array_push($fields, $field);
         }
-        return compact('rows', 'fields');
+        return compact('rows', 'fields') + ['hasAssignments' => true];
 
     }
 

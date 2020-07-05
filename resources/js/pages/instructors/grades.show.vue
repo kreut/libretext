@@ -1,15 +1,20 @@
 <template>
   <div>
-    <b-table striped
-             hover
-             fixed
-             :items="items"
-             :fields="fields"
-             :sort-by.sync="sortBy"
-             :sort-desc.sync="sortDesc"
-             sort-icon-left
-             responsive="sm"
-    ></b-table>
+    <div v-if="hasAssignments">
+      <b-table striped
+               hover
+               fixed
+               :items="items"
+               :fields="fields"
+               :sort-by.sync="sortBy"
+               :sort-desc.sync="sortDesc"
+               sort-icon-left
+               responsive="sm"
+      ></b-table>
+    </div>
+    <div v-else>
+      <b-alert show variant="warning"><a href="#" class="alert-link">This course currently has no assignments.</a></b-alert>
+  </div>
   </div>
 </template>
 <script>
@@ -27,7 +32,8 @@
       courseId: '',
       fields: [],
       grades: [],
-      items: []
+      items: [],
+      hasAssignments: true
     }),
     mounted() {
       this.courseId = this.$route.params.id
@@ -39,11 +45,14 @@
         try {
           axios.get('/api/grades/' + this.courseId).then(
             response => {
-              this.items = response.data.rows
-              this.fields = response.data.fields
-
+              console.log(response)
+              if (response.data.hasAssignments) {
+                this.items = response.data.rows
+                this.fields = response.data.fields
+              } else {
+                this.hasAssignments = false
               }
-
+            }
           )
         } catch (error) {
           alert(error.message)
@@ -52,4 +61,4 @@
 
     }
   }
-  </script>
+</script>
