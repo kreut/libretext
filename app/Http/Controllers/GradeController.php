@@ -51,7 +51,7 @@ class GradeController extends Controller
     {
         //get all user_ids for the user enrolled in the course
         foreach ($course->enrolledUsers as $key => $user) {
-            $enrolled_users[$user->id] = $user->name;
+            $enrolled_users[$user->id] = "$user->first_name $user->last_name";
         }
 
         //get all assignments in the course
