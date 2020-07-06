@@ -6,22 +6,22 @@ use App\Assignment;
 use App\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Prophecy\Doubler\Generator\ClassCodeGenerator;
 
 class AssignmentController extends Controller
 {
     /**
-     * Display a listing of the resource.
      *
-     * @return \Illuminate\Http\Response
+     * Display all assignments for the course
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return mixed
      */
-    public function index(Course $course)
+    public function index(Course $course, Assignment $assignment)
     {
-        //todo it gets assignments in ascending order
-        //todo just get them for the specific course
-       return response(DB::table('assignments')
-           ->where('course_id', '=', $course->id)
+       return $assignment->where('course_id', '=', $course->id)
            ->orderBy('due_date', 'asc')
-           ->get());
+           ->get();
 
     }
 
