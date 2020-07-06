@@ -89,7 +89,7 @@ export default {
       // Fetch the user.
       await this.$store.dispatch('auth/fetchUser')
       // Redirect home.
-      this.$router.push({ name: 'courses.show' })
+      this.$router.push({ name: 'courses.index' })
     }
   }
 }
