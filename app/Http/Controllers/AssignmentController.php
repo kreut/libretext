@@ -22,7 +22,6 @@ class AssignmentController extends Controller
        return $assignment->where('course_id', '=', $course->id)
            ->orderBy('due_date', 'asc')
            ->get();
-
     }
 
     /**
