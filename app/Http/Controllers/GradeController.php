@@ -9,45 +9,8 @@ use Illuminate\Http\Request;
 
 class GradeController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     *
-     * Show the grades for a given course
-     *
-     * @param Course $course
-     * @return array
-     */
-    public function show(Course $course)
+    public function index(Course $course)
     {
         //get all user_ids for the user enrolled in the course
         foreach ($course->enrolledUsers as $key => $user) {
@@ -58,8 +21,8 @@ class GradeController extends Controller
         $assignments = $course->assignments;//get all the info
 
         if ($assignments->isEmpty()) {
-            return ['hasAssignment'=> false];
-    }
+            return ['hasAssignment' => false];
+        }
 
         $grades = $course->grades;
 
@@ -91,6 +54,46 @@ class GradeController extends Controller
         }
         return compact('rows', 'fields') + ['hasAssignments' => true];
 
+    }
+
+
+    /**
+     * Show the form for creating a new resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     *
+     * Show the grades for a given course
+     *
+     * @param Course $course
+     * @return array
+     */
+
+    /**
+     * Display a listing of the resource.
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function show()
+    {
+        //
     }
 
     /**
