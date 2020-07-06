@@ -155,7 +155,7 @@
     },
     methods: {
       showGrades(courseId){
-        window.location.href = '/grades/' + courseId
+        window.location.href = `/courses/${courseId}/grades`
       },
       deleteCourse(courseId) {
         this.courseId = courseId

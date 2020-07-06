@@ -29,7 +29,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/courses', 'CourseController@store');
     Route::post('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
-    Route::get('/grades/{course}', 'GradeController@show');
+    Route::get('/courses/{course}/grades', 'GradeController@show');
 
 
 });

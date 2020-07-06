@@ -36,14 +36,14 @@
       hasAssignments: true
     }),
     mounted() {
-      this.courseId = this.$route.params.id
+      this.courseId = this.$route.params.courseId
       this.getGrades();
     },
     methods: {
       getGrades() {
 
         try {
-          axios.get('/api/grades/' + this.courseId).then(
+          axios.get(`/api/courses/${this.courseId}/grades`).then(
             response => {
               console.log(response)
               if (response.data.hasAssignments) {

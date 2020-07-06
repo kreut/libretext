@@ -6,12 +6,13 @@ function page (path) {
 
 let student_paths  = [
   { path: '/assignments/:assignmentId', name: 'assignments.show', component: page('students/assignments.show.vue') },
-  { path: '/courses/:courseId/assignments', name: 'students.home', component: page('students/home.vue') }
+
   ]
 
 let instructor_paths = [
   { path: '/courses', name: 'courses.show', component: page('instructors/courses.index.vue') },
-  { path: '/grades/:id', name: 'grades.show', component: page('instructors/grades.show.vue') }
+  { path: '/courses/:courseId/grades', name: 'grades.show', component: page('instructors/grades.show.vue') },
+  { path: '/courses/:courseId/assignments', name: 'assignments.show', component: page('instructors/assignments.show.vue') }
   ]
 
 let general_paths  = [
@@ -22,7 +23,7 @@ let general_paths  = [
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
-  { path: '/home', name: 'home', component: page('home.vue') },
+  { path: '/home', name: 'home', component: page('asssignments.show.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [
