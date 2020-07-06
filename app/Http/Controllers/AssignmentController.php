@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -13,11 +14,12 @@ class AssignmentController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Course $course)
     {
         //todo it gets assignments in ascending order
         //todo just get them for the specific course
        return response(DB::table('assignments')
+           ->where('course_id', '=', $course->id)
            ->orderBy('due_date', 'asc')
            ->get());
 

@@ -5,7 +5,6 @@ function page (path) {
 }
 
 let student_paths  = [
-  { path: '/assignments/:assignmentId', name: 'assignments.show', component: page('students/assignments.show.vue') },
 
   ]
 
@@ -23,7 +22,7 @@ let general_paths  = [
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
-  { path: '/home', name: 'home', component: page('asssignments.show.vue') },
+  { path: '/home', name: 'home', component: page('assignments.show.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [

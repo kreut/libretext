@@ -91,7 +91,7 @@
       </template>
       <template v-slot:cell(actions)="data">
         <div class="mb-0">
-          <span class="pr-1"><b-icon icon="file-earmark-text"></b-icon></span>
+          <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="file-earmark-text"></b-icon></span>
           <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
           <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
           <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
@@ -154,54 +154,65 @@
 
     },
     methods: {
-      showGrades(courseId){
+      showAssignments(courseId) {
+        window.location.href = `/courses/${courseId}/assignments`
+      }
+      ,
+      showGrades(courseId) {
         window.location.href = `/courses/${courseId}/grades`
-      },
+      }
+      ,
       deleteCourse(courseId) {
         this.courseId = courseId
         this.$bvModal.show('modal-delete-course')
-      },
+      }
+      ,
       async handleDeleteCourse() {
         try {
-          const { data } = await axios.delete('/api/courses/' + this.courseId)
+          const {data} = await axios.delete('/api/courses/' + this.courseId)
           this.$noty[data.type](data.message)
           this.resetAll('modal-delete-course')
         } catch (error) {
           console.log(error)
         }
-      },
+      }
+      ,
       editCourse(course) {
         this.courseId = course.id;
         this.form.name = course.name
         this.form.start_date = course.start_date
         this.form.end_date = course.end_date
         this.$bvModal.show('modal-course-details')
-      },
+      }
+      ,
       resetModalForms() {
         this.form.name = ''
         this.form.start_date = ''
         this.form.end_date = ''
         this.courseId = false
         this.form.errors.clear()
-      },
-      resetAll(modalId)  {
+      }
+      ,
+      resetAll(modalId) {
         this.getCourses()
         this.resetModalForms()
         // Hide the modal manually
         this.$nextTick(() => {
           this.$bvModal.hide(modalId)
         })
-      },
+      }
+      ,
       submitCourseInfo(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
         this.createCourse()
-      },
+      }
+      ,
       async createCourse() {
         try {
           let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
-          const { data } =  await this.form.post(endpoint)
+          const {data} = await this.form.post(endpoint)
           this.$noty[data.type](data.message)
           this.resetAll('modal-course-details')
 
@@ -209,7 +220,8 @@
           console.log(error)
         }
 
-      },
+      }
+      ,
       getCourses() {
         try {
           axios.get('/api/courses').then(

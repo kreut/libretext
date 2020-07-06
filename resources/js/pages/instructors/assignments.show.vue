@@ -22,13 +22,14 @@
       assignments: []
     }),
     mounted () {
+      this.courseId = this.$route.params.courseId
       this.getAssignments();
 
     },
     methods: {
       getAssignments() {
         try {
-          axios.get('/api/assignments').then(
+          axios.get(`/api/courses/${this.courseId}/assignments`).then(
             response => this.assignments = response.data
           )
         } catch (error) {
