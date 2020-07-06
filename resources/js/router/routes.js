@@ -9,9 +9,9 @@ let student_paths  = [
   ]
 
 let instructor_paths = [
-  { path: '/courses', name: 'courses.show', component: page('instructors/courses.index.vue') },
-  { path: '/courses/:courseId/grades', name: 'grades.show', component: page('instructors/grades.show.vue') },
-  { path: '/courses/:courseId/assignments', name: 'assignments.show', component: page('instructors/assignments.show.vue') }
+  { path: '/courses', name: 'courses.index', component: page('instructors/courses.index.vue') },
+  { path: '/courses/:courseId/grades', name: 'grades.index', component: page('instructors/grades.index.vue') },
+  { path: '/courses/:courseId/assignments', name: 'assignments.index', component: page('instructors/assignments.index.vue') }
   ]
 
 let general_paths  = [
@@ -22,7 +22,7 @@ let general_paths  = [
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
-  { path: '/home', name: 'home', component: page('assignments.show.vue') },
+  { path: '/home', name: 'home', component: page('assignments.index.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [
