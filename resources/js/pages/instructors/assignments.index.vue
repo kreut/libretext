@@ -19,16 +19,20 @@
           label-cols-lg="3"
           label="Name"
           label-for="name"
-        >
-          <b-form-input
-            id="name"
-            v-model="form.name"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('name') }"
-            @keydown="form.errors.clear('name')"
-          >
-          </b-form-input>
-          <has-error :form="form" field="name"></has-error>
+        >     <b-form-row>
+          <b-col lg="7">
+            <b-form-input
+              id="name"
+              v-model="form.name"
+              lg="7"
+              type="text"
+              :class="{ 'is-invalid': form.errors.has('name') }"
+              @keydown="form.errors.clear('name')"
+            >
+            </b-form-input>
+            <has-error :form="form" field="name"></has-error>
+          </b-col>
+        </b-form-row>
         </b-form-group>
 
         <b-form-group
@@ -81,14 +85,14 @@
               <b-form-timepicker v-model="form.due_time"
                                  locale="en"
                                  :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                  v-on:shown="form.errors.clear('due_time')">
+                                 v-on:shown="form.errors.clear('due_time')">
               </b-form-timepicker>
               <has-error :form="form" field="due_time"></has-error>
             </b-col>
           </b-form-row>
         </b-form-group>
         <b-form-row>
-          <b-col lg="5">Mark an assignment is completed if at least</b-col>
+          <b-col lg="5">Give students assignment credit if at least</b-col>
           <b-col lg="1">
             <b-form-select v-model="form.num_submissions_needed"
                            :options="numSubmissionsNeeded"
@@ -98,10 +102,10 @@
                            disabled-field="notEnabled">
             </b-form-select>
           </b-col>
-          <b-col lg="2">
-            questions are
+          <b-col lg="4" class="d-flex justify-content-center">
+             of the submitted responses are
           </b-col>
-          <b-col lg="3">
+          <b-col lg="2">
             <b-form-select v-model="form.type_of_submission"
                            :options="completedOrCorrectOptions"
                            class="mb-3"
@@ -146,10 +150,9 @@
 
   const now = new Date()
   let numSubmissionsNeeded = []
- for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9', '10']) {
-   numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
- }
-
+  for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9']) {
+    numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
+  }
 
 
   export default {
@@ -158,8 +161,8 @@
       assignmentId: false, //if there's a assignmentId it's an update
       assignments: [],
       completedOrCorrectOptions: [
-        {item: 'completed', name: 'completed'},
-        {item: 'correct', name: 'correct'}
+        {item: 'correct', name: 'correct'},
+        {item: 'completed', name: 'completed'}
       ],
       courseId: false,
       fields: [
@@ -173,7 +176,7 @@
         available_on_time: '',
         due_date: '',
         due_time: '',
-        type_of_submission: 'completed',
+        type_of_submission: 'correct',
         num_submissions_needed: '2'
       }),
       hasAssignments: false,
@@ -226,8 +229,13 @@
           const {data} = await this.form.post(endpoint)
 
           console.log(data)
-          // this.$noty[data.type](data.message)
+          this.$noty[data.type](data.message)
+          this.getAssignments()
+          //Start: 1.reset the modal
           // this.resetAll('modal-course-details')
+          //2. Do the update of the assignment
+          //3. show the other columns
+          //4. Add in the other icons Question icon, edit, delete
 
         } catch (error) {
           console.log(error)
@@ -235,9 +243,13 @@
       },
       resetModalForms() {
         this.form.name = ''
-        this.form.start_date = ''
-        this.form.end_date = ''
-        this.courseId = false
+        this.form.available_on_date = ''
+        this.form.available_on_time = ''
+        this.form.due_date = ''
+        this.form.due_time = ''
+        this.form.type_of_submission = 'completed'
+        this.form.num_submissions_needed = '2'
+        this.assignmentId = false
         this.form.errors.clear()
       },
       metaInfo() {
