@@ -61,16 +61,44 @@
           label="Due Date"
           label-for="Due Date"
         >
-          <b-form-datepicker
-            v-model="form.due_date"
-            :min="min"
-            class="mb-2"
-            :class="{ 'is-invalid': form.errors.has('due_date') }"
-            @click="form.errors.clear('due_date')"
-            v-on:shown="form.errors.clear('due_date')">
-          </b-form-datepicker>
-          <has-error :form="form" field="due_date"></has-error>
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="form.due_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('due_date') }"
+                v-on:shown="form.errors.clear('due_date')">
+              </b-form-datepicker>
+              <has-error :form="form" field="due_date"></has-error>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="due_time" locale="en"></b-form-timepicker>
+              <has-error :form="form" field="due_time"></has-error>
+            </b-col>
+          </b-form-row>
         </b-form-group>
+        <b-form-row>
+          <b-col lg="5">Mark an assignment is completed if at least</b-col>
+          <b-col lg="1">
+            <b-form-select  v-model="numQuestions"
+                          :options="numQuestionsOptions"
+                          class="mb-3"
+                          value-field="item"
+                          text-field="name"
+                          disabled-field="notEnabled">
+          </b-form-select>
+          </b-col>
+      <b-col lg="2">
+        questions are </b-col>
+          <b-col lg="3">  <b-form-select  v-model="completedOrCorrect"
+                                      :options="completedOrCorrectOptions"
+                                      class="mb-3"
+                                      value-field="item"
+                                      text-field="name"
+                                      disabled-field="notEnabled">
+      </b-form-select>
+          </b-col>
+        </b-form-row>
       </b-form>
     </b-modal>
 
@@ -118,6 +146,18 @@
       available_on_time: '',
       due_date: '',
       due_time: '',
+      numQuestions: '2',
+      numQuestionsOptions: [
+        { item: '2', name: '2' },
+        { item: '3', name: '3' },
+        { item: '4', name: '4' },
+        { item: '5', name: '5' },
+        { item: '6', name: '6' }],
+      completedOrCorrect: 'completed',
+      completedOrCorrectOptions: [
+        { item: 'completed', name: 'completed' },
+        { item: 'completed', name: 'cgiorrect' }
+      ],
       hasAssignments: false,
       showNoAssignmentsAlert: false,
       assignmentId: false, //if there's a assignmentId it's an update
