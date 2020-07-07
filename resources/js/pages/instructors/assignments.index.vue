@@ -136,16 +136,30 @@
   export default {
     middleware: 'auth',
     data: () => ({
+      assignmentId: false, //if there's a assignmentId it's an update
+      assignments: [],
+      available_on_date: '',
+      available_on_time: '',
+      completedOrCorrect: 'completed',
+      completedOrCorrectOptions: [
+        { item: 'completed', name: 'completed' },
+        { item: 'correct', name: 'correct' }
+      ],
+      courseId: false,
+      due_date: '',
+      due_time: '',
       fields: [
         {key: 'name', label: 'Assignment'},
         'available_on',
         'due_date'
       ],
-      assignments: [],
-      available_on_date: '',
-      available_on_time: '',
-      due_date: '',
-      due_time: '',
+      form: new Form({
+        name: '',
+        start_date: '',
+        end_date: ''
+      }),
+      hasAssignments: false,
+      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       numQuestions: '2',
       numQuestionsOptions: [
         { item: '2', name: '2' },
@@ -153,20 +167,7 @@
         { item: '4', name: '4' },
         { item: '5', name: '5' },
         { item: '6', name: '6' }],
-      completedOrCorrect: 'completed',
-      completedOrCorrectOptions: [
-        { item: 'completed', name: 'completed' },
-        { item: 'completed', name: 'cgiorrect' }
-      ],
-      hasAssignments: false,
       showNoAssignmentsAlert: false,
-      assignmentId: false, //if there's a assignmentId it's an update
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      form: new Form({
-        name: '',
-        start_date: '',
-        end_date: ''
-      })
     }),
     mounted() {
       this.courseId = this.$route.params.courseId

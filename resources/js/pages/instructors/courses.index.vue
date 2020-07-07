@@ -141,7 +141,7 @@
         'actions'
       ],
       courses: [],
-      courseId: false, //if there's a courseId it's an update
+      courseId: false, //if there's a courseId if it's an update
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         name: '',
