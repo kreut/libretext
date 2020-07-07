@@ -47,7 +47,15 @@ class AssignmentController extends Controller
          $response['type'] = 'error';
         try {
                 $data = $request->validated();
-                $assignment->create($data);
+                $assignment->create(
+                    ['name' => $data['name'],
+                        'available_on' => $data['available_on_date'] . ' ' . $data['available_on_time'],
+                        'due_date' => $data['due_date'] . ' ' . $data['due_time'],
+                        'num_submissions_needed' => $data['num_submissions_needed'],
+                        'type_of_submission' => $data['type_of_submission'],
+                        'course_id' => $course->id
+                    ]
+                );
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$request->assignment</strong> has been created.";
         } catch (Exception $e) {

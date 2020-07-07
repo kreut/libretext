@@ -18,7 +18,7 @@ class CreateAssignmentsTable extends Migration
             $table->string('name');
             $table->timestamp('available_on', 0);
             $table->timestamp('due_date', 0);
-            $table->enum('num_submissions_needed',[2, 3, 4, 5, 6, 7, 8, 9, 10]);
+            $table->enum('num_submissions_needed',[2, 3, 4, 5, 6, 7, 8, 9]);
             $table->enum('type_of_submission', ['completed', 'correct']);
             $table->unsignedBigInteger('course_id');
             $table->foreign('course_id')->references('id')->on('courses');
