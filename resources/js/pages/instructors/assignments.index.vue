@@ -49,7 +49,13 @@
               <has-error :form="form" field="available_on_date"></has-error>
             </b-col>
             <b-col>
-              <b-form-timepicker v-model="available_on_time" locale="en"></b-form-timepicker>
+              <b-form-timepicker v-model="form.available_on_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has('available_on_time') }"
+                                 v-on:shown="form.errors.clear('available_on_time')">
+
+              </b-form-timepicker>
+              <has-error :form="form" field="available_on_time"></has-error>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -72,7 +78,11 @@
               <has-error :form="form" field="due_date"></has-error>
             </b-col>
             <b-col>
-              <b-form-timepicker v-model="due_time" locale="en"></b-form-timepicker>
+              <b-form-timepicker v-model="form.due_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has('due_time') }"
+                                  v-on:shown="form.errors.clear('due_time')">
+              </b-form-timepicker>
               <has-error :form="form" field="due_time"></has-error>
             </b-col>
           </b-form-row>
@@ -80,23 +90,25 @@
         <b-form-row>
           <b-col lg="5">Mark an assignment is completed if at least</b-col>
           <b-col lg="1">
-            <b-form-select  v-model="numQuestions"
-                          :options="numQuestionsOptions"
-                          class="mb-3"
-                          value-field="item"
-                          text-field="name"
-                          disabled-field="notEnabled">
-          </b-form-select>
+            <b-form-select v-model="form.num_submissions_needed"
+                           :options="numSubmissionsNeeded"
+                           class="mb-3"
+                           value-field="item"
+                           text-field="name"
+                           disabled-field="notEnabled">
+            </b-form-select>
           </b-col>
-      <b-col lg="2">
-        questions are </b-col>
-          <b-col lg="3">  <b-form-select  v-model="completedOrCorrect"
-                                      :options="completedOrCorrectOptions"
-                                      class="mb-3"
-                                      value-field="item"
-                                      text-field="name"
-                                      disabled-field="notEnabled">
-      </b-form-select>
+          <b-col lg="2">
+            questions are
+          </b-col>
+          <b-col lg="3">
+            <b-form-select v-model="form.type_of_submission"
+                           :options="completedOrCorrectOptions"
+                           class="mb-3"
+                           value-field="item"
+                           text-field="name"
+                           disabled-field="notEnabled">
+            </b-form-select>
           </b-col>
         </b-form-row>
       </b-form>
@@ -133,21 +145,23 @@
   import Form from "vform";
 
   const now = new Date()
+  let numSubmissionsNeeded = []
+ for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9', '10']) {
+   numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
+ }
+
+
+
   export default {
     middleware: 'auth',
     data: () => ({
       assignmentId: false, //if there's a assignmentId it's an update
       assignments: [],
-      available_on_date: '',
-      available_on_time: '',
-      completedOrCorrect: 'completed',
       completedOrCorrectOptions: [
-        { item: 'completed', name: 'completed' },
-        { item: 'correct', name: 'correct' }
+        {item: 'completed', name: 'completed'},
+        {item: 'correct', name: 'correct'}
       ],
       courseId: false,
-      due_date: '',
-      due_time: '',
       fields: [
         {key: 'name', label: 'Assignment'},
         'available_on',
@@ -155,18 +169,16 @@
       ],
       form: new Form({
         name: '',
-        start_date: '',
-        end_date: ''
+        available_on_date: '',
+        available_on_time: '',
+        due_date: '',
+        due_time: '',
+        type_of_submission: 'completed',
+        num_submissions_needed: '2'
       }),
       hasAssignments: false,
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      numQuestions: '2',
-      numQuestionsOptions: [
-        { item: '2', name: '2' },
-        { item: '3', name: '3' },
-        { item: '4', name: '4' },
-        { item: '5', name: '5' },
-        { item: '6', name: '6' }],
+      numSubmissionsNeeded: numSubmissionsNeeded,
       showNoAssignmentsAlert: false,
     }),
     mounted() {
@@ -205,19 +217,21 @@
         this.createAssignment()
       },
       async createAssignment() {
-        alert('create assignment')
 
-        /* try {
-         let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
-         const {data} = await this.form.post(endpoint)
-         this.$noty[data.type](data.message)
-         this.resetAll('modal-course-details')
+        try {
+          let endpoint = `/api/courses/${this.courseId}/assignments`
+          if (this.assignmentID) { //it's an update
+            endpoint += `/${this.assignmentId}`
+          }
+          const {data} = await this.form.post(endpoint)
 
-       } catch (error) {
-         console.log(error)
-       }
+          console.log(data)
+          // this.$noty[data.type](data.message)
+          // this.resetAll('modal-course-details')
 
-     }*/
+        } catch (error) {
+          console.log(error)
+        }
       },
       resetModalForms() {
         this.form.name = ''

@@ -7,6 +7,7 @@ use App\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Prophecy\Doubler\Generator\ClassCodeGenerator;
+use App\Http\Requests\StoreAssignment;
 
 class AssignmentController extends Controller
 {
@@ -40,9 +41,21 @@ class AssignmentController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreAssignment $request, Course $course, Assignment $assignment)
     {
-        //
+
+         $response['type'] = 'error';
+        try {
+                $data = $request->validated();
+                $assignment->create($data);
+            $response['type'] = 'success';
+            $response['message'] = "The assignment <strong>$request->assignment</strong> has been created.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
