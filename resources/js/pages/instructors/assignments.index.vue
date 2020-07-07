@@ -10,7 +10,7 @@
       @ok="submitAssignmentInfo"
       @hidden="resetModalForms"
       ok-title="Submit"
-
+      size="lg"
     >
       <b-form ref="form" @submit="createAssignment">
         <b-form-group
@@ -32,37 +32,44 @@
         </b-form-group>
 
         <b-form-group
-          id="start_date"
+          id="available_on"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Start Date"
-          label-for="Start Date"
+          label="Available on"
+          label-for="Available on"
         >
-          <b-form-datepicker
-            v-model="form.start_date"
-            :min="min"
-            :class="{ 'is-invalid': form.errors.has('start_date') }"
-            v-on:shown="form.errors.clear('start_date')">
-          </b-form-datepicker>
-          <has-error :form="form" field="start_date"></has-error>
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="form.available_on_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('available_on_date') }"
+                v-on:shown="form.errors.clear('available_on_date')">
+              </b-form-datepicker>
+              <has-error :form="form" field="available_on_date"></has-error>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="available_on_time" locale="en"></b-form-timepicker>
+            </b-col>
+          </b-form-row>
         </b-form-group>
 
         <b-form-group
-          id="end_date"
+          id="due_date"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="End Date"
-          label-for="End Date"
+          label="Due Date"
+          label-for="Due Date"
         >
           <b-form-datepicker
-            v-model="form.end_date"
+            v-model="form.due_date"
             :min="min"
             class="mb-2"
-            :class="{ 'is-invalid': form.errors.has('end_date') }"
-            @click="form.errors.clear('end_date')"
-            v-on:shown="form.errors.clear('end_date')">
+            :class="{ 'is-invalid': form.errors.has('due_date') }"
+            @click="form.errors.clear('due_date')"
+            v-on:shown="form.errors.clear('due_date')">
           </b-form-datepicker>
-          <has-error :form="form" field="end_date"></has-error>
+          <has-error :form="form" field="due_date"></has-error>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -70,19 +77,14 @@
     <b-modal
       id="modal-delete-assignment"
       ref="modal"
-      title="Yes, delete course!"
+      title="Yes, delete Assignment!"
       @ok="handleDeleteAssignment"
       @hidden="resetModalForms"
-      ok-title="Yes, delete course!"
+      ok-title="Yes, delete assignment!"
 
     >
-      <p>By deleting the course, you will also delete:</p>
-      <ol>
-        <li>All assignments associated with the course</li>
-        <li>All submitted student responses</li>
-        <li>All student grades</li>
-      </ol>
-      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <p>By deleting the assignment, you will also delete all student grades associated with the assignment</p>
+      <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
     </b-modal>
     <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
@@ -112,6 +114,10 @@
         'due_date'
       ],
       assignments: [],
+      available_on_date: '',
+      available_on_time: '',
+      due_date: '',
+      due_time: '',
       hasAssignments: false,
       showNoAssignmentsAlert: false,
       assignmentId: false, //if there's a assignmentId it's an update
