@@ -19,20 +19,21 @@
           label-cols-lg="3"
           label="Name"
           label-for="name"
-        >     <b-form-row>
-          <b-col lg="7">
-            <b-form-input
-              id="name"
-              v-model="form.name"
-              lg="7"
-              type="text"
-              :class="{ 'is-invalid': form.errors.has('name') }"
-              @keydown="form.errors.clear('name')"
-            >
-            </b-form-input>
-            <has-error :form="form" field="name"></has-error>
-          </b-col>
-        </b-form-row>
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-input
+                id="name"
+                v-model="form.name"
+                lg="7"
+                type="text"
+                :class="{ 'is-invalid': form.errors.has('name') }"
+                @keydown="form.errors.clear('name')"
+              >
+              </b-form-input>
+              <has-error :form="form" field="name"></has-error>
+            </b-col>
+          </b-form-row>
         </b-form-group>
 
         <b-form-group
@@ -103,7 +104,7 @@
             </b-form-select>
           </b-col>
           <b-col lg="4" class="d-flex justify-content-center">
-             of the submitted responses are
+            of the submitted responses are
           </b-col>
           <b-col lg="2">
             <b-form-select v-model="form.type_of_submission"
@@ -138,8 +139,11 @@
       </b-table>
     </div>
     <div v-else>
+      <br>
+      <div class="mt-4">
       <b-alert :show="showNoAssignmentsAlert" variant="warning"><a href="#" class="alert-link">This course currently has
         no assignments.</a></b-alert>
+      </div>
     </div>
   </div>
 </template>
@@ -166,9 +170,10 @@
       ],
       courseId: false,
       fields: [
-        {key: 'name', label: 'Assignment'},
+        'name',
         'available_on',
-        'due_date'
+        'due_date',
+        'credit_given_if_at_least'
       ],
       form: new Form({
         name: '',

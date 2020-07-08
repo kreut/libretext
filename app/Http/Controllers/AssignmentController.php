@@ -20,9 +20,13 @@ class AssignmentController extends Controller
      */
     public function index(Course $course, Assignment $assignment)
     {
-       return $assignment->where('course_id', '=', $course->id)
+       $assignments = $assignment->where('course_id', '=', $course->id)
            ->orderBy('due_date', 'asc')
            ->get();
+       foreach ($assignments as $key=>$assignment){
+           $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} submissions are {$assignment['type_of_submission']}";
+       }
+       return $assignments;
     }
 
     /**
