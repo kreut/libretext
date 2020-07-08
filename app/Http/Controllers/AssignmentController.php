@@ -31,16 +31,16 @@ class AssignmentController extends Controller
     public function index(Course $course, Assignment $assignment)
     {
         $assignments = $assignment->where('course_id', '=', $course->id)
-            ->orderBy('due_date', 'asc')
+            ->orderBy('due', 'asc')
             ->get();
         foreach ($assignments as $key => $assignment) {
             $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
 
-            $assignments[$key]['available_on_date'] = $this->getDateFromSqlTimestamp($assignment['available_on']);
-            $assignments[$key]['available_on_time'] = $this->getTimeFromSqlTimestamp($assignment['available_on']);
+            $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
+            $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
 
-            $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($assignment['due_date']);
-            $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($assignment['due_date']);
+            $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($assignment['due']);
+            $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($assignment['due']);
 
         }
         return $assignments;
@@ -70,8 +70,8 @@ class AssignmentController extends Controller
             $data = $request->validated();
             $assignment->create(
                 ['name' => $data['name'],
-                    'available_on' => $data['available_on_date'] . ' ' . $data['available_on_time'],
-                    'due_date' => $data['due_date'] . ' ' . $data['due_time'],
+                    'available_from' => $data['available_from_date'] . ' ' . $data['available_from_time'],
+                    'due' => $data['due_date'] . ' ' . $data['due_time'],
                     'num_submissions_needed' => $data['num_submissions_needed'],
                     'type_of_submission' => $data['type_of_submission'],
                     'course_id' => $course->id

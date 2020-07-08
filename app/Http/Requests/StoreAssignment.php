@@ -27,9 +27,9 @@ class StoreAssignment extends FormRequest
         $rules = [
             'name' => ['required',
                 'max:255'],
-            'available_on_date' => 'required|date',
+            'available_from_date' => 'required|date',
             'due_date' => 'required|date|after:available_on_date',
-            'available_on_time' => 'required|date_format:H:i:00',
+            'available_from_time' => 'required|date_format:H:i:00',
             'due_time' => 'required|date_format:H:i:00',
             'type_of_submission' => Rule::in(['completed', 'correct']),
             'num_submissions_needed' => Rule::in([2, 3, 4, 5, 6, 7, 8, 9])
@@ -43,7 +43,7 @@ class StoreAssignment extends FormRequest
     public function messages()
     {
         return [
-            'available_on_time.required' => 'A time is required.',
+            'available_from_time.required' => 'A time is required.',
             'due_time.required' => 'A time is required.'
         ];
     }

@@ -37,7 +37,7 @@
         </b-form-group>
 
         <b-form-group
-          id="available_on"
+          id="available_from"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Available on"
@@ -46,27 +46,27 @@
           <b-form-row>
             <b-col lg="7">
               <b-form-datepicker
-                v-model="form.available_on_date"
+                v-model="form.available_from_date"
                 :min="min"
-                :class="{ 'is-invalid': form.errors.has('available_on_date') }"
-                v-on:shown="form.errors.clear('available_on_date')">
+                :class="{ 'is-invalid': form.errors.has('available_from_date') }"
+                v-on:shown="form.errors.clear('available_from_date')">
               </b-form-datepicker>
-              <has-error :form="form" field="available_on_date"></has-error>
+              <has-error :form="form" field="available_from_date"></has-error>
             </b-col>
             <b-col>
-              <b-form-timepicker v-model="form.available_on_time"
+              <b-form-timepicker v-model="form.available_from_time"
                                  locale="en"
-                                 :class="{ 'is-invalid': form.errors.has('available_on_time') }"
-                                 v-on:shown="form.errors.clear('available_on_time')">
+                                 :class="{ 'is-invalid': form.errors.has('available_from_time') }"
+                                 v-on:shown="form.errors.clear('available_from_time')">
 
               </b-form-timepicker>
-              <has-error :form="form" field="available_on_time"></has-error>
+              <has-error :form="form" field="available_from_time"></has-error>
             </b-col>
           </b-form-row>
         </b-form-group>
 
         <b-form-group
-          id="due_date"
+          id="due"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Due Date"
@@ -179,15 +179,15 @@
       courseId: false,
       fields: [
         'name',
-        'available_on',
-        'due_date',
+        'available_from',
+        'due',
         'credit_given_if_at_least',
         'actions'
       ],
       form: new Form({
         name: '',
-        available_on_date: '',
-        available_on_time: '09:00:00',
+        available_from_date: '',
+        available_from_time: '09:00:00',
         due_date: '',
         due_time: '09:00:00',
         type_of_submission: 'correct',
@@ -208,8 +208,8 @@
 
       this.assignmentId = assignment.id
       this.form.name = assignment.name
-      this.form.available_on_date = assignment.available_on_date
-      this.form.available_on_time = assignment.available_on_time
+      this.form.available_from_date = assignment.available_from_date
+      this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
       this.form.due_time = assignment.due_time
       this.form.type_of_submission = assignment.type_of_submission
@@ -275,8 +275,8 @@
       },
       resetModalForms() {
         this.form.name = ''
-        this.form.available_on_date = ''
-        this.form.available_on_time = ''
+        this.form.available_from_date = ''
+        this.form.available_from_time = ''
         this.form.due_date = ''
         this.form.due_time = ''
         this.form.type_of_submission = 'completed'
