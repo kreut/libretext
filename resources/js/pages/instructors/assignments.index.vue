@@ -140,7 +140,7 @@
           <div class="mb-0">
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="eye"></b-icon></span>
-            <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
+            <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
           </div>
         </template>
@@ -204,6 +204,20 @@
 
     },
     methods: {
+    editAssignment(assignment) {
+      console.error(assignment)
+      /*
+      this.courseId = assignment.id
+      this.form.name = assignment.name
+
+      this.form.available_on_date = ''
+      this.form.available_on_time = ''
+      this.form.due_date = ''
+      this.form.due_time = ''
+      this.form.type_of_submission = 'completed'
+      this.form.num_submissions_needed = '2'
+      this.$bvModal.show('modal-course-details')*/
+    },
       getAssignments() {
         try {
           axios.get(`/api/courses/${this.courseId}/assignments`).then(
