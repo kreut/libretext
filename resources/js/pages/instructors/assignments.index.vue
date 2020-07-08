@@ -173,9 +173,9 @@
       form: new Form({
         name: '',
         available_on_date: '',
-        available_on_time: '',
+        available_on_time: '09:00:00',
         due_date: '',
-        due_time: '',
+        due_time: '09:00:00',
         type_of_submission: 'correct',
         num_submissions_needed: '2'
       }),
@@ -230,9 +230,7 @@
 
           console.log(data)
           this.$noty[data.type](data.message)
-          this.getAssignments()
-          //Start: 1.reset the modal
-          // this.resetAll('modal-course-details')
+          this.resetAll('modal-assignment-details')
           //2. Do the update of the assignment
           //3. show the other columns
           //4. Add in the other icons Question icon, edit, delete
@@ -240,6 +238,14 @@
         } catch (error) {
           console.log(error)
         }
+      },
+      resetAll(modalId) {
+        this.getAssignments()
+        this.resetModalForms()
+        // Hide the modal manually
+        this.$nextTick(() => {
+          this.$bvModal.hide(modalId)
+        })
       },
       resetModalForms() {
         this.form.name = ''
