@@ -205,18 +205,16 @@
     },
     methods: {
     editAssignment(assignment) {
-      console.error(assignment)
-      /*
-      this.courseId = assignment.id
-      this.form.name = assignment.name
 
-      this.form.available_on_date = ''
-      this.form.available_on_time = ''
-      this.form.due_date = ''
-      this.form.due_time = ''
-      this.form.type_of_submission = 'completed'
-      this.form.num_submissions_needed = '2'
-      this.$bvModal.show('modal-course-details')*/
+      this.assignmentId = assignment.id
+      this.form.name = assignment.name
+      this.form.available_on_date = assignment.available_on_date
+      this.form.available_on_time = assignment.available_on_time
+      this.form.due_date = assignment.due_date
+      this.form.due_time = assignment.due_time
+      this.form.type_of_submission = assignment.type_of_submission
+      this.form.num_submissions_needed = assignment.num_submissions_needed
+      this.$bvModal.show('modal-assignment-details')
     },
       getAssignments() {
         try {
