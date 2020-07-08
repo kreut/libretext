@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row mb-4 float-right">
-      <b-button v-b-modal.modal-assignment-details>Add Assigment</b-button>
+      <b-button v-b-modal.modal-assignment-details>Add Assignment</b-button>
     </div>
     <b-modal
       id="modal-assignment-details"
@@ -136,6 +136,14 @@
         <template v-slot:cell(name)="data">
           <a :href="`/assignments/${data.item.id}`">{{ data.item.name }}</a>
         </template>
+        <template v-slot:cell(actions)="data">
+          <div class="mb-0">
+            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
+            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="eye"></b-icon></span>
+            <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
+            <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+          </div>
+        </template>
       </b-table>
     </div>
     <div v-else>
@@ -173,7 +181,8 @@
         'name',
         'available_on',
         'due_date',
-        'credit_given_if_at_least'
+        'credit_given_if_at_least',
+        'actions'
       ],
       form: new Form({
         name: '',
