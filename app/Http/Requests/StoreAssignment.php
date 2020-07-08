@@ -34,10 +34,13 @@ class StoreAssignment extends FormRequest
             'type_of_submission' => Rule::in(['completed', 'correct']),
             'num_submissions_needed' => Rule::in([2, 3, 4, 5, 6, 7, 8, 9])
         ];
-        /*
-        if ($this->route('course')) {
-            array_push($rules['name'], Rule::unique('courses', 'name')->ignore($this->route('course')->id));
-        }*/
+
+        //unique assignment name
+        if ($this->route('assignment')) {
+            array_push($rules['name'], Rule::unique('assignments', 'name')->ignore($this->route('assignment')->id));
+        } else {
+            array_push($rules['name'], Rule::unique('assignments', 'name'));
+        }
         return $rules;
     }
     public function messages()

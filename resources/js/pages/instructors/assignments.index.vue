@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row mb-4 float-right">
-      <b-button v-b-modal.modal-assignment-details>Add Assignment</b-button>
+      <b-button variant="primary" v-b-modal.modal-assignment-details>Add Assignment</b-button>
     </div>
     <b-modal
       id="modal-assignment-details"
@@ -133,9 +133,6 @@
     </b-modal>
     <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
-        <template v-slot:cell(name)="data">
-          <a :href="`/assignments/${data.item.id}`">{{ data.item.name }}</a>
-        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
@@ -257,9 +254,6 @@
           console.log(data)
           this.$noty[data.type](data.message)
           this.resetAll('modal-assignment-details')
-          //2. Do the update of the assignment
-          //3. show the other columns
-          //4. Add in the other icons Question icon, edit, delete
 
         } catch (error) {
           console.log(error)
@@ -279,7 +273,7 @@
         this.form.available_from_time = ''
         this.form.due_date = ''
         this.form.due_time = ''
-        this.form.type_of_submission = 'completed'
+        this.form.type_of_submission = 'correct'
         this.form.num_submissions_needed = '2'
         this.assignmentId = false
         this.form.errors.clear()

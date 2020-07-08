@@ -29,7 +29,7 @@ class Course extends Model
             'user_id'); //local key in enrollments table
     }
     public function assignments() {
-        return $this->hasMany('App\Assignment')->orderBy('due_date', 'asc');
+        return $this->hasMany('App\Assignment')->orderBy('due', 'asc');
     }
 
 }

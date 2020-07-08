@@ -21,8 +21,8 @@
         {{ title }}
       </div>
 
-      <div class="links">
-        <a href="https://github.com/cretueusebiu/laravel-vue-spa">github.com/cretueusebiu/laravel-vue-spa</a>
+      <div class="text-dark">
+        Libretext Adaptive Learning Assessment System
       </div>
     </div>
   </div>

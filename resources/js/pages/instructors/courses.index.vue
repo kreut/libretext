@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="row mb-4 float-right">
-      <b-button v-b-modal.modal-course-details>Add Course</b-button>
+      <b-button variant="primary" v-b-modal.modal-course-details>Add Course</b-button>
     </div>
     <b-modal
       id="modal-course-details"
@@ -86,9 +86,6 @@
     </b-modal>
 
     <b-table striped hover :fields="fields" :items="courses">
-      <template v-slot:cell(name)="data">
-        <a :href="`/courses/${data.item.id}`">{{ data.item.name }}</a>
-      </template>
       <template v-slot:cell(actions)="data">
         <div class="mb-0">
           <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="file-earmark-text"></b-icon></span>
