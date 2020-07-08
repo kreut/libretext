@@ -8,6 +8,8 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Prophecy\Doubler\Generator\ClassCodeGenerator;
 use App\Http\Requests\StoreAssignment;
+use \Exception;
+use App\Exceptions\Handler;
 
 class AssignmentController extends Controller
 {
@@ -98,16 +100,6 @@ class AssignmentController extends Controller
         //
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Assignment $assignment
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Assignment $assignment)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -116,9 +108,28 @@ class AssignmentController extends Controller
      * @param \App\Assignment $assignment
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Assignment $assignment)
+    public function update(StoreAssignment $request, Course $course, Assignment $assignment)
     {
-        //
+        $response['type'] = 'error';
+        try {
+            $data = $request->validated();
+            $data['available_from'] = $data['available_from_date'] . ' ' . $data['available_from_time'];
+
+            $data['due'] = $data['due_date'] . ' ' . $data['due_time'];
+
+            //remove what's not needed
+            foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value){
+                unset($data[$value]);
+            }
+            $assignment->update($data);
+            $response['type'] = 'success';
+            $response['message'] = "The course <strong>$assignment->name</strong> has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**

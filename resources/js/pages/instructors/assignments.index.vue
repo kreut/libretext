@@ -249,7 +249,7 @@
 
         try {
           let endpoint = `/api/courses/${this.courseId}/assignments`
-          if (this.assignmentID) { //it's an update
+          if (this.assignmentId) { //it's an update
             endpoint += `/${this.assignmentId}`
           }
           const {data} = await this.form.post(endpoint)
