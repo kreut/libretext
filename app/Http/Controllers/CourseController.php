@@ -102,21 +102,22 @@ class CourseController extends Controller
 
     /**
      *
-     * Remove the specified resource from storage.
-     *
+     * Delete a course
      *
      * @param Course $course
-     * @param Request $request
+     * @param CourseAccessCode $course_access_code
+     * @param Enrollment $enrollment
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, CourseAccessCode $course_access_code)
+    public function destroy(Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment)
     {
 
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($course, $course_access_code) {
+            DB::transaction(function () use ($course, $course_access_code, $enrollment) {
                 $course_access_code->where('course_id', '=', $course->id)->delete();
+                $enrollment->where('course_id', '=', $course->id)->delete();
                 $course->delete();
             });
             $response['type'] = 'success';
