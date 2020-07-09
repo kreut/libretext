@@ -13,7 +13,7 @@
       ></b-table>
     </div>
     <div v-else>
-      <b-alert show variant="warning"><a href="#" class="alert-link">This course currently has no assignments.</a></b-alert>
+      <b-alert show variant="warning"><a href="#" class="alert-link">Once you create your first assignment, you'll be able to view your gradebook.</a></b-alert>
   </div>
   </div>
 </template>
