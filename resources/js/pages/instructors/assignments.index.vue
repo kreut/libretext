@@ -218,7 +218,7 @@
           axios.get(`/api/courses/${this.courseId}/assignments`).then(
             response => {
               this.hasAssignments = response.data.length > 0
-              this.showNoAssignmentsAlert = !this.hasAssignments;
+              this.showNoAssignmentsAlert = !this.hasAssignments
               this.assignments = response.data
             }
           )

@@ -84,17 +84,27 @@
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
     </b-modal>
-
-    <b-table striped hover :fields="fields" :items="courses">
-      <template v-slot:cell(actions)="data">
-        <div class="mb-0">
-          <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="file-earmark-text"></b-icon></span>
-          <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
-          <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-          <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
-        </div>
-      </template>
-    </b-table>
+    <div v-if="hasCourses">
+      <b-table striped hover :fields="fields" :items="courses">
+        <template v-slot:cell(actions)="data">
+          <div class="mb-0">
+            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
+              icon="file-earmark-text"></b-icon></span>
+            <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
+            <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
+            <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+          </div>
+        </template>
+      </b-table>
+    </div>
+    <div v-else>
+      <br>
+      <div class="mt-4">
+        <b-alert :show="showNoCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently have no
+          courses.
+        </a></b-alert>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -138,13 +148,15 @@
         'actions'
       ],
       courses: [],
+      hasCourses: false,
       courseId: false, //if there's a courseId if it's an update
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         name: '',
         start_date: '',
         end_date: ''
-      })
+      }),
+      showNoCoursesAlert: false,
     }),
     mounted() {
       this.getCourses();
@@ -222,7 +234,11 @@
       getCourses() {
         try {
           axios.get('/api/courses').then(
-            response => this.courses = response.data
+            response => {
+              this.hasCourses = response.data.length > 0
+              this.showNoCoursesAlert = !this.hasCourses
+              this.courses = response.data
+            }
           )
         } catch (error) {
           alert(error.message)
