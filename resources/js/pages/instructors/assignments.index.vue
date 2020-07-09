@@ -290,9 +290,9 @@
       resetModalForms() {
         this.form.name = ''
         this.form.available_from_date = ''
-        this.form.available_from_time = ''
+        this.form.available_from_time = '09:00:00'
         this.form.due_date = ''
-        this.form.due_time = ''
+        this.form.due_time = '09:00:00'
         this.form.type_of_submission = 'correct'
         this.form.num_submissions_needed = '2'
         this.assignmentId = false
