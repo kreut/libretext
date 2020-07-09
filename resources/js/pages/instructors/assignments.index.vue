@@ -122,13 +122,13 @@
     <b-modal
       id="modal-delete-assignment"
       ref="modal"
-      title="Yes, delete Assignment!"
+      title="Confirm Delete Assignment"
       @ok="handleDeleteAssignment"
       @hidden="resetModalForms"
       ok-title="Yes, delete assignment!"
 
     >
-      <p>By deleting the assignment, you will also delete all student grades associated with the assignment</p>
+      <p>By deleting the assignment, you will also delete all student grades associated with the assignment.</p>
       <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
     </b-modal>
     <div v-if="hasAssignments">
@@ -138,7 +138,7 @@
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+            <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
           </div>
         </template>
       </b-table>
@@ -227,20 +227,23 @@
         }
       },
       async handleDeleteAssignment() {
-        alert('delete assignment')
-        /* try {
-           const {data} = await axios.delete('/api/courses/' + this.courseId)
+         try {
+           const {data} = await axios.delete(`/api/courses/${this.courseId}/assignments/${this.assignmentId}`)
            this.$noty[data.type](data.message)
-           this.resetAll('modal-delete-course')
+           this.resetAll('modal-delete-assignment')
          } catch (error) {
            console.log(error)
-         }*/
+         }
       },
       submitAssignmentInfo(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
         this.createAssignment()
+      },
+      deleteAssignment(assignmentId) {
+        this.assignmentId = assignmentId
+        this.$bvModal.show('modal-delete-assignment')
       },
       async createAssignment() {
 

@@ -26,15 +26,17 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     //instructor
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/{course}/grades', 'GradeController@index');
+    Route::get('/courses/{course}/assignments', 'AssignmentController@index');
+
+
     Route::post('/courses', 'CourseController@store');
     Route::post('/courses/{course}/assignments', 'AssignmentController@store');
     Route::post('/courses/{course}/assignments/{assignment}', 'AssignmentController@update');
     Route::post('/courses/{course}', 'CourseController@update');
 
-
     Route::delete('/courses/{course}', 'CourseController@destroy');
-    Route::get('/courses/{course}/grades', 'GradeController@index');
-    Route::get('/courses/{course}/assignments', 'AssignmentController@index');
+    Route::delete('/courses/{course}/assignments/{assignment}', 'AssignmentController@destroy');
 
 
 });

@@ -70,7 +70,7 @@
     <b-modal
       id="modal-delete-course"
       ref="modal"
-      title="Yes, delete course!"
+      title="Confirm Delete Course"
       @ok="handleDeleteCourse"
       @hidden="resetModalForms"
       ok-title="Yes, delete course!"

@@ -4,9 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Course;
-use Illuminate\Http\Request;
+use App\Grade;
 use Illuminate\Support\Facades\DB;
-use Prophecy\Doubler\Generator\ClassCodeGenerator;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
 use App\Exceptions\Handler;
@@ -133,13 +132,31 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Remove the specified resource from storage.
      *
-     * @param \App\Assignment $assignment
-     * @return \Illuminate\Http\Response
+     * Delete an assignment
+     *
+     * @param Course $course
+     * @param Assignment $assignment
+     * @param Grade $grade
+     * @return mixed
+     * @throws Exception
      */
-    public function destroy(Assignment $assignment)
+    public function destroy(Course $course, Assignment $assignment, Grade $grade)
     {
-        //
+
+        $response['type'] = 'error';
+        try {
+            DB::transaction(function () use ($assignment, $grade) {
+                $grade->where('assignment_id','=',$assignment->id)->delete();
+                $assignment->delete();
+            });
+            $response['type'] = 'success';
+            $response['message'] = "The assignment <strong>$assignment->name</strong> has been deleted.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error removing <strong>$assignment->name</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 }
