@@ -6,7 +6,7 @@ use App\Course;
 use App\User;
 use App\CourseAccessCode;
 use App\Enrollment;
-use Illuminate\Http\Request;
+use App\Assignment;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
 use App\Exceptions\Handler;
@@ -110,13 +110,14 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment)
+    public function destroy(Course $course, CourseAccessCode $course_access_code, Assignment $assignment, Enrollment $enrollment)
     {
 
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($course, $course_access_code, $enrollment) {
+            DB::transaction(function () use ($course, $course_access_code, $assignment, $enrollment) {
                 $course_access_code->where('course_id', '=', $course->id)->delete();
+                $assignment->where('course_id', '=', $course->id)->delete();
                 $enrollment->where('course_id', '=', $course->id)->delete();
                 $course->delete();
             });
