@@ -45,7 +45,7 @@ class GradeController extends Controller
         }
 
         $fields = [['key' => 'name',
-            'label' => 'name',
+            'label' => 'Name',
             'sortable' => true,
             'stickyColumn' => true]];
         foreach ($assignments as $assignment) {
