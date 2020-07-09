@@ -112,12 +112,10 @@
   import axios from 'axios'
   import Form from "vform"
 
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   let formatDate = value => {
-    let date_pieces = value.split('-')
-    let month = date_pieces[1]
-    let day = date_pieces[2].split(' ')[0]//get rid of the time piece 2020-06-21 00:00:00
-    let year = date_pieces[0]
-    return month + '-' + day + '-' + year
+    let date = new Date(value)
+    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear()
   }
 
   const now = new Date()

@@ -158,9 +158,16 @@
   import Form from "vform";
 
   const now = new Date()
+
   let numSubmissionsNeeded = []
   for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9']) {
     numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
+  }
+
+  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+  let formatDateAndTime = value => {
+    let date = new Date(value)
+    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() +  ' ' + date.toLocaleTimeString()
   }
 
 
@@ -176,8 +183,18 @@
       courseId: false,
       fields: [
         'name',
-        'available_from',
-        'due',
+        {
+          key: 'available_from',
+          formatter: value => {
+            return formatDateAndTime(value)
+          }
+        },
+        {
+          key: 'due',
+          formatter: value => {
+            return formatDateAndTime(value)
+          }
+        },
         'credit_given_if_at_least',
         'actions'
       ],
