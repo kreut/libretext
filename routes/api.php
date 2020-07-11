@@ -38,10 +38,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/courses/{course}/assignments/{assignment}', 'AssignmentController@destroy');
 
+    Route::get('/courses', 'CourseController@index');
+    Route::get('/h5p', 'H5pController@index');
 
 });
 
 Route::group(['middleware' => 'guest:api'], function () {
+
     Route::post('login', 'Auth\LoginController@login');
     Route::post('register', 'Auth\RegisterController@register');
 
