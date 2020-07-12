@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class CreateQuestionsTagsTable extends Migration
+class CreateQuestionTagTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,7 +13,7 @@ class CreateQuestionsTagsTable extends Migration
      */
     public function up()
     {
-        Schema::create('questions_tags', function (Blueprint $table) {
+        Schema::create('question_tag', function (Blueprint $table) {
             $table->unsignedBigInteger('question_id');
             $table->foreign('question_id')->references('id')->on('questions');
 

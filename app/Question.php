@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Model;
 
 class Question extends Model
 {
+
+    protected $fillable = ['title', 'author', 'technology_id'];
+
     public function getUrlLinkText($url)
     {
         $matches = [];
@@ -22,6 +25,9 @@ class Question extends Model
         return $matches[1];
     }
 
+    public function tags() {
+        return $this->belongsToMany('App\Tag');
+    }
     public function getQuestions()
     {
         /** [
@@ -64,30 +70,35 @@ class Question extends Model
         return json_decode($questions);
     }
 
+    /**
+     * @param string $technology
+     */
     public function store(string $technology)
     {
+        $tag = new Tag();
         if ($technology === 'h5p') {
             $questions = $this->getQuestions();
             foreach ($questions->rows as $question) {
                 $title = $this->getUrlLinkText($question[0]);
-                $author = $question[2];
+                $author = $question[2]->title;
                 $tag_info = $question[3];
-                $tags = [];
+                //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
+                $technology_id = $question[5];
+                $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
+                $question = $this->create($data);
                 if ($tag_info) {
-                    foreach ($tag_info as $tag) ;
-                    array_push($tags, $tag->title);
-                }
-                $created_at = $this->getCreatedAt($question[4]);
-                $id = $question[5];
-                $question_info = [$title, $author, $tag_info, $tags, $created_at, $id];
-               //store question info in the question table
-                //title, author, id, created at, question_and_tag_pivot_id
-                //store the tags in the tag table if they don't already exist
+                    foreach ($tag_info as $value) {
+                        $tag_id = $tag->firstOrCreate(['tag' =>  mb_strtolower($value->title)]);
+                        $question->tags()->attach($tag_id);
+                    }
 
+                    //store question info in the question table
+                    //title, author, id, created at, question_and_tag_pivot_id
+                    //store the tags in the tag table if they don't already exist
+
+                }
             }
         }
-
-
     }
 
 }
