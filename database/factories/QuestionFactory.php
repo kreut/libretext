@@ -2,10 +2,10 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\H5p;
+use App\Model;
 use Faker\Generator as Faker;
 
-$factory->define(H5p::class, function (Faker $faker) {
+$factory->define(Model::class, function (Faker $faker) {
     return [
         //
     ];

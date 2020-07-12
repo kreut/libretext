@@ -24,7 +24,7 @@ class AssignmentSeeder extends Seeder
                 'name' => $faker->text(15),
                 'available_from' => $current_date->add(($i + 2) . ' weeks')->format('Y-m-d H:i:00'),
                 'due' => $current_date->add(($i + 3) . ' weeks')->format('Y-m-d H:i:00'),
-                'num_submissions_needed' => $faker->randomElement([2, 3, 4, 5, 6, 7, 8, 9]),
+                'num_submissions_needed' => $faker->randomElement(['2', '3', '4', '5', '6', '7', '8', '9']),
                 'type_of_submission' => $faker->randomElement(['completed', 'correct']),
                 'course_id' => $course->id
             ]);
