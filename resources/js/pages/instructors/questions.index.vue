@@ -5,23 +5,26 @@
       :data="tags"
       placeholder="Enter a tag"
     />
-    <p class="lead">
-      Selected Tag: <strong>{{query}}</strong>
-    </p>
-    <b-button variant="primary" v-on:click="getQuestionsByTags()">Get questions</b-button>
-    <ul id="example-1">
-      <li v-for="question in questions" :key="question.id">
-        {{ question.title }}
-        {{ question.author }}
-        {{ question.technology_id }}
-        <b-embed @load="questionLoaded()"
-          type="iframe"
-          aspect="16by9"
-          v-bind:src="`https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=${question.technology_id}`"
-          allowfullscreen
-        ></b-embed>
-      </li>
-    </ul>
+    <div class="mt-3">
+      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get questions</b-button>
+      <b-button variant="primary" v-on:click="getSelectedQuestions()">View selected questions</b-button>
+      <b-button variant="primary" v-on:click="getStudentView()">Student View</b-button>
+    </div>
+    <div v-for="question in questions" :key="question.id" class="mt-5">
+      <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
+        <div class="mt-1 mb-2" v-on:click="addQuestion(question.id)">
+          <v-button>Add</v-button>
+        </div>
+        <b-card-text>
+          <b-embed @load="questionLoaded()"
+                   type="iframe"
+                   aspect="16by9"
+                   v-bind:src="`https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=${question.technology_id}`"
+                   allowfullscreen
+          ></b-embed>
+        </b-card-text>
+      </b-card>
+    </div>
   </div>
 </template>
 
@@ -61,6 +64,16 @@
               console.log(response.data)
               this.tags = response.data
             })
+        } catch (error) {
+          alert(error.message)
+        }
+
+      },
+      async addQuestion(questionId){
+        try {
+        const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
+          console.log(data)
+
         } catch (error) {
           alert(error.message)
         }
