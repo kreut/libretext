@@ -85,7 +85,7 @@ class Question extends Model
                 //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
                 $technology_id = $question[5];
                 $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
-                $question = $this->create($data);
+                $question = $this->firstOrCreate($data);
                 if ($tag_info) {
                     foreach ($tag_info as $value) {
                         $tag_id = $tag->firstOrCreate(['tag' =>  mb_strtolower($value->title)]);

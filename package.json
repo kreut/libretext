@@ -25,6 +25,7 @@
     "sweetalert2": "^8.10.0",
     "vform": "^1.0.0",
     "vue": "^2.6.10",
+    "vue-bootstrap-typeahead": "^0.2.6",
     "vue-i18n": "^8.11.2",
     "vue-meta": "^1.6.0",
     "vue-router": "^3.0.6",
