@@ -13,8 +13,9 @@ class QuestionController extends Controller
     {
         //get all questions with these tags
         $tag = Tag::where(['tag' => $request->get('tags')])->first();
-
-        return $tag->questions;
+        if (!$tag) return ['type' => 'error'];
+        return ['type' => 'success',
+            'questions' => $tag->questions];
 
     }
 }
