@@ -15,11 +15,12 @@ class CreateAssignmentQuestionTable extends Migration
     {
         Schema::create('assignment_question', function (Blueprint $table) {
             $table->id();
+            $table->unsignedBigInteger('assignment_id');
+            $table->foreign('assignment_id')->references('id')->on('assignments');
+
             $table->unsignedBigInteger('question_id');
             $table->foreign('question_id')->references('id')->on('questions');
-
-            $table->unsignedBigInteger('tag_id');
-            $table->foreign('tag_id')->references('id')->on('tags');
+            $table->unique(['question_id', 'assignment_id']);
             $table->timestamps();
         });
 

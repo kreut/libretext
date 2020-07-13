@@ -1,7 +1,7 @@
 <?php
 
 use Illuminate\Database\Seeder;
-
+use Illuminate\Support\Facades\Artisan;
 
 class DatabaseSeeder extends Seeder
 {
@@ -22,6 +22,7 @@ class DatabaseSeeder extends Seeder
             AssignmentSeeder::class,
             GradeSeeder::class
         ]);
-
+        //get the h5p questions
+        Artisan::call('store:h5p');
     }
 }
