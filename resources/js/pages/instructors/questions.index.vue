@@ -8,6 +8,7 @@
       <p class="lead">
         Selected Tag: <strong>{{query}}</strong>
       </p>
+      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get questions</b-button>
     </div>
 </template>
 
@@ -24,6 +25,7 @@
       return {
         query: '',
         tags: [],
+        questions: []
       }
     },
     mounted() {
@@ -37,11 +39,25 @@
           axios.get(`/api/tags`).then(
             response => {
               console.log(response.data)
-              this.tags= response.data
+              this.tags = response.data
             })
         } catch (error) {
           alert(error.message)
         }
+
+      },
+      getQuestionsByTags() {
+        try {
+          axios.post(`/api/questions/getQuestionsByTags`, {'tags' : this.query }).then(
+            response => {
+              console.log(response.data)
+              this.questions = response.data
+            })
+        } catch (error) {
+          alert(error.message)
+        }
+
+
 
       }
     },
