@@ -43,7 +43,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
-
+    Route::get('/assignments/{assignment}/questions', 'AssignmentSyncQuestionController@index');
 
 });
 

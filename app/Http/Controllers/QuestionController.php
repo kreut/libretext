@@ -17,6 +17,7 @@ class QuestionController extends Controller
         foreach ($tag->questions as $key => $question){
             $tag->questions[$key]['inAssignment'] = false;
         }
+
         return ['type' => 'success',
             'questions' => $tag->questions];
 

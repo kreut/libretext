@@ -92,7 +92,14 @@
           }
           const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.query})
           if (data.type === 'success') {
+            let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions`)
+            for (let i = 0; i < data.questions.length; i++) {
+              data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id);
+            }
+
             this.questions = data.questions
+
+
           } else {
             this.$noty.error(`There are no questions associated with <strong>${this.query}</strong>.`)
           }
