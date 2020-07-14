@@ -12,7 +12,7 @@
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
-        <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question.id)">
+        <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question)">
           <v-button variant="secondary">Remove</v-button>
         </div>
         <div v-else class="mt-1 mb-2" v-on:click="addQuestion(question)">
@@ -73,12 +73,20 @@
       },
       async addQuestion(question){
         try {
-        const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-          console.log(data)
+        await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+          this.$noty.success('The question has been added to the assignment.')
           question.inAssignment = true
-          //question has been added message
-          //change the button to remove
-          //change the border to selected
+
+        } catch (error) {
+          alert(error.message)
+        }
+
+      },
+      async removeQuestion(question){
+        try {
+          axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+          this.$noty.info('The question has been removed from the assignment.')
+          question.inAssignment = false
         } catch (error) {
           alert(error.message)
         }

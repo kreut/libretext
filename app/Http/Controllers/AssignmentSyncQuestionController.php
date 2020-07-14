@@ -15,4 +15,8 @@ class AssignmentSyncQuestionController extends Controller
     public function store(Assignment $assignment, Question $question) {
         $assignment->questions()->syncWithoutDetaching($question);
     }
+
+    public function destroy(Assignment $assignment, Question $question) {
+        $assignment->questions()->detach($question);
+    }
 }
