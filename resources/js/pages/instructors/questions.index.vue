@@ -12,12 +12,14 @@
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
-        <div class="mt-1 mb-2" v-on:click="addQuestion(question.id)">
+        <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question.id)">
+          <v-button variant="secondary">Remove</v-button>
+        </div>
+        <div v-else class="mt-1 mb-2" v-on:click="addQuestion(question)">
           <v-button>Add</v-button>
         </div>
         <b-card-text>
-          <b-embed @load="questionLoaded()"
-                   type="iframe"
+          <b-embed type="iframe"
                    aspect="16by9"
                    v-bind:src="`https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=${question.technology_id}`"
                    allowfullscreen
@@ -69,11 +71,14 @@
         }
 
       },
-      async addQuestion(questionId){
+      async addQuestion(question){
         try {
-        const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
+        const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
           console.log(data)
-
+          question.inAssignment = true
+          //question has been added message
+          //change the button to remove
+          //change the border to selected
         } catch (error) {
           alert(error.message)
         }
