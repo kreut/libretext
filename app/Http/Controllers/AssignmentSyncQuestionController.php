@@ -19,4 +19,8 @@ class AssignmentSyncQuestionController extends Controller
     public function destroy(Assignment $assignment, Question $question) {
         $assignment->questions()->detach($question);
     }
+
+    public function getQuestionsToView(Assignment $assignment){
+       return $assignment->questions;
+    }
 }
