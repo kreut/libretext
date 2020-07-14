@@ -25,11 +25,12 @@ class Question extends Model
         return $matches[1];
     }
 
-    public function tags() {
+    public function tags()
+    {
         return $this->belongsToMany('App\Tag');
     }
 
-    public function getQuestions()
+    public function getQuestions(int $offset)
     {
         /** [
          * "<a href=\"https://h5p.libretexts.org/wp-admin/admin.php?page=h5p&task=show&id=1464\">Cap.5: Videos y actividad.</a>",
@@ -44,7 +45,7 @@ class Question extends Model
         $login_user = getenv('H5P_USERNAME');
         $login_pass = getenv('H5P_PASSWORD');
         $login_url = 'https://h5p.libretexts.org/wp-login.php';
-        $visit_url = 'https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_contents&limit=100&offset=0&sortBy=4&sortDir=0';
+        $visit_url = "https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_contents&limit=100&offset=$offset&sortBy=4&sortDir=0";
         $cookie_file = '/cookie.txt';
         $http_agent = "Mozilla/5.0 (Windows; U; Windows NT 5.1; en-US; rv:1.8.1.6) Gecko/20070725 Firefox/2.0.0.6";
 
@@ -77,28 +78,35 @@ class Question extends Model
     public function store(string $technology)
     {
         $tag = new Tag();
+        $offset = 0;
         if ($technology === 'h5p') {
-            $questions = $this->getQuestions();
-            foreach ($questions->rows as $question) {
-                $title = $this->getUrlLinkText($question[0]);
-                $author = $question[2]->title;
-                $tag_info = $question[3];
-                //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
-                $technology_id = $question[5];
-                $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
-                $question = $this->firstOrCreate($data);
-                if ($tag_info) {
-                    foreach ($tag_info as $value) {
-                        $tag_id = $tag->firstOrCreate(['tag' =>  mb_strtolower($value->title)]);
-                        $question->tags()->attach($tag_id);
+            $questions = $this->getQuestions($offset);
+            while ($questions->rows) {
+                echo $offset;
+                foreach ($questions->rows as $question) {
+                    $title = $this->getUrlLinkText($question[0]);
+                    $author = $question[2]->title;
+                    $tag_info = $question[3];
+                    //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
+                    $technology_id = $question[5];
+                    $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
+                    $question = $this->firstOrCreate($data);
+                    if ($tag_info) {
+                        foreach ($tag_info as $value) {
+                            $tag_id = $tag->firstOrCreate(['tag' => mb_strtolower($value->title)]);
+                            $question->tags()->attach($tag_id);
+                        }
+
+                        //store question info in the question table
+                        //title, author, id, created at, question_and_tag_pivot_id
+                        //store the tags in the tag table if they don't already exist
+
                     }
-
-                    //store question info in the question table
-                    //title, author, id, created at, question_and_tag_pivot_id
-                    //store the tags in the tag table if they don't already exist
-
                 }
+                $offset += 100;
+                $questions = $this->getQuestions($offset);
             }
+            echo "\r\n";
         }
     }
 
