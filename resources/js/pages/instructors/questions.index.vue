@@ -6,9 +6,8 @@
       placeholder="Enter a tag"
     />
     <div class="mt-3">
-      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get questions</b-button>
-      <b-button variant="primary" v-on:click="getSelectedQuestions()">View selected questions</b-button>
-      <b-button variant="primary" v-on:click="getStudentView()">Student View</b-button>
+      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get Questions</b-button>
+      <b-button variant="primary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
@@ -71,24 +70,24 @@
         }
 
       },
-      async addQuestion(question){
+      async addQuestion(question) {
         try {
-        await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+          await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
           this.$noty.success('The question has been added to the assignment.')
           question.inAssignment = true
 
         } catch (error) {
-          alert(error.message)
+          this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
         }
 
       },
-      async removeQuestion(question){
+      async removeQuestion(question) {
         try {
           axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
           this.$noty.info('The question has been removed from the assignment.')
           question.inAssignment = false
         } catch (error) {
-          alert(error.message)
+          this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
         }
 
       },
@@ -104,10 +103,7 @@
             for (let i = 0; i < data.questions.length; i++) {
               data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id);
             }
-
             this.questions = data.questions
-
-
           } else {
             this.$noty.error(`There are no questions associated with <strong>${this.query}</strong>.`)
           }
@@ -115,8 +111,9 @@
         } catch (error) {
           alert(error.message)
         }
-
-
+      },
+      getStudentView(assignmentId) {
+       this.$router.push(`/assignments/${assignmentId}/questions/view`);
       }
     },
     metaInfo() {

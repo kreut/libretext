@@ -12,8 +12,8 @@ let instructor_paths = [
   { path: '/courses', name: 'courses.index', component: page('instructors/courses.index.vue') },
   { path: '/courses/:courseId/grades', name: 'grades.index', component: page('instructors/grades.index.vue') },
   { path: '/courses/:courseId/assignments', name: 'assignments.index', component: page('instructors/assignments.index.vue') },
-  { path: '/assignments/:assignmentId/questions', name: 'questions.index', component: page('instructors/questions.index.vue') }
-  ]
+  { path: '/assignments/:assignmentId/questions/get', name: 'questions.index', component: page('instructors/questions.index.vue') },
+  { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('instructors/questions.view.vue') }]
 
 let general_paths  = [
   { path: '/', name: 'welcome', component: page('welcome.vue') },
