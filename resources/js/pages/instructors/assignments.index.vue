@@ -135,8 +135,8 @@
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
-            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon icon="eye"></b-icon></span>
+            <span class="pr-1" v-on:click="getQuestions(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
+            <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
           </div>
@@ -229,6 +229,12 @@
       this.form.type_of_submission = assignment.type_of_submission
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.$bvModal.show('modal-assignment-details')
+    },
+      getQuestions(assignmentId) {
+        this.$router.push(`/assignments/${assignmentId}/questions/get`)
+      },
+    getStudentView(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
     },
       getAssignments() {
         try {

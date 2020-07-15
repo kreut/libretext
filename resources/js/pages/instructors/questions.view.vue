@@ -3,8 +3,8 @@
     <div v-if="!initializing">
       <div v-if="questions.length">
         <div class="d-flex justify-content-between">
-          <div class="mt-1 mb-2" v-on:click="getMoreQuestions()">
-            <b-button variant="success">Get More Questions</b-button>
+          <div class="mt-1 mb-2" v-on:click="getQuestions()">
+            <b-button variant="success">Get Questions</b-button>
           </div>
           <div class="overflow-auto">
             <b-pagination
@@ -27,7 +27,7 @@
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
-          <div class="mt-1 mb-2" v-on:click="getMoreQuestions()">
+          <div class="mt-1 mb-2" v-on:click="getQuestions()">
             <b-button variant="success">Get More Questions</b-button>
           </div>
           <div class="d-flex justify-content-center mt-5">
@@ -68,7 +68,7 @@
           this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
         }
       },
-      getMoreQuestions() {
+      getQuestions() {
         this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
       },
       async removeQuestion(currentPage) {
