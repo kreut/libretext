@@ -3,7 +3,7 @@
   <div class="overflow-auto d-flex justify-content-center">
     <b-pagination
       v-model="currentPage"
-      :total-rows="rows"
+        :total-rows="questions.length"
       :per-page="perPage"
     ></b-pagination>
   </div>
@@ -30,11 +30,6 @@
       currentPage: 1,
       questions: []
     }),
-    computed: {
-      rows() {
-        return 2
-      }
-    },
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.getQuestions(this.assignmentId)
