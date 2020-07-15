@@ -6,13 +6,13 @@
       placeholder="Enter a tag"
     />
     <div class="mt-3">
-      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get Questions</b-button>
+      <b-button variant="success" v-on:click="getQuestionsByTags()">Get Questions</b-button>
       <b-button variant="primary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
         <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question)">
-          <v-button variant="secondary">Remove</v-button>
+          <b-button variant="danger">Remove</b-button>
         </div>
         <div v-else class="mt-1 mb-2" v-on:click="addQuestion(question)">
           <v-button>Add</v-button>
@@ -113,7 +113,7 @@
         }
       },
       getStudentView(assignmentId) {
-       this.$router.push(`/assignments/${assignmentId}/questions/view`);
+       this.$router.push(`/assignments/${assignmentId}/questions/view`)
       }
     },
     metaInfo() {
