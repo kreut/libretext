@@ -10,9 +10,9 @@
 
     <b-collapse id="nav-collapse" is-nav >
       <b-navbar-nav v-if="user">
-        <b-nav-item href="#">
-          <router-link :to="{ name: 'courses.index' }" class="nav-link" active-class="active">
-            Courses
+        <b-nav-item href="#" v-if="user">
+          <router-link v-if="$route.name !== 'courses.index'" :to="{ name: 'courses.index' }" class="nav-link" >
+            Courses Home
           </router-link>
         </b-nav-item>
 
