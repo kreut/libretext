@@ -20,7 +20,8 @@ class DatabaseSeeder extends Seeder
             CourseAccessCodeSeeder::class,
             EnrollmentSeeder::class,
             AssignmentSeeder::class,
-            GradeSeeder::class
+            GradeSeeder::class,
+            InstructorAccessCodeSeeder::class
         ]);
         //get the h5p questions
         Artisan::call('store:h5p');
