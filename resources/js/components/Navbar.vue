@@ -12,7 +12,7 @@
       <b-navbar-nav v-if="user">
         <b-nav-item href="#" v-if="user">
           <router-link v-if="$route.name !== 'courses.index'" :to="{ name: 'courses.index' }" class="nav-link" >
-            Courses Home
+            My Courses
           </router-link>
         </b-nav-item>
 

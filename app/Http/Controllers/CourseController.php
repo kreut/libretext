@@ -110,15 +110,19 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, CourseAccessCode $course_access_code, Assignment $assignment, Enrollment $enrollment)
+    public function destroy(Course $course)
     {
 
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($course, $course_access_code, $assignment, $enrollment) {
-                $course_access_code->where('course_id', '=', $course->id)->delete();
-                $assignment->where('course_id', '=', $course->id)->delete();
-                $enrollment->where('course_id', '=', $course->id)->delete();
+            DB::transaction(function () use ($course) {
+                $course->accessCodes()->delete();
+                foreach ($course->assignments as $assignment){
+                    $assignment->questions()->detach();
+                    $assignment->grades()->delete();
+                }
+                $course->assignments()->delete();
+                $course->enrollments()->delete();
                 $course->delete();
             });
             $response['type'] = 'success';

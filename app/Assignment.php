@@ -8,7 +8,13 @@ class Assignment extends Model
 {
     protected $guarded = [];
 
-    public function questions() {
+    public function questions()
+    {
         return $this->belongsToMany('App\Question')->withTimestamps();
-}
+    }
+
+    public function grades()
+    {
+        return $this->hasMany('App\Grade');
+    }
 }

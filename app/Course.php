@@ -32,4 +32,12 @@ class Course extends Model
         return $this->hasMany('App\Assignment')->orderBy('due', 'asc');
     }
 
+    public function enrollments() {
+        return $this->hasMany('App\Enrollment');
+    }
+
+    public function accessCodes() {
+        return $this->hasOne('App\CourseAccessCode');
+    }
+
 }
