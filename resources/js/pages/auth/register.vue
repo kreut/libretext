@@ -48,6 +48,15 @@
             </div>
           </div>
 
+          <!-- Access Code -->
+          <div class="form-group row" v-if="isInstructor">
+            <label class="col-md-3 col-form-label text-md-right">{{ $t('access_code') }}</label>
+            <div class="col-md-7">
+              <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }" class="form-control" type="text" name="access_code">
+              <has-error :form="form" field="access_code" />
+            </div>
+          </div>
+
           <div class="form-group row">
             <div class="col-md-7 offset-md-3 d-flex">
               <!-- Submit Button -->
@@ -79,16 +88,20 @@ export default {
   metaInfo () {
     return { title: this.$t('register') }
   },
-
+  mounted () {
+    this.isInstructor = this.$route.path.includes('instructor')
+  },
   data: () => ({
     form: new Form({
       first_name: '',
       last_name: '',
       email: '',
       password: '',
-      password_confirmation: ''
+      password_confirmation: '',
+      access_code: ''
     }),
-    mustVerifyEmail: false
+    mustVerifyEmail: false,
+    isInstructor: ''
   }),
 
   methods: {
