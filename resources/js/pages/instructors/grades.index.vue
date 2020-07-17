@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PageTitle title="Grades"></PageTitle>
     <div v-if="hasAssignments">
       <b-table striped
                hover

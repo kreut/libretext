@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PageTitle title="View Questions"></PageTitle>
     <div v-if="!initializing">
       <div v-if="questions.length">
         <div class="d-flex justify-content-between">

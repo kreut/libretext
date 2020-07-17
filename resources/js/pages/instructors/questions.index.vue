@@ -1,13 +1,14 @@
 <template>
   <div>
+    <PageTitle title="Add Questions"></PageTitle>
     <vue-bootstrap-typeahead
       v-model="query"
       :data="tags"
       placeholder="Enter a tag"
     />
-    <div class="mt-3">
-      <b-button variant="success" v-on:click="getQuestionsByTags()">Get Questions</b-button>
-      <b-button variant="primary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
+    <div class="mt-3 d-flex justify-content-between">
+      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get Questions</b-button>
+      <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">

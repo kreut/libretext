@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PageTitle title="Assignments"></PageTitle>
     <div class="row mb-4 float-right">
       <b-button variant="primary" v-b-modal.modal-assignment-details>Add Assignment</b-button>
     </div>
@@ -155,7 +156,8 @@
 
 <script>
   import axios from 'axios'
-  import Form from "vform";
+  import Form from "vform"
+
 
   const now = new Date()
 

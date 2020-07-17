@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PageTitle title="Courses"></PageTitle>
     <div class="row mb-4 float-right">
       <b-button variant="primary" v-b-modal.modal-course-details>Add Course</b-button>
     </div>
