@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\User;
+use App\InstructorAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
@@ -71,6 +72,10 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        //delete for instructors
+        if (isset($data['access_code'])) {
+            InstructorAccessCode::where('access_code', $data['access_code'])->delete();
+        }
         return User::create([
             'first_name' => $data['first_name'],
             'last_name' => $data['last_name'],

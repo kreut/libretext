@@ -24,7 +24,7 @@ let general_paths  = [
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
-  { path: '/home', name: 'home', component: page('assignments.index.vue') },
+  { path: '/home', name: 'home', component: page('instructors/courses.index.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [
