@@ -8,6 +8,7 @@ use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use App\Rules\IsValidInstructorAccessCode;
 
 class RegisterController extends Controller
 {
@@ -49,12 +50,17 @@ class RegisterController extends Controller
      */
     protected function validator(array $data)
     {
-        return Validator::make($data, [
+        $validator = [
             'first_name' => 'required|max:255',
             'last_name' => 'required|max:255',
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6|confirmed',
-        ]);
+        ];
+
+        if ($data['registration_type'] === 'instructor'){
+            $validator['access_code'] = new IsValidInstructorAccessCode();
+        }
+        return Validator::make($data, $validator);
     }
 
     /**

@@ -90,6 +90,7 @@ export default {
   },
   mounted () {
     this.isInstructor = this.$route.path.includes('instructor')
+    this.form.registration_type = this.isInstructor ? 'instructor' : 'student';
   },
   data: () => ({
     form: new Form({
@@ -98,7 +99,8 @@ export default {
       email: '',
       password: '',
       password_confirmation: '',
-      access_code: ''
+      access_code: '',
+      registration_type: ''
     }),
     mustVerifyEmail: false,
     isInstructor: ''
