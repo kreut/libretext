@@ -49,6 +49,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 });
 
+Route::post('results', 'ResultController@store');
 Route::group(['middleware' => 'guest:api'], function () {
 
     Route::post('login', 'Auth\LoginController@login');
