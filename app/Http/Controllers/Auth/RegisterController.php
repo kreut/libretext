@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\User;
+use App\Role;
 use App\InstructorAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Rules\IsValidInstructorAccessCode;
+
 
 class RegisterController extends Controller
 {
@@ -28,8 +30,8 @@ class RegisterController extends Controller
     /**
      * The user has been registered.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\User  $user
+     * @param \Illuminate\Http\Request $request
+     * @param \App\User $user
      * @return \Illuminate\Http\JsonResponse
      */
     protected function registered(Request $request, User $user)
@@ -46,7 +48,7 @@ class RegisterController extends Controller
     /**
      * Get a validator for an incoming registration request.
      *
-     * @param  array  $data
+     * @param array $data
      * @return \Illuminate\Contracts\Validation\Validator
      */
     protected function validator(array $data)
@@ -58,7 +60,7 @@ class RegisterController extends Controller
             'password' => 'required|min:6|confirmed',
         ];
 
-        if ($data['registration_type'] === 'instructor'){
+        if ($data['registration_type'] === 'instructor') {
             $validator['access_code'] = new IsValidInstructorAccessCode();
         }
         return Validator::make($data, $validator);
@@ -67,20 +69,32 @@ class RegisterController extends Controller
     /**
      * Create a new user instance after a valid registration.
      *
-     * @param  array  $data
+     * @param array $data
      * @return \App\User
      */
     protected function create(array $data)
     {
-        //delete for instructors
-        if (isset($data['access_code'])) {
-            InstructorAccessCode::where('access_code', $data['access_code'])->delete();
-        }
-        return User::create([
-            'first_name' => $data['first_name'],
-            'last_name' => $data['last_name'],
-            'email' => $data['email'],
-            'password' => bcrypt($data['password']),
-        ]);
+            //delete for instructors
+            if (isset($data['access_code'])) {
+                InstructorAccessCode::where('access_code', $data['access_code'])->delete();
+            }
+
+            $user = User::create([
+                'first_name' => $data['first_name'],
+                'last_name' => $data['last_name'],
+                'email' => $data['email'],
+                'password' => bcrypt($data['password']),
+            ]);
+
+            //don't make mass assignable because you don't want them to be able to change the registration type
+            $role = new Role;
+            $role->name = $data['registration_type'];
+            $role->user_id = $user->id;
+
+            $role->save();
+            $response['type'] = 'success';
+            $response['user'] = $user;
+
+        return $user;
     }
 }
