@@ -1,61 +1,65 @@
 <template>
   <div>
-    <div class="top-right links">
-      <template v-if="authenticated">
-        <router-link :to="{ name: 'home' }">
-          {{ $t('home') }}
-        </router-link>
-      </template>
-      <template v-else>
-        <router-link :to="{ name: 'login' }">
-          {{ $t('login') }}
-        </router-link>
-        <router-link :to="{ name: 'register' }">
-          {{ $t('register') }}
-        </router-link>
-      </template>
-    </div>
+    <div class="basic-layout d-flex  justify-content-center m-0 bg-white">
+      <div class="text-center">
+        <div class="title">
+          {{ title }}
+        </div>
 
-    <div class="text-center">
-      <div class="title mb-4">
-        {{ title }}
-      </div>
-
-      <div class="text-dark">
-        Libretext Adaptive Learning Assessment System
+        <div class="text-dark">
+          Libretext Adaptive Learning Assessment System
+        </div>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-import { mapGetters } from 'vuex'
+  import {mapGetters} from 'vuex'
 
-export default {
-  layout: 'basic',
+  export default {
 
-  metaInfo () {
-    return { title: this.$t('home') }
-  },
+    metaInfo() {
+      return {title: this.$t('home')}
+    },
 
-  data: () => ({
-    title: window.config.appName
-  }),
+    data: () => ({
+      title: window.config.appName
+    }),
 
-  computed: mapGetters({
-    authenticated: 'auth/check'
-  })
-}
+    computed: mapGetters({
+      authenticated: 'auth/check'
+    })
+  }
 </script>
 
-<style scoped>
-.top-right {
-  position: absolute;
-  right: 10px;
-  top: 18px;
-}
+<style lang="scss" scoped>
+  .top-right {
+    position: absolute;
+    right: 10px;
+    top: 18px;
+  }
 
-.title {
-  font-size: 85px;
-}
+  .title {
+    font-size: 85px;
+  }
+
+  .basic-layout {
+    color: #636b6f;
+    height: 100vh;
+    font-weight: 100;
+    position: relative;
+    padding-top: 100px;
+
+    .links > a {
+      color: #636b6f;
+      padding: 0 25px;
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: .1rem;
+      text-decoration: none;
+      text-transform: uppercase;
+    }
+  }
+
 </style>
