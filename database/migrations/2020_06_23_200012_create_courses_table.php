@@ -16,8 +16,8 @@ class CreateCoursesTable extends Migration
         Schema::create('courses', function (Blueprint $table) {
             $table->id();
             $table->string('name');
-            $table->timestamp('start_date', 0);
-            $table->timestamp('end_date', 0);
+            $table->dateTime('start_date');
+            $table->dateTime('end_date');
             $table->unsignedBigInteger('user_id');
             $table->foreign('user_id')->references('id')->on('users');
             $table->timestamps();
