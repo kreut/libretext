@@ -17,6 +17,7 @@ class CreateUsersTable extends Migration
             $table->id();
             $table->string('first_name');
             $table->string('last_name');
+            $table->integer('role')->comment('1=admin, 2=instructor, 3=student');
             $table->string('email')->unique()->nullable();//null for Fake Student
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password')->nullable();

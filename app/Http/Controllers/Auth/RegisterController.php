@@ -74,26 +74,23 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-            //delete for instructors
-            if (isset($data['access_code'])) {
-                InstructorAccessCode::where('access_code', $data['access_code'])->delete();
-            }
+        //delete for instructors
+        $role = 3;//assume student
+        if (isset($data['access_code'])) {
+            InstructorAccessCode::where('access_code', $data['access_code'])->delete();
+            $role = 2;
+        }
 
-            $user = User::create([
-                'first_name' => $data['first_name'],
-                'last_name' => $data['last_name'],
-                'email' => $data['email'],
-                'password' => bcrypt($data['password']),
-            ]);
+        $user = new User;
+        $user->first_name = $data['first_name'];
+        $user->last_name = $data['last_name'];
+        $user->email = $data['email'];
+        $user->password = bcrypt($data['password']);
+        $user->role = $role;
+        $user->save();
 
-            //don't make mass assignable because you don't want them to be able to change the registration type
-            $role = new Role;
-            $role->name = $data['registration_type'];
-            $role->user_id = $user->id;
-
-            $role->save();
-            $response['type'] = 'success';
-            $response['user'] = $user;
+        $response['type'] = 'success';
+        $response['user'] = $user;
 
         return $user;
     }
