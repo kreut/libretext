@@ -84,6 +84,7 @@
 <script>
   import Form from 'vform'
   import LoginWithGithub from '~/components/LoginWithGithub'
+  import { redirectOnLogin } from '~/components/LoginRedirect'
 
   export default {
     middleware: 'guest',
@@ -142,9 +143,7 @@
           await this.$store.dispatch('auth/updateUser', {user: data})
 
           // Redirect to the correct home page
-          let userTypes = {2 : 'instructors', 3: 'students'}
-          let role = userTypes[this.$store.getters['auth/user'].role]
-          this.$router.push({name: `${role}.courses.index`})
+          redirectOnLogin(this.$store, this.$router)
         }
       }
     }

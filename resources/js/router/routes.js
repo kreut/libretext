@@ -5,11 +5,11 @@ function page (path) {
 }
 
 let student_paths  = [
-  { path: 'instructors/courses', name: 'students.courses.index', component: page('students/courses.index.vue')}
+  { path: '/students/courses', name: 'students.courses.index', component: page('students/courses.index.vue')}
 ]
 
 let instructor_paths = [
-  { path: 'instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
+  { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
   { path: '/courses/:courseId/grades', name: 'grades.index', component: page('instructors/grades.index.vue') },
   { path: '/courses/:courseId/assignments', name: 'assignments.index', component: page('instructors/assignments.index.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.index', component: page('instructors/questions.index.vue') },

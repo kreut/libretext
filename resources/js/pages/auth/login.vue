@@ -55,6 +55,8 @@
 <script>
 import Form from 'vform'
 import LoginWithGithub from '~/components/LoginWithGithub'
+import { redirectOnLogin } from '~/components/LoginRedirect'
+
 
 export default {
   middleware: 'guest',
@@ -88,8 +90,8 @@ export default {
 
       // Fetch the user.
       await this.$store.dispatch('auth/fetchUser')
-      // Redirect home.
-      this.$router.push({ name: 'courses.index' })
+      // Redirect to the correct home page
+      redirectOnLogin(this.$store, this.$router)
     }
   }
 }
