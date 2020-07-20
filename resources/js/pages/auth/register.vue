@@ -1,12 +1,12 @@
 <template>
   <div class="row">
     <div class="col-lg-8 m-auto">
-      <card v-if="mustVerifyEmail" :title="$t('register')">
+      <card v-if="mustVerifyEmail" :title="registrationTitle">
         <div class="alert alert-success" role="alert">
           {{ $t('verify_email_address') }}
         </div>
       </card>
-      <card v-else :title="$t('register')">
+      <card v-else :title="registrationTitle">
         <form @submit.prevent="register" @keydown="form.onKeydown($event)">
           <!-- Name -->
           <div class="form-group row">
@@ -96,8 +96,12 @@
       return {title: this.$t('register')}
     },
     mounted() {
-      this.isInstructor = this.$route.path.includes('instructor')
-      this.form.registration_type = this.isInstructor ? 'instructor' : 'student';
+      this.setRegistrationType(this.$route.path)
+    },
+    watch: {
+      '$route' (to) {
+        this.setRegistrationType(to.path)
+      }
     },
     data: () => ({
       form: new Form({
@@ -110,30 +114,36 @@
         registration_type: ''
       }),
       mustVerifyEmail: false,
-      isInstructor: ''
+      isInstructor: '',
+      registrationTitle: ''
     }),
 
     methods: {
+      setRegistrationType(path) {
+        this.isInstructor = path.includes('instructor')
+        this.form.registration_type = this.isInstructor ? 'instructor' : 'student'
+        this.registrationTitle = this.isInstructor ? 'Instructor Registration' : 'Student Registration'
+      },
       async register() {
 
         // Register the user.
         const {data} = await this.form.post('/api/register')
-          // Must verify email fist.
-          if (data.status) {
-            this.mustVerifyEmail = true
-          } else {
-            // Log in the user.
-            const {data: {token}} = await this.form.post('/api/login')
+        // Must verify email fist.
+        if (data.status) {
+          this.mustVerifyEmail = true
+        } else {
+          // Log in the user.
+          const {data: {token}} = await this.form.post('/api/login')
 
-            // Save the token.
-            this.$store.dispatch('auth/saveToken', {token})
+          // Save the token.
+          this.$store.dispatch('auth/saveToken', {token})
 
-            // Update the user.
-            await this.$store.dispatch('auth/updateUser', {user: data})
+          // Update the user.
+          await this.$store.dispatch('auth/updateUser', {user: data})
 
-            // Redirect home.
-            this.$router.push({name: 'home'})
-          }
+          // Redirect home.
+          this.$router.push({name: 'home'})
+        }
       }
     }
   }
