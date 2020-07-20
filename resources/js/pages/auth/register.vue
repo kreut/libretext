@@ -141,8 +141,10 @@
           // Update the user.
           await this.$store.dispatch('auth/updateUser', {user: data})
 
-          // Redirect home.
-          this.$router.push({name: 'courses.index'})
+          // Redirect to the correct home page
+          let userTypes = {2 : 'instructors', 3: 'students'}
+          let role = userTypes[this.$store.getters['auth/user'].role]
+          this.$router.push({name: `${role}.courses.index`})
         }
       }
     }
