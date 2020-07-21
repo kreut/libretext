@@ -89,6 +89,6 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
     }
 
     public function enrollments() {
-         return $this->belongsToMany('App\Course', 'enrollments');
+         return $this->belongsToMany('App\Course', 'enrollments')->withTimestamps();
     }
 }

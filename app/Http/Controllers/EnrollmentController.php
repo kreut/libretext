@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use App\CourseAccessCode;
 
 class EnrollmentController extends Controller
 {
@@ -31,13 +32,10 @@ class EnrollmentController extends Controller
     public function store(Request $request)
     {
     $data = $request->validate(['access_code' => 'exists:course_access_codes']);
+    $course_id = CourseAccessCode::where('access_code', '=', $request->access_code)->first()->course_id;
 
-        //validate access code
-
-        //if so, attach the user to the course
-
-
-
+    //make sure they don't sign up twice!
+    $request->user()->enrollments()->attach(['course_id' =>$course_id ]);
 
     }
 
