@@ -47,7 +47,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/questions', 'AssignmentSyncQuestionController@index');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
 
-    Route::get('/enrollments', 'EnrollmentController.index');
+    Route::get('/enrollments', 'EnrollmentController@index');
 });
 
 Route::post('results', 'ResultController@store');

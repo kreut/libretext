@@ -4,17 +4,21 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class EnrollmentController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
+
+    public function index(Request $request)
     {
-        //
+
+       return DB::table('courses')
+           ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
+           ->join('users','courses.user_id', '=', 'users.id')
+           ->where('enrollments.user_id', '=', $request->user()->id)
+           ->select( DB::raw('CONCAT(first_name, " " , last_name) AS instructor'), 'courses.name', 'courses.start_date', 'courses.end_date', 'courses.id')
+           ->get();
+
     }
 
     /**
