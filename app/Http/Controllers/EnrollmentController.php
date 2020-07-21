@@ -31,7 +31,10 @@ class EnrollmentController extends Controller
      */
     public function store(Request $request)
     {
-    $data = $request->validate(['access_code' => 'exists:course_access_codes']);
+        //make sure they don't to it twice
+        //check this on the db side.
+        //send back a message
+    $request->validate(['access_code' => 'exists:course_access_codes']);
     $course_id = CourseAccessCode::where('access_code', '=', $request->access_code)->first()->course_id;
 
     //make sure they don't sign up twice!

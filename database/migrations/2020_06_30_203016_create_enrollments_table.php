@@ -17,6 +17,7 @@ class CreateEnrollmentsTable extends Migration
             $table->id();
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('course_id');
+            $table->unique(['user_id', 'course_id']);
             $table->timestamps();
 
             $table->foreign('user_id')->references('id')->on('users');
