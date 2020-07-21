@@ -56,9 +56,12 @@ class CourseController extends Controller
                 $course_access_code->create(['course_id' => $new_course->id,
                     'access_code' => $course_access_code->createCourseAccessCode()]);
                 //create a test student
-                $fake_student = $user->create(['last_name' => 'Student',
-                    'first_name' => 'Fake'
-                ]);
+                $fake_student = new User();
+                $fake_student->last_name = 'Student';
+                $fake_student->first_name = 'Fake';
+                $fake_student->role = 3;
+                $fake_student->save();
+
                 //enroll the fake student
                 $enrollment->create(['user_id' => $fake_student->id,
                     'course_id' => $new_course->id]);
