@@ -1,108 +1,52 @@
 <template>
   <div>
-    <PageTitle title="Student Courses"></PageTitle>
+    <PageTitle title="My Courses"></PageTitle>
+    Start:
+    1. Students can enroll in a course (using the course access code)
+    2. Students can view assignments for the course
+
     <div class="row mb-4 float-right">
-      <b-button variant="primary" v-b-modal.modal-course-details>Add Course</b-button>
+      <b-button variant="primary" v-b-modal.modal-course-details>Enroll In Course</b-button>
     </div>
     <b-modal
-      id="modal-course-details"
+      id="modal-enroll-course"
       ref="modal"
-      title="Course Details"
-      @ok="submitCourseInfo"
+      title="Enroll In Course"
+      @ok="submitEnrollInCourse"
       @hidden="resetModalForms"
       ok-title="Submit"
 
     >
-      <b-form ref="form" @submit="createCourse">
+      <b-form ref="form" @submit="submitEnrollInCourse">
         <b-form-group
-          id="name"
+          id="course_access_code"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Name"
-          label-for="name"
+          label="Course Access Code"
+          label-for="course_access_code"
         >
           <b-form-input
-            id="name"
-            v-model="form.name"
+            id="course_access_code"
+            v-model="form.course_access_code"
             type="text"
-            :class="{ 'is-invalid': form.errors.has('name') }"
-            @keydown="form.errors.clear('name')"
+            :class="{ 'is-invalid': form.errors.has('course_access_code') }"
+            @keydown="form.errors.clear('course_access_code')"
           >
           </b-form-input>
-          <has-error :form="form" field="name"></has-error>
+          <has-error :form="form" field="course_access_code"></has-error>
         </b-form-group>
 
-        <b-form-group
-          id="start_date"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Start Date"
-          label-for="Start Date"
-        >
-          <b-form-datepicker
-            v-model="form.start_date"
-            :min="min"
-            :class="{ 'is-invalid': form.errors.has('start_date') }"
-            v-on:shown="form.errors.clear('start_date')">
-          </b-form-datepicker>
-          <has-error :form="form" field="start_date"></has-error>
-        </b-form-group>
-
-        <b-form-group
-          id="end_date"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="End Date"
-          label-for="End Date"
-        >
-          <b-form-datepicker
-            v-model="form.end_date"
-            :min="min"
-            class="mb-2"
-            :class="{ 'is-invalid': form.errors.has('end_date') }"
-            @click="form.errors.clear('end_date')"
-            v-on:shown="form.errors.clear('end_date')">
-          </b-form-datepicker>
-          <has-error :form="form" field="end_date"></has-error>
-        </b-form-group>
       </b-form>
     </b-modal>
 
-    <b-modal
-      id="modal-delete-course"
-      ref="modal"
-      title="Confirm Delete Course"
-      @ok="handleDeleteCourse"
-      @hidden="resetModalForms"
-      ok-title="Yes, delete course!"
-
-    >
-      <p>By deleting the course, you will also delete:</p>
-      <ol>
-        <li>All assignments associated with the course</li>
-        <li>All submitted student responses</li>
-        <li>All student grades</li>
-      </ol>
-      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
-    </b-modal>
-    <div v-if="hasCourses">
-      <b-table striped hover :fields="fields" :items="courses">
-        <template v-slot:cell(actions)="data">
-          <div class="mb-0">
-            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
-              icon="file-earmark-text"></b-icon></span>
-            <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
-            <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
-          </div>
-        </template>
+    <div v-if="hasEnrolledInCourses">
+      <b-table striped hover :fields="fields" :items="enrolledInCourses">
       </b-table>
     </div>
     <div v-else>
       <br>
       <div class="mt-4">
-        <b-alert :show="showNoCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently have no
-          courses.
+        <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently are not enrolled in any courses.
         </a></b-alert>
       </div>
     </div>
@@ -112,14 +56,9 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import { formatDate } from '~/helpers/Date'
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  let formatDate = value => {
-    let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear()
-  }
 
-  const now = new Date()
   export default {
     middleware: 'auth',
     data: () => ({
@@ -128,6 +67,7 @@
           key: 'name',
           label: 'Course'
         },
+        'instructor',
         {
           key: 'start_date',
           formatter: value => {
@@ -139,70 +79,28 @@
           formatter: value => {
             return formatDate(value)
           }
-        },
-        {
-          key: 'access_code',
-          label: 'Access Code'
-        },
-        'actions'
+        }
       ],
-      courses: [],
-      hasCourses: false,
-      courseId: false, //if there's a courseId if it's an update
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+      enrolledInCourses: [],
+      hasEnrolledInCourses: false,
       form: new Form({
-        name: '',
-        start_date: '',
-        end_date: ''
+        course_access_code: ''
       }),
-      showNoCoursesAlert: false,
+      showNoEnrolledInCoursesAlert: false,
     }),
     mounted() {
-      this.getCourses();
+      this.getEnrolledInCourses();
 
     },
     methods: {
-      showAssignments(courseId) {
-        window.location.href = `/courses/${courseId}/assignments`
-      }
-      ,
-      showGrades(courseId) {
-        window.location.href = `/courses/${courseId}/grades`
-      }
-      ,
-      deleteCourse(courseId) {
-        this.courseId = courseId
-        this.$bvModal.show('modal-delete-course')
-      }
-      ,
-      async handleDeleteCourse() {
-        try {
-          const {data} = await axios.delete('/api/courses/' + this.courseId)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-delete-course')
-        } catch (error) {
-          console.log(error)
-        }
-      }
-      ,
-      editCourse(course) {
-        this.courseId = course.id;
-        this.form.name = course.name
-        this.form.start_date = course.start_date
-        this.form.end_date = course.end_date
-        this.$bvModal.show('modal-course-details')
-      }
-      ,
+
       resetModalForms() {
-        this.form.name = ''
-        this.form.start_date = ''
-        this.form.end_date = ''
-        this.courseId = false
+        this.form.course_access_code = ''
         this.form.errors.clear()
       }
       ,
       resetAll(modalId) {
-        this.getCourses()
+        this.getEnrolledInCourses()
         this.resetModalForms()
         // Hide the modal manually
         this.$nextTick(() => {
@@ -210,33 +108,23 @@
         })
       }
       ,
-      submitCourseInfo(bvModalEvt) {
+      submitEnrollInCourse(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
-        this.createCourse()
+        this.enrollInCourse()
       }
       ,
-      async createCourse() {
-        try {
-          let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
-          const {data} = await this.form.post(endpoint)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-course-details')
+      enrollInCourse() {
 
-        } catch (error) {
-          console.log(error)
-        }
-
-      }
-      ,
-      getCourses() {
+      },
+      getEnrolledInCourses() {
         try {
-          axios.get('/api/courses').then(
+          axios.get('/api/enrollments').then(
             response => {
-              this.hasCourses = response.data.length > 0
-              this.showNoCoursesAlert = !this.hasCourses
-              this.courses = response.data
+              this.hasEnrolledInCourses = response.data.length > 0
+              this.showNoEnrolledInCoursesAlert = !this.hasEnrolledInCourses
+              this.enrolledInCourses = response.data
             }
           )
         } catch (error) {

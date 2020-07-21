@@ -113,11 +113,7 @@
   import axios from 'axios'
   import Form from "vform"
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  let formatDate = value => {
-    let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear()
-  }
+  import { formatDate } from '~/helpers/Date'
 
   const now = new Date()
   export default {

@@ -55,7 +55,7 @@
 <script>
 import Form from 'vform'
 import LoginWithGithub from '~/components/LoginWithGithub'
-import { redirectOnLogin } from '~/components/LoginRedirect'
+import { redirectOnLogin } from '~/helpers/LoginRedirect'
 
 
 export default {
