@@ -115,9 +115,12 @@
       async enrollInCourse() {
         try {
           const {data} = await this.form.post('/api/enrollments')
-          console.log(data)
-         // this.$noty[data.type](data.message)
-          //this.resetAll('modal-enroll-in-course')
+          if (data.validated) {
+            this.$noty[data.type](data.message)
+            if (data.type === 'success') {
+              this.resetAll('modal-enroll-in-course')
+            }
+          }
         } catch (error) {
           console.log(error)
         }
