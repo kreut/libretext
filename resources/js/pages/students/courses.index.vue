@@ -1,15 +1,11 @@
 <template>
   <div>
     <PageTitle title="My Courses"></PageTitle>
-    Start:
-    1. Students can enroll in a course (using the course access code)
-    2. Students can view assignments for the course
-
     <div class="row mb-4 float-right">
-      <b-button variant="primary" v-b-modal.modal-course-details>Enroll In Course</b-button>
+      <b-button variant="primary" v-b-modal.modal-enroll-in-course>Enroll In Course</b-button>
     </div>
     <b-modal
-      id="modal-enroll-course"
+      id="modal-enroll-in-course"
       ref="modal"
       title="Enroll In Course"
       @ok="submitEnrollInCourse"
@@ -18,22 +14,23 @@
 
     >
       <b-form ref="form" @submit="submitEnrollInCourse">
+        <p>To enroll in the course, please provide the access code given to you by your instructor.</p>
         <b-form-group
-          id="course_access_code"
+          id="access_code"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Course Access Code"
-          label-for="course_access_code"
+          label="Access Code"
+          label-for="access_code"
         >
           <b-form-input
-            id="course_access_code"
-            v-model="form.course_access_code"
+            id="access_code"
+            v-model="form.access_code"
             type="text"
-            :class="{ 'is-invalid': form.errors.has('course_access_code') }"
-            @keydown="form.errors.clear('course_access_code')"
+            :class="{ 'is-invalid': form.errors.has('access_code') }"
+            @keydown="form.errors.clear('access_code')"
           >
           </b-form-input>
-          <has-error :form="form" field="course_access_code"></has-error>
+          <has-error :form="form" field="access_code"></has-error>
         </b-form-group>
 
       </b-form>
@@ -84,7 +81,7 @@
       enrolledInCourses: [],
       hasEnrolledInCourses: false,
       form: new Form({
-        course_access_code: ''
+        access_code: ''
       }),
       showNoEnrolledInCoursesAlert: false,
     }),
@@ -95,7 +92,7 @@
     methods: {
 
       resetModalForms() {
-        this.form.course_access_code = ''
+        this.form.access_code = ''
         this.form.errors.clear()
       }
       ,
@@ -115,8 +112,15 @@
         this.enrollInCourse()
       }
       ,
-      enrollInCourse() {
-
+      async enrollInCourse() {
+        try {
+          const {data} = await this.form.post('/api/enrollments')
+          console.log(data)
+         // this.$noty[data.type](data.message)
+          //this.resetAll('modal-enroll-in-course')
+        } catch (error) {
+          console.log(error)
+        }
       },
       getEnrolledInCourses() {
         try {

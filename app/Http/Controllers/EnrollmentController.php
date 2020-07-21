@@ -21,15 +21,6 @@ class EnrollmentController extends Controller
 
     }
 
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -39,7 +30,15 @@ class EnrollmentController extends Controller
      */
     public function store(Request $request)
     {
-        //
+    $data = $request->validate(['access_code' => 'exists:course_access_codes']);
+
+        //validate access code
+
+        //if so, attach the user to the course
+
+
+
+
     }
 
     /**
