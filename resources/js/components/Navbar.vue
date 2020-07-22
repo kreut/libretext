@@ -11,7 +11,7 @@
     <b-collapse id="nav-collapse" is-nav>
       <b-navbar-nav v-if="user">
         <b-nav-item href="#" v-if="user">
-          <router-link v-if="$route.name !== 'courses.index'" :to="{ name: 'courses.index' }" class="nav-link">
+          <router-link :to="{ name: (user.role === 'student') ? 'students.courses.index' : 'instructors.courses.index'}" class="nav-link">
             My Courses
           </router-link>
         </b-nav-item>
