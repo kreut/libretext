@@ -38,6 +38,11 @@
 
     <div v-if="hasEnrolledInCourses">
       <b-table striped hover :fields="fields" :items="enrolledInCourses">
+        <template v-slot:cell(name)="data">
+          <div class="mb-0">
+            <a href="" v-on:click.prevent="getAssignment(data.item.id)">{{ data.item.name }}</a>
+          </div>
+        </template>
       </b-table>
     </div>
     <div v-else>
@@ -90,7 +95,9 @@
 
     },
     methods: {
-
+    getAssignment(assignmentId){
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    },
       resetModalForms() {
         this.form.access_code = ''
         this.form.errors.clear()
