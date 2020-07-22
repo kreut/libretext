@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
 use App\Exceptions\Handler;
+use \Illuminate\Http\Request;
 
 class AssignmentController extends Controller
 {
@@ -89,14 +90,16 @@ class AssignmentController extends Controller
     }
 
     /**
-     * Display the specified resource.
      *
-     * @param \App\Assignment $assignment
-     * @return \Illuminate\Http\Response
+     * Display the specified resource
+     *
+     * @param Assignment $assignment
+     * @return Assignment
      */
-    public function show(Assignment $assignment)
+    public function show($id)
     {
-        //
+        return Assignment::find($id);
+
     }
 
 

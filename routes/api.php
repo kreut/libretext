@@ -23,6 +23,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     //student
     Route::get('/assignments', 'AssignmentController@index');
+    Route::get('/assignments/{assignmentId}', 'AssignmentController@show');
 
     //instructor
     Route::get('/courses', 'CourseController@index');
