@@ -95,4 +95,7 @@
   .nav-link {
     padding-top: .25em;
   }
+  .bg-info {
+    background-color: #127bc4 !important;
+  }
 </style>
