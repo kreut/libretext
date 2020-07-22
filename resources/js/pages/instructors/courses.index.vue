@@ -159,7 +159,7 @@
     },
     methods: {
       showAssignments(courseId) {
-        window.location.href = `/courses/${courseId}/assignments`
+        window.location.href = `/instructors/courses/${courseId}/assignments`
       }
       ,
       showGrades(courseId) {

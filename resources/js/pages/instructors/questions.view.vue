@@ -29,16 +29,17 @@
         </div>
         <div v-else>
           <div v-if="questions !== ['init']">
-            <div class="mt-1 mb-2" v-on:click="getQuestions()">
+            <div class="mt-1 mb-2" v-on:click="getQuestions()" v-if="user.role !== 3">
               <b-button variant="success">Get More Questions</b-button>
             </div>
-            <div class="d-flex justify-content-center mt-5">
-              <p>This assignment currently has no questions.</p>
-            </div>
+            <div class="mt-4">
+              <b-alert :show="true" variant="warning"><a href="#" class="alert-link">This assignment currently has no questions.
+              </a></b-alert>
           </div>
         </div>
       </div>
     </div>
+  </div>
 </template>
 
 
