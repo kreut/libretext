@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Question extends Model
 {
@@ -78,8 +79,34 @@ class Question extends Model
     public function store(string $technology)
     {
         $tag = new Tag();
-        $offset = 0;
+        try {
+            $webwork = DB::connection('webwork');
+            $results = $webwork->table('OPL_keyword')
+                ->select('*')
+                ->get();
+            foreach ($results as $value) {
+                $tag->firstOrCreate(['tag' => mb_strtolower($value->keyword)]);
+            }
+        } catch (Exception $e) {
+            echo $e->getMessage();
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        exit;
         if ($technology === 'h5p') {
+            $offset = 0;
             $questions = $this->getQuestions($offset);
             while ($questions->rows) {
                 echo $offset;
