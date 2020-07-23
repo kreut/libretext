@@ -41,7 +41,9 @@ class Webwork extends Command
         $tables = DB::connection('webwork')->select('SHOW TABLES');
         foreach($tables as $table)
         {
-            echo $table->Tables_in_db_name . '\r\n';
+            if (strpos($table->Tables_in_webwork, 'OPL') !== false) {
+                echo $table->Tables_in_webwork . "\r\n";
+            }
         }
     }
 }
