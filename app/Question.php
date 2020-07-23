@@ -10,6 +10,12 @@ class Question extends Model
 
     protected $fillable = ['title', 'author', 'technology_id'];
 
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        ini_set('memory_limit', '1G');
+    }
+
     public function getUrlLinkText($url)
     {
         $matches = [];
@@ -81,12 +87,28 @@ class Question extends Model
         $tag = new Tag();
         try {
             $webwork = DB::connection('webwork');
-            $results = $webwork->table('OPL_keyword')
+           /* $keywords= $webwork->table('OPL_keyword')
                 ->select('*')
                 ->get();
-            foreach ($results as $value) {
+            foreach ($keywords as $value) {
                 $tag->firstOrCreate(['tag' => mb_strtolower($value->keyword)]);
             }
+*/
+            $questions  = $webwork->table('OPL_path')
+                                ->join('OPL_pgfile', 'OPL_path.path_id', '=', 'OPL_pgfile.path_id')
+                                ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
+                                ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=','OPL_keyword.keyword_id')
+                                ->select('*')
+                                ->get();
+
+            echo count($questions);
+
+            echo "not real: ".(memory_get_peak_usage(false)/1024/1024)." MiB\n";
+            echo "real: ".(memory_get_peak_usage(true)/1024/1024)." MiB\n\n";
+
+
+
+
         } catch (Exception $e) {
             echo $e->getMessage();
         }
