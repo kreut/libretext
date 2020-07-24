@@ -22,7 +22,7 @@
           <b-card-text :items="questions">
             <b-embed type="iframe"
                      aspect="16by9"
-                     v-bind:src="`https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=${ questions[currentPage-1].technology_id }`"
+                     v-bind:src="questions[currentPage-1].src"
                      allowfullscreen
             ></b-embed>
           </b-card-text>
@@ -46,7 +46,7 @@
 <script>
   import axios from 'axios'
   import {mapGetters} from "vuex"
-
+  import { getSrc } from '~/helpers/Questions'
 
   export default {
 
@@ -61,6 +61,9 @@
       initializing: true, //use to show a blank screen until all is loaded
       title: ''
     }),
+    created() {
+      this.getSrc = getSrc
+    },
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.getTitle(this.assignmentId)
@@ -79,6 +82,10 @@
         try {
           const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
           this.questions = data
+          for (let i = 0; i < this.questions.length; i++) {
+            this.questions[i].src = this.getSrc(this.questions[i])
+          }
+
           this.initializing = false
         } catch (error) {
           alert(error)
