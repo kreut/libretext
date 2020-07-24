@@ -50,6 +50,7 @@ class Question extends Model
          * "<a href=\"https://h5p.libretexts.org/wp-admin/admin.php?page=h5p&task=results&id=1464\">Results</a>",
          * "<a href=\"https://h5p.libretexts.org/wp-admin/admin.php?page=h5p_new&id=1464\">Edit</a>" ]
          */
+
         $login_user = getenv('H5P_USERNAME');
         $login_pass = getenv('H5P_PASSWORD');
         $login_url = 'https://h5p.libretexts.org/wp-login.php';
@@ -137,7 +138,9 @@ class Question extends Model
                 if ($tag_info) {
                     foreach ($tag_info as $value) {
                         $tag_id = Tag::firstOrCreate(['tag' => mb_strtolower($value->title)]);
-                        $question->tags()->attach($tag_id);
+                        if (!$question->tags->contains($tag_id)) {
+                            $question->tags()->attach($tag_id);
+                        }
                     }
 
                     //store question info in the question table
@@ -147,7 +150,7 @@ class Question extends Model
                 }
             }
             $offset += 100;
-            $questions = $this->getQuestions($offset);
+            $questions = $this->getH5PQuestions($offset);
         }
         echo "\r\n";
 
