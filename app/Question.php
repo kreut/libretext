@@ -38,7 +38,7 @@ class Question extends Model
         return $this->belongsToMany('App\Tag')->withTimestamps();
     }
 
-    public function getQuestions(int $offset)
+    public function getH5PQuestions(int $offset)
     {
         /** [
          * "<a href=\"https://h5p.libretexts.org/wp-admin/admin.php?page=h5p&task=show&id=1464\">Cap.5: Videos y actividad.</a>",
@@ -123,7 +123,7 @@ class Question extends Model
     public function storeH5P()
     {
         $offset = 0;
-        $questions = $this->getQuestions($offset);
+        $questions = $this->getH5PQuestions($offset);
         while ($questions->rows) {
             echo $offset;
             foreach ($questions->rows as $question) {

@@ -13,7 +13,10 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\H5P::class
+        Commands\storeQuestions::class,
+        Commands\storeH5P::class,
+        Commands\storeWebwork::class
+
     ];
 
     /**
