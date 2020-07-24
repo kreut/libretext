@@ -50,6 +50,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::post('/enrollments', 'EnrollmentController@store');
+
+    Route::post('/submissions', 'SubmissionController@store');
 });
 
 Route::post('results', 'ResultController@store');

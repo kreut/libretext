@@ -17,7 +17,7 @@ let instructor_paths = [
   { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('instructors/questions.view.vue') }]
 
 let general_paths  = [
-  { path: '/xapi', name: 'xapi.index', component: page('xapi.store.vue') },
+  { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
   { path: '/register/instructor', name: 'register', component: page('auth/register.vue'), alias: '/register/student' },
