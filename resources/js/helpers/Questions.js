@@ -3,6 +3,7 @@ export function getSrc(question){
   switch (question.technology){
     case 'h5p':
       let url = (window.location.host.includes('adapt.libretexts.org') && !window.location.host.includes('dev')) ? 'h5p.libretexts.org' : 'dev.h5p.libretexts.org'
+      url = 'dev.h5p.libretexts.org'
       src = `https://${url}/wp-admin/admin-ajax.php?action=h5p_embed&id=${question.technology_id}`
       break;
     case 'webwork':
