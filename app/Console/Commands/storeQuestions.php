@@ -4,22 +4,21 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use App\Question;
-
-class H5P extends Command
+class storeQuestions extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'store:h5p';
+    protected $signature = 'store:questions';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Updates the database with the latest h5p questions';
+    protected $description = 'Store 3rd party questions locally';
 
     /**
      * Create a new command instance.
@@ -32,12 +31,11 @@ class H5P extends Command
     }
 
     /**
-     * Execute the console command.
-     *
-     * @return mixed
+     * @param Question $question
      */
     public function handle(Question $question)
     {
-       $question->store('h5p');
+        $question->store();
     }
 }
+

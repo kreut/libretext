@@ -15,10 +15,11 @@ class CreateQuestionsTable extends Migration
     {
         Schema::create('questions', function (Blueprint $table) {
             $table->id();
-            $table->string('title');
-            $table->string('author');
-            $table->unsignedBigInteger('technology_id');
-            $table->enum('technology',['h5p']);
+            $table->string('title')->nullable();
+            $table->string('author')->nullable();
+            $table->string('technology_id');
+            $table->enum('technology',['h5p', 'webwork']);
+            $table->unique(['technology_id', 'technology']);
             $table->timestamps();
         });
     }

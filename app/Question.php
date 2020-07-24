@@ -13,7 +13,8 @@ class Question extends Model
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
-        ini_set('memory_limit', '1G');
+        ini_set('memory_limit', '2G');
+
     }
 
     public function getUrlLinkText($url)
@@ -79,84 +80,84 @@ class Question extends Model
         return json_decode($questions);
     }
 
-    /**
-     * @param string $technology
-     */
-    public function store(string $technology)
+    public function storeWebwork()
     {
-        $tag = new Tag();
         try {
             $webwork = DB::connection('webwork');
-           /* $keywords= $webwork->table('OPL_keyword')
+            echo "Connected to webwork\r\n";
+            $keywords = $webwork->table('OPL_keyword')
                 ->select('*')
                 ->get();
             foreach ($keywords as $value) {
-                $tag->firstOrCreate(['tag' => mb_strtolower($value->keyword)]);
+                Tag::firstOrCreate(['tag' => mb_strtolower($value->keyword)]);
             }
-*/
-            $questions  = $webwork->table('OPL_path')
-                                ->join('OPL_pgfile', 'OPL_path.path_id', '=', 'OPL_pgfile.path_id')
-                                ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
-                                ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=','OPL_keyword.keyword_id')
-                                ->select('*')
-                                ->get();
-
-            echo count($questions);
-
-            echo "not real: ".(memory_get_peak_usage(false)/1024/1024)." MiB\n";
-            echo "real: ".(memory_get_peak_usage(true)/1024/1024)." MiB\n\n";
-
-
-
-
+            echo "created tags\r\n";
+            $questions = $webwork->table('OPL_path')
+                ->join('OPL_pgfile', 'OPL_path.path_id', '=', 'OPL_pgfile.path_id')
+                ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
+                ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=', 'OPL_keyword.keyword_id')
+                ->leftJoin('OPL_author', 'OPL_author.author_id', '=', 'OPL_pgfile.author_id')
+                ->select('keyword', DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"), DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"))
+                ->get();
+            DB::disconnect('webwork');
+            echo count($questions) . " questions\r\n";
+            echo "Disconnected from webwork\r\n";
+            echo "Selected questions\r\n";
+            foreach ($questions as $value) {
+                $author = $value->author;
+                $technology_id = $value->technology_id;
+                $data = compact('author', 'technology_id') + ['technology' => 'webwork'];
+                $question = $this->firstOrCreate($data);
+                $tag_id = Tag::where('tag', '=', mb_strtolower($value->keyword))->first()->id;
+                if (!$question->tags->contains($tag_id)) {
+                    $question->tags()->attach($tag_id);
+                }
+            }
+            echo "Inserted questions\r\n";
         } catch (Exception $e) {
             echo $e->getMessage();
         }
 
+    }
 
-
-
-
-
-
-
-
-
-
-
-
-
-        exit;
-        if ($technology === 'h5p') {
-            $offset = 0;
-            $questions = $this->getQuestions($offset);
-            while ($questions->rows) {
-                echo $offset;
-                foreach ($questions->rows as $question) {
-                    $title = $this->getUrlLinkText($question[0]);
-                    $author = $question[2]->title;
-                    $tag_info = $question[3];
-                    //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
-                    $technology_id = $question[5];
-                    $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
-                    $question = $this->firstOrCreate($data);
-                    if ($tag_info) {
-                        foreach ($tag_info as $value) {
-                            $tag_id = $tag->firstOrCreate(['tag' => mb_strtolower($value->title)]);
-                            $question->tags()->attach($tag_id);
-                        }
-
-                        //store question info in the question table
-                        //title, author, id, created at, question_and_tag_pivot_id
-                        //store the tags in the tag table if they don't already exist
-
+    public function storeH5P()
+    {
+        $offset = 0;
+        $questions = $this->getQuestions($offset);
+        while ($questions->rows) {
+            echo $offset;
+            foreach ($questions->rows as $question) {
+                $title = $this->getUrlLinkText($question[0]);
+                $author = $question[2]->title;
+                $tag_info = $question[3];
+                //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
+                $technology_id = $question[5];
+                $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
+                $question = $this->firstOrCreate($data);
+                if ($tag_info) {
+                    foreach ($tag_info as $value) {
+                        $tag_id = Tag::firstOrCreate(['tag' => mb_strtolower($value->title)]);
+                        $question->tags()->attach($tag_id);
                     }
+
+                    //store question info in the question table
+                    //title, author, id, created at, question_and_tag_pivot_id
+                    //store the tags in the tag table if they don't already exist
+
                 }
-                $offset += 100;
-                $questions = $this->getQuestions($offset);
             }
-            echo "\r\n";
+            $offset += 100;
+            $questions = $this->getQuestions($offset);
         }
+        echo "\r\n";
+
+    }
+
+    public function store()
+    {
+
+        $this->storeWebwork();
+        $this->storeH5P();
     }
 
 }

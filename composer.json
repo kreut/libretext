@@ -10,6 +10,9 @@
   "type": "project",
   "require": {
     "php": "^7.2.5",
+    "ext-curl": "*",
+    "ext-json": "*",
+    "doctrine/dbal": "^2.10",
     "fideloper/proxy": "^4.2",
     "fruitcake/laravel-cors": "^1.0",
     "guzzlehttp/guzzle": "^6.3",
@@ -17,14 +20,11 @@
     "laravel/socialite": "^4.3",
     "laravel/tinker": "^2.0",
     "laravel/ui": "^2.0",
-    "tymon/jwt-auth": "^1.0.0",
-    "ext-curl": "*",
-    "ext-json": "*"
+    "tymon/jwt-auth": "^1.0.0"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.3",
     "beyondcode/laravel-dump-server": "^1.4.0",
-    "doctrine/dbal": "^2.9",
     "facade/ignition": "^2.0",
     "fzaninotto/faker": "^1.9.1",
     "laravel/dusk": "^5.11",

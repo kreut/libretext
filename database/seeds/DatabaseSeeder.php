@@ -23,6 +23,6 @@ class DatabaseSeeder extends Seeder
             InstructorAccessCodeSeeder::class
         ]);
         //get the h5p questions
-        Artisan::call('store:h5p');
+        Artisan::call('store:questions');
     }
 }
