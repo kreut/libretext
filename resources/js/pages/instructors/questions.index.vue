@@ -6,9 +6,19 @@
       :data="tags"
       placeholder="Enter a tag"
     />
-    <div class="mt-3 d-flex justify-content-between">
-      <b-button variant="primary" v-on:click="getQuestionsByTags()">Get Questions</b-button>
+    <div class="mt-3 d-flex flex-row">
+      <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
+      <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">Get Questions</b-button>
       <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
+    </div>
+    <hr>
+    <div>
+      <h5>Chosen Tags:</h5>
+    <ol>
+      <li v-for="chosenTag in chosenTags" :key="chosenTag">
+        <span v-on:click="removeTag(chosenTag)">{{ chosenTag}}<b-icon icon="trash" variant="danger"></b-icon></span>
+      </li>
+    </ol>
     </div>
     <div v-for="question in questions" :key="question.id" class="mt-5">
       <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
@@ -33,9 +43,7 @@
 <script>
   import axios from 'axios'
   import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-  import { getSrc } from '~/helpers/Questions'
-
-
+  import {getSrc} from '~/helpers/Questions'
 
   export default {
     components: {
@@ -54,7 +62,8 @@
       ],
       query: '',
       tags: [],
-      questions: []
+      questions: [],
+      chosenTags: []
     }),
     created() {
       this.getSrc = getSrc
@@ -64,6 +73,16 @@
       this.tags = this.getTags();
     },
     methods: {
+      removeTag(chosenTag){
+        this.chosenTags = _.without(this.chosenTags, chosenTag);
+      },
+      addTag() {
+        if (this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
+          this.chosenTags.push(this.query)
+          this.chosenTags.sort()
+          this.query = ''
+        }
+      },
       getTags() {
         try {
           axios.get(`/api/tags`).then(
@@ -122,7 +141,7 @@
         }
       },
       getStudentView(assignmentId) {
-       this.$router.push(`/assignments/${assignmentId}/questions/view`)
+        this.$router.push(`/assignments/${assignmentId}/questions/view`)
       }
     },
     metaInfo() {
