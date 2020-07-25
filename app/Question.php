@@ -180,7 +180,8 @@ class Question extends Model
 
     public function store()
     {
-
+        echo "Not importing questions";
+        exit;
         $this->storeWebwork();
         $this->storeH5P();
     }
