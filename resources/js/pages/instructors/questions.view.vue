@@ -59,7 +59,8 @@
       currentPage: 1,
       questions: [],
       initializing: true, //use to show a blank screen until all is loaded
-      title: ''
+      title: '',
+      assignmentId: ''
     }),
     created() {
       this.getSrc = getSrc
@@ -68,6 +69,19 @@
       this.assignmentId = this.$route.params.assignmentId
       this.getTitle(this.assignmentId)
       this.getSelectedQuestions(this.assignmentId)
+      let vm = this
+      let receiveMessage = function(event) {
+        if (event.data.action !== 'hello'){
+
+          let submission_data = {'submission' : event.data,
+                  'assignment_id' : vm.assignmentId,
+                  'question_id' : vm.questions[vm.currentPage-1].id}
+                  console.log(submission_data)
+         axios.post('/api/submissions', submission_data)
+
+        }
+      }
+      window.addEventListener("message", receiveMessage, true);
     },
     methods: {
       async getTitle(assignmentId) {

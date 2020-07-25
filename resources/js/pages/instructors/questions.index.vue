@@ -35,6 +35,8 @@
   import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
   import { getSrc } from '~/helpers/Questions'
 
+
+
   export default {
     components: {
       VueBootstrapTypeahead
@@ -60,7 +62,6 @@
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.tags = this.getTags();
-
     },
     methods: {
       getTags() {
