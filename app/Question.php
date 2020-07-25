@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Question extends Model
 {
 
-    protected $fillable = ['title', 'author', 'technology_id'];
+    protected $fillable = ['title', 'author', 'technology_id', 'technology'];
 
     public function __construct(array $attributes = [])
     {
@@ -98,21 +98,43 @@ class Question extends Model
                 ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
                 ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=', 'OPL_keyword.keyword_id')
                 ->leftJoin('OPL_author', 'OPL_author.author_id', '=', 'OPL_pgfile.author_id')
-                ->select('keyword', DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"), DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"))
+                ->join('OPL_section', 'OPL_pgfile.DBsection_id', '=', 'OPL_section.section_id')
+                ->join('OPL_chapter', 'OPL_section.chapter_id', '=', 'OPL_chapter.chapter_id')
+                ->join('OPL_textbook', 'OPL_chapter.chapter_id', '=', 'OPL_textbook.textbook_id')
+                ->select('keyword',
+                    'level',
+                    DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"),
+                    DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"),
+                    DB::raw("CONCAT(`title`,' - ',OPL_chapter.name,' - ',OPL_section.name,': ',`firstname`,' ',`lastname`) AS textbook_source"))
                 ->get();
             DB::disconnect('webwork');
             echo count($questions) . " questions\r\n";
             echo "Disconnected from webwork\r\n";
             echo "Selected questions\r\n";
             foreach ($questions as $value) {
-                $author = $value->author;
-                $technology_id = $value->technology_id;
-                $data = compact('author', 'technology_id') + ['technology' => 'webwork'];
-                $question = $this->firstOrCreate($data);
+
+                $data = ['author' => $value->author,
+                    'technology_id' => $value->technology_id,
+                    'technology' => 'webwork'];
+                $question = Question::firstOrCreate($data);
+
                 $tag_id = Tag::where('tag', '=', mb_strtolower($value->keyword))->first()->id;
                 if (!$question->tags->contains($tag_id)) {
                     $question->tags()->attach($tag_id);
                 }
+                if ($value->level) {
+                    $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
+                    if (!$question->tags->contains($tag->id)) {
+                        $question->tags()->attach($tag->id);
+                    }
+                }
+                if ($value->textbook_source) {
+                    $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
+                    if (!$question->tags->contains($tag->id)) {
+                        $question->tags()->attach($tag->id);
+                    }
+                }
+
             }
             echo "Inserted questions\r\n";
         } catch (Exception $e) {
