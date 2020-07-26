@@ -98,9 +98,9 @@ class Question extends Model
                 ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
                 ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=', 'OPL_keyword.keyword_id')
                 ->leftJoin('OPL_author', 'OPL_author.author_id', '=', 'OPL_pgfile.author_id')
-                ->join('OPL_section', 'OPL_pgfile.DBsection_id', '=', 'OPL_section.section_id')
-                ->join('OPL_chapter', 'OPL_section.chapter_id', '=', 'OPL_chapter.chapter_id')
-                ->join('OPL_textbook', 'OPL_chapter.chapter_id', '=', 'OPL_textbook.textbook_id')
+                ->leftJoin('OPL_section', 'OPL_pgfile.DBsection_id', '=', 'OPL_section.section_id')
+                ->leftJoin('OPL_chapter', 'OPL_section.chapter_id', '=', 'OPL_chapter.chapter_id')
+                ->leftJoin('OPL_textbook', 'OPL_chapter.chapter_id', '=', 'OPL_textbook.textbook_id')
                 ->select('keyword',
                     'level',
                     DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"),
@@ -118,7 +118,7 @@ class Question extends Model
                     'technology' => 'webwork'];
                 $question = Question::firstOrCreate($data);
 
-                $tag_id = Tag::where('tag', '=', mb_strtolower($value->keyword))->first()->id;
+                $tag_id = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first()->id;
                 if (!$question->tags->contains($tag_id)) {
                     $question->tags()->attach($tag_id);
                 }
@@ -127,13 +127,16 @@ class Question extends Model
                     if (!$question->tags->contains($tag->id)) {
                         $question->tags()->attach($tag->id);
                     }
+                    $tag->refresh();
                 }
                 if ($value->textbook_source) {
                     $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
                     if (!$question->tags->contains($tag->id)) {
                         $question->tags()->attach($tag->id);
                     }
+                    $tag->refresh();
                 }
+                $question->refresh();
 
             }
             echo "Inserted questions\r\n";
