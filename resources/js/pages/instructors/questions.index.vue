@@ -123,6 +123,8 @@
 
       },
       async getQuestionsByTags() {
+        this.questions = []
+
         this.addTag() //in case they didn't click
         try {
           if (this.chosenTags.length === 0) {
