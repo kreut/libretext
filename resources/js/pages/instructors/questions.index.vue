@@ -15,7 +15,7 @@
     <hr>
     <div>
       <h5>Chosen Tags:</h5>
-      <div v-if="chosenTags">
+      <div v-if="chosenTags.length>0">
       <ol>
         <li v-for="chosenTag in chosenTags" :key="chosenTag">
           <span v-on:click="removeTag(chosenTag)">{{ chosenTag}}<b-icon icon="trash" variant="danger"></b-icon></span>
@@ -81,12 +81,14 @@
     methods: {
       removeTag(chosenTag) {
         this.chosenTags = _.without(this.chosenTags, chosenTag);
+        console.log(this.chosenTags)
       },
       addTag() {
-        if (this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
+
+        if ((this.query !== '') && this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
           this.chosenTags.push(this.query)
         }
-        this.$refs.queryTypeahead.inputValue = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
+        this.$refs.queryTypeahead.inputValue = this.query = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       },
       getTags() {
         try {
@@ -124,7 +126,7 @@
       async getQuestionsByTags() {
         this.questions = []
 
-        this.addTag() //in case they didn't click
+       this.addTag() //in case they didn't click
         try {
           if (this.chosenTags.length === 0) {
             this.$noty.error('Please choose at least one tag.')
@@ -148,7 +150,7 @@
         } catch (error) {
           alert(error.message)
         }
-        this.$refs.queryTypeahead.inputValue = '' //reset...https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
+
       },
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
