@@ -85,7 +85,6 @@
       addTag() {
         if (this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
           this.chosenTags.push(this.query)
-          this.chosenTags.sort()
         }
         this.$refs.queryTypeahead.inputValue = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       },
@@ -149,6 +148,7 @@
         } catch (error) {
           alert(error.message)
         }
+        this.$refs.queryTypeahead.inputValue = '' //reset...https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       },
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
