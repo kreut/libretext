@@ -123,6 +123,7 @@
 
       },
       async getQuestionsByTags() {
+        this.addTag() //in case they didn't click
         try {
           if (this.chosenTags.length === 0) {
             this.$noty.error('Please choose at least one tag.')
