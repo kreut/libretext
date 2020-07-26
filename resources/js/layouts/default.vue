@@ -12,7 +12,7 @@
 
       <div class="d-flex  justify-content-left flex-wrap">
         <a class="ml-5 pt-3 pb-3" href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program" rel="external nofollow" target="_blank" title="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"> <img alt="DOE Logo.png"  src="https://adapt.libretexts.org/assets/img/DOE.png" /></a>
-        <a class="ml-5 pt-3 pb-3" href="#" rel="external nofollow" target="_blank" title="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"> <img alt="DOE Logo.png" style="height:85px;"  src="https://adapt.libretexts.org/assets/img/CELL_LogoColor.png" /></a>   </div>
+        <a class="ml-5 pt-3 pb-3" href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/" rel="external nofollow" target="_blank" title="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"> <img alt="DOE Logo.png" style="height:85px;"  src="https://adapt.libretexts.org/assets/img/CELL_LogoColor.png" /></a>   </div>
     </footer>
   </div>
   </div>
