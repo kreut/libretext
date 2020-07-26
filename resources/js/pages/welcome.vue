@@ -1,6 +1,7 @@
 <template>
   <div>
-    <div class="basic-layout d-flex  justify-content-center m-0  bg">
+    <div class="pb-3">
+    <div class="basic-layout d-flex  justify-content-center  bg">
       <div class="text-center">
         <div class="title font-italic text-white">
           {{ title }}
@@ -10,6 +11,7 @@
           The Libretext Adaptive Learning Assessment System
         </h5>
       </div>
+    </div>
     </div>
   </div>
 </template>
