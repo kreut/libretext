@@ -5,6 +5,7 @@
       v-model="query"
       :data="tags"
       placeholder="Enter a tag"
+      ref="queryTypeahead"
     />
     <div class="mt-3 d-flex flex-row">
       <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
@@ -80,8 +81,8 @@
         if (this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
           this.chosenTags.push(this.query)
           this.chosenTags.sort()
-          this.query = ''
         }
+        this.$refs.queryTypeahead.inputValue = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
       },
       getTags() {
         try {
@@ -118,11 +119,11 @@
       },
       async getQuestionsByTags() {
         try {
-          if (this.query === '') {
+          if (this.chosenTags.length === 0) {
             this.$noty.error('Please enter at least one tag.')
             return false
           }
-          const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.query})
+          const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
           console.log(data)
           if (data.type === 'success') {
             //get whether in the assignment and get the url
