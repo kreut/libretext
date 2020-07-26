@@ -1,12 +1,11 @@
 <template>
   <div>
     <div class="pb-3">
-    <div class="basic-layout d-flex  justify-content-center  bg">
+    <div class="basic-layout d-flex  justify-content-center bg" :style="{backgroundImage:'url(/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg)'}">
       <div class="text-center">
         <div class="title font-italic text-white">
           {{ title }}
         </div>
-
         <h5 class="text-white">
           The Libretext Adaptive Learning Assessment System
         </h5>
@@ -37,7 +36,7 @@
 
 <style lang="scss" scoped>
   .bg {
-    background-image: url("https://adapt.libretexts.org/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg");
+    //background-image: url("~@/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg");
     opacity: 0.6;
     height: 100%;
     background-position: center;

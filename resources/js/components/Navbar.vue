@@ -2,7 +2,7 @@
   <div>
 
     <b-navbar-brand href="/">
-      <img src="https://adapt.libretexts.org/assets/img/libretexts_section_complete_adapt_header.png"  class="d-inline-block align-top pl-3">
+      <img src="/assets/img/libretexts_section_complete_adapt_header.png"  class="d-inline-block align-top pl-3">
     </b-navbar-brand>
 
   <b-navbar toggleable="lg" type="dark" variant="info">
