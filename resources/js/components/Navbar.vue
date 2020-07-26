@@ -1,11 +1,16 @@
 <template>
+  <div>
+    <b-navbar-brand href="/">
+      <img src="https://adapt.libretexts.org/assets/img/libretexts_section_complete_adapt_header.png"  class="d-inline-block align-top pl-3">
+    </b-navbar-brand>
+
   <b-navbar toggleable="lg" type="dark" variant="info">
-    <b-navbar-brand href="#">
+
+    <!--<b-navbar-brand href="#">
       <router-link :to="{ name: user ? 'home' : 'welcome' }" class="navbar-brand">
         {{ appName }}
       </router-link>
-    </b-navbar-brand>
-
+    </b-navbar-brand>-->
     <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
     <b-collapse id="nav-collapse" is-nav>
@@ -60,6 +65,9 @@
       </b-navbar-nav>
     </b-collapse>
   </b-navbar>
+
+  </div>
+
 </template>
 
 <script>
@@ -96,6 +104,6 @@
     padding-top: .25em;
   }
   .bg-info {
-    background-color: #127bc4 !important;
+    background-color: #b4b4b4 !important;
   }
 </style>

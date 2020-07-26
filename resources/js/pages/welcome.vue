@@ -1,14 +1,14 @@
 <template>
   <div>
-    <div class="basic-layout d-flex  justify-content-center m-0 bg-white">
+    <div class="basic-layout d-flex  justify-content-center m-0  bg">
       <div class="text-center">
-        <div class="title">
+        <div class="title font-italic text-white">
           {{ title }}
         </div>
 
-        <div class="text-dark">
-          Libretext Adaptive Learning Assessment System
-        </div>
+        <h5 class="text-white">
+          The Libretext Adaptive Learning Assessment System
+        </h5>
       </div>
     </div>
   </div>
@@ -34,6 +34,14 @@
 </script>
 
 <style lang="scss" scoped>
+  .bg {
+    background-image: url("https://adapt.libretexts.org/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg");
+    opacity: 0.6;
+    height: 100%;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-size: cover;
+  }
   .top-right {
     position: absolute;
     right: 10px;
