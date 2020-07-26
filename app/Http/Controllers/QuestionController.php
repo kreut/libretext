@@ -4,33 +4,36 @@ namespace App\Http\Controllers;
 
 use App\Tag;
 use Illuminate\Http\Request;
+use App\Question_Tag;
 use \Exception;
 use App\Exceptions\Handler;
+use Illuminate\Support\Facades\DB;
 
 class QuestionController extends Controller
 {
     public function getQuestionsByTags(Request $request)
     {
         //get all questions with these tags
-        $chosen_tags = Tag::whereIn('tag',  $request->get('tags'));
-
+        //dd($request->get('tags'));
+        $chosen_tags =  DB::table('tags')
+                        ->whereIn('tag',  $request->get('tags'))
+                        ->get()
+                        ->pluck('id');
         if (!$chosen_tags) return ['type' => 'error'];
-        $tag_ids = [];
-        foreach ($chosen_tags as $chosen_tag){
-            array_push($tag_ids, $chosen_tag->id);
 
+        $tag = DB::table('question_tag')
+                ->where('tag_id', $chosen_tags)
+                ->groupBy('question_id')
+                ->having('count', '=', count($chosen_tags))
+                ->get();
+        
+        if (!$tag->questions){
+            return ['type' => 'error'];
         }
-        Start here!!!  Then change below
-        SELECT question_id
-FROM question_tag
-WHERE tag_id IN (438,3066)
-GROUP BY question_id
-HAVING COUNT(*) = 2
-
-
-
-        foreach ($tag->questions as $key => $question){
-            $tag->questions[$key]['inAssignment'] = false;
+        if ($tag->questions) {
+            foreach ($tag->questions as $key => $question) {
+                $tag->questions[$key]['inAssignment'] = false;
+            }
         }
 
         return ['type' => 'success',

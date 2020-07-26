@@ -15,29 +15,34 @@
     <hr>
     <div>
       <h5>Chosen Tags:</h5>
-    <ol>
-      <li v-for="chosenTag in chosenTags" :key="chosenTag">
-        <span v-on:click="removeTag(chosenTag)">{{ chosenTag}}<b-icon icon="trash" variant="danger"></b-icon></span>
-      </li>
-    </ol>
+      <div v-if="chosenTags">
+      <ol>
+        <li v-for="chosenTag in chosenTags" :key="chosenTag">
+          <span v-on:click="removeTag(chosenTag)">{{ chosenTag}}<b-icon icon="trash" variant="danger"></b-icon></span>
+        </li>
+      </ol>
     </div>
-    <div v-for="question in questions" :key="question.id" class="mt-5">
-      <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
-        <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question)">
-          <b-button variant="danger">Remove</b-button>
-        </div>
-        <div v-else class="mt-1 mb-2" v-on:click="addQuestion(question)">
-          <v-button>Add</v-button>
-        </div>
-        <b-card-text>
-          <b-embed type="iframe"
-                   aspect="16by9"
-                   v-bind:src="question.src"
-                   allowfullscreen
-          ></b-embed>
-        </b-card-text>
-      </b-card>
+    <div v-else>
+      <span class="text-danger">No tags have been chosen.</span>
     </div>
+  </div>
+  <div v-for="question in questions" :key="question.id" class="mt-5">
+    <b-card v-bind:title="question.title" v-bind:sub-title="question.author">
+      <div v-if="question.inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(question)">
+        <b-button variant="danger">Remove</b-button>
+      </div>
+      <div v-else class="mt-1 mb-2" v-on:click="addQuestion(question)">
+        <v-button>Add</v-button>
+      </div>
+      <b-card-text>
+        <b-embed type="iframe"
+                 aspect="16by9"
+                 v-bind:src="question.src"
+                 allowfullscreen
+        ></b-embed>
+      </b-card-text>
+    </b-card>
+  </div>
   </div>
 </template>
 
@@ -74,7 +79,7 @@
       this.tags = this.getTags();
     },
     methods: {
-      removeTag(chosenTag){
+      removeTag(chosenTag) {
         this.chosenTags = _.without(this.chosenTags, chosenTag);
       },
       addTag() {
@@ -120,7 +125,7 @@
       async getQuestionsByTags() {
         try {
           if (this.chosenTags.length === 0) {
-            this.$noty.error('Please enter at least one tag.')
+            this.$noty.error('Please choose at least one tag.')
             return false
           }
           const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
@@ -134,7 +139,8 @@
             }
             this.questions = data.questions
           } else {
-            this.$noty.error(`There are no questions associated with <strong>${this.query}</strong>.`)
+
+            this.$noty.error(`There are no questions associated with <strong>${this.chosenTags.join(" and ")}</strong>.`)
           }
 
         } catch (error) {
