@@ -30,13 +30,13 @@ class UserSeeder extends Seeder
                 'email' => $faker->email,
                 'password' => $faker->password
             ]);
-
-            User::create(['first_name' => 'Fake',
-                'last_name' => 'Student',
-                'role' => 3]);
-
-
         endfor;
+
+        User::create(['first_name' => 'Fake',
+            'last_name' => 'Student',
+            'role' => 3]);
+
+
 
     }
 }

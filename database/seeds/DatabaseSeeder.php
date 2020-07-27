@@ -23,6 +23,8 @@ class DatabaseSeeder extends Seeder
             InstructorAccessCodeSeeder::class
         ]);
         //get the h5p questions
+        echo "No questions seeded.";
+        exit;
         Artisan::call('store:questions');
     }
 }
