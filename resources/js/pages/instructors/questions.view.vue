@@ -52,7 +52,8 @@
 
     middleware: 'auth',
     computed: mapGetters({
-      user: 'auth/user'
+      user: 'auth/user',
+      token: 'auth/token'
     }),
     data: () => ({
       perPage: 1,
@@ -64,24 +65,29 @@
     }),
     created() {
       this.getSrc = getSrc
+      console.log(this.token)
     },
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.getTitle(this.assignmentId)
       this.getSelectedQuestions(this.assignmentId)
       let vm = this
-      let receiveMessage = function(event) {
-        if (event.data.action !== 'hello'){
+      if (this.user.role === 3) {
+        let receiveMessage = function (event) {
+          if (event.data.action !== 'hello') {
 
-          let submission_data = {'submission' : event.data,
-                  'assignment_id' : vm.assignmentId,
-                  'question_id' : vm.questions[vm.currentPage-1].id}
-                  console.log(submission_data)
-         axios.post('/api/submissions', submission_data)
+            let submission_data = {
+              'submission': event.data,
+              'assignment_id': vm.assignmentId,
+              'question_id': vm.questions[vm.currentPage - 1].id
+            }
+            console.log(submission_data)
+            axios.post('/api/submissions', submission_data)
 
+          }
         }
+        window.addEventListener("message", receiveMessage, true);
       }
-      window.addEventListener("message", receiveMessage, true);
     },
     methods: {
       async getTitle(assignmentId) {
@@ -97,7 +103,7 @@
           const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
           this.questions = data
           for (let i = 0; i < this.questions.length; i++) {
-            this.questions[i].src = this.getSrc(this.questions[i])
+            this.questions[i].src = this.getSrc(this.questions[i], this.token)
           }
 
           this.initializing = false

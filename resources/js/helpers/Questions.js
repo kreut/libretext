@@ -1,4 +1,4 @@
-export function getSrc(question){
+export function getSrc(question, jwt_token){
   let src
   switch (question.technology){
     case 'h5p':
@@ -10,5 +10,6 @@ export function getSrc(question){
       src = `https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&sourceFilePath=Library/${question.technology_id}&problemSeed=1234567&courseID=anonymous&userID=anonymous&course_password=anonymous&showSummary=1&displayMode=MathJax&language=en&outputformat=libretexts`
       break;
   }
+  src += `&jwt_token=${jwt_token}`
   return src
 }

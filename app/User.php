@@ -6,6 +6,7 @@ use App\Notifications\ResetPassword;
 use App\Notifications\VerifyEmail;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
+
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
@@ -54,7 +55,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
     /**
      * Send the password reset notification.
      *
-     * @param  string  $token
+     * @param string $token
      * @return void
      */
     public function sendPasswordResetNotification($token)
@@ -85,10 +86,11 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      */
     public function getJWTCustomClaims()
     {
-        return [];
+        return ['user_id' => $this->id];
     }
 
-    public function enrollments() {
-         return $this->belongsToMany('App\Course', 'enrollments')->withTimestamps();
+    public function enrollments()
+    {
+        return $this->belongsToMany('App\Course', 'enrollments')->withTimestamps();
     }
 }
