@@ -95,49 +95,57 @@ class Question extends Model
             echo "created tags\r\n";
             $questions = $webwork->table('OPL_path')
                 ->join('OPL_pgfile', 'OPL_path.path_id', '=', 'OPL_pgfile.path_id')
-                ->join('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
-                ->join('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=', 'OPL_keyword.keyword_id')
+                ->leftJoin('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
+                ->leftJoin('OPL_keyword', 'OPL_pgfile_keyword.keyword_id', '=', 'OPL_keyword.keyword_id')
                 ->leftJoin('OPL_author', 'OPL_author.author_id', '=', 'OPL_pgfile.author_id')
                 ->leftJoin('OPL_section', 'OPL_pgfile.DBsection_id', '=', 'OPL_section.section_id')
                 ->leftJoin('OPL_chapter', 'OPL_section.chapter_id', '=', 'OPL_chapter.chapter_id')
                 ->leftJoin('OPL_textbook', 'OPL_chapter.chapter_id', '=', 'OPL_textbook.textbook_id')
                 ->select('keyword',
                     'level',
+                    'path',
                     DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"),
                     DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"),
                     DB::raw("CONCAT(`title`,' - ',OPL_chapter.name,' - ',OPL_section.name,': ',`firstname`,' ',`lastname`) AS textbook_source"))
-                ->get();
+                ->toSql();
             DB::disconnect('webwork');
             echo count($questions) . " questions\r\n";
             echo "Disconnected from webwork\r\n";
             echo "Selected questions\r\n";
+            $used_questions = [];
             foreach ($questions as $value) {
-
                 $data = ['author' => $value->author,
                     'technology_id' => $value->technology_id,
                     'technology' => 'webwork'];
-                $question = Question::firstOrCreate($data);
+                if (!in_array($value->technology_id, $used_questions)) {
+                    $question = Question::Create($data);
+                    array_push($used_questions, $value->technology_id);
+                    $tag_id = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first()->id;
+                    if (!$question->tags->contains($tag_id)) {
+                        $question->tags()->attach($tag_id);
+                    }
 
-                $tag_id = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first()->id;
-                if (!$question->tags->contains($tag_id)) {
-                    $question->tags()->attach($tag_id);
-                }
-                if ($value->level) {
-                    $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
+                    if ($value->level) {
+                        $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
+
+                        if (!$question->tags->contains($tag->id)) {
+                            $question->tags()->attach($tag->id);
+                        }
+                    }
+                    if ($value->textbook_source) {
+                        $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
+                        if (!$question->tags->contains($tag->id)) {
+                            $question->tags()->attach($tag->id);
+                        }
+                    }
+                    $tag = Tag::firstOrCreate(['tag' => $value->path]);
                     if (!$question->tags->contains($tag->id)) {
                         $question->tags()->attach($tag->id);
                     }
-                    $tag->refresh();
-                }
-                if ($value->textbook_source) {
-                    $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
-                    if (!$question->tags->contains($tag->id)) {
-                        $question->tags()->attach($tag->id);
-                    }
-                    $tag->refresh();
-                }
-                $question->refresh();
 
+                } else {
+                    echo $value->technology_id;
+                }
             }
             echo "Inserted questions\r\n";
         } catch (Exception $e) {
@@ -181,7 +189,8 @@ class Question extends Model
 
     }
 
-    public function store()
+    public
+    function store()
     {
         $this->storeWebwork();
         $this->storeH5P();
