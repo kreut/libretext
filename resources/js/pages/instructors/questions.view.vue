@@ -13,6 +13,8 @@
                 v-model="currentPage"
                 :total-rows="questions.length"
                 :per-page="perPage"
+                first-number
+                last-number
               ></b-pagination>
             </div>
             <div class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" v-if="user.role !== 3">
