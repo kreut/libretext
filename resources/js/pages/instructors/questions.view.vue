@@ -75,7 +75,6 @@
       if (this.user.role === 3) {
         let receiveMessage = function (event) {
           if (event.data.action !== 'hello') {
-
             let submission_data = {
               'submission': event.data,
               'assignment_id': vm.assignmentId,
@@ -83,7 +82,8 @@
             }
             console.log(submission_data)
             axios.post('/api/submissions', submission_data)
-
+          } else {
+            console.log ('Hello Event')
           }
         }
         window.addEventListener("message", receiveMessage, true);
