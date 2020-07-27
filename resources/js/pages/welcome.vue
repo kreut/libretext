@@ -1,18 +1,16 @@
 <template>
   <div>
-    <div class="pb-3">
     <div class="basic-layout d-flex  justify-content-center bg" :style="{backgroundImage:'url(/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg)'}">
       <div class="text-center">
         <div class="title font-italic text-white">
           {{ title }}
         </div>
         <h5 class="text-white">
-          The Libretext Adaptive Learning Assessment System
+          The Libretexts Adaptive Learning Assessment System
         </h5>
       </div>
     </div>
     </div>
-  </div>
 </template>
 
 <script>
