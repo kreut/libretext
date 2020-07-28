@@ -107,45 +107,42 @@ class Question extends Model
                     DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"),
                     DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"),
                     DB::raw("CONCAT(`title`,' - ',OPL_chapter.name,' - ',OPL_section.name,': ',`firstname`,' ',`lastname`) AS textbook_source"))
-                ->toSql();
+                ->get();
             DB::disconnect('webwork');
             echo count($questions) . " questions\r\n";
             echo "Disconnected from webwork\r\n";
             echo "Selected questions\r\n";
-            $used_questions = [];
             foreach ($questions as $value) {
                 $data = ['author' => $value->author,
                     'technology_id' => $value->technology_id,
                     'technology' => 'webwork'];
-                if (!in_array($value->technology_id, $used_questions)) {
-                    $question = Question::Create($data);
-                    array_push($used_questions, $value->technology_id);
-                    $tag_id = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first()->id;
-                    if (!$question->tags->contains($tag_id)) {
-                        $question->tags()->attach($tag_id);
-                    }
-
-                    if ($value->level) {
-                        $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
-
+                $question = Question::firstOrCreate($data);
+                if ($value->keyword) {
+                    $tag = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first();
                         if (!$question->tags->contains($tag->id)) {
                             $question->tags()->attach($tag->id);
                         }
-                    }
-                    if ($value->textbook_source) {
-                        $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
-                        if (!$question->tags->contains($tag->id)) {
-                            $question->tags()->attach($tag->id);
-                        }
-                    }
-                    $tag = Tag::firstOrCreate(['tag' => $value->path]);
+                }
+
+                if ($value->level) {
+                    $tag = "Difficulty Level = {$value->level}";
+                    $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
+
                     if (!$question->tags->contains($tag->id)) {
                         $question->tags()->attach($tag->id);
                     }
-
-                } else {
-                    echo $value->technology_id;
                 }
+                if ($value->textbook_source) {
+                    $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
+                    if (!$question->tags->contains($tag->id)) {
+                        $question->tags()->attach($tag->id);
+                    }
+                }
+                $tag = Tag::firstOrCreate(['tag' => $value->path]);
+                if (!$question->tags->contains($tag->id)) {
+                    $question->tags()->attach($tag->id);
+                }
+                echo $value->technology_id . "\r\n";
             }
             echo "Inserted questions\r\n";
         } catch (Exception $e) {
