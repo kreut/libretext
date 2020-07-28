@@ -129,7 +129,7 @@
       ok-title="Yes, delete assignment!"
 
     >
-      <p>By deleting the assignment, you will also delete all student grades associated with the assignment.</p>
+      <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
       <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
     </b-modal>
     <div v-if="hasAssignments">

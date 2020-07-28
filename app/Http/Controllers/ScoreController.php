@@ -2,12 +2,12 @@
 
 namespace App\Http\Controllers;
 
-use App\Grade;
+use App\Score;
 use App\Course;
 use App\Enrollment;
 use Illuminate\Http\Request;
 
-class GradeController extends Controller
+class ScoreController extends Controller
 {
 
     public function index(Course $course)
@@ -24,22 +24,22 @@ class GradeController extends Controller
             return ['hasAssignment' => false];
         }
 
-        $grades = $course->grades;
+        $scores = $course->scores;
 
-        //organize the grades by user_id and assignment
-        $grades_by_user_and_assignment = [];
-        foreach ($grades as $grade) {
-            $grades_by_user_and_assignment[$grade->user_id][$grade->assignment_id] = $grade->grade;
+        //organize the scores by user_id and assignment
+        $scores_by_user_and_assignment = [];
+        foreach ($scores as $score) {
+            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
         }
 
-        //now fill in the actual grades
+        //now fill in the actual scores
         $rows = [];
         foreach ($enrolled_users as $user_id => $name) {
             $columns = [];
 
             foreach ($assignments as $assignment) {
-                $grade = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
-                $columns[$assignment->id] = $grade;
+                $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
+                $columns[$assignment->id] = $score;
             }
             $columns['name'] = $name;
             $columns['userId'] = $user_id;
@@ -82,7 +82,7 @@ class GradeController extends Controller
 
     /**
      *
-     * Show the grades for a given course
+     * Show the scores for a given course
      *
      * @param Course $course
      * @return array
@@ -101,10 +101,10 @@ class GradeController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param \App\Grade $grade
+     * @param \App\Score $score
      * @return \Illuminate\Http\Response
      */
-    public function edit(Grade $grade)
+    public function edit(Score $score)
     {
         //
     }
@@ -113,10 +113,10 @@ class GradeController extends Controller
      * Update the specified resource in storage.
      *
      * @param \Illuminate\Http\Request $request
-     * @param \App\Grade $grade
+     * @param \App\Score $score
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Grade $grade)
+    public function update(Request $request, Score $score)
     {
         //
     }
@@ -124,10 +124,10 @@ class GradeController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param \App\Grade $grade
+     * @param \App\Score $score
      * @return \Illuminate\Http\Response
      */
-    public function destroy(Grade $grade)
+    public function destroy(Score $score)
     {
         //
     }

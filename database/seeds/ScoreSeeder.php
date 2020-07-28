@@ -3,13 +3,13 @@
 use Illuminate\Database\Seeder;
 use App\Assignment;
 use App\User;
-use App\Grade;
+use App\Score;
 use Faker\Factory;
 
-class GradeSeeder extends Seeder
+class ScoreSeeder extends Seeder
 {
     /**
-     * Randomly pick users to create C grades for all assignments
+     * Randomly pick users to create C scores for all assignments
      *
      * @return void
      */
@@ -22,10 +22,10 @@ class GradeSeeder extends Seeder
             $randId = $faker->numberBetween(1, $num_users+1);
             $users = User::where('id', '>', $randId)->get();
             foreach ($users as $user) {
-                Grade::create([
+                Score::create([
                     'user_id' => $user->id,
                     'assignment_id' => $assignment->id,
-                    'grade' => 'C'
+                    'score' => 'C'
                 ]);
             }
         }

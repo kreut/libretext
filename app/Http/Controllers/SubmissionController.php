@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Submission;
-use App\Grade;
+use App\Score;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -54,15 +54,15 @@ class SubmissionController extends Controller
         $submission ? $submission->update(['submission' => $data['submission']])
                      : Submission::Create($data);
 
-        //update the grade if it's supposed to be updated
+        //update the score if it's supposed to be updated
         $num_submissions_by_assignment = DB::table('submissions')
             ->where('user_id', '=', $data['user_id'])
             ->where('assignment_id', '=', $data['assignment_id'])
             ->count();
         if ($num_submissions_by_assignment >= 2) {
-            Grade::firstOrCreate(['user_id' => $data['user_id'],
+            Score::firstOrCreate(['user_id' => $data['user_id'],
                 'assignment_id' => $data['assignment_id'],
-                'grade' => 'C']);
+                'score' => 'C']);
         }
     }
 

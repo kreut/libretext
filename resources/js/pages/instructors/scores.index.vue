@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Grades"></PageTitle>
+    <PageTitle title="Scores"></PageTitle>
     <div v-if="hasAssignments">
       <b-table striped
                hover
@@ -23,7 +23,7 @@
     </div>
     <div v-else>
       <b-alert show variant="warning"><a href="#" class="alert-link">Once you create your first assignment, you'll be
-        able to view your gradebook.</a></b-alert>
+        able to view your scorebook.</a></b-alert>
     </div>
     <b-modal
       id="modal-update-student-assignment"
@@ -112,7 +112,7 @@
       sortDesc: false,
       courseId: '',
       fields: [],
-      grades: [],
+      scores: [],
       items: [],
       hasAssignments: true,
       studentUserId: 0,
@@ -130,7 +130,7 @@
     }),
     mounted() {
       this.courseId = this.$route.params.courseId
-      this.getGrades();
+      this.getScores();
     },
     methods: {
       submitUpdateAssignmentByStudent(bvModalEvt) {
@@ -156,6 +156,7 @@
         }
       },
       async updateScore(userId, assignmentId) {
+          alert(this.form.score)
 
 
       },
@@ -177,10 +178,10 @@
         this.$bvModal.show('modal-update-student-assignment')
 
       },
-      async getGrades() {
+      async getScores() {
 
         try {
-          const {data} = await axios.get(`/api/courses/${this.courseId}/grades`)
+          const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
           console.log(data)
           if (data.hasAssignments) {
             this.items = data.rows

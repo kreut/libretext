@@ -122,7 +122,7 @@ class CourseController extends Controller
                 $course->accessCodes()->delete();
                 foreach ($course->assignments as $assignment){
                     $assignment->questions()->detach();
-                    $assignment->grades()->delete();
+                    $assignment->scores()->delete();
                 }
                 $course->assignments()->delete();
                 $course->enrollments()->delete();

@@ -27,7 +27,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     //instructor
     Route::get('/courses', 'CourseController@index');
-    Route::get('/courses/{course}/grades', 'GradeController@index');
+    Route::get('/courses/{course}/scores', 'ScoreController@index');
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
 
 

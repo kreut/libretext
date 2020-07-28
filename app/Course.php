@@ -16,8 +16,8 @@ class Course extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
-    public function grades() {
-        return $this->hasManyThrough('App\Grade', 'App\Assignment');
+    public function scores() {
+        return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
     public function enrolledUsers() {

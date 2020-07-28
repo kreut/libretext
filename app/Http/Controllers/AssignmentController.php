@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Course;
-use App\Grade;
+use App\Score;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
@@ -140,17 +140,17 @@ class AssignmentController extends Controller
      *
      * @param Course $course
      * @param Assignment $assignment
-     * @param Grade $grade
+     * @param Score $score
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, Assignment $assignment, Grade $grade)
+    public function destroy(Course $course, Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($assignment, $grade) {
-                $grade->where('assignment_id','=',$assignment->id)->delete();
+            DB::transaction(function () use ($assignment, $score) {
+                $score->where('assignment_id','=',$assignment->id)->delete();
                 $assignment->delete();
             });
             $response['type'] = 'success';

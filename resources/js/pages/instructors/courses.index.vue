@@ -81,7 +81,7 @@
       <ol>
         <li>All assignments associated with the course</li>
         <li>All submitted student responses</li>
-        <li>All student grades</li>
+        <li>All student scores</li>
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
     </b-modal>
@@ -91,7 +91,7 @@
           <div class="mb-0">
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
               icon="file-earmark-text"></b-icon></span>
-            <span class="pr-1" v-on:click="showGrades(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
+            <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
             <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
           </div>
@@ -162,8 +162,8 @@
         window.location.href = `/instructors/courses/${courseId}/assignments`
       }
       ,
-      showGrades(courseId) {
-        window.location.href = `/courses/${courseId}/grades`
+      showScores(courseId) {
+        window.location.href = `/courses/${courseId}/scores`
       }
       ,
       deleteCourse(courseId) {

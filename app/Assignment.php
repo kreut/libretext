@@ -13,8 +13,8 @@ class Assignment extends Model
         return $this->belongsToMany('App\Question')->withTimestamps();
     }
 
-    public function grades()
+    public function scores()
     {
-        return $this->hasMany('App\Grade');
+        return $this->hasMany('App\Score');
     }
 }
