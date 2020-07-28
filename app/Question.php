@@ -80,7 +80,7 @@ class Question extends Model
         curl_close($ch);
         return json_decode($questions);
     }
-    public function addOtherTags($key, $tag, $question){
+    public function addTag($key, $tag, $question){
         if ($key) {
             $tag = Tag::firstOrCreate(compact('tag'));
             if (!$question->tags->contains($tag->id)) {
@@ -122,7 +122,7 @@ class Question extends Model
                 $this->addTag($value->level, "Difficulty Level = {$value->level}", $question);
                 $this->addTag($value->textbook_source, $value->textbook_source, $question);
                 $this->addTag($value->path, $value->path, $question);
-
+                $question->refresh();
                 echo $value->technology_id . "\r\n";
             }
             echo "Inserted questions\r\n";

@@ -21,18 +21,29 @@ class QuestionController extends Controller
             ->get()
             ->pluck('id');
         if (!$chosen_tags) return ['type' => 'error'];
-
-        $question_ids = DB::table('question_tag')
-            ->select('question_id')
-            ->whereIn('tag_id', $chosen_tags)
-            ->groupBy(['question_id','tag_id'])
-            ->having(DB::raw('count(`tag_id`)'), '=', count($chosen_tags))
-            ->get()
-            ->pluck('question_id');
-        $questions = Question::whereIn('id', $question_ids)->get();
-        if (!count($questions)) {
+        $question_ids_grouped_by_tag = [];
+        //get all of the question ids for each of the tags
+        foreach ($chosen_tags as $key => $chosen_tag) {
+            $question_ids_grouped_by_tag[$key] = DB::table('question_tag')
+                                                ->select('question_id')
+                                                ->where('tag_id', '=', $chosen_tag)
+                                                ->get()
+                                                 ->pluck('question_id')->toArray();
+            if (!$question_ids_grouped_by_tag[$key] ){
+                return ['type' => 'error'];
+            }
+        }
+        //now intersect them for each group
+        $question_ids = $question_ids_grouped_by_tag[0];
+        foreach ($question_ids_grouped_by_tag as $question_group) {
+            $intersected_question_ids = array_intersect($question_ids, $question_group);
+        }
+        if (!count($intersected_question_ids)) {
             return ['type' => 'error'];
         }
+
+        $questions = Question::whereIn('id', $intersected_question_ids)->get();
+
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
 
