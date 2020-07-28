@@ -8,6 +8,7 @@
                :items="items"
                :fields="fields"
                :sort-by.sync="sortBy"
+               primary-key="userId"
                :sort-desc.sync="sortDesc"
                sort-icon-left
                responsive="sm"
@@ -15,7 +16,7 @@
       >
         <template v-slot:[initStudentAssignmentCell(assignmentIndex+1)]="data"
                   v-for="assignmentIndex in assignmentsArray">
-          <span v-on:click="openStudentAssignmentModal(data.index, data.field.key)">{{ data.value}}</span>
+          <span v-on:click="openStudentAssignmentModal(data.item.userId, data.field.key)">{{ data.value}}</span>
         </template>
 
       </b-table>
@@ -114,8 +115,8 @@
       grades: [],
       items: [],
       hasAssignments: true,
-      studentIndex: 0,
-      assignmentIndex: 0,
+      studentUserId: 0,
+      assignmentId: 0,
       assignmentsArray: [],
       options: [
         {value: null, text: 'Please select an option'},
@@ -139,15 +140,30 @@
         this.updateAssignmentByStudent()
       },
       updateAssignmentByStudent() {
-        if ((this.form.score !== null) && (this.form.extension_date !== '')) {
+        let isUpdateScore = (this.form.score !== null)
+        let isGiveExtension = (this.form.extension_date !== '')
+        if (isUpdateScore && isGiveExtension) {
           this.$noty.error("Please either give an extension or provide an override score, but not both.")
           this.form.score = null
           this.form.extension_date = ''
+          return false
         }
+        if (isUpdateScore) {
+          this.updateScore(this.studentUserId, this.assignmentId)
+        }
+        if (isGiveExtension) {
+          this.giveExtension(this.studentUserId, this.assignmentId)
+        }
+      },
+      async updateScore(userId, assignmentId) {
+
+
+      },
+      async giveExtension(userId, assignmentId) {
+
 
       },
       resetModalForms() {
-
         this.form.extension_date = ''
         this.form.extension_time = '09:00:00'
         this.form.errors.clear()
@@ -155,29 +171,27 @@
       initStudentAssignmentCell(key) {
         return `cell(${key})`; // simple string interpolation
       },
-      openStudentAssignmentModal(studentIndex, assignmentIndex) {
-        this.studentIndex = studentIndex
-        this.assignmentIndex = assignmentIndex
-        console.log(studentIndex + ', ' + assignmentIndex)
+      openStudentAssignmentModal(studentUserId, assignmentId) {
+        this.studentUserId = studentUserId
+        this.assignmentId = assignmentId
         this.$bvModal.show('modal-update-student-assignment')
 
       },
-      getGrades() {
+      async getGrades() {
 
         try {
-          axios.get(`/api/courses/${this.courseId}/grades`).then(
-            response => {
-              console.log(response)
-              if (response.data.hasAssignments) {
-                this.items = response.data.rows
-                this.fields = response.data.fields
-                //create an array 0 up through the top assignment number index
-                this.assignmentsArray = [...Array(this.fields.length).keys()]
-              } else {
-                this.hasAssignments = false
-              }
-            }
-          )
+          const {data} = await axios.get(`/api/courses/${this.courseId}/grades`)
+          console.log(data)
+          if (data.hasAssignments) {
+            this.items = data.rows
+            this.fields = data.fields  //Name
+            //create an array 0 up through the top assignment number index
+            this.assignmentsArray = [...Array(this.fields.length).keys()]
+          } else {
+            this.hasAssignments = false
+          }
+
+
         } catch (error) {
           alert(error.message)
         }

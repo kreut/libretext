@@ -18,7 +18,7 @@ class GradeController extends Controller
         }
 
         //get all assignments in the course
-        $assignments = $course->assignments;//get all the info
+        $assignments = $course->assignments->sortBy('due');
 
         if ($assignments->isEmpty()) {
             return ['hasAssignment' => false];
@@ -36,11 +36,13 @@ class GradeController extends Controller
         $rows = [];
         foreach ($enrolled_users as $user_id => $name) {
             $columns = [];
+
             foreach ($assignments as $assignment) {
                 $grade = $grades_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
                 $columns[$assignment->id] = $grade;
             }
             $columns['name'] = $name;
+            $columns['userId'] = $user_id;
             $rows[] = $columns;
         }
 
