@@ -80,19 +80,20 @@ class Question extends Model
         curl_close($ch);
         return json_decode($questions);
     }
+    public function addOtherTags($key, $tag, $question){
+        if ($key) {
+            $tag = Tag::firstOrCreate(compact('tag'));
+            if (!$question->tags->contains($tag->id)) {
+                $question->tags()->attach($tag->id);
+            }
+        }
+    }
 
     public function storeWebwork()
     {
         try {
             $webwork = DB::connection('webwork');
             echo "Connected to webwork\r\n";
-            $keywords = $webwork->table('OPL_keyword')
-                ->select('*')
-                ->get();
-            foreach ($keywords as $value) {
-                Tag::firstOrCreate(['tag' => mb_strtolower($value->keyword)]);
-            }
-            echo "created tags\r\n";
             $questions = $webwork->table('OPL_path')
                 ->join('OPL_pgfile', 'OPL_path.path_id', '=', 'OPL_pgfile.path_id')
                 ->leftJoin('OPL_pgfile_keyword', 'OPL_pgfile_keyword.pgfile_id', '=', 'OPL_pgfile.pgfile_id')
@@ -117,31 +118,11 @@ class Question extends Model
                     'technology_id' => $value->technology_id,
                     'technology' => 'webwork'];
                 $question = Question::firstOrCreate($data);
-                if ($value->keyword) {
-                    $tag = DB::table('tags')->where('tag', '=', mb_strtolower($value->keyword))->first();
-                        if (!$question->tags->contains($tag->id)) {
-                            $question->tags()->attach($tag->id);
-                        }
-                }
+                $this->addTag($value->keyword, mb_strtolower($value->keyword), $question);
+                $this->addTag($value->level, "Difficulty Level = {$value->level}", $question);
+                $this->addTag($value->textbook_source, $value->textbook_source, $question);
+                $this->addTag($value->path, $value->path, $question);
 
-                if ($value->level) {
-                    $tag = "Difficulty Level = {$value->level}";
-                    $tag = Tag::firstOrCreate(['tag' => "Difficulty Level = {$value->level}"]);
-
-                    if (!$question->tags->contains($tag->id)) {
-                        $question->tags()->attach($tag->id);
-                    }
-                }
-                if ($value->textbook_source) {
-                    $tag = Tag::firstOrCreate(['tag' => $value->textbook_source]);
-                    if (!$question->tags->contains($tag->id)) {
-                        $question->tags()->attach($tag->id);
-                    }
-                }
-                $tag = Tag::firstOrCreate(['tag' => $value->path]);
-                if (!$question->tags->contains($tag->id)) {
-                    $question->tags()->attach($tag->id);
-                }
                 echo $value->technology_id . "\r\n";
             }
             echo "Inserted questions\r\n";
