@@ -9,7 +9,10 @@
     />
     <div class="mt-3 d-flex flex-row">
       <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
-      <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">Get Questions</b-button>
+      <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">
+        <b-spinner small type="grow" v-if="gettingQuestions"></b-spinner>
+        Get Questions
+      </b-button>
       <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
     </div>
     <hr>
@@ -37,20 +40,24 @@
       ></b-pagination>
     </div>
     <div v-if="showQuestions">
-      <b-card v-bind:title="questions[currentPage-1].title" v-bind:sub-title="questions[currentPage-1].author" :items="questions">
-      <b-card-text>
-        <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2" v-on:click="removeQuestion(questions[currentPage-1])">
-          <b-button variant="danger">Remove Question</b-button>
-        </div>
-        <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
-          <v-button variant="success">Add Question</v-button>
-        </div>
-        <b-embed type="iframe"
-                 aspect="16by9"
-                 v-bind:src="questions[currentPage-1].src"
-                 allowfullscreen
-        ></b-embed>
-      </b-card-text>
+      <b-card
+        v-bind:title="typeof((questions[currentPage-1].title) !== 'undefined') ? questions[currentPage-1].title : ' '"
+        v-bind:sub-title="typeof((questions[currentPage-1].author) !== 'undefined') ? questions[currentPage-1].author : ' '"
+        :items="questions">
+        <b-card-text>
+          <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+               v-on:click="removeQuestion(questions[currentPage-1])">
+            <b-button variant="danger">Remove Question</b-button>
+          </div>
+          <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
+            <v-button variant="success">Add Question</v-button>
+          </div>
+          <b-embed type="iframe"
+                   aspect="16by9"
+                   v-bind:src="questions[currentPage-1].src"
+                   allowfullscreen
+          ></b-embed>
+        </b-card-text>
       </b-card>
     </div>
   </div>
@@ -74,7 +81,8 @@
       questions: [],
       chosenTags: [],
       question: {},
-      showQuestions: false
+      showQuestions: false,
+      gettingQuestions: false
     }),
     created() {
       this.getSrc = getSrc
@@ -111,7 +119,7 @@
         try {
           await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
           this.$noty.success('The question has been added to the assignment.')
-          this.questions[this.currentPage-1].inAssignment = true
+          this.questions[this.currentPage - 1].inAssignment = true
 
         } catch (error) {
           console.log(error)
@@ -132,6 +140,7 @@
       async getQuestionsByTags() {
         this.questions = []
         this.showQuestions = false
+        this.gettingQuestions = true
         this.addTag() //in case they didn't click
         try {
           if (this.chosenTags.length === 0) {
@@ -158,7 +167,7 @@
         } catch (error) {
           alert(error.message)
         }
-
+        this.gettingQuestions = false
       },
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
