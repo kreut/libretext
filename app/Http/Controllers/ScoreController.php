@@ -2,10 +2,12 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Handler;
 use App\Score;
 use App\Course;
 use App\Enrollment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class ScoreController extends Controller
 {
@@ -118,27 +120,46 @@ class ScoreController extends Controller
      */
     public function update(Request $request, Course $course)
     {
-dd($course->id);//validate that they are the owner of the course
-        //validate that they are the owner of the course
+//validate that they are the owner of the course
+        $is_owner_of_course = DB::table('courses')
+            ->select('user_id')
+            ->where('course_id', '=', $course->id)
+            ->where('user_id', '=', Auth::user()->id)
+            ->first();
         //validate that the assignment is in the course
-        //validate that the user is enrolled in the course
-      /*  array:3 [
-        "assignment_id" => "9"
-  "user_id" => 7
-  "score" => "4"
-]*/
+        $assignment_is_in_course = DB::table('assignments')
+            ->select('id')
+            ->where('assignment_id', '=', $request->assignment_id)
+            ->where('course_id', '=', $course->id)
+            ->first();
+        //validate that the student is enrolled in the course
+        $student_is_in_enrolled_in_the_course = DB::table('enrollments')
+            ->select('user_id')
+            ->where('course_id', '=', $course->id)
+            ->where('user_id', '=', $request->student_user_id)
+            ->first();
+        $response['type'] = 'error';
+        try {
+
+            if (!($is_owner_of_course && $assignment_is_in_course && $student_is_in_enrolled_in_the_course)) {
+                $response['message'] = 'You do not have access to that score.';
+                return $response;
+            }
+            //todo: validate the data
+
+            DB::table('scores')
+                ->where('user_id', '=', $request->student_user_id)
+                ->where('assignment_id', '=', $request->assignment_id)
+                ->update(['score' => $request->score]);
+            $response['message'] = 'The score has been updated.';
 
 
-
-
-
-return dd($request->all());
-
-
-
-
-
-
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
