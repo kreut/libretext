@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Tag;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class TagController extends Controller
 {
@@ -14,7 +15,11 @@ class TagController extends Controller
      */
     public function index()
     {
-        return Tag::all('tag')->pluck('tag');
+        return DB::table('tags')
+            ->orderBy('tag')
+            ->get()
+            ->pluck('tag');
+
     }
 
     /**
