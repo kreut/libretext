@@ -8,6 +8,8 @@ use App\Course;
 use App\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Gate;
 
 class ScoreController extends Controller
 {
@@ -111,65 +113,83 @@ class ScoreController extends Controller
         //
     }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Score $score
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Course $course)
+    public function updateScorePolicy(int $course_id, int $assignment_id, int $student_user_id)
     {
-//validate that they are the owner of the course
+        //validate that they are the owner of the course
         $is_owner_of_course = DB::table('courses')
-            ->select('user_id')
-            ->where('course_id', '=', $course->id)
+            ->select('id')
+            ->where('id', '=', $course_id)
             ->where('user_id', '=', Auth::user()->id)
             ->first();
         //validate that the assignment is in the course
         $assignment_is_in_course = DB::table('assignments')
             ->select('id')
-            ->where('assignment_id', '=', $request->assignment_id)
-            ->where('course_id', '=', $course->id)
+            ->where('id', '=', $assignment_id)
+            ->where('course_id', '=', $course_id)
             ->first();
-        //validate that the student is enrolled in the course
+        //validate that the student is enorolled in the course
         $student_is_in_enrolled_in_the_course = DB::table('enrollments')
             ->select('user_id')
-            ->where('course_id', '=', $course->id)
-            ->where('user_id', '=', $request->student_user_id)
+            ->where('course_id', '=', $course_id)
+            ->where('user_id', '=', $student_user_id)
             ->first();
-        $response['type'] = 'error';
-        try {
 
-            if (!($is_owner_of_course && $assignment_is_in_course && $student_is_in_enrolled_in_the_course)) {
-                $response['message'] = 'You do not have access to that score.';
-                return $response;
-            }
-            //todo: validate the data
+        return ($is_owner_of_course && $assignment_is_in_course && $student_is_in_enrolled_in_the_course);
+}
 
-            DB::table('scores')
-                ->where('user_id', '=', $request->student_user_id)
-                ->where('assignment_id', '=', $request->assignment_id)
-                ->update(['score' => $request->score]);
-            $response['message'] = 'The score has been updated.';
-
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
-        }
+/**
+ * Update the specified resource in storage.
+ *
+ * @param \Illuminate\Http\Request $request
+ * @param \App\Score $score
+ * @return \Illuminate\Http\Response
+ */
+public
+function update(Request $request, Course $course)
+{
+    /*
+     *
+    //start: 1. test the auth logic --- works
+    2. Move into a policy
+    4. change the grade with js
+    5. do the due date version
+    6. lock down the assignments
+    7. Upload all to dev
+    8. Move all to other mac
+*/
+    $response['type'] = 'error';
+    try {
+        if (!$this->updateScorePolicy($course->id, $request->assignment_id, $request->student_user_id)){
+        $response['message'] = "You don't have access to that student/assignment combination.";
         return $response;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Score $score
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Score $score)
-    {
-        //
+        //todo: validate the data as a possible score (completed or not
+        Score::updateOrCreate(
+            ['user_id' => $request->student_user_id, 'assignment_id' =>  $request->assignment_id],
+             ['score' => $request->score]
+        );
+
+        $response['type'] = 'success';
+        $response['message'] = 'The score has been updated.';
+
+    } catch (Exception $e) {
+        $h = new Handler(app());
+        $h->report($e);
+        $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
     }
+    return $response;
+}
+
+/**
+ * Remove the specified resource from storage.
+ *
+ * @param \App\Score $score
+ * @return \Illuminate\Http\Response
+ */
+public
+function destroy(Score $score)
+{
+    //
+}
 }

@@ -161,20 +161,10 @@
                           'score': this.form.score}
                           console.log(updateInfo)
 
-        //start: 1. test the auth logic
-        2. Move into a policy
-        3. test return messages
-        4. change the grade with js
-        5. do the due date
-        6. lock down the assignments
-        7. Upload all to dev
-
-
 
         try {
           const {data} = await axios.patch(`/api/courses/${this.courseId}/scores`, updateInfo)
           this.$noty[data.type](data.message)
-          this.resetAll('modal-delete-assignment')
         } catch (error) {
           console.log(error)
         }
