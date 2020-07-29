@@ -160,11 +160,13 @@
                           'student_user_id': studentUserId,
                           'score': this.form.score}
                           console.log(updateInfo)
-
-
         try {
           const {data} = await axios.patch(`/api/courses/${this.courseId}/scores`, updateInfo)
           this.$noty[data.type](data.message)
+          this.getScores()
+          if (data.type === 'success'){
+            this.resetAll('modal-update-student-assignment')
+          }
         } catch (error) {
           console.log(error)
         }
@@ -173,9 +175,17 @@
 
 
       },
+      resetAll(modalId) {
+        this.resetModalForms()
+        // Hide the modal manually
+        this.$nextTick(() => {
+          this.$bvModal.hide(modalId)
+        })
+      },
       resetModalForms() {
         this.form.extension_date = ''
         this.form.extension_time = '09:00:00'
+        this.form.score = null
         this.form.errors.clear()
       },
       initStudentAssignmentCell(key) {
