@@ -28,6 +28,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     //instructor
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/{course}/scores', 'ScoreController@index');
+    Route::patch('/courses/{course}/scores', 'ScoreController@update');
+
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
 
 

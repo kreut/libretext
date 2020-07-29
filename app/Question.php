@@ -77,7 +77,15 @@ class Question extends Model
         curl_setopt($ch, CURLOPT_POST, 1);
         $questions = curl_exec($ch);
 
+        if (curl_errno($ch)) {
+            $error_msg = curl_error($ch);
+        }
         curl_close($ch);
+
+        if (isset($error_msg)) {
+            echo $error_msg;
+            exit;
+        }
         return json_decode($questions);
     }
     public function addTag($key, $tag, $question){

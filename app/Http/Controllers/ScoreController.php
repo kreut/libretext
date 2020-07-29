@@ -116,9 +116,29 @@ class ScoreController extends Controller
      * @param \App\Score $score
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Score $score)
+    public function update(Request $request, Course $course)
     {
-        //
+dd($course->id);//validate that they are the owner of the course
+        //validate that they are the owner of the course
+        //validate that the assignment is in the course
+        //validate that the user is enrolled in the course
+      /*  array:3 [
+        "assignment_id" => "9"
+  "user_id" => 7
+  "score" => "4"
+]*/
+
+
+
+
+
+return dd($request->all());
+
+
+
+
+
+
     }
 
     /**

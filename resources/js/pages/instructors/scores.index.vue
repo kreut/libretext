@@ -155,10 +155,14 @@
           this.giveExtension(this.studentUserId, this.assignmentId)
         }
       },
-      async updateScore(userId, assignmentId) {
-          alert(this.form.score)
+      async updateScore(studentUserId, assignmentId) {
+        let updateInfo = {'assignment_id': assignmentId,
+                          'user_id': studentUserId,
+                          'score': this.form.score}
+                          console.log(updateInfo)
 
-
+        const {data} = await axios.patch(`/api/courses/${this.courseId}/scores`, updateInfo)
+console.log(data)
       },
       async giveExtension(userId, assignmentId) {
 
