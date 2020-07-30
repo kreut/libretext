@@ -6,6 +6,7 @@ use App\Extension;
 use App\Traits\DateFormatter;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreExtension;
+use Illuminate\Support\Facades\Db;
 
 class ExtensionController extends Controller
 {
@@ -44,7 +45,7 @@ class ExtensionController extends Controller
         try {
             $student_user_id = $request->student_user_id;
             $assignment_id = $request->assignment_id;
-            $cousre_id = $request->course_id;
+            $course_id = $request->course_id;
             /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
                   $response['message'] = "You don't have access to that student/assignment combination.";
                   return $response;
@@ -53,9 +54,11 @@ class ExtensionController extends Controller
 
             $data = $request->validated();
 
-            Extension::updateOrCreate(
-                ['extension' => $data['extension_date'] . ' ' . $data['extension_time']],
-                ['user_id' => $student_user_id, 'assignment_id' => $assignment_id]
+            Extension::create(
+                ['extension' => $data['extension_date'] . ' ' . $data['extension_time'],
+                    'user_id' => $student_user_id,
+                    'assignment_id' => $assignment_id
+                ]
             );
 
             $response['type'] = 'success';
@@ -64,7 +67,7 @@ class ExtensionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error giving the extension.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating the extension.  Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -78,10 +81,11 @@ class ExtensionController extends Controller
     public function show(Request $request)
     {
 
-        $extension = Extension::where(['user_id' => $request->user])
-            ->where(['assignment_id' => $request->assignment])
+        $extension = DB::table('extensions')
+            ->where('user_id', $request->user)
+            ->where('assignment_id', $request->assignment)
             ->first()
-            ->value('extension');
+            ->extension;
 
         if ($extension) {
             $response['type'] = 'success';
@@ -111,9 +115,34 @@ class ExtensionController extends Controller
      * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
-    public function update(Request $request, Extension $extension)
+    public function update(StoreExtension $request, Extension $extension)
     {
-        //
+        $response['type'] = 'error';
+        try {
+            $student_user_id = $request->student_user_id;
+            $assignment_id = $request->assignment_id;
+            $course_id = $request->course_id;
+            /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
+                  $response['message'] = "You don't have access to that student/assignment combination.";
+                  return $response;
+              }*/
+
+
+            $data = $request->validated();
+            Extension::where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->update(['extension' => $data['extension_date'] . ' ' . $data['extension_time']]);
+
+
+            $response['type'] = 'success';
+            $response['message'] = 'The extension has been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**

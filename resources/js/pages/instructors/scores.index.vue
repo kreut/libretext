@@ -118,6 +118,7 @@
       studentUserId: 0,
       assignmentId: 0,
       assignmentsArray: [],
+      hasExtension: false,
       options: [
         {value: null, text: 'Please select an option'},
         {value: 'C', text: 'Completed'},
@@ -183,7 +184,8 @@
         this.form.assignment_id = assignmentId
         this.form.student_user_id = studentUserId
         try {
-          const {data} = await this.form.patch(`/api/assignments/extensions`)
+          let action = this.hasExtension ? 'patch' : 'post'
+          const {data} = await this.form[action](`/api/assignments/extensions`)
           console.log(data)
           this.$noty[data.type](data.message)
           await this.getScores()
@@ -211,10 +213,12 @@
       initStudentAssignmentCell(key) {
         return `cell(${key})`; // simple string interpolation
       },
-     async openStudentAssignmentModal(value, studentUserId, assignmentId) {
+     async openStudentAssignmentModal(value,studentUserId, assignmentId) {
         this.studentUserId = studentUserId
         this.assignmentId = assignmentId
-        if (value === 'Extension'){
+       this.hasExtension = value === 'Extension'
+
+        if (this.hasExtension){
           const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
           if (data.type === 'success'){
             this.form.extension_date = data.extension_date

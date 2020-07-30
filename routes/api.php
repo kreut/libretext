@@ -29,7 +29,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/{course}/scores', 'ScoreController@index');
     Route::patch('/assignments/scores', 'ScoreController@update');
-    Route::patch('/assignments/extensions', 'ExtensionController@store');
+    Route::post('/assignments/extensions', 'ExtensionController@store');
+    Route::patch('/assignments/extensions', 'ExtensionController@update');
     Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
 
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
