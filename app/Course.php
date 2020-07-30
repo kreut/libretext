@@ -28,6 +28,16 @@ class Course extends Model
             'id', //local key in courses table
             'user_id'); //local key in enrollments table
     }
+
+    public function extensions() {
+        return $this->hasManyThrough('App\Extension',
+            'App\Assignment',
+            'course_id', //foreign key on assignments table
+            'assignment_id', //foreign key on extensions table
+            'id', //local key in courses table
+            'id'); //local key in assignments table
+    }
+
     public function assignments() {
         return $this->hasMany('App\Assignment')->orderBy('due', 'asc');
     }

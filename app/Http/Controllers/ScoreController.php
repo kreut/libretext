@@ -29,11 +29,18 @@ class ScoreController extends Controller
         }
 
         $scores = $course->scores;
+        $extensions = $course->extensions;
+        foreach ($extensions as $value) {
+            $extension[$value->user_id][$value->assignment_id] = $value->extension;
+        }
+
+        Next: separate out extensions and then pass back
+
 
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         foreach ($scores as $score) {
-            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
+            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id]['score'] = $score->score;
         }
 
         //now fill in the actual scores
@@ -135,61 +142,61 @@ class ScoreController extends Controller
             ->first();
 
         return ($is_owner_of_course && $assignment_is_in_course && $student_is_in_enrolled_in_the_course);
-}
+    }
 
-/**
- * Update the specified resource in storage.
- *
- * @param \Illuminate\Http\Request $request
- * @param \App\Score $score
- * @return \Illuminate\Http\Response
- */
-public
-function update(Request $request)
-{
-    /*
+    /**
+     * Update the specified resource in storage.
      *
-    //start: 1. test the auth logic --- works
-    2. Move into a policy
-    4. change the grade with js
-    5. do the due date version
-    6. lock down the assignments
-    7. Upload all to dev
-    8. Move all to other mac
-*/
-    $response['type'] = 'error';
-    try {
-        if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
-        $response['message'] = "You don't have access to that student/assignment combination.";
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Score $score
+     * @return \Illuminate\Http\Response
+     */
+    public
+    function update(Request $request)
+    {
+        /*
+         *
+        //start: 1. test the auth logic --- works
+        2. Move into a policy
+        4. change the grade with js
+        5. do the due date version
+        6. lock down the assignments
+        7. Upload all to dev
+        8. Move all to other mac
+    */
+        $response['type'] = 'error';
+        try {
+            if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)) {
+                $response['message'] = "You don't have access to that student/assignment combination.";
+                return $response;
+            }
+
+            //todo: validate the data as a possible score (completed or not
+            Score::updateOrCreate(
+                ['user_id' => $request->student_user_id, 'assignment_id' => $request->assignment_id],
+                ['score' => $request->score]
+            );
+
+            $response['type'] = 'success';
+            $response['message'] = 'The score has been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+        }
         return $response;
     }
 
-        //todo: validate the data as a possible score (completed or not
-        Score::updateOrCreate(
-            ['user_id' => $request->student_user_id, 'assignment_id' =>  $request->assignment_id],
-             ['score' => $request->score]
-        );
-
-        $response['type'] = 'success';
-        $response['message'] = 'The score has been updated.';
-
-    } catch (Exception $e) {
-        $h = new Handler(app());
-        $h->report($e);
-        $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+    /**
+     * Remove the specified resource from storage.
+     *
+     * @param \App\Score $score
+     * @return \Illuminate\Http\Response
+     */
+    public
+    function destroy(Score $score)
+    {
+        //
     }
-    return $response;
-}
-
-/**
- * Remove the specified resource from storage.
- *
- * @param \App\Score $score
- * @return \Illuminate\Http\Response
- */
-public
-function destroy(Score $score)
-{
-    //
-}
 }

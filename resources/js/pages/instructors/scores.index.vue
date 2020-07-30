@@ -105,7 +105,7 @@
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
       form: new Form({
         extension_date: '',
-        extension_time: '09:00:00',
+        extension_time: '',
         score: null
       }),
       sortBy: 'name',
@@ -204,7 +204,7 @@
       },
       resetModalForms() {
         this.form.extension_date = ''
-        this.form.extension_time = '09:00:00'
+        this.form.extension_time = ''
         this.form.score = null
         this.form.errors.clear()
       },
