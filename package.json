@@ -27,6 +27,7 @@
     "vue": "^2.6.10",
     "vue-bootstrap-typeahead": "^0.2.6",
     "vue-i18n": "^8.11.2",
+    "vue-json-excel": "^0.2.98",
     "vue-meta": "^1.6.0",
     "vue-router": "^3.0.6",
     "vuejs-noty": "^0.1.3",
