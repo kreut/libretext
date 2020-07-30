@@ -215,9 +215,11 @@
         this.studentUserId = studentUserId
         this.assignmentId = assignmentId
         if (value === 'Extension'){
-
           const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
-console.log(data)
+          if (data.type === 'success'){
+            this.form.extension_date = data.extension_date
+            this.form.extension_time = data.extension_time
+          }
         }
         //get the score and assignment info
 

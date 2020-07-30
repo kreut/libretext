@@ -10,6 +10,7 @@ use App\Http\Requests\StoreExtension;
 class ExtensionController extends Controller
 {
     use DateFormatter;
+
     /**
      * Display a listing of the resource.
      *
@@ -33,7 +34,7 @@ class ExtensionController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(StoreExtension $request)
@@ -44,17 +45,17 @@ class ExtensionController extends Controller
             $student_user_id = $request->student_user_id;
             $assignment_id = $request->assignment_id;
             $cousre_id = $request->course_id;
-          /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
-                $response['message'] = "You don't have access to that student/assignment combination.";
-                return $response;
-            }*/
+            /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
+                  $response['message'] = "You don't have access to that student/assignment combination.";
+                  return $response;
+              }*/
 
 
             $data = $request->validated();
 
             Extension::updateOrCreate(
                 ['extension' => $data['extension_date'] . ' ' . $data['extension_time']],
-                ['user_id' => $student_user_id, 'assignment_id' =>  $assignment_id]
+                ['user_id' => $student_user_id, 'assignment_id' => $assignment_id]
             );
 
             $response['type'] = 'success';
@@ -71,30 +72,31 @@ class ExtensionController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\Extension  $extension
+     * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
     public function show(Request $request)
     {
 
-       $extension = Extension::where(['user_id' => $request->user])
-           ->where(['assignment_id'=> $request->assignment])
-            ->get();
-       dd($extension);
+        $extension = Extension::where(['user_id' => $request->user])
+            ->where(['assignment_id' => $request->assignment])
+            ->first()
+            ->value('extension');
 
+        if ($extension) {
+            $response['type'] = 'success';
+            $response['extension_date'] = $this->getDateFromSqlTimestamp($extension);
+            $response['extension_time'] = $this->getTimeFromSqlTimestamp($extension);
 
-
-
-       Start convert extenstion to date and time
-
-
+        }
+        return $response;
 
     }
 
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\Extension  $extension
+     * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
     public function edit(Extension $extension)
@@ -105,8 +107,8 @@ class ExtensionController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\Extension  $extension
+     * @param \Illuminate\Http\Request $request
+     * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, Extension $extension)
@@ -117,7 +119,7 @@ class ExtensionController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\Extension  $extension
+     * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
     public function destroy(Extension $extension)
