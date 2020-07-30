@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\Traits\DateFormatter;
 use App\Course;
 use App\Score;
 use Illuminate\Support\Facades\DB;
@@ -13,16 +14,8 @@ use \Illuminate\Http\Request;
 
 class AssignmentController extends Controller
 {
+    use DateFormatter;
 
-    public function getDateFromSqlTimestamp(string $date) {
-        return date('Y-m-d', strtotime($date));
-
-    }
-
-    public function getTimeFromSqlTimestamp(string $date) {
-        return date('H:i:00', strtotime($date));
-
-    }
     /**
      *
      * Display all assignments for the course

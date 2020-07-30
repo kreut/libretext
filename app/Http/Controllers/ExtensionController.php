@@ -3,11 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Extension;
+use App\Traits\DateFormatter;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreExtension;
 
 class ExtensionController extends Controller
 {
+    use DateFormatter;
     /**
      * Display a listing of the resource.
      *
@@ -72,9 +74,21 @@ class ExtensionController extends Controller
      * @param  \App\Extension  $extension
      * @return \Illuminate\Http\Response
      */
-    public function show(Extension $extension)
+    public function show(Request $request)
     {
-        //
+
+       $extension = Extension::where(['user_id' => $request->user])
+           ->where(['assignment_id'=> $request->assignment])
+            ->get();
+       dd($extension);
+
+
+
+
+       Start convert extenstion to date and time
+
+
+
     }
 
     /**

@@ -16,7 +16,7 @@
       >
         <template v-slot:[initStudentAssignmentCell(assignmentIndex+1)]="data"
                   v-for="assignmentIndex in assignmentsArray">
-          <span v-html="data.value" v-on:click="openStudentAssignmentModal(data.item.userId, data.field.key)"></span>
+          <span v-html="data.value" v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)">{{ data.value}}</span>
         </template>
 
       </b-table>
@@ -211,9 +211,14 @@
       initStudentAssignmentCell(key) {
         return `cell(${key})`; // simple string interpolation
       },
-      openStudentAssignmentModal(studentUserId, assignmentId) {
+     async openStudentAssignmentModal(value, studentUserId, assignmentId) {
         this.studentUserId = studentUserId
         this.assignmentId = assignmentId
+        if (value === 'Extension'){
+
+          const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
+console.log(data)
+        }
         //get the score and assignment info
 
         this.$bvModal.show('modal-update-student-assignment')
