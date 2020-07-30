@@ -23,7 +23,7 @@
     </div>
     <div v-else>
       <b-alert show variant="warning"><a href="#" class="alert-link">Once you create your first assignment, you'll be
-        able to view your scorebook.</a></b-alert>
+        able to view your gradebook.</a></b-alert>
     </div>
     <b-modal
       id="modal-update-student-assignment"
@@ -148,6 +148,10 @@
           this.form.extension_date = ''
           return false
         }
+        if (!(isUpdateScore || isGiveExtension)) {
+
+          this.$noty.error("Please either give an extension or provide an override score.")
+        }
         if (isUpdateScore) {
           this.updateScore(this.studentUserId, this.assignmentId)
         }
@@ -156,23 +160,39 @@
         }
       },
       async updateScore(studentUserId, assignmentId) {
-        let updateInfo = {'assignment_id': assignmentId,
-                          'student_user_id': studentUserId,
-                          'score': this.form.score}
-                          console.log(updateInfo)
+        let updateInfo = {
+          'course_id': this.courseId,
+          'assignment_id': assignmentId,
+          'student_user_id': studentUserId,
+          'score': this.form.score
+        }
+        console.log(updateInfo)
         try {
-          const {data} = await axios.patch(`/api/courses/${this.courseId}/scores`, updateInfo)
+          const {data} = await axios.patch(`/api/assignments/scores`, updateInfo)
           this.$noty[data.type](data.message)
-          this.getScores()
-          if (data.type === 'success'){
+          await this.getScores()
+          if (data.type === 'success') {
             this.resetAll('modal-update-student-assignment')
           }
         } catch (error) {
           console.log(error)
         }
       },
-      async giveExtension(userId, assignmentId) {
-
+      async giveExtension(studentUserId, assignmentId) {
+        this.form.course_id = this.courseId
+        this.form.assignment_id = assignmentId
+        this.form.student_user_id = studentUserId
+        try {
+          const {data} = await this.form.patch(`/api/assignments/extensions`)
+          console.log(data)
+          this.$noty[data.type](data.message)
+          await this.getScores()
+          if (data.type === 'success') {
+            this.resetAll('modal-update-student-assignment')
+          }
+        } catch (error) {
+         console.log(error)
+        }
 
       },
       resetAll(modalId) {
@@ -194,6 +214,8 @@
       openStudentAssignmentModal(studentUserId, assignmentId) {
         this.studentUserId = studentUserId
         this.assignmentId = assignmentId
+        //get the score and assignment info
+
         this.$bvModal.show('modal-update-student-assignment')
 
       },

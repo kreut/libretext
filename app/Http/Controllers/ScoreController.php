@@ -145,7 +145,7 @@ class ScoreController extends Controller
  * @return \Illuminate\Http\Response
  */
 public
-function update(Request $request, Course $course)
+function update(Request $request)
 {
     /*
      *
@@ -159,7 +159,7 @@ function update(Request $request, Course $course)
 */
     $response['type'] = 'error';
     try {
-        if (!$this->updateScorePolicy($course->id, $request->assignment_id, $request->student_user_id)){
+        if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
         $response['message'] = "You don't have access to that student/assignment combination.";
         return $response;
     }

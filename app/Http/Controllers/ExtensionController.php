@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Extension;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreExtension;
 
 class ExtensionController extends Controller
 {
@@ -33,9 +34,36 @@ class ExtensionController extends Controller
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request)
+    public function store(StoreExtension $request)
     {
-        //
+
+        $response['type'] = 'error';
+        try {
+            $student_user_id = $request->student_user_id;
+            $assignment_id = $request->assignment_id;
+            $cousre_id = $request->course_id;
+          /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
+                $response['message'] = "You don't have access to that student/assignment combination.";
+                return $response;
+            }*/
+
+
+            $data = $request->validated();
+
+            Extension::updateOrCreate(
+                ['extension' => $data['extension_date'] . ' ' . $data['extension_time']],
+                ['user_id' => $student_user_id, 'assignment_id' =>  $assignment_id]
+            );
+
+            $response['type'] = 'success';
+            $response['message'] = 'The student has been given an extension.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error giving the extension.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
