@@ -7,13 +7,14 @@ import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import VueNoty from 'vuejs-noty'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
-
+import JsonExcel from 'vue-json-excel'
 
 import '~/plugins'
 import '~/components'
 
 import 'vuejs-noty/dist/vuejs-noty.css' //https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
 
+Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)

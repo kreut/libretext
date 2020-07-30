@@ -1,7 +1,20 @@
 <template>
   <div>
-    <PageTitle title="Scores"></PageTitle>
+    <PageTitle title="Gradebook"></PageTitle>
     <div v-if="hasAssignments">
+      <download-excel
+        class   = "float-right mb-2"
+        :data   = "downloadData"
+        :fetch   = "fetchData"
+        :fields = "downloadFields"
+        worksheet = "My Worksheet"
+        type = "csv"
+        name    = "scores.csv">
+
+       <b-button variant="success">Download Scores</b-button>
+
+
+      </download-excel>
       <b-table striped
                hover
                fixed
@@ -112,6 +125,8 @@
       sortDesc: false,
       courseId: '',
       fields: [],
+      downloadFields:{},
+      downloadData: [],
       scores: [],
       items: [],
       hasAssignments: true,
@@ -230,14 +245,23 @@
         this.$bvModal.show('modal-update-student-assignment')
 
       },
+      async  fetchData(){
+        const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
+        return data.download_data;
+      },
       async getScores() {
 
         try {
           const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
           console.log(data)
-          if (data.hasAssignments) {
-            this.items = data.rows
-            this.fields = data.fields  //Name
+          if (data.table.hasAssignments) {
+            this.items = data.table.rows
+            this.fields = data.table.fields  //Name
+            this.downloadFields = data.download_fields
+            this.downloadData =data.download_data
+            console.log(this.downloadFields )
+            console.log(this.downloadData)
+
             //create an array 0 up through the top assignment number index
             this.assignmentsArray = [...Array(this.fields.length).keys()]
           } else {

@@ -38,21 +38,29 @@ class ScoreController extends Controller
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         foreach ($scores as $score) {
-            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id]['score'] = $score->score;
+            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id]= $score->score;
         }
 
         //now fill in the actual scores
         $rows = [];
+        $download_data = [];
         foreach ($enrolled_users as $user_id => $name) {
             $columns = [];
-
+            $download_row_data = ['name' => $name];
             foreach ($assignments as $assignment) {
                 $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
-                $score = $extension[$user_id][$assignment->id] ?? '-';
+                if (isset($extension[$user_id][$assignment->id])) {
+                    $score = 'Extension';
+                }
+
                 $columns[$assignment->id] = $score;
+                $download_row_data["{$assignment->id}"] = $score;
             }
             $columns['name'] = $name;
+            $download['name'] = $name;
             $columns['userId'] = $user_id;
+            $download = [];
+$download_data[] = $download_row_data;
             $rows[] = $columns;
         }
 
@@ -60,11 +68,16 @@ class ScoreController extends Controller
             'label' => 'Name',
             'sortable' => true,
             'stickyColumn' => true]];
+        $download_fields = new \stdClass();
+        $download_fields->Name = 'name';
         foreach ($assignments as $assignment) {
             $field = ['key' => "$assignment->id", 'label' => $assignment->name];
+            $download_fields->{$assignment->name} = $assignment->id;
             array_push($fields, $field);
         }
-        return compact('rows', 'fields') + ['hasAssignments' => true];
+        return ['table' => compact('rows', 'fields') + ['hasAssignments' => true],
+                'download_fields' => $download_fields,
+                'download_data' => $download_data];
 
     }
 
