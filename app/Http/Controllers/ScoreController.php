@@ -31,10 +31,8 @@ class ScoreController extends Controller
         $scores = $course->scores;
         $extensions = $course->extensions;
         foreach ($extensions as $value) {
-            $extension[$value->user_id][$value->assignment_id] = $value->extension;
+            $extension[$value->user_id][$value->assignment_id] = 'Extension';
         }
-
-        Next: separate out extensions and then pass back
 
 
         //organize the scores by user_id and assignment
@@ -50,6 +48,7 @@ class ScoreController extends Controller
 
             foreach ($assignments as $assignment) {
                 $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
+                $score = $extension[$user_id][$assignment->id] ?? '-';
                 $columns[$assignment->id] = $score;
             }
             $columns['name'] = $name;

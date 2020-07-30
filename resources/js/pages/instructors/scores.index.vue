@@ -16,7 +16,7 @@
       >
         <template v-slot:[initStudentAssignmentCell(assignmentIndex+1)]="data"
                   v-for="assignmentIndex in assignmentsArray">
-          <span v-on:click="openStudentAssignmentModal(data.item.userId, data.field.key)">{{ data.value}}</span>
+          <span v-html="data.value" v-on:click="openStudentAssignmentModal(data.item.userId, data.field.key)"></span>
         </template>
 
       </b-table>
