@@ -19,6 +19,7 @@ class ScoreController extends Controller
         //get all user_ids for the user enrolled in the course
         foreach ($course->enrolledUsers as $key => $user) {
             $enrolled_users[$user->id] = "$user->first_name $user->last_name";
+            $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
         }
 
         //get all assignments in the course
@@ -38,7 +39,7 @@ class ScoreController extends Controller
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         foreach ($scores as $score) {
-            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id]= $score->score;
+            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
         }
 
         //now fill in the actual scores
@@ -46,7 +47,7 @@ class ScoreController extends Controller
         $download_data = [];
         foreach ($enrolled_users as $user_id => $name) {
             $columns = [];
-            $download_row_data = ['name' => $name];
+            $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
             foreach ($assignments as $assignment) {
                 $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
                 if (isset($extension[$user_id][$assignment->id])) {
@@ -57,10 +58,8 @@ class ScoreController extends Controller
                 $download_row_data["{$assignment->id}"] = $score;
             }
             $columns['name'] = $name;
-            $download['name'] = $name;
             $columns['userId'] = $user_id;
-            $download = [];
-$download_data[] = $download_row_data;
+            $download_data[] = $download_row_data;
             $rows[] = $columns;
         }
 
@@ -69,15 +68,15 @@ $download_data[] = $download_row_data;
             'sortable' => true,
             'stickyColumn' => true]];
         $download_fields = new \stdClass();
-        $download_fields->Name = 'name';
+        $download_fields->LastFirst = 'name';
         foreach ($assignments as $assignment) {
             $field = ['key' => "$assignment->id", 'label' => $assignment->name];
             $download_fields->{$assignment->name} = $assignment->id;
             array_push($fields, $field);
         }
         return ['table' => compact('rows', 'fields') + ['hasAssignments' => true],
-                'download_fields' => $download_fields,
-                'download_data' => $download_data];
+            'download_fields' => $download_fields,
+            'download_data' => $download_data];
 
     }
 

@@ -247,7 +247,8 @@
       },
       async  fetchData(){
         const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
-        return data.download_data;
+        console.log(data)
+        return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
       },
       async getScores() {
 
