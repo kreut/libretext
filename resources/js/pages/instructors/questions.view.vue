@@ -22,13 +22,12 @@
             </div>
           </div>
           <b-card-text :items="questions">
-            <div class="row" style="height:900px">
             <b-embed type="iframe"
                      aspect="16by9"
                      v-bind:src="questions[currentPage-1].src"
+                     height="100%"
                      allowfullscreen
             ></b-embed>
-            </div>
           </b-card-text>
         </div>
         <div v-else>
