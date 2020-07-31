@@ -41,8 +41,8 @@
     </div>
     <div v-if="showQuestions">
       <b-card
-        v-bind:title="typeof((questions[currentPage-1].title) !== 'undefined') ? questions[currentPage-1].title : ' '"
-        v-bind:sub-title="typeof((questions[currentPage-1].author) !== 'undefined') ? questions[currentPage-1].author : ' '"
+        v-bind:title="typeof((questions[currentPage-1].title) !== null) ? questions[currentPage-1].title : ' '"
+        v-bind:sub-title="typeof((questions[currentPage-1].author) !== null) ? questions[currentPage-1].author : ' '"
         :items="questions">
         <b-card-text>
           <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
