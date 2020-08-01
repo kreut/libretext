@@ -42,7 +42,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/courses/{course}', 'CourseController@update');
 
     Route::delete('/courses/{course}', 'CourseController@destroy');
-    Route::delete('/courses/{course}/assignments/{assignment}', 'AssignmentController@destroy');
+    Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/tags', 'TagController@index');

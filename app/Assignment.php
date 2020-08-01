@@ -17,4 +17,8 @@ class Assignment extends Model
     {
         return $this->hasMany('App\Score');
     }
+
+    public function course() {
+        return $this->belongsTo('App\Course');
+    }
 }

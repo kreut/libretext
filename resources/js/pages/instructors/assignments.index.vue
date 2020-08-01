@@ -253,7 +253,7 @@
       },
       async handleDeleteAssignment() {
          try {
-           const {data} = await axios.delete(`/api/courses/${this.courseId}/assignments/${this.assignmentId}`)
+           const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
            this.$noty[data.type](data.message)
            this.resetAll('modal-delete-assignment')
          } catch (error) {

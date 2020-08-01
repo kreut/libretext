@@ -8,6 +8,7 @@ use App\Course;
 use App\Score;
 use App\Extension;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
 use App\Exceptions\Handler;
@@ -114,7 +115,7 @@ class AssignmentController extends Controller
             $data['due'] = $data['due_date'] . ' ' . $data['due_time'];
 
             //remove what's not needed
-            foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value){
+            foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
                 unset($data[$value]);
             }
             $assignment->update($data);
@@ -138,15 +139,20 @@ class AssignmentController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, Assignment $assignment)
+    public function destroy(Assignment $assignment)
     {
-
         $response['type'] = 'error';
+        $authorized = Gate::inspect('delete', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
             DB::transaction(function () use ($assignment) {
-                DB::table('assignment_question')->where('assignment_id','=',$assignment->id)->delete();
-                DB::table('extensions')->where('assignment_id','=',$assignment->id)->delete();
-                DB::table('scores')->where('assignment_id','=',$assignment->id)->delete();
+                DB::table('assignment_question')->where('assignment_id', '=', $assignment->id)->delete();
+                DB::table('extensions')->where('assignment_id', '=', $assignment->id)->delete();
+                DB::table('scores')->where('assignment_id', '=', $assignment->id)->delete();
                 $assignment->delete();
             });
             $response['type'] = 'success';
