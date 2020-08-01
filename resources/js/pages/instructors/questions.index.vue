@@ -52,14 +52,11 @@
           <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
             <v-button variant="success">Add Question</v-button>
           </div>
-          <div class="row">
           <b-embed type="iframe"
                    aspect="16by9"
                    v-bind:src="questions[currentPage-1].src"
-                   height="100%"
                    allowfullscreen
           ></b-embed>
-          </div>
         </b-card-text>
       </b-card>
     </div>

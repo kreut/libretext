@@ -25,7 +25,6 @@
             <b-embed type="iframe"
                      aspect="16by9"
                      v-bind:src="questions[currentPage-1].src"
-                     height="100%"
                      allowfullscreen
             ></b-embed>
           </b-card-text>
