@@ -66,7 +66,7 @@ class AssignmentPolicy
      */
     public function delete(User $user, Assignment $assignment)
     {
-        return $user->id !== $assignment->course->user_id
+        return $user->id === $assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }
