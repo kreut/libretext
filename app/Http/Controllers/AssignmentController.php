@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Traits\DateFormatter;
 use App\Course;
 use App\Score;
+use App\Extension;
 use Illuminate\Support\Facades\DB;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
@@ -137,13 +138,15 @@ class AssignmentController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, Assignment $assignment, Score $score)
+    public function destroy(Course $course, Assignment $assignment)
     {
 
         $response['type'] = 'error';
         try {
-            DB::transaction(function () use ($assignment, $score) {
-                $score->where('assignment_id','=',$assignment->id)->delete();
+            DB::transaction(function () use ($assignment) {
+                DB::table('assignment_question')->where('assignment_id','=',$assignment->id)->delete();
+                DB::table('extensions')->where('assignment_id','=',$assignment->id)->delete();
+                DB::table('scores')->where('assignment_id','=',$assignment->id)->delete();
                 $assignment->delete();
             });
             $response['type'] = 'success';
