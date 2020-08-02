@@ -264,20 +264,30 @@
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
-        this.createAssignment()
+       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
       },
       deleteAssignment(assignmentId) {
         this.assignmentId = assignmentId
         this.$bvModal.show('modal-delete-assignment')
       },
-      async createAssignment() {
+      async updateAssignment() {
 
         try {
-          let endpoint = `/api/courses/${this.courseId}/assignments`
-          if (this.assignmentId) { //it's an update
-            endpoint += `/${this.assignmentId}`
-          }
-          const {data} = await this.form.post(endpoint)
+
+          const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
+
+          console.log(data)
+          this.$noty[data.type](data.message)
+          this.resetAll('modal-assignment-details')
+
+        } catch (error) {
+          console.log(error)
+        }
+      },
+      async createAssignment() {
+        try {
+
+          const {data} = await this.form.post(`/api/courses/${this.courseId}/assignments`)
 
           console.log(data)
           this.$noty[data.type](data.message)

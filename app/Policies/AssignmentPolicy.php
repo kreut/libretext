@@ -66,7 +66,9 @@ class AssignmentPolicy
      */
     public function update(User $user, Assignment $assignment)
     {
-        //
+        return $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to update this assignment.');
     }
 
     /**

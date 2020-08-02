@@ -109,9 +109,16 @@ class AssignmentController extends Controller
      * @param \App\Assignment $assignment
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreAssignment $request, Course $course, Assignment $assignment)
+    public function update(StoreAssignment $request, Assignment $assignment)
     {
+
         $response['type'] = 'error';
+        $authorized = Gate::inspect('update', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
             $data = $request->validated();
             $data['available_from'] = $data['available_from_date'] . ' ' . $data['available_from_time'];
