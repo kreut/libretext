@@ -9,6 +9,7 @@ use App\Score;
 use App\Extension;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreAssignment;
 use \Exception;
 use App\Exceptions\Handler;
@@ -28,20 +29,32 @@ class AssignmentController extends Controller
     public function index(Course $course)
     {
 
-        $assignments = $course->assignments;
-        foreach ($course->assignments as $key => $assignment) {
-            $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
+        $authorized = Gate::inspect('view', $course);
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignments = $course->assignments;
+            foreach ($course->assignments as $key => $assignment) {
+                $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
 
-            $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
-            $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
+                $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
+                $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
 
-            $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($assignment['due']);
-            $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($assignment['due']);
+                $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($assignment['due']);
+                $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($assignment['due']);
 
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your assignments.  Please try again by refreshing the page or contact us for assistance.";
+        return $response;
         }
         return $assignments;
     }
-
 
 
     /**

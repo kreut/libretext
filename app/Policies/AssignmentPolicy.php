@@ -17,6 +17,18 @@ class AssignmentPolicy
      * @param \App\User $user
      * @return mixed
      */
+    public function index(User $user, Assignment $assignment, Course $course)
+    {
+        //
+    }
+
+
+    /**
+     * Determine whether the user can view any assignments.
+     *
+     * @param \App\User $user
+     * @return mixed
+     */
     public function viewAny(User $user)
     {
         //
