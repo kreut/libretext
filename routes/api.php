@@ -22,7 +22,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
     //student
-    Route::get('/assignments', 'AssignmentController@index');
     Route::get('/assignments/{assignmentId}', 'AssignmentController@show');
 
     //instructor

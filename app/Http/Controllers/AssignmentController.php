@@ -25,12 +25,11 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return mixed
      */
-    public function index(Course $course, Assignment $assignment)
+    public function index(Course $course)
     {
-        $assignments = $assignment->where('course_id', '=', $course->id)
-            ->orderBy('due', 'asc')
-            ->get();
-        foreach ($assignments as $key => $assignment) {
+
+        $assignments = $course->assignments;
+        foreach ($course->assignments as $key => $assignment) {
             $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
 
             $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
