@@ -178,7 +178,7 @@ export default {
         this.$noty[data.type](data.message)
         this.resetAll('modal-delete-course')
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
     }
     ,
@@ -221,7 +221,7 @@ export default {
         this.resetAll('modal-course-details')
 
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
 
     },
@@ -232,7 +232,7 @@ export default {
         this.resetAll('modal-course-details')
 
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
 
     }
@@ -250,7 +250,7 @@ export default {
           this.courses = data
         }
       } catch (error) {
-        alert(error.message)
+        this.$noty.error(error.message)
       }
     }
   },

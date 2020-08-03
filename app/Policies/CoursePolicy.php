@@ -96,7 +96,9 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course)
     {
-        //
+        return $this->_ownedByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to delete this course.');
     }
 
     /**

@@ -112,13 +112,10 @@ class CourseController extends Controller
         $response['type'] = 'error';
 
         $authorized = Gate::inspect('update', $course);
-
         if (!$authorized->allowed()) {
-
             $response['message'] = $authorized->message();
             return $response;
         }
-
 
         try {
             $request->validated();
@@ -147,6 +144,13 @@ class CourseController extends Controller
     {
 
         $response['type'] = 'error';
+
+        $authorized = Gate::inspect('delete', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
             DB::transaction(function () use ($course) {
                 $course->accessCodes()->delete();

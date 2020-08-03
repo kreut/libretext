@@ -253,7 +253,7 @@ export default {
         this.assignments = data
 
       } catch (error) {
-        alert(error.response)
+        this.$noty.error(error.message)
       }
     },
     async handleDeleteAssignment() {
@@ -262,7 +262,7 @@ export default {
         this.$noty[data.type](data.message)
         this.resetAll('modal-delete-assignment')
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
     },
     submitAssignmentInfo(bvModalEvt) {
@@ -286,7 +286,7 @@ export default {
         this.resetAll('modal-assignment-details')
 
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
     },
     async createAssignment() {
@@ -299,7 +299,7 @@ export default {
         this.resetAll('modal-assignment-details')
 
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
     },
     resetAll(modalId) {
