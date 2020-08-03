@@ -40,11 +40,7 @@
       ></b-pagination>
     </div>
     <div v-if="showQuestions">
-      <b-card
-        v-bind:title="typeof((questions[currentPage-1].title) !== null) ? questions[currentPage-1].title : ' '"
-        v-bind:sub-title="typeof((questions[currentPage-1].author) !== null) ? questions[currentPage-1].author : ' '"
-        :items="questions">
-        <b-card-text>
+
           <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
                v-on:click="removeQuestion(questions[currentPage-1])">
             <b-button variant="danger">Remove Question</b-button>
@@ -52,13 +48,12 @@
           <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
             <v-button variant="success">Add Question</v-button>
           </div>
-          <b-embed type="iframe"
-                   aspect="16by9"
-                   v-bind:src="questions[currentPage-1].src"
-                   allowfullscreen
-          ></b-embed>
-        </b-card-text>
-      </b-card>
+      <iframe allowtransparency="true" frameborder="0"
+              v-bind:src="questions[currentPage-1].src"
+              style="overflow: auto; height: 1000px;"
+              width="100%">
+
+      </iframe>
     </div>
   </div>
 </template>
