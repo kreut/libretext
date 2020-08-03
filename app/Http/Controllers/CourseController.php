@@ -57,6 +57,13 @@ class CourseController extends Controller
     {
         //todo: check the validation rules
         $response['type'] = 'error';
+        $authorized = Gate::inspect('create', $course);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
 
         try {

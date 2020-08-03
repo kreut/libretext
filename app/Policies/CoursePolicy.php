@@ -64,7 +64,9 @@ class CoursePolicy
      */
     public function create(User $user)
     {
-        //
+        return ($user->role === 2)
+            ? Response::allow()
+            : Response::deny('You are not allowed to create a course.');
     }
 
     /**
