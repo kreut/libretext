@@ -33,10 +33,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
 
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
-
+    Route::post('/assignments', 'AssignmentController@store');
+    Route::patch('/assignments/{assignment}', 'AssignmentController@update');
 
     Route::post('/courses', 'CourseController@store');
-    Route::post('/courses/{course}/assignments', 'AssignmentController@store');
+
+    Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::post('/courses/{course}', 'CourseController@update');
 

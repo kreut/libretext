@@ -40,6 +40,21 @@ class CoursePolicy
     }
 
     /**
+     * Determine whether the user can view the course.
+     *
+     * @param  \App\User  $user
+     * @param  \App\Course  $course
+     * @return mixed
+     */
+    public function createCourseAssignment(User $user, Course $course)
+    {
+        return $user->id === $course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to create assignments for this course.');
+    }
+
+
+    /**
      * Determine whether the user can create courses.
      *
      * @param  \App\User  $user

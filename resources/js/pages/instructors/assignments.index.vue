@@ -238,15 +238,12 @@
     getStudentView(assignmentId) {
       this.$router.push(`/assignments/${assignmentId}/questions/view`)
     },
-      getAssignments() {
+      async getAssignments() {
         try {
-          axios.get(`/api/courses/${this.courseId}/assignments`).then(
-            response => {
-              this.hasAssignments = response.data.length > 0
+          const {data}  =  await axios.get(`/api/courses/${this.courseId}/assignments`)
+              this.hasAssignments = data.length > 0
               this.showNoAssignmentsAlert = !this.hasAssignments
-              this.assignments = response.data
-            }
-          )
+              this.assignments = data
         } catch (error) {
           alert(error.response)
         }
@@ -286,8 +283,8 @@
       },
       async createAssignment() {
         try {
-
-          const {data} = await this.form.post(`/api/courses/${this.courseId}/assignments`)
+          this.form.course_id = this.courseId
+          const {data} = await this.form.post(`/api/assignments`)
 
           console.log(data)
           this.$noty[data.type](data.message)

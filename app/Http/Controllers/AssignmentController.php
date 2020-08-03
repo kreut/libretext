@@ -58,18 +58,29 @@ class AssignmentController extends Controller
 
 
     /**
-     * Store a newly created resource in storage.
      *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * Store a newly created resource in storage.
+     * @param StoreAssignment $request
+     * @param Course $course
+     * @param Assignment $assignment
+     * @return mixed
+     * @throws Exception
      */
-    public function store(StoreAssignment $request, Course $course, Assignment $assignment)
+    public function store(StoreAssignment $request)
     {
+
+        $course = Course::find(['course_id' => $request->input('course_id')])->first();
+        $authorized = Gate::inspect('createCourseAssignment', $course);
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         $response['type'] = 'error';
         try {
             $data = $request->validated();
-            $assignment->create(
+            Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $data['available_from_date'] . ' ' . $data['available_from_time'],
                     'due' => $data['due_date'] . ' ' . $data['due_time'],
