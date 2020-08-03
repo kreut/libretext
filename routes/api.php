@@ -32,20 +32,18 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/assignments/extensions', 'ExtensionController@update');
     Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
 
+
+    Route::get('/courses', 'CourseController@index');
+    Route::post('/courses', 'CourseController@store');
+    Route::patch('/courses/{course}', 'CourseController@update');
+    Route::delete('/courses/{course}', 'CourseController@destroy');
+
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
-
-    Route::post('/courses', 'CourseController@store');
-
-    Route::post('/assignments', 'AssignmentController@store');
-    Route::patch('/assignments/{assignment}', 'AssignmentController@update');
-    Route::post('/courses/{course}', 'CourseController@update');
-
-    Route::delete('/courses/{course}', 'CourseController@destroy');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
-    Route::get('/courses', 'CourseController@index');
+
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');

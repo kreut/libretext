@@ -110,6 +110,16 @@ class CourseController extends Controller
     public function update(StoreCourse $request, Course $course)
     {
         $response['type'] = 'error';
+
+        $authorized = Gate::inspect('update', $course);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         try {
             $request->validated();
             $course->update($request->except('user_id'));

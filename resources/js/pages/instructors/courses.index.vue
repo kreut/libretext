@@ -211,13 +211,23 @@ export default {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      this.createCourse()
+      !this.courseId ? this.createCourse() : this.updateCourse()
     }
     ,
     async createCourse() {
       try {
-        let endpoint = (!this.courseId) ? '/api/courses' : '/api/courses/' + this.courseId
-        const {data} = await this.form.post(endpoint)
+        const {data} = await this.form.post('/api/courses' )
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-course-details')
+
+      } catch (error) {
+        console.log(error)
+      }
+
+    },
+    async updateCourse() {
+      try {
+        const {data} = await this.form.patch(`/api/courses/${this.courseId}`)
         this.$noty[data.type](data.message)
         this.resetAll('modal-course-details')
 
