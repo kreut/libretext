@@ -28,10 +28,10 @@ class AssignmentController extends Controller
      */
     public function index(Course $course)
     {
-
+        $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
+
         if (!$authorized->allowed()) {
-            $response['type'] = 'error';
             $response['message'] = $authorized->message();
             return $response;
         }
@@ -68,11 +68,11 @@ class AssignmentController extends Controller
      */
     public function store(StoreAssignment $request)
     {
-
+        $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
         $authorized = Gate::inspect('createCourseAssignment', $course);
+
         if (!$authorized->allowed()) {
-            $response['type'] = 'error';
             $response['message'] = $authorized->message();
             return $response;
         }
@@ -125,6 +125,7 @@ class AssignmentController extends Controller
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
+
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -142,11 +143,11 @@ class AssignmentController extends Controller
             }
             $assignment->update($data);
             $response['type'] = 'success';
-            $response['message'] = "The course <strong>$assignment->name</strong> has been updated.";
+            $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating <strong>$course->name</strong>.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -165,6 +166,7 @@ class AssignmentController extends Controller
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('delete', $assignment);
+
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;

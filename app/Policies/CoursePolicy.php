@@ -19,7 +19,9 @@ class CoursePolicy
      */
     public function viewAny(User $user)
     {
-        //
+        return ($user->role !== 3)
+            ? Response::allow()
+            : Response::deny('You are not allowed to view courses.');
     }
 
     /**

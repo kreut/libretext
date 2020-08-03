@@ -9,6 +9,7 @@ use App\Enrollment;
 use App\Assignment;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use App\Exceptions\Handler;
 use \Exception;
 
@@ -18,11 +19,21 @@ class CourseController extends Controller
      *
      *  Get the authenticated user's courses
      *
-     * @param Course $course
      * @return \Illuminate\Support\Collection
      */
     public function index(Course $course)
     {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('viewAny', $course);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'success';
         return DB::table('courses')
             ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
             ->select('courses.*', 'course_access_codes.access_code')
@@ -42,12 +53,14 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, User $user, Enrollment $enrollment)
+    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
+
+
         try {
-            DB::transaction(function () use ($request, $course, $course_access_code, $user, $enrollment) {
+            DB::transaction(function () use ($request, $course, $course_access_code,  $enrollment) {
                 $data = $request->validated();
                 $data['user_id'] = auth()->user()->id;
                 //create the course
