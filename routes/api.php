@@ -21,16 +21,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
-    //student
-    Route::get('/assignments/{assignmentId}', 'AssignmentController@show');
-
-    //instructor
-    Route::get('/courses', 'CourseController@index');
-    Route::get('/courses/{course}/scores', 'ScoreController@index');
-    Route::patch('/assignments/scores', 'ScoreController@update');
-    Route::post('/assignments/extensions', 'ExtensionController@store');
-    Route::patch('/assignments/extensions', 'ExtensionController@update');
-    Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
 
 
     Route::get('/courses', 'CourseController@index');
@@ -39,18 +29,34 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
     Route::get('/courses/{course}/assignments', 'AssignmentController@index');
+    Route::get('/assignments/{assignmentId}', 'AssignmentController@show');
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
 
+
+    Rename this stuff!
+    Route::get('/courses/{course}/scores', 'ScoreController@index');
+    Route::patch('/assignments/scores', 'ScoreController@update');
+
+
+    Start with extenstions and rename to just extensions
+    Route::post('/assignments/extensions', 'ExtensionController@store');
+    Route::patch('/assignments/extensions', 'ExtensionController@update');
+    Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
+
+
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
-    Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
-    Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
+
+
     Route::get('/assignments/{assignment}/questions', 'AssignmentSyncQuestionController@index');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
+    Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
+    Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
+
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::post('/enrollments', 'EnrollmentController@store');
