@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Assignments"></PageTitle>
+    <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
     <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
@@ -58,6 +58,7 @@
       ],
       hasAssignments: false,
       showNoAssignmentsAlert: false,
+      canViewAssignments: false
     }),
     mounted() {
       this.courseId = this.$route.params.courseId
@@ -75,6 +76,7 @@
           this.$noty.error(data.message)
           return false
         }
+          this.canViewAssignments = true
           this.hasAssignments = data.length > 0
           this.showNoAssignmentsAlert = !this.hasAssignments
           this.assignments = data

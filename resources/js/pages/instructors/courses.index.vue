@@ -232,7 +232,7 @@ export default {
         const {data} = await axios.get('/api/courses')
         console.log(data)
         if (data.type === 'error') {
-          this.$noty[data.type](data.message)
+          this.$noty.error(data.message)
         } else {
           this.canViewCourses = true
           this.hasCourses = data.length > 0

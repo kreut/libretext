@@ -1,7 +1,7 @@
 <template>
   <div>
-    <PageTitle title="Assignments"></PageTitle>
-    <div class="row mb-4 float-right">
+    <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
+    <div class="row mb-4 float-right" v-if="canViewAssignments">
       <b-button variant="primary" v-b-modal.modal-assignment-details>Add Assignment</b-button>
     </div>
     <b-modal
@@ -147,79 +147,81 @@
     <div v-else>
       <br>
       <div class="mt-4">
-      <b-alert :show="showNoAssignmentsAlert" variant="warning"><a href="#" class="alert-link">This course currently has
-        no assignments.</a></b-alert>
+        <b-alert :show="showNoAssignmentsAlert" variant="warning"><a href="#" class="alert-link">This course currently
+          has
+          no assignments.</a></b-alert>
       </div>
     </div>
   </div>
 </template>
 
 <script>
-  import axios from 'axios'
-  import Form from "vform"
+import axios from 'axios'
+import Form from "vform"
 
 
-  const now = new Date()
+const now = new Date()
 
-  let numSubmissionsNeeded = []
-  for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9']) {
-    numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
-  }
+let numSubmissionsNeeded = []
+for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9']) {
+  numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
+}
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  let formatDateAndTime = value => {
-    let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() +  ' ' + date.toLocaleTimeString()
-  }
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+let formatDateAndTime = value => {
+  let date = new Date(value)
+  return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+}
 
 
-  export default {
-    middleware: 'auth',
-    data: () => ({
-      assignmentId: false, //if there's a assignmentId it's an update
-      assignments: [],
-      completedOrCorrectOptions: [
-        {item: 'correct', name: 'correct'},
-        {item: 'completed', name: 'completed'}
-      ],
-      courseId: false,
-      fields: [
-        'name',
-        {
-          key: 'available_from',
-          formatter: value => {
-            return formatDateAndTime(value)
-          }
-        },
-        {
-          key: 'due',
-          formatter: value => {
-            return formatDateAndTime(value)
-          }
-        },
-        'credit_given_if_at_least',
-        'actions'
-      ],
-      form: new Form({
-        name: '',
-        available_from_date: '',
-        available_from_time: '09:00:00',
-        due_date: '',
-        due_time: '09:00:00',
-        type_of_submission: 'correct',
-        num_submissions_needed: '2'
-      }),
-      hasAssignments: false,
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      numSubmissionsNeeded: numSubmissionsNeeded,
-      showNoAssignmentsAlert: false,
+export default {
+  middleware: 'auth',
+  data: () => ({
+    assignmentId: false, //if there's a assignmentId it's an update
+    assignments: [],
+    completedOrCorrectOptions: [
+      {item: 'correct', name: 'correct'},
+      {item: 'completed', name: 'completed'}
+    ],
+    courseId: false,
+    fields: [
+      'name',
+      {
+        key: 'available_from',
+        formatter: value => {
+          return formatDateAndTime(value)
+        }
+      },
+      {
+        key: 'due',
+        formatter: value => {
+          return formatDateAndTime(value)
+        }
+      },
+      'credit_given_if_at_least',
+      'actions'
+    ],
+    form: new Form({
+      name: '',
+      available_from_date: '',
+      available_from_time: '09:00:00',
+      due_date: '',
+      due_time: '09:00:00',
+      type_of_submission: 'correct',
+      num_submissions_needed: '2'
     }),
-    mounted() {
-      this.courseId = this.$route.params.courseId
-      this.getAssignments();
+    hasAssignments: false,
+    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    numSubmissionsNeeded: numSubmissionsNeeded,
+    canViewAssignments: false,
+    showNoAssignmentsAlert: false,
+  }),
+  mounted() {
+    this.courseId = this.$route.params.courseId
+    this.getAssignments();
 
-    },
-    methods: {
+  },
+  methods: {
     editAssignment(assignment) {
 
       this.assignmentId = assignment.id
@@ -232,90 +234,96 @@
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.$bvModal.show('modal-assignment-details')
     },
-      getQuestions(assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/get`)
-      },
+    getQuestions(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/get`)
+    },
     getStudentView(assignmentId) {
       this.$router.push(`/assignments/${assignmentId}/questions/view`)
     },
-      async getAssignments() {
-        try {
-          const {data}  =  await axios.get(`/api/courses/${this.courseId}/assignments`)
-              this.hasAssignments = data.length > 0
-              this.showNoAssignmentsAlert = !this.hasAssignments
-              this.assignments = data
-        } catch (error) {
-          alert(error.response)
+    async getAssignments() {
+      try {
+        const {data} = await axios.get(`/api/courses/${this.courseId}/assignments`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
         }
-      },
-      async handleDeleteAssignment() {
-         try {
-           const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
-           this.$noty[data.type](data.message)
-           this.resetAll('modal-delete-assignment')
-         } catch (error) {
-           console.log(error)
-         }
-      },
-      submitAssignmentInfo(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-      },
-      deleteAssignment(assignmentId) {
-        this.assignmentId = assignmentId
-        this.$bvModal.show('modal-delete-assignment')
-      },
-      async updateAssignment() {
+        this.canViewAssignments = true
+        this.hasAssignments = data.length > 0
+        this.showNoAssignmentsAlert = !this.hasAssignments
+        this.assignments = data
 
-        try {
-
-          const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-
-          console.log(data)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-assignment-details')
-
-        } catch (error) {
-          console.log(error)
-        }
-      },
-      async createAssignment() {
-        try {
-          this.form.course_id = this.courseId
-          const {data} = await this.form.post(`/api/assignments`)
-
-          console.log(data)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-assignment-details')
-
-        } catch (error) {
-          console.log(error)
-        }
-      },
-      resetAll(modalId) {
-        this.getAssignments()
-        this.resetModalForms()
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide(modalId)
-        })
-      },
-      resetModalForms() {
-        this.form.name = ''
-        this.form.available_from_date = ''
-        this.form.available_from_time = '09:00:00'
-        this.form.due_date = ''
-        this.form.due_time = '09:00:00'
-        this.form.type_of_submission = 'correct'
-        this.form.num_submissions_needed = '2'
-        this.assignmentId = false
-        this.form.errors.clear()
-      },
-      metaInfo() {
-        return {title: this.$t('home')}
+      } catch (error) {
+        alert(error.response)
       }
+    },
+    async handleDeleteAssignment() {
+      try {
+        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-delete-assignment')
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    submitAssignmentInfo(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      !this.assignmentId ? this.createAssignment() : this.updateAssignment()
+    },
+    deleteAssignment(assignmentId) {
+      this.assignmentId = assignmentId
+      this.$bvModal.show('modal-delete-assignment')
+    },
+    async updateAssignment() {
+
+      try {
+
+        const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
+
+        console.log(data)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-assignment-details')
+
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async createAssignment() {
+      try {
+        this.form.course_id = this.courseId
+        const {data} = await this.form.post(`/api/assignments`)
+
+        console.log(data)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-assignment-details')
+
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    resetAll(modalId) {
+      this.getAssignments()
+      this.resetModalForms()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    },
+    resetModalForms() {
+      this.form.name = ''
+      this.form.available_from_date = ''
+      this.form.available_from_time = '09:00:00'
+      this.form.due_date = ''
+      this.form.due_time = '09:00:00'
+      this.form.type_of_submission = 'correct'
+      this.form.num_submissions_needed = '2'
+      this.assignmentId = false
+      this.form.errors.clear()
+    },
+    metaInfo() {
+      return {title: this.$t('home')}
     }
   }
+}
 </script>
