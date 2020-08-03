@@ -21,13 +21,13 @@
               <b-button variant="danger">Remove Question</b-button>
             </div>
           </div>
-          <b-card-text :items="questions">
-            <b-embed type="iframe"
-                     aspect="16by9"
-                     v-bind:src="questions[currentPage-1].src"
-                     allowfullscreen
-            ></b-embed>
-          </b-card-text>
+          <iframe allowtransparency="true" frameborder="0"
+                  v-bind:src="questions[currentPage-1].src"
+                  style="overflow: auto; height: 1274px;"
+                  width="100%">
+
+          </iframe>
+
         </div>
         <div v-else>
           <div v-if="questions !== ['init']">
@@ -83,12 +83,13 @@
               'question_id': vm.questions[vm.currentPage - 1].id
             }
             console.log(submission_data)
+            return false
             axios.post('/api/submissions', submission_data)
           } else {
             console.log ('Hello Event')
           }
         }
-        window.addEventListener("message", receiveMessage, true);
+        window.addEventListener("message", receiveMessage, false)
       }
     },
     methods: {

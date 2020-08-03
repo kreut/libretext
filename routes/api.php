@@ -36,12 +36,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-    Rename this stuff!
+    /*Rename this stuff!*/
     Route::get('/courses/{course}/scores', 'ScoreController@index');
     Route::patch('/assignments/scores', 'ScoreController@update');
 
 
-    Start with extenstions and rename to just extensions
+   /* Start with extenstions and rename to just extensions*/
     Route::post('/assignments/extensions', 'ExtensionController@store');
     Route::patch('/assignments/extensions', 'ExtensionController@update');
     Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
