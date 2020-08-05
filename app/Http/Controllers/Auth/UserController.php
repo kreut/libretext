@@ -19,6 +19,7 @@ class UserController extends Controller
     }
 
     public function getAuthenticatedUser()
+
     {
         try {
             $payload = \JWTAuth::parseToken()->getPayload();
@@ -41,7 +42,6 @@ class UserController extends Controller
         }
 
         // the token is valid and we have found the user via the sub claim
-        echo "Webwork: " . \JWTAuth::parseToken()->getPayload()->get('webwork') . "\r\n\r\n";
-        return response()->json(compact('user'));
+        return "Webwork: " . \JWTAuth::parseToken()->getPayload()->get('webwork') . "\r\n\r\n" . response()->json(compact('user'));
     }
 }

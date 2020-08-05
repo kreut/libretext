@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
-Route::get('jwt-test', 'Auth\UserController@getAuthenticatedUser');
+Route::post('jwt-test', 'Auth\UserController@getAuthenticatedUser');
 
 Route::group(['middleware' => 'auth:api'], function () {
     Route::post('logout', 'Auth\LoginController@logout');
