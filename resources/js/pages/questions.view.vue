@@ -104,7 +104,12 @@
       async getSelectedQuestions(assignmentId) {
         try {
           const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
-          this.questions = data
+
+          if (data.type === 'error'){
+            this.$noty.error(data.message)
+            return false
+          }
+          this.questions = data.questions
           for (let i = 0; i < this.questions.length; i++) {
             this.questions[i].src = this.getSrc(this.questions[i], this.token)
           }

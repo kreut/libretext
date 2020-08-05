@@ -117,9 +117,11 @@ export default {
     },
     async addQuestion(question) {
       try {
-        await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-        this.$noty.success('The question has been added to the assignment.')
-        this.questions[this.currentPage - 1].inAssignment = true
+        const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].inAssignment = true
+        }
 
       } catch (error) {
         console.log(error)
@@ -129,9 +131,13 @@ export default {
     },
     async removeQuestion(question) {
       try {
-        axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-        this.$noty.info('The question has been removed from the assignment.')
-        question.inAssignment = false
+        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+        if (data.type === 'success') {
+          this.$noty.info(data.message)
+          question.inAssignment = false
+        } else {
+          this.$noty.error(data.message)
+        }
       } catch (error) {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
@@ -152,13 +158,17 @@ export default {
         if (data.type === 'success') {
           //get whether in the assignment and get the url
           let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions/ids`)
-          for (let i = 0; i < data.questions.length; i++) {
-            data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id)
-            data.questions[i].src = this.getSrc(data.questions[i])
+          if (data.type === 'success') {
+            for (let i = 0; i < data.questions.length; i++) {
+              data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id)
+              data.questions[i].src = this.getSrc(data.questions[i])
+            }
+            this.questions = data.questions
+            console.log(this.questions)
+            this.showQuestions = true
+          } else {
+            this.$noty.error(data.message)
           }
-          this.questions = data.questions
-          console.log(this.questions)
-          this.showQuestions = true
         } else {
 
           this.$noty.error(data.message)

@@ -19,4 +19,9 @@ trait CommonPolicies
         $student_enrolled_in_course = ($assignment && $student_user) ? $student_user->enrollments->contains('id', $assignment->course->id) : false;
         return ($owner_of_course && $student_enrolled_in_course);
     }
+
+    public function ownsCourseByUser($course, $user){
+
+        return $user->id === $course->user_id;
+    }
 }

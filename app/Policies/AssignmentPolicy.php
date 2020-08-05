@@ -10,17 +10,7 @@ use Illuminate\Auth\Access\Response;
 class AssignmentPolicy
 {
     use HandlesAuthorization;
-
-    /**
-     * Determine whether the user can view any assignments.
-     *
-     * @param \App\User $user
-     * @return mixed
-     */
-    public function index(User $user, Assignment $assignment, Course $course)
-    {
-        //
-    }
+    use \App\Traits\CommonPolicies;
 
 
     /**
@@ -43,7 +33,11 @@ class AssignmentPolicy
      */
     public function view(User $user, Assignment $assignment)
     {
-        //
+        $has_access = ($user->role === 3) ? $assignment->course->enrollments->contains('user_id', $user->id)
+            : $this->ownsCourseByUser($assignment->course, $user);
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to access this assignment.');
     }
 
     /**

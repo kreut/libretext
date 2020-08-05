@@ -10,11 +10,8 @@ use Illuminate\Auth\Access\Response;
 class CoursePolicy
 {
     use HandlesAuthorization;
+    use \App\Traits\CommonPolicies;
 
-    private function _ownedByUser($course, $user){
-        return $user->id === $course->user_id;
-
-}
     /**
      * Determine whether the user can view any courses.
      *
@@ -36,7 +33,7 @@ class CoursePolicy
      */
     public function viewCourseScores(User $user, Course $course)
     {
-        return $this->_ownedByUser($course, $user)
+        return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to view these scores.');
     }
@@ -52,7 +49,7 @@ class CoursePolicy
     {
 
         $has_access = ($user->role === 3) ? $course->enrollments->contains('user_id',$user->id)
-            : $this->_ownedByUser($course, $user);
+            : $this->ownsCourseByUser($course, $user);
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to access this course.');
@@ -67,7 +64,7 @@ class CoursePolicy
      */
     public function createCourseAssignment(User $user, Course $course)
     {
-        return $this->_ownedByUser($course, $user)
+        return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to create assignments for this course.');
     }
@@ -95,7 +92,7 @@ class CoursePolicy
      */
     public function update(User $user, Course $course)
     {
-        return $this->_ownedByUser($course, $user)
+        return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to update this course.');
     }
@@ -109,7 +106,7 @@ class CoursePolicy
      */
     public function delete(User $user, Course $course)
     {
-        return $this->_ownedByUser($course, $user)
+        return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
             : Response::deny('You are not allowed to delete this course.');
     }
