@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="showPage">
     <PageTitle title="My Courses"></PageTitle>
     <div class="row mb-4 float-right">
       <b-button variant="primary" v-b-modal.modal-enroll-in-course>Enroll In Course</b-button>
@@ -48,7 +48,8 @@
     <div v-else>
       <br>
       <div class="mt-4">
-        <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently are not enrolled in any courses.
+        <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently are
+          not enrolled in any courses.
         </a></b-alert>
       </div>
     </div>
@@ -56,98 +57,106 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import Form from "vform"
-  import { formatDate } from '~/helpers/Date'
+import axios from 'axios'
+import Form from "vform"
+import {formatDate} from '~/helpers/Date'
 
 
-  export default {
-    middleware: 'auth',
-    data: () => ({
-      fields: [
-        {
-          key: 'name',
-          label: 'Course'
-        },
-        'instructor',
-        {
-          key: 'start_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        },
-        {
-          key: 'end_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        }
-      ],
-      enrolledInCourses: [],
-      hasEnrolledInCourses: false,
-      form: new Form({
-        access_code: ''
-      }),
-      showNoEnrolledInCoursesAlert: false,
-    }),
-    mounted() {
-      this.getEnrolledInCourses();
-
-    },
-    methods: {
-    getAssignments(courseId){
-      this.$router.push(`/students/courses/${courseId}/assignments`)
-    },
-      resetModalForms() {
-        this.form.access_code = ''
-        this.form.errors.clear()
-      }
-      ,
-      resetAll(modalId) {
-        this.getEnrolledInCourses()
-        this.resetModalForms()
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide(modalId)
-        })
-      }
-      ,
-      submitEnrollInCourse(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-        this.enrollInCourse()
-      }
-      ,
-      async enrollInCourse() {
-        try {
-          const {data} = await this.form.post('/api/enrollments')
-          if (data.validated) {
-            this.$noty[data.type](data.message)
-            if (data.type === 'success') {
-              this.resetAll('modal-enroll-in-course')
-            }
-          }
-        } catch (error) {
-          console.log(error)
+export default {
+  middleware: 'auth',
+  data: () => ({
+    fields: [
+      {
+        key: 'name',
+        label: 'Course'
+      },
+      'instructor',
+      {
+        key: 'start_date',
+        formatter: value => {
+          return formatDate(value)
         }
       },
-      getEnrolledInCourses() {
-        try {
-          axios.get('/api/enrollments').then(
-            response => {
-              this.hasEnrolledInCourses = response.data.length > 0
-              this.showNoEnrolledInCoursesAlert = !this.hasEnrolledInCourses
-              this.enrolledInCourses = response.data
-            }
-          )
-        } catch (error) {
-          alert(error.message)
+      {
+        key: 'end_date',
+        formatter: value => {
+          return formatDate(value)
         }
       }
+    ],
+    enrolledInCourses: [],
+    hasEnrolledInCourses: false,
+    form: new Form({
+      access_code: ''
+    }),
+    showNoEnrolledInCoursesAlert: false,
+    showPage: false
+  }),
+  mounted() {
+    this.getEnrolledInCourses();
+
+  },
+  methods: {
+    getAssignments(courseId) {
+      this.$router.push(`/students/courses/${courseId}/assignments`)
     },
-    metaInfo() {
-      return {title: this.$t('home')}
+    resetModalForms() {
+      this.form.access_code = ''
+      this.form.errors.clear()
     }
+    ,
+    resetAll(modalId) {
+      this.getEnrolledInCourses()
+      this.resetModalForms()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    }
+    ,
+    submitEnrollInCourse(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      this.enrollInCourse()
+    }
+    ,
+    async enrollInCourse() {
+      try {
+        const {data} = await this.form.post('/api/enrollments')
+        if (data.validated) {
+          this.$noty[data.type](data.message)
+          if (data.type === 'success') {
+            this.resetAll('modal-enroll-in-course')
+          }
+        } else {
+          if (data.type === 'error') {
+            this.$noty.error(data.message)//no access
+            this.resetAll('modal-enroll-in-course')
+          }
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async getEnrolledInCourses() {
+      try {
+        const {data} = await axios.get('/api/enrollments')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.showPage = true
+          this.hasEnrolledInCourses = data.enrollments.length > 0
+          this.showNoEnrolledInCoursesAlert = !this.hasEnrolledInCourses
+          this.enrolledInCourses = data.enrollments
+        }
+      } catch (error) {
+        this.$noty.error(data.message)
+      }
+    }
+  },
+  metaInfo() {
+    return {title: this.$t('home')}
   }
+}
 </script>
