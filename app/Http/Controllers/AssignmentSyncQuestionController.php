@@ -8,7 +8,7 @@ use App\Question;
 
 class AssignmentSyncQuestionController extends Controller
 {
-    public function index(Assignment $assignment) {
+    public function getQuestionIdsByAssignment(Assignment $assignment) {
         return json_encode($assignment->questions()->pluck('question_id'));//need to do since it's an array
     }
 
