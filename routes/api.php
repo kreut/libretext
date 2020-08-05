@@ -45,7 +45,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-    ///START
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');

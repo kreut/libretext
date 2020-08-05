@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="showPage">
     <PageTitle title="Add Questions"></PageTitle>
     <vue-bootstrap-typeahead
       v-model="query"
@@ -21,7 +21,8 @@
       <div v-if="chosenTags.length>0">
         <ol>
           <li v-for="chosenTag in chosenTags" :key="chosenTag">
-            <span v-on:click="removeTag(chosenTag)">{{ chosenTag}}<b-icon icon="trash" variant="danger"></b-icon></span>
+            <span v-on:click="removeTag(chosenTag)">{{ chosenTag }}<b-icon icon="trash"
+                                                                           variant="danger"></b-icon></span>
           </li>
         </ol>
       </div>
@@ -41,13 +42,13 @@
     </div>
     <div v-if="showQuestions">
 
-          <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
-               v-on:click="removeQuestion(questions[currentPage-1])">
-            <b-button variant="danger">Remove Question</b-button>
-          </div>
-          <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
-            <v-button variant="success">Add Question</v-button>
-          </div>
+      <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+           v-on:click="removeQuestion(questions[currentPage-1])">
+        <b-button variant="danger">Remove Question</b-button>
+      </div>
+      <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
+        <v-button variant="success">Add Question</v-button>
+      </div>
       <iframe allowtransparency="true" frameborder="0"
               v-bind:src="questions[currentPage-1].src"
               style="overflow: auto; height: 1000px;"
@@ -59,117 +60,121 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-  import {getSrc} from '~/helpers/Questions'
+import axios from 'axios'
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import {getSrc} from '~/helpers/Questions'
 
-  export default {
-    components: {
-      VueBootstrapTypeahead
+export default {
+  components: {
+    VueBootstrapTypeahead
+  },
+  middleware: 'auth',
+  data: () => ({
+    perPage: 1,
+    currentPage: 1,
+    query: '',
+    tags: [],
+    questions: [],
+    chosenTags: [],
+    question: {},
+    showQuestions: false,
+    gettingQuestions: false,
+    showPage: false
+  }),
+  created() {
+    this.getSrc = getSrc
+  },
+  mounted() {
+    this.assignmentId = this.$route.params.assignmentId
+    this.tags = this.getTags();
+  },
+  methods: {
+    removeTag(chosenTag) {
+      this.chosenTags = _.without(this.chosenTags, chosenTag);
+      console.log(this.chosenTags)
     },
-    middleware: 'auth',
-    data: () => ({
-      perPage: 1,
-      currentPage: 1,
-      query: '',
-      tags: [],
-      questions: [],
-      chosenTags: [],
-      question: {},
-      showQuestions: false,
-      gettingQuestions: false
-    }),
-    created() {
-      this.getSrc = getSrc
-    },
-    mounted() {
-      this.assignmentId = this.$route.params.assignmentId
-      this.tags = this.getTags();
-    },
-    methods: {
-      removeTag(chosenTag) {
-        this.chosenTags = _.without(this.chosenTags, chosenTag);
-        console.log(this.chosenTags)
-      },
-      addTag() {
+    addTag() {
 
-        if ((this.query !== '') && this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
-          this.chosenTags.push(this.query)
-        }
-        this.$refs.queryTypeahead.inputValue = this.query = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
-      },
-      getTags() {
-        try {
-          axios.get(`/api/tags`).then(
-            response => {
-              console.log(response.data)
-              this.tags = response.data
-            })
-        } catch (error) {
-          alert(error.message)
-        }
-
-      },
-      async addQuestion(question) {
-        try {
-          await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-          this.$noty.success('The question has been added to the assignment.')
-          this.questions[this.currentPage - 1].inAssignment = true
-
-        } catch (error) {
-          console.log(error)
-          this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
-        }
-
-      },
-      async removeQuestion(question) {
-        try {
-          axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-          this.$noty.info('The question has been removed from the assignment.')
-          question.inAssignment = false
-        } catch (error) {
-          this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
-        }
-
-      },
-      async getQuestionsByTags() {
-        this.questions = []
-        this.showQuestions = false
-        this.gettingQuestions = true
-        this.addTag() //in case they didn't click
-        try {
-          if (this.chosenTags.length === 0) {
-            this.$noty.error('Please choose at least one tag.')
-            return false
-          }
-          const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
-          console.log(data)
-          if (data.type === 'success') {
-            //get whether in the assignment and get the url
-            let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions`)
-            for (let i = 0; i < data.questions.length; i++) {
-              data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id)
-              data.questions[i].src = this.getSrc(data.questions[i])
-            }
-            this.questions = data.questions
-            console.log(this.questions)
-            this.showQuestions = true
-          } else {
-
-            this.$noty.error(`There are no questions associated with <strong>${this.chosenTags.join(" and ")}</strong>.`)
-          }
-
-        } catch (error) {
-          alert(error.message)
-        }
-        this.gettingQuestions = false
-      },
-      getStudentView(assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/view`)
+      if ((this.query !== '') && this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
+        this.chosenTags.push(this.query)
       }
+      this.$refs.queryTypeahead.inputValue = this.query = '' //https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
     },
-    metaInfo() {
-      return {title: this.$t('home')}
+    async getTags() {
+      try {
+        const {data} = await axios.get(`/api/tags`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        } else {
+          this.tags = data.tags
+          this.showPage = true
+        }
+      } catch (error) {
+        alert(error.message)
+      }
+
+    },
+    async addQuestion(question) {
+      try {
+        await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+        this.$noty.success('The question has been added to the assignment.')
+        this.questions[this.currentPage - 1].inAssignment = true
+
+      } catch (error) {
+        console.log(error)
+        this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
+      }
+
+    },
+    async removeQuestion(question) {
+      try {
+        axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+        this.$noty.info('The question has been removed from the assignment.')
+        question.inAssignment = false
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+
+    },
+    async getQuestionsByTags() {
+      this.questions = []
+      this.showQuestions = false
+      this.gettingQuestions = true
+      this.addTag() //in case they didn't click
+      try {
+        if (this.chosenTags.length === 0) {
+          this.$noty.error('Please choose at least one tag.')
+          return false
+        }
+        const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
+        console.log(data)
+        if (data.type === 'success') {
+          //get whether in the assignment and get the url
+          let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions`)
+          for (let i = 0; i < data.questions.length; i++) {
+            data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id)
+            data.questions[i].src = this.getSrc(data.questions[i])
+          }
+          this.questions = data.questions
+          console.log(this.questions)
+          this.showQuestions = true
+        } else {
+
+          this.$noty.error(data.message)
+        }
+
+      } catch (error) {
+        alert(error.message)
+      }
+      this.gettingQuestions = false
+    },
+    getStudentView(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
     }
+  },
+  metaInfo() {
+    return {title: this.$t('home')}
   }
+}
 </script>

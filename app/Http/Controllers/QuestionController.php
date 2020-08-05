@@ -9,13 +9,22 @@ use App\Question_Tag;
 use \Exception;
 use App\Exceptions\Handler;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 
 class QuestionController extends Controller
 {
-    public function getQuestionsByTags(Request $request)
+    public function getQuestionsByTags(Request $request, Question $question)
     {
-        //get all questions with these tags
-        //dd($request->get('tags'));
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('viewAny', $question);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message() ;
+            return $response;
+        }
+
+
         $chosen_tags = DB::table('tags')
             ->whereIn('tag', $request->get('tags'))
             ->get()
@@ -30,7 +39,8 @@ class QuestionController extends Controller
                                                 ->get()
                                                  ->pluck('question_id')->toArray();
             if (!$question_ids_grouped_by_tag[$key] ){
-                return ['type' => 'error'];
+                return ['type' => 'error',
+                        'message' => 'There are no questions associate with those tags.'];
             }
         }
         //now intersect them for each group
@@ -39,7 +49,8 @@ class QuestionController extends Controller
             $intersected_question_ids = array_intersect($question_ids, $question_group);
         }
         if (!count($intersected_question_ids)) {
-            return ['type' => 'error'];
+            ['type' => 'error',
+                'message' => 'There are no questions associate with those tags.'];
         }
 
         $questions = Question::whereIn('id', $intersected_question_ids)->get();
