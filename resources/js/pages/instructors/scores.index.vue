@@ -181,14 +181,8 @@ export default {
       }
     },
     async updateScore(studentUserId, assignmentId) {
-      let updateInfo = {
-        'assignment_id': assignmentId,
-        'student_user_id': studentUserId,
-        'score': this.form.score
-      }
-      console.log(updateInfo)
       try {
-        const {data} = await axios.patch(`/api/scores`, updateInfo)
+        const {data} = await this.form.patch(`/api/scores/${assignmentId}/${studentUserId}`)
         this.$noty[data.type](data.message)
         await this.getScores()
         if (data.type === 'success') {

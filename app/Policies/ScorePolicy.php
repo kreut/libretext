@@ -11,6 +11,7 @@ use Illuminate\Auth\Access\Response;
 class ScorePolicy
 {
     use HandlesAuthorization;
+    use \App\Traits\CommonPolicies;
 
     /**
      * Determine whether the user can update the score.
@@ -22,13 +23,7 @@ class ScorePolicy
     public function update(User $user,  Score $score, int $assignment_id, int $student_user_id)
     {
 
-        $assignment = Assignment::find($assignment_id);
-        $student_user = User::find($student_user_id);
-        //assignment is in user's course and student is enrolled in that course
-        $owner_of_course = $assignment ? ($assignment->course->id === $user->id) : false;
-        $student_enrolled_in_course = ($assignment && $student_user) ? $student_user->enrollments->contains('id', $assignment->course->id) : false;
-
-        return ($owner_of_course && $student_enrolled_in_course)
+        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this score.');
 

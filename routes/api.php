@@ -36,7 +36,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     Route::get('/scores/{course}', 'ScoreController@index');
-    Route::patch('/scores', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
+    Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
 
 
     Route::get('/extensions/{assignment}/{user}', 'ExtensionController@show');
@@ -44,6 +44,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/extensions/{assignment}/{user}', 'ExtensionController@update');
 
 
+
+    ///START
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');

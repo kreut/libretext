@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Score;
 use App\Course;
+use App\User;
 use App\Assignment;
 use App\Enrollment;
 use Illuminate\Http\Request;
@@ -101,11 +102,11 @@ class ScoreController extends Controller
      * @return \Illuminate\Http\Response
      */
     public
-    function update(Request $request, Score $score)
+    function update(Request $request, Assignment $assignment, User $user, Score $score)
     {
 
     $response['type'] = 'error';
-        $authorized = Gate::inspect('update', [$score, $request->assignment_id, $request->student_user_id]);
+        $authorized = Gate::inspect('update', [$score, $assignment->id, $user->id]);
 
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
@@ -118,7 +119,7 @@ class ScoreController extends Controller
 
             //todo: validate the data as a possible score (completed or not
             Score::updateOrCreate(
-                ['user_id' => $request->student_user_id, 'assignment_id' => $request->assignment_id],
+                ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['score' => $request->score]
             );
 
