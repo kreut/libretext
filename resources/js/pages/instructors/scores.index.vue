@@ -11,10 +11,7 @@
           worksheet="My Worksheet"
           type="csv"
           name="scores.csv">
-
           <b-button variant="success">Download Scores</b-button>
-
-
         </download-excel>
       </div>
       <b-table striped
@@ -262,8 +259,7 @@ export default {
 
     },
     async fetchData() {
-      const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
-      this.canViewScores = true
+      const {data} = await axios.get(`/api/scores/${this.courseId}`)
       console.log(data)
       return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
     },
@@ -288,6 +284,7 @@ export default {
           //create an array 0 up through the top assignment number index
           this.assignmentsArray = [...Array(this.fields.length).keys()]
           this.hasAssignments = true
+          this.canViewScores = true
         }
 
 
