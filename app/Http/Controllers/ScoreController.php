@@ -26,7 +26,7 @@ class ScoreController extends Controller
         $assignments = $course->assignments->sortBy('due');
 
         if ($assignments->isEmpty()) {
-            return ['hasAssignment' => false];
+           return ['hasAssignments' => false];
         }
 
         $scores = $course->scores;
@@ -74,7 +74,8 @@ class ScoreController extends Controller
             $download_fields->{$assignment->name} = $assignment->id;
             array_push($fields, $field);
         }
-        return ['table' => compact('rows', 'fields') + ['hasAssignments' => true],
+        return ['hasAssignments' => true,
+            'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
             'download_data' => $download_data];
 

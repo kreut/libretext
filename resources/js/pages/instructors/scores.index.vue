@@ -2,6 +2,7 @@
   <div>
     <PageTitle title="Gradebook"></PageTitle>
     <div v-if="hasAssignments">
+          <div v-if="canViewScores">
       <download-excel
         class   = "float-right mb-2"
         :data   = "downloadData"
@@ -11,10 +12,11 @@
         type = "csv"
         name    = "scores.csv">
 
-       <b-button variant="success">Download Scores</b-button>
+   <b-button variant="success">Download Scores</b-button>
 
 
       </download-excel>
+            </div>
       <b-table striped
                hover
                fixed
@@ -35,8 +37,7 @@
       </b-table>
     </div>
     <div v-else>
-      <b-alert show variant="warning"><a href="#" class="alert-link">Once you create your first assignment, you'll be
-        able to view your gradebook.</a></b-alert>
+      <b-alert show variant="warning"><a href="#" class="alert-link">Once you have students enrolled in the cousre.</a></b-alert>
     </div>
     <b-modal
       id="modal-update-student-assignment"
@@ -134,6 +135,7 @@
       assignmentId: 0,
       assignmentsArray: [],
       hasExtension: false,
+      canViewScores: false,
       options: [
         {value: null, text: 'Please select an option'},
         {value: 'C', text: 'Completed'},
@@ -247,6 +249,7 @@
       },
       async  fetchData(){
         const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
+        this.canViewScores = true
         console.log(data)
         return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
       },
@@ -255,7 +258,7 @@
         try {
           const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
           console.log(data)
-          if (data.table.hasAssignments) {
+          if (data.hasAssignments) {
             this.items = data.table.rows
             this.fields = data.table.fields  //Name
             this.downloadFields = data.download_fields
@@ -265,8 +268,7 @@
 
             //create an array 0 up through the top assignment number index
             this.assignmentsArray = [...Array(this.fields.length).keys()]
-          } else {
-            this.hasAssignments = false
+            this.hasAssignments = true
           }
 
 
