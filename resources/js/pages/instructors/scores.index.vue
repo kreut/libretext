@@ -29,10 +29,10 @@
                responsive="sm"
 
       >
-        <template v-slot:[initStudentAssignmentCell(assignmentIndex+1)]="data"
+        <template v-slot:cell()="data"
                   v-for="assignmentIndex in assignmentsArray">
           <span v-html="data.value"
-                v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)">{{ data.value }}</span>
+                v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)"></span>
         </template>
 
       </b-table>
@@ -230,9 +230,14 @@ export default {
       this.form.errors.clear()
     },
     initStudentAssignmentCell(key) {
+      console.log(key)
       return `cell(${key})`; // simple string interpolation
     },
     async openStudentAssignmentModal(value, studentUserId, assignmentId) {
+      //name shouldn't be clickable
+      if (assignmentId === 'name'){
+        return false
+      }
       this.studentUserId = studentUserId
       this.assignmentId = assignmentId
       this.hasExtension = value === 'Extension'

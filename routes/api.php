@@ -35,15 +35,14 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
 
-    /*Rename this stuff!*/
     Route::get('/scores/{course}', 'ScoreController@index');
     Route::patch('/scores', 'ScoreController@update');
 
 
-    /* Start with extenstions and rename to just extensions*/
+    Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
     Route::post('/assignments/extensions', 'ExtensionController@store');
     Route::patch('/assignments/extensions', 'ExtensionController@update');
-    Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
+
 
 
     Route::get('/tags', 'TagController@index');
