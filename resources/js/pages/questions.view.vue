@@ -5,7 +5,7 @@
         <PageTitle v-bind:title="this.title"></PageTitle>
         <div v-if="questions.length">
           <div class="d-flex justify-content-between">
-            <div class="mt-1 mb-2" v-on:click="getQuestions()" v-if="user.role !== 3">
+            <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
               <b-button variant="success">Get Questions</b-button>
             </div>
             <div class="overflow-auto">
@@ -31,7 +31,7 @@
         </div>
         <div v-else>
           <div v-if="questions !== ['init']">
-            <div class="mt-1 mb-2" v-on:click="getQuestions()" v-if="user.role !== 3">
+            <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
               <b-button variant="success">Get More Questions</b-button>
             </div>
             <div class="mt-4">
@@ -115,7 +115,7 @@
           this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
         }
       },
-      getQuestions() {
+      getQuestionsForAssignment() {
         this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
       },
       async removeQuestion(currentPage) {

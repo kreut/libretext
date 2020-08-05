@@ -17,6 +17,9 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     public function destroy(Assignment $assignment, Question $question) {
+
+
+
         $assignment->questions()->detach($question);
     }
 
