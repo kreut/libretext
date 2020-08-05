@@ -1,22 +1,22 @@
 <template>
   <div>
-    <PageTitle title="Gradebook"></PageTitle>
+    <PageTitle v-if="canViewScores" title="Gradebook"></PageTitle>
     <div v-if="hasAssignments">
-          <div v-if="canViewScores">
-      <download-excel
-        class   = "float-right mb-2"
-        :data   = "downloadData"
-        :fetch   = "fetchData"
-        :fields = "downloadFields"
-        worksheet = "My Worksheet"
-        type = "csv"
-        name    = "scores.csv">
+      <div v-if="canViewScores">
+        <download-excel
+          class="float-right mb-2"
+          :data="downloadData"
+          :fetch="fetchData"
+          :fields="downloadFields"
+          worksheet="My Worksheet"
+          type="csv"
+          name="scores.csv">
 
-   <b-button variant="success">Download Scores</b-button>
+          <b-button variant="success">Download Scores</b-button>
 
 
-      </download-excel>
-            </div>
+        </download-excel>
+      </div>
       <b-table striped
                hover
                fixed
@@ -31,13 +31,15 @@
       >
         <template v-slot:[initStudentAssignmentCell(assignmentIndex+1)]="data"
                   v-for="assignmentIndex in assignmentsArray">
-          <span v-html="data.value" v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)">{{ data.value}}</span>
+          <span v-html="data.value"
+                v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)">{{ data.value }}</span>
         </template>
 
       </b-table>
     </div>
     <div v-else>
-      <b-alert show variant="warning"><a href="#" class="alert-link">Once you have students enrolled in the cousre.</a></b-alert>
+      <b-alert show variant="warning"><a href="#" class="alert-link">Once you have students enrolled in the cousre.</a>
+      </b-alert>
     </div>
     <b-modal
       id="modal-update-student-assignment"
@@ -98,185 +100,190 @@
   </div>
 </template>
 <script>
-  import axios from 'axios'
-  import Form from "vform"
+import axios from 'axios'
+import Form from "vform"
 
 
-  const now = new Date()
+const now = new Date()
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  let formatDateAndTime = value => {
-    let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
-  }
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+let formatDateAndTime = value => {
+  let date = new Date(value)
+  return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+}
 
-  // get all students enrolled in the course: course_enrollment
-  // get all assignments for the course
-  //
-  export default {
-    middleware: 'auth',
-    data: () => ({
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      form: new Form({
-        extension_date: '',
-        extension_time: '',
-        score: null
-      }),
-      sortBy: 'name',
-      sortDesc: false,
-      courseId: '',
-      fields: [],
-      downloadFields:{},
-      downloadData: [],
-      scores: [],
-      items: [],
-      hasAssignments: true,
-      studentUserId: 0,
-      assignmentId: 0,
-      assignmentsArray: [],
-      hasExtension: false,
-      canViewScores: false,
-      options: [
-        {value: null, text: 'Please select an option'},
-        {value: 'C', text: 'Completed'},
-        {value: '1', text: '1'},
-        {value: '2', text: '2'},
-        {value: '3', text: '3'},
-        {value: '4', text: '4'},
-        {value: '5', text: '5'},
-      ]
+// get all students enrolled in the course: course_enrollment
+// get all assignments for the course
+//
+export default {
+  middleware: 'auth',
+  data: () => ({
+    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    form: new Form({
+      extension_date: '',
+      extension_time: '',
+      score: null
     }),
-    mounted() {
-      this.courseId = this.$route.params.courseId
-      this.getScores();
+    sortBy: 'name',
+    sortDesc: false,
+    courseId: '',
+    fields: [],
+    downloadFields: {},
+    downloadData: [],
+    scores: [],
+    items: [],
+    hasAssignments: true,
+    studentUserId: 0,
+    assignmentId: 0,
+    assignmentsArray: [],
+    hasExtension: false,
+    canViewScores: false,
+    options: [
+      {value: null, text: 'Please select an option'},
+      {value: 'C', text: 'Completed'},
+      {value: '1', text: '1'},
+      {value: '2', text: '2'},
+      {value: '3', text: '3'},
+      {value: '4', text: '4'},
+      {value: '5', text: '5'},
+    ]
+  }),
+  mounted() {
+    this.courseId = this.$route.params.courseId
+    this.getScores();
+  },
+  methods: {
+    submitUpdateAssignmentByStudent(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      this.updateAssignmentByStudent()
     },
-    methods: {
-      submitUpdateAssignmentByStudent(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-        this.updateAssignmentByStudent()
-      },
-      updateAssignmentByStudent() {
-        let isUpdateScore = (this.form.score !== null)
-        let isGiveExtension = (this.form.extension_date !== '')
-        if (isUpdateScore && isGiveExtension) {
-          this.$noty.error("Please either give an extension or provide an override score, but not both.")
-          this.form.score = null
-          this.form.extension_date = ''
-          return false
-        }
-        if (!(isUpdateScore || isGiveExtension)) {
-
-          this.$noty.error("Please either give an extension or provide an override score.")
-        }
-        if (isUpdateScore) {
-          this.updateScore(this.studentUserId, this.assignmentId)
-        }
-        if (isGiveExtension) {
-          this.giveExtension(this.studentUserId, this.assignmentId)
-        }
-      },
-      async updateScore(studentUserId, assignmentId) {
-        let updateInfo = {
-          'course_id': this.courseId,
-          'assignment_id': assignmentId,
-          'student_user_id': studentUserId,
-          'score': this.form.score
-        }
-        console.log(updateInfo)
-        try {
-          const {data} = await axios.patch(`/api/assignments/scores`, updateInfo)
-          this.$noty[data.type](data.message)
-          await this.getScores()
-          if (data.type === 'success') {
-            this.resetAll('modal-update-student-assignment')
-          }
-        } catch (error) {
-          console.log(error)
-        }
-      },
-      async giveExtension(studentUserId, assignmentId) {
-        this.form.course_id = this.courseId
-        this.form.assignment_id = assignmentId
-        this.form.student_user_id = studentUserId
-        try {
-          let action = this.hasExtension ? 'patch' : 'post'
-          const {data} = await this.form[action](`/api/assignments/extensions`)
-          console.log(data)
-          this.$noty[data.type](data.message)
-          await this.getScores()
-          if (data.type === 'success') {
-            this.resetAll('modal-update-student-assignment')
-          }
-        } catch (error) {
-         console.log(error)
-        }
-
-      },
-      resetAll(modalId) {
-        this.resetModalForms()
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide(modalId)
-        })
-      },
-      resetModalForms() {
-        this.form.extension_date = ''
-        this.form.extension_time = ''
+    updateAssignmentByStudent() {
+      let isUpdateScore = (this.form.score !== null)
+      let isGiveExtension = (this.form.extension_date !== '')
+      if (isUpdateScore && isGiveExtension) {
+        this.$noty.error("Please either give an extension or provide an override score, but not both.")
         this.form.score = null
-        this.form.errors.clear()
-      },
-      initStudentAssignmentCell(key) {
-        return `cell(${key})`; // simple string interpolation
-      },
-     async openStudentAssignmentModal(value,studentUserId, assignmentId) {
-        this.studentUserId = studentUserId
-        this.assignmentId = assignmentId
-       this.hasExtension = value === 'Extension'
+        this.form.extension_date = ''
+        return false
+      }
+      if (!(isUpdateScore || isGiveExtension)) {
 
-        if (this.hasExtension){
-          const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
-          if (data.type === 'success'){
-            this.form.extension_date = data.extension_date
-            this.form.extension_time = data.extension_time
-          }
+        this.$noty.error("Please either give an extension or provide an override score.")
+      }
+      if (isUpdateScore) {
+        this.updateScore(this.studentUserId, this.assignmentId)
+      }
+      if (isGiveExtension) {
+        this.giveExtension(this.studentUserId, this.assignmentId)
+      }
+    },
+    async updateScore(studentUserId, assignmentId) {
+      let updateInfo = {
+        'course_id': this.courseId,
+        'assignment_id': assignmentId,
+        'student_user_id': studentUserId,
+        'score': this.form.score
+      }
+      console.log(updateInfo)
+      try {
+        const {data} = await axios.patch(`/api/assignments/scores`, updateInfo)
+        this.$noty[data.type](data.message)
+        await this.getScores()
+        if (data.type === 'success') {
+          this.resetAll('modal-update-student-assignment')
         }
-        //get the score and assignment info
-
-        this.$bvModal.show('modal-update-student-assignment')
-
-      },
-      async  fetchData(){
-        const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
-        this.canViewScores = true
+      } catch (error) {
+        console.log(error)
+      }
+    },
+    async giveExtension(studentUserId, assignmentId) {
+      this.form.course_id = this.courseId
+      this.form.assignment_id = assignmentId
+      this.form.student_user_id = studentUserId
+      try {
+        let action = this.hasExtension ? 'patch' : 'post'
+        const {data} = await this.form[action](`/api/assignments/extensions`)
         console.log(data)
-        return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
-      },
-      async getScores() {
-
-        try {
-          const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
-          console.log(data)
-          if (data.hasAssignments) {
-            this.items = data.table.rows
-            this.fields = data.table.fields  //Name
-            this.downloadFields = data.download_fields
-            this.downloadData =data.download_data
-            console.log(this.downloadFields )
-            console.log(this.downloadData)
-
-            //create an array 0 up through the top assignment number index
-            this.assignmentsArray = [...Array(this.fields.length).keys()]
-            this.hasAssignments = true
-          }
-
-
-        } catch (error) {
-          alert(error.message)
+        this.$noty[data.type](data.message)
+        await this.getScores()
+        if (data.type === 'success') {
+          this.resetAll('modal-update-student-assignment')
         }
+      } catch (error) {
+        console.log(error)
       }
 
+    },
+    resetAll(modalId) {
+      this.resetModalForms()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    },
+    resetModalForms() {
+      this.form.extension_date = ''
+      this.form.extension_time = ''
+      this.form.score = null
+      this.form.errors.clear()
+    },
+    initStudentAssignmentCell(key) {
+      return `cell(${key})`; // simple string interpolation
+    },
+    async openStudentAssignmentModal(value, studentUserId, assignmentId) {
+      this.studentUserId = studentUserId
+      this.assignmentId = assignmentId
+      this.hasExtension = value === 'Extension'
+
+      if (this.hasExtension) {
+        const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
+        if (data.type === 'success') {
+          this.form.extension_date = data.extension_date
+          this.form.extension_time = data.extension_time
+        }
+      }
+      //get the score and assignment info
+
+      this.$bvModal.show('modal-update-student-assignment')
+
+    },
+    async fetchData() {
+      const {data} = await axios.get(`/api/courses/${this.courseId}/scores`)
+      this.canViewScores = true
+      console.log(data)
+      return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
+    },
+    async getScores() {
+
+      try {
+        const {data} = await axios.get(`/api/scores/${this.courseId}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+
+        if (data.hasAssignments) {
+          this.items = data.table.rows
+          this.fields = data.table.fields  //Name
+          this.downloadFields = data.download_fields
+          this.downloadData = data.download_data
+          console.log(this.downloadFields)
+          console.log(this.downloadData)
+
+          //create an array 0 up through the top assignment number index
+          this.assignmentsArray = [...Array(this.fields.length).keys()]
+          this.hasAssignments = true
+        }
+
+
+      } catch (error) {
+        alert(error.message)
+      }
     }
+
   }
+}
 </script>

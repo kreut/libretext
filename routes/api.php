@@ -36,7 +36,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     /*Rename this stuff!*/
-    Route::get('/courses/{course}/scores', 'ScoreController@index');
+    Route::get('/scores/{course}', 'ScoreController@index');
     Route::patch('/assignments/scores', 'ScoreController@update');
 
 

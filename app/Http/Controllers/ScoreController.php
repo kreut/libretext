@@ -16,6 +16,16 @@ class ScoreController extends Controller
 
     public function index(Course $course)
     {
+
+        $authorized = Gate::inspect('viewCourseScores', $course);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         //get all user_ids for the user enrolled in the course
         foreach ($course->enrolledUsers as $key => $user) {
             $enrolled_users[$user->id] = "$user->first_name $user->last_name";
@@ -74,6 +84,7 @@ class ScoreController extends Controller
             $download_fields->{$assignment->name} = $assignment->id;
             array_push($fields, $field);
         }
+
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,

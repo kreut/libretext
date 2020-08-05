@@ -29,6 +29,19 @@ class CoursePolicy
     }
 
     /**
+     * Determine whether the user can view any courses.
+     *
+     * @param  \App\User  $user
+     * @return mixed
+     */
+    public function viewCourseScores(User $user, Course $course)
+    {
+        return $this->_ownedByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to view these scores.');
+    }
+
+    /**
      * Determine whether the user can view the course.
      *
      * @param  \App\User  $user
