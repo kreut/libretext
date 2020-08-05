@@ -9,7 +9,7 @@ use Illuminate\Support\Facades\Gate;
 use App\Traits\DateFormatter;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreExtension;
-use Illuminate\Support\Facades\Db;
+use Illuminate\Support\Facades\DB;
 
 class ExtensionController extends Controller
 {
