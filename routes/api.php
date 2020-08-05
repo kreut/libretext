@@ -39,9 +39,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/scores', 'ScoreController@update');
 
 
-    Route::get('/assignments/extensions/{assignment}/{user}', 'ExtensionController@show');
-    Route::post('/assignments/extensions', 'ExtensionController@store');
-    Route::patch('/assignments/extensions', 'ExtensionController@update');
+    Route::get('/extensions/{assignment}/{user}', 'ExtensionController@show');
+    Route::post('/extensions/{assignment}/{user}', 'ExtensionController@store');
+    Route::patch('/extensions/{assignment}/{user}', 'ExtensionController@update');
 
 
 

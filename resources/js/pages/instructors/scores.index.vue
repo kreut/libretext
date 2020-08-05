@@ -176,12 +176,12 @@ export default {
         this.updateScore(this.studentUserId, this.assignmentId)
       }
       if (isGiveExtension) {
-        this.giveExtension(this.studentUserId, this.assignmentId)
+        this.hasExtension ? this.updateExtension(this.studentUserId, this.assignmentId)
+          : this.addExtension(this.studentUserId, this.assignmentId)
       }
     },
     async updateScore(studentUserId, assignmentId) {
       let updateInfo = {
-        'course_id': this.courseId,
         'assignment_id': assignmentId,
         'student_user_id': studentUserId,
         'score': this.form.score
@@ -198,13 +198,23 @@ export default {
         console.log(error)
       }
     },
-    async giveExtension(studentUserId, assignmentId) {
-      this.form.course_id = this.courseId
-      this.form.assignment_id = assignmentId
-      this.form.student_user_id = studentUserId
+    async addExtension() {
       try {
-        let action = this.hasExtension ? 'patch' : 'post'
-        const {data} = await this.form[action](`/api/assignments/extensions`)
+        const {data} = await this.form.post(`/api/extensions/${this.assignmentId}/${this.studentUserId}`)
+        console.log(data)
+        this.$noty[data.type](data.message)
+        await this.getScores()
+        if (data.type === 'success') {
+          this.resetAll('modal-update-student-assignment')
+        }
+      } catch (error) {
+        console.log(error)
+      }
+
+    },
+    async updateExtension() {
+      try {
+        const {data} = await this.form.patch(`/api/extensions/${this.assignmentId}/${this.studentUserId}`)
         console.log(data)
         this.$noty[data.type](data.message)
         await this.getScores()
@@ -235,7 +245,7 @@ export default {
     },
     async openStudentAssignmentModal(value, studentUserId, assignmentId) {
       //name shouldn't be clickable
-      if (assignmentId === 'name'){
+      if (assignmentId === 'name') {
         return false
       }
       this.studentUserId = studentUserId
@@ -243,10 +253,13 @@ export default {
       this.hasExtension = value === 'Extension'
 
       if (this.hasExtension) {
-        const {data} = await axios.get(`/api/assignments/extensions/${this.assignmentId}/${this.studentUserId}`)
+        const {data} = await axios.get(`/api/extensions/${this.assignmentId}/${this.studentUserId}`)
         if (data.type === 'success') {
           this.form.extension_date = data.extension_date
           this.form.extension_time = data.extension_time
+        } else {
+          this.$noty.error(data.message)
+          return false
         }
       }
       //get the score and assignment info

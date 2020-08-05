@@ -3,6 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Extension;
+use App\Assignment;
+use App\User;
+use Illuminate\Support\Facades\Gate;
 use App\Traits\DateFormatter;
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreExtension;
@@ -12,25 +15,6 @@ class ExtensionController extends Controller
 {
     use DateFormatter;
 
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -38,26 +22,28 @@ class ExtensionController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreExtension $request)
+    public function store(StoreExtension $request, Assignment $assignment, User $user, Extension $extension)
     {
 
         $response['type'] = 'error';
+        $authorized = Gate::inspect('store', [$extension, $assignment->id, $user->id]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         try {
-            $student_user_id = $request->student_user_id;
-            $assignment_id = $request->assignment_id;
-            $course_id = $request->course_id;
-            /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
-                  $response['message'] = "You don't have access to that student/assignment combination.";
-                  return $response;
-              }*/
 
 
             $data = $request->validated();
 
             Extension::create(
                 ['extension' => $data['extension_date'] . ' ' . $data['extension_time'],
-                    'user_id' => $student_user_id,
-                    'assignment_id' => $assignment_id
+                    'user_id' => $user->id,
+                    'assignment_id' => $assignment->id
                 ]
             );
 
@@ -78,12 +64,20 @@ class ExtensionController extends Controller
      * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request)
+    public function show(Request $request, Assignment $assignment, User $user, Extension $extension)
     {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', [$extension, $assignment->id, $user->id]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         $extension = DB::table('extensions')
-            ->where('user_id', $request->user)
-            ->where('assignment_id', $request->assignment)
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', $user->id)
             ->first()
             ->extension;
 
@@ -97,16 +91,6 @@ class ExtensionController extends Controller
 
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Extension $extension
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Extension $extension)
-    {
-        //
-    }
 
     /**
      * Update the specified resource in storage.
@@ -115,22 +99,24 @@ class ExtensionController extends Controller
      * @param \App\Extension $extension
      * @return \Illuminate\Http\Response
      */
-    public function update(StoreExtension $request, Extension $extension)
+    public function update(StoreExtension $request, Assignment $assignment, User $user, Extension $extension)
     {
         $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$extension, $assignment->id, $user->id]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
         try {
-            $student_user_id = $request->student_user_id;
-            $assignment_id = $request->assignment_id;
-            $course_id = $request->course_id;
-            /*  if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)){
-                  $response['message'] = "You don't have access to that student/assignment combination.";
-                  return $response;
-              }*/
 
 
             $data = $request->validated();
-            Extension::where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
+            Extension::where('user_id', $user->id)
+                ->where('assignment_id', $assignment->id)
                 ->update(['extension' => $data['extension_date'] . ' ' . $data['extension_time']]);
 
 
@@ -145,14 +131,5 @@ class ExtensionController extends Controller
         return $response;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Extension $extension
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Extension $extension)
-    {
-        //
-    }
+
 }

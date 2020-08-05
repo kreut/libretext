@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Score;
 use App\Course;
+use App\Assignment;
 use App\Enrollment;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -132,15 +133,5 @@ class ScoreController extends Controller
         return $response;
     }
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Score $score
-     * @return \Illuminate\Http\Response
-     */
-    public
-    function destroy(Score $score)
-    {
-        //
-    }
+
 }
