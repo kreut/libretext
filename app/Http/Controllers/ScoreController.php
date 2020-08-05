@@ -92,81 +92,6 @@ class ScoreController extends Controller
 
     }
 
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
-
-    /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
-     */
-    public function store(Request $request)
-    {
-        //
-    }
-
-    /**
-     *
-     * Show the scores for a given course
-     *
-     * @param Course $course
-     * @return array
-     */
-
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function show()
-    {
-        //
-    }
-
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Score $score
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Score $score)
-    {
-        //
-    }
-
-    public function updateScorePolicy(int $course_id, int $assignment_id, int $student_user_id)
-    {
-        //validate that they are the owner of the course
-        $is_owner_of_course = DB::table('courses')
-            ->select('id')
-            ->where('id', '=', $course_id)
-            ->where('user_id', '=', Auth::user()->id)
-            ->first();
-        //validate that the assignment is in the course
-        $assignment_is_in_course = DB::table('assignments')
-            ->select('id')
-            ->where('id', '=', $assignment_id)
-            ->where('course_id', '=', $course_id)
-            ->first();
-        //validate that the student is enorolled in the course
-        $student_is_in_enrolled_in_the_course = DB::table('enrollments')
-            ->select('user_id')
-            ->where('course_id', '=', $course_id)
-            ->where('user_id', '=', $student_user_id)
-            ->first();
-
-        return ($is_owner_of_course && $assignment_is_in_course && $student_is_in_enrolled_in_the_course);
-    }
-
     /**
      * Update the specified resource in storage.
      *
@@ -175,24 +100,20 @@ class ScoreController extends Controller
      * @return \Illuminate\Http\Response
      */
     public
-    function update(Request $request)
+    function update(Request $request, Score $score)
     {
-        /*
-         *
-        //start: 1. test the auth logic --- works
-        2. Move into a policy
-        4. change the grade with js
-        5. do the due date version
-        6. lock down the assignments
-        7. Upload all to dev
-        8. Move all to other mac
-    */
-        $response['type'] = 'error';
+
+    $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$score, $request->assignment_id, $request->student_user_id]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
-            if (!$this->updateScorePolicy($request->course_id, $request->assignment_id, $request->student_user_id)) {
-                $response['message'] = "You don't have access to that student/assignment combination.";
-                return $response;
-            }
+
 
             //todo: validate the data as a possible score (completed or not
             Score::updateOrCreate(

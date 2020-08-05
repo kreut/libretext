@@ -37,7 +37,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     /*Rename this stuff!*/
     Route::get('/scores/{course}', 'ScoreController@index');
-    Route::patch('/assignments/scores', 'ScoreController@update');
+    Route::patch('/scores', 'ScoreController@update');
 
 
     /* Start with extenstions and rename to just extensions*/

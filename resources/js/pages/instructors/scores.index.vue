@@ -188,7 +188,7 @@ export default {
       }
       console.log(updateInfo)
       try {
-        const {data} = await axios.patch(`/api/assignments/scores`, updateInfo)
+        const {data} = await axios.patch(`/api/scores`, updateInfo)
         this.$noty[data.type](data.message)
         await this.getScores()
         if (data.type === 'success') {
