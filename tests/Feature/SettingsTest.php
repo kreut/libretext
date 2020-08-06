@@ -23,7 +23,8 @@ class SettingsTest extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson('/api/settings/profile', [
-                'name' => 'Test User',
+                'first_name' => 'Test',
+                'last_name' => 'User',
                 'email' => 'test@test.app',
             ])
             ->assertSuccessful()
@@ -31,7 +32,8 @@ class SettingsTest extends TestCase
 
         $this->assertDatabaseHas('users', [
             'id' => $this->user->id,
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@test.app',
         ]);
     }

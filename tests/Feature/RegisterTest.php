@@ -11,13 +11,14 @@ class RegisterTest extends TestCase
     public function can_register()
     {
         $this->postJson('/api/register', [
-            'name' => 'Test User',
+            'first_name' => 'Test',
+            'last_name' => 'User',
             'email' => 'test@test.app',
             'password' => 'secret',
             'password_confirmation' => 'secret',
         ])
         ->assertSuccessful()
-        ->assertJsonStructure(['id', 'name', 'email']);
+        ->assertJsonStructure(['id', 'first_name', 'last_name','name', 'email']);
     }
 
     /** @test */
