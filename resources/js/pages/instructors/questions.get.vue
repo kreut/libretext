@@ -157,29 +157,35 @@ export default {
           return false
         }
         const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
-        console.log(data)
-        if (data.type === 'success') {
+      let questionsByTags = data
+
+        if (questionsByTags.type === 'success' && questionsByTags.questions.length>0) {
           //get whether in the assignment and get the url
-          let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions/ids`)
-          console.log(assignmentQuestions)
-          if (data.type === 'success') {
-            for (let i = 0; i < data.questions.length; i++) {
-              data.questions[i].inAssignment = assignmentQuestions.data.question_ids.includes(data.questions[i].id)
-              data.questions[i].src = this.getSrc(data.questions[i])
+          const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/ids`)
+          let questionIds = data
+
+          if (questionIds.type === 'success') {
+
+
+
+            for (let i = 0; i < questionsByTags.questions.length; i++) {
+              console.log(questionsByTags.questions)
+              questionsByTags.questions[i].inAssignment = questionIds.question_ids.includes(questionsByTags.questions[i].id)
+              questionsByTags.questions[i].src = this.getSrc(questionsByTags.questions[i])
             }
-            this.questions = data.questions
+            this.questions = questionsByTags.questions
             console.log(this.questions)
             this.showQuestions = true
           } else {
-            this.$noty.error(data.message)
+            this.$noty.error(questionIds.message)
           }
         } else {
 
-          this.$noty.error(data.message)
+          this.$noty.error(questionsByTags.message)
         }
 
       } catch (error) {
-        this.$noty.error(data.message)
+        this.$noty.error(error.message)
       }
       this.gettingQuestions = false
     },

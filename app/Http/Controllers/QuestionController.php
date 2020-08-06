@@ -49,8 +49,8 @@ class QuestionController extends Controller
             $intersected_question_ids = array_intersect($question_ids, $question_group);
         }
         if (!count($intersected_question_ids)) {
-            ['type' => 'error',
-                'message' => 'There are no questions associate with those tags.'];
+           return ['type' => 'error',
+                'message' => 'There are no questions associated with those tags.'];
         }
 
         $questions = Question::whereIn('id', $intersected_question_ids)->get();
