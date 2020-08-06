@@ -32,13 +32,20 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        try {
 
-        $response['type'] = 'success';
-        return DB::table('courses')
-            ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
-            ->select('courses.*', 'course_access_codes.access_code')
-            ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
-            ->get();
+            $response['courses'] = DB::table('courses')
+                ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+                ->select('courses.*', 'course_access_codes.access_code')
+                ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
+                ->get();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
 
     }
 
@@ -67,7 +74,7 @@ class CourseController extends Controller
 
 
         try {
-            DB::transaction(function () use ($request, $course, $course_access_code,  $enrollment) {
+            DB::transaction(function () use ($request, $course, $course_access_code, $enrollment) {
                 $data = $request->validated();
                 $data['user_id'] = auth()->user()->id;
                 //create the course
@@ -154,7 +161,7 @@ class CourseController extends Controller
         try {
             DB::transaction(function () use ($course) {
                 $course->accessCodes()->delete();
-                foreach ($course->assignments as $assignment){
+                foreach ($course->assignments as $assignment) {
                     $assignment->questions()->detach();
                     $assignment->scores()->delete();
                 }

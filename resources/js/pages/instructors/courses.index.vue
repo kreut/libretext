@@ -240,14 +240,14 @@ export default {
     async getCourses() {
       try {
         const {data} = await axios.get('/api/courses')
-        console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
           this.canViewCourses = true
-          this.hasCourses = data.length > 0
+          this.hasCourses = data.courses.length > 0
           this.showNoCoursesAlert = !this.hasCourses
-          this.courses = data
+          this.courses = data.courses
+          console.log(data.courses)
         }
       } catch (error) {
         this.$noty.error(error.message)
