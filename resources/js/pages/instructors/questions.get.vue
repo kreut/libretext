@@ -158,9 +158,10 @@ export default {
         if (data.type === 'success') {
           //get whether in the assignment and get the url
           let assignmentQuestions = await axios.get(`/api/assignments/${this.assignmentId}/questions/ids`)
+          console.log(assignmentQuestions)
           if (data.type === 'success') {
             for (let i = 0; i < data.questions.length; i++) {
-              data.questions[i].inAssignment = assignmentQuestions.data.includes(data.questions[i].id)
+              data.questions[i].inAssignment = assignmentQuestions.data.question_ids.includes(data.questions[i].id)
               data.questions[i].src = this.getSrc(data.questions[i])
             }
             this.questions = data.questions

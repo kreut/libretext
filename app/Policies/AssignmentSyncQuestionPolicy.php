@@ -36,6 +36,9 @@ class AssignmentSyncQuestionPolicy
      */
     public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
+
+
+
         return $user->id === ($assignment->course->user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to add a question to this assignment.');

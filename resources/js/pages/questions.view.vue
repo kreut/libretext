@@ -75,7 +75,7 @@
       this.getSelectedQuestions(this.assignmentId)
       let vm = this
       if (this.user.role === 3) {
-        let receiveMessage = function (event) {
+        let receiveMessage = async function (event) {
           if (event.data.action !== 'hello') {
             let submission_data = {
               'submission': event.data,
@@ -83,8 +83,12 @@
               'question_id': vm.questions[vm.currentPage - 1].id
             }
             console.log(submission_data)
-            return false
-            axios.post('/api/submissions', submission_data)
+
+            let {data} = await axios.post('/api/submissions', submission_data)
+            console.log(data)
+            if (data.message){
+              //Will add this later when we've worked out what it means to submit...vm.$noty[data.type](data.message)
+            }
           } else {
             console.log ('Hello Event')
           }
