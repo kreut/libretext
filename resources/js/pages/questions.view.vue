@@ -23,7 +23,7 @@
           </div>
           <iframe allowtransparency="true" frameborder="0"
                   v-bind:src="questions[currentPage-1].src"
-                  style="overflow: auto; height: 1000px;"
+                  style="overflow: auto; height: 1274px;"
                   width="100%">
 
           </iframe>

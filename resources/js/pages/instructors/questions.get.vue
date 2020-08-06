@@ -1,12 +1,14 @@
 <template>
   <div v-if="showPage">
     <PageTitle title="Add Questions"></PageTitle>
-    <vue-bootstrap-typeahead
+    <p>Use the search box you can find questions by Tag, Difficulty Level, Author, Textbook, as well as Chapter, Section, and Topic names.</p>
+    <div class="col-5 p-0"><vue-bootstrap-typeahead
       v-model="query"
       :data="tags"
       placeholder="Enter a tag"
       ref="queryTypeahead"
     />
+   </div>
     <div class="mt-3 d-flex flex-row">
       <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
       <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">
@@ -51,7 +53,7 @@
       </div>
       <iframe allowtransparency="true" frameborder="0"
               v-bind:src="questions[currentPage-1].src"
-              style="overflow: auto; height: 1000px;"
+              style="overflow: auto; height: 1274px;"
               width="100%">
 
       </iframe>
@@ -151,6 +153,7 @@ export default {
       try {
         if (this.chosenTags.length === 0) {
           this.$noty.error('Please choose at least one tag.')
+          this.gettingQuestions = false
           return false
         }
         const {data} = await axios.post(`/api/questions/getQuestionsByTags`, {'tags': this.chosenTags})
@@ -176,7 +179,7 @@ export default {
         }
 
       } catch (error) {
-        alert(error.message)
+        this.$noty.error(data.message)
       }
       this.gettingQuestions = false
     },
