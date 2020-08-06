@@ -9,25 +9,6 @@ use Illuminate\Support\Facades\DB;
 
 class SubmissionController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function index()
-    {
-        //
-    }
-
-    /**
-     * Show the form for creating a new resource.
-     *
-     * @return \Illuminate\Http\Response
-     */
-    public function create()
-    {
-        //
-    }
 
     /**
      * Store a newly created resource in storage.
@@ -44,6 +25,8 @@ class SubmissionController extends Controller
         $data['submission'] = $request->input('submission');
 
         //check if assignment is in question and assignment is one of theirs and due data
+
+        //do the extension stuff also
 
 
         $submission = Submission::where('user_id', '=', $data['user_id'])
@@ -66,48 +49,5 @@ class SubmissionController extends Controller
         }
     }
 
-    /**
-     * Display the specified resource.
-     *
-     * @param \App\Submission $submission
-     * @return \Illuminate\Http\Response
-     */
-    public function show(Submission $submission)
-    {
-        //
-    }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\Submission $submission
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(Submission $submission)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Submission $submission
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, Submission $submission)
-    {
-        //
-    }
-
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\Submission $submission
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(Submission $submission)
-    {
-        //
-    }
 }
