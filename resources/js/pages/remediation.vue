@@ -478,7 +478,7 @@ export default {
      let lastBlockElem = blockElems[blockElems.length - 1]
       console.log(lastBlockElem.innerHTML)
       let newBlockElem =  `<div class="blockelem create-flowy noselect">
-        <input type="hidden" name='blockelemtype' class="blockelemtype" value="5">
+        <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length+1}">
         <div class="grabme">
         <img src="assets/img/grabme.svg">
         </div>
