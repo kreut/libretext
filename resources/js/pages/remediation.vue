@@ -411,18 +411,7 @@ export default {
       grab.parentNode.removeChild(grab);
       var blockin = drag.querySelector(".blockin");
       blockin.parentNode.removeChild(blockin);
-      if (drag.querySelector(".blockelemtype").value == "1") {
-        drag.innerHTML += "<div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>New visitor</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>When a <span>new visitor</span> goes to <span>Site 1</span></div>";
-      } else if (drag.querySelector(".blockelemtype").value == "2") {
-        drag.innerHTML += "<div class='blockyleft'><img src='assets/actionblue.svg'><p class='blockyname'>Action is performed</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>When <span>Action 1</span> is performed</div>";
-      } else if (drag.querySelector(".blockelemtype").value == "3") {
-        drag.innerHTML += "<div class='blockyleft'><img src='assets/timeblue.svg'><p class='blockyname'>Time has passed</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>When <span>10 seconds</span> have passed</div>";
-      } else if (drag.querySelector(".blockelemtype").value == "4") {
-        drag.innerHTML += "<div class='blockyleft'><img src='assets/errorblue.svg'><p class='blockyname'>Error prompt</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>When <span>Error 1</span> is triggered</div>";
-      } else if (drag.querySelector(".blockelemtype").value == "5") {
-        drag.innerHTML += "<div class='blockyleft'><img src='assets/errorblue.svg'><p class='blockyname'>Some other Error prompt</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>When <span>Error 1</span> is triggered</div>";
-      }
-
+      drag.innerHTML += "<div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>New visitor</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The value is:" + drag.querySelector(".blockelemtype").value + "</span></div>";
       return true;
     }
 
