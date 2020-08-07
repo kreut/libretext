@@ -1,10 +1,6 @@
 <template>
   <div>
     <div id="leftcard">
-      <div id="closecard">
-        <img src="assets/closeleft.svg">
-      </div>
-      <p id="header">Blocks</p>
       <div id="search">
         <img src="assets/search.svg">
         <input type="text" placeholder="Search blocks">
