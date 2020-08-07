@@ -3,7 +3,7 @@
     <div id="leftcard">
       <div id="search">
         <img src="assets/search.svg">
-        <input type="text" placeholder="Search blocks">
+        <input type="text" placeholder="Query Id">
       </div>
       <div id="subnav">
         <div id="triggers" class="navactive side">Triggers</div>
@@ -373,14 +373,14 @@ body, html {
   background-color: #FFF;
   border: 1px solid #E8E8EF;
   box-sizing: border-box;
-  padding-top: 85px;
+  padding-top: 10px;
   padding-left: 20px;
   height: 100%;
   position: absolute;
   z-index: 2;
 }
 #search input {
-  width: 318px;
+  width: 200px;
   height: 40px;
   background-color: #FFF;
   border: 1px solid #E8E8EF;
