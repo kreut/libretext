@@ -4,7 +4,7 @@
       <div id="search">
         <img src="assets/img/search.svg">
         <input type="text" placeholder="Query Id">
-        <span id="add" class="btn-link pl-2">Add</span>
+        <span id="add" class="btn-link pl-2" v-on:click="addRemediation">Add</span>
         <span class="view btn-link pl-2">View</span>
       </div>
       <div id="subnav">
@@ -234,6 +234,11 @@
     addEventListener("mouseup", doneTouch, false);
     addEventListenerMulti("touchstart", beginTouch, false, ".block");
 
+    },
+    methods: {
+      addRemediation() {
+        alert('f')
+      }
     }
   }
 </script>
