@@ -416,8 +416,8 @@ export default {
           <img src="assets/error.svg">
         </div>
         <div class="blocktext">
-          <p class="blocktitle">Some other Error promptssssssss</p>
-          <p class="blockdesc">Triggers when a specified error happens</p>
+          <p class="blocktitle">PageId: ${this.chosenId}</p>
+          <p class="blockdesc">Some description</p>
         </div>
       </div>
     </div>`
