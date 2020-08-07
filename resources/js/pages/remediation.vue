@@ -483,6 +483,31 @@ export default {
   methods: {
     addRemediation() {
       alert(document.querySelectorAll('div.blockelem.create-flowy.noselect').length)
+     // this.chosenId
+
+     let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
+     let lastBlockElem = blockElems[blockElems.length - 1]
+      console.log(lastBlockElem.innerHTML)
+      let newBlockElem =  `<div class="blockelem create-flowy noselect">
+        <input type="hidden" name='blockelemtype' class="blockelemtype" value="5">
+        <div class="grabme">
+        <img src="assets/img/grabme.svg">
+        </div>
+      <div class="blockin">
+        <div class="blockico">
+          <span></span>
+          <img src="assets/error.svg">
+        </div>
+        <div class="blocktext">
+          <p class="blocktitle">Some other Error promptssssssss</p>
+          <p class="blockdesc">Triggers when a specified error happens</p>
+        </div>
+      </div>
+    </div>`
+
+      lastBlockElem.insertAdjacentHTML('afterend', newBlockElem);
+
+
     }
   }
 }
