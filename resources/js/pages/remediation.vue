@@ -482,7 +482,7 @@ export default {
   },
   methods: {
     addRemediation() {
-      alert(document.querySelectorAll('.create-flowy').length)
+      alert(document.querySelectorAll('div.blockelem.create-flowy.noselect').length)
     }
   }
 }
