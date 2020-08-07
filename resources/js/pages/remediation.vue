@@ -19,7 +19,7 @@
               <img src="assets/img/eye.svg">
             </div>
             <div class="blocktext">
-              <p class="blocktitle">New visitor</p>
+              <p class="blocktitle">Main Question</p>
               <p class="blockdesc">Triggers when somebody visits a specified page</p>
             </div>
           </div>
@@ -324,7 +324,7 @@ export default {
 <div class="grabme"><img src="assets/img/grabme.svg"></div>
 <div class="blockin">
 <div class="blockico"><span></span><img src="assets/img/eye.svg"></div>
-<div class="blocktext"> <p class="blocktitle">New visitor</p><p class="blockdesc">Triggers when somebody visits a specified page</p></div></div></div>`
+<div class="blocktext"> <p class="blocktitle">Assessment Node</p><p class="blockdesc">The original question.</p></div></div></div>`
     flowy(document.getElementById("canvas"), drag, release, snapping);
 
     function addEventListenerMulti(type, listener, capture, selector) {
@@ -339,7 +339,8 @@ export default {
       grab.parentNode.removeChild(grab);
       var blockin = drag.querySelector(".blockin");
       blockin.parentNode.removeChild(blockin);
-      drag.innerHTML += "<div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>New visitor</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The value is:" + drag.querySelector(".blockelemtype").value + "</span></div>";
+      let title = (drag.querySelector(".blockelemtype").value === "1") ? 'Assessment Node' : 'Remediation'
+      drag.innerHTML += "<div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>" + title + "</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The value is:" + drag.querySelector(".blockelemtype").value + "</span></div>";
       return true;
     }
 
@@ -416,8 +417,8 @@ export default {
           <img src="assets/error.svg">
         </div>
         <div class="blocktext">
-          <p class="blocktitle">PageId: ${this.chosenId}</p>
-          <p class="blockdesc">Some description</p>
+          <p class="blocktitle">Remediation</p>
+          <p class="blockdesc">PageId: ${this.chosenId}</p>
         </div>
       </div>
     </div>`
