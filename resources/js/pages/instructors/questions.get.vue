@@ -1,7 +1,8 @@
 <template>
   <div v-if="showPage">
     <PageTitle title="Add Questions"></PageTitle>
-    <p>Use the search box you can find questions by Tag, Difficulty Level, Author, Textbook, as well as Chapter, Section, and Topic names.</p>
+    <p>Use the search box you can find questions by Tag, Difficulty Level, Author, Textbook, as well as Chapter, Section, and Topic names.
+    Adding multiple search parameters will result in a search result which matches all of the conditions.</p>
     <div class="col-5 p-0"><vue-bootstrap-typeahead
       v-model="query"
       :data="tags"
