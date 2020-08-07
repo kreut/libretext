@@ -482,7 +482,7 @@ export default {
   },
   methods: {
     addRemediation() {
-      alert(document.querySelectorAll('.specific-class').length)
+      alert(document.querySelectorAll('.create-flowy').length)
     }
   }
 }
