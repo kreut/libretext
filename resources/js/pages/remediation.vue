@@ -4,6 +4,8 @@
       <div id="search">
         <img src="assets/img/search.svg">
         <input type="text" placeholder="Query Id">
+        <span id="add" class="btn-link pl-2">Add</span>
+        <span class="view btn-link pl-2">View</span>
       </div>
       <div id="subnav">
         <div id="triggers" class="navactive side">Triggers</div>
