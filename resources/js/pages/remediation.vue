@@ -400,7 +400,7 @@ export default {
   },
   methods: {
     addRemediation() {
-      alert(document.querySelectorAll('div.blockelem.create-flowy.noselect').length)
+
       // this.chosenId
 
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
