@@ -3,14 +3,14 @@
     <b-modal
       id="modal-learning-objective"
       ref="modal"
-      title="Add Learning Objective"
+      title="Attach Learning Objective"
       size="lg"
-      @ok="submitAddLearningObjective"
+      @ok="submitAttachLearningObjective"
       @hidden="resetModals()"
       ok-title="Submit"
 
     >
-      <b-form ref="form" @submit="submitAddLearningObjective">
+      <b-form ref="form" @submit="submitAttachLearningObjective">
         <b-form-group
           id="learning_objective"
           label-cols-sm="4"
@@ -32,6 +32,13 @@
       </b-form>
     </b-modal>
     <div id="leftcard">
+      <div class="text">
+        <span class="font-weight-bold text-decoration-underline">Important notes</span>
+        <ol>
+          <li>Start with the assessment node.</li>
+          <li>If the assessment node is out of reach, you'll have to start over.</li>
+        </ol>
+      </div>
       <div id="search">
         <div class="mb-2 mr-2">
           <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
@@ -230,36 +237,36 @@ ${body}
 
   },
   methods: {
-    resetModals() {
-
+    resetAll(modalId) {
+      this.form.learning_objective = ''
+      this.form.pageId = ''
+      this.form.library = ''
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
     },
     openLearningObjectiveModal() {
       this.$bvModal.show('modal-learning-objective')
     },
-    submitAddLearningObjective(bvModalEvt) {
+    submitAttachLearningObjective(bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      this.addLearningObjective()
+      this.attachLearningObjective()
     }
     ,
-    async addLearningObjective() {
+    async attachLearningObjective() {
       try {
-          const {data} = await this.form.post('/api/learning_objectives')
-          if (data.validated) {
-            this.$noty[data.type](data.message)
-            if (data.type === 'success') {
-              this.resetAll('modal-enroll-in-course')
-            }
-          } else {
-            if (data.type === 'error') {
-              this.$noty.error(data.message)//no access
-              this.resetAll('modal-enroll-in-course')
-            }
-          }
-        } catch (error) {
-          console.log(error)
+        const {data} = await this.form.post('/api/learning-objectives')
+        if (data.type === 'success') {
+          this.resetAll('modal-learning-objective')
         }
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!data.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
     },
     addRemediation() {
 
@@ -285,7 +292,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-       Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">View</span>
+       Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">Attach</span>
         </div>
       </div>
     </div>`

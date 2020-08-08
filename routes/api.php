@@ -49,6 +49,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
 
+    Route::post('/learning-objectives','LearningObjectiveController@store');
+
+
 
 
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
