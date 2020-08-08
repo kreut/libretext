@@ -89,7 +89,9 @@ export default {
 
   data: () => ({
     form: new Form({
-      learning_objective: ''
+      learning_objective: '',
+      pageId: '',
+      library: '',
     }),
     title: window.config.appName,
     pageId: '',
@@ -116,6 +118,7 @@ export default {
 <div class="blockin">
 <div class="blockico"><span></span><img src="assets/img/eye.svg"></div>
 <div class="blocktext"> <p class="blocktitle">Assessment Node</p><p class="blockdesc">The original question.</p></div></div></div>`
+
     function addEventListenerMulti(type, listener, capture, selector) {
       var nodes = document.querySelectorAll(selector);
       for (var i = 0; i < nodes.length; i++) {
@@ -156,12 +159,10 @@ ${body}
       block.classList.add("blockdisabled");
       tempblock2 = block;
     }
-    document.addEventListener("click", function (event){
-      window.lastElementClicked = event.target;
-    });
+
 
     function release() {
-      console.log( window.lastElementClicked)
+
       tempblock2.classList.remove("blockdisabled");
     }
 
@@ -185,7 +186,7 @@ ${body}
     var beginTouch = function (event) {
       aclick = true;
       noinfo = false;
-      if (event.target.className === 'open-learning-objective-modal'){
+      if (event.target.className === 'open-learning-objective-modal') {
         console.log('fff')
       }
       if (event.target.closest(".create-flowy")) {
@@ -196,14 +197,22 @@ ${body}
     var checkTouch = function (event) {
       aclick = false;
     }
+
+    function findAncestor(el, cls) {
+      while ((el = el.parentElement) && !el.classList.contains(cls)) ;
+      return el;
+    }
+
     let vm = this
     var doneTouch = function (event) {
 
 
-      if (event.target.className === 'open-learning-objective-modal'){
+      if (event.target.className === 'open-learning-objective-modal') {
+        console.log(event.target)
+        vm.form.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
+        vm.form.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
         vm.openLearningObjectiveModal()
-      } else
-      if (event.type === "mouseup" && aclick && !noinfo) {
+      } else if (event.type === "mouseup" && aclick && !noinfo) {
         if (!rightcard && event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
           tempblock = event.target.closest(".block");
@@ -224,7 +233,7 @@ ${body}
     resetModals() {
 
     },
-    openLearningObjectiveModal(){
+    openLearningObjectiveModal() {
       this.$bvModal.show('modal-learning-objective')
     },
     submitAddLearningObjective(bvModalEvt) {
@@ -235,7 +244,22 @@ ${body}
     }
     ,
     async addLearningObjective() {
-    alert('ff')
+      try {
+          const {data} = await this.form.post('/api/learning_objectives')
+          if (data.validated) {
+            this.$noty[data.type](data.message)
+            if (data.type === 'success') {
+              this.resetAll('modal-enroll-in-course')
+            }
+          } else {
+            if (data.type === 'error') {
+              this.$noty.error(data.message)//no access
+              this.resetAll('modal-enroll-in-course')
+            }
+          }
+        } catch (error) {
+          console.log(error)
+        }
     },
     addRemediation() {
 
