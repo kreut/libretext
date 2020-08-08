@@ -12,23 +12,7 @@
 
       </div>
       <div id="blocklist">
-        <div class="blockelem create-flowy noselect">
-          <input type="hidden" name='blockelemtype' class="blockelemtype" value="1">
-          <div class="grabme">
-            <img src="assets/img/grabme.svg">
-          </div>
-          <div class="blockin">
-            <div class="blockico">
-              <span></span>
-              <img src="assets/img/eye.svg">
-            </div>
-            <div class="blocktext">
-              <p class="blocktitle">Main Question</p>
-              <p class="blockdesc">Triggers when somebody visits a specified page</p>
-            </div>
-          </div>
       </div>
-    </div>
   </div>
   <div id="propwrap">
     <div id="properties">
