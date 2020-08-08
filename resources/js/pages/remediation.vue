@@ -1,5 +1,22 @@
 <template>
   <div>
+    <b-modal
+      id="modal-learning-objective"
+      ref="modal"
+      title="Confirm Delete Course"
+      @ok="test"
+      @hidden="test"
+      ok-title="Yes, delete course!"
+
+    >
+      <p>By deleting the course, you will also delete:</p>
+      <ol>
+        <li>All assignments associated with the course</li>
+        <li>All submitted student responses</li>
+        <li>All student scores</li>
+      </ol>
+      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+    </b-modal>
     <div id="leftcard">
       <div id="search">
         <div class="mb-2 mr-2">
@@ -346,7 +363,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>Learning Objective: <span class="learningObjective remediation-info"><span class="view-learning-objective">View</span></div>`
+       <div>Learning Objective: <span class="learningObjective remediation-info"><span v-on:click="">View</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
 <img src='assets/img/eyeblue.svg'>
 <p class='blockyname'>${title}</p></div>
@@ -394,12 +411,14 @@ ${body}
     var checkTouch = function (event) {
       aclick = false;
     }
+    let vm = this
     var doneTouch = function (event) {
       if (event.type === "mouseup" && aclick && !noinfo) {
         if (!rightcard && event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
           tempblock = event.target.closest(".block");
           rightcard = true;
+          vm.openLearningObjectiveModal()
           document.getElementById("properties").classList.add("expanded");
           document.getElementById("propwrap").classList.add("itson");
           tempblock.classList.add("selectedblock");
@@ -413,6 +432,13 @@ ${body}
 
   },
   methods: {
+    test() {
+      alert('test')
+    },
+    openLearningObjectiveModal(){
+      alert('f')
+      this.$bvModal.show('modal-learning-objective')
+    },
     addRemediation() {
 
       // this.chosenId
