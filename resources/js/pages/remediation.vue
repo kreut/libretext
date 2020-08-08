@@ -336,17 +336,18 @@ export default {
       var blockin = drag.querySelector(".blockin");
 
       blockin.parentNode.removeChild(blockin);
-    let isAssessmentNode =  (drag.querySelector(".blockelemtype").value === "1")
+      let isAssessmentNode = (drag.querySelector(".blockelemtype").value === "1")
 
-        let title = isAssessmentNode ? 'Assessment Node' : 'Remediation'
+      let title = isAssessmentNode ? 'Assessment Node' : 'Remediation'
 
-      let library = isAssessmentNode ? '' :blockin.querySelector(".library").innerHTML
+      let library = isAssessmentNode ? '' : blockin.querySelector(".library").innerHTML
       let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
 
 
-     let body = isAssessmentNode  ? "The original question" :`<div>Library: <span class="library remediation-info" >${library}</span></div>
-      <div>PageId: <span class="pageId remediation-info" >${pageId}</span></div>`
-       drag.innerHTML +=`<div class='blockyleft'>
+      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
+      <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
+       <div>Learning Objective: <span class="learningObjective remediation-info"><span class="view-learning-objective">View</span></div>`
+      drag.innerHTML += `<div class='blockyleft'>
 <img src='assets/img/eyeblue.svg'>
 <p class='blockyname'>${title}</p></div>
 <div class='blockyright'><img src='assets/img/more.svg'></div>
@@ -432,7 +433,11 @@ ${body}
         <div class="blocktext">
           <p class="blocktitle">Remediation</p>
           <p class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
-      this.library.slice(1)}</span><br>PageId: <span class="pageId">${this.pageId}</span></p>
+      this.library.slice(1)}</span>
+          <br>
+          Page Id: <span class="pageId">${this.pageId}</span>
+          <br>
+       Learning Objective: <span class="learningObjective remediation-info"><span class="view-learning-objective">View</span>
         </div>
       </div>
     </div>`
@@ -449,10 +454,12 @@ ${body}
 div.container {
   margin-left: 5px !important;
 }
+
 .blockyinfo span.remediation-info {
   border-bottom: none;
   color: #808292;
 }
+
 .navbar-brand {
   display: none;
 }
