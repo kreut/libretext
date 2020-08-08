@@ -3,19 +3,33 @@
     <b-modal
       id="modal-learning-objective"
       ref="modal"
-      title="Confirm Delete Course"
-      @ok="test"
-      @hidden="test"
-      ok-title="Yes, delete course!"
+      title="Add Learning Objective"
+      size="lg"
+      @ok="submitAddLearningObjective"
+      @hidden="resetModals()"
+      ok-title="Submit"
 
     >
-      <p>By deleting the course, you will also delete:</p>
-      <ol>
-        <li>All assignments associated with the course</li>
-        <li>All submitted student responses</li>
-        <li>All student scores</li>
-      </ol>
-      <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <b-form ref="form" @submit="submitAddLearningObjective">
+        <b-form-group
+          id="learning_objective"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Learning Objective"
+          label-for="learning_objective"
+        >
+          <b-form-input
+            id="learning_objective"
+            v-model="form.learning_objective"
+            type="text"
+            :class="{ 'is-invalid': form.errors.has('learning_objective') }"
+            @keydown="form.errors.clear('learning_objective')"
+          >
+          </b-form-input>
+          <has-error :form="form" field="learning_objective"></has-error>
+        </b-form-group>
+
+      </b-form>
     </b-modal>
     <div id="leftcard">
       <div id="search">
@@ -65,6 +79,7 @@
 
 
 import {flowy} from '~/helpers/Flowy'
+import Form from "vform";
 
 export default {
 
@@ -73,6 +88,9 @@ export default {
   },
 
   data: () => ({
+    form: new Form({
+      learning_objective: ''
+    }),
     title: window.config.appName,
     pageId: '',
     chosenId: '',
@@ -89,6 +107,8 @@ export default {
     var rightcard = false;
     var tempblock;
     var tempblock2;
+
+    flowy(document.getElementById("canvas"), drag, release, snapping);
     document.getElementById("blocklist").innerHTML = `
 <div class="blockelem create-flowy noselect">
 <input type="hidden" name="blockelemtype" class="blockelemtype" value="1">
@@ -96,8 +116,6 @@ export default {
 <div class="blockin">
 <div class="blockico"><span></span><img src="assets/img/eye.svg"></div>
 <div class="blocktext"> <p class="blocktitle">Assessment Node</p><p class="blockdesc">The original question.</p></div></div></div>`
-    flowy(document.getElementById("canvas"), drag, release, snapping);
-
     function addEventListenerMulti(type, listener, capture, selector) {
       var nodes = document.querySelectorAll(selector);
       for (var i = 0; i < nodes.length; i++) {
@@ -122,7 +140,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">View</span></div>`
+       <div>Learning Objective: <span class="learningObjective remediation-info">Some Learning objective</div>`
       drag.innerHTML += `<div class='blockyleft'>
 <img src='assets/img/eyeblue.svg'>
 <p class='blockyname'>${title}</p></div>
@@ -138,8 +156,12 @@ ${body}
       block.classList.add("blockdisabled");
       tempblock2 = block;
     }
+    document.addEventListener("click", function (event){
+      window.lastElementClicked = event.target;
+    });
 
     function release() {
+      console.log( window.lastElementClicked)
       tempblock2.classList.remove("blockdisabled");
     }
 
@@ -163,7 +185,11 @@ ${body}
     var beginTouch = function (event) {
       aclick = true;
       noinfo = false;
+      if (event.target.className === 'open-learning-objective-modal'){
+        console.log('fff')
+      }
       if (event.target.closest(".create-flowy")) {
+
         noinfo = true;
       }
     }
@@ -195,11 +221,21 @@ ${body}
 
   },
   methods: {
-    test() {
-      alert('test')
+    resetModals() {
+
     },
     openLearningObjectiveModal(){
       this.$bvModal.show('modal-learning-objective')
+    },
+    submitAddLearningObjective(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      this.addLearningObjective()
+    }
+    ,
+    async addLearningObjective() {
+    alert('ff')
     },
     addRemediation() {
 
@@ -225,7 +261,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-       Learning Objective: <span class="learningObjective remediation-info"><span class="view-learning-objective">View</span>
+       Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">View</span>
         </div>
       </div>
     </div>`
