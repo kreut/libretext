@@ -2,45 +2,45 @@
   <div>
     <div id="leftcard">
       <div id="search">
-<div class="mb-2 mr-2">
-          <b-form-select v-model="selected" :options="options"  class="mt-3"></b-form-select>
-</div>
-          <div class="d-flex flex-row">
-         <b-form-input v-model="chosenId" style="width: 100px" placeholder="Page Id"></b-form-input>
-            <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation">Add Remediation</b-button>
-          </div>
+        <div class="mb-2 mr-2">
+          <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
+        </div>
+        <div class="d-flex flex-row">
+          <b-form-input v-model="pageId" style="width: 100px" placeholder="Page Id"></b-form-input>
+          <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation">Add Remediation</b-button>
+        </div>
 
       </div>
       <div id="blocklist">
       </div>
-  </div>
-  <div id="propwrap">
-    <div id="properties">
-      <div id="close">
-        <img src="assets/close.svg">
-      </div>
-      <p id="header2">Properties</p>
-      <div id="propswitch">
-        <div id="dataprop">Data</div>
-        <div id="alertprop">Alerts</div>
-        <div id="logsprop">Logs</div>
-      </div>
-      <div id="proplist">
-        <p class="inputlabel">Select database</p>
-        <div class="dropme">Database 1 <img src="assets/dropdown.svg"></div>
-        <p class="inputlabel">Check properties</p>
-        <div class="dropme">All<img src="assets/dropdown.svg"></div>
-        <div class="checkus"><img src="assets/checkon.svg">
-          <p>Log on successful performance</p></div>
-        <div class="checkus"><img src="assets/checkoff.svg">
-          <p>Give priority to this block</p></div>
-      </div>
-      <div id="divisionthing"></div>
-      <div id="removeblock">Delete blocks</div>
     </div>
-  </div>
-  <div id="canvas">
-  </div>
+    <div id="propwrap">
+      <div id="properties">
+        <div id="close">
+          <img src="assets/close.svg">
+        </div>
+        <p id="header2">Properties</p>
+        <div id="propswitch">
+          <div id="dataprop">Data</div>
+          <div id="alertprop">Alerts</div>
+          <div id="logsprop">Logs</div>
+        </div>
+        <div id="proplist">
+          <p class="inputlabel">Select database</p>
+          <div class="dropme">Database 1 <img src="assets/dropdown.svg"></div>
+          <p class="inputlabel">Check properties</p>
+          <div class="dropme">All<img src="assets/dropdown.svg"></div>
+          <div class="checkus"><img src="assets/checkon.svg">
+            <p>Log on successful performance</p></div>
+          <div class="checkus"><img src="assets/checkoff.svg">
+            <p>Give priority to this block</p></div>
+        </div>
+        <div id="divisionthing"></div>
+        <div id="removeblock">Delete blocks</div>
+      </div>
+    </div>
+    <div id="canvas">
+    </div>
   </div>
 </template>
 
@@ -56,11 +56,11 @@ export default {
   data: () => ({
     title: window.config.appName,
     chosenId: '',
-    selected: null,
-    options: [
-      { value: null, text: 'Please select  the library' },
-      { value: 'query', text: 'Query' },
-      { value: 'b', text: 'Some other library' },
+    library: null,
+    libraryOptions: [
+      {value: null, text: 'Please select  the library'},
+      {value: 'query', text: 'Query'},
+      {value: 'b', text: 'Some other library'},
     ]
   }),
 
@@ -412,7 +412,8 @@ export default {
         </div>
         <div class="blocktext">
           <p class="blocktitle">Remediation</p>
-          <p class="blockdesc">PageId: ${this.chosenId}</p>
+          <p class="blockdesc">Library: ${this.library[0].toUpperCase() +
+      this.library.slice(1)}<br>PageId: ${this.pageId}</p>
         </div>
       </div>
     </div>`
@@ -803,7 +804,6 @@ body, html {
   position: absolute;
   z-index: 2;
 }
-
 
 
 ::-webkit-input-placeholder { /* Edge */
