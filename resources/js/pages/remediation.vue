@@ -2,10 +2,14 @@
   <div>
     <div id="leftcard">
       <div id="search">
-        <img src="assets/img/search.svg">
-        <input v-model="chosenId" type="text" placeholder="Query Id">
-        <span id="add" class="btn-link pl-2" v-on:click="addRemediation">Add</span>
-        <span class="view btn-link pl-2">View</span>
+<div class="mb-2 mr-2">
+          <b-form-select v-model="selected" :options="options"  class="mt-3"></b-form-select>
+</div>
+          <div class="d-flex flex-row">
+         <b-form-input v-model="chosenId" style="width: 100px" placeholder="Page Id"></b-form-input>
+            <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation">Add Remediation</b-button>
+          </div>
+
       </div>
       <div id="blocklist">
         <div class="blockelem create-flowy noselect">
@@ -67,7 +71,15 @@ export default {
 
   data: () => ({
     title: window.config.appName,
-    chosenId: ''
+    chosenId: '',
+    selected: null,
+    options: [
+      { value: null, text: 'Please select an option' },
+      { value: 'a', text: 'This is First option' },
+      { value: 'b', text: 'Selected Option' },
+      { value: { C: '3PO' }, text: 'This is an option with object value' },
+      { value: 'd', text: 'This one is disabled', disabled: true }
+    ]
   }),
 
   mounted() {
@@ -810,18 +822,7 @@ body, html {
   z-index: 2;
 }
 
-#search input {
-  width: 200px;
-  height: 40px;
-  background-color: #FFF;
-  border: 1px solid #E8E8EF;
-  box-sizing: border-box;
-  box-shadow: 0px 2px 8px rgba(34, 34, 87, 0.05);
-  border-radius: 5px;
-  text-indent: 35px;
-  font-family: Roboto;
-  font-size: 16px;
-}
+
 
 ::-webkit-input-placeholder { /* Edge */
   color: #C9C9D5;
@@ -835,12 +836,6 @@ body, html {
   color: #C9C9D5;
 }
 
-#search img {
-  position: absolute;
-  margin-top: 10px;
-  width: 18px;
-  margin-left: 12px;
-}
 
 #header {
   font-size: 20px;
