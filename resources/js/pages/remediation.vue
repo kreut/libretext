@@ -363,7 +363,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>Learning Objective: <span class="learningObjective remediation-info"><span v-on:click="">View</span></div>`
+       <div>Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">View</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
 <img src='assets/img/eyeblue.svg'>
 <p class='blockyname'>${title}</p></div>
@@ -413,12 +413,16 @@ ${body}
     }
     let vm = this
     var doneTouch = function (event) {
+
+
+      if (event.target.className === 'open-learning-objective-modal'){
+        vm.openLearningObjectiveModal()
+      } else
       if (event.type === "mouseup" && aclick && !noinfo) {
         if (!rightcard && event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
           tempblock = event.target.closest(".block");
           rightcard = true;
-          vm.openLearningObjectiveModal()
           document.getElementById("properties").classList.add("expanded");
           document.getElementById("propwrap").classList.add("itson");
           tempblock.classList.add("selectedblock");
@@ -436,7 +440,6 @@ ${body}
       alert('test')
     },
     openLearningObjectiveModal(){
-      alert('f')
       this.$bvModal.show('modal-learning-objective')
     },
     addRemediation() {
