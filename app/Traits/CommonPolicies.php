@@ -24,4 +24,8 @@ trait CommonPolicies
 
         return $user->id === $course->user_id;
     }
+
+    public function isNotStudent($user){
+        return $user->role !== 3;
+    }
 }

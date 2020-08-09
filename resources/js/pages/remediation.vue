@@ -1,36 +1,5 @@
 <template>
   <div>
-    <b-modal
-      id="modal-learning-objective"
-      ref="modal"
-      title="Attach Learning Objective"
-      size="lg"
-      @ok="submitAttachLearningObjective"
-      @hidden="resetModals()"
-      ok-title="Submit"
-
-    >
-      <b-form ref="form" @submit="submitAttachLearningObjective">
-        <b-form-group
-          id="learning_objective"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Learning Objective"
-          label-for="learning_objective"
-        >
-          <b-form-input
-            id="learning_objective"
-            v-model="form.learning_objective"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('learning_objective') }"
-            @keydown="form.errors.clear('learning_objective')"
-          >
-          </b-form-input>
-          <has-error :form="form" field="learning_objective"></has-error>
-        </b-form-group>
-
-      </b-form>
-    </b-modal>
     <div id="leftcard">
       <div class="text">
         <span class="font-weight-bold text-decoration-underline">Important notes</span>
@@ -79,6 +48,26 @@
     </div>
     <div id="canvas">
     </div>
+    <b-modal
+      id="modal-learning-objective"
+      ref="modal"
+      title="Attach Learning Objective"
+      size="lg"
+      @ok="submitAttachLearningObjective"
+      @hidden="resetModals()"
+      ok-title="Submit"
+
+    >
+      <b-form ref="form" @submit="submitAttachLearningObjective">
+        <div class="p-0"><vue-bootstrap-typeahead
+          v-model="query"
+          :data="learningObjectives"
+          placeholder="Enter a Learning Objective"
+          ref="queryTypeahead"
+        />
+        </div>
+      </b-form>
+    </b-modal>
   </div>
 </template>
 
@@ -86,20 +75,26 @@
 
 
 import {flowy} from '~/helpers/Flowy'
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import Form from "vform";
+import axios from "axios";
 
 export default {
-
+  components: {
+    VueBootstrapTypeahead
+  },
   metaInfo() {
     return {title: this.$t('home')}
   },
 
   data: () => ({
+    query: '',
     form: new Form({
       learning_objective: '',
       pageId: '',
       library: '',
     }),
+    learningObjectives: '',
     title: window.config.appName,
     pageId: '',
     chosenId: '',
@@ -112,7 +107,8 @@ export default {
   }),
 
   mounted() {
-
+    this.getLearningObjectives();
+console.log(this.learningObjectives)
     var rightcard = false;
     var tempblock;
     var tempblock2;
@@ -233,7 +229,22 @@ ${body}
 
   },
   methods: {
-    resetModals() {
+    async getLearningObjectives() {
+      try {
+        const {data} = await axios.get(`/api/learning-objectives`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        } else {
+          this.learningObjectives = data.learning_objectives
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+
+      resetModals() {
       //handled through the resetAll
     },
     resetAll(modalId) {

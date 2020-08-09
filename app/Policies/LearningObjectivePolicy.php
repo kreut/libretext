@@ -3,14 +3,15 @@
 namespace App\Policies;
 
 
+use App\Traits\CommonPolicies;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 
 class LearningObjectivePolicy
 {
-    use HandlesAuthorization;
 
+    use CommonPolicies;
     /**
      * Determine whether the user can store the learning objective
      *
@@ -20,9 +21,18 @@ class LearningObjectivePolicy
      */
     public function store(User $user)
     {
-        return ($user->role !== 3)
+        return $this->IsNotStudent($user)
             ? Response::allow()
             : Response::deny('You are not allowed to create Learning Objectives.');
 
     }
+
+    public function viewAny(User $user)
+    {
+        return $this->IsNotStudent($user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve Learning Objectives from the database.');
+
+    }
+
 }
