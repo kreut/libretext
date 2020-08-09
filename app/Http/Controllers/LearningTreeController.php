@@ -57,7 +57,7 @@ class LearningTreeController extends Controller
         }
 
         $response['type'] = 'error';
-$learning_tree_parsed = str_replace('\"',"'", $request->learning_tree);
+        $learning_tree_parsed = str_replace('\"', "'", $request->learning_tree);
 
         try {
 
@@ -81,6 +81,30 @@ $learning_tree_parsed = str_replace('\"',"'", $request->learning_tree);
 
     }
 
+    public function getLearningTreeByUserAndQuestionId($user_id, $question_id)
+    {
+        return DB::table('learning_trees')
+            ->where('question_id', $question_id)
+            ->where('user_id', $user_id)
+            ->pluck('learning_tree');
+    }
+
+    public function getDefaultLearningTreeByQuestionId(int $question_id)
+    {
+        return DB::table('learning_trees')
+            ->where('question_id', $question_id)
+            ->orderBy('created_at', 'asc')
+            ->pluck('learning_tree');
+    }
+
+    public function getDefaultLearningTree()
+    {
+       return  <<<EOT
+{"html":"<div class='indicator invisible'></div><div class='blockelem noselect block' style='left: 225px; top: 34px;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>Assessment Node</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The original question</div></div>","blockarr":[{"parent":-1,"childwidth":0,"id":0,"x":745,"y":159.5,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 225px; top: 34px;"}]}]}
+EOT;
+
+               }
+
     /**
      * Display the specified resource.
      *
@@ -92,23 +116,16 @@ $learning_tree_parsed = str_replace('\"',"'", $request->learning_tree);
         //anybody who is logged in can do this!
         $response['type'] = 'error';
         try {
-            $learning_tree = DB::table('learning_trees')
-                        ->where('question_id', $question->id)
-                        ->where('user_id',Auth::user()->id)
-                        ->pluck('learning_tree');
-            if (!$learning_tree){
-                $learning_tree = DB::table('learning_trees')
-                    ->where('question_id', $question->id+25)
-                    ->orderBy('created_at', 'asc')
-                    ->pluck('learning_tree');
-            }
-            $learning_tree = false;
-            if (!$learning_tree){
-                $learning_tree =<<<EOT
-{"html":"<div class='indicator invisible'></div><div class='blockelem noselect block' style='left: 225px; top: 34px;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>Assessment Node</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The original question</div></div>","blockarr":[{"parent":-1,"childwidth":0,"id":0,"x":745,"y":159.5,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 225px; top: 34px;"}]}]}
-EOT;
+            $learning_tree = $this->getLearningTreeByUserAndQuestionId(Auth::user()->id, $question->id);
 
+            if ($learning_tree->isEmpty()) {
+                $learning_tree = $this->getDefaultLearningTreeByQuestionId($question->id);
             }
+
+            if ($learning_tree->isEmpty()) {
+                $learning_tree = $this->getDefaultLearningTree();
+            }
+
             $response['type'] = 'success';
             $response['learning_tree'] = $learning_tree;
 
@@ -118,7 +135,6 @@ EOT;
             $response['message'] = "There was an error retrieving the learning tree.  Please try again or contact us for assistance.";
         }
         return $response;
-
 
 
     }

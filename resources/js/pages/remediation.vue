@@ -114,15 +114,9 @@ export default {
     var rightcard = false;
     var tempblock;
     var tempblock2;
+console.log(document.getElementById("canvas"))
 
     flowy(document.getElementById("canvas"), drag, release, snapping);
-    document.getElementById("blocklist").innerHTML = `
-<div class="blockelem create-flowy noselect">
-<input type="hidden" name="blockelemtype" class="blockelemtype" value="1">
-<div class="grabme"><img src="assets/img/grabme.svg"></div>
-<div class="blockin">
-<div class="blockico"><span></span><img src="assets/img/eye.svg"></div>
-<div class="blocktext"> <p class="blocktitle">Assessment Node</p><p class="blockdesc">The original question.</p></div></div></div>`
 
     function addEventListenerMulti(type, listener, capture, selector) {
       var nodes = document.querySelectorAll(selector);
@@ -312,10 +306,10 @@ ${body}
       // this.chosenId
 
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-      let lastBlockElem = blockElems[blockElems.length - 1]
-      console.log(lastBlockElem.innerHTML)
+
+
       let newBlockElem = `<div class="blockelem create-flowy noselect">
-        <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 1}">
+        <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <div class="grabme">
         <img src="assets/img/grabme.svg">
         </div>
@@ -335,8 +329,12 @@ ${body}
         </div>
       </div>
     </div>`
-
-      lastBlockElem.insertAdjacentHTML('afterend', newBlockElem);
+      if (blockElems.length > 0) {
+        let lastBlockElem = blockElems[blockElems.length - 1]
+        lastBlockElem.insertAdjacentHTML('afterend', newBlockElem);
+      } else {
+        document.getElementById("blocklist").innerHTML += newBlockElem
+      }
 
     }
   }
