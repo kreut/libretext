@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\LearningObjective;
+use App\LearningObjectiveNode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -55,31 +56,50 @@ class LearningObjectiveController extends Controller
      * @return mixed
      * @throws \Exception
      */
-    public function store(StoreLearningObjective $request, LearningObjective $learningObjective)
+    public function attach(StoreLearningObjective $request, LearningObjective $learningObjective)
     {
 
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('store', $learningObjective);
+//0. Use Vue to create the stuff on the left?
+        //1. check that the page and learning objective are unique
+        //2. prepopulate the field if one is attached already
+        //3. Show which are attached and which aren't.
+        //4. Can anyone update the learning objective???? (Crowd source?)
 
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
 
-        $response['type'] = 'error';
+
+
+
+         $response['type'] = 'error';
+         $authorized = Gate::inspect('store', $learningObjective);
+
+         if (!$authorized->allowed()) {
+             $response['message'] = $authorized->message();
+             return $response;
+         }
+
+         $response['type'] = 'error';
+
+
         try {
+
             $data = $request->validated();
-            LearningObjective::create(
-                ['learning_objective' => $data['learning_objective'],
-                   'user_id' => Auth::user()->id
+
+
+            LearningObjectiveNode::create(
+                ['learning_objective_id' => DB::table('learning_objectives')->
+                                            where('learning_objective', $data['learning_objective'])
+                                                ->first()->id,
+                    'user_id' => Auth::user()->id,
+                    'library' => $data['library'],
+                    'page_id' => $data['pageId']
                 ]
             );
             $response['type'] = 'success';
-            $response['message'] = "The learning objective has been attached to the remediation.";
+            $response['message'] = "The learning objective has been attached to the remediation node.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error creating the learning objective.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error attaching the learning objective to the remediation node.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -89,7 +109,7 @@ class LearningObjectiveController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\LearningObjective  $learningObjective
+     * @param \App\LearningObjective $learningObjective
      * @return \Illuminate\Http\Response
      */
     public function show(LearningObjective $learningObjective)
@@ -100,7 +120,7 @@ class LearningObjectiveController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\LearningObjective  $learningObjective
+     * @param \App\LearningObjective $learningObjective
      * @return \Illuminate\Http\Response
      */
     public function edit(LearningObjective $learningObjective)
@@ -111,8 +131,8 @@ class LearningObjectiveController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\LearningObjective  $learningObjective
+     * @param \Illuminate\Http\Request $request
+     * @param \App\LearningObjective $learningObjective
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, LearningObjective $learningObjective)
@@ -123,7 +143,7 @@ class LearningObjectiveController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\LearningObjective  $learningObjective
+     * @param \App\LearningObjective $learningObjective
      * @return \Illuminate\Http\Response
      */
     public function destroy(LearningObjective $learningObjective)

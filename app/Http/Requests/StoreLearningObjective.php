@@ -24,7 +24,9 @@ class StoreLearningObjective extends FormRequest
     public function rules()
     {
         $rules = [
-            'learning_objective' => ['required', 'max:255']
+            'learning_objective' => ['exists:learning_objectives'],
+            'pageId' => 'required|integer|min:1',
+            'library' => 'required'
         ];
         return $rules;
     }

@@ -64,6 +64,7 @@
           :data="learningObjectives"
           placeholder="Enter a Learning Objective"
           ref="queryTypeahead"
+          @click="form.errors.clear('learning_objective')"
         />
         </div>
       </b-form>
@@ -267,15 +268,14 @@ ${body}
     ,
     async attachLearningObjective() {
       try {
-        const {data} = await this.form.post('/api/learning-objectives')
+        this.form.learning_objective = this.query
+        const {data} = await this.form.post('/api/learning-objectives/attach')
         if (data.type === 'success') {
           this.resetAll('modal-learning-objective')
         }
         this.$noty[data.type](data.message)
       } catch (error) {
-        if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
-        }
       }
     },
     addRemediation() {
