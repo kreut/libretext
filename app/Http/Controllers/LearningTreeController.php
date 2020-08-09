@@ -97,9 +97,16 @@ $learning_tree_parsed = str_replace('\"',"'", $request->learning_tree);
                         ->where('user_id',Auth::user()->id)
                         ->pluck('learning_tree');
             if (!$learning_tree){
-
-
-
+                $learning_tree = DB::table('learning_trees')
+                    ->where('question_id', $question->id+25)
+                    ->orderBy('created_at', 'asc')
+                    ->pluck('learning_tree');
+            }
+            $learning_tree = false;
+            if (!$learning_tree){
+                $learning_tree =<<<EOT
+{"html":"<div class='indicator invisible'></div><div class='blockelem noselect block' style='left: 225px; top: 34px;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>Assessment Node</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The original question</div></div>","blockarr":[{"parent":-1,"childwidth":0,"id":0,"x":745,"y":159.5,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 225px; top: 34px;"}]}]}
+EOT;
 
             }
             $response['type'] = 'success';

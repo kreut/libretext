@@ -241,9 +241,9 @@ ${body}
       console.log('getting learning tree')
       try {
         const {data} = await axios.get(`/api/learning-trees/${questionId}`)
-        console.log(data)
-console.log(data.learning_tree)
-        flowy.import(JSON.parse(data.learning_tree))
+
+          flowy.import(JSON.parse(data.learning_tree))
+
       } catch (error) {
         this.$noty.error(error.message)
       }
