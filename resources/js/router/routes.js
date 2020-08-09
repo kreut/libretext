@@ -10,7 +10,7 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
-  { path: '/remediation', name: 'remediation.index', component: page('remediation.vue') },
+  { path: '/remediation/:questionId', name: 'remediation.index', component: page('remediation.vue') },
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
   { path: '/courses/:courseId/scores', name: 'scores.index', component: page('instructors/scores.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') },

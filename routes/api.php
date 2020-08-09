@@ -55,6 +55,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/learning-objectives', 'LearningObjectiveController@index');
 
 
+    Route::get('/learning-trees/{question}','LearningTreeController@show');
+    Route::post('/learning-trees','LearningTreeController@store');
+
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');

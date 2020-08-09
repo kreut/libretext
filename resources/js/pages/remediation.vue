@@ -1,12 +1,9 @@
 <template>
   <div>
+
     <div id="leftcard">
-      <div class="text">
-        <span class="font-weight-bold text-decoration-underline">Important notes</span>
-        <ol>
-          <li>Start with the assessment node.</li>
-          <li>If the assessment node is out of reach, you'll have to start over.</li>
-        </ol>
+      <div class="float-right mr-2">
+        <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
       </div>
       <div id="search">
         <div class="mb-2 mr-2">
@@ -59,13 +56,14 @@
 
     >
       <b-form ref="form" @submit="submitAttachLearningObjective">
-        <div class="p-0"><vue-bootstrap-typeahead
-          v-model="query"
-          :data="learningObjectives"
-          placeholder="Enter a Learning Objective"
-          ref="queryTypeahead"
-          @click="form.errors.clear('learning_objective')"
-        />
+        <div class="p-0">
+          <vue-bootstrap-typeahead
+            v-model="query"
+            :data="learningObjectives"
+            placeholder="Enter a Learning Objective"
+            ref="queryTypeahead"
+            @click="form.errors.clear('learning_objective')"
+          />
         </div>
       </b-form>
     </b-modal>
@@ -108,8 +106,11 @@ export default {
   }),
 
   mounted() {
+    this.questionId = this.$route.params.questionId
+
     this.getLearningObjectives();
-console.log(this.learningObjectives)
+
+    console.log(this.learningObjectives)
     var rightcard = false;
     var tempblock;
     var tempblock2;
@@ -228,11 +229,39 @@ ${body}
     addEventListener("mouseup", doneTouch, false);
     addEventListenerMulti("touchstart", beginTouch, false, ".block");
 
+    let learningTree = this.getLearningTreeByQuestionId(this.questionId)
+
+    //flowy.import(learningTree)
+
+
+
   },
   methods: {
+    async getLearningTreeByQuestionId(questionId){
+      console.log('getting learning tree')
+      try {
+        const {data} = await axios.get(`/api/learning-trees/${questionId}`)
+        console.log(data)
+console.log(data.learning_tree)
+        flowy.import(JSON.parse(data.learning_tree))
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async saveLearningTree() {
+      try {
+        const {data} = await axios.post('/api/learning-trees', {
+          'question_id': this.questionId,
+          'learning_tree': JSON.stringify(flowy.output())
+        })
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getLearningObjectives() {
       try {
-        const {data} = await axios.get(`/api/learning-objectives`)
+        const {data} = await axios.get('/api/learning-objectives')
         console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -245,7 +274,7 @@ ${body}
       }
     },
 
-      resetModals() {
+    resetModals() {
       //handled through the resetAll
     },
     resetAll(modalId) {
@@ -275,7 +304,7 @@ ${body}
         }
         this.$noty[data.type](data.message)
       } catch (error) {
-          this.$noty.error(error.message)
+        this.$noty.error(error.message)
       }
     },
     addRemediation() {
@@ -308,7 +337,6 @@ ${body}
     </div>`
 
       lastBlockElem.insertAdjacentHTML('afterend', newBlockElem);
-
 
     }
   }
