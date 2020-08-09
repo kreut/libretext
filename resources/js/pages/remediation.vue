@@ -193,9 +193,7 @@ ${body}
     var beginTouch = function (event) {
       aclick = true;
       noinfo = false;
-      if (event.target.className === 'open-learning-objective-modal') {
-        console.log('fff')
-      }
+
       if (event.target.closest(".create-flowy")) {
 
         noinfo = true;
@@ -205,10 +203,6 @@ ${body}
       aclick = false;
     }
 
-    function findAncestor(el, cls) {
-      while ((el = el.parentElement) && !el.classList.contains(cls)) ;
-      return el;
-    }
 
     let vm = this
     var doneTouch = function (event) {
@@ -218,6 +212,8 @@ ${body}
         console.log(event.target)
         vm.form.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
         vm.form.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
+        console.log(event.target.parentNode.parentNode.querySelector('.learningObjective'))
+        event.target.parentNode.parentNode.querySelector('.learningObjective').setAttribute("id", "chosen");
         vm.openLearningObjectiveModal()
       } else if (event.type === "mouseup" && aclick && !noinfo) {
         if (!rightcard && event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
@@ -237,6 +233,9 @@ ${body}
 
   },
   methods: {
+    resetModals() {
+      //handled through the resetAll
+    },
     resetAll(modalId) {
       this.form.learning_objective = ''
       this.form.pageId = ''
@@ -263,7 +262,7 @@ ${body}
         }
         this.$noty[data.type](data.message)
       } catch (error) {
-        if (!data.message.includes('status code 422')) {
+        if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
       }
