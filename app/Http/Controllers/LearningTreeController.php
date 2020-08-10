@@ -42,11 +42,6 @@ class LearningTreeController extends Controller
     public function store(StoreLearningTree $request, LearningTree $learningTree)
     {
 
-        ///validate that not a student
-        ///check that it doesn't exist
-        /// check that the question is an integer
-        ///
-
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -63,12 +58,12 @@ class LearningTreeController extends Controller
 
             $data = $request->validated();
 
-            LearningTree::create(
-                ['question_id' => $data['question_id'],
-                    'user_id' => Auth::user()->id,
-                    'learning_tree' => $learning_tree_parsed
-                ]
-            );
+            DB::table('learning_trees')
+                ->updateOrInsert(
+                    ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
+                    ['learning_tree' => $learning_tree_parsed]
+                );
+
             $response['type'] = 'success';
             $response['message'] = "The learning tree has been saved.";
         } catch (Exception $e) {
