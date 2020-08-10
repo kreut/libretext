@@ -54,8 +54,7 @@
 
     middleware: 'auth',
     computed: mapGetters({
-      user: 'auth/user',
-      token: 'auth/token'
+      user: 'auth/user'
     }),
     data: () => ({
       perPage: 1,
@@ -67,7 +66,6 @@
     }),
     created() {
       this.getSrc = getSrc
-      console.log(this.token)
     },
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
@@ -115,7 +113,7 @@
           }
           this.questions = data.questions
           for (let i = 0; i < this.questions.length; i++) {
-            this.questions[i].src = this.getSrc(this.questions[i], this.token)
+            this.questions[i].src = this.getSrc(this.questions[i])
           }
 
           this.initializing = false
