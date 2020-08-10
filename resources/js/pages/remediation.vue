@@ -21,7 +21,7 @@
     <div id="propwrap">
       <div id="properties">
         <div id="close">
-          <img src="assets/close.svg">
+
         </div>
         <p id="header2">Properties</p>
         <div id="propswitch">
@@ -31,13 +31,7 @@
         </div>
         <div id="proplist">
           <p class="inputlabel">Select database</p>
-          <div class="dropme">Database 1 <img src="assets/dropdown.svg"></div>
-          <p class="inputlabel">Check properties</p>
-          <div class="dropme">All<img src="assets/dropdown.svg"></div>
-          <div class="checkus"><img src="assets/checkon.svg">
-            <p>Log on successful performance</p></div>
-          <div class="checkus"><img src="assets/checkoff.svg">
-            <p>Give priority to this block</p></div>
+
         </div>
         <div id="divisionthing"></div>
         <div id="removeblock">Delete blocks</div>
@@ -144,9 +138,7 @@ console.log(document.getElementById("canvas"))
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
        <div>Learning Objective: <span class="learningObjective remediation-info">Some Learning objective</div>`
       drag.innerHTML += `<div class='blockyleft'>
-<img src='assets/img/eyeblue.svg'>
 <p class='blockyname'>${title}</p></div>
-<div class='blockyright'><img src='assets/img/more.svg'></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
@@ -311,13 +303,9 @@ ${body}
       let newBlockElem = `<div class="blockelem create-flowy noselect">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <div class="grabme">
-        <img src="assets/img/grabme.svg">
+        <img src="/assets/img/grabme.svg">
         </div>
       <div class="blockin">
-        <div class="blockico">
-          <span></span>
-          <img src="assets/error.svg">
-        </div>
         <div class="blocktext">
           <p class="blocktitle">Remediation</p>
           <p class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
@@ -789,11 +777,9 @@ body, html {
   cursor: pointer;
 }
 
-.grabme, .blockico {
-  display: inline-block;
-}
 
 .grabme {
+  display: inline-block;
   margin-top: 10px;
   margin-left: 10px;
   margin-bottom: -14px;
@@ -818,28 +804,6 @@ body, html {
   margin-left: 12px;
 }
 
-.blockico {
-  width: 36px;
-  height: 36px;
-  background-color: #F1F4FC;
-  border-radius: 5px;
-  text-align: center;
-  white-space: nowrap;
-}
-
-.blockico span {
-  height: 100%;
-  width: 0px;
-  display: inline-block;
-  vertical-align: middle;
-}
-
-.blockico img {
-  vertical-align: middle;
-  margin-left: auto;
-  margin-right: auto;
-  display: inline-block;
-}
 
 .blocktext {
   display: inline-block;
@@ -1105,10 +1069,6 @@ body, html {
   font-size: 16px;
 }
 
-.blockyleft img {
-  display: inline-block;
-  vertical-align: middle;
-}
 
 .blockyright {
   display: inline-block;

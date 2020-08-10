@@ -100,7 +100,7 @@ class LearningTreeController extends Controller
     public function getDefaultLearningTree()
     {
        return  <<<EOT
-{"html":"<div class='indicator invisible'></div><div class='blockelem noselect block' style='left: 225px; top: 34px;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><img src='assets/img/eyeblue.svg'><p class='blockyname'>Assessment Node</p></div><div class='blockyright'><img src='assets/img/more.svg'></div><div class='blockydiv'></div><div class='blockyinfo'>The original question</div></div>","blockarr":[{"parent":-1,"childwidth":0,"id":0,"x":745,"y":159.5,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 225px; top: 34px;"}]}]}
+{"html":"<div class='indicator invisible'></div><div class='blockelem noselect block' style='left: 225px; top: 34px;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'>Assessment Node</p></div><div class='blockydiv'></div><div class='blockyinfo'>The original question</div></div>","blockarr":[{"parent":-1,"childwidth":0,"id":0,"x":745,"y":159.5,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 225px; top: 34px;"}]}]}
 EOT;
 
                }
