@@ -77,7 +77,7 @@ export default {
     libraryOptions: [
       {value: null, text: 'Please select  the library'},
       {value: 'query', text: 'Query'},
-      {value: 'b', text: 'Some other library'},
+      {value: 'engineering', text: 'Engineering'},
     ]
   }),
 
@@ -87,24 +87,24 @@ export default {
     this.getLearningObjectives();
 
     console.log(this.learningObjectives)
-    var tempblock;
-    var tempblock2;
+    let tempblock;
+    let tempblock2;
 console.log(document.getElementById("canvas"))
 
     flowy(document.getElementById("canvas"), drag, release, snapping);
 
     function addEventListenerMulti(type, listener, capture, selector) {
-      var nodes = document.querySelectorAll(selector);
-      for (var i = 0; i < nodes.length; i++) {
+      let nodes = document.querySelectorAll(selector);
+      for (let i = 0; i < nodes.length; i++) {
         nodes[i].addEventListener(type, listener, capture);
       }
     }
 
     function snapping(drag, first) {
-      var grab = drag.querySelector(".grabme");
+      let grab = drag.querySelector(".grabme");
       grab.parentNode.removeChild(grab);
 
-      var blockin = drag.querySelector(".blockin");
+      let blockin = drag.querySelector(".blockin");
 
       blockin.parentNode.removeChild(blockin);
       let isAssessmentNode = (drag.querySelector(".blockelemtype").value === "1")
@@ -140,9 +140,9 @@ ${body}
       }
     }
 
-    var aclick = false;
-    var noinfo = false;
-    var beginTouch = function (event) {
+    let aclick = false;
+    let noinfo = false;
+    let beginTouch = function (event) {
       aclick = true;
       noinfo = false;
 
@@ -151,13 +151,13 @@ ${body}
         noinfo = true;
       }
     }
-    var checkTouch = function (event) {
+    let checkTouch = function (event) {
       aclick = false;
     }
 
 
     let vm = this
-    var doneTouch = function (event) {
+    let doneTouch = function (event) {
 
 
       if (event.target.className === 'open-learning-objective-modal') {
