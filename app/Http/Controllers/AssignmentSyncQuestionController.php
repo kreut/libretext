@@ -98,16 +98,14 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $response['type'] = 'success';
-            foreach ($assignment->questions as $question) {
-                echo $question->id . "<br>";
-            }
 
             foreach ($assignment->questions as $key => $question) {
-                $custom_claims = ['Adapt' => ['user_id' => Auth::user()->id,
+                $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
-                $assignment->questions[$key]->jwt = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                $custom_claims["{$question->technology}"] = '';
+                $assignment->questions[$key]->token = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
             }
             $response['questions'] = $assignment->questions;
         } catch (Exception $e) {
