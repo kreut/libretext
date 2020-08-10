@@ -134,8 +134,10 @@ ${body}
 
 
     function release() {
-
-      tempblock2.classList.remove("blockdisabled");
+      if (tempblock2) {
+        //if it's reloading a saved learning tree, this won't exist
+        tempblock2.classList.remove("blockdisabled");
+      }
     }
 
     var aclick = false;
@@ -166,6 +168,7 @@ ${body}
         event.target.parentNode.parentNode.querySelector('.learningObjective').setAttribute("id", "chosen");
         vm.openLearningObjectiveModal()
       } else if (event.type === "mouseup" && aclick && !noinfo) {
+
         if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
           tempblock = event.target.closest(".block");
@@ -179,10 +182,7 @@ ${body}
     addEventListener("mouseup", doneTouch, false);
     addEventListenerMulti("touchstart", beginTouch, false, ".block");
 
-    let learningTree = this.getLearningTreeByQuestionId(this.questionId)
-
-    //flowy.import(learningTree)
-
+   this.getLearningTreeByQuestionId(this.questionId)
 
 
   },
