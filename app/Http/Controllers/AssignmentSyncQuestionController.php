@@ -8,6 +8,7 @@ use App\Assignment;
 use App\Question;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -30,10 +31,6 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
         }
         return $response;
-
-
-
-
 
 
     }
@@ -101,12 +98,24 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $response['type'] = 'success';
+            foreach ($assignment->questions as $question) {
+                echo $question->id . "<br>";
+            }
+
+            foreach ($assignment->questions as $key => $question) {
+                $custom_claims = ['Adapt' => ['user_id' => Auth::user()->id,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'technology' => $question->technology]];
+                $assignment->questions[$key]->jwt = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+            }
             $response['questions'] = $assignment->questions;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 }
