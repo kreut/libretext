@@ -18,25 +18,7 @@
       <div id="blocklist">
       </div>
     </div>
-    <div id="propwrap">
-      <div id="properties">
-        <div id="close">
 
-        </div>
-        <p id="header2">Properties</p>
-        <div id="propswitch">
-          <div id="dataprop">Data</div>
-          <div id="alertprop">Alerts</div>
-          <div id="logsprop">Logs</div>
-        </div>
-        <div id="proplist">
-          <p class="inputlabel">Select database</p>
-
-        </div>
-        <div id="divisionthing"></div>
-        <div id="removeblock">Delete blocks</div>
-      </div>
-    </div>
     <div id="canvas">
     </div>
     <b-modal
@@ -105,7 +87,6 @@ export default {
     this.getLearningObjectives();
 
     console.log(this.learningObjectives)
-    var rightcard = false;
     var tempblock;
     var tempblock2;
 console.log(document.getElementById("canvas"))
@@ -157,21 +138,6 @@ ${body}
       tempblock2.classList.remove("blockdisabled");
     }
 
-
-    document.getElementById("close").addEventListener("click", function () {
-      if (rightcard) {
-        rightcard = false;
-        document.getElementById("properties").classList.remove("expanded");
-        setTimeout(function () {
-          document.getElementById("propwrap").classList.remove("itson");
-        }, 300);
-        tempblock.classList.remove("selectedblock");
-      }
-    });
-
-    document.getElementById("removeblock").addEventListener("click", function () {
-      flowy.deleteBlocks();
-    });
     var aclick = false;
     var noinfo = false;
     var beginTouch = function (event) {
@@ -200,12 +166,10 @@ ${body}
         event.target.parentNode.parentNode.querySelector('.learningObjective').setAttribute("id", "chosen");
         vm.openLearningObjectiveModal()
       } else if (event.type === "mouseup" && aclick && !noinfo) {
-        if (!rightcard && event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
+        if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
           tempblock = event.target.closest(".block");
-          rightcard = true;
           document.getElementById("properties").classList.add("expanded");
-          document.getElementById("propwrap").classList.add("itson");
           tempblock.classList.add("selectedblock");
         }
       }
@@ -834,23 +798,6 @@ body, html {
   opacity: .5;
 }
 
-#closecard {
-  position: absolute;
-  margin-left: 340px;
-  background-color: #FFF;
-  border-radius: 0px 5px 5px 0px;
-  border-bottom: 1px solid #E8E8EF;
-  border-right: 1px solid #E8E8EF;
-  border-top: 1px solid #E8E8EF;
-  width: 53px;
-  height: 53px;
-  text-align: center;
-  z-index: 10;
-}
-
-#closecard img {
-  margin-top: 15px
-}
 
 #canvas {
   position: absolute;
@@ -862,16 +809,6 @@ body, html {
   overflow: auto;
 }
 
-#propwrap {
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 311px;
-  height: 100%;
-  padding-left: 20px;
-  overflow: hidden;
-  z-index: -2;
-}
 
 #properties {
   position: absolute;
@@ -906,18 +843,6 @@ body, html {
   margin-top: 101px;
 }
 
-#close {
-  margin-top: 100px;
-  position: absolute;
-  right: 20px;
-  z-index: 9999;
-  transition: all .25s cubic-bezier(.05, .03, .35, 1);
-}
-
-#close:hover {
-  cursor: pointer;
-  opacity: .7;
-}
 
 #propswitch {
   border-bottom: 1px solid #E8E8EF;
