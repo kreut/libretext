@@ -46,8 +46,19 @@ export default {
     library: null,
     libraryOptions: [
       {value: null, text: 'Please select  the library'},
-      {value: 'query', text: 'Query'},
-      {value: 'engineering', text: 'Engineering'},
+      {value: 'bio', text: 'Biology'},
+      {value: 'biz', text: 'Business'},
+      {value: 'chem', text: 'Chemistry'},
+      {value: 'eng', text: 'Engineering'},
+      {value: 'espanol', text: 'Español'},
+      {value: 'geo', text: 'Geology'},
+      {value: 'human', text: 'Humanities'},
+      {value: 'math', text: 'Mathematics'},
+      {value: 'med', text: 'Medicine'},
+      {value: 'phys', text: 'Physics'},
+      {value: 'socialsci', text: 'Social Science'},
+      {value: 'stats', text: 'Statistics'},
+      {value: 'workforce', text: 'Workforce'},
     ]
   }),
 
