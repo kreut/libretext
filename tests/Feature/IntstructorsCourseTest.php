@@ -11,7 +11,11 @@ use Tests\TestCase;
 class InstructorsCourseTest extends TestCase
 {
 
+  public function setup(): void {
 
+      parent::setUp();
+      $this->user = factory(User::class)->create();
+  }
     public function can_get_your_courses() {
 
     }
@@ -36,8 +40,8 @@ class InstructorsCourseTest extends TestCase
     /** @test */
     public function can_create_a_course()
     {
-        $user = factory(User::class)->create();
-        $this->actingAs($user)->postJson('/api/courses', [
+
+        $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
@@ -48,12 +52,12 @@ class InstructorsCourseTest extends TestCase
 
     /** @test */
     public function can_update_the_course_if_you_are_the_owner() {
-        $user = factory(User::class)->create();
-        $course = factory(Course::class)->create(['user_id' => $user->id,
+
+        $course = factory(Course::class)->create(['user_id' => $this->user->id,
             'name' => 'First Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10']);
-        $this->actingAs($user)->patchJson("/api/courses/$course->id", [
+        $this->actingAs($this->user)->patchJson("/api/courses/$course->id", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
@@ -64,13 +68,12 @@ class InstructorsCourseTest extends TestCase
     /** @test */
     public function cannot_update_a_course_if_you_are_not_the_owner(){
         //create two users
-        factory(User::class, 2)->create();
-        $user = User::find(2);
-        $course = factory(Course::class)->create(['user_id' => 1,
+        $user_2 = factory(User::class)->create();
+        $course = factory(Course::class)->create(['user_id' => $this->user->id,
             'name' => 'First Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10']);
-        $this->actingAs($user)->patchJson("/api/courses/$course->id", [
+        $this->actingAs($user_2)->patchJson("/api/courses/$course->id", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
@@ -81,7 +84,16 @@ class InstructorsCourseTest extends TestCase
     }
 
     public function must_include_a_course_name(){
-
+        $course = factory(Course::class)->create(['user_id' => $this->user->id,
+            'name' => 'First Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10']);
+        $this->actingAs($this->user)->patchJson("/api/courses/$course->id", [
+            'name' => 'Some New Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10'
+        ])->assertSuccessful()
+            ->assertJson(['type' => 'success']);
     }
 
     public function must_include_valid_dates() {
