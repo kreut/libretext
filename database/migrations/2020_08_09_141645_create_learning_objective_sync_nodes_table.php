@@ -18,7 +18,7 @@ class CreateLearningObjectiveSyncNodesTable extends Migration
             $table->unsignedBigInteger('learning_objective_id');
             $table->unsignedBigInteger('page_id');
             $table->unsignedBigInteger('user_id');
-            $table->enum('library',['query','engineering']);
+            $table->enum('library',['bio','biz','chem','eng','espanol','geo','human','math','med','phys','socialsci','stats', 'workforce']);
             $table->unique(['page_id', 'learning_objective_id']);
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('learning_objective_id')->references('id')->on('learning_objectives');
