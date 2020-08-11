@@ -21,8 +21,8 @@ trait CommonPolicies
     }
 
     public function ownsCourseByUser($course, $user){
-
-        return $user->id === $course->user_id;
+        //added int because test was failing in instructor course test
+        return (int) $user->id === (int) $course->user_id;
     }
 
     public function isNotStudent($user){
