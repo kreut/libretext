@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Http\Request;
 
 class UserController extends Controller
@@ -40,8 +41,8 @@ class UserController extends Controller
             return response()->json(['token_absent'], $e->getStatusCode());
 
         }
-
+        Log::info( \JWTAuth::parseToken()->getPayload());
         // the token is valid and we have found the user via the sub claim
-        return "Webwork: " . \JWTAuth::parseToken()->getPayload()->get('webwork') . "\r\n\r\n" . response()->json(compact('user'));
+        return  \JWTAuth::parseToken()->getPayload();
     }
 }

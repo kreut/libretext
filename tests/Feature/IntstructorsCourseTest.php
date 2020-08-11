@@ -34,8 +34,9 @@ class InstructorsCourseTest extends TestCase
             ->assertSuccessful()
             ->assertJson(['courses' => [['id' => '1']]]);
     }
-/** @test */
-    public function can_not_get_courses_if_student()
+
+    public function cannot_get_courses_if_student()
+
     {
         $this->user->role = 3;
         $this->actingAs($this->user)->getJson("/api/courses")
