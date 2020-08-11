@@ -18,7 +18,7 @@ class SettingsTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
-    /** @test */
+
     public function update_profile_info()
     {
         $this->actingAs($this->user)
@@ -38,7 +38,7 @@ class SettingsTest extends TestCase
         ]);
     }
 
-    /** @test */
+
     public function update_password()
     {
         $this->actingAs($this->user)

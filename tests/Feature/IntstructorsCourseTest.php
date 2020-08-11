@@ -7,8 +7,29 @@ use Illuminate\Foundation\Testing\WithFaker;
 use App\User;
 use Tests\TestCase;
 
-class CourseTest extends TestCase
+class InstructorsCourseTest extends TestCase
 {
+    public function can_get_your_courses() {
+
+    }
+
+    public function can_not_get_courses_of_another_user() {
+
+
+    }
+
+
+    public function can_delete_a_course_if_you_are_the_owner(){
+
+
+    }
+
+    public function cannot_delete_a_course_if_you_are_not_the_owner(){
+
+
+    }
+
+
     /** @test */
     public function can_create_a_course()
     {
@@ -22,15 +43,6 @@ class CourseTest extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    public function can_delete_a_course_if_you_are_the_owner(){
-
-
-}
-
-    public function cannot_delete_a_course_if_you_are_not_the_owner(){
-
-
-    }
 
     public function can_update_the_course_if_you_are_the_owner() {
 
