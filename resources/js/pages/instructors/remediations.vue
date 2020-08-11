@@ -1,6 +1,18 @@
 <template>
   <div>
+    <div>
 
+
+      <b-modal id="bv-modal-example" hide-footer>
+        <template v-slot:modal-title>
+          Using <code>$bvModal</code> Methods
+        </template>
+        <div class="d-block text-center">
+          <h3>Hello From This Modal!</h3>
+        </div>
+        <b-button class="mt-3" block @click="$bvModal.hide('bv-modal-example')">Close Me</b-button>
+      </b-modal>
+    </div>
     <div id="leftcard">
       <div>
         <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
@@ -44,6 +56,10 @@ export default {
     pageId: '',
     chosenId: '',
     library: null,
+    libraryColors: {
+      'chem' : 'rgb(0, 191, 255)',
+      'biz' : 'rgb(32, 117, 55)'
+    },
     libraryOptions: [
       {value: null, text: 'Please select  the library'},
       {value: 'bio', text: 'Biology'},
@@ -97,9 +113,9 @@ function rearranging(block, parent){
       let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
 
 
-      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span>, Page Id: <span class="pageId remediation-info" >${pageId}</span>, SLO: <span class="learningObjective remediation-info">I, 1, a`
+      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span>, Page Id: <span class="pageId remediation-info" >${pageId}</span>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'>${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library}.svg"></span> ${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
@@ -188,17 +204,20 @@ ${body}
         this.$noty.error(error.message)
       }
     },
+    openModal() {
+      alert('f')
+      $bvModal.show('bv-modal-example')
+    },
     addRemediation() {
 
       // this.chosenId
 
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
 
-
-      let newBlockElem = `<div class="blockelem create-flowy noselect">
+      let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <div class="grabme">
-        <img src="/assets/img/grabme.svg">
+       <img src="/assets/img/${this.library}.png" style="${this.libraryColors[this.library]}">
         </div>
       <div class="blockin">
         <div class="blocktext">
@@ -208,7 +227,6 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-       SLO: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">II, 1, a</span>
         </div>
       </div>
     </div>`
