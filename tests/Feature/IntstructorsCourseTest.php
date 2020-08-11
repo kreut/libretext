@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\CourseAccessCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use App\User;
@@ -18,26 +19,57 @@ class InstructorsCourseTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
+
+    /** @test */
     public function can_get_your_courses()
     {
+        $course = factory(Course::class)->create(['user_id' => $this->user->id,
+            'name' => 'First Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10']);
+        factory(CourseAccessCode::class)->create(['access_code' => 'wefk;IOE',
+            'course_id' => $course->id]);
 
+        $this->actingAs($this->user)->getJson("/api/courses")
+            ->assertSuccessful()
+            ->assertJson(['courses' => [['id' => '1']]]);
     }
-
-    public function can_not_get_courses_of_another_user()
+/** @test */
+    public function can_not_get_courses_if_student()
     {
-
+        $this->user->role = 3;
+        $this->actingAs($this->user)->getJson("/api/courses")
+            ->assertSuccessful()
+            ->assertJson(['type' => 'error', 'message'=> 'You are not allowed to view courses.']);
 
     }
 
-
+    /** @test */
     public function can_delete_a_course_if_you_are_the_owner()
     {
-
+        $course = factory(Course::class)->create(['user_id' => $this->user->id,
+            'name' => 'First Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10']);
+        $this->actingAs($this->user)->deleteJson("/api/courses/$course->id")
+            ->assertSuccessful()
+            ->assertJson(['type' => 'success']);
 
     }
 
+    /** @test */
     public function cannot_delete_a_course_if_you_are_not_the_owner()
     {
+
+        $user_2 = factory(User::class)->create();
+        $course_2 = factory(Course::class)->create(['user_id' => $user_2->id,
+            'name' => 'First Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10']);
+
+        $this->actingAs($this->user)->deleteJson("/api/courses/$course_2->id")
+            ->assertSuccessful()
+            ->assertJson(['type' => 'error']);
 
 
     }
@@ -101,14 +133,36 @@ class InstructorsCourseTest extends TestCase
         ])->assertJsonValidationErrors(['name']);
     }
 
-    public function must_include_valid_dates()
+    /** @test */
+    public function must_include_valid_start_date()
     {
+        $this->actingAs($this->user)->postJson('/api/courses', [
+            'name' => 'Some course',
+            'start_date' => 'blah blah',
+            'end_date' => '2021-06-10'
+        ])->assertJsonValidationErrors(['start_date']);
 
     }
 
-    public function must_have_the_end_date_after_the_start_date()
+    /** @test */
+    public function must_include_valid_end_date()
     {
+        $this->actingAs($this->user)->postJson('/api/courses', [
+            'name' => 'Some course',
+            'start_date' => '2021-06-10',
+            'end_date' => 'blah blah'
+        ])->assertJsonValidationErrors(['end_date']);
 
+    }
+
+    /** @test */
+    public function end_date_must_be_after_start_date()
+    {
+        $this->actingAs($this->user)->postJson('/api/courses', [
+            'name' => 'Some course',
+            'start_date' => '2021-06-10',
+            'end_date' => '2021-06-09'
+        ])->assertJsonValidationErrors(['end_date']);
 
     }
 
