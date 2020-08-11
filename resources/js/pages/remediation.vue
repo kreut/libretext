@@ -85,7 +85,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>Learning Objective: <span class="learningObjective remediation-info">Some Learning objective</div>`
+       <div>SLO: <span class="learningObjective remediation-info">I, 1, a</div>`
       drag.innerHTML += `<div class='blockyleft'>
 <p class='blockyname'>${title}</p></div>
 <div class='blockydiv'></div>
@@ -196,7 +196,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-       Learning Objective: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">Attach</span>
+       SLO: <span class="learningObjective remediation-info"><span class="open-learning-objective-modal">II, 1, a</span>
         </div>
       </div>
     </div>`
