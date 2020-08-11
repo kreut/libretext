@@ -21,28 +21,7 @@
 
     <div id="canvas">
     </div>
-    <b-modal
-      id="modal-learning-objective"
-      ref="modal"
-      title="Attach Learning Objective"
-      size="lg"
-      @ok="submitAttachLearningObjective"
-      @hidden="resetModals()"
-      ok-title="Submit"
 
-    >
-      <b-form ref="form" @submit="submitAttachLearningObjective">
-        <div class="p-0">
-          <vue-bootstrap-typeahead
-            v-model="query"
-            :data="learningObjectives"
-            placeholder="Enter a Learning Objective"
-            ref="queryTypeahead"
-            @click="form.errors.clear('learning_objective')"
-          />
-        </div>
-      </b-form>
-    </b-modal>
   </div>
 </template>
 
@@ -50,26 +29,22 @@
 
 
 import {flowy} from '~/helpers/Flowy'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+
 import Form from "vform";
 import axios from "axios";
 
 export default {
-  components: {
-    VueBootstrapTypeahead
-  },
+
   metaInfo() {
     return {title: this.$t('home')}
   },
 
   data: () => ({
-    query: '',
     form: new Form({
       learning_objective: '',
       pageId: '',
       library: '',
     }),
-    learningObjectives: '',
     title: window.config.appName,
     pageId: '',
     chosenId: '',
@@ -84,11 +59,8 @@ export default {
   mounted() {
     this.questionId = this.$route.params.questionId
 
-    this.getLearningObjectives();
-
-    console.log(this.learningObjectives)
-    let tempblock;
-    let tempblock2;
+    let tempblock
+    let tempblock2
     console.log(document.getElementById("canvas"))
 
     flowy(document.getElementById("canvas"), drag, release, snapping);
@@ -117,7 +89,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
       <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>Learning Objective: <span class="learningObjective remediation-info">Some Learning objective</div>`
+       <div>SLO: <span class="learningObjective remediation-info">1, 2, 3</div>`
       drag.innerHTML += `<div class='blockyleft'>
 <p class='blockyname'>${title}</p></div>
 <div class='blockydiv'></div>
@@ -166,7 +138,6 @@ ${body}
         vm.form.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
         console.log(event.target.parentNode.parentNode.querySelector('.learningObjective'))
         event.target.parentNode.parentNode.querySelector('.learningObjective').setAttribute("id", "chosen");
-        vm.openLearningObjectiveModal()
       } else if (event.type === "mouseup" && aclick && !noinfo) {
 
         if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
@@ -204,54 +175,6 @@ ${body}
           'question_id': this.questionId,
           'learning_tree': JSON.stringify(flowy.output())
         })
-        this.$noty[data.type](data.message)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async getLearningObjectives() {
-      try {
-        const {data} = await axios.get('/api/learning-objectives')
-        console.log(data)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        } else {
-          this.learningObjectives = data.learning_objectives
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-
-    resetModals() {
-      //handled through the resetAll
-    },
-    resetAll(modalId) {
-      this.form.learning_objective = ''
-      this.form.pageId = ''
-      this.form.library = ''
-      this.$nextTick(() => {
-        this.$bvModal.hide(modalId)
-      })
-    },
-    openLearningObjectiveModal() {
-      this.$bvModal.show('modal-learning-objective')
-    },
-    submitAttachLearningObjective(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.attachLearningObjective()
-    }
-    ,
-    async attachLearningObjective() {
-      try {
-        this.form.learning_objective = this.query
-        const {data} = await this.form.post('/api/learning-objectives/attach')
-        if (data.type === 'success') {
-          this.resetAll('modal-learning-objective')
-        }
         this.$noty[data.type](data.message)
       } catch (error) {
         this.$noty.error(error.message)
