@@ -2,7 +2,7 @@
   <div>
 
     <div id="leftcard">
-      <div class="float-right mr-2">
+      <div>
         <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
       </div>
       <div id="search">
