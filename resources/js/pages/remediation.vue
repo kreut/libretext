@@ -59,7 +59,7 @@ export default {
     let tempblock2;
     console.log(document.getElementById("canvas"))
 
-    flowy(document.getElementById("canvas"), drag, release, snapping);
+    flowy(document.getElementById("canvas"), drag, release, snapping, rearranging, 40, 50);
 
     function addEventListenerMulti(type, listener, capture, selector) {
       let nodes = document.querySelectorAll(selector);
@@ -67,6 +67,9 @@ export default {
         nodes[i].addEventListener(type, listener, capture);
       }
     }
+function rearranging(block, parent){
+  // Needed so that I could redefine the y distance in flowy
+}
 
     function snapping(drag, first) {
       let grab = drag.querySelector(".grabme");
@@ -77,15 +80,13 @@ export default {
       blockin.parentNode.removeChild(blockin);
       let isAssessmentNode = (drag.querySelector(".blockelemtype").value === "1")
 
-      let title = isAssessmentNode ? 'Assessment Node' : 'Remediation'
+      let title = isAssessmentNode ? 'Assessment' : 'Remediation'
 
       let library = isAssessmentNode ? '' : blockin.querySelector(".library").innerHTML
       let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
 
 
-      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span></div>
-      <div>Page Id: <span class="pageId remediation-info" >${pageId}</span></div>
-       <div>SLO: <span class="learningObjective remediation-info">I, 1, a</div>`
+      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span>, Page Id: <span class="pageId remediation-info" >${pageId}</span>, SLO: <span class="learningObjective remediation-info">I, 1, a`
       drag.innerHTML += `<div class='blockyleft'>
 <p class='blockyname'>${title}</p></div>
 <div class='blockydiv'></div>
