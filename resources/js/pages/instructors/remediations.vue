@@ -157,7 +157,7 @@ ${body}
 
 
       if (event.target.className === 'open-learning-objective-modal') {
-        console.log(event.target)
+        alert('yes!')
         vm.form.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
         vm.form.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
         console.log(event.target.parentNode.parentNode.querySelector('.learningObjective'))
@@ -227,6 +227,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
+          <span class="open-learning-objective-modal">Open</span>
         </div>
       </div>
     </div>`
