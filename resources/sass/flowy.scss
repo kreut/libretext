@@ -477,12 +477,15 @@ body, html {
   color: #393C44;
 }
 
-.blockdesc {
-  margin-top: 5px;
+.blockdesc, .blockyinfo {
   font-family: Roboto;
   color: #808292;
   font-size: 14px;
   line-height: 21px;
+}
+
+.blockyinfo, .blockin-info {
+  margin: 20px;
 }
 
 .blockdisabled {
@@ -722,23 +725,6 @@ body, html {
   background-color: #E9E9EF;
 }
 
-.blockyinfo {
-  font-family: Roboto;
-  font-size: 14px;
-  color: #808292;
-  margin-top: 15px;
-  text-indent: 20px;
-  margin-bottom: 20px;
-}
-
-.blockyinfo span {
-  color: #253134;
-  font-weight: 500;
-  display: inline-block;
-  border-bottom: 1px solid #D3DCEA;
-  line-height: 20px;
-  text-indent: 0px;
-}
 
 .block {
   background-color: #FFF;

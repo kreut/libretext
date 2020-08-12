@@ -101,9 +101,11 @@ export default {
       let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
 
 
-      let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span>, Page Id: <span class="pageId remediation-info" >${pageId}</span>`
+      let body = isAssessmentNode ? "The original question" :
+        `<div>Library: <span class="library" >${library}</span>, Page Id: <span class="pageId" >${pageId}</span><br>
+<span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library}.svg"></span>ss ${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library}.svg"></span>${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
@@ -249,7 +251,7 @@ ${body}
         </div>
           <div class='blockydiv'>
           </div>
-          <div style="margin:20px">
+          <div class="blockin-info">
           <span class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
       this.library.slice(1)}</span>,
           Page Id: <span class="pageId">${this.pageId}</span>
