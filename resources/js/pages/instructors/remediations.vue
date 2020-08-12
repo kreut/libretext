@@ -76,7 +76,8 @@ export default {
     ]
   }),
 
-  mounted() {
+mounted() {
+
     this.questionId = this.$route.params.questionId
 
     console.log(this.learningObjectives)
@@ -204,8 +205,27 @@ ${body}
       }
     },
     async openStudentLearningObjectiveModal() {
-      const {data} = axios.get(`/student-learning-objectives/${this.library}/${this.pageId}`)
-      this.studentLearningObjectives = data.studentLearningObjectives
+      const {data} = await axios.get(`/api/student-learning-objectives/${this.library}/${this.pageId}`)
+      let d = document.createElement('div');
+      d.innerHTML = data
+      console.log(d)
+      console.log(d.querySelector("ul"));
+
+      Start:
+
+      1. Loop through the UL and get the list items
+      2. What if there's no response or an error?
+        3.  Make the flowy stuff all look the same
+     4.  Add the same thing to the stuff on the right
+      5.  Bettter button
+      6. SLO instead of open (show as link)
+      7. Create the tree then do it for the students
+
+
+
+
+
+      this.studentLearningObjectives = d.querySelector("ul")
       //what if none?
       this.$bvModal.show('student-learning-objective-modal')
     },
