@@ -80,7 +80,6 @@ mounted() {
 
     this.questionId = this.$route.params.questionId
 
-    console.log(this.learningObjectives)
     let tempblock;
     let tempblock2;
     console.log(document.getElementById("canvas"))
@@ -155,7 +154,7 @@ ${body}
     let vm = this
     let doneTouch = function (event) {
 
-
+console.log(event.target.className)
       if (event.target.className === 'open-student-learning-objective-modal') {
         vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
         vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
@@ -211,10 +210,6 @@ ${body}
       console.log(d)
       console.log(d.querySelector("ul"));
 
-
-
-
-
       this.studentLearningObjectives = d.querySelector("ul")
       //what if none?
       this.$bvModal.show('student-learning-objective-modal')
@@ -238,7 +233,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-          <span class="open-student-learning-objective-modal">Open</span>
+          <span class="open-student-learning-objective-modal">Student Learning Objectives</span>
         </div>
       </div>
     </div>`
