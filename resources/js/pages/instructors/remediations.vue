@@ -65,7 +65,7 @@ export default {
     ]
   }),
 
-mounted() {
+  mounted() {
 
     this.questionId = this.$route.params.questionId
 
@@ -143,7 +143,7 @@ ${body}
     let vm = this
     let doneTouch = function (event) {
 
-console.log(event.target.className)
+      console.log(event.target.className)
       if (event.target.className === 'open-student-learning-objective-modal') {
         vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
         vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
@@ -199,15 +199,15 @@ console.log(event.target.className)
 
       const h = this.$createElement
 
-      const titleVNode = h('div', { domProps: { innerHTML: 'Student Learning Objectives' } })
-     let messageVNode
+      const titleVNode = h('div', {domProps: {innerHTML: 'Student Learning Objectives'}})
+      let messageVNode
       if (d.querySelector("ul")) {
-        messageVNode = h('ul',[])
+        messageVNode = h('ul', [])
         for (const li of d.querySelector("ul").querySelectorAll('li')) {
           messageVNode.children.push(h('li', [li.textContent]))
         }
       } else {
-        messageVNode = h('p', {class: 'text-danger'},['There are no Student Learning Objectives available.'])
+        messageVNode = h('p', {class: 'text-danger'}, ['There are no Student Learning Objectives available.'])
       }
 
       console.log(messageVNode)
@@ -219,17 +219,23 @@ console.log(event.target.className)
       })
 
 
-
-
-
-
-
-
       this.$bvModal.show('student-learning-objective-modal')
     },
+    validateRemediation() {
+      if (!this.library) {
+        this.$noty.error('Please choose a library.')
+        return false
+      }
+      if (!(Number.isInteger(parseFloat(this.pageId)) && parseInt(this.pageId) > 0)) {
+        this.$noty.error('Your Page Id should be a positive integer.')
+        return false
+      }
+      return true
+    },
     addRemediation() {
-
-      // this.chosenId
+      if (!this.validateRemediation()) {
+        return false
+      }
 
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
 
