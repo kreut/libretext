@@ -63,6 +63,7 @@ export default {
     level: 0,
     learningTree: [],
     currentLearningTreeLevel: [],
+    currentLibrariesAndPageIds: [],
     parentId: 0,
     perPage: 1,
     currentPage: 1,
@@ -112,16 +113,36 @@ export default {
         this.learningTree = learningTree
         //loop through and get all with parent = -1
         this.currentLearningTreeLevel = []
-alert(this.learningTree.length)
         //loop through each with parent having this level
+        let page_id
+        let library
         for (let i = 0; i < this.learningTree.length; i++) {
-          console.log(this.learningTree[i].parent)
-          if (this.learningTree[i].parent === 0) {
-            alert('f')
-            this.currentLearningTreeLevel.push(learningTree[i])
+          let remediation = this.learningTree[i]
+
+          if (remediation.parent === 0) {
+            console.log('0 parent')
+            //get the library and page ids
+            //go to the server and return with the student learning objectives
+            // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
+
+            page_id = library = null
+            for (let j = 0; j < remediation.data.length; j++) {
+              switch (remediation.data[j].name) {
+                case('page_id'):
+                  page_id = remediation.data[j].value
+                  break
+                case ('library'):
+                  library = remediation.data[j].value
+                  break
+              }
+            }
+            if (page_id && library) {
+              this.currentLibrariesAndPageIds.push({'library': library, 'page_id': page_id})
+            }
+
           }
         }
-        console.info(this.currentLearningTreeLevel)
+        console.info(this.currentLibrariesAndPageIds)
       }
     },
     async getTitle(assignmentId) {
