@@ -36,7 +36,6 @@ export default {
   metaInfo() {
     return {title: this.$t('home')}
   },
-
   data: () => ({
     studentLearningObjectives: '',
     title: window.config.appName,

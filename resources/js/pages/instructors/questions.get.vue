@@ -44,14 +44,19 @@
       ></b-pagination>
     </div>
     <div v-if="showQuestions">
-
+      <div class="col-4 d-flex justify-content-between">
       <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
            v-on:click="removeQuestion(questions[currentPage-1])">
         <b-button variant="danger">Remove Question</b-button>
       </div>
       <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
-        <v-button variant="success">Add Question</v-button>
+        <b-button variant="success">Add Question</b-button>
       </div>
+      <div class="mt-1 mb-2" v-on:click="$router.push(`/instructors/remediations/${questions[currentPage-1].id}`)">
+        <b-button variant="info">Create Learning Tree</b-button>
+      </div>
+     </div>
+
       <iframe allowtransparency="true" frameborder="0"
               v-bind:src="questions[currentPage-1].src"
               style="overflow: auto; height: 1274px;"
