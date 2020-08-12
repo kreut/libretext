@@ -105,7 +105,7 @@ export default {
     }
   },
   methods: {
-    resetLearningTree(learningTree) {
+    async resetLearningTree(learningTree) {
       console.log(learningTree)
       if (learningTree) {
         this.level = 0
@@ -120,7 +120,7 @@ export default {
           let remediation = this.learningTree[i]
 
           if (remediation.parent === 0) {
-            console.log('0 parent')
+
             //get the library and page ids
             //go to the server and return with the student learning objectives
             // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
@@ -142,7 +142,19 @@ export default {
 
           }
         }
-        console.info(this.currentLibrariesAndPageIds)
+        //get the learning objectives
+        for (let i = 0; i <  this.currentLibrariesAndPageIds.length; i++) {
+          const {data} = await axios.get(`/api/student-learning-objectives/${this.currentLibrariesAndPageIds[i]['library']}/${this.currentLibrariesAndPageIds[i]['page_id']}`)
+          let d = document.createElement('div');
+          d.innerHTML = data
+          //console.log(data)
+          for (const li of d.querySelector("ul").querySelectorAll('li')) {
+            console.log(li.innerText)
+          }
+        }
+        console.log('done')
+
+
       }
     },
     async getTitle(assignmentId) {
