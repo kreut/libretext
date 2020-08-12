@@ -1,9 +1,7 @@
 <template>
   <div>
     <div id="leftcard">
-      <div>
         <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
-      </div>
       <div id="search">
         <div class="mb-2 mr-2">
           <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
@@ -37,6 +35,7 @@ export default {
     return {title: this.$t('home')}
   },
   data: () => ({
+    panelHidden: false,
     studentLearningObjectives: '',
     title: window.config.appName,
     pageId: '',
