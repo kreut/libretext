@@ -200,9 +200,14 @@ console.log(event.target.className)
       const h = this.$createElement
 
       const titleVNode = h('div', { domProps: { innerHTML: 'Student Learning Objectives' } })
-      const messageVNode = h('ul',[])
-      for (const li of d.querySelector("ul").querySelectorAll('li')) {
-        messageVNode.children.push( h('li',[li.textContent]))
+     let messageVNode
+      if (d.querySelector("ul")) {
+        messageVNode = h('ul',[])
+        for (const li of d.querySelector("ul").querySelectorAll('li')) {
+          messageVNode.children.push(h('li', [li.textContent]))
+        }
+      } else {
+        messageVNode = h('p', {class: 'text-danger'},['There are no Student Learning Objectives available.'])
       }
 
       console.log(messageVNode)
