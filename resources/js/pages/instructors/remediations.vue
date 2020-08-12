@@ -131,7 +131,6 @@ ${body}
     let beginTouch = function (event) {
       aclick = true;
       noinfo = false;
-
       if (event.target.closest(".create-flowy")) {
 
         noinfo = true;
@@ -141,18 +140,22 @@ ${body}
       aclick = false;
     }
 
+    let mouseOver = function(event){
+        if (event.target.className === 'open-student-learning-objective-modal') {
+          vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
+          vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
+          console.log(vm.pageId)
+          console.log(vm.library)
+          vm.openStudentLearningObjectiveModal()
+        }
+    }
+
 
     let vm = this
     let doneTouch = function (event) {
 
       console.log(event.target.className)
-      if (event.target.className === 'open-student-learning-objective-modal') {
-        vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
-        vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
-        console.log(vm.pageId)
-        console.log(vm.library)
-        vm.openStudentLearningObjectiveModal()
-      } else if (event.type === "mouseup" && aclick && !noinfo) {
+   if ((event.target.className !== 'open-student-learning-objective-modal') && event.type === "mouseup" && aclick && !noinfo) {
 
         if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
           console.log(event.target.closest(".block").classList.contains("dragging"));
@@ -162,6 +165,7 @@ ${body}
         }
       }
     }
+    addEventListener("mouseover", mouseOver, false);
     addEventListener("mousedown", beginTouch, false);
     addEventListener("mousemove", checkTouch, false);
     addEventListener("mouseup", doneTouch, false);
