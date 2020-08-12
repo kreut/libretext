@@ -1,16 +1,5 @@
 <template>
   <div>
-    <div>
-      <b-modal id="student-learning-objective-modal" hide-footer>
-        <template v-slot:modal-title>
-          Student Learning Ojectives
-        </template>
-        <div class="d-block text-center">
-          {{ studentLearningObjectives }}
-        </div>
-        <b-button class="mt-3" block @click="$bvModal.hide('bv-modal-example')">Close Me</b-button>
-      </b-modal>
-    </div>
     <div id="leftcard">
       <div>
         <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
@@ -207,11 +196,30 @@ console.log(event.target.className)
       const {data} = await axios.get(`/api/student-learning-objectives/${this.library}/${this.pageId}`)
       let d = document.createElement('div');
       d.innerHTML = data
-      console.log(d)
-      console.log(d.querySelector("ul"));
 
-      this.studentLearningObjectives = d.querySelector("ul")
-      //what if none?
+      const h = this.$createElement
+
+      const titleVNode = h('div', { domProps: { innerHTML: 'Student Learning Objectives' } })
+      const messageVNode = h('ul',[])
+      for (const li of d.querySelector("ul").querySelectorAll('li')) {
+        messageVNode.children.push( h('li',[li.textContent]))
+      }
+
+      console.log(messageVNode)
+      // We must pass the generated VNodes as arrays
+      this.$bvModal.msgBoxOk([messageVNode], {
+        title: [titleVNode],
+        buttonSize: 'sm',
+        centered: true, size: 'lg'
+      })
+
+
+
+
+
+
+
+
       this.$bvModal.show('student-learning-objective-modal')
     },
     addRemediation() {
