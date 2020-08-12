@@ -242,6 +242,8 @@ ${body}
 
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
+        <input type="hidden" name='page_id' value="${this.pageId}">
+        <input type="hidden" name='library' value="${this.library}">
 <div class="grabme">
 </div>
       <div class="blockin">

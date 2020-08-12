@@ -82,11 +82,14 @@
             }
             console.log(submission_data)
 
+            //if incorrect, show the learning tree stuff...
             let {data} = await axios.post('/api/submissions', submission_data)
             console.log(data)
             if (data.message){
               //Will add this later when we've worked out what it means to submit...vm.$noty[data.type](data.message)
             }
+
+
           } else {
             console.log ('Hello Event')
           }
@@ -106,6 +109,8 @@
       async getSelectedQuestions(assignmentId) {
         try {
           const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
+          console.log(JSON.parse(JSON.stringify(data)))
+//create an array of arrays?
 
           if (data.type === 'error'){
             this.$noty.error(data.message)

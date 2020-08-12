@@ -9,6 +9,7 @@ use App\Question;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -99,6 +100,35 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $response['type'] = 'success';
 
+
+$question_ids = json_decode($this->getQuestionIdsByAssignment($assignment)['question_ids'], true);
+
+
+$instructor_user_id = $assignment->course->user_id;
+         $instructor_learning_trees = DB::table('learning_trees')
+                            ->whereIn('question_id', $question_ids)
+                            ->where('user_id', $instructor_user_id )
+                            ->get();
+         $instructor_learning_trees_by_question_id = [];
+         $other_instructor_learning_trees_by_question_id = [];
+
+         if ($instructor_learning_trees) {
+             foreach ($instructor_learning_trees as $key=>$value){
+                 $instructor_learning_trees_by_question_id[$value->question_id]= json_decode($value->learning_tree)->blocks;
+             }
+         }
+            $other_instructor_learning_trees = DB::table('learning_trees')
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', '<>',Auth::user()->id)
+                ->get();
+         //just get the first one created
+
+            if ($other_instructor_learning_trees ) {
+                    foreach ($other_instructor_learning_trees as $key=>$value){
+                        $other_instructor_learning_trees_by_question_id[$value->question_id]= json_decode($value->learning_tree)->blocks;
+                    }
+            }
+
             foreach ($assignment->questions as $key => $question) {
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
@@ -106,7 +136,15 @@ class AssignmentSyncQuestionController extends Controller
                     'technology' => $question->technology]];
                 $custom_claims["{$question->technology}"] = '';
                 $assignment->questions[$key]->token = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                if (isset($instructor_learning_trees_by_question_id[$question->id])){
+                    $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
+                } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
+                    $assignment->questions[$key]->learning_tree = $other_instructor_learning_trees_by_question_id[$question->id];
+                } else {
+                    $assignment->questions[$key]->learning_tree = '';
+                }
             }
+
             $response['questions'] = $assignment->questions;
         } catch (Exception $e) {
             $h = new Handler(app());
