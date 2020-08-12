@@ -50,7 +50,7 @@
         <b-button variant="danger">Remove Question</b-button>
       </div>
       <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
-        <b-button variant="success">Add Question</b-button>
+        <b-button variant="primary">Add Question</b-button>
       </div>
       <div class="mt-1 mb-2" v-on:click="$router.push(`/instructors/remediations/${questions[currentPage-1].id}`)">
         <b-button variant="info">Create Learning Tree</b-button>
