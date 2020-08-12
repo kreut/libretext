@@ -51,8 +51,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-    Route::post('/learning-objectives/attach','LearningObjectiveController@attach');
-    Route::get('/learning-objectives', 'LearningObjectiveController@index');
+    Route::get('/learning-objectives/{libary}/{pageId}', 'LearningObjectiveController@show');
 
 
     Route::get('/learning-trees/{question}','LearningTreeController@show');
@@ -68,6 +67,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/enrollments', 'EnrollmentController@store');
 
     Route::post('/submissions', 'SubmissionController@store');
+
+
 });
 
 Route::post('results', 'ResultController@store');

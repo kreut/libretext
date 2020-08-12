@@ -1,14 +1,12 @@
 <template>
   <div>
     <div>
-
-
-      <b-modal id="bv-modal-example" hide-footer>
+      <b-modal id="student-learning-objective-modal" hide-footer>
         <template v-slot:modal-title>
-          Using <code>$bvModal</code> Methods
+          Student Learning Ojectives
         </template>
         <div class="d-block text-center">
-          <h3>Hello From This Modal!</h3>
+          {{ studentLearningObjectives }}
         </div>
         <b-button class="mt-3" block @click="$bvModal.hide('bv-modal-example')">Close Me</b-button>
       </b-modal>
@@ -51,14 +49,14 @@ export default {
   },
 
   data: () => ({
-
+    studentLearningObjectives: '',
     title: window.config.appName,
     pageId: '',
     chosenId: '',
     library: null,
     libraryColors: {
-      'chem' : 'rgb(0, 191, 255)',
-      'biz' : 'rgb(32, 117, 55)'
+      'chem': 'rgb(0, 191, 255)',
+      'biz': 'rgb(32, 117, 55)'
     },
     libraryOptions: [
       {value: null, text: 'Please select  the library'},
@@ -94,9 +92,10 @@ export default {
         nodes[i].addEventListener(type, listener, capture);
       }
     }
-function rearranging(block, parent){
-  // Needed so that I could redefine the y distance in flowy
-}
+
+    function rearranging(block, parent) {
+      // Needed so that I could redefine the y distance in flowy
+    }
 
     function snapping(drag, first) {
       let grab = drag.querySelector(".grabme");
@@ -156,12 +155,12 @@ ${body}
     let doneTouch = function (event) {
 
 
-      if (event.target.className === 'open-learning-objective-modal') {
-        alert('yes!')
-        vm.form.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
-        vm.form.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
-        console.log(event.target.parentNode.parentNode.querySelector('.learningObjective'))
-        event.target.parentNode.parentNode.querySelector('.learningObjective').setAttribute("id", "chosen");
+      if (event.target.className === 'open-student-learning-objective-modal') {
+        vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
+        vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
+        console.log(vm.pageId)
+        console.log(vm.library)
+        vm.openStudentLearningObjectiveModal()
       } else if (event.type === "mouseup" && aclick && !noinfo) {
 
         if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
@@ -182,7 +181,7 @@ ${body}
 
   },
   methods: {
-    async getLearningTreeByQuestionId(questionId){
+    async getLearningTreeByQuestionId(questionId) {
       console.log('getting learning tree')
       try {
         const {data} = await axios.get(`/api/learning-trees/${questionId}`)
@@ -204,9 +203,11 @@ ${body}
         this.$noty.error(error.message)
       }
     },
-    openModal() {
-      alert('f')
-      $bvModal.show('bv-modal-example')
+    async openStudentLearningObjectiveModal() {
+      const {data} = axios.get(`/student-learning-objectives/${this.library}/${this.pageId}`)
+      this.studentLearningObjectives = data.studentLearningObjectives
+      //what if none?
+      this.$bvModal.show('student-learning-objective-modal')
     },
     addRemediation() {
 
@@ -227,7 +228,7 @@ ${body}
           <br>
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-          <span class="open-learning-objective-modal">Open</span>
+          <span class="open-student-learning-objective-modal">Open</span>
         </div>
       </div>
     </div>`
