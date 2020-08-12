@@ -4,7 +4,6 @@
     <div v-if="!initializing">
       <PageTitle v-bind:title="this.title"></PageTitle>
       <div v-if="questions.length">
-        <li v-for="remediation in currentLearningTreeLevel">{{ remediation }}</li>
         <div class="d-flex justify-content-between">
           <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
             <b-button variant="success">Get Questions</b-button>
@@ -22,6 +21,12 @@
           <div class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" v-if="user.role !== 3">
             <b-button variant="danger">Remove Question</b-button>
           </div>
+        </div>
+        <div v-if="this.currentLearningTreeLevel.length>0">
+          <b-alert show>
+            <h5>Need some help?  One of the Student Learning Objectives below might be useful.</h5>
+            <li v-for="remediation in this.currentLearningTreeLevel">{{ remediation }}</li>
+          </b-alert>
         </div>
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
@@ -107,12 +112,13 @@ export default {
   methods: {
     async resetLearningTree(learningTree) {
       console.log(learningTree)
+      this.currentLearningTreeLevel = []
       if (learningTree) {
         this.level = 0
         this.parentId = 0
         this.learningTree = learningTree
         //loop through and get all with parent = -1
-        this.currentLearningTreeLevel = []
+
         //loop through each with parent having this level
         let page_id
         let library
@@ -147,9 +153,8 @@ export default {
           const {data} = await axios.get(`/api/student-learning-objectives/${this.currentLibrariesAndPageIds[i]['library']}/${this.currentLibrariesAndPageIds[i]['page_id']}`)
           let d = document.createElement('div');
           d.innerHTML = data
-          //console.log(data)
           for (const li of d.querySelector("ul").querySelectorAll('li')) {
-            console.log(li.innerText)
+           this.currentLearningTreeLevel.push(li.innerText)
           }
         }
         console.log('done')
