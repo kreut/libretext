@@ -103,7 +103,7 @@ export default {
 
       let body = isAssessmentNode ? "The original question" : `<div>Library: <span class="library remediation-info" >${library}</span>, Page Id: <span class="pageId remediation-info" >${pageId}</span>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library}.svg"></span> ${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library}.svg"></span>ss ${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
@@ -241,20 +241,22 @@ ${body}
 
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
-        <div class="grabme">
-       <img src="/assets/img/${this.library}.png" style="${this.libraryColors[this.library]}">
-        </div>
+<div class="grabme">
+</div>
       <div class="blockin">
-        <div class="blocktext">
-          <p class="blocktitle">Remediation</p>
-          <p class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
-      this.library.slice(1)}</span>
-          <br>
+        <div class="blockyleft">
+          <p class="blockyname"> <img src="/assets/img/${this.library}.svg" style="${this.libraryColors[this.library]}">Remediation</p>
+        </div>
+          <div class='blockydiv'>
+          </div>
+          <div style="margin:20px">
+          <span class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
+      this.library.slice(1)}</span>,
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
           <span class="open-student-learning-objective-modal">Student Learning Objectives</span>
         </div>
-      </div>
+        </div>
     </div>`
       if (blockElems.length > 0) {
         let lastBlockElem = blockElems[blockElems.length - 1]

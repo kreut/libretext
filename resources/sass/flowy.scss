@@ -448,14 +448,6 @@ body, html {
 }
 
 
-.grabme {
-  display: inline-block;
-  margin-top: 10px;
-  margin-left: 10px;
-  margin-bottom: -14px;
-  width: 15px;
-}
-
 #blocklist {
   height: calc(100% - 220px);
   overflow-y: auto;
@@ -466,12 +458,6 @@ body, html {
   overflow: auto;
   margin-top: -30px;
   padding-top: 30px;
-}
-
-.blockin {
-  display: inline-block;
-  vertical-align: top;
-  margin-left: 12px;
 }
 
 
@@ -843,3 +829,4 @@ body, html {
     text-decoration: none;
 
 }
+
