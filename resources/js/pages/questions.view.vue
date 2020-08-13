@@ -113,6 +113,7 @@ export default {
     async resetLearningTree(learningTree) {
       console.log(learningTree)
       this.currentLearningTreeLevel = []
+      this.currentLibrariesAndPageIds = []
       if (learningTree) {
         this.level = 0
         this.parentId = 0
