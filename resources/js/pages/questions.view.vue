@@ -24,18 +24,29 @@
         </div>
         <div v-if="this.learningTreeAsList.length>0">
           <b-alert show>
-            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5>
+
+            <div class="text-center" v-if="!loadedStudentLearningObjectives">
+              <h5>
+                <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner> Loading Student Learning Objectives
+              </h5></div>
+            <div v-else>
+              <div  class="d-flex justify-content-between">
+            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5><b-button v-if="!showQuestion" variant="primary" v-on:click="viewOriginalQuestion">View Original Question</b-button>
+            </div>
             <template v-for="remediationObject in this.learningTreeAsList">
               <li v-for="(value, name) in remediationObject"
                   v-if="(remediationObject.show) && (name === 'studentLearningObjective')">
-                <b-button variant="link" v-html="value" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                <b-button variant="link" class="text-left" v-html="value" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
                 </b-button>
-                <b-button variant="info" size="sm" v-if="remediationObject.children" v-on:click="more(remediationObject)">
+                <b-button variant="info" size="sm" v-if="remediationObject.children.length" v-on:click="more(remediationObject)">
                   More
                 </b-button>
-
+                <b-button variant="info" size="sm" v-if="remediationObject.parent > 0" v-on:click="back(remediationObject)">
+                  Back
+                </b-button>
               </li>
             </template>
+            </div>
           </b-alert>
         </div>
 
@@ -82,6 +93,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    loadedStudentLearningObjectives: false,
     showQuestion: true,
     remediationSrc: '',
     learningTree: [],
@@ -128,6 +140,21 @@ export default {
     }
   },
   methods: {
+    viewOriginalQuestion(){
+      this.showQuestion = true
+    },
+   back(remediationObject) {
+     let parentIdToShow = false
+      for (let i =0; i < this.learningTreeAsList.length; i++){
+        if (this.learningTreeAsList[i].id === remediationObject.parent){
+          parentIdToShow = this.learningTreeAsList[i].parent
+        }
+      }
+     for (let i =0; i < this.learningTreeAsList.length; i++){
+         this.learningTreeAsList[i].show = (this.learningTreeAsList[i].parent === parentIdToShow)
+     }
+
+    },
     more(remediationObject) {
 
       for (let i =0; i < this.learningTreeAsList.length; i++){
@@ -201,7 +228,7 @@ export default {
         console.log('done')
         console.log(this.learningTreeAsList)
         this.learningTreeAsList_1 = this.learningTreeAsList
-
+       this.loadedStudentLearningObjectives = true
 
       }
     },
