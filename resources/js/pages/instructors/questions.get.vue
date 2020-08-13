@@ -90,7 +90,7 @@ export default {
     showPage: false
   }),
   created() {
-    this.getSrc = getSrc
+    this.getQuestionSrc = getQuestionSrc
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
@@ -177,7 +177,7 @@ export default {
             for (let i = 0; i < questionsByTags.questions.length; i++) {
               console.log(questionsByTags.questions)
               questionsByTags.questions[i].inAssignment = questionIds.question_ids.includes(questionsByTags.questions[i].id)
-              questionsByTags.questions[i].src = this.getSrc(questionsByTags.questions[i])
+              questionsByTags.questions[i].src = this.getQuestionSrc(questionsByTags.questions[i])
             }
             this.questions = questionsByTags.questions
             console.log(this.questions)

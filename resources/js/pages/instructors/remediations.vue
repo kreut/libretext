@@ -103,7 +103,7 @@ export default {
         `<div>Library: <span class="library" >${library}</span>, Page Id: <span class="pageId" >${pageId}</span><br>
 <span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library}.svg"></span>${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase()+library.slice(1)}.svg"></span>${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
