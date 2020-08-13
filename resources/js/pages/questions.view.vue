@@ -24,19 +24,29 @@
         </div>
         <div v-if="this.currentLearningTreeLevel.length>0">
           <b-alert show>
-            <h5>Need some help?  One of the Student Learning Objectives below might be useful.</h5>
+            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5>
             <template v-for="remediationObject in this.currentLearningTreeLevel">
-              <li v-for="(value, name) in remediationObject"
-                  v-on:click="explore(remediationObject.library, remediationObject.pageId)"
-                  v-show="name === 'text'"
-                  v-html="value"></li>
-            </template>
-
-
-
-
+            <li v-for="(value, name) in remediationObject"
+                v-show="name === 'text'">
+              <b-button variant="link" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                {{ value }}
+              </b-button>
+              <b-button variant="link" v-on:click="more()">
+               More...
+              </b-button>
+              <ul>
+                <li v-for="value in [1,2,3]">{{value}}</li>
+              </ul>
+            </li>
+          </template>
           </b-alert>
         </div>
+
+
+        Allow up to 4 levels
+
+
+
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
                 style="overflow: auto; height: 1274px;"
@@ -127,6 +137,9 @@ export default {
     }
   },
   methods: {
+    more() {
+      alert('a')
+    },
     async resetLearningTree(learningTree) {
       console.log(learningTree)
       this.currentLearningTreeLevel = []
@@ -167,18 +180,20 @@ export default {
           }
         }
         //get the learning objectives
-        for (let i = 0; i <  this.currentLibrariesAndPageIds.length; i++) {
-          let library =this.currentLibrariesAndPageIds[i]['library']
-        let pageId = this.currentLibrariesAndPageIds[i]['page_id']
+        for (let i = 0; i < this.currentLibrariesAndPageIds.length; i++) {
+          let library = this.currentLibrariesAndPageIds[i]['library']
+          let pageId = this.currentLibrariesAndPageIds[i]['page_id']
           const {data} = await axios.get(`/api/student-learning-objectives/${library}/${pageId}`)
           let d = document.createElement('div');
           d.innerHTML = data
           for (const li of d.querySelector("ul").querySelectorAll('li')) {
-            let remediation = {'library' : library,
-            'pageId': pageId,
-            'studentLearningObjective': li.innerText,
-            'text': `<b-button type="button" class="btn btn-link">${li.innerText}</b-button>`}
-           this.currentLearningTreeLevel.push(remediation)
+            let remediation = {
+              'library': library,
+              'pageId': pageId,
+              'studentLearningObjective': li.innerText,
+              'text': `${li.innerText}`
+            }
+            this.currentLearningTreeLevel.push(remediation)
           }
         }
         console.log('done')
@@ -186,7 +201,7 @@ export default {
 
       }
     },
-    explore(library, pageId){
+    explore(library, pageId) {
       this.showQuestion = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
     },
