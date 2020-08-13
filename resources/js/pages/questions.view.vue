@@ -27,22 +27,17 @@
             <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5>
             <template v-for="remediationObject in this.learningTreeAsList">
               <li v-for="(value, name) in remediationObject"
-                  v-if="(remediationObject.parent === currentLevel) && (name === 'studentLearningObjective')">
-                <b-button variant="link" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
-                  {{ value }}
+                  v-if="(remediationObject.show) && (name === 'studentLearningObjective')">
+                <b-button variant="link" v-html="value" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
                 </b-button>
-                <b-button variant="link" v-on:click="more()">
-                  More...
+                <b-button variant="info" size="sm" v-if="remediationObject.children" v-on:click="more(remediationObject)">
+                  More
                 </b-button>
 
               </li>
             </template>
           </b-alert>
         </div>
-
-
-        Allow up to 4 levels
-
 
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
@@ -89,12 +84,10 @@ export default {
   data: () => ({
     showQuestion: true,
     remediationSrc: '',
-    currentLevel: 0,
     learningTree: [],
     currentLearningTreeLevel: [],
     learningTreeAsList: [],
     learningTreeAsList_1: [],
-    parentId: 0,
     perPage: 1,
     currentPage: 1,
     questions: [],
@@ -135,16 +128,17 @@ export default {
     }
   },
   methods: {
-    more() {
-      alert('a')
-      this.currentLevel++
+    more(remediationObject) {
+
+      for (let i =0; i < this.learningTreeAsList.length; i++){
+        console.log(this.learningTreeAsList[i].id)
+        this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
+      }
     },
     async resetLearningTree(learningTree) {
       console.log(learningTree)
       this.learningTreeAsList = []
       if (learningTree) {
-        this.currentLevel = 0
-        this.parentId = 0
         //loop through and get all with parent = -1
 
         //loop through each with parent having this level
@@ -178,14 +172,15 @@ export default {
             d.innerHTML = data
             let text = ''
             for (const li of d.querySelector("ul").querySelectorAll('li')) {
-              text += li.innerText
+              text += li.innerText + '<br>'
             }
             let remediation = {
               'library': library,
               'pageId': pageId,
               'studentLearningObjective': text,
               'parent': parent,
-              'id': id
+              'id': id,
+              'show': (parent === 0)
             }
             this.learningTreeAsList.push(remediation)
           }
