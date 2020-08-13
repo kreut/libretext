@@ -25,7 +25,16 @@
         <div v-if="this.currentLearningTreeLevel.length>0">
           <b-alert show>
             <h5>Need some help?  One of the Student Learning Objectives below might be useful.</h5>
-            <li v-for="remediation in this.currentLearningTreeLevel">{{ remediation }}</li>
+            <template v-for="remediationObject in this.currentLearningTreeLevel">
+              <li v-for="(value, name) in remediationObject"
+                  v-on:click="explore(remediationObject.library, remediationObject.pageId)"
+                  v-show="name === 'text'"
+                  v-html="value"></li>
+            </template>
+
+
+
+
           </b-alert>
         </div>
         <iframe allowtransparency="true" frameborder="0"
@@ -151,17 +160,26 @@ export default {
         }
         //get the learning objectives
         for (let i = 0; i <  this.currentLibrariesAndPageIds.length; i++) {
-          const {data} = await axios.get(`/api/student-learning-objectives/${this.currentLibrariesAndPageIds[i]['library']}/${this.currentLibrariesAndPageIds[i]['page_id']}`)
+          let library =this.currentLibrariesAndPageIds[i]['library']
+        let pageId = this.currentLibrariesAndPageIds[i]['page_id']
+          const {data} = await axios.get(`/api/student-learning-objectives/${library}/${pageId}`)
           let d = document.createElement('div');
           d.innerHTML = data
           for (const li of d.querySelector("ul").querySelectorAll('li')) {
-           this.currentLearningTreeLevel.push(li.innerText)
+            let remediation = {'library' : library,
+            'pageId': pageId,
+            'studentLearningObjective': li.innerText,
+            'text': `${li.innerText} Explore!`}
+           this.currentLearningTreeLevel.push(remediation)
           }
         }
         console.log('done')
 
 
       }
+    },
+    explore(library, pageId){
+      console.log(library, pageId)
     },
     async getTitle(assignmentId) {
       try {
