@@ -31,7 +31,7 @@
               </h5></div>
             <div v-else>
               <div  class="d-flex justify-content-between">
-            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5><b-button v-if="!showQuestion" variant="primary" v-on:click="viewOriginalQuestion">View Original Question</b-button>
+            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5><b-button :disabled="showQuestion" variant="primary" v-on:click="viewOriginalQuestion">View Original Question</b-button>
             </div>
             <template v-for="remediationObject in this.learningTreeAsList">
               <li v-for="(value, name) in remediationObject"
@@ -163,7 +163,7 @@ export default {
       }
     },
     async resetLearningTree(learningTree) {
-      console.log(learningTree)
+      this.showQuestion = true
       this.learningTreeAsList = []
       if (learningTree) {
         //loop through and get all with parent = -1
