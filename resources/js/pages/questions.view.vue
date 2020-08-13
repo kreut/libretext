@@ -50,15 +50,22 @@
           </b-alert>
         </div>
 
+  <div v-if="!iframeLoaded" class="text-center">
+    <h5>
+      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner> Loading...
+    </h5>
+  </div>
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
                 style="overflow: auto; height: 1274px;"
                 v-if="!showQuestion"
+                v-on:load="showIframe" v-show="iframeLoaded"
                 width="100%">
         </iframe>
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
                 v-if="showQuestion"
+                v-on:load="showIframe" v-show="iframeLoaded"
                 style="overflow: auto; height: 1274px;"
                 width="100%">
         </iframe>
@@ -93,6 +100,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    iframeLoaded: false,
     loadedStudentLearningObjectives: false,
     showQuestion: true,
     remediationSrc: '',
@@ -140,7 +148,11 @@ export default {
     }
   },
   methods: {
+    showIframe() {
+      this.iframeLoaded = true
+    },
     viewOriginalQuestion(){
+      this.iframeLoaded = false
       this.showQuestion = true
     },
    back(remediationObject) {
@@ -234,6 +246,7 @@ export default {
     },
     explore(library, pageId) {
       this.showQuestion = false
+      this.iframeLoaded = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
     },
     async getTitle(assignmentId) {
