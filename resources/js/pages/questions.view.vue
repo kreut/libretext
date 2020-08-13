@@ -22,29 +22,26 @@
             <b-button variant="danger">Remove Question</b-button>
           </div>
         </div>
-        <div v-if="this.currentLearningTreeLevel.length>0">
+        <div v-if="this.learningTreeAsList.length>0">
           <b-alert show>
             <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5>
-            <template v-for="remediationObject in this.currentLearningTreeLevel">
-            <li v-for="(value, name) in remediationObject"
-                v-show="name === 'text'">
-              <b-button variant="link" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
-                {{ value }}
-              </b-button>
-              <b-button variant="link" v-on:click="more()">
-               More...
-              </b-button>
-              <ul>
-                <li v-for="value in [1,2,3]">{{value}}</li>
-              </ul>
-            </li>
-          </template>
+            <template v-for="remediationObject in this.learningTreeAsList">
+              <li v-for="(value, name) in remediationObject"
+                  v-if="(remediationObject.parent === currentLevel) && (name === 'studentLearningObjective')">
+                <b-button variant="link" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                  {{ value }}
+                </b-button>
+                <b-button variant="link" v-on:click="more()">
+                  More...
+                </b-button>
+
+              </li>
+            </template>
           </b-alert>
         </div>
 
 
         Allow up to 4 levels
-
 
 
         <iframe allowtransparency="true" frameborder="0"
@@ -92,10 +89,11 @@ export default {
   data: () => ({
     showQuestion: true,
     remediationSrc: '',
-    level: 0,
+    currentLevel: 0,
     learningTree: [],
     currentLearningTreeLevel: [],
-    currentLibrariesAndPageIds: [],
+    learningTreeAsList: [],
+    learningTreeAsList_1: [],
     parentId: 0,
     perPage: 1,
     currentPage: 1,
@@ -139,64 +137,75 @@ export default {
   methods: {
     more() {
       alert('a')
+      this.currentLevel++
     },
     async resetLearningTree(learningTree) {
       console.log(learningTree)
-      this.currentLearningTreeLevel = []
-      this.currentLibrariesAndPageIds = []
+      this.learningTreeAsList = []
       if (learningTree) {
-        this.level = 0
+        this.currentLevel = 0
         this.parentId = 0
-        this.learningTree = learningTree
         //loop through and get all with parent = -1
 
         //loop through each with parent having this level
-        let page_id
+        let pageId
         let library
-        for (let i = 0; i < this.learningTree.length; i++) {
-          let remediation = this.learningTree[i]
+        console.log('length ' + learningTree.length)
+        for (let i = 0; i < learningTree.length; i++) {
+          let remediation = learningTree[i]
+          //get the library and page ids
+          //go to the server and return with the student learning objectives
+          // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
 
-          if (remediation.parent === 0) {
-
-            //get the library and page ids
-            //go to the server and return with the student learning objectives
-            // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
-
-            page_id = library = null
-            for (let j = 0; j < remediation.data.length; j++) {
-              switch (remediation.data[j].name) {
-                case('page_id'):
-                  page_id = remediation.data[j].value
-                  break
-                case ('library'):
-                  library = remediation.data[j].value
-                  break
-              }
+          pageId = library = null
+          let parent = remediation.parent
+          let id = remediation.id
+          for (let j = 0; j < remediation.data.length; j++) {
+            switch (remediation.data[j].name) {
+              case('page_id'):
+                pageId = remediation.data[j].value
+                break
+              case ('library'):
+                library = remediation.data[j].value
+                break
+              case('id'):
+                id = remediation.data[j].value
             }
-            if (page_id && library) {
-              this.currentLibrariesAndPageIds.push({'library': library, 'page_id': page_id})
-            }
-
           }
-        }
-        //get the learning objectives
-        for (let i = 0; i < this.currentLibrariesAndPageIds.length; i++) {
-          let library = this.currentLibrariesAndPageIds[i]['library']
-          let pageId = this.currentLibrariesAndPageIds[i]['page_id']
-          const {data} = await axios.get(`/api/student-learning-objectives/${library}/${pageId}`)
-          let d = document.createElement('div');
-          d.innerHTML = data
-          for (const li of d.querySelector("ul").querySelectorAll('li')) {
+          if (pageId && library) {
+            const {data} = await axios.get(`/api/student-learning-objectives/${library}/${pageId}`)
+            let d = document.createElement('div');
+            d.innerHTML = data
+            let text = ''
+            for (const li of d.querySelector("ul").querySelectorAll('li')) {
+              text += li.innerText
+            }
             let remediation = {
               'library': library,
               'pageId': pageId,
-              'studentLearningObjective': li.innerText,
-              'text': `${li.innerText}`
+              'studentLearningObjective': text,
+              'parent': parent,
+              'id': id
             }
-            this.currentLearningTreeLevel.push(remediation)
+            this.learningTreeAsList.push(remediation)
+          }
+          for (let i = 0; i < this.learningTreeAsList.length; i++) {
+            this.learningTreeAsList[i]['children'] = []
+
+            for (let j = 0; j < this.learningTreeAsList.length; j++) {
+
+              if (i !== j && (this.learningTreeAsList[j]['parent'] === this.learningTreeAsList[i]['id'])) {
+                this.learningTreeAsList[i]['children'].push(this.learningTreeAsList[j]['id'])
+              }
+            }
+
           }
         }
+
+
         console.log('done')
+        console.log(this.learningTreeAsList)
+        this.learningTreeAsList_1 = this.learningTreeAsList
 
 
       }
