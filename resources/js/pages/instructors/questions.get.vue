@@ -70,7 +70,7 @@
 <script>
 import axios from 'axios'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-import {getSrc} from '~/helpers/Questions'
+import {getQuestionSrc} from '~/helpers/Questions'
 
 export default {
   components: {

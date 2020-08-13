@@ -1,4 +1,4 @@
-export function getSrc(question, jwt_token){
+export function getQuestionSrc(question, jwt_token){
   let src
   switch (question.technology){
     case 'h5p':

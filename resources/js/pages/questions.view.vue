@@ -38,10 +38,16 @@
           </b-alert>
         </div>
         <iframe allowtransparency="true" frameborder="0"
+                v-bind:src="remediationSrc"
+                style="overflow: auto; height: 1274px;"
+                v-if="!showQuestion"
+                width="100%">
+        </iframe>
+        <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
+                v-if="showQuestion"
                 style="overflow: auto; height: 1274px;"
                 width="100%">
-
         </iframe>
 
       </div>
@@ -65,7 +71,7 @@
 <script>
 import axios from 'axios'
 import {mapGetters} from "vuex"
-import {getSrc} from '~/helpers/Questions'
+import {getQuestionSrc} from '~/helpers/Questions'
 
 export default {
 
@@ -74,6 +80,8 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    showQuestion: true,
+    remediationSrc: '',
     level: 0,
     learningTree: [],
     currentLearningTreeLevel: [],
@@ -87,7 +95,7 @@ export default {
     assignmentId: ''
   }),
   created() {
-    this.getSrc = getSrc
+    this.getQuestionSrc = getQuestionSrc
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
@@ -169,7 +177,7 @@ export default {
             let remediation = {'library' : library,
             'pageId': pageId,
             'studentLearningObjective': li.innerText,
-            'text': `${li.innerText} Explore!`}
+            'text': `<b-button type="button" class="btn btn-link">${li.innerText}</b-button>`}
            this.currentLearningTreeLevel.push(remediation)
           }
         }
@@ -179,7 +187,8 @@ export default {
       }
     },
     explore(library, pageId){
-      console.log(library, pageId)
+      this.showQuestion = false
+      this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
     },
     async getTitle(assignmentId) {
       try {
@@ -201,7 +210,7 @@ export default {
         }
         this.questions = data.questions
         for (let i = 0; i < this.questions.length; i++) {
-          this.questions[i].src = this.getSrc(this.questions[i])
+          this.questions[i].src = this.getQuestionSrc(this.questions[i])
         }
 
         this.initializing = false
