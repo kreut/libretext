@@ -31,13 +31,6 @@ class StoreCourse extends FormRequest
             'end_date' => 'required|date|after:start_date'
         ];
 
-        //unique course name
-
-        if ($this->route('course')) {
-            array_push($rules['name'], Rule::unique('courses', 'name')->ignore($this->route('course')->id));
-        } else {
-            array_push($rules['name'], Rule::unique('courses', 'name'));
-        }
         return $rules;
     }
 }

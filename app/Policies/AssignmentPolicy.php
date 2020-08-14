@@ -60,7 +60,7 @@ class AssignmentPolicy
      */
     public function update(User $user, Assignment $assignment)
     {
-        return $user->id === $assignment->course->user_id
+        return $user->id === (int) $assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to update this assignment.');
     }
@@ -74,7 +74,8 @@ class AssignmentPolicy
      */
     public function delete(User $user, Assignment $assignment)
     {
-        return $user->id === $assignment->course->user_id
+        //added (int) because wasn't working in the test
+        return $user->id === (int) $assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }
