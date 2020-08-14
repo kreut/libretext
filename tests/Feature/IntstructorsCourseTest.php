@@ -19,6 +19,12 @@ class InstructorsCourseTest extends TestCase
         $this->user = factory(User::class)->create();
     }
 
+   /** @test */
+    public function can_visit_instructors_courses()
+    {
+        $response = $this->getJson('/instructors/courses');
+        $response->assertStatus(200);
+    }
 
     /** @test */
     public function can_get_your_courses()
@@ -34,7 +40,7 @@ class InstructorsCourseTest extends TestCase
             ->assertSuccessful()
             ->assertJson(['courses' => [['id' => '1']]]);
     }
-
+    /** @test  */
     public function cannot_get_courses_if_student()
 
     {
