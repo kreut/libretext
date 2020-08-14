@@ -52,6 +52,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     Route::get('/student-learning-objectives/{library}/{pageId}', 'LearningObjectiveController@show');
+    Route::get('/student-learning-objectives/get-title/{library}/{pageId}', 'LearningObjectiveController@getTitle');
 
 
     Route::get('/learning-trees/{question}','LearningTreeController@show');

@@ -25,36 +25,71 @@
         <div v-if="this.learningTreeAsList.length>0">
           <b-alert show>
 
-            <div class="text-center" v-if="!loadedStudentLearningObjectives">
+            <div class="text-center" v-if="!loadedTitles">
               <h5>
-                <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner> Loading Student Learning Objectives
-              </h5></div>
-            <div v-else>
-              <div  class="d-flex justify-content-between">
-            <h5>Need some help? One of the Student Learning Objectives below might be useful.</h5><b-button :disabled="showQuestion" variant="primary" v-on:click="viewOriginalQuestion">View Original Question</b-button>
+                <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+                Loading Student Learning Objectives
+              </h5>
             </div>
-            <template v-for="remediationObject in this.learningTreeAsList">
-              <li v-for="(value, name) in remediationObject"
-                  v-if="(remediationObject.show) && (name === 'studentLearningObjective')">
-                <b-button variant="link" class="text-left" v-html="value" v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+            <div v-else>
+              <div class="d-flex justify-content-between mb-2">
+                <h5>Need some help? Explore the Learning Tree below.</h5>
+                <b-button class="float-right" :disabled="showQuestion" variant="primary"
+                          v-on:click="viewOriginalQuestion">View Original
+                  Question
                 </b-button>
-                <b-button variant="info" size="sm" v-if="remediationObject.children.length" v-on:click="more(remediationObject)">
-                  More
-                </b-button>
-                <b-button variant="info" size="sm" v-if="remediationObject.parent > 0" v-on:click="back(remediationObject)">
-                  Back
-                </b-button>
-              </li>
-            </template>
+
+              </div>
+              <hr>
+              <b-container class="bv-example-row">
+                <b-row align-h="center">
+                  <template v-for="remediationObject in this.learningTreeAsList">
+                    <b-col cols="4" v-for="(value, name) in remediationObject" v-bind:key="value.id"
+                           v-if="(remediationObject.show) && (name === 'title')">
+                      <b-row align-h="center">
+                        <b-col cols="4">
+                          <div class="h2 mb-0">
+                            <b-icon variant="info" v-if="remediationObject.parent > 0"
+                                    v-on:click="back(remediationObject)" icon="arrow-up-square-fill">
+                            </b-icon>
+                          </div>
+                        </b-col>
+                      </b-row>
+                      <div class="border border-info mr-1 p-3 rounded">
+                        <b-row align-h="center">
+                          <div class="mr-1 ml-2">{{ remediationObject.title }}</div>
+                          <b-button size="sm" class="mr-2" variant="success"
+                                    v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                            Go!
+                          </b-button>
+                        </b-row>
+                      </div>
+                      <b-container>
+                        <b-row align-h="center">
+                          <b-col cols="4">
+                            <div class="h2 mb-0">
+                              <b-icon v-if="remediationObject.children.length"
+                                      v-on:click="more(remediationObject)" icon="arrow-down-square-fill"
+                                      variant="info">
+                              </b-icon>
+                            </div>
+                          </b-col>
+                        </b-row>
+                      </b-container>
+                    </b-col>
+                  </template>
+                </b-row>
+              </b-container>
             </div>
           </b-alert>
         </div>
 
-  <div v-if="!iframeLoaded" class="text-center">
-    <h5>
-      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner> Loading...
-    </h5>
-  </div>
+        <div v-if="!iframeLoaded" class="text-center">
+          <h5>
+            <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+            Loading...
+          </h5>
+        </div>
         <iframe allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
                 style="overflow: auto; height: 1274px;"
@@ -101,7 +136,7 @@ export default {
   }),
   data: () => ({
     iframeLoaded: false,
-    loadedStudentLearningObjectives: false,
+    loadedTitles: false,
     showQuestion: true,
     remediationSrc: '',
     learningTree: [],
@@ -151,25 +186,25 @@ export default {
     showIframe() {
       this.iframeLoaded = true
     },
-    viewOriginalQuestion(){
+    viewOriginalQuestion() {
       this.iframeLoaded = false
       this.showQuestion = true
     },
-   back(remediationObject) {
-     let parentIdToShow = false
-      for (let i =0; i < this.learningTreeAsList.length; i++){
-        if (this.learningTreeAsList[i].id === remediationObject.parent){
+    back(remediationObject) {
+      let parentIdToShow = false
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
+        if (this.learningTreeAsList[i].id === remediationObject.parent) {
           parentIdToShow = this.learningTreeAsList[i].parent
         }
       }
-     for (let i =0; i < this.learningTreeAsList.length; i++){
-         this.learningTreeAsList[i].show = (this.learningTreeAsList[i].parent === parentIdToShow)
-     }
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
+        this.learningTreeAsList[i].show = (this.learningTreeAsList[i].parent === parentIdToShow)
+      }
 
     },
     more(remediationObject) {
 
-      for (let i =0; i < this.learningTreeAsList.length; i++){
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
         console.log(this.learningTreeAsList[i].id)
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
@@ -206,17 +241,11 @@ export default {
             }
           }
           if (pageId && library) {
-            const {data} = await axios.get(`/api/student-learning-objectives/${library}/${pageId}`)
-            let d = document.createElement('div');
-            d.innerHTML = data
-            let text = ''
-            for (const li of d.querySelector("ul").querySelectorAll('li')) {
-              text += li.innerText + '<br>'
-            }
+            const {data} = await axios.get(`/api/student-learning-objectives/get-title/${library}/${pageId}`)
             let remediation = {
               'library': library,
               'pageId': pageId,
-              'studentLearningObjective': text,
+              'title': data,
               'parent': parent,
               'id': id,
               'show': (parent === 0)
@@ -240,7 +269,7 @@ export default {
         console.log('done')
         console.log(this.learningTreeAsList)
         this.learningTreeAsList_1 = this.learningTreeAsList
-       this.loadedStudentLearningObjectives = true
+        this.loadedTitles = true
 
       }
     },
@@ -296,3 +325,8 @@ export default {
   }
 }
 </script>
+<style scoped>
+svg:hover {
+  fill: #138496;
+}
+</style>
