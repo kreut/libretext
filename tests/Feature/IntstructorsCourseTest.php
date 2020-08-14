@@ -30,10 +30,7 @@ class InstructorsCourseTest extends TestCase
     /** @test */
     public function can_get_your_courses()
     {
-        $course = factory(Course::class)->create(['user_id' => $this->user->id,
-            'name' => 'First Course',
-            'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10']);
+        $course = factory(Course::class)->create();
         factory(CourseAccessCode::class)->create(['access_code' => 'wefk;IOE',
             'course_id' => $course->id]);
 
@@ -53,10 +50,7 @@ class InstructorsCourseTest extends TestCase
     /** @test */
     public function can_delete_a_course_if_you_are_the_owner()
     {
-        $course = factory(Course::class)->create(['user_id' => $this->user->id,
-            'name' => 'First Course',
-            'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10']);
+        $course = factory(Course::class)->create();
         $this->actingAs($this->user)->deleteJson("/api/courses/$course->id")
             ->assertJson(['type' => 'success']);
 
@@ -94,10 +88,7 @@ class InstructorsCourseTest extends TestCase
     public function can_update_a_course_if_you_are_the_owner()
     {
 
-        $course = factory(Course::class)->create(['user_id' => $this->user->id,
-            'name' => 'First Course',
-            'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10']);
+        $course = factory(Course::class)->create();
         $this->actingAs($this->user)->patchJson("/api/courses/$course->id", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
