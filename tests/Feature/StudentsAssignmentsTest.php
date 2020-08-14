@@ -10,12 +10,7 @@ class StudentsAssignmentsTest extends TestCase
 {
 
     /*Already tested getting the assignments in InstructorsAssignmentsTest*/
-    /** @test */
-    public function can_visit_students_assignments()
-    {
-        $response = $this->getJson('/students/assignments');
-        $response->assertStatus(200);
-    }
+    /*Nothing to test */
 
 
 }

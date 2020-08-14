@@ -9,10 +9,9 @@ use App\User;
 use App\Course;
 use Tests\TestCase;
 
-class InstructorsCourseTest extends TestCase
+class InstructorsCoursesTest extends TestCase
 {
 
-    /** Should test that only a student can create a courset... */
     public function setup(): void
     {
 

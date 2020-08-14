@@ -37,12 +37,6 @@ class InstructorsAssignmentsTest extends TestCase
 
     }
 
-    /** @test */
-    public function can_visit_instructors_assignments()
-    {
-        $response = $this->getJson('/instructors/assignments');
-        $response->assertStatus(200);
-    }
 
 
    /** @test */
