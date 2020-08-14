@@ -70,7 +70,7 @@
       },
       async getAssignments() {
         try {
-         const {data}  = await axios.get(`/api/courses/${this.courseId}/assignments`)
+         const {data}  = await axios.get(`/api/assignments/courses/${this.courseId}`)
           console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
