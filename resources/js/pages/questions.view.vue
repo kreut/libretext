@@ -28,12 +28,12 @@
             <div class="text-center" v-if="!loadedTitles">
               <h5>
                 <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-                Loading Student Learning Objectives
+                Loading
               </h5>
             </div>
             <div v-else>
               <div class="d-flex justify-content-between mb-2">
-                <h5>Need some help? Explore the Learning Tree below.</h5>
+                <h5>Need some help? Explore the topics below.</h5>
                 <b-button class="float-right" :disabled="showQuestion" variant="primary"
                           v-on:click="viewOriginalQuestion">View Original
                   Question
@@ -57,7 +57,7 @@
                       </b-row>
                       <div class="border border-info mr-1 p-3 rounded">
                         <b-row align-h="center">
-                          <div class="mr-1 ml-2">{{ remediationObject.title }}</div>
+                          <div class="mr-1 ml-2"><strong>{{ remediationObject.title }}</strong></div>
                           <b-button size="sm" class="mr-2" variant="success"
                                     v-on:click="explore(remediationObject.library, remediationObject.pageId)">
                             Go!
@@ -268,7 +268,6 @@ export default {
 
         console.log('done')
         console.log(this.learningTreeAsList)
-        this.learningTreeAsList_1 = this.learningTreeAsList
         this.loadedTitles = true
 
       }
