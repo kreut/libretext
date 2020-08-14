@@ -36,6 +36,7 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
+
             $assignments = $course->assignments;
             foreach ($course->assignments as $key => $assignment) {
                 $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";

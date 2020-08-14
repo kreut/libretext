@@ -28,7 +28,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
-    Route::get('/courses/{course}/assignments', 'AssignmentController@index');
+    Route::get('assignments/courses/{course}/', 'AssignmentController@index');
     Route::get('/assignments/{assignmentId}', 'AssignmentController@show');
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');

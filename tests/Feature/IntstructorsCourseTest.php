@@ -12,6 +12,7 @@ use Tests\TestCase;
 class InstructorsCourseTest extends TestCase
 {
 
+    /** Should test that only a student can create a courset... */
     public function setup(): void
     {
 
@@ -37,7 +38,6 @@ class InstructorsCourseTest extends TestCase
             'course_id' => $course->id]);
 
         $this->actingAs($this->user)->getJson("/api/courses")
-            ->assertSuccessful()
             ->assertJson(['courses' => [['id' => '1']]]);
     }
     /** @test  */
@@ -46,7 +46,6 @@ class InstructorsCourseTest extends TestCase
     {
         $this->user->role = 3;
         $this->actingAs($this->user)->getJson("/api/courses")
-            ->assertSuccessful()
             ->assertJson(['type' => 'error', 'message'=> 'You are not allowed to view courses.']);
 
     }
@@ -59,7 +58,6 @@ class InstructorsCourseTest extends TestCase
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10']);
         $this->actingAs($this->user)->deleteJson("/api/courses/$course->id")
-            ->assertSuccessful()
             ->assertJson(['type' => 'success']);
 
     }
@@ -75,7 +73,6 @@ class InstructorsCourseTest extends TestCase
             'end_date' => '2021-06-10']);
 
         $this->actingAs($this->user)->deleteJson("/api/courses/$course_2->id")
-            ->assertSuccessful()
             ->assertJson(['type' => 'error']);
 
 
@@ -90,13 +87,11 @@ class InstructorsCourseTest extends TestCase
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
-        ])
-            ->assertSuccessful()
-            ->assertJson(['type' => 'success']);
+        ])->assertJson(['type' => 'success']);
     }
 
     /** @test */
-    public function can_update_the_course_if_you_are_the_owner()
+    public function can_update_a_course_if_you_are_the_owner()
     {
 
         $course = factory(Course::class)->create(['user_id' => $this->user->id,
@@ -107,8 +102,7 @@ class InstructorsCourseTest extends TestCase
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
-        ])->assertSuccessful()
-            ->assertJson(['type' => 'success']);
+        ])->assertJson(['type' => 'success']);
     }
 
     /** @test */
@@ -124,8 +118,7 @@ class InstructorsCourseTest extends TestCase
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10'
-        ])->assertSuccessful()
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
+        ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 
 
     }
