@@ -8,15 +8,14 @@ use Tests\TestCase;
 
 class QuestionsViewtest extends TestCase
 {
-    /**
-     * A basic feature test example.
-     *
-     * @return void
-     */
-    public function testExample()
-    {
-        $response = $this->get('/');
 
-        $response->assertStatus(200);
+    public function can_submit_response_if_student_in_course{
+
+
+    }
+
+    public function cannot_submit_response_if_not_student_in_course{
+
+
     }
 }
