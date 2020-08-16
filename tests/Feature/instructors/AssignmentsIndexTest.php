@@ -92,8 +92,6 @@ class AssignmentsIndexTest extends TestCase
 /** @test */
     public function can_create_an_assignment()
     {
-
-
         $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
             ->assertJson(['type' => 'success']);
 

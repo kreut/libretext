@@ -2,11 +2,14 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\Model;
+use App\Question;
 use Faker\Generator as Faker;
 
-$factory->define(Model::class, function (Faker $faker) {
-    return [
-        //
-    ];
+$factory->define(Question::class, function (Faker $faker) {
+    return
+        [
+            'title' => 'some title',
+            'author' =>'some_author',
+            'technology_id' => 1,
+            'technology' => 'webwork'];
 });
