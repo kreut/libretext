@@ -47,7 +47,6 @@ class CoursePolicy
      */
     public function view(User $user, Course $course)
     {
-
         $has_access = ($user->role === 3) ? $course->enrollments->contains('user_id',$user->id)
             : $this->ownsCourseByUser($course, $user);
         return $has_access

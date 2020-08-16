@@ -107,9 +107,22 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function show($id)
+    public function show(Assignment $assignment)
     {
-        return Assignment::find($id);
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            return Assignment::find($assignment->id);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+        }
 
     }
 

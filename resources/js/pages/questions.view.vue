@@ -155,7 +155,7 @@ export default {
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
-    this.getTitle(this.assignmentId)
+    this.getAssignmentName(this.assignmentId)
     this.getSelectedQuestions(this.assignmentId)
     let vm = this
     if (this.user.role === 3) {
@@ -277,12 +277,12 @@ export default {
       this.iframeLoaded = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
     },
-    async getTitle(assignmentId) {
+    async getAssignmentName(assignmentId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}`)
         this.title = `${data.name} Assignment Questions`
       } catch (error) {
-        this.title = "View Questions"
+          this.$noty.error(error.message)
       }
     },
     async getSelectedQuestions(assignmentId) {

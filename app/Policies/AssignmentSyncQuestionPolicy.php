@@ -22,7 +22,7 @@ class AssignmentSyncQuestionPolicy
      */
     public function delete(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
-        return $user->id === ($assignment->course->user_id)
+        return $user->id === ((int) $assignment->course->user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to remove this question from this assignment.');
     }

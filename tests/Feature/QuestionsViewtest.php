@@ -21,11 +21,12 @@ class QuestionsViewTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
+        $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create();
         $this->assignment = factory(Assignment::class)->create();
-        factory(Question::class)->create();
+        $this->question = factory(Question::class)->create();
 
-        $this->assignment->questions()->attach(Question::find(1));
+        $this->assignment->questions()->attach(Question::find($this->question->id));
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -44,7 +45,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'success']);
 
@@ -55,13 +56,13 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission']);
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some other submission'])
             ->assertJson(['type' => 'success']);
 
@@ -83,7 +84,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->actingAs($this->student_user_2)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'error',
                 'message'=> 'No responses will be saved since the assignment is not part of your course.']);
@@ -101,7 +102,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'success']);
 
@@ -115,7 +116,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
 
@@ -133,7 +134,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since your extension for this assignment has passed.']);
@@ -148,43 +149,62 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> 1,
+            'question_id'=> $this->question->id,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since this assignment is not yet available.']);
 
     }
 
-
+/** @test */
     public function can_get_titles_of_learning_tree()
     {
+        $this->actingAs($this->user)->getJson("/api/student-learning-objectives/get-title/chem/21691")
+            ->assertSeeText('Studying Chemistry');
 
 
     }
+/** @test  */
+    public function can_get_assignment_title_if_owner_course() {
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}")
+            ->assertJson(['name' => $this->assignment->name]);
+    }
 
+    /** @test  */
     public function can_get_assignment_title_if_student_in_course() {
-
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}")
+            ->assertJson(['name' => $this->assignment->name]);
     }
-
+/** @test */
     public function cannot_get_assignment_title_if_not_student_in_course() {
-
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}")
+            ->assertJson([ 'type' => 'error',
+                'message' => 'You are not allowed to access this assignment.']);
     }
+/** @test  */
     public function can_get_assignment_questions_if_student_in_course(){
-//do I check for extensions?
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view")
+            ->assertJson([ 'type' => 'success']);
 
     }
-
+    /** @test  */
     public function cannot_get_assignment_questions_if_not_student_in_course(){
-
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/questions/view")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to access this assignment.']);
 
     }
-
+/** @test */
     public function can_remove_question_from_assignment_if_owner() {
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
 
     }
-
+/** @test */
     public function cannot_remove_question_from_assignment_if_not_owner() {
-
+        $this->actingAs($this->user_2)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to remove this question from this assignment.']);
     }
 
 }
