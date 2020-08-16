@@ -6,11 +6,12 @@ use App\CourseAccessCode;
 use App\Traits\AccessCodes;
 use App\User;
 use App\Course;
+use App\Enrollment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-class StudentsCoursesTest extends TestCase
+class CoursesIndexTest extends TestCase
 {
     public function setup(): void
     {
@@ -31,11 +32,13 @@ class StudentsCoursesTest extends TestCase
     public function can_get_enrollments_if_user_is_a_student(){
 
 
-        START: create an enrollment then change the message below
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'course_id' => $this->course->id
+        ]);
 
 
-
-        $this->actingAs( $this->student_user)->getJson("/api/enrollments")
+        $this->actingAs( $this->user)->getJson("/api/enrollments")
             ->assertJson([  'type' => 'error',
                 'message' => 'You must be a student to view your enrollments.']);
     }

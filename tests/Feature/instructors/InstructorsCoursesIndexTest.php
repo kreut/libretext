@@ -9,7 +9,7 @@ use App\User;
 use App\Course;
 use Tests\TestCase;
 
-class InstructorsCoursesTest extends TestCase
+class InstructorsCoursesIndexTest extends TestCase
 {
 
     public function setup(): void
@@ -21,12 +21,6 @@ class InstructorsCoursesTest extends TestCase
         $this->course = factory(Course::class)->create();
     }
 
-    /** @test */
-    public function can_visit_instructors_courses()
-    {
-        $response = $this->getJson('/instructors/courses');
-        $response->assertStatus(200);
-    }
 
     /** @test */
     public function can_get_your_courses()
