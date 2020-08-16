@@ -9,7 +9,7 @@ use App\User;
 use App\Course;
 use Tests\TestCase;
 
-class InstructorsCoursesIndexTest extends TestCase
+class CoursesIndexTest extends TestCase
 {
 
     public function setup(): void

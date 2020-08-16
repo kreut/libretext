@@ -9,7 +9,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-class InstructorsAssignmentsTest extends TestCase
+class AssignmentsIndexTest extends TestCase
 {
 
     /**Still must test the stuff with the correct/completed and number**/
