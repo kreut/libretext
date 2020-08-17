@@ -305,7 +305,7 @@ export default {
        // console.log(data.questions)
         for (let i = 0; i < this.questions.length; i++) {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])
-          this.questions[i].questionIframeId = `questionIframe-${this.questions[i].id}`
+          this.questions[i].questionIframeId = `viewQuestionIframe-${this.questions[i].id}`
         }
 
         this.initializing = false

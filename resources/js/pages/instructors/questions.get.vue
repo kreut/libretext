@@ -57,10 +57,10 @@
       </div>
      </div>
 
-        <iframe id="question-iframe"
+        <iframe v-bind:id="questions[currentPage-1].questionIframeId"
                 allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
-                v-on:load="showIframe" v-show="iframeLoaded"
+                v-on:load="showIframe(questions[currentPage-1].questionIframeId)" v-show="iframeLoaded"
                 style="width: 1px;min-width: 100%;"
         >
 
@@ -100,9 +100,9 @@ export default {
     this.tags = this.getTags();
   },
   methods: {
-    showIframe() {
+    showIframe(id) {
       this.iframeLoaded = true
-      iFrameResize({log: true}, '#question-iframe')
+      iFrameResize({log: true}, `#${id}`)
     },
     removeTag(chosenTag) {
       this.chosenTags = _.without(this.chosenTags, chosenTag);
@@ -185,6 +185,7 @@ export default {
               console.log(questionsByTags.questions)
               questionsByTags.questions[i].inAssignment = questionIds.question_ids.includes(questionsByTags.questions[i].id)
               questionsByTags.questions[i].src = this.getQuestionSrc(questionsByTags.questions[i])
+              questionsByTags.questions[i].questionIframeId = `getQuestionIframe-${i}`
             }
             this.questions = questionsByTags.questions
             console.log(this.questions)
