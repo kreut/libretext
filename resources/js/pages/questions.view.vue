@@ -90,18 +90,20 @@
             Loading...
           </h5>
         </div>
-        <iframe allowtransparency="true" frameborder="0"
+        <iframe id="remediation-iframe"
+                allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
-                style="overflow: auto; height: 1274px;"
+                style="width: 1px;min-width: 100%;"
                 v-if="!showQuestion"
                 v-on:load="showIframe" v-show="iframeLoaded"
                 width="100%">
         </iframe>
-        <iframe allowtransparency="true" frameborder="0"
+        <iframe id="question-iframe"
+                allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
                 v-if="showQuestion"
                 v-on:load="showIframe" v-show="iframeLoaded"
-                style="overflow: auto; height: 1274px;"
+                style="width: 1px;min-width: 100%;"
                 width="100%">
         </iframe>
 
@@ -128,8 +130,8 @@ import axios from 'axios'
 import {mapGetters} from "vuex"
 import {getQuestionSrc} from '~/helpers/Questions'
 
-export default {
 
+export default {
   middleware: 'auth',
   computed: mapGetters({
     user: 'auth/user'
@@ -185,6 +187,8 @@ export default {
   methods: {
     showIframe() {
       this.iframeLoaded = true
+      let iframe = this.showQuestion ? 'question-iframe' : 'remediation-iframe'
+      iFrameResize({log: true}, `#${iframe}`)
     },
     viewOriginalQuestion() {
       this.iframeLoaded = false
@@ -241,7 +245,7 @@ export default {
             }
           }
           if (pageId && library) {
-            const {data} = await axios.get(`/api/libreverse/library/${library}/page//${pageId}/title`)
+            const {data} = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
             let remediation = {
               'library': library,
               'pageId': pageId,

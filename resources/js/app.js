@@ -14,6 +14,14 @@ import '~/components'
 
 import 'vuejs-noty/dist/vuejs-noty.css' //https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
 
+import iFrameResize from 'iframe-resizer/js/iframeResizer'
+
+Vue.directive('resize', {
+  bind: function (el, {value = {}}) {
+    el.addEventListener('load', () => iFrameResize(value, el))
+  },
+})
+
 Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
