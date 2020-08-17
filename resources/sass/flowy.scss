@@ -363,13 +363,13 @@ body, html {
 }
 
 #leftcard {
-  width: 363px;
+  width: 300px; //was 363
   background-color: #FFF;
   border: 1px solid #E8E8EF;
   box-sizing: border-box;
   padding-top: 10px;
   padding-left: 20px;
-  height: 500px;
+  height: 500px;//was 500
   margin-left:-90px;
   position: absolute;
   z-index: 2;
@@ -423,7 +423,7 @@ body, html {
 .blockelem {
   padding-top: 10px;
   margin-bottom: 5px;
-  width: 318px;
+  width: 242px;//318 --- 282 works
   border: 1px solid transparent;
   transition-property: box-shadow, height;
   transition-duration: .2s;
@@ -491,8 +491,8 @@ body, html {
   position: absolute;
   width: calc(100% - 361px);
   height: calc(100% - 71px);
-  top: 71px;
-  left: 361px;
+  top: 0px;
+  left: 341px;
   z-index: 0;
   overflow: auto;
 }
