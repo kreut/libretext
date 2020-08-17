@@ -90,22 +90,24 @@
             Loading...
           </h5>
         </div>
-        <iframe id="remediation-iframe"
+        <iframe v-bind:id="remediationIframeId"
                 allowtransparency="true" frameborder="0"
                 v-bind:src="remediationSrc"
                 style="width: 1px;min-width: 100%;"
                 v-if="!showQuestion"
-                v-on:load="showIframe" v-show="iframeLoaded"
+                v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
                 >
         </iframe>
-        <iframe id="question-iframe"
+        <div  v-if="showQuestion"  v-show="iframeLoaded">
+        <iframe v-bind:id="questions[currentPage-1].questionIframeId"
                 allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
-                v-if="showQuestion"
-                v-on:load="showIframe" v-show="iframeLoaded"
+                v-on:load="showIframe(questions[currentPage-1].questionIframeId)"
                 style="width: 1px;min-width: 100%;"
                 >
         </iframe>
+        </div>
+
 
       </div>
       <div v-else>
@@ -137,6 +139,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    remediationIframeId: '',
     iframeLoaded: false,
     loadedTitles: false,
     showQuestion: true,
@@ -172,27 +175,25 @@ export default {
 
           //if incorrect, show the learning tree stuff...
           let {data} = await axios.post('/api/submissions', submission_data)
-          console.log(data)
+          //console.log(data)
           if (data.message) {
             //Will add this later when we've worked out what it means to submit...vm.$noty[data.type](data.message)
           }
 
         } else {
-          console.log('Hello Event')
+         // console.log('Hello Event')
         }
       }
       window.addEventListener("message", receiveMessage, false)
     }
   },
   methods: {
-    showIframe() {
-      this.iframeLoaded = true
-      let iframe = this.showQuestion ? 'question-iframe' : 'remediation-iframe'
-      iFrameResize({log: true}, `#${iframe}`)
-    },
-    viewOriginalQuestion() {
-      this.iframeLoaded = false
+    viewOriginalQuestion(){
       this.showQuestion = true
+    },
+    showIframe(id) {
+      this.iframeLoaded = true
+      iFrameResize({log: true}, `#${id}`)
     },
     back(remediationObject) {
       let parentIdToShow = false
@@ -209,7 +210,7 @@ export default {
     more(remediationObject) {
 
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        console.log(this.learningTreeAsList[i].id)
+        //console.log(this.learningTreeAsList[i].id)
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
     },
@@ -222,7 +223,7 @@ export default {
         //loop through each with parent having this level
         let pageId
         let library
-        console.log('length ' + learningTree.length)
+       // console.log('length ' + learningTree.length)
         for (let i = 0; i < learningTree.length; i++) {
           let remediation = learningTree[i]
           //get the library and page ids
@@ -280,6 +281,7 @@ export default {
       this.showQuestion = false
       this.iframeLoaded = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
+      this.remediationIframeId = `remediation-${library}-${pageId}`
     },
     async getAssignmentName(assignmentId) {
       try {
@@ -292,7 +294,7 @@ export default {
     async getSelectedQuestions(assignmentId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
-        console.log(JSON.parse(JSON.stringify(data)))
+       // console.log(JSON.parse(JSON.stringify(data)))
 
 
         if (data.type === 'error') {
@@ -300,8 +302,10 @@ export default {
           return false
         }
         this.questions = data.questions
+       // console.log(data.questions)
         for (let i = 0; i < this.questions.length; i++) {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])
+          this.questions[i].questionIframeId = `questionIframe-${this.questions[i].id}`
         }
 
         this.initializing = false
