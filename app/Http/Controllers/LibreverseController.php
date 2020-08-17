@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Http;
 
-class LearningObjectiveController extends Controller
+class LibreverseController extends Controller
 {
 
     /**
@@ -14,7 +14,7 @@ class LearningObjectiveController extends Controller
      * @param \App\LearningObjective $learningObjective
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, string $library, int $pageId)
+    public function getStudentLearningObjectiveByLibraryAndPageId(Request $request, string $library, int $pageId)
     {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
 
@@ -29,7 +29,7 @@ class LearningObjectiveController extends Controller
      * @param string $library
      * @param int $pageId
      */
-    public function getTitle(Request $request, string $library, int $pageId)
+    public function getTitleByLibraryAndPageId(Request $request, string $library, int $pageId)
     {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
 

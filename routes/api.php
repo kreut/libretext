@@ -51,8 +51,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-    Route::get('/student-learning-objectives/{library}/{pageId}', 'LearningObjectiveController@show');
-    Route::get('/student-learning-objectives/get-title/{library}/{pageId}', 'LearningObjectiveController@getTitle');
+    Route::get('/libreverse/library/{library}/page/{pageId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByLibraryAndPageId');
+    Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
 
 
     Route::get('/learning-trees/{question}','LearningTreeController@show');

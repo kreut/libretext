@@ -194,7 +194,7 @@ ${body}
       }
     },
     async openStudentLearningObjectiveModal() {
-      const {data} = await axios.get(`/api/student-learning-objectives/${this.library}/${this.pageId}`)
+      const {data} = await axios.get(`/libreverse/library/${this.library}/page/${this.pageId}/student-learning-objectives`)
       let d = document.createElement('div');
       d.innerHTML = data
 

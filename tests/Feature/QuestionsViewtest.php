@@ -159,7 +159,7 @@ class QuestionsViewTest extends TestCase
 /** @test */
     public function can_get_titles_of_learning_tree()
     {
-        $this->actingAs($this->user)->getJson("/api/student-learning-objectives/get-title/chem/21691")
+        $this->actingAs($this->user)->getJson("/api/libreverse/library/chem/page/21691/title")
             ->assertSeeText('Studying Chemistry');
 
 

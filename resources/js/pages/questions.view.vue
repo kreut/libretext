@@ -241,7 +241,7 @@ export default {
             }
           }
           if (pageId && library) {
-            const {data} = await axios.get(`/api/student-learning-objectives/get-title/${library}/${pageId}`)
+            const {data} = await axios.get(`/api/libreverse/library/${library}/page//${pageId}/title`)
             let remediation = {
               'library': library,
               'pageId': pageId,
