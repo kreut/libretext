@@ -119,7 +119,7 @@ export default {
           this.showPage = true
         }
       } catch (error) {
-        alert(error.message)
+        this.$noty.error(error.message)
       }
 
     },
