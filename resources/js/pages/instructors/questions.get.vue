@@ -57,10 +57,12 @@
       </div>
      </div>
 
-      <iframe allowtransparency="true" frameborder="0"
-              v-bind:src="questions[currentPage-1].src"
-              style="overflow: auto; height: 1274px;"
-              width="100%">
+        <iframe id="question-iframe"
+                allowtransparency="true" frameborder="0"
+                v-bind:src="questions[currentPage-1].src"
+                v-on:load="showIframe" v-show="iframeLoaded"
+                style="width: 1px;min-width: 100%;"
+        >
 
       </iframe>
     </div>
@@ -78,6 +80,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    iframeLoaded: false,
     perPage: 1,
     currentPage: 1,
     query: '',
@@ -97,6 +100,10 @@ export default {
     this.tags = this.getTags();
   },
   methods: {
+    showIframe() {
+      this.iframeLoaded = true
+      iFrameResize({log: true}, '#question-iframe')
+    },
     removeTag(chosenTag) {
       this.chosenTags = _.without(this.chosenTags, chosenTag);
       console.log(this.chosenTags)

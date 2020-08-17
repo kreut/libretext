@@ -96,7 +96,7 @@
                 style="width: 1px;min-width: 100%;"
                 v-if="!showQuestion"
                 v-on:load="showIframe" v-show="iframeLoaded"
-                width="100%">
+                >
         </iframe>
         <iframe id="question-iframe"
                 allowtransparency="true" frameborder="0"
@@ -104,7 +104,7 @@
                 v-if="showQuestion"
                 v-on:load="showIframe" v-show="iframeLoaded"
                 style="width: 1px;min-width: 100%;"
-                width="100%">
+                >
         </iframe>
 
       </div>
