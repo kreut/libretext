@@ -35,7 +35,14 @@ class UploadController extends Controller
      */
     public function store(Request $request)
     {
-        dd($request->all());
+
+//only allow enrolled users in course
+        //check type of file
+        //save to the database
+        $assignment_id = $request->assignmentId;
+        $path = $request->file('assignmentFile')->store("assignments/$assignment_id");
+        //student_user_id, assignment_id,submission, submission_with_feedback, text_comments, graded, grader_user_id
+       dd($path);
     }
 
     /**

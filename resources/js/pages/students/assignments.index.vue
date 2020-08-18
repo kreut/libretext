@@ -97,11 +97,10 @@
         try {
           console.log(this.form)
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
-          Start: add the assignment id, do the validation...
-          check the type, size, etc....
-          do the server side as well (just do an error noty)
+
           let formData = new FormData();
-          formData.append('file', this.form.file);
+          formData.append('assignmentFile', this.form.file)
+          formData.append('assignmentId', this.assignmentId);
           formData.append('_method', 'put'); // add this
           const {data} = await axios.post('/api/uploads', formData)
          /* if (data.validated) {
