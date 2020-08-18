@@ -93,11 +93,38 @@
       this.getAssignments()
     },
     methods: {
-      submitUploadAssignmentFile() {
-       console.log(this.form.file)
+      async submitUploadAssignmentFile() {
+        try {
+          console.log(this.form)
+          //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
+          Start: add the assignment id, do the validation...
+          check the type, size, etc....
+          do the server side as well (just do an error noty)
+          let formData = new FormData();
+          formData.append('file', this.form.file);
+          formData.append('_method', 'put'); // add this
+          const {data} = await axios.post('/api/uploads', formData)
+         /* if (data.validated) {
+            this.$noty[data.type](data.message)
+            if (data.type === 'success') {
+              this.resetAll('modal-enroll-in-course')
+            }
+          } else {
+            if (data.type === 'error') {
+              this.$noty.error(data.message)//no access
+              this.resetAll('modal-enroll-in-course')
+            }
+          }*/
+        } catch (error) {
+          alert(error.message)
+        }
+
+
+
+
       },
       resetModalForms() {
-        alert('reset modal')
+       // alert('reset modal')
       },
       openUploadAssignmentFileModal(assignmentId) {
         this.assignmentId = assignmentId

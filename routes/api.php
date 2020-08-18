@@ -69,6 +69,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/submissions', 'SubmissionController@store');
 
+    Route::put('/uploads', 'UploadController@store');
+
 
 });
 
