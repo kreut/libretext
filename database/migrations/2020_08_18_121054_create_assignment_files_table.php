@@ -22,6 +22,12 @@ class CreateAssignmentFilesTable extends Migration
             $table->longText('text_comments')->nullable();
             $table->dateTime('date_submitted');
             $table->unsignedTinyInteger('score')->nullable();
+
+            $table->unique(['user_id', 'assignment_id']);
+            $table->foreign('user_id')->references('id')->on('users');
+            $table->foreign('assignment_id')->references('id')->on('assignments');
+
+
             $table->timestamps();
         });
     }
