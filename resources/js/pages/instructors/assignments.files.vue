@@ -14,10 +14,13 @@ export default {
   data: () => ({}),
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
-   alert(this.assignmentId)
+    this.assignmentFiles = this.getAssignmentFiles( this.assignmentId )
+      alert(this.assignmentId)
   },
   methods: {
-
+async getAssignmentFiles() {
+  //const {data} = await axios.get(`/api`)
+}
   }
 }
 </script>
