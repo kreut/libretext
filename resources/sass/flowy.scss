@@ -489,7 +489,7 @@ body, html {
 #canvas {
   position: absolute;
   width: calc(100% - 361px);
-  height: calc(100% - 71px);
+  height: 900px;//  height: calc(100% - 71px);
   top: 0px;
   left: 341px;
   z-index: 0;
