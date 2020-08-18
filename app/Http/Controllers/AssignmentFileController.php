@@ -5,15 +5,22 @@ namespace App\Http\Controllers;
 use App\AssignmentFile;
 use App\Assignment;
 use Illuminate\Http\Request;
+use Carbon\Carbon;
 
 class AssignmentFileController extends Controller
 {
 
-    public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment){
+    public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment)
+    {
 
+        foreach ($assignment->assignmentFiles as $key => $assignment_file) {
+            $assignment->assignmentFiles[$key]->needs_grading = $assignment_file->date_graded ?
+                Carbon::parse($assignment_file->date_submitted) > Carbon::parse($assignment_file->date_graded)
+                : true;
+        }
         return $assignment->assignmentFiles;
-
     }
+
     /**
      * Display a listing of the resource.
      *
@@ -37,7 +44,7 @@ class AssignmentFileController extends Controller
     /**
      * Store a newly created resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
     public function store(Request $request)
@@ -48,7 +55,7 @@ class AssignmentFileController extends Controller
     /**
      * Display the specified resource.
      *
-     * @param  \App\AssignmentFile  $assignmentFile
+     * @param \App\AssignmentFile $assignmentFile
      * @return \Illuminate\Http\Response
      */
     public function show(AssignmentFile $assignmentFile)
@@ -59,7 +66,7 @@ class AssignmentFileController extends Controller
     /**
      * Show the form for editing the specified resource.
      *
-     * @param  \App\AssignmentFile  $assignmentFile
+     * @param \App\AssignmentFile $assignmentFile
      * @return \Illuminate\Http\Response
      */
     public function edit(AssignmentFile $assignmentFile)
@@ -70,8 +77,8 @@ class AssignmentFileController extends Controller
     /**
      * Update the specified resource in storage.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \App\AssignmentFile  $assignmentFile
+     * @param \Illuminate\Http\Request $request
+     * @param \App\AssignmentFile $assignmentFile
      * @return \Illuminate\Http\Response
      */
     public function update(Request $request, AssignmentFile $assignmentFile)
@@ -82,7 +89,7 @@ class AssignmentFileController extends Controller
     /**
      * Remove the specified resource from storage.
      *
-     * @param  \App\AssignmentFile  $assignmentFile
+     * @param \App\AssignmentFile $assignmentFile
      * @return \Illuminate\Http\Response
      */
     public function destroy(AssignmentFile $assignmentFile)

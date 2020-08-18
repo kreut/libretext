@@ -18,9 +18,10 @@ class CreateAssignmentFilesTable extends Migration
             $table->unsignedBigInteger('user_id');
             $table->unsignedBigInteger('assignment_id');
             $table->string('submission');
+            $table->dateTime('date_submitted');
             $table->string('submission_with_feedback')->nullable();
             $table->longText('text_comments')->nullable();
-            $table->dateTime('date_submitted');
+            $table->dateTime('date_graded')->nullable();
             $table->unsignedTinyInteger('score')->nullable();
 
             $table->unique(['user_id', 'assignment_id']);
