@@ -1,6 +1,16 @@
 <template>
   <div>
-    I'm hjere
+    <div class="overflow-auto" v-if="assignmentFiles.length>0">
+      <b-pagination
+        v-model="currentPage"
+        :total-rows="assignmentFiles.length"
+        :per-page="perPage"
+        align="center"
+        first-number
+        last-number
+      ></b-pagination>
+    </div>
+    {{assignmentFiles[currentPage-1]}}
   </div>
 </template>
 
@@ -11,7 +21,11 @@
 
   export default {
     middleware: 'auth',
-    data: () => ({}),
+    data: () => ({
+      currentPage: 1,
+      perPage: 1,
+      assignmentFiles: []
+    }),
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.assignmentFiles = this.getAssignmentFiles(this.assignmentId)
@@ -20,7 +34,7 @@
       async getAssignmentFiles() {
         const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
         console.log(data)
-        //Start: take these files and paginate them with already completed and not
+        this.assignmentFiles = data
       }
     }
   }
