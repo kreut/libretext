@@ -135,6 +135,17 @@ $instructor_user_id = $assignment->course->user_id;
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
                 $custom_claims["{$question->technology}"] = '';
+                if ($question->technology === 'webwork'){
+                    $custom_claims['webwork'] = [];
+                    $custom_claims['webwork']['problemSeed'] = '1234567';
+                    $custom_claims['webwork']['courseID'] = 'daemon_course';
+                    $custom_claims['webwork']['userID'] = 'daemon';
+                    $custom_claims['webwork']['course_password'] = 'daemon';
+                    $custom_claims['webwork']['showSummary'] = 1;
+                    $custom_claims['webwork']['displayMode'] = 'MathJax';
+                    $custom_claims['webwork']['language'] = 'en';
+                    $custom_claims['webwork']['outputformat'] = 'libretexts';
+                }
                 $assignment->questions[$key]->token = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                 if (isset($instructor_learning_trees_by_question_id[$question->id])){
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];

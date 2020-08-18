@@ -11,7 +11,7 @@ export function getQuestionSrc(question, jwt_token){
       src = `https://demo.webwork.rochester.edu/webwork2/html2xml?answersSubmitted=0&sourceFilePath=Library/${question.technology_id}&problemSeed=1234567&courseID=daemon_course&userID=daemon&course_password=daemon&showSummary=1&displayMode=MathJax&language=en&outputformat=libretexts`
       break;
   }
-  src += `&jwt_token=${question.token}`
+  src += `&problemJWT=${question.token}`
   return src
 }
 /*

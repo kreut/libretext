@@ -20,6 +20,7 @@
       async getAssignmentFiles() {
         const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
         console.log(data)
+        //Start: take these files and paginate them with already completed and not
       }
     }
   }

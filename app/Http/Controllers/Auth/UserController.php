@@ -19,7 +19,7 @@ class UserController extends Controller
         return response()->json($request->user());
     }
 
-    public function getAuthenticatedUser()
+    public function getAuthenticatedUser(Request $request)
 
     {
         try {
@@ -41,8 +41,9 @@ class UserController extends Controller
             return response()->json(['token_absent'], $e->getStatusCode());
 
         }
-        Log::info( \JWTAuth::parseToken()->getPayload());
+        Log::info( \JWTAuth::parseToken()->getPayload() . "\r\n" );
+        Log::info( $request->all() );
         // the token is valid and we have found the user via the sub claim
-        return  \JWTAuth::parseToken()->getPayload();
+        return [ \JWTAuth::parseToken()->getPayload() , $request->all()] ;
     }
 }
