@@ -8,6 +8,12 @@
             <a href="" v-on:click.prevent="getStudentView(data.item.id)">{{ data.item.name }}</a>
           </div>
         </template>
+          <template v-slot:cell(uploadFile)="data">
+            <div class="mb-0">
+              <button class="btn btn-primary" v-on:click="openUploadAssignmentFileModal(data.item.id)">Upload File</button>
+            </div>
+          </template>
+
       </b-table>
     </div>
     <div v-else>
@@ -54,7 +60,11 @@
             return formatDateAndTime(value)
           }
         },
-        'credit_given_if_at_least'
+        'credit_given_if_at_least',
+        {
+          key: 'uploadFile',
+          name: 'Files'
+        }
       ],
       hasAssignments: false,
       showNoAssignmentsAlert: false,
@@ -65,6 +75,9 @@
       this.getAssignments()
     },
     methods: {
+      openUploadAssignmentFileModal(assignmentId) {
+alert(assignmentId)
+      },
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
       },
