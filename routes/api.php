@@ -71,6 +71,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::put('/uploads/assignment-file', 'UploadController@storeAssignmentFile');
 
+    Route::get('/assignment-files/{assignment}', 'AssignmentFileController@getAssignmentFilesByAssignment');
 
 });
 

@@ -7,6 +7,11 @@ use Illuminate\Http\Request;
 
 class AssignmentFileController extends Controller
 {
+
+    public function getAssignmentFilesByAssignment(){
+
+        return ['sss'];
+    }
     /**
      * Display a listing of the resource.
      *
