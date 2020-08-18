@@ -21,4 +21,8 @@ class Assignment extends Model
     public function course() {
         return $this->belongsTo('App\Course');
     }
+    public function assignmentFiles()
+    {
+        return $this->hasMany('App\AssignmentFile');
+    }
 }

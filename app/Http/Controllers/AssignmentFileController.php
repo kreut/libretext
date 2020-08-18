@@ -3,14 +3,16 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentFile;
+use App\Assignment;
 use Illuminate\Http\Request;
 
 class AssignmentFileController extends Controller
 {
 
-    public function getAssignmentFilesByAssignment(){
+    public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment){
 
-        return ['sss'];
+        return $assignment->assignmentFiles;
+
     }
     /**
      * Display a listing of the resource.
