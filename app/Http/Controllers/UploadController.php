@@ -7,6 +7,7 @@ use App\Assignment;
 use App\AssignmentFile;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 use Illuminate\Http\Request;
@@ -54,6 +55,10 @@ class UploadController extends Controller
 
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
+
+            //wait 30 seconds between uploads
+            //no more than 10 uploads per assignment
+
             $validator = Validator::make($request->all(), [
                 'assignmentFile' => ['required', 'mimes:pdf', 'max:500000']
             ]);
@@ -63,8 +68,10 @@ class UploadController extends Controller
                return $response;
             }
 
-
-            $submission = $request->file('assignmentFile')->store("assignments/$assignment_id",'s3');
+            //save locally and to S3
+            $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
+            $submissionContents = Storage::disk('local')->get($submission);
+            Storage::disk('s3')->put("assignments/$assignment_id/$submission",  $submissionContents);
 
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
