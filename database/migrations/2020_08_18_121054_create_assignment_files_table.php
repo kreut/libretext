@@ -20,6 +20,7 @@ class CreateAssignmentFilesTable extends Migration
             $table->string('submission');
             $table->dateTime('date_submitted');
             $table->string('submission_with_feedback')->nullable();
+            $table->string('original_filename');
             $table->longText('text_comments')->nullable();
             $table->dateTime('date_graded')->nullable();
             $table->unsignedTinyInteger('score')->nullable();

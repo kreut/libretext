@@ -58,6 +58,7 @@ class UploadController extends Controller
 
             //wait 30 seconds between uploads
             //no more than 10 uploads per assignment
+            //delete the file if there was an exception???
 
             $validator = Validator::make($request->all(), [
                 'assignmentFile' => ['required', 'mimes:pdf', 'max:500000']
@@ -70,12 +71,14 @@ class UploadController extends Controller
 
             //save locally and to S3
             $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
-            $submissionContents = Storage::disk('local')->get($submission);
+           $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put("assignments/$assignment_id/$submission",  $submissionContents);
 
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
-                ['submission' => $submission, 'date_submitted' => Carbon::now()]
+                ['submission' => basename($submission),
+                    'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                    'date_submitted' => Carbon::now()]
             );
             $response['type'] = 'success';
             $response['message'] = 'Your assignment submission has been saved.';
