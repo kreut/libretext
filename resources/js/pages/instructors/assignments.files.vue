@@ -59,22 +59,29 @@
         </div>
         <b-form ref="form">
           <div class="col-sm">
-            <b-form-file
-              ref="feedbackFile"
-              v-model="feedbackFileForm.feedbackFile"
-              placeholder="Choose a .pdf file..."
-              drop-placeholder="Drop file here..."
-              accept=".pdf"
-            ></b-form-file>
-            <div v-if="uploading">
-              <b-spinner small type="grow"></b-spinner>
-              Uploading file...
-            </div>
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">{{ feedbackFileForm.errors.get('feedbackFile')}}
-            </div>
-            <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
+            <b-input-group>
+              <b-form-file
+                ref="fileFeedbackInput"
+                v-model="feedbackFileForm.feedbackFile"
+                placeholder="Choose a .pdf file..."
+                drop-placeholder="Drop file here..."
+                accept=".pdf"
+              ></b-form-file>
+              <span class="ml-3">
+                <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
+                </span>
+            </b-input-group>
+              <div v-if="uploading">
+                <b-spinner small type="grow"></b-spinner>
+                Uploading file...
+              </div>
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">{{ feedbackFileForm.errors.get('feedbackFile')}}
+              </div>
+
+
           </div>
+
         </b-form>
       </div>
     </div>
@@ -102,8 +109,8 @@
       textFeedbackForm: new Form({
         textFeedback: ''
       }),
-      feedbackFileForm : new Form({
-          feedbackFile: null
+      feedbackFileForm: new Form({
+        feedbackFile: null
       })
     }),
     created() {
@@ -111,7 +118,7 @@
       this.assignmentFiles = this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
-      async uploadFileFeedback(){
+      async uploadFileFeedback() {
         try {
           this.feedbackFileForm.errors.set('feedbackFile', null)
           this.uploading = true
@@ -119,7 +126,7 @@
           let formData = new FormData();
           formData.append('feedbackFile', this.feedbackFileForm.feedbackFile)
           formData.append('assignmentId', this.assignmentId)
-          formData.append('userId', this.assignmentFiles[this.currentPage-1]['user_id'])
+          formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/assignment-files/feedback-file', formData)
           if (data.type === 'error') {
@@ -129,18 +136,18 @@
 
           }
         } catch (error) {
-          if (error.message.includes('status code 413')){
+          if (error.message.includes('status code 413')) {
             error.message = 'The maximum size allowed is 10MB.'
           }
           this.$noty.error(error.message)
 
         }
         this.uploading = false
-        this.$refs['assignmentFileInput'].reset()
+        this.$refs['fileFeedbackInput'].reset()
 
       },
       submitTextFeedbackForm() {
-       console.log(this.textFeedbackForm)
+        console.log(this.textFeedbackForm)
       },
       async downloadAssignmentFile(currentPage) {
         try {

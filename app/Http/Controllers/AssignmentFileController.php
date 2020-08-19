@@ -1,6 +1,7 @@
 <?php
 
 namespace App\Http\Controllers;
+
 use App\User;
 use App\AssignmentFile;
 use App\Assignment;
@@ -8,6 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\DB;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 
@@ -28,10 +30,10 @@ class AssignmentFileController extends Controller
             //get the assignment info, getting the temporary url of the first submission for viewing
             $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
             $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
-            $date_submitted =  $assignmentFilesByUser[$user->id]->date_submitted ?? null;
-            $feedback_file =  $assignmentFilesByUser[$user->id]->feedback_file ?? null;
-            $date_graded =  $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
-            $score =  $assignmentFilesByUser[$user->id]->score ?? "N/A";
+            $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
+            $feedback_file = $assignmentFilesByUser[$user->id]->feedback_file ?? null;
+            $date_graded = $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
+            $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
             $all_info = ['user_id' => $user->id,
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'submission' => $submission,
@@ -103,7 +105,7 @@ class AssignmentFileController extends Controller
             //save locally and to S3
             $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put("assignments/$assignment_id/$submission",  $submissionContents);
+            Storage::disk('s3')->put("assignments/$assignment_id/$submission", $submissionContents);
 
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
@@ -127,14 +129,14 @@ class AssignmentFileController extends Controller
     {
 
         $response['type'] = 'error';
-         $assignment_id = $request->assignmentId;
-         $student_user_id = $request->userId;
+        $assignment_id = $request->assignmentId;
+        $student_user_id = $request->userId;
 
-          $authorized = Gate::inspect('uploadfeedbackFile', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id), ]);
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        $authorized = Gate::inspect('uploadfeedbackFile', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id),]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
@@ -155,14 +157,30 @@ class AssignmentFileController extends Controller
             //save locally and to S3
             $feedbackFile = $request->file('feedbackFile')->store("feedbacks/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($feedbackFile);
-            Storage::disk('s3')->put("feedbacks/$assignment_id/$feedbackFile",  $feedbackContents);
+            Storage::disk('s3')->put("feedbacks/$assignment_id/$feedbackFile", $feedbackContents);
+            DB::table('assignment_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->update(['file_feedback' => basename($feedbackFile)]);
 
-            $assignmentFile->update(
-                ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
-                ['feedback_file' => basename($feedbackFile)]
-            );
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
+
+            /*
+             * Start:
+             * 1. make sure the insertorupdate thing works
+             * 2. Show the file and add to the vue object on return
+             * 2. Add comments
+             * Move the button over
+             * Progress bar or ladda to disable?
+             * 3. Add grade
+             * 4. Student view comments
+             * 5. Show All or just ungraded
+             * 6. Student should be able to see the results
+             * 7. figure out the pdf viewer
+             */
+
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
