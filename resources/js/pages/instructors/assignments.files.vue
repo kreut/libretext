@@ -10,6 +10,8 @@
         last-number
       ></b-pagination>
     </div>
+    <iframe src="/storage/assignments/1/fake2.pdf"></iframe>
+    <!--<pdf src="../storage/assignments/1/fake_2.pdf"></pdf>-->
     {{assignmentFiles[currentPage-1]}}
   </div>
 </template>
@@ -17,9 +19,13 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import pdf from 'vue-pdf'
 
 
   export default {
+    components: {
+      pdf
+    },
     middleware: 'auth',
     data: () => ({
       currentPage: 1,
