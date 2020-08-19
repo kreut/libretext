@@ -64,7 +64,7 @@ class UploadController extends Controller
             }
 
 
-            $submission = $request->file('assignmentFile')->store("assignments/$assignment_id");
+            $submission = $request->file('assignmentFile')->store("assignments/$assignment_id",'s3');
 
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
