@@ -69,13 +69,12 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/submissions', 'SubmissionController@store');
 
-    Route::put('/uploads/assignment-file', 'UploadController@storeAssignmentFile');
-    Route::put('/uploads/feedback-file', 'UploadController@storeFeedbackFile');
 
     Route::get('/assignment-files/{assignment}', 'AssignmentFileController@getAssignmentFilesByAssignment');
     Route::post('/assignment-files/get-temporary-url', 'AssignmentFileController@getTemporaryUrl');
     Route::post('/assignment-files/download', 'AssignmentFileController@downloadAssignmentFile');
-
+    Route::put('/assignment-files', 'AssignmentFileController@storeAssignmentFile');
+    Route::put('/assignment-files/feedback-file', 'AssignmentFileController@storeFeedbackFile');
 });
 
 Route::post('results', 'ResultController@store');

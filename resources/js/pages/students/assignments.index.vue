@@ -120,7 +120,7 @@
           formData.append('assignmentFile', this.form.assignmentFile)
           formData.append('assignmentId', this.assignmentId)
           formData.append('_method', 'put'); // add this
-          const {data} = await axios.post('/api/uploads/assignment-file', formData)
+          const {data} = await axios.post('/api/assigment-files/assignment-file', formData)
           if (data.type === 'error') {
             this.form.errors.set('assignmentFile', data.message)
           } else {

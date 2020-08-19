@@ -61,7 +61,7 @@
           <div class="col-sm">
             <b-form-file
               ref="feedbackFile"
-              v-model="fileFeedbackForm.fileFeedback"
+              v-model="feedbackFileForm.feedbackFile"
               placeholder="Choose a .pdf file..."
               drop-placeholder="Drop file here..."
               accept=".pdf"
@@ -71,7 +71,7 @@
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback')}}
+            <div class="help-block invalid-feedback">{{ feedbackFileForm.errors.get('feedbackFile')}}
             </div>
             <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
           </div>
@@ -102,8 +102,8 @@
       textFeedbackForm: new Form({
         textFeedback: ''
       }),
-      fileFeedbackForm : new Form({
-          fileFeedback: null
+      feedbackFileForm : new Form({
+          feedbackFile: null
       })
     }),
     created() {
@@ -113,17 +113,17 @@
     methods: {
       async uploadFileFeedback(){
         try {
-          this.fileFeedbackForm.errors.set('fileFeedback', null)
+          this.feedbackFileForm.errors.set('feedbackFile', null)
           this.uploading = true
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
           let formData = new FormData();
-          formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
+          formData.append('feedbackFile', this.feedbackFileForm.feedbackFile)
           formData.append('assignmentId', this.assignmentId)
           formData.append('userId', this.assignmentFiles[this.currentPage-1]['user_id'])
           formData.append('_method', 'put') // add this
-          const {data} = await axios.post('/api/uploads/feedback-file', formData)
+          const {data} = await axios.post('/api/assignment-files/feedback-file', formData)
           if (data.type === 'error') {
-            this.fileFeedbackForm.errors.set('fileFeedback', data.message)
+            this.feedbackFileForm.errors.set('feedbackFile', data.message)
           } else {
             this.$noty.success(data.message)
 
