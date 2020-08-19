@@ -41,6 +41,11 @@ class AssignmentFileController extends Controller
         return $this->getAssignmentSubmissionTemporaryUrl($request->assignment_id, $request->submission);
 
     }
+    public function downloadAssignmentFile(Request $request){
+        START: add try catch to this.  Message about downloading, change the name of the file
+
+       return Storage::disk('s3')->download("assignmentss/$request->assignment_id/$request->submission");
+    }
 
     public function getAssignmentSubmissionTemporaryUrl($assignment_id, $submission, $time = 5)
     {

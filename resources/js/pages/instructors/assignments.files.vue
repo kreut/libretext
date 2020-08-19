@@ -1,6 +1,6 @@
 <template>
   <div v-if="assignmentFiles.length>0">
-    <div class="overflow-auto" >
+    <div class="overflow-auto">
       <b-pagination
         v-on:input="changePage"
         v-model="currentPage"
@@ -11,7 +11,8 @@
         last-number
       ></b-pagination>
     </div>
-      <iframe v-if="assignmentFiles.length>0" :src="getAssignmentUrl(currentPage)"></iframe>
+    <b-button v-on:click="downloadAssignmentFile(currentPage)">Download Submission</b-button>
+    <iframe v-if="assignmentFiles.length>0" :src="getAssignmentUrl(currentPage)"></iframe>
   </div>
 </template>
 
@@ -36,20 +37,39 @@
       this.assignmentFiles = this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
-      async changePage(currentPage){
-        if (this.assignmentFiles[currentPage-1]['submission']) {
+      async downloadAssignmentFile(currentPage) {
+        const {data} = await axios({
+          method: 'post',
+          url: '/api/assignment-files/download',
+          responseType: 'arraybuffer',
+          data: {
+            'assignment_id': this.assignmentId,
+            'submission': this.assignmentFiles[currentPage - 1]['submission']
+          }
+        })
+
+        let blob = new Blob([data], {type: 'application/pdf'})
+        let link = document.createElement('a')
+        link.href = window.URL.createObjectURL(blob)
+        link.download = 'Report.pdf'
+        link.click()
+
+      },
+      async changePage(currentPage) {
+        if (this.assignmentFiles[currentPage - 1]['submission']) {
           const {data} = await axios.post('/api/assignment-files/get-temporary-url',
-            {'assignment_id': this.assignmentId,
+            {
+              'assignment_id': this.assignmentId,
               'submission': this.assignmentFiles[currentPage - 1]['submission']
             })
           this.assignmentFiles[currentPage - 1]['url'] = data
         }
       },
-      getAssignmentUrl(currentPage){
-        return this.assignmentFiles[currentPage-1]['url']
+      getAssignmentUrl(currentPage) {
+        return this.assignmentFiles[currentPage - 1]['url']
       },
-      assignmentUrlExists(currentPage){
-        return (this.assignmentFiles[currentPage-1]['url'] !== null)
+      assignmentUrlExists(currentPage) {
+        return (this.assignmentFiles[currentPage - 1]['url'] !== null)
       },
       async getAssignmentFiles() {
         const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
