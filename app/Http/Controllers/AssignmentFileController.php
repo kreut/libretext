@@ -24,9 +24,19 @@ class AssignmentFileController extends Controller
         foreach ($assignment->course->enrolledUsers as $key => $user) {
             //get the assignment info, getting the temporary url of the first submission for viewing
             $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
-            $all_info = ['id' => $user->id,
+            $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
+            $date_submitted =  $assignmentFilesByUser[$user->id]->date_submitted ?? null;
+            $feedback_file =  $assignmentFilesByUser[$user->id]->feedback_file ?? null;
+            $date_graded =  $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
+            $score =  $assignmentFilesByUser[$user->id]->score ?? "N/A";
+            $all_info = ['user_id' => $user->id,
                 'name' => $user->first_name . ' ' . $user->last_name,
                 'submission' => $submission,
+                'original_filename' => $original_filename,
+                'date_submitted' => $date_submitted,
+                'feedback_file' => $feedback_file,
+                'date_graded' => $date_graded,
+                'score' => $score,
                 'url' => ($submission && $key === 0) ? $this->getAssignmentSubmissionTemporaryUrl($assignment->id, $submission)
                     : null];
 
@@ -41,10 +51,11 @@ class AssignmentFileController extends Controller
         return $this->getAssignmentSubmissionTemporaryUrl($request->assignment_id, $request->submission);
 
     }
-    public function downloadAssignmentFile(Request $request){
-        START: add try catch to this.  Message about downloading, change the name of the file
 
-       return Storage::disk('s3')->download("assignmentss/$request->assignment_id/$request->submission");
+    public function downloadAssignmentFile(Request $request)
+    {
+        return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
+
     }
 
     public function getAssignmentSubmissionTemporaryUrl($assignment_id, $submission, $time = 5)

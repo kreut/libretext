@@ -91,6 +91,55 @@ class UploadController extends Controller
 
     }
 
+
+    public function storeFeedbackFile(Request $request, Assignment $assignment)
+    {
+
+dd($request->all());
+        $response['type'] = 'error';
+      /*  $assignment_id = $request->assignmentId;
+        $authorized = Gate::inspect('uploadAssignmentFile', [$assignmentFile, $assignment->find($assignment_id)]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+      */
+
+        try {
+            //validator put here because I wasn't using vform so had to manually handle errors
+
+            //wait 30 seconds between uploads
+            //no more than 10 uploads per assignment
+            //delete the file if there was an exception???
+
+            $validator = Validator::make($request->all(), [
+                'feedbackFile' => ['required', 'mimes:pdf', 'max:500000']
+            ]);
+
+            if ($validator->fails()) {
+                $response['message'] = $validator->errors()->first('feedbackFile');
+                return $response;
+            }
+
+            //save locally and to S3
+            $feedbackFile = $request->file('feedbackFile')->store("feedbacks/$assignment_id", 'local');
+            $feedbackContents = Storage::disk('local')->get($feedback);
+            Storage::disk('s3')->put("feedbacks/$assignment_id/$feedback",  $feedbackContents);
+
+            $assignmentFile->update(
+                ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
+                ['feedback_file' => basename($feedbackFile)]
+            );
+            $response['type'] = 'success';
+            $response['message'] = 'Your feedback file has been saved.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your feedback file.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
     /**
      * Display the specified resource.
      *

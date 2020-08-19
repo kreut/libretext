@@ -15,8 +15,9 @@
           <b-form-file
             ref="assignmentFileInput"
             v-model="form.assignmentFile"
-            placeholder="Choose a file or drop it here..."
+            placeholder="Choose a .pdf file or drop it here..."
             drop-placeholder="Drop file here..."
+            accept=".pdf"
           ></b-form-file>
           <div v-if="uploading">
             <b-spinner small type="grow"></b-spinner> Uploading file...
@@ -117,7 +118,7 @@
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
           let formData = new FormData();
           formData.append('assignmentFile', this.form.assignmentFile)
-          formData.append('assignmentId', this.assignmentId);
+          formData.append('assignmentId', this.assignmentId)
           formData.append('_method', 'put'); // add this
           const {data} = await axios.post('/api/uploads/assignment-file', formData)
           if (data.type === 'error') {
