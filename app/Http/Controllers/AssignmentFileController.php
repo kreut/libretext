@@ -171,11 +171,11 @@ class AssignmentFileController extends Controller
              * 1. make sure the insertorupdate thing works
              * 2. Show the file and add to the vue object on return
              * 2. Add comments
-             * Move the button over
-             * Progress bar or ladda to disable?
-             * 3. Add grade
+             * Progress bar or ladda to disable?https://serversideup.net/file-upload-progress-indicator-with-axios-and-vuejs/
+             * 3. Do the score piece --- replace with, etc. etc. put in the assignment
              * 4. Student view comments
              * 5. Show All or just ungraded
+             * View Feedback or View Submission
              * 6. Student should be able to see the results
              * 7. figure out the pdf viewer
              */
