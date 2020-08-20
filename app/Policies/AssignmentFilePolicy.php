@@ -6,6 +6,7 @@ use App\User;
 use App\Assignment;
 use App\AssignmentFile;
 use Illuminate\Auth\Access\HandlesAuthorization;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\Response;
 
 class AssignmentFilePolicy
@@ -31,7 +32,18 @@ class AssignmentFilePolicy
 
         return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
             ? Response::allow()
-            : Response::deny('You are not allowed to submit commentsd for this assignment.');
+            : Response::deny('You are not allowed to submit comments for this assignment.');
+
+    }
+
+    public function getAssignmentFileInfoByStudent(User $user, AssignmentFile $assignmentFile, int $assignment_id){
+        $user_is_owner_of_assignment_file = $assignmentFile
+                                                ->where('user_id', $user->id)
+                                                ->where('assignment_id', $assignment_id);
+
+        return $user_is_owner_of_assignment_file
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the information on this file submission.');
 
     }
 

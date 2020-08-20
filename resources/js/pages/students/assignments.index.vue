@@ -28,6 +28,23 @@
 
         </b-form>
       </b-modal>
+      <b-modal
+        id="modal-assignment-submission-feedback"
+        ref="modal"
+        size="xl"
+        title="Assignment submission feedback"
+        @ok="closeAssignmentSubmissionFeedbackModal"
+        ok-only
+        ok-variant="primary"
+        ok-title="Close"
+
+      >
+
+        Score:  {{this.assignmentFileInfo.score}}<br>
+        Date graded: {{this.assignmentFileInfo.date_graded}}<br>
+        Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
+        <iframe width="600"  height="600" :src="this.assignmentFileInfo.file_feedback_url"></iframe>
+      </b-modal>
 
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
@@ -36,11 +53,8 @@
           </div>
         </template>
         <template v-slot:cell(files)="data">
-          <div class="mb-0">
-            <b-button variant="primary" v-on:click="openUploadAssignmentFileModal(data.item.id)"
-                      v-b-modal.modal-upload-assignment-file>Upload File
-            </b-button>
-          </div>
+       <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)" v-b-modal.modal-upload-assignment-file></b-icon>
+          <b-icon icon="pencil-square"  v-on:click="getAssignmentFileInfo(data.item.id)" v-b-modal.modal-assignment-submission-feedback></b-icon>
         </template>
 
       </b-table>
@@ -75,6 +89,7 @@
       form: new Form({
         assignmentFile: null,
       }),
+      assignmentFileInfo: {},
       uploading: false,
       assignments: [],
       courseId: false,
@@ -104,6 +119,42 @@
       this.getAssignments()
     },
     methods: {
+      closeAssignmentSubmissionFeedbackModal(){
+        this.$nextTick(() => {
+          this.$bvModal.hide('modal-assignment-submission-feedback')
+        })
+      },
+      async getAssignmentFileInfo(assignmentId){
+        try {
+          const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
+          console.log(data)
+          this.assignmentFileInfo = data.assignment_file_info
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            this.$nextTick(() => {
+              this.$bvModal.hide('modal-assignment-submission-feedback')
+            })
+            return false
+          }
+        } catch (error) {
+          if (error.message.includes('status code 413')){
+            error.message = 'The maximum size allowed is 10MB.'
+          }
+          this.$noty.error(error.message)
+
+        }
+        //get the text comments
+        //get the score
+        //the the temporary url of the feedback
+        //get the download url of your current submission
+
+
+
+
+
+
+
+      },
       handleOk(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
