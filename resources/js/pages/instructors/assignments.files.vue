@@ -86,7 +86,8 @@
       </div>
     </div>
 
-    <iframe v-if="assignmentFiles.length>0" :src="getAssignmentUrl(currentPage)"></iframe>
+    <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+    <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
   </div>
 </template>
 
@@ -128,12 +129,12 @@
           formData.append('assignmentId', this.assignmentId)
           formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
-          const {data} = await axios.post('/api/assignment-files/feedback-file', formData)
+          const {data} = await axios.post('/api/assignment-files/file-feedback', formData)
           if (data.type === 'error') {
             this.feedbackFileForm.errors.set('feedbackFile', data.message)
           } else {
             this.$noty.success(data.message)
-
+            this.assignmentFiles[this.currentPage - 1]['file_feedback_url'] = data.file_feedback_url
           }
         } catch (error) {
           if (error.message.includes('status code 413')) {
@@ -176,16 +177,21 @@
           const {data} = await axios.post('/api/assignment-files/get-temporary-url',
             {
               'assignment_id': this.assignmentId,
-              'submission': this.assignmentFiles[currentPage - 1]['submission']
+              'file': this.assignmentFiles[currentPage - 1]['submission']
             })
-          this.assignmentFiles[currentPage - 1]['url'] = data
+          this.assignmentFiles[currentPage - 1]['submission_url'] = data
+        }
+        if (this.assignmentFiles[currentPage - 1]['file_feedback']) {
+          const {data} = await axios.post('/api/assignment-files/get-temporary-url',
+            {
+              'assignment_id': this.assignmentId,
+              'file': this.assignmentFiles[currentPage - 1]['file_feedback']
+            })
+          this.assignmentFiles[currentPage - 1]['file_feedback_url'] = data
         }
       },
-      getAssignmentUrl(currentPage) {
-        return this.assignmentFiles[currentPage - 1]['url']
-      },
       assignmentUrlExists(currentPage) {
-        return (this.assignmentFiles[currentPage - 1]['url'] !== null)
+        return (this.assignmentFiles[currentPage - 1]['submission_url'] !== null)
       },
       async getAssignmentFiles() {
         const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)

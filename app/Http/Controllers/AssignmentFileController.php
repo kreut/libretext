@@ -29,6 +29,7 @@ class AssignmentFileController extends Controller
         foreach ($assignment->course->enrolledUsers as $key => $user) {
             //get the assignment info, getting the temporary url of the first submission for viewing
             $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
+            $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
             $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
             $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
             $feedback_file = $assignmentFilesByUser[$user->id]->feedback_file ?? null;
@@ -42,7 +43,9 @@ class AssignmentFileController extends Controller
                 'feedback_file' => $feedback_file,
                 'date_graded' => $date_graded,
                 'score' => $score,
-                'url' => ($submission && $key === 0) ? $this->getAssignmentSubmissionTemporaryUrl($assignment->id, $submission)
+                'submission_url' => ($submission && $key === 0) ? $this->getTemporaryUrl($assignment->id, $submission)
+                    : null,
+                'file_feedback_url' => ($file_feedback && $key === 0) ? $this->getTemporaryUrl($assignment->id, $file_feedback)
                     : null];
 
             $user_and_assignment_file_info[] = $all_info;
@@ -51,11 +54,6 @@ class AssignmentFileController extends Controller
         return $user_and_assignment_file_info;
     }
 
-    public function getTemporaryUrl(Request $request)
-    {
-        return $this->getAssignmentSubmissionTemporaryUrl($request->assignment_id, $request->submission);
-
-    }
 
     public function downloadAssignmentFile(Request $request)
     {
@@ -63,9 +61,9 @@ class AssignmentFileController extends Controller
 
     }
 
-    public function getAssignmentSubmissionTemporaryUrl($assignment_id, $submission, $time = 5)
+    public function getTemporaryUrl($assignment_id, $file)
     {
-        return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$submission", now()->addMinutes($time));
+        return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(5));
     }
 
     /**
@@ -105,7 +103,7 @@ class AssignmentFileController extends Controller
             //save locally and to S3
             $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put("assignments/$assignment_id/$submission", $submissionContents);
+            Storage::disk('s3')->put("$submission", $submissionContents);
 
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
@@ -125,7 +123,7 @@ class AssignmentFileController extends Controller
     }
 
 
-    public function storeFeedbackFile(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
+    public function storeFileFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -155,9 +153,9 @@ class AssignmentFileController extends Controller
             }
 
             //save locally and to S3
-            $feedbackFile = $request->file('feedbackFile')->store("feedbacks/$assignment_id", 'local');
+            $feedbackFile = $request->file('feedbackFile')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($feedbackFile);
-            Storage::disk('s3')->put("feedbacks/$assignment_id/$feedbackFile", $feedbackContents);
+            Storage::disk('s3')->put("$feedbackFile", $feedbackContents);
             DB::table('assignment_files')
                 ->where('user_id', $student_user_id)
                 ->where('assignment_id', $assignment_id)
@@ -165,20 +163,7 @@ class AssignmentFileController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
-
-            /*
-             * Start:
-             * 1. make sure the insertorupdate thing works
-             * 2. Show the file and add to the vue object on return
-             * 2. Add comments
-             * Progress bar or ladda to disable?https://serversideup.net/file-upload-progress-indicator-with-axios-and-vuejs/
-             * 3. Do the score piece --- replace with, etc. etc. put in the assignment
-             * 4. Student view comments
-             * 5. Show All or just ungraded
-             * View Feedback or View Submission
-             * 6. Student should be able to see the results
-             * 7. figure out the pdf viewer
-             */
+            $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($feedbackFile));
 
 
         } catch (Exception $e) {
