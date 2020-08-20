@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\User;
 use App\AssignmentFile;
 use App\Assignment;
+use App\Http\Requests\StoreTextFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -66,6 +67,37 @@ class AssignmentFileController extends Controller
         return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(5));
     }
 
+
+    public function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment) {
+        $response['type'] = 'error';
+        $assignment_id = $request->assignmentId;
+        $student_user_id = $request->userId;
+        $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+
+            $data = $request->validated();
+            DB::table('assignment_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->update(['text_feedback' => $data['textFeedback']]);
+
+            $response['type'] = 'success';
+            $response['message'] = 'Your comments have been saved.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
     /**
      * Store a newly created resource in storage.
      *
@@ -105,6 +137,7 @@ class AssignmentFileController extends Controller
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put("$submission", $submissionContents);
 
+
             $assignmentFile->updateOrCreate(
                 ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
                 ['submission' => basename($submission),
@@ -130,7 +163,7 @@ class AssignmentFileController extends Controller
         $assignment_id = $request->assignmentId;
         $student_user_id = $request->userId;
 
-        $authorized = Gate::inspect('uploadfeedbackFile', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id),]);
+        $authorized = Gate::inspect('uploadFileFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id),]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -144,26 +177,26 @@ class AssignmentFileController extends Controller
             //delete the file if there was an exception???
 
             $validator = Validator::make($request->all(), [
-                'feedbackFile' => ['required', 'mimes:pdf', 'max:500000']
+                'fileFeedback' => ['required', 'mimes:pdf', 'max:500000']
             ]);
 
             if ($validator->fails()) {
-                $response['message'] = $validator->errors()->first('feedbackFile');
+                $response['message'] = $validator->errors()->first('fileFeedback');
                 return $response;
             }
 
             //save locally and to S3
-            $feedbackFile = $request->file('feedbackFile')->store("assignments/$assignment_id", 'local');
-            $feedbackContents = Storage::disk('local')->get($feedbackFile);
-            Storage::disk('s3')->put("$feedbackFile", $feedbackContents);
+            $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
+            $feedbackContents = Storage::disk('local')->get($fileFeedback);
+            Storage::disk('s3')->put("$fileFeedback", $feedbackContents);
             DB::table('assignment_files')
                 ->where('user_id', $student_user_id)
                 ->where('assignment_id', $assignment_id)
-                ->update(['file_feedback' => basename($feedbackFile)]);
+                ->update(['file_feedback' => basename($fileFeedback)]);
 
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
-            $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($feedbackFile));
+            $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($fileFeedback));
 
 
         } catch (Exception $e) {

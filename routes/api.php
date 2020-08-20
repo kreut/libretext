@@ -75,6 +75,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/assignment-files/download', 'AssignmentFileController@downloadAssignmentFile');
     Route::put('/assignment-files', 'AssignmentFileController@storeAssignmentFile');
     Route::put('/assignment-files/file-feedback', 'AssignmentFileController@storeFileFeedback');
+    Route::post('/assignment-files/text-feedback', 'AssignmentFileController@storeTextFeedback');
 });
 
 Route::post('results', 'ResultController@store');

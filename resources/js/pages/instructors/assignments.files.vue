@@ -62,7 +62,7 @@
             <b-input-group>
               <b-form-file
                 ref="fileFeedbackInput"
-                v-model="feedbackFileForm.feedbackFile"
+                v-model="fileFeedbackForm.fileFeedback"
                 placeholder="Choose a .pdf file..."
                 drop-placeholder="Drop file here..."
                 accept=".pdf"
@@ -71,13 +71,13 @@
                 <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
                 </span>
             </b-input-group>
-              <div v-if="uploading">
-                <b-spinner small type="grow"></b-spinner>
-                Uploading file...
-              </div>
-              <input type="hidden" class="form-control is-invalid">
-              <div class="help-block invalid-feedback">{{ feedbackFileForm.errors.get('feedbackFile')}}
-              </div>
+            <div v-if="uploading">
+              <b-spinner small type="grow"></b-spinner>
+              Uploading file...
+            </div>
+            <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback')}}
+            </div>
 
 
           </div>
@@ -110,8 +110,8 @@
       textFeedbackForm: new Form({
         textFeedback: ''
       }),
-      feedbackFileForm: new Form({
-        feedbackFile: null
+      fileFeedbackForm: new Form({
+        fileFeedback: null
       })
     }),
     created() {
@@ -121,17 +121,17 @@
     methods: {
       async uploadFileFeedback() {
         try {
-          this.feedbackFileForm.errors.set('feedbackFile', null)
+          this.fileFeedbackForm.errors.set('fileFeedback', null)
           this.uploading = true
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
           let formData = new FormData();
-          formData.append('feedbackFile', this.feedbackFileForm.feedbackFile)
+          formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
           formData.append('assignmentId', this.assignmentId)
           formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/assignment-files/file-feedback', formData)
           if (data.type === 'error') {
-            this.feedbackFileForm.errors.set('feedbackFile', data.message)
+            this.fileFeedbackForm.errors.set('fileFeedback', data.message)
           } else {
             this.$noty.success(data.message)
             this.assignmentFiles[this.currentPage - 1]['file_feedback_url'] = data.file_feedback_url
@@ -147,8 +147,23 @@
         this.$refs['fileFeedbackInput'].reset()
 
       },
-      submitTextFeedbackForm() {
-        console.log(this.textFeedbackForm)
+      async submitTextFeedbackForm() {
+        try {
+
+          this.textFeedbackForm.assignmentId = this.assignmentId
+          this.textFeedbackForm.userId = this.assignmentFiles[this.currentPage - 1]['user_id']
+
+          const {data} = await this.textFeedbackForm.post('/api/assignment-files/text-feedback')
+          this.$noty[data.type](data.message)
+          if (data.type === 'success') {
+            this.assignmentFiles[this.currentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
+          }
+        } catch (error) {
+          if (!error.message.includes('status code 422')) {
+            this.$noty.error(error.message)
+          }
+        }
+
       },
       async downloadAssignmentFile(currentPage) {
         try {

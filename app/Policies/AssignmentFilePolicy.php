@@ -20,12 +20,25 @@ class AssignmentFilePolicy
             : Response::deny('You are not allowed to access this assignment.');
 
     }
-
-    public function uploadFeedbackFile(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
-    {
+    public function canProvideFeedback($assignment, $student_user_id, $instructor_user_id){
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course
-        return ($assignment->course->enrollments->contains('user_id', $student_user->id) && ($assignment->course->user_id === $user->id))
+        return $assignment->course->enrollments->contains('user_id',  $student_user_id) && ($assignment->course->user_id === $instructor_user_id);
+    }
+
+    public function storeTextFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
+    {
+
+        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to submit commentsd for this assignment.');
+
+    }
+
+    public function uploadFileFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
+    {
+
+        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to upload feedback for this assignment.');
 
