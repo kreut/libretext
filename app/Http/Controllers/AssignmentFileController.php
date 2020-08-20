@@ -31,9 +31,9 @@ class AssignmentFileController extends Controller
             //get the assignment info, getting the temporary url of the first submission for viewing
             $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
             $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
+            $text_feedback = $assignmentFilesByUser[$user->id]->text_feedback ?? null;
             $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
             $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
-            $feedback_file = $assignmentFilesByUser[$user->id]->feedback_file ?? null;
             $date_graded = $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
             $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
             $all_info = ['user_id' => $user->id,
@@ -41,7 +41,8 @@ class AssignmentFileController extends Controller
                 'submission' => $submission,
                 'original_filename' => $original_filename,
                 'date_submitted' => $date_submitted,
-                'feedback_file' => $feedback_file,
+                'file_feedback' => $file_feedback,
+                'text_feedback' => $text_feedback,
                 'date_graded' => $date_graded,
                 'score' => $score,
                 'submission_url' => ($submission && $key === 0) ? $this->getTemporaryUrl($assignment->id, $submission)
@@ -51,7 +52,6 @@ class AssignmentFileController extends Controller
 
             $user_and_assignment_file_info[] = $all_info;
         }
-
         return $user_and_assignment_file_info;
     }
 
@@ -62,6 +62,10 @@ class AssignmentFileController extends Controller
 
     }
 
+    public function getTemporaryUrlFromRequest(Request $request)
+    {
+        return $this->getTemporaryUrl($request->assignment_id, $request->file);
+    }
     public function getTemporaryUrl($assignment_id, $file)
     {
         return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(5));

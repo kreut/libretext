@@ -114,9 +114,9 @@
         fileFeedback: null
       })
     }),
-    created() {
+    mounted() {
       this.assignmentId = this.$route.params.assignmentId
-      this.assignmentFiles = this.getAssignmentFiles(this.assignmentId)
+      this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
       async uploadFileFeedback() {
@@ -173,14 +173,14 @@
             responseType: 'arraybuffer',
             data: {
               'assignment_id': this.assignmentId,
-              'submission': this.assignmentFiles[currentPage - 1]['submission']
+              'submission': this.assignmentFiles[this.currentPage - 1]['submission']
             }
           })
           this.$noty.success("The assignment file is being downloaded")
           let blob = new Blob([data], {type: 'application/pdf'})
           let link = document.createElement('a')
           link.href = window.URL.createObjectURL(blob)
-          link.download = this.assignmentFiles[currentPage - 1]['original_filename']
+          link.download = this.assignmentFiles[this.currentPage - 1]['original_filename']
           link.click()
         } catch (error) {
           this.$noty.error(error.message)
@@ -188,8 +188,10 @@
 
       },
       async changePage(currentPage) {
+        this.textFeedbackForm.textFeedback = this.assignmentFiles[this.currentPage - 1]['text_feedback']
+        console.log(this.assignmentFiles[currentPage - 1])
         if (this.assignmentFiles[currentPage - 1]['submission']) {
-          const {data} = await axios.post('/api/assignment-files/get-temporary-url',
+          const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
             {
               'assignment_id': this.assignmentId,
               'file': this.assignmentFiles[currentPage - 1]['submission']
@@ -197,7 +199,8 @@
           this.assignmentFiles[currentPage - 1]['submission_url'] = data
         }
         if (this.assignmentFiles[currentPage - 1]['file_feedback']) {
-          const {data} = await axios.post('/api/assignment-files/get-temporary-url',
+
+          const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
             {
               'assignment_id': this.assignmentId,
               'file': this.assignmentFiles[currentPage - 1]['file_feedback']
@@ -210,8 +213,8 @@
       },
       async getAssignmentFiles() {
         const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
-        console.log(data)
         this.assignmentFiles = data
+        this.textFeedbackForm.textFeedback = this.assignmentFiles[0]['text_feedback']
       }
     }
   }
