@@ -24,6 +24,25 @@
                 Score: {{ this.assignmentFiles[currentPage - 1]['score'] }}</p>
             </b-card-text>
           </b-card>
+          <b-card class="mt-2" title="Score for this submission" sub-title="TODO: Extra information how this is scored">
+            <b-card-text>
+              <b-form ref="scoreForm">
+                <b-input-group>
+                  <b-form-input
+                    id="name"
+                    v-model="scoreForm.score"
+                    type="text"
+                    placeholder="Enter the score"
+                    :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                    @keydown="scoreForm.errors.clear('score')"
+                  >
+                  </b-form-input>
+                  <has-error :form="scoreForm" field="score"></has-error>
+                  <b-button class="ml-3" variant="primary" v-on:click="submitScoreForm">Submit Score</b-button>
+                </b-input-group>
+              </b-form>
+            </b-card-text>
+          </b-card>
         </div>
 
         <div class="col-sm">
@@ -34,8 +53,8 @@
                   id="text_comments"
                   v-model="textFeedbackForm.textFeedback"
                   placeholder="Enter something..."
-                  rows="4"
-                  max-rows="4"
+                  rows="6"
+                  max-rows="6"
                   :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
                   @keydown="textFeedbackForm.errors.clear('textFeedback')"
                 >
@@ -112,13 +131,19 @@
       }),
       fileFeedbackForm: new Form({
         fileFeedback: null
-      })
+      }),
+      scoreForm: new Form({
+        score: ''
+      }),
     }),
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
+      submitScoreForm(){
+        alert("todo")
+      },
       async uploadFileFeedback() {
         try {
           this.fileFeedbackForm.errors.set('fileFeedback', null)
