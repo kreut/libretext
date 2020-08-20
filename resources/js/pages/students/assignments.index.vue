@@ -126,7 +126,7 @@
           } else {
             this.$noty.success(data.message)
             this.$nextTick(() => {
-              this.$bvModal.hide(modalId)
+              this.$bvModal.hide('modal-upload-assignment-file')
             })
           }
         } catch (error) {

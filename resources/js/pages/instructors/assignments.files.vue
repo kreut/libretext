@@ -2,7 +2,7 @@
   <div v-if="assignmentFiles.length>0">
     <div class="overflow-auto">
       <b-pagination
-        v-on:input="changePage"
+        v-on:input="changePage(currentPage)"
         v-model="currentPage"
         :total-rows="assignmentFiles.length"
         :per-page="perPage"
@@ -22,24 +22,26 @@
                 Date Submitted: {{ this.assignmentFiles[currentPage - 1]['date_submitted'] }}<br>
                 Date Graded: {{ this.assignmentFiles[currentPage - 1]['date_graded'] }}<br>
                 Base Score: {{ this.assignmentFiles[currentPage - 1]['score'] }}</p>
-                <hr><b-form-group
-                  id="fieldset-horizontal"
-                  label-cols-sm="6"
-                  label-cols-lg="5"
-                  label=" Score With Submission:"
-                  label-for="input-horizontal"
+              <hr>
+              <b-form-group
+                id="fieldset-horizontal"
+                label-cols-sm="6"
+                label-cols-lg="5"
+                label=" Score With Submission:"
+                label-for="input-horizontal"
 
-                >
-                  <b-form-input id="input-horizontal"
-                                v-model="scoreForm.score"
-                                type="text"
-                                placeholder="Enter the score"
-                                :class="{ 'is-invalid': scoreForm.errors.has('score') }"
-                                @keydown="scoreForm.errors.clear('score')"
-                  ></b-form-input>
+              >
+                <b-form-input id="input-horizontal"
+                              v-model="scoreForm.score"
+                              type="text"
+                              placeholder="Enter the score"
+                              :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                              @keydown="scoreForm.errors.clear('score')"
+                ></b-form-input>
                 <has-error :form="scoreForm" field="score"></has-error>
-                <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit Score</b-button>
-                </b-form-group>
+                <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit Score
+                </b-button>
+              </b-form-group>
             </b-card-text>
           </b-card>
 
@@ -74,15 +76,18 @@
     <div class="container">
       <div class="row">
         <div class="col-sm">
-          <!--<{checked: '#007BFF', unchecked: '#75C791'}>-->
-          <toggle-button @change="toggleView"
+          <b-button variant="outline-primary" v-on:click="downloadAssignmentFile(currentPage)">Download Submission
+          </b-button>
+
+          <toggle-button class="float-right"
+                         @change="toggleView(currentPage)"
                          :width="180"
                          :value="viewSubmission"
                          :font-size="14"
                          :margin="4"
+                         :sync="true"
                          :color="{checked: '#007BFF', unchecked: '#75C791'}"
                          :labels="{unchecked: 'View Submission', checked: 'View File Feedback'}"/>
-          <b-button class="float-right" variant="outline-primary" v-on:click="downloadAssignmentFile(currentPage)">Download Submission</b-button>
 
         </div>
         <b-form ref="form">
@@ -113,11 +118,23 @@
         </b-form>
       </div>
     </div>
-    <div v-if="viewSubmission">
-      <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
-    </div>
-    <div v-else>
-      <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+    <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
+      <div v-show="viewSubmission">
+        <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['submission_url'] !== null)">
+          <iframe width="600"  height="600" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+        </div>
+        <div v-else>
+          <span class="text-info">This student has not submitted a file.</span>
+        </div>
+      </div>
+      <div v-show="!viewSubmission">
+        <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['file_feedback_url'] !== null)">
+          <iframe width="600"  height="600"  :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
+        </div>
+        <div v-else>
+          <span class="text-info">You have not uploaded a feedback file.</span>
+        </div>
+      </div>
     </div>
 
 
@@ -127,7 +144,7 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
-  import { ToggleButton } from 'vue-js-toggle-button'
+  import {ToggleButton} from 'vue-js-toggle-button'
   //import pdf from 'vue-pdf'
 
 
@@ -137,6 +154,7 @@
     },
     middleware: 'auth',
     data: () => ({
+      loaded: true,
       viewSubmission: true,
       uploading: false,
       currentPage: 1,
@@ -157,7 +175,7 @@
       this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
-      toggleView(){
+      async toggleView(currentPage) {
         this.viewSubmission = !this.viewSubmission
       },
       submitScoreForm() {
@@ -232,25 +250,25 @@
 
       },
       async changePage(currentPage) {
+
         this.textFeedbackForm.textFeedback = this.assignmentFiles[this.currentPage - 1]['text_feedback']
         console.log(this.assignmentFiles[currentPage - 1])
-        if (this.assignmentFiles[currentPage - 1]['submission']) {
-          const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
-            {
-              'assignment_id': this.assignmentId,
-              'file': this.assignmentFiles[currentPage - 1]['submission']
-            })
-          this.assignmentFiles[currentPage - 1]['submission_url'] = data
-        }
-        if (this.assignmentFiles[currentPage - 1]['file_feedback']) {
+        await this.getTemporaryUrl('file_feedback', currentPage)
+        await this.getTemporaryUrl('submission', currentPage)
+        this.viewSubmission = true
 
+
+      },
+      async getTemporaryUrl(type, currentPage){
+        if (this.assignmentFiles[currentPage - 1][type] && !this.assignmentFiles[currentPage - 1][`${type}_url`]) {
           const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
             {
               'assignment_id': this.assignmentId,
-              'file': this.assignmentFiles[currentPage - 1]['file_feedback']
+              'file': this.assignmentFiles[currentPage - 1][type]
             })
-          this.assignmentFiles[currentPage - 1]['file_feedback_url'] = data
+          this.assignmentFiles[currentPage - 1][`${type}_url`] = data
         }
+
       },
       assignmentUrlExists(currentPage) {
         return (this.assignmentFiles[currentPage - 1]['submission_url'] !== null)
