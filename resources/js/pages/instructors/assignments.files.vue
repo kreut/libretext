@@ -21,28 +21,28 @@
                 Name: {{ this.assignmentFiles[currentPage - 1]['name'] }}<br>
                 Date Submitted: {{ this.assignmentFiles[currentPage - 1]['date_submitted'] }}<br>
                 Date Graded: {{ this.assignmentFiles[currentPage - 1]['date_graded'] }}<br>
-                Score: {{ this.assignmentFiles[currentPage - 1]['score'] }}</p>
+                Base Score: {{ this.assignmentFiles[currentPage - 1]['score'] }}</p>
+                <hr><b-form-group
+                  id="fieldset-horizontal"
+                  label-cols-sm="6"
+                  label-cols-lg="5"
+                  label=" Score With Submission:"
+                  label-for="input-horizontal"
+
+                >
+                  <b-form-input id="input-horizontal"
+                                v-model="scoreForm.score"
+                                type="text"
+                                placeholder="Enter the score"
+                                :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                                @keydown="scoreForm.errors.clear('score')"
+                  ></b-form-input>
+                <has-error :form="scoreForm" field="score"></has-error>
+                <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit Score</b-button>
+                </b-form-group>
             </b-card-text>
           </b-card>
-          <b-card class="mt-2" title="Score for this submission" sub-title="TODO: Extra information how this is scored">
-            <b-card-text>
-              <b-form ref="scoreForm">
-                <b-input-group>
-                  <b-form-input
-                    id="name"
-                    v-model="scoreForm.score"
-                    type="text"
-                    placeholder="Enter the score"
-                    :class="{ 'is-invalid': scoreForm.errors.has('score') }"
-                    @keydown="scoreForm.errors.clear('score')"
-                  >
-                  </b-form-input>
-                  <has-error :form="scoreForm" field="score"></has-error>
-                  <b-button class="ml-3" variant="primary" v-on:click="submitScoreForm">Submit Score</b-button>
-                </b-input-group>
-              </b-form>
-            </b-card-text>
-          </b-card>
+
         </div>
 
         <div class="col-sm">
@@ -74,7 +74,16 @@
     <div class="container">
       <div class="row">
         <div class="col-sm">
-          <b-button v-on:click="downloadAssignmentFile(currentPage)">Download Submission</b-button>
+          <!--<{checked: '#007BFF', unchecked: '#75C791'}>-->
+          <toggle-button @change="toggleView"
+                         :width="180"
+                         :value="viewSubmission"
+                         :font-size="14"
+                         :margin="4"
+                         :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                         :labels="{unchecked: 'View Submission', checked: 'View File Feedback'}"/>
+          <b-button class="float-right" variant="outline-primary" v-on:click="downloadAssignmentFile(currentPage)">Download Submission</b-button>
+
         </div>
         <b-form ref="form">
           <div class="col-sm">
@@ -104,24 +113,31 @@
         </b-form>
       </div>
     </div>
+    <div v-if="viewSubmission">
+      <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
+    </div>
+    <div v-else>
+      <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+    </div>
 
-    <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
-    <iframe v-if="assignmentFiles.length>0" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
+
   </div>
 </template>
 
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import { ToggleButton } from 'vue-js-toggle-button'
   //import pdf from 'vue-pdf'
 
 
   export default {
-    /*components: {
-      //pdf
-    },*/
+    components: {
+      ToggleButton
+    },
     middleware: 'auth',
     data: () => ({
+      viewSubmission: true,
       uploading: false,
       currentPage: 1,
       perPage: 1,
@@ -141,7 +157,10 @@
       this.getAssignmentFiles(this.assignmentId)
     },
     methods: {
-      submitScoreForm(){
+      toggleView(){
+        this.viewSubmission = !this.viewSubmission
+      },
+      submitScoreForm() {
         alert("todo")
       },
       async uploadFileFeedback() {
