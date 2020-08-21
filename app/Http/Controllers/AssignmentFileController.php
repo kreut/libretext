@@ -47,6 +47,7 @@ class AssignmentFileController extends Controller
             $date_graded = $assignmentFile->date_graded ?? "Not yet graded";
             $score = $assignmentFile->score ?? "N/A";
             $response['assignment_file_info'] = [
+                'assignment_id' => $assignment->id,
                 'submission' => $submission,
                 'original_filename' => $original_filename,
                 'date_submitted' => $date_submitted,

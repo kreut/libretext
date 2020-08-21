@@ -43,7 +43,7 @@
         <b-card title="Summary">
           <b-card-text>
             <p>
-              Submitted File: {{this.assignmentFileInfo.original_filename}}<br>
+              Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission()">{{this.assignmentFileInfo.original_filename}}</b-button><br>
               Score: {{this.assignmentFileInfo.score}}<br>
               Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
               Date graded: {{this.assignmentFileInfo.date_graded}}<br>
@@ -134,6 +134,28 @@
       this.getAssignments()
     },
     methods: {
+     async downloadSubmission() {
+
+        try {
+          const {data} = await axios({
+            method: 'post',
+            url: '/api/assignment-files/download',
+            responseType: 'arraybuffer',
+            data: {
+              'assignment_id': this.assignmentFileInfo.assignment_id,
+              'submission': this.assignmentFileInfo.submission
+            }
+          })
+          this.$noty.success("The assignment file is being downloaded")
+          let blob = new Blob([data], {type: 'application/pdf'})
+          let link = document.createElement('a')
+          link.href = window.URL.createObjectURL(blob)
+          link.download = this.assignmentFileInfo.original_filename
+          link.click()
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      },
       closeAssignmentSubmissionFeedbackModal() {
         this.$nextTick(() => {
           this.$bvModal.hide('modal-assignment-submission-feedback')
