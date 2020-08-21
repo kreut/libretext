@@ -76,7 +76,7 @@
     <div class="container">
       <div class="row">
         <div class="col-sm">
-          <b-button variant="outline-primary" v-on:click="downloadAssignmentFile(currentPage)">Download Submission
+          <b-button variant="outline-primary" v-on:click="downloadSubmission(assignmentId, assignmentFiles[currentPage - 1]['submission'], assignmentFiles[currentPage - 1]['original_filename'], $noty)">Download Submission
           </b-button>
 
           <toggle-button class="float-right"
@@ -145,6 +145,7 @@
   import axios from 'axios'
   import Form from "vform"
   import {ToggleButton} from 'vue-js-toggle-button'
+  import {downloadSubmission} from '~/helpers/Assignmentfiles'
   //import pdf from 'vue-pdf'
 
 
@@ -170,6 +171,9 @@
         score: ''
       }),
     }),
+    created() {
+      this.downloadSubmission = downloadSubmission
+    },
     mounted() {
       this.assignmentId = this.$route.params.assignmentId
       this.getAssignmentFiles(this.assignmentId)
