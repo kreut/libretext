@@ -43,7 +43,7 @@
         <b-card title="Summary">
           <b-card-text>
             <p>
-              Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission()">{{this.assignmentFileInfo.original_filename}}</b-button><br>
+              Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">{{this.assignmentFileInfo.original_filename}}</b-button><br>
               Score: {{this.assignmentFileInfo.score}}<br>
               Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
               Date graded: {{this.assignmentFileInfo.date_graded}}<br>
@@ -88,6 +88,7 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import {downloadSubmission} from '~/helpers/Assignmentfiles'
 
   const now = new Date()
 
@@ -129,33 +130,15 @@
       showNoAssignmentsAlert: false,
       canViewAssignments: false
     }),
+    created() {
+      this.downloadSubmission = downloadSubmission
+    },
     mounted() {
       this.courseId = this.$route.params.courseId
       this.getAssignments()
     },
     methods: {
-     async downloadSubmission() {
 
-        try {
-          const {data} = await axios({
-            method: 'post',
-            url: '/api/assignment-files/download',
-            responseType: 'arraybuffer',
-            data: {
-              'assignment_id': this.assignmentFileInfo.assignment_id,
-              'submission': this.assignmentFileInfo.submission
-            }
-          })
-          this.$noty.success("The assignment file is being downloaded")
-          let blob = new Blob([data], {type: 'application/pdf'})
-          let link = document.createElement('a')
-          link.href = window.URL.createObjectURL(blob)
-          link.download = this.assignmentFileInfo.original_filename
-          link.click()
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      },
       closeAssignmentSubmissionFeedbackModal() {
         this.$nextTick(() => {
           this.$bvModal.hide('modal-assignment-submission-feedback')
