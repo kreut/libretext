@@ -20,7 +20,8 @@
             accept=".pdf"
           ></b-form-file>
           <div v-if="uploading">
-            <b-spinner small type="grow"></b-spinner> Uploading file...
+            <b-spinner small type="grow"></b-spinner>
+            Uploading file...
           </div>
           <input type="hidden" class="form-control is-invalid">
           <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile')}}
@@ -32,18 +33,30 @@
         id="modal-assignment-submission-feedback"
         ref="modal"
         size="xl"
-        title="Assignment submission feedback"
+        title="Assignment Submission Feedback"
         @ok="closeAssignmentSubmissionFeedbackModal"
         ok-only
         ok-variant="primary"
         ok-title="Close"
 
       >
+        <b-card title="Summary">
+          <b-card-text>
+            <p>
+              Submitted File: {{this.assignmentFileInfo.original_filename}}<br>
+              Score: {{this.assignmentFileInfo.score}}<br>
+              Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
+              Date graded: {{this.assignmentFileInfo.date_graded}}<br>
+              Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
+            <hr>
 
-        Score:  {{this.assignmentFileInfo.score}}<br>
-        Date graded: {{this.assignmentFileInfo.date_graded}}<br>
-        Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
-        <iframe width="600"  height="600" :src="this.assignmentFileInfo.file_feedback_url"></iframe>
+          </b-card-text>
+        </b-card>
+        <div v-if="assignmentFileInfo.file_feedback_url">
+        <div class="d-flex justify-content-center mt-5">
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"></iframe>
+        </div>
+        </div>
       </b-modal>
 
       <b-table striped hover :fields="fields" :items="assignments">
@@ -53,8 +66,10 @@
           </div>
         </template>
         <template v-slot:cell(files)="data">
-       <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)" v-b-modal.modal-upload-assignment-file></b-icon>
-          <b-icon icon="pencil-square"  v-on:click="getAssignmentFileInfo(data.item.id)" v-b-modal.modal-assignment-submission-feedback></b-icon>
+          <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
+                  v-b-modal.modal-upload-assignment-file></b-icon>
+          <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
+                 ></b-icon>
         </template>
 
       </b-table>
@@ -119,16 +134,22 @@
       this.getAssignments()
     },
     methods: {
-      closeAssignmentSubmissionFeedbackModal(){
+      closeAssignmentSubmissionFeedbackModal() {
         this.$nextTick(() => {
           this.$bvModal.hide('modal-assignment-submission-feedback')
         })
       },
-      async getAssignmentFileInfo(assignmentId){
+      async getAssignmentFileInfo(assignmentId) {
         try {
           const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
-          console.log(data)
           this.assignmentFileInfo = data.assignment_file_info
+          if (!this.assignmentFileInfo){
+           this.$noty.info("You can't have any feedback if you haven't submitted a file!")
+            return false
+          }
+          this.assignmentFileInfo = data.assignment_file_info
+
+          this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback');
           if (data.type === 'error') {
             this.$noty.error(data.message)
             this.$nextTick(() => {
@@ -137,7 +158,7 @@
             return false
           }
         } catch (error) {
-          if (error.message.includes('status code 413')){
+          if (error.message.includes('status code 413')) {
             error.message = 'The maximum size allowed is 10MB.'
           }
           this.$noty.error(error.message)
@@ -147,11 +168,6 @@
         //get the score
         //the the temporary url of the feedback
         //get the download url of your current submission
-
-
-
-
-
 
 
       },
@@ -181,7 +197,7 @@
             })
           }
         } catch (error) {
-          if (error.message.includes('status code 413')){
+          if (error.message.includes('status code 413')) {
             error.message = 'The maximum size allowed is 10MB.'
           }
           this.$noty.error(error.message)

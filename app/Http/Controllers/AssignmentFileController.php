@@ -30,36 +30,38 @@ class AssignmentFileController extends Controller
         }
 
 
-      try {
-          $assignmentFile = AssignmentFile::where('user_id', $user_id)
-              ->where('assignment_id', $assignment->id)
-              ->first();
-
-          $submission = $assignmentFile->submission ?? null;
-          $file_feedback = $assignmentFile->file_feedback ?? null;
-          $text_feedback = $assignmentFile->text_feedback ?? 'None';
-          $original_filename = $assignmentFile->original_filename;
-          $date_submitted = $assignmentFile->date_submitted;
-          $date_graded = $assignmentFile->date_graded ?? "Not yet graded";
-          $score = $assignmentFile->score ?? "N/A";
-        $response['assignment_file_info'] = [
-            'submission' => $submission,
-            'original_filename' => $original_filename,
-            'date_submitted' => $date_submitted,
-            'file_feedback' => $file_feedback,
-            'text_feedback' => $text_feedback,
-            'date_graded' => $date_graded,
-            'score' => $score,
-            'submission_url' => $this->getTemporaryUrl($assignment->id, $submission)
-                ?? null,
-            'file_feedback_url' => $this->getTemporaryUrl($assignment->id, $file_feedback)
-                ?? null];
-        $response['type'] = 'success';
-      } catch (Exception $e) {
-          $h = new Handler(app());
-          $h->report($e);
-          $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
-      }
+        try {
+            $assignmentFile = AssignmentFile::where('user_id', $user_id)
+                ->where('assignment_id', $assignment->id)
+                ->first();
+            if (!$assignmentFile) {
+                $response['type'] = 'success';
+                $response['assignment_file_info'] = null;
+                return $response;
+            }
+            $submission = $assignmentFile->submission ?? null;
+            $file_feedback = $assignmentFile->file_feedback ?? null;
+            $text_feedback = $assignmentFile->text_feedback ?? 'None';
+            $original_filename = $assignmentFile->original_filename;
+            $date_submitted = $assignmentFile->date_submitted;
+            $date_graded = $assignmentFile->date_graded ?? "Not yet graded";
+            $score = $assignmentFile->score ?? "N/A";
+            $response['assignment_file_info'] = [
+                'submission' => $submission,
+                'original_filename' => $original_filename,
+                'date_submitted' => $date_submitted,
+                'file_feedback' => $file_feedback,
+                'text_feedback' => $text_feedback,
+                'date_graded' => $date_graded,
+                'score' => $score,
+                'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
+                'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
+        }
         return $response;
 
     }
