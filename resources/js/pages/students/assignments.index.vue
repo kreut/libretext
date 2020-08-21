@@ -175,6 +175,10 @@
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
+        if (this.uploading){
+          this.$noty.info('Please be patient while the file is uploading.')
+          return false
+        }
         this.submitUploadAssignmentFile()
       },
       async submitUploadAssignmentFile() {

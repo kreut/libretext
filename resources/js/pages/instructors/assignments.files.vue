@@ -183,6 +183,10 @@
       },
       async uploadFileFeedback() {
         try {
+          if (this.uploading){
+            this.$noty.info('Please be patient while the file is uploading.')
+            return false
+          }
           this.fileFeedbackForm.errors.set('fileFeedback', null)
           this.uploading = true
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
