@@ -76,7 +76,9 @@
     <div class="container">
       <div class="row">
         <div class="col-sm">
-          <b-button variant="outline-primary" v-on:click="downloadSubmission(assignmentId, assignmentFiles[currentPage - 1]['submission'], assignmentFiles[currentPage - 1]['original_filename'], $noty)">Download Submission
+          <b-button variant="outline-primary"
+                    v-on:click="downloadSubmission(assignmentId, assignmentFiles[currentPage - 1]['submission'], assignmentFiles[currentPage - 1]['original_filename'], $noty)">
+            Download Submission
           </b-button>
 
           <toggle-button class="float-right"
@@ -121,7 +123,7 @@
     <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
       <div v-show="viewSubmission">
         <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['submission_url'] !== null)">
-          <iframe width="600"  height="600" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+          <iframe width="600" height="600" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
         </div>
         <div v-else>
           <span class="text-info">This student has not submitted a file.</span>
@@ -129,7 +131,7 @@
       </div>
       <div v-show="!viewSubmission">
         <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['file_feedback_url'] !== null)">
-          <iframe width="600"  height="600"  :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
+          <iframe width="600" height="600" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
         </div>
         <div v-else>
           <span class="text-info">You have not uploaded a feedback file.</span>
@@ -187,7 +189,7 @@
       },
       async uploadFileFeedback() {
         try {
-          if (this.uploading){
+          if (this.uploading) {
             this.$noty.info('Please be patient while the file is uploading.')
             return false
           }
@@ -233,29 +235,6 @@
             this.$noty.error(error.message)
           }
         }
-
-      },
-      async downloadAssignmentFile(currentPage) {
-        try {
-          const {data} = await axios({
-            method: 'post',
-            url: '/api/assignment-files/download',
-            responseType: 'arraybuffer',
-            data: {
-              'assignment_id': this.assignmentId,
-              'submission': this.assignmentFiles[this.currentPage - 1]['submission']
-            }
-          })
-          this.$noty.success("The assignment file is being downloaded")
-          let blob = new Blob([data], {type: 'application/pdf'})
-          let link = document.createElement('a')
-          link.href = window.URL.createObjectURL(blob)
-          link.download = this.assignmentFiles[this.currentPage - 1]['original_filename']
-          link.click()
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-
       },
       async changePage(currentPage) {
 
@@ -267,7 +246,7 @@
 
 
       },
-      async getTemporaryUrl(type, currentPage){
+      async getTemporaryUrl(type, currentPage) {
         if (this.assignmentFiles[currentPage - 1][type] && !this.assignmentFiles[currentPage - 1][`${type}_url`]) {
           const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
             {
