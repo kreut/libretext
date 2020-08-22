@@ -6,7 +6,7 @@ use App\Tag;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Question_Tag;
-use \Exception;
+
 use App\Exceptions\Handler;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;

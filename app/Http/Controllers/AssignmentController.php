@@ -11,9 +11,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreAssignment;
-use \Exception;
-use App\Exceptions\Handler;
+
 use \Illuminate\Http\Request;
+
+use App\Exceptions\Handler;
+use \Exception;
 
 class AssignmentController extends Controller
 {

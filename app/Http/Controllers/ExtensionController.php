@@ -11,6 +11,9 @@ use Illuminate\Http\Request;
 use App\Http\Requests\StoreExtension;
 use Illuminate\Support\Facades\DB;
 
+use App\Exceptions\Handler;
+use \Exception;
+
 class ExtensionController extends Controller
 {
     use DateFormatter;

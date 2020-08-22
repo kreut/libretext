@@ -4,11 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Enrollment;
 use App\Course;
-use App\Exceptions\Handler;
+
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\CourseAccessCode;
 use Illuminate\Support\Facades\Gate;
+
+use App\Exceptions\Handler;
+use \Exception;
 
 class EnrollmentController extends Controller
 {

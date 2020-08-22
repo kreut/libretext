@@ -13,8 +13,8 @@ class AssignmentFileSeeder extends Seeder
      * @return void
      */
     public function run()
-    {
-        foreach ([1, 2, 3] as $value){
+    {z
+        foreach ([2, 3, 4] as $value){
         AssignmentFile::create(['user_id' => $value,
             'assignment_id' => 1,
             'submission' => 'fake_' . $value.'.pdf',

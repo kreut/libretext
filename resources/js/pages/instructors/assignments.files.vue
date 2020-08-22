@@ -261,9 +261,17 @@
         return (this.assignmentFiles[currentPage - 1]['submission_url'] !== null)
       },
       async getAssignmentFiles() {
-        const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
-        this.assignmentFiles = data
-        this.textFeedbackForm.textFeedback = this.assignmentFiles[0]['text_feedback']
+        try {
+          const {data} = await axios.get(`/api/assignment-files/${this.assignmentId}`)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          this.assignmentFiles = data.user_and_assignment_file_info
+          this.textFeedbackForm.textFeedback = this.assignmentFiles[0]['text_feedback']
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
       }
     }
   }

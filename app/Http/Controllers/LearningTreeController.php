@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\Handler;
 use App\Http\Requests\StoreLearningTree;
 use App\LearningTree;
 use App\Question;
@@ -10,6 +9,9 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
+use App\Exceptions\Handler;
+use \Exception;
 
 class LearningTreeController extends Controller
 {

@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\User;
 use App\Assignment;
 use App\AssignmentFile;
+use App\Course;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\Response;
@@ -13,6 +14,12 @@ class AssignmentFilePolicy
 {
     use HandlesAuthorization;
 
+    public function viewAssignmentFilesByAssignment(User $user, AssignmentFile $assignmentFile, Course $course){
+
+         return ((int) $course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to access these assignment files.');
+}
     public function uploadAssignmentFile(User $user, AssignmentFile $assignmentFile, Assignment $assignment)
     {
 

@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use \Exception;
+
 use Illuminate\Http\Request;
 use App\Assignment;
 use App\Question;
@@ -10,6 +12,7 @@ use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+
 
 class AssignmentSyncQuestionController extends Controller
 {

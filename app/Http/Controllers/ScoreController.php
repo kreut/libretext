@@ -2,16 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Exceptions\Handler;
 use App\Score;
 use App\Course;
 use App\User;
 use App\Assignment;
 use App\Enrollment;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+
+use App\Exceptions\Handler;
+use \Exception;
 
 class ScoreController extends Controller
 {

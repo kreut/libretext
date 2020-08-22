@@ -31,7 +31,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
     }
 
-    pubic function cannot_store_assignment_file_if_not_ower(){
+    public function cannot_store_assignment_file_if_not_ower(){
 
 }
 
