@@ -27,6 +27,7 @@ class StudentsCoursesIndexTest extends TestCase
             'course_id' => $this->course->id,
             'access_code' =>    $this->course_access_code]);
 
+
     }
 /** @test */
     public function can_get_enrollments_if_user_is_a_student(){
@@ -67,7 +68,7 @@ class StudentsCoursesIndexTest extends TestCase
         $this->actingAs($this->student_user)->postJson("/api/enrollments",[
             'course_id' => $this->course->id,
             'access_code' =>  'not the real code'
-        ])->assertJsonValidationErrors(['access_code']);;
+        ])->assertJsonValidationErrors(['access_code']);
 
     }
 

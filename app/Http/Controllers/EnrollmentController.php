@@ -9,7 +9,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use App\CourseAccessCode;
 use Illuminate\Support\Facades\Gate;
-
+use App\Http\Requests\StoreEnrollment;
 use App\Exceptions\Handler;
 use \Exception;
 
@@ -56,7 +56,7 @@ class EnrollmentController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Enrollment $enrollment)
+    public function store(StoreEnrollment $request, Enrollment $enrollment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
@@ -67,8 +67,9 @@ class EnrollmentController extends Controller
         }
 
         try {
-            $request->validate(['access_code' => 'exists:course_access_codes']);
-            $course_id = CourseAccessCode::where('access_code', '=', $request->access_code)->first()->course_id;
+
+            $data = $request->validated();;
+            $course_id = CourseAccessCode::where('access_code', '=', $data['access_code'])->first()->course_id;
 
             //make sure they don't sign up twice!
             $response['validated'] = true;
