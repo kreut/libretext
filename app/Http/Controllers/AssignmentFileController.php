@@ -137,15 +137,41 @@ class AssignmentFileController extends Controller
     }
 
 
-    public function downloadAssignmentFile(Request $request)
+    public function downloadAssignmentFile(Request $request, AssignmentFile $assignmentFile)
     {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('downloadAssignmentFile', [$assignmentFile, $request->assignment_id, $request->submission]);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
 
     }
 
-    public function getTemporaryUrlFromRequest(Request $request)
+    public function getTemporaryUrlFromRequest(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
     {
-        return $this->getTemporaryUrl($request->assignment_id, $request->file);
+        $response['type'] = 'error';
+        $course = $assignment->find($request->assignment_id)->course;
+        $authorized = Gate::inspect('createTemporaryUrl', [$assignmentFile, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['temporary_url'] = $this->getTemporaryUrl($request->assignment_id, $request->file);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     public function getTemporaryUrl($assignment_id, $file)
@@ -157,8 +183,8 @@ class AssignmentFileController extends Controller
     public function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
         $response['type'] = 'error';
-        $assignment_id = $request->assignmentId;
-        $student_user_id = $request->userId;
+        $assignment_id = $request->assignment_id;
+        $student_user_id = $request->user_id;
         $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
 
 

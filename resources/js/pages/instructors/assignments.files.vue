@@ -222,8 +222,8 @@
       async submitTextFeedbackForm() {
         try {
 
-          this.textFeedbackForm.assignmentId = this.assignmentId
-          this.textFeedbackForm.userId = this.assignmentFiles[this.currentPage - 1]['user_id']
+          this.textFeedbackForm.assignment_id = this.assignmentId
+          this.textFeedbackForm.user_id = this.assignmentFiles[this.currentPage - 1]['user_id']
 
           const {data} = await this.textFeedbackForm.post('/api/assignment-files/text-feedback')
           this.$noty[data.type](data.message)
@@ -248,12 +248,20 @@
       },
       async getTemporaryUrl(type, currentPage) {
         if (this.assignmentFiles[currentPage - 1][type] && !this.assignmentFiles[currentPage - 1][`${type}_url`]) {
-          const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
-            {
-              'assignment_id': this.assignmentId,
-              'file': this.assignmentFiles[currentPage - 1][type]
-            })
-          this.assignmentFiles[currentPage - 1][`${type}_url`] = data
+          try {
+            const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
+              {
+                'assignment_id': this.assignmentId,
+                'file': this.assignmentFiles[currentPage - 1][type]
+              })
+            if (data.type === 'error') {
+              this.$noty.error(data.message)
+              return false
+            }
+            this.assignmentFiles[currentPage - 1][`${type}_url`] = data.temporary_url
+          } catch (error){
+            this.$noty.error(error.message)
+          }
         }
 
       },

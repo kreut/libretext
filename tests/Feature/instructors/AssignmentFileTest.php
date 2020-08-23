@@ -31,60 +31,105 @@ class AssignmentFileTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
-        factory(AssignmentFile::class)->create(['user_id' => 2]);
+        $this->assignment_file = factory(AssignmentFile::class)->create(['user_id' => $this->student_user->id]);
+
 
     }
 
     /** @test */
 
-    public function can_get_assignment_files_if_owner() {
+    public function can_get_assignment_files_if_owner()
+    {
 
         $this->actingAs($this->user)->getJson("/api/assignment-files/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
 
     }
-/** @test */
-   public function cannot_get_assignment_files_if_not_owner(){
-       $this->actingAs($this->user_2)->getJson("/api/assignment-files/{$this->assignment->id}")
-           ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access these assignment files.']);
 
-   }
-
-   public function can_download_assignment_file_if_owner() {
-        //student or instructor check where this comes from....
-   }
-
-   public function can_get_temporary_url_from_request_if_owner() {
-       //student or instructor
-   }
-
-   public function can_get_temporary_url_if_owner() {
-
-
-   }
-
-    public function cannot_get_temporary_url_if_not_owner() {
-
+    /** @test */
+    public function cannot_get_assignment_files_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/assignment-files/{$this->assignment->id}")
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access these assignment files.']);
 
     }
 
-    public function can_store_text_feedback_if_owner() {
-
-
-    }
-
-    public function cannot_store_text_feedback_if_not_owner() {
-
+    /** @test */
+    public function can_download_assignment_file_if_owner()
+    {
+        //not sure how to test
 
     }
 
-    public function can_store_assignment_file_if_owner() {
-
+    /** @test */
+    public function cannot_download_assignment_file_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/assignment-files/download",
+            [
+                'assignment_id' => $this->assignment->id,
+                'submission' => $this->assignment_file->submission
+            ]
+        )
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);
 
     }
 
-    public function cannot_store_assignment_file_if_not_owner() {
-
+    /** @test */
+    public function can_get_temporary_url_from_request_if_owner()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignment-files/get-temporary-url-from-request",
+            [
+                'assignment_id' => $this->assignment->id,
+                'file' => $this->assignment_file->submission
+            ]
+        )
+            ->assertJson(['type' => 'success']);
 
     }
+
+
+    /** @test */
+    public function cannot_get_temporary_url_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/assignment-files/get-temporary-url-from-request",
+            [
+                'assignment_id' => $this->assignment->id,
+                'file' => $this->assignment_file->submission
+            ]
+        )
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to create a temporary URL.']);
+
+    }
+
+    /** @test */
+    public function can_store_text_feedback_if_owner()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignment-files/text-feedback",
+            [
+                'assignment_id' => $this->assignment->id,
+                'user_id' => $this->student_user->id,
+                'textFeedback' => 'Some text feedback'
+            ]
+        )
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+    public function cannot_store_text_feedback_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/assignment-files/text-feedback",
+            [
+                'assignment_id' => $this->assignment->id,
+                'user_id' => $this->student_user->id,
+                'textFeedback' => 'Some text feedback'
+            ]
+        )
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to submit comments for this assignment.']);
+
+    }
+
+
 }
