@@ -23,6 +23,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user_2 = factory(User::class)->create();
+
         $this->student_user->role = 3;
         $this->student_user_2->role = 3;
         factory(Enrollment::class)->create([
@@ -33,18 +34,27 @@ class StudentsAssignmentsIndexTest extends TestCase
             'user_id' => $this->student_user_2->id,
             'course_id' => $this->course->id
         ]);
+
+        //student not enrolled
+        $this->student_user_3 = factory(User::class)->create();
+        $this->student_user_3->role = 3;
         $this->assignment_file = factory(AssignmentFile::class)->create(['user_id' => $this->student_user->id]);
     }
 
 
+    /** @test */
+    public function can_get_assignment_file_info_if_owner()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/assignment-files/assignment-file-info-by-student/{$this->assignment->id}")
+            ->assertJson(['type' => 'success']);
+    }
 
     /** @test */
-   public function can_get_assignment_file_info_if_owner() {
-
-   }
-    /** @test */
-    public function cannot_get_assignment_file_info_if_owner() {
-
+    public function cannot_get_assignment_file_info_if_not_owner()
+    {
+        $this->actingAs($this->student_user_2)->getJson("/api/assignment-files/assignment-file-info-by-student/{$this->assignment->id}")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to get the information on this file submission.']);
     }
 
     /** @test */
@@ -52,7 +62,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
         $this->actingAs($this->student_user_2)->postJson("/api/assignment-files/download",
             [
-                'assignment_id' =>  $this->assignment->id,
+                'assignment_id' => $this->assignment->id,
                 'submission' => $this->assignment_file->submission
             ]
         )
@@ -61,12 +71,49 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    public function can_store_assignment_file_if_enrolled_in_course() {
+    /** @test */
+    public function assignment_file_must_contain_a_file()
+    {
+
+        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
+            'assignmentFile' => '',
+            'assignmentId' => $this->assignment->id,
+        ])
+            ->assertJson(['type' => 'error', 'message' => 'The assignment file field is required.']);
 
     }
 
-    public function cannot_store_assignment_file_if_not_enrolled_in_course(){
+    /** @test */
+    public function assignment_file_must_contain_a_pdf_file()
+    {
 
-}
+        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
+            'assignmentFile' => 'sdflkj.jpeg',
+            'assignmentId' => $this->assignment->id,
+        ])
+            ->assertJson(['type' => 'error', 'message' => 'The assignment file must be a file of type: pdf.']);
 
+
+    }
+
+    /** @test */
+    public function cannot_store_assignment_file_if_not_enrolled_in_course()
+    {
+
+        $this->actingAs($this->student_user_3)->putJson("/api/assignment-files", [
+            'assignmentFile' => 'abd.pdf',
+            'assignmentId' => $this->assignment->id,
+        ])
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to upload a file to this assignment.']);
+    }
+
+    /** @test */
+    public function can_store_assignment_file_if_enrolled_in_course()
+    {
+
+        $this->markTestIncomplete(
+            'https://laravel.com/docs/7.x/http-tests#testing-file-uploads'
+        );
+
+    }
 }

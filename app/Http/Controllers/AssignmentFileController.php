@@ -233,10 +233,6 @@ class AssignmentFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            //wait 30 seconds between uploads
-            //no more than 10 uploads per assignment
-            //delete the file if there was an exception???
-
             $validator = Validator::make($request->all(), [
                 'assignmentFile' => ['required', 'mimes:pdf', 'max:500000']
             ]);

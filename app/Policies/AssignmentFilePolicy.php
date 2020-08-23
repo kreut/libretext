@@ -23,6 +23,7 @@ class AssignmentFilePolicy
             $user_id = $assignmentFile->where('assignment_id', $assignment_id)
                 ->where('submission', $submission)
                 ->value('user_id');
+
         } else {
             //instructor is owner of the course
             $user_id = Assignment::find($assignment_id) ? Assignment::find($assignment_id)->course->user_id : null;
@@ -56,7 +57,7 @@ class AssignmentFilePolicy
 
         return $assignment->course->enrollments->contains('user_id', $user->id)
             ? Response::allow()
-            : Response::deny('You are not allowed to access this assignment.');
+            : Response::deny('You are not allowed to upload a file to this assignment.');
 
     }
 
@@ -78,11 +79,13 @@ class AssignmentFilePolicy
 
     public function getAssignmentFileInfoByStudent(User $user, AssignmentFile $assignmentFile, int $assignment_id)
     {
-        $user_is_owner_of_assignment_file = $assignmentFile
+        $assignment_file_user_id = $assignmentFile
             ->where('user_id', $user->id)
-            ->where('assignment_id', $assignment_id);
+            ->where('assignment_id', $assignment_id)
+            ->value('user_id');
 
-        return $user_is_owner_of_assignment_file
+
+        return ((int)$assignment_file_user_id === $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the information on this file submission.');
 

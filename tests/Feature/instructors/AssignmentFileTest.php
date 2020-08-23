@@ -57,7 +57,9 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function can_download_assignment_file_if_owner()
     {
-        //not sure how to test
+        $this->markTestIncomplete(
+            'Not sure how to test'
+        );
 
     }
 
