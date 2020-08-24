@@ -77,7 +77,7 @@ class AssignmentFileController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$assignmentFile,  $assignment]);
+        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$assignmentFile, $assignment]);
 
 
         if (!$authorized->allowed()) {
@@ -218,13 +218,14 @@ class AssignmentFileController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function storeAssignmentFile(Request $request, AssignmentFile $assignmentFile, Assignment $assignment, Extension $extension)
+    public function storeAssignmentFile(Request $request, AssignmentFile $assignmentFile, Extension $extension)
     {
 
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
-        $authorized = Gate::inspect('uploadAssignmentFile', [$assignmentFile, $assignment->find($assignment_id)]);
+        $assignment = Assignment::find($assignment_id);
+        $authorized = Gate::inspect('uploadAssignmentFile', [$assignmentFile, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -236,8 +237,8 @@ class AssignmentFileController extends Controller
             $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
 
             $is_extension = isset($extensions_by_assignment[$assignment->id]);
-            $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
-            if ($due < time()){
+            $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment->due;
+            if (strtotime($due) < time()) {
                 $response['message'] = 'You cannot upload a file since this assignment is past due.';
                 return $response;
 
@@ -251,9 +252,6 @@ class AssignmentFileController extends Controller
                 $response['message'] = $validator->errors()->first('assignmentFile');
                 return $response;
             }
-
-
-
 
 
             //save locally and to S3

@@ -41,10 +41,21 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assignment_file = factory(AssignmentFile::class)->create(['user_id' => $this->student_user->id]);
     }
 
+    /** @test */
+    public function assignment_file_must_contain_a_file()
+    {
 
+        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
+            'assignmentFile' => '',
+            'assignmentId' => $this->assignment->id,
+        ])
+            ->assertJson(['type' => 'error', 'message' => 'The assignment file field is required.']);
+
+    }
 
     /** @test */
     public function cannot_upload_if_past_due(){
+        $assignment_due = $this->assignment->due;
         $this->assignment->due = '2020-06-12 09:00:00';
         $this->assignment->save();
 
@@ -54,6 +65,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         ])
             ->assertJson(['type' => 'error',
                 'message' => 'You cannot upload a file since this assignment is past due.']);
+
     }
 
     /** @test */
@@ -85,17 +97,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-    public function assignment_file_must_contain_a_file()
-    {
 
-        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
-            'assignmentFile' => '',
-            'assignmentId' => $this->assignment->id,
-        ])
-            ->assertJson(['type' => 'error', 'message' => 'The assignment file field is required.']);
-
-    }
 
     /** @test */
     public function assignment_file_must_contain_a_pdf_file()
