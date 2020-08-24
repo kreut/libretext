@@ -66,10 +66,15 @@
           </div>
         </template>
         <template v-slot:cell(files)="data">
+          <div v-if="data.item.assignment_files === 1">
           <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
                   v-b-modal.modal-upload-assignment-file></b-icon>
           <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
                  ></b-icon>
+          </div>
+          <div v-else>
+            N/A
+          </div>
         </template>
 
       </b-table>
