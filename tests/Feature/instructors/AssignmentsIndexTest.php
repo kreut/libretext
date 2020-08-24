@@ -33,6 +33,7 @@ class AssignmentsIndexTest extends TestCase
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
             'num_submissions_needed' => 3,
+            'assignment_files' => 1,
             'type_of_submission' => 'correct'];
 
     }
@@ -147,6 +148,15 @@ class AssignmentsIndexTest extends TestCase
         $this->assignment_info['available_from_time'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
             ->assertJsonValidationErrors(['available_from_time']);
+    }
+
+    /** @test */
+    public function must_include_whether_assignment_files_are_allowed()
+    {
+
+        $this->assignment_info['assignment_files'] = "7";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['assignment_files']);
     }
 
 

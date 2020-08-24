@@ -89,6 +89,7 @@ class AssignmentController extends Controller
                     'due' => $data['due_date'] . ' ' . $data['due_time'],
                     'num_submissions_needed' => $data['num_submissions_needed'],
                     'type_of_submission' => $data['type_of_submission'],
+                    'assignment_files' => $data['assignment_files'],
                     'course_id' => $course->id
                 ]
             );

@@ -32,6 +32,7 @@ class StoreAssignment extends FormRequest
             'available_from_time' => 'required|date_format:H:i:00',
             'due_time' => 'required|date_format:H:i:00',
             'type_of_submission' => Rule::in(['completed', 'correct']),
+            'assignment_files' => Rule::in([0,1]),
             'num_submissions_needed' => Rule::in([2, 3, 4, 5, 6, 7, 8, 9])
         ];
         return $rules;

@@ -93,6 +93,20 @@
             </b-col>
           </b-form-row>
         </b-form-group>
+        <b-form-group
+          id="assignment_files"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assignment Files"
+          label-for="Assignment Files"
+        >
+        <b-form-row>
+          <b-form-radio-group v-model="form.assignment_files" >
+            <b-form-radio name="assignment_files" value="1">Students can upload files</b-form-radio>
+            <b-form-radio name="assignment_files" value="0">Students cannot upload files</b-form-radio>
+          </b-form-radio-group>
+        </b-form-row>
+        </b-form-group>
         <b-form-row>
           <b-col lg="5">Give students assignment credit if at least</b-col>
           <b-col lg="1">
@@ -209,6 +223,7 @@
         available_from_time: '09:00:00',
         due_date: '',
         due_time: '09:00:00',
+        assignment_files: '0',
         type_of_submission: 'correct',
         num_submissions_needed: '2'
       }),
@@ -233,6 +248,7 @@
         this.form.due_date = assignment.due_date
         this.form.due_time = assignment.due_time
         this.form.type_of_submission = assignment.type_of_submission
+        this.form.assignment_files = assignment.assignment_files
         this.form.num_submissions_needed = assignment.num_submissions_needed
         this.$bvModal.show('modal-assignment-details')
       },
@@ -324,6 +340,7 @@
         this.form.due_time = '09:00:00'
         this.form.type_of_submission = 'correct'
         this.form.num_submissions_needed = '2'
+        this.form.assignment_files = '1'
         this.assignmentId = false
         this.form.errors.clear()
       },

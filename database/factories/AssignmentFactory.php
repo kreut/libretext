@@ -11,5 +11,6 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'available_from' => '2020-06-10 09:00:00',
         'due' => '2027-06-12 09:00:00',
         'num_submissions_needed' => 3,
+        'assignment_files' => 1,
         'type_of_submission' => 'correct'];
 });
