@@ -42,6 +42,20 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
+
+    /** @test */
+    public function cannot_upload_if_past_due(){
+        $this->assignment->due = '2020-06-12 09:00:00';
+        $this->assignment->save();
+
+     $this->actingAs($this->student_user)->putJson("/api/assignment-files", [
+            'assignmentFile' => 'abd.pdf',
+            'assignmentId' => $this->assignment->id,
+        ])
+            ->assertJson(['type' => 'error',
+                'message' => 'You cannot upload a file since this assignment is past due.']);
+    }
+
     /** @test */
     public function can_get_assignment_file_info_if_owner()
     {
