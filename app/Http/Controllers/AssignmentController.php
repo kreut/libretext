@@ -28,7 +28,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return mixed
      */
-    public function index(Course $course)
+    public function index(Course $course, Extension $extension)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -38,23 +38,32 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
-
+            $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
             $assignments = $course->assignments;
             foreach ($course->assignments as $key => $assignment) {
                 $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
-
                 $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
                 $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
+                if (Auth::user()->role === 3) {
+                    $is_extension = isset($extensions_by_assignment[$assignment->id]);
+                    $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
+                    $assignments[$key]['is_extension'] = isset($extensions_by_assignment[$assignment->id]);
+                    $assignments[$key]['due'] = ['due_date' => $due, 'is_extension' => $is_extension];
+                    $assignments[$key]['is_available'] = strtotime($assignment['available_from']) < time();
+                    $assignments[$key]['past_due'] = $due < time();
+                } else {
+                    $due = $assignment['due'];
+                }
+                $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($due);
+                $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($due);
 
-                $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($assignment['due']);
-                $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($assignment['due']);
 
             }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error retrieving your assignments.  Please try again by refreshing the page or contact us for assistance.";
-        return $response;
+            return $response;
         }
         return $assignments;
     }

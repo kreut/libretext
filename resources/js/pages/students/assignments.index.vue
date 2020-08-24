@@ -1,68 +1,75 @@
 <template>
   <div>
     <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
-    <div v-if="hasAssignments">
-      <b-modal
-        id="modal-upload-assignment-file"
-        ref="modal"
-        title="Upload File"
-        @ok="handleOk"
-        @hidden="resetModalForms"
-        ok-title="Submit"
+    <b-modal
+      id="modal-upload-assignment-file"
+      ref="modal"
+      title="Upload File"
+      @ok="handleOk"
+      @hidden="resetModalForms"
+      ok-title="Submit"
 
-      >
-        <b-form ref="form" @submit.stop.prevent="submitUploadAssignmentFile">
-          <b-form-file
-            ref="assignmentFileInput"
-            v-model="form.assignmentFile"
-            placeholder="Choose a .pdf file or drop it here..."
-            drop-placeholder="Drop file here..."
-            accept=".pdf"
-          ></b-form-file>
-          <div v-if="uploading">
-            <b-spinner small type="grow"></b-spinner>
-            Uploading file...
-          </div>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile')}}
-          </div>
+    >
+      <b-form ref="form" @submit.stop.prevent="submitUploadAssignmentFile">
+        <b-form-file
+          ref="assignmentFileInput"
+          v-model="form.assignmentFile"
+          placeholder="Choose a .pdf file or drop it here..."
+          drop-placeholder="Drop file here..."
+          accept=".pdf"
+        ></b-form-file>
+        <div v-if="uploading">
+          <b-spinner small type="grow"></b-spinner>
+          Uploading file...
+        </div>
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile')}}
+        </div>
 
-        </b-form>
-      </b-modal>
-      <b-modal
-        id="modal-assignment-submission-feedback"
-        ref="modal"
-        size="xl"
-        title="Assignment Submission Feedback"
-        @ok="closeAssignmentSubmissionFeedbackModal"
-        ok-only
-        ok-variant="primary"
-        ok-title="Close"
+      </b-form>
+    </b-modal>
+    <b-modal
+      id="modal-assignment-submission-feedback"
+      ref="modal"
+      size="xl"
+      title="Assignment Submission Feedback"
+      @ok="closeAssignmentSubmissionFeedbackModal"
+      ok-only
+      ok-variant="primary"
+      ok-title="Close"
 
-      >
-        <b-card title="Summary">
-          <b-card-text>
-            <p>
-              Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">{{this.assignmentFileInfo.original_filename}}</b-button><br>
-              Score: {{this.assignmentFileInfo.score}}<br>
-              Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
-              Date graded: {{this.assignmentFileInfo.date_graded}}<br>
-              Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
-            <hr>
+    >
+      <b-card title="Summary">
+        <b-card-text>
+          <p>
+            Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">{{this.assignmentFileInfo.original_filename}}</b-button><br>
+            Score: {{this.assignmentFileInfo.score}}<br>
+            Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
+            Date graded: {{this.assignmentFileInfo.date_graded}}<br>
+            Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
+          <hr>
 
-          </b-card-text>
-        </b-card>
-        <div v-if="assignmentFileInfo.file_feedback_url">
+        </b-card-text>
+      </b-card>
+      <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
           <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"></iframe>
         </div>
-        </div>
-      </b-modal>
+      </div>
+    </b-modal>
 
+
+
+    <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
+            <div v-show="data.item.is_available">
             <a href="" v-on:click.prevent="getStudentView(data.item.id)">{{ data.item.name }}</a>
+            </div>
+            <div v-show="!data.item.is_available">
+              {{ data.item.name }}
+            </div>
           </div>
         </template>
         <template v-slot:cell(files)="data">
@@ -125,7 +132,10 @@
         {
           key: 'due',
           formatter: value => {
-            return formatDateAndTime(value)
+            let dateAndTime = formatDateAndTime(value.due_date)
+            let extension = value.is_extension ? '(Extension)' : ''
+
+            return dateAndTime + ' ' + extension
           }
         },
         'credit_given_if_at_least',
@@ -225,6 +235,7 @@
         // alert('reset modal')
       },
       openUploadAssignmentFileModal(assignmentId) {
+        this.form.errors.clear('assignmentFile')
         this.assignmentId = assignmentId
       },
       getStudentView(assignmentId) {

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\User;
 use App\AssignmentFile;
 use App\Assignment;
+use App\Extension;
 use App\Http\Requests\StoreTextFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -217,7 +218,7 @@ class AssignmentFileController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function storeAssignmentFile(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
+    public function storeAssignmentFile(Request $request, AssignmentFile $assignmentFile, Assignment $assignment, Extension $extension)
     {
 
 
@@ -232,6 +233,16 @@ class AssignmentFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
+            $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
+
+            $is_extension = isset($extensions_by_assignment[$assignment->id]);
+            $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
+            if ($due < time()){
+                $response['message'] = 'You cannot upload a file since this assignment is past due.';
+                return $response;
+
+            }
+
             $validator = Validator::make($request->all(), [
                 'assignmentFile' => ['required', 'mimes:pdf', 'max:500000']
             ]);
@@ -240,6 +251,10 @@ class AssignmentFileController extends Controller
                 $response['message'] = $validator->errors()->first('assignmentFile');
                 return $response;
             }
+
+
+
+
 
             //save locally and to S3
             $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
