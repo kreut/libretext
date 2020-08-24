@@ -308,7 +308,9 @@
           this.resetAll('modal-assignment-details')
 
         } catch (error) {
-          this.$noty.error(error.message)
+          if (!error.message.includes('status code 422')) {
+            this.$noty.error(error.message)
+          }
         }
       },
       async createAssignment() {
@@ -321,7 +323,9 @@
           this.resetAll('modal-assignment-details')
 
         } catch (error) {
-          this.$noty.error(error.message)
+          if (!error.message.includes('status code 422')) {
+            this.$noty.error(error.message)
+          }
         }
       },
       resetAll(modalId) {
