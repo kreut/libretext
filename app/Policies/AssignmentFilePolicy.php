@@ -44,12 +44,19 @@ class AssignmentFilePolicy
             : Response::deny('You are not allowed to create a temporary URL.');
     }
 
-    public function viewAssignmentFilesByAssignment(User $user, AssignmentFile $assignmentFile, Course $course)
+    public function viewAssignmentFilesByAssignment(User $user, AssignmentFile $assignmentFile, Assignment $assignment)
     {
+       $message ='';
+       if (((int)$assignment->course->user_id !== $user->id)) {
+            $message = 'You are not allowed to access these assignment files.';
+        }
 
-        return ((int)$course->user_id === $user->id)
+        if ((int)$assignment->assignment_files !== 1) {
+            $message = 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.';
+        }
+        return (((int)$assignment->course->user_id === $user->id) && ((int)$assignment->assignment_files === 1))
             ? Response::allow()
-            : Response::deny('You are not allowed to access these assignment files.');
+            : Response::deny($message);
     }
 
     public function uploadAssignmentFile(User $user, AssignmentFile $assignmentFile, Assignment $assignment)
@@ -65,7 +72,7 @@ class AssignmentFilePolicy
     {
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course
-        return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int) $assignment->course->user_id === $instructor_user_id);
+        return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int)$assignment->course->user_id === $instructor_user_id);
     }
 
     public function storeTextFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)

@@ -36,6 +36,7 @@ class AssignmentFileTest extends TestCase
 
     }
 
+
     /** @test */
 
     public function can_get_assignment_files_if_owner()
@@ -53,6 +54,17 @@ class AssignmentFileTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access these assignment files.']);
 
     }
+
+    /** @test */
+    public function cannot_get_assignment_files_if_assignment_files_not_enabled()
+    {
+        $this->assignment->assignment_files = 0;
+        $this->assignment->save();
+        $this->actingAs($this->user)->getJson("/api/assignment-files/{$this->assignment->id}")
+            ->assertJson(['type' => 'error', 'message' => 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.']);
+
+    }
+
 
     /** @test */
     public function can_download_assignment_file_if_owner()

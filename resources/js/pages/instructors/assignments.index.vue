@@ -152,7 +152,7 @@
           <div class="mb-0">
             <span class="pr-1" v-on:click="getQuestions(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
-            <span class="pr-1" v-on:click="getAssignmentFileView(data.item.id)"> <b-icon
+            <span class="pr-1" v-on:click="getAssignmentFileView(data.item.id, data.item.assignment_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
@@ -258,7 +258,11 @@
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
       },
-      getAssignmentFileView(assignmentId) {
+      getAssignmentFileView(assignmentId, assignmentFiles) {
+        if (assignmentFiles === 0){
+          this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
+        return false
+        }
         this.$router.push(`/assignments/${assignmentId}/files`)
       },
       async getAssignments() {

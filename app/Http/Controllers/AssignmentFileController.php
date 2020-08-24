@@ -75,9 +75,8 @@ class AssignmentFileController extends Controller
     public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment, AssignmentFile $assignmentFile)
     {
 
-
         $response['type'] = 'error';
-        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$assignmentFile, $assignment->course]);
+        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$assignmentFile,  $assignment]);
 
 
         if (!$authorized->allowed()) {
