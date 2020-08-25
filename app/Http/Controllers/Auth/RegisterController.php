@@ -5,14 +5,19 @@ namespace App\Http\Controllers\Auth;
 use App\Http\Controllers\Controller;
 use App\User;
 use App\Role;
+use App\Course_Ta;
 use App\InstructorAccessCode;
 use App\TaAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\DB;
 use App\Rules\IsValidInstructorAccessCode;
 use App\Rules\IsValidTaAccessCode;
+
+use App\Exceptions\Handler;
+use \Exception;
 
 
 class RegisterController extends Controller
@@ -80,35 +85,57 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+        try {
 
+           return  DB::transaction(function () use ($data) {
+                switch ($data['registration_type']) {
+                    case('student'):
+                        $role = 3;
+                        break;
+                    case('instructor'):
+                        DB::table('instructor_access_codes')->where('access_code', $data['access_code'])->delete();
+                        $role = 2;
+                        break;
+                    case('ta'):
+                        $course_id = DB::table('ta_access_codes')->where('access_code', $data['access_code'])->value('course_id');
+                        TaAccessCode::where('access_code', $data['access_code'])->delete();
+                        $role = 4;
+                        break;
+                    default:
+                        return false;
+                }
 
-        switch ($data['registration_type']){
-            case('student'):
-                $role = 3;
-                break;
-            case('instructor'):
-                InstructorAccessCode::where('access_code', $data['access_code'])->delete();
-                $role = 2;
-                break;
-            case('ta'):
-                TaAccessCode::where('access_code', $data['access_code'])->delete();
-                $role = 4;
-                break;
-            default:
-             return false;
+                $user = new User;
+                $user->first_name = $data['first_name'];
+                $user->last_name = $data['last_name'];
+                $user->email = $data['email'];
+                $user->password = bcrypt($data['password']);
+                $user->role = $role;
+                $user->save();
+                if ($role === 4) {
+                    $course_ta_exists = DB::table('course_ta')
+                        ->where('user_id', $user->id)
+                        ->where('course_id', $course_id)
+                        ->get()
+                        ->isNotEmpty();
+                    if (!$course_ta_exists) {
+                        DB::table('course_ta')->insert(
+                            ['user_id' => $user->id,
+                                'course_id' => $course_id,
+                                'created_at' => now(),
+                                'updated_at' => now()]
+                        );
+                    }
+
+                }
+                return $user;
+            });
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error completing your registration.  Please try again or contact us for assistance.";
         }
 
-        $user = new User;
-        $user->first_name = $data['first_name'];
-        $user->last_name = $data['last_name'];
-        $user->email = $data['email'];
-        $user->password = bcrypt($data['password']);
-        $user->role = $role;
-        $user->save();
-
-        $response['type'] = 'success';
-        $response['user'] = $user;
-
-        return $user;
+        return $response;
     }
 }
