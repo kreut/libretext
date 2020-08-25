@@ -16,9 +16,9 @@ class inviteTa extends Mailable
      *
      * @return void
      */
-    public function __construct()
+    public function __construct($access_code)
     {
-
+            $this->access_code = $access_code;
     }
 
     /**
@@ -29,6 +29,6 @@ class inviteTa extends Mailable
     public function build()
     {
         return $this->from('adapt@libretexts.org')
-            ->view('emails.ta_invitation');
+                    ->view('emails.ta_invitation', ['access_code' => $this->access_code]);
     }
 }

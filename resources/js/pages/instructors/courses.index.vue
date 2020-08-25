@@ -7,11 +7,10 @@
     <b-modal
       id="modal-manage-tas"
       ref="modal"
-      title="Add TA"
+      title="Invite TA"
       @ok="submitInviteTA"
       @hidden="resetModalForms"
       ok-title="Submit"
-
     >
       <b-form ref="form">
         <b-form-group
@@ -29,9 +28,12 @@
             @keydown="taForm.errors.clear('email')"
           >
           </b-form-input>
-          <has-error :form="taForm" field="name"></has-error>
+          <has-error :form="taForm" field="email"></has-error>
         </b-form-group>
-
+        <div  v-if="sendingEmail" class="float-right">
+          <b-spinner small type="grow"></b-spinner>
+        Sending Email...
+        </div>
       </b-form>
     </b-modal>
 
@@ -124,7 +126,7 @@
               icon="file-earmark-text"></b-icon></span>
             <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
             <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <span class="pr-1" v-on:click="inviteTA(data.item)"><b-icon icon="people"></b-icon></span>
+            <span class="pr-1" v-on:click="inviteTA(data.item.id)"><b-icon icon="people"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
           </div>
         </template>
@@ -174,6 +176,7 @@
         },
         'actions'
       ],
+      sendingEmail: false,
       courses: [],
       hasCourses: false,
       courseId: false, //if there's a courseId if it's an update
@@ -199,11 +202,14 @@
         this.$bvModal.show('modal-manage-tas')
       },
       async submitInviteTA(bvModalEvt) {
+        if (this.sendingEmail){
+          this.$noty.info('Please be patient while we send the email.')
+          return faslse
+        }
         bvModalEvt.preventDefault()
         try {
-          this.taForm.course_id = this.courseId
-          this.taForm.type = 'ta';
-          const {data} = await this.taForm.post('/api/invitations')
+          this.sendingEmail = true
+          const {data} = await this.taForm.post(`/api/invitations/${this.courseId}`)
           this.$noty[data.type](data.message)
           this.resetAll('modal-manage-tas')
 
@@ -212,6 +218,7 @@
             this.$noty.error(error.message)
           }
         }
+        this.sendingEmail = false
       },
       showAssignments(courseId) {
         window.location.href = `/instructors/courses/${courseId}/assignments`

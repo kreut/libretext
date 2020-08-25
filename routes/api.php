@@ -78,7 +78,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/assignment-files/file-feedback', 'AssignmentFileController@storeFileFeedback');
     Route::post('/assignment-files/text-feedback', 'AssignmentFileController@storeTextFeedback');
 
-    Route::post('/invitations', 'InvitationController@emailInvitation');
+    Route::post('/invitations/{course}', 'InvitationController@emailInvitation');
 
 });
 
