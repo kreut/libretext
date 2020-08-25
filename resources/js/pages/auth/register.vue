@@ -55,7 +55,7 @@
           </div>
 
           <!-- Access Code -->
-          <div class="form-group row" v-if="isInstructor">
+          <div class="form-group row" v-if="isInstructor || isTA">
             <label class="col-md-3 col-form-label text-md-right">{{ $t('access_code') }}</label>
             <div class="col-md-7">
               <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }"
@@ -84,7 +84,7 @@
 <script>
   import Form from 'vform'
   import LoginWithGithub from '~/components/LoginWithGithub'
-  import { redirectOnLogin } from '~/helpers/LoginRedirect'
+  import {redirectOnLogin} from '~/helpers/LoginRedirect'
 
   export default {
     middleware: 'guest',
@@ -100,7 +100,7 @@
       this.setRegistrationType(this.$route.path)
     },
     watch: {
-      '$route' (to) {
+      '$route'(to) {
         this.setRegistrationType(to.path)
       }
     },
@@ -115,15 +115,28 @@
         registration_type: ''
       }),
       mustVerifyEmail: false,
-      isInstructor: '',
+      isTA: false,
+      isInstructor: false,
       registrationTitle: ''
     }),
 
     methods: {
       setRegistrationType(path) {
-        this.isInstructor = path.includes('instructor')
-        this.form.registration_type = this.isInstructor ? 'instructor' : 'student'
-        this.registrationTitle = this.isInstructor ? 'Instructor Registration' : 'Student Registration'
+        this.form.registration_type = path.replace('/register/', '')
+        switch (this.form.registration_type) {
+          case 'instructor':
+            this.registrationTitle = 'Instructor Registration'
+            this.isInstructor = true
+            break
+          case 'student':
+            this.registrationTitle = 'Student Registration'
+            break
+          case 'ta':
+            this.registrationTitle = 'TA Registration'
+            this.isTA = true
+            break
+        }
+
       },
       async register() {
 

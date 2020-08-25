@@ -6,11 +6,13 @@ use App\Http\Controllers\Controller;
 use App\User;
 use App\Role;
 use App\InstructorAccessCode;
+use App\TaAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use App\Rules\IsValidInstructorAccessCode;
+use App\Rules\IsValidTaAccessCode;
 
 
 class RegisterController extends Controller
@@ -63,6 +65,10 @@ class RegisterController extends Controller
         if ($data['registration_type'] === 'instructor') {
             $validator['access_code'] = new IsValidInstructorAccessCode();
         }
+
+        if ($data['registration_type'] === 'ta') {
+            $validator['access_code'] = new IsValidTaAccessCode();
+        }
         return Validator::make($data, $validator);
     }
 
@@ -74,11 +80,22 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
-        //delete for instructors
-        $role = 3;//assume student
-        if (isset($data['access_code'])) {
-            InstructorAccessCode::where('access_code', $data['access_code'])->delete();
-            $role = 2;
+
+
+        switch ($data['registration_type']){
+            case('student'):
+                $role = 3;
+                break;
+            case('instructor'):
+                InstructorAccessCode::where('access_code', $data['access_code'])->delete();
+                $role = 2;
+                break;
+            case('ta'):
+                TaAccessCode::where('access_code', $data['access_code'])->delete();
+                $role = 4;
+                break;
+            default:
+             return false;
         }
 
         $user = new User;

@@ -22,7 +22,7 @@ let general_paths  = [
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
-  { path: '/register/instructor', name: 'register', component: page('auth/register.vue'), alias: '/register/student' },
+  { path: '/register/instructor', name: 'register', component: page('auth/register.vue'), alias: ['/register/student','/register/ta'] },
   { path: '/password/reset', name: 'password.request', component: page('auth/password/email.vue') },
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },

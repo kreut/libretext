@@ -17,9 +17,11 @@ exports.formatDate = formatDate;
 function redirectOnLogin(store, router) {
   var userTypes = {
     2: 'instructors',
-    3: 'students'
+    3: 'students',
+    4: 'tas'
   };
   var role = userTypes[store.getters['auth/user'].role];
+  alert(role);
   router.push({
     name: "".concat(role, ".courses.index")
   });
