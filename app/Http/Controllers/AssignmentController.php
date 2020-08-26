@@ -98,7 +98,8 @@ class AssignmentController extends Controller
                     'due' => $data['due_date'] . ' ' . $data['due_time'],
                     'num_submissions_needed' => $data['num_submissions_needed'],
                     'type_of_submission' => $data['type_of_submission'],
-                    'assignment_files' => $data['assignment_files'],
+                    'assignment_files' => ($data['files'] === 'assignment_files'),
+                    'question_files' => ($data['files'] === 'question_files'),
                     'course_id' => $course->id
                 ]
             );
@@ -162,11 +163,13 @@ class AssignmentController extends Controller
             $data['available_from'] = $data['available_from_date'] . ' ' . $data['available_from_time'];
 
             $data['due'] = $data['due_date'] . ' ' . $data['due_time'];
-
+            $data['assignment_files'] = ($data['files'] === 'assignment_files');
+            $data['question_files'] = ($data['files'] === 'question_files');
             //remove what's not needed
-            foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
+            foreach (['files', 'available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
                 unset($data[$value]);
             }
+
             $assignment->update($data);
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
