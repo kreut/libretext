@@ -17,7 +17,7 @@ class InvitationPolicy
 
         return $course->user_id === $user->id
             ? Response::allow()
-            : Response::deny('You are not allowed to invite users to this course');
+            : Response::deny('You are not allowed to invite users to this course.');
 
     }
 }

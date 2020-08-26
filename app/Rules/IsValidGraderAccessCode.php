@@ -3,9 +3,9 @@
 namespace App\Rules;
 
 use Illuminate\Contracts\Validation\Rule;
-use App\TaAccessCode;
+use App\GraderAccessCode;
 
-class IsValidTaAccessCode implements Rule
+class IsValidGraderAccessCode implements Rule
 {
     /**
      * Create a new rule instance.
@@ -27,7 +27,7 @@ class IsValidTaAccessCode implements Rule
     public function passes($attribute, $value)
     {
 
-        return TaAccessCode::where('access_code', '=', $value)->exists();
+        return GraderAccessCode::where('access_code', '=', $value)->exists();
     }
 
     /**

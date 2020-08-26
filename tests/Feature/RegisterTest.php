@@ -3,12 +3,26 @@
 namespace Tests\Feature;
 
 use App\User;
+use App\Course;
+use App\GraderAccessCode;
+
 use Tests\TestCase;
+
 
 class RegisterTest extends TestCase
 {
+
+    public function setup(): void
+    {
+
+        parent::setUp();
+        $this->user = factory(User::class)->create();
+        $this->course = factory(Course::class)->create();
+    }
+
+
     /** @test */
-    public function can_register()
+    public function can_register_as_student()
     {
         $this->postJson('/api/register', [
             'first_name' => 'Test',
@@ -20,6 +34,38 @@ class RegisterTest extends TestCase
         ])
         ->assertSuccessful()
         ->assertJsonStructure(['id', 'first_name', 'last_name', 'email']);
+    }
+
+    /** @test */
+    public function cannot_register_as_grader_without_valid_access_code()
+    {
+        $this->postJson('/api/register', [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@test.app',
+            'password' => 'secret',
+            'password_confirmation' => 'secret',
+            'registration_type' => 'grader',
+            'access_code' => 'some bad code'
+        ])
+            ->assertJsonValidationErrors(['access_code']);
+    }
+
+    /** @test */
+    public function can_register_as_grader_with_a_valid_access_code()
+    {
+
+        GraderAccessCode::create(['access_code' => 'a_valid_code', 'course_id' => $this->course->id]);
+        $this->postJson('/api/register', [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@test.app',
+            'password' => 'secret',
+            'password_confirmation' => 'secret',
+            'registration_type' => 'grader',
+            'access_code' => 'a_valid_code'
+        ])
+            ->assertJson(['role' => 4]);
     }
 
     /** @test */

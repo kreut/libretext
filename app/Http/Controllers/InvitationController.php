@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Invitation;
 use App\Course;
-use App\TaAccessCode;
+use App\GraderAccessCode;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Mail;
 use App\Mail\inviteTa;
@@ -19,7 +19,7 @@ class InvitationController extends Controller
 {
 
     use AccessCodes;
-    public function emailInvitation(EmailInvitation $request, Course $course, Invitation $invitation, TaAccessCode $ta_access_code)
+    public function emailInvitation(EmailInvitation $request, Course $course, Invitation $invitation, GraderAccessCode $ta_access_code)
     {
 
         $response['type'] = 'error';
@@ -33,10 +33,7 @@ class InvitationController extends Controller
             $data = $request->validated();
 
             //create an access code and save it to the database
-
-            $to_name = 'Eric Kean';
-            $to_email = 'kreut@hotmail.com';
-            $access_code =  $this->createTaAccessCode();
+            $access_code =  $this->createGraderAccessCode();
             $ta_access_code->create(['course_id' => $course->id,
                 'access_code' => $access_code]);
 

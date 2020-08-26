@@ -60,6 +60,10 @@
               Instructor
             </router-link>
             </b-dropdown-item>
+            <b-dropdown-item href="#"> <router-link  :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
+              Grader
+            </router-link>
+            </b-dropdown-item>
           </b-nav-item-dropdown>
 
         </b-navbar-nav>

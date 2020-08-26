@@ -7,14 +7,14 @@ use App\User;
 use App\Role;
 use App\Course_Ta;
 use App\InstructorAccessCode;
-use App\TaAccessCode;
+use App\GraderAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Rules\IsValidInstructorAccessCode;
-use App\Rules\IsValidTaAccessCode;
+use App\Rules\IsValidGraderAccessCode;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -71,8 +71,8 @@ class RegisterController extends Controller
             $validator['access_code'] = new IsValidInstructorAccessCode();
         }
 
-        if ($data['registration_type'] === 'ta') {
-            $validator['access_code'] = new IsValidTaAccessCode();
+        if ($data['registration_type'] === 'grader') {
+            $validator['access_code'] = new IsValidGraderAccessCode();
         }
         return Validator::make($data, $validator);
     }
@@ -96,9 +96,9 @@ class RegisterController extends Controller
                         DB::table('instructor_access_codes')->where('access_code', $data['access_code'])->delete();
                         $role = 2;
                         break;
-                    case('ta'):
-                        $course_id = DB::table('ta_access_codes')->where('access_code', $data['access_code'])->value('course_id');
-                        TaAccessCode::where('access_code', $data['access_code'])->delete();
+                    case('grader'):
+                        $course_id = DB::table('grader_access_codes')->where('access_code', $data['access_code'])->value('course_id');
+                        GraderAccessCode::where('access_code', $data['access_code'])->delete();
                         $role = 4;
                         break;
                     default:
@@ -128,6 +128,7 @@ class RegisterController extends Controller
                     }
 
                 }
+
                 return $user;
             });
         } catch (Exception $e) {

@@ -188,6 +188,7 @@ class CourseController extends Controller
                 }
                 $course->assignments()->delete();
                 $course->enrollments()->delete();
+                $course->graders()->delete();
                 $course->delete();
             });
             $response['type'] = 'success';

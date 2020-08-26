@@ -7,6 +7,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use App\User;
 use App\Course;
+use App\Grader;
 use Tests\TestCase;
 
 class CoursesIndexTest extends TestCase
@@ -19,6 +20,54 @@ class CoursesIndexTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create();
+        $this->course_2 = factory(Course::class)->create();
+
+        $this->grader_user = factory(User::class)->create();
+        $this->grader_user->role = 4;
+        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
+        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course_2->id]);
+
+    }
+
+    /** @test */
+    public function user_cannot_email_grader_invitation_without_a_valid_email()
+    {
+        $this->actingAs($this->user)->postJson("/api/invitations/{$this->course->id}",
+            ['email' => 'some bad email'])
+            ->assertJsonValidationErrors(['email']);
+    }
+
+
+    /** @test */
+    public function user_cannot_email_grader_invitation_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/invitations/{$this->course->id}",
+            ['email' => 'some@email.com'])
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to invite users to this course.']);
+    }
+
+
+    /** @test */
+    public function user_can_email_grader_invitation_if_owner()
+    {
+        $this->markTestIncomplete(
+            'Need to learn how to mock the Mail class'
+        );
+
+
+    }
+
+    /** @test */
+    public function grader_can_get_courses_for_which_they_grade()
+    {
+        factory(CourseAccessCode::class)->create(['access_code' => 'wefk;IOE',
+            'course_id' => $this->course->id]);
+        factory(CourseAccessCode::class)->create(['access_code' => 'ssswefk;IOE',
+            'course_id' => $this->course_2->id]);
+
+        $this->actingAs($this->grader_user)->getJson("/api/courses")
+            ->assertJson(['courses' => [['id' => '1'], ['id' => '2']]]);
+
     }
 
 
