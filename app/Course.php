@@ -58,18 +58,18 @@ class Course extends Model
         return $this->hasOne('App\CourseAccessCode');
     }
 
-    public function tas()
+    public function graders()
     {
-        return DB::table('course_ta')
+        return DB::table('graders')
             ->select('user_id')
             ->where('course_id', $this->id)
             ->get()
             ->pluck('user_id');
     }
 
-    public function isTa()
+    public function isGrader()
     {
-        $tas = DB::table('course_ta')
+        $tas = DB::table('graders')
             ->select('user_id')
             ->where('course_id', $this->id)
             ->get()

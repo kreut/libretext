@@ -113,13 +113,13 @@ class RegisterController extends Controller
                 $user->role = $role;
                 $user->save();
                 if ($role === 4) {
-                    $course_ta_exists = DB::table('course_ta')
+                    $grader= DB::table('grader')
                         ->where('user_id', $user->id)
                         ->where('course_id', $course_id)
                         ->get()
                         ->isNotEmpty();
-                    if (!$course_ta_exists) {
-                        DB::table('course_ta')->insert(
+                    if (!$grader) {
+                        DB::table('grader')->insert(
                             ['user_id' => $user->id,
                                 'course_id' => $course_id,
                                 'created_at' => now(),

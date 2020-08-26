@@ -7,10 +7,10 @@
       </div>
     </div>
     <b-modal
-      id="modal-manage-tas"
+      id="modal-manage-graders"
       ref="modal"
       title="Invite TA"
-      @ok="submitInviteTA"
+      @ok="submitInviteGrader"
       @hidden="resetModalForms"
       ok-title="Submit"
     >
@@ -24,13 +24,13 @@
         >
           <b-form-input
             id="email"
-            v-model="taForm.email"
+            v-model="graderForm.email"
             type="text"
-            :class="{ 'is-invalid': taForm.errors.has('email') }"
-            @keydown="taForm.errors.clear('email')"
+            :class="{ 'is-invalid': graderForm.errors.has('email') }"
+            @keydown="graderForm.errors.clear('email')"
           >
           </b-form-input>
-          <has-error :form="taForm" field="email"></has-error>
+          <has-error :form="graderForm" field="email"></has-error>
         </b-form-group>
         <div v-if="sendingEmail" class="float-right">
           <b-spinner small type="grow"></b-spinner>
@@ -127,9 +127,9 @@
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
               icon="file-earmark-text"></b-icon></span>
             <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
-            <span v-if="user.role === 3">
+            <span v-if="user.role === 2">
               <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-              <span class="pr-1" v-on:click="inviteTA(data.item.id)"><b-icon icon="people"></b-icon></span>
+              <span class="pr-1" v-on:click="inviteGrader(data.item.id)"><b-icon icon="people"></b-icon></span>
               <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
             </span>
           </div>
@@ -194,7 +194,7 @@
         start_date: '',
         end_date: ''
       }),
-      taForm: new Form({
+      graderForm: new Form({
         email: ''
       }),
       showNoCoursesAlert: false,
@@ -204,11 +204,11 @@
       this.getCourses();
     },
     methods: {
-      inviteTA(courseId) {
+      inviteGrader(courseId) {
         this.courseId = courseId
-        this.$bvModal.show('modal-manage-tas')
+        this.$bvModal.show('modal-manage-graders')
       },
-      async submitInviteTA(bvModalEvt) {
+      async submitInviteGrader(bvModalEvt) {
         if (this.sendingEmail) {
           this.$noty.info('Please be patient while we send the email.')
           return faslse
@@ -218,7 +218,7 @@
           this.sendingEmail = true
           const {data} = await this.taForm.post(`/api/invitations/${this.courseId}`)
           this.$noty[data.type](data.message)
-          this.resetAll('modal-manage-tas')
+          this.resetAll('modal-manage-graders')
 
         } catch (error) {
           if (!error.message.includes('status code 422')) {

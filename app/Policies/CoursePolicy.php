@@ -58,7 +58,7 @@ class CoursePolicy
             }
             case(4):
             {
-                $has_access = $course->isTa();
+                $has_access = $course->isGrader();
                 break;
             }
             default:

@@ -57,7 +57,7 @@ class CourseController extends Controller
                     ->get();
                 break;
             case(4):
-                $courses = DB::table('course_ta')
+                $courses = DB::table('graders')
                     ->where('user_id', $user->id)
                     ->get()
                     ->pluck('course_id');
