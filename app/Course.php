@@ -3,6 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class Course extends Model
 {
@@ -16,11 +18,13 @@ class Course extends Model
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
      */
-    public function scores() {
+    public function scores()
+    {
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
-    public function enrolledUsers() {
+    public function enrolledUsers()
+    {
         return $this->hasManyThrough('App\User',
             'App\Enrollment',
             'course_id', //foreign key on enrollments table
@@ -29,7 +33,8 @@ class Course extends Model
             'user_id'); //local key in enrollments table
     }
 
-    public function extensions() {
+    public function extensions()
+    {
         return $this->hasManyThrough('App\Extension',
             'App\Assignment',
             'course_id', //foreign key on assignments table
@@ -38,16 +43,39 @@ class Course extends Model
             'id'); //local key in assignments table
     }
 
-    public function assignments() {
+    public function assignments()
+    {
         return $this->hasMany('App\Assignment')->orderBy('due', 'asc');
     }
 
-    public function enrollments() {
+    public function enrollments()
+    {
         return $this->hasMany('App\Enrollment');
     }
 
-    public function accessCodes() {
+    public function accessCodes()
+    {
         return $this->hasOne('App\CourseAccessCode');
+    }
+
+    public function tas()
+    {
+        return DB::table('course_ta')
+            ->select('user_id')
+            ->where('course_id', $this->id)
+            ->get()
+            ->pluck('user_id');
+    }
+
+    public function isTa()
+    {
+        $tas = DB::table('course_ta')
+            ->select('user_id')
+            ->where('course_id', $this->id)
+            ->get()
+            ->pluck('user_id')
+            ->toArray();
+        return (in_array(Auth::user()->id, $tas));
     }
 
 }

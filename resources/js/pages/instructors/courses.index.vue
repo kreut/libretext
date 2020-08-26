@@ -1,8 +1,10 @@
 <template>
   <div>
     <PageTitle v-if="canViewCourses" title="My Courses"></PageTitle>
-    <div class="row mb-4 float-right" v-if="canViewCourses">
-      <b-button variant="primary" v-b-modal.modal-course-details>Add Course</b-button>
+    <div v-if="user.role === 2">
+      <div class="row mb-4 float-right" v-if="canViewCourses">
+        <b-button variant="primary" v-b-modal.modal-course-details>Add Course</b-button>
+      </div>
     </div>
     <b-modal
       id="modal-manage-tas"
@@ -30,9 +32,9 @@
           </b-form-input>
           <has-error :form="taForm" field="email"></has-error>
         </b-form-group>
-        <div  v-if="sendingEmail" class="float-right">
+        <div v-if="sendingEmail" class="float-right">
           <b-spinner small type="grow"></b-spinner>
-        Sending Email...
+          Sending Email...
         </div>
       </b-form>
     </b-modal>
@@ -125,9 +127,11 @@
             <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
               icon="file-earmark-text"></b-icon></span>
             <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
-            <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <span class="pr-1" v-on:click="inviteTA(data.item.id)"><b-icon icon="people"></b-icon></span>
-            <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+            <span v-if="user.role === 3">
+              <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
+              <span class="pr-1" v-on:click="inviteTA(data.item.id)"><b-icon icon="people"></b-icon></span>
+              <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+            </span>
           </div>
         </template>
       </b-table>
@@ -197,8 +201,7 @@
       canViewCourses: false
     }),
     mounted() {
-     this.getCourses();
-
+      this.getCourses();
     },
     methods: {
       inviteTA(courseId) {
@@ -206,7 +209,7 @@
         this.$bvModal.show('modal-manage-tas')
       },
       async submitInviteTA(bvModalEvt) {
-        if (this.sendingEmail){
+        if (this.sendingEmail) {
           this.$noty.info('Please be patient while we send the email.')
           return faslse
         }

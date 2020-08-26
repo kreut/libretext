@@ -15,7 +15,7 @@ class CoursePolicy
     /**
      * Determine whether the user can view any courses.
      *
-     * @param  \App\User  $user
+     * @param \App\User $user
      * @return mixed
      */
     public function viewAny(User $user)
@@ -28,7 +28,7 @@ class CoursePolicy
     /**
      * Determine whether the user can view any courses.
      *
-     * @param  \App\User  $user
+     * @param \App\User $user
      * @return mixed
      */
     public function viewCourseScores(User $user, Course $course)
@@ -41,14 +41,29 @@ class CoursePolicy
     /**
      * Determine whether the user can view the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function view(User $user, Course $course)
     {
-        $has_access = ($user->role === 3) ? $course->enrollments->contains('user_id',$user->id)
-            : $this->ownsCourseByUser($course, $user);
+        switch ($user->role) {
+            case(2):
+                $has_access = $this->ownsCourseByUser($course, $user);
+                break;
+            case(3):
+            {
+               $has_access = $course->enrollments->contains('user_id', $user->id);
+                break;
+            }
+            case(4):
+            {
+                $has_access = $course->isTa();
+                break;
+            }
+            default:
+                $has_access = false;
+        }
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to access this course.');
@@ -57,8 +72,8 @@ class CoursePolicy
     /**
      * Determine whether the user can view the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function createCourseAssignment(User $user, Course $course)
@@ -72,7 +87,7 @@ class CoursePolicy
     /**
      * Determine whether the user can create courses.
      *
-     * @param  \App\User  $user
+     * @param \App\User $user
      * @return mixed
      */
     public function create(User $user)
@@ -85,8 +100,8 @@ class CoursePolicy
     /**
      * Determine whether the user can update the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function update(User $user, Course $course)
@@ -99,8 +114,8 @@ class CoursePolicy
     /**
      * Determine whether the user can delete the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function delete(User $user, Course $course)
@@ -113,8 +128,8 @@ class CoursePolicy
     /**
      * Determine whether the user can restore the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function restore(User $user, Course $course)
@@ -125,8 +140,8 @@ class CoursePolicy
     /**
      * Determine whether the user can permanently delete the course.
      *
-     * @param  \App\User  $user
-     * @param  \App\Course  $course
+     * @param \App\User $user
+     * @param \App\Course $course
      * @return mixed
      */
     public function forceDelete(User $user, Course $course)
