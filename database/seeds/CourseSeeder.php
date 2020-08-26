@@ -18,12 +18,18 @@ class CourseSeeder extends Seeder
         $faker = Factory::create();
         $user = User::find(1);
         $start_date = Carbon::now();
-            Course::create([
-                'name' => 'First Course',
-                'user_id' => $user->id,
-                'start_date' => $start_date->format('Y-m-d'),
-                'end_date' => $start_date->add('2 years')->format('Y-m-d')
-            ]);
+        Course::create([
+            'name' => 'First Course',
+            'user_id' => $user->id,
+            'start_date' => $start_date->format('Y-m-d'),
+            'end_date' => $start_date->add('1 years')->format('Y-m-d')
+        ]);
+        Course::create([
+            'name' => 'Second Course',
+            'user_id' => $user->id,
+            'start_date' => $start_date->add('2 years')->format('Y-m-d'),
+            'end_date' => $start_date->add('3 years')->format('Y-m-d')
+        ]);
 
     }
 }
