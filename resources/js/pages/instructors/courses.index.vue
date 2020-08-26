@@ -9,7 +9,7 @@
     <b-modal
       id="modal-manage-graders"
       ref="modal"
-      title="Invite TA"
+      title="Invite Grader"
       @ok="submitInviteGrader"
       @hidden="resetModalForms"
       ok-title="Submit"
@@ -216,7 +216,7 @@
         bvModalEvt.preventDefault()
         try {
           this.sendingEmail = true
-          const {data} = await this.taForm.post(`/api/invitations/${this.courseId}`)
+          const {data} = await this.graderForm.post(`/api/invitations/${this.courseId}`)
           this.$noty[data.type](data.message)
           this.resetAll('modal-manage-graders')
 
@@ -262,7 +262,7 @@
         this.form.name = ''
         this.form.start_date = ''
         this.form.end_date = ''
-        this.taForm.email = ''
+        this.graderForm.email = ''
         this.courseId = false
         this.form.errors.clear()
       }

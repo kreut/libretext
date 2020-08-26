@@ -1,8 +1,10 @@
 <template>
   <div>
     <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
-    <div class="row mb-4 float-right" v-if="canViewAssignments">
-      <b-button variant="primary" v-b-modal.modal-assignment-details>Add Assignment</b-button>
+    <div v-if="user.role === 2">
+      <div class="row mb-4 float-right" v-if="canViewAssignments">
+        <b-button variant="primary" v-b-modal.modal-assignment-details>Add Assignment</b-button>
+      </div>
     </div>
     <b-modal
       id="modal-assignment-details"
@@ -100,12 +102,12 @@
           label="Assignment Files"
           label-for="Assignment Files"
         >
-        <b-form-row>
-          <b-form-radio-group v-model="form.assignment_files" >
-            <b-form-radio name="assignment_files" value="1">Students can upload files</b-form-radio>
-            <b-form-radio name="assignment_files" value="0">Students cannot upload files</b-form-radio>
-          </b-form-radio-group>
-        </b-form-row>
+          <b-form-row>
+            <b-form-radio-group v-model="form.assignment_files">
+              <b-form-radio name="assignment_files" value="1">Students can upload files</b-form-radio>
+              <b-form-radio name="assignment_files" value="0">Students cannot upload files</b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
         </b-form-group>
         <b-form-row>
           <b-col lg="5">Give students assignment credit if at least</b-col>
@@ -154,8 +156,10 @@
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="getAssignmentFileView(data.item.id, data.item.assignment_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
+            <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
+              </span>
           </div>
         </template>
       </b-table>
@@ -174,6 +178,7 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import {mapGetters} from "vuex"
 
 
   const now = new Date()
@@ -192,6 +197,9 @@
 
   export default {
     middleware: 'auth',
+    computed: mapGetters({
+      user: 'auth/user'
+    }),
     data: () => ({
       assignmentId: false, //if there's a assignmentId it's an update
       assignments: [],
@@ -259,9 +267,9 @@
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
       },
       getAssignmentFileView(assignmentId, assignmentFiles) {
-        if (assignmentFiles === 0){
+        if (assignmentFiles === 0) {
           this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
-        return false
+          return false
         }
         this.$router.push(`/assignments/${assignmentId}/files`)
       },
