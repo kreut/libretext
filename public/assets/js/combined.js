@@ -21,8 +21,8 @@ function redirectOnLogin(store, router) {
     4: 'tas'
   };
   var role = userTypes[store.getters['auth/user'].role];
-  alert(role);
+  var name = role === 'students' ? 'students.courses.index' : 'instructors.courses.index';
   router.push({
-    name: "".concat(role, ".courses.index")
+    name: name
   });
 }

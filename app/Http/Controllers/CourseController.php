@@ -27,19 +27,14 @@ class CourseController extends Controller
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $course);
-
         if (!$authorized->allowed()) {
 
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
+            $response['courses'] = $this->getCourses(auth()->user());
 
-            $response['courses'] = DB::table('courses')
-                ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
-                ->select('courses.*', 'course_access_codes.access_code')
-                ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
-                ->get();
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -48,6 +43,31 @@ class CourseController extends Controller
         }
         return $response;
 
+    }
+
+    public function getCourses($user)
+    {
+
+        switch ($user->role) {
+            case(2):
+                return DB::table('courses')
+                    ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+                    ->select('courses.*', 'course_access_codes.access_code')
+                    ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
+                    ->get();
+                break;
+            case(4):
+                $courses = DB::table('course_ta')
+                    ->where('user_id', $user->id)
+                    ->get()
+                    ->pluck('course_id');
+                return DB::table('courses')
+                    ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+                    ->select('courses.*', 'course_access_codes.access_code')
+                    ->whereIn('courses.id', $courses)->orderBy('start_date', 'desc')
+                    ->get();
+                break;
+        }
     }
 
     /**

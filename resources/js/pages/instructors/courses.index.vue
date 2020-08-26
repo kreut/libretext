@@ -146,12 +146,16 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
+  import {mapGetters} from "vuex"
 
   import {formatDate} from '~/helpers/Date'
 
   const now = new Date()
   export default {
     middleware: 'auth',
+    computed: mapGetters({
+      user: 'auth/user'
+    }),
     data: () => ({
       fields: [
         {
@@ -193,7 +197,7 @@
       canViewCourses: false
     }),
     mounted() {
-      this.getCourses();
+     this.getCourses();
 
     },
     methods: {
