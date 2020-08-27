@@ -48,6 +48,8 @@
       <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
            v-on:click="removeQuestion(questions[currentPage-1])">
         <b-button variant="danger">Remove Question</b-button>
+       Enable Question File Uploads
+
       </div>
       <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
         <b-button variant="primary">Add Question</b-button>
