@@ -1,6 +1,37 @@
 <template>
   <div>
 
+    <b-modal
+      id="modal-upload-question-file"
+      ref="modal"
+      title="Upload File"
+      @ok="handleOk"
+      @hidden="resetModalForms"
+      ok-title="Submit"
+
+    >
+      <b-form ref="form">
+        <b-form-file
+          ref="questionFileInput"
+          v-model="form.questionFile"
+          placeholder="Choose a .pdf file or drop it here..."
+          drop-placeholder="Drop file here..."
+          accept=".pdf"
+        ></b-form-file>
+        <div v-if="uploading">
+          <b-spinner small type="grow"></b-spinner>
+          Uploading file...
+        </div>
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">{{ form.errors.get('questionFile')}}
+        </div>
+
+      </b-form>
+    </b-modal>
+
+
+
+
     <div v-if="!initializing">
       <PageTitle v-bind:title="this.title"></PageTitle>
       <div v-if="questions.length">
@@ -31,23 +62,10 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
           <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-            <b-form ref="form" @submit.stop.prevent="submitUploadQuestionFile">
-              <b-form-file
-                ref="assignmentFileInput"
-                v-model="form.questionFile"
-                placeholder="Choose a .pdf file or drop it here..."
-                drop-placeholder="Drop file here..."
-                accept=".pdf"
-              ></b-form-file>
-              <div v-if="uploading">
-                <b-spinner small type="grow"></b-spinner>
-                Uploading file...
-              </div>
-              <input type="hidden" class="form-control is-invalid">
-              <div class="help-block invalid-feedback">{{ form.errors.get('questionFile')}}
-              </div>
+            <b-button variant="primary" class="mr-2" v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
+                    v-b-modal.modal-upload-question-file>Upload File</b-button>
+            <b-button variant="secondary">View Comments</b-button>
 
-            </b-form>
           </div>
         </div>
         <div v-if="this.learningTreeAsList.length>0">
@@ -157,10 +175,12 @@
 
 <script>
 import axios from 'axios'
+import Form from 'vform'
 import {mapGetters} from "vuex"
 import {getQuestionSrc} from '~/helpers/Questions'
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
+import {submitUploadFile} from '~/helpers/UploadFiles'
 
 export default {
   middleware: 'auth',
@@ -171,6 +191,12 @@ export default {
     ToggleButton
   },
   data: () => ({
+    uploading: false,
+    form: new Form({
+      questionFile: null,
+      assignmentId: null,
+      questionId: null
+    }),
     remediationIframeId: '',
     iframeLoaded: false,
     loadedTitles: false,
@@ -190,6 +216,7 @@ export default {
   created() {
     this.getQuestionSrc = getQuestionSrc
     this.toggleQuestionFiles = toggleQuestionFiles
+    this.submitUploadFile = submitUploadFile
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
@@ -221,6 +248,26 @@ export default {
     }
   },
   methods: {
+    resetModalForms() {
+      // alert('reset modal')
+    },
+    openUploadQuestionFileModal(questionId) {
+      this.form.errors.clear('questionFile')
+      this.form.questionId = questionId
+      this.form.assignmentId = this.assignmentId
+    },
+  async handleOk(bvModalEvt) {
+    // Prevent modal from closing
+    bvModalEvt.preventDefault()
+    // Trigger submit handler
+    if (this.uploading) {
+      this.$noty.info('Please be patient while the file is uploading.')
+      return false
+    }
+    this.uploading = true
+    await this.submitUploadFile('question', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+    this.uploading = false
+  },
     viewOriginalQuestion(){
       this.showQuestion = true
     },
