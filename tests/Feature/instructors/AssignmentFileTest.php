@@ -78,7 +78,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function cannot_download_assignment_file_if_not_owner()
     {
-        $this->actingAs($this->user_2)->postJson("/api/assignment-files/download",
+        $this->actingAs($this->user_2)->postJson("/api/submission-files/download",
             [
                 'assignment_id' => $this->assignment->id,
                 'submission' => $this->assignment_file->submission
@@ -91,7 +91,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function can_get_temporary_url_from_request_if_owner()
     {
-        $this->actingAs($this->user)->postJson("/api/assignment-files/get-temporary-url-from-request",
+        $this->actingAs($this->user)->postJson("/api/submission-files/get-temporary-url-from-request",
             [
                 'assignment_id' => $this->assignment->id,
                 'file' => $this->assignment_file->submission
@@ -105,7 +105,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function cannot_get_temporary_url_if_not_owner()
     {
-        $this->actingAs($this->user_2)->postJson("/api/assignment-files/get-temporary-url-from-request",
+        $this->actingAs($this->user_2)->postJson("/api/submission-files/get-temporary-url-from-request",
             [
                 'assignment_id' => $this->assignment->id,
                 'file' => $this->assignment_file->submission
@@ -119,7 +119,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function can_store_text_feedback_if_owner()
     {
-        $this->actingAs($this->user)->postJson("/api/assignment-files/text-feedback",
+        $this->actingAs($this->user)->postJson("/api/submission-files/text-feedback",
             [
                 'assignment_id' => $this->assignment->id,
                 'user_id' => $this->student_user->id,
@@ -133,7 +133,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function cannot_store_text_feedback_if_not_owner()
     {
-        $this->actingAs($this->user_2)->postJson("/api/assignment-files/text-feedback",
+        $this->actingAs($this->user_2)->postJson("/api/submission-files/text-feedback",
             [
                 'assignment_id' => $this->assignment->id,
                 'user_id' => $this->student_user->id,

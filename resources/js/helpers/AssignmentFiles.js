@@ -5,7 +5,7 @@ export async function downloadSubmission(assignment_id, submission, original_fil
   try {
     const {data} = await axios({
       method: 'post',
-      url: '/api/assignment-files/download',
+      url: '/api/submission-files/download',
       responseType: 'arraybuffer',
       data: {
         'assignment_id': assignment_id,

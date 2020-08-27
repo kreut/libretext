@@ -201,7 +201,7 @@
           formData.append('assignmentId', this.assignmentId)
           formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
-          const {data} = await axios.post('/api/assignment-files/file-feedback', formData)
+          const {data} = await axios.post('/api/submission-files/file-feedback', formData)
           if (data.type === 'error') {
             this.fileFeedbackForm.errors.set('fileFeedback', data.message)
           } else {
@@ -225,7 +225,7 @@
           this.textFeedbackForm.assignment_id = this.assignmentId
           this.textFeedbackForm.user_id = this.assignmentFiles[this.currentPage - 1]['user_id']
 
-          const {data} = await this.textFeedbackForm.post('/api/assignment-files/text-feedback')
+          const {data} = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
             this.assignmentFiles[this.currentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
@@ -249,7 +249,7 @@
       async getTemporaryUrl(type, currentPage) {
         if (this.assignmentFiles[currentPage - 1][type] && !this.assignmentFiles[currentPage - 1][`${type}_url`]) {
           try {
-            const {data} = await axios.post('/api/assignment-files/get-temporary-url-from-request',
+            const {data} = await axios.post('/api/submission-files/get-temporary-url-from-request',
               {
                 'assignment_id': this.assignmentId,
                 'file': this.assignmentFiles[currentPage - 1][type]

@@ -10,8 +10,9 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
     formData.append(typeFile, form[typeFile])
     formData.append('assignmentId', form.assignmentId)
     formData.append('questionId', form.questionId)
+    formData.append(type, type)
     formData.append('_method', 'put'); // add this
-    const {data} = await axios.post(`/api/${type}-files`, formData)
+    const {data} = await axios.post(`/api/submission-files`, formData)
     if (data.type === 'error') {
       form.errors.set(typeFile, data.message)
     } else {

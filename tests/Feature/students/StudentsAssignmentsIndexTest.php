@@ -45,7 +45,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     public function assignment_file_must_contain_a_file()
     {
 
-        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
+        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
             'assignmentFile' => '',
             'assignmentId' => $this->assignment->id,
         ])
@@ -59,7 +59,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assignment->due = '2020-06-12 09:00:00';
         $this->assignment->save();
 
-     $this->actingAs($this->student_user)->putJson("/api/assignment-files", [
+     $this->actingAs($this->student_user)->putJson("/api/submission-files", [
             'assignmentFile' => 'abd.pdf',
             'assignmentId' => $this->assignment->id,
         ])
@@ -86,7 +86,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     /** @test */
     public function cannot_download_assignment_file_if_not_owner()
     {
-        $this->actingAs($this->student_user_2)->postJson("/api/assignment-files/download",
+        $this->actingAs($this->student_user_2)->postJson("/api/submission-files/download",
             [
                 'assignment_id' => $this->assignment->id,
                 'submission' => $this->assignment_file->submission
@@ -103,7 +103,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     public function assignment_file_must_contain_a_pdf_file()
     {
 
-        $this->actingAs($this->student_user_2)->putJson("/api/assignment-files", [
+        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
             'assignmentFile' => 'sdflkj.jpeg',
             'assignmentId' => $this->assignment->id,
         ])
@@ -116,7 +116,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     public function cannot_store_assignment_file_if_not_enrolled_in_course()
     {
 
-        $this->actingAs($this->student_user_3)->putJson("/api/assignment-files", [
+        $this->actingAs($this->student_user_3)->putJson("/api/submission-files", [
             'assignmentFile' => 'abd.pdf',
             'assignmentId' => $this->assignment->id,
         ])
