@@ -55,9 +55,9 @@ class AssignmentSyncQuestionController extends Controller
             $response['question_ids'] = [];
             $response['question_files'] = [];
             $assignment_question_info = DB::table('assignment_question')
-                                            ->where('assignment_id', $assignment->id)
-                                            ->get();
-           if ($assignment_question_info->isNotEmpty()){
+                ->where('assignment_id', $assignment->id)
+                ->get();
+            if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
                     $response['question_ids'][] = $question_info->question_id;
                     if ($question_info->question_files) {
@@ -75,7 +75,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function toggleQuestionFiles(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion){
+    public function toggleQuestionFiles(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
@@ -87,11 +88,11 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                                            ->where('question_id', $question->id)
-                                            ->update(['question_files' => $request->question_files]);
+                ->where('question_id', $question->id)
+                ->update(['question_files' => $request->question_files]);
             $response['type'] = $request->question_files ? 'success' : 'info';
             $response['message'] = $request->question_files ? 'Your students can now upload a question file for this question.'
-                                                            : 'Your student can no longer upload a question file for this question.';
+                : 'Your student can no longer upload a question file for this question.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -101,6 +102,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
+
     public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -166,41 +168,46 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
 
 
-$question_ids = json_decode($this->getQuestionIdsByAssignment($assignment)['question_ids'], true);
+
+            $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
+
+            $question_ids =  $assignment_question_info['question_ids'];
+            $question_files = $assignment_question_info['question_files'];
 
 
-$instructor_user_id = $assignment->course->user_id;
-         $instructor_learning_trees = DB::table('learning_trees')
-                            ->whereIn('question_id', $question_ids)
-                            ->where('user_id', $instructor_user_id )
-                            ->get();
-         $instructor_learning_trees_by_question_id = [];
-         $other_instructor_learning_trees_by_question_id = [];
+            $instructor_user_id = $assignment->course->user_id;
+            $instructor_learning_trees = DB::table('learning_trees')
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', $instructor_user_id)
+                ->get();
+            $instructor_learning_trees_by_question_id = [];
+            $other_instructor_learning_trees_by_question_id = [];
 
-         if ($instructor_learning_trees) {
-             foreach ($instructor_learning_trees as $key=>$value){
-                 $instructor_learning_trees_by_question_id[$value->question_id]= json_decode($value->learning_tree)->blocks;
-             }
-         }
+            if ($instructor_learning_trees) {
+                foreach ($instructor_learning_trees as $key => $value) {
+                    $instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
+                }
+            }
             $other_instructor_learning_trees = DB::table('learning_trees')
                 ->whereIn('question_id', $question_ids)
-                ->where('user_id', '<>',Auth::user()->id)
+                ->where('user_id', '<>', Auth::user()->id)
                 ->get();
-         //just get the first one created
+            //just get the first one created
 
-            if ($other_instructor_learning_trees ) {
-                    foreach ($other_instructor_learning_trees as $key=>$value){
-                        $other_instructor_learning_trees_by_question_id[$value->question_id]= json_decode($value->learning_tree)->blocks;
-                    }
+            if ($other_instructor_learning_trees) {
+                foreach ($other_instructor_learning_trees as $key => $value) {
+                    $other_instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
+                }
             }
 
             foreach ($assignment->questions as $key => $question) {
+                $assignment->questions[$key]['questionFiles'] = in_array($question->id,$question_files);//camel case because using in vue
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
                 $custom_claims["{$question->technology}"] = '';
-                if ($question->technology === 'webwork'){
+                if ($question->technology === 'webwork') {
                     $custom_claims['webwork'] = [];
                     $custom_claims['webwork']['problemSeed'] = '1234567';
                     $custom_claims['webwork']['courseID'] = 'daemon_course';
@@ -212,7 +219,7 @@ $instructor_user_id = $assignment->course->user_id;
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
                 }
                 $assignment->questions[$key]->token = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
-                if (isset($instructor_learning_trees_by_question_id[$question->id])){
+                if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $other_instructor_learning_trees_by_question_id[$question->id];

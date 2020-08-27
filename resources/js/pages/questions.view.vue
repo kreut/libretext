@@ -18,8 +18,17 @@
               v-on:input="resetLearningTree(questions[currentPage - 1].learning_tree)"
             ></b-pagination>
           </div>
-          <div class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" v-if="user.role !== 3">
-            <b-button variant="danger">Remove Question</b-button>
+          <div v-if="user.role !== 3">
+            <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)"  variant="danger">Remove Question</b-button>
+            <toggle-button
+              @change="toggleQuestionFiles(questions[currentPage-1])"
+              :width="250"
+              :value="questions[currentPage-1].questionFiles"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="{checked: '#007BFF', unchecked: '#75C791'}"
+              :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
         </div>
         <div v-if="this.learningTreeAsList.length>0">
@@ -131,6 +140,7 @@
 import axios from 'axios'
 import {mapGetters} from "vuex"
 import {getQuestionSrc} from '~/helpers/Questions'
+import {ToggleButton} from 'vue-js-toggle-button'
 
 
 export default {
@@ -138,6 +148,9 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  components: {
+    ToggleButton
+  },
   data: () => ({
     remediationIframeId: '',
     iframeLoaded: false,
@@ -188,6 +201,19 @@ export default {
     }
   },
   methods: {
+    async toggleQuestionFiles(question){
+      console.log(question)
+      this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
+      try {
+        const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${question.id}/toggle-question-files`,
+          {question_files : this.questions[this.currentPage - 1].questionFiles })
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
+        console.log(error)
+        this.$noty.error('We could not toggle the question files option.  Please try again or contact us for assistance.')
+      }
+    },
     viewOriginalQuestion(){
       this.showQuestion = true
     },
@@ -307,7 +333,7 @@ export default {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])
           this.questions[i].questionIframeId = `viewQuestionIframe-${this.questions[i].id}`
         }
-
+console.log(this.questions)
         this.initializing = false
       } catch (error) {
         alert(error)

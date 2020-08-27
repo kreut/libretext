@@ -57,14 +57,15 @@
       </div>
      </div>
       <div v-if="questions[currentPage-1].inAssignment">
-      <div v-show="questions[currentPage-1].questionFiles" class="mt-1 mb-2"
-           v-on:click="toggleQuestionFiles(questions[currentPage-1])">
-        <b-button variant="success">Disable Question File Upload</b-button>
-      </div>
-      <div v-show="!questions[currentPage-1].questionFiles" class="mt-1 mb-2"
-           v-on:click="toggleQuestionFiles(questions[currentPage-1])">
-        <b-button variant="success">Enable Question File Upload</b-button>
-      </div>
+        <toggle-button
+                       @change="toggleQuestionFiles(questions[currentPage-1])"
+                       :width="250"
+                       :value="questions[currentPage-1].questionFiles"
+                       :sync="true"
+                       :font-size="14"
+                       :margin="4"
+                       :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                       :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
       </div>
         <iframe v-bind:id="questions[currentPage-1].questionIframeId"
                 allowtransparency="true" frameborder="0"
@@ -82,10 +83,12 @@
 import axios from 'axios'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {getQuestionSrc} from '~/helpers/Questions'
+import {ToggleButton} from 'vue-js-toggle-button'
 
 export default {
   components: {
-    VueBootstrapTypeahead
+    VueBootstrapTypeahead,
+    ToggleButton
   },
   middleware: 'auth',
   data: () => ({
@@ -110,15 +113,14 @@ export default {
   },
   methods: {
     async toggleQuestionFiles(question){
+      console.log(question)
+      this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
   try {
     const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${question.id}/toggle-question-files`,
-    {question_files : !question.questionFiles})
+    {question_files : this.questions[this.currentPage - 1].questionFiles })
     this.$noty[data.type](data.message)
-    if (data.type === 'success') {
-      this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
-    }
-
   } catch (error) {
+    this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
     console.log(error)
     this.$noty.error('We could not toggle the question files option.  Please try again or contact us for assistance.')
   }
@@ -155,11 +157,11 @@ export default {
     },
     async addQuestion(question) {
       try {
+        this.questions[this.currentPage - 1].questionFiles = false
         const {data} = await axios.post(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].inAssignment = true
-          this.questions[this.currentPage - 1].questionFiles = false
         }
 
       } catch (error) {
