@@ -21,7 +21,7 @@
           <div v-if="user.role !== 3">
             <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)"  variant="danger">Remove Question</b-button>
             <toggle-button
-              @change="toggleQuestionFiles(questions[currentPage-1])"
+              @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
               :width="250"
               :value="questions[currentPage-1].questionFiles"
               :sync="true"
@@ -141,7 +141,7 @@ import axios from 'axios'
 import {mapGetters} from "vuex"
 import {getQuestionSrc} from '~/helpers/Questions'
 import {ToggleButton} from 'vue-js-toggle-button'
-
+import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 
 export default {
   middleware: 'auth',
@@ -170,6 +170,7 @@ export default {
   }),
   created() {
     this.getQuestionSrc = getQuestionSrc
+    this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
@@ -201,19 +202,6 @@ export default {
     }
   },
   methods: {
-    async toggleQuestionFiles(question){
-      console.log(question)
-      this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
-      try {
-        const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${question.id}/toggle-question-files`,
-          {question_files : this.questions[this.currentPage - 1].questionFiles })
-        this.$noty[data.type](data.message)
-      } catch (error) {
-        this.questions[this.currentPage - 1].questionFiles = !question.questionFiles
-        console.log(error)
-        this.$noty.error('We could not toggle the question files option.  Please try again or contact us for assistance.')
-      }
-    },
     viewOriginalQuestion(){
       this.showQuestion = true
     },
@@ -333,7 +321,7 @@ export default {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])
           this.questions[i].questionIframeId = `viewQuestionIframe-${this.questions[i].id}`
         }
-console.log(this.questions)
+
         this.initializing = false
       } catch (error) {
         alert(error)
