@@ -30,6 +30,9 @@
               :color="{checked: '#007BFF', unchecked: '#75C791'}"
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
+          <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+            Can upload
+          </div>
         </div>
         <div v-if="this.learningTreeAsList.length>0">
           <b-alert show>
