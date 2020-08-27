@@ -40,7 +40,7 @@ class QuestionController extends Controller
                                                  ->pluck('question_id')->toArray();
             if (!$question_ids_grouped_by_tag[$key] ){
                 return ['type' => 'error',
-                        'message' => 'There are no questions associate with those tags.'];
+                        'message' => 'There are no questions associated with those tags.'];
             }
         }
         //now intersect them for each group

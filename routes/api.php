@@ -59,6 +59,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/learning-trees','LearningTreeController@store');
 
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
+    Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');

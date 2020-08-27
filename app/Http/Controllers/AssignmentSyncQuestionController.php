@@ -8,6 +8,7 @@ use \Exception;
 use Illuminate\Http\Request;
 use App\Assignment;
 use App\Question;
+use App\AssignmentQuestion;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -36,8 +37,43 @@ class AssignmentSyncQuestionController extends Controller
         }
         return $response;
 
+    }
+
+    public function getQuestionInfoByAssignment(Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['type'] = 'success';
+            $response['question_ids'] = [];
+            $response['question_files'] = [];
+            $assignment_question_info = DB::table('assignment_question')
+                                            ->where('assignment_id', $assignment->id)
+                                            ->get();
+           if ($assignment_question_info->isNotEmpty()){
+                foreach ($assignment_question_info as $question_info) {
+                    $response['question_ids'][] = $question_info->question_id;
+                    if ($question_info->question_files) {
+                        $response['question_files'][] = $question_info->question_id;
+                    }
+                }
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
 
     }
+
 
     public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {

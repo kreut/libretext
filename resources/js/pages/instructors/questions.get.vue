@@ -44,12 +44,10 @@
       ></b-pagination>
     </div>
     <div v-if="showQuestions">
-      <div class="col-4 d-flex justify-content-between">
+      <div class="d-flex col-4 justify-content-between">
       <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
            v-on:click="removeQuestion(questions[currentPage-1])">
         <b-button variant="danger">Remove Question</b-button>
-       Enable Question File Uploads
-
       </div>
       <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
         <b-button variant="primary">Add Question</b-button>
@@ -58,7 +56,16 @@
         <b-button variant="info">Create Learning Tree</b-button>
       </div>
      </div>
-
+      <div v-if="questions[currentPage-1].inAssignment">
+      <div v-show="questions[currentPage-1].questionFiles" class="mt-1 mb-2"
+           v-on:click="enableQuestionFiles(questions[currentPage-1])">
+        <b-button variant="success">Disable Question File Upload</b-button>
+      </div>
+      <div v-show="!questions[currentPage-1].questionFiles" class="mt-1 mb-2"
+           v-on:click="enableQuestionFiles(questions[currentPage-1])">
+        <b-button variant="success">Enable Question File Upload</b-button>
+      </div>
+      </div>
         <iframe v-bind:id="questions[currentPage-1].questionIframeId"
                 allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].src"
@@ -102,6 +109,9 @@ export default {
     this.tags = this.getTags();
   },
   methods: {
+    enableQuestionFiles(){
+
+    },
     showIframe(id) {
       this.iframeLoaded = true
       iFrameResize({log: true}, `#${id}`)
@@ -138,6 +148,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].inAssignment = true
+          this.questions[this.currentPage - 1].questionFiles = false
         }
 
       } catch (error) {
@@ -176,16 +187,17 @@ export default {
 
         if (questionsByTags.type === 'success' && questionsByTags.questions.length>0) {
           //get whether in the assignment and get the url
-          const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/ids`)
-          let questionIds = data
-
-          if (questionIds.type === 'success') {
-
-
+          const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
+          console.log(data)
+          let questionInfo = data
+console.log(questionInfo)
+          if (questionInfo.type === 'success') {
 
             for (let i = 0; i < questionsByTags.questions.length; i++) {
               console.log(questionsByTags.questions)
-              questionsByTags.questions[i].inAssignment = questionIds.question_ids.includes(questionsByTags.questions[i].id)
+              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
+              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+
               questionsByTags.questions[i].src = this.getQuestionSrc(questionsByTags.questions[i])
               questionsByTags.questions[i].questionIframeId = `getQuestionIframe-${i}`
             }
