@@ -21,6 +21,8 @@ use \Exception;
 
 class AssignmentFileController extends Controller
 {
+
+    //getSubmissionFileController?
     public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, AssignmentFile $assignmentFile)
     {
         $user_id = Auth::user()->id;
@@ -72,7 +74,7 @@ class AssignmentFileController extends Controller
 
     }
 
-
+//getSubmissionFilesByAssignment
     public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment, AssignmentFile $assignmentFile)
     {
 
@@ -136,7 +138,7 @@ class AssignmentFileController extends Controller
 
     }
 
-
+//downloadSubmissionFile
     public function downloadAssignmentFile(Request $request, AssignmentFile $assignmentFile)
     {
 
@@ -212,6 +214,8 @@ class AssignmentFileController extends Controller
 
     }
 
+
+    //storeSubmission
     /**
      * Store a newly created resource in storage.
      *
