@@ -147,7 +147,7 @@
   import axios from 'axios'
   import Form from "vform"
   import {ToggleButton} from 'vue-js-toggle-button'
-  import {downloadSubmission} from '~/helpers/Assignmentfiles'
+  import {downloadSubmission} from '~/helpers/AssignmentFiles'
   //import pdf from 'vue-pdf'
 
 

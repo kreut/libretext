@@ -31,7 +31,23 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
           <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-            Can upload
+            <b-form ref="form" @submit.stop.prevent="submitUploadQuestionFile">
+              <b-form-file
+                ref="assignmentFileInput"
+                v-model="form.questionFile"
+                placeholder="Choose a .pdf file or drop it here..."
+                drop-placeholder="Drop file here..."
+                accept=".pdf"
+              ></b-form-file>
+              <div v-if="uploading">
+                <b-spinner small type="grow"></b-spinner>
+                Uploading file...
+              </div>
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">{{ form.errors.get('questionFile')}}
+              </div>
+
+            </b-form>
           </div>
         </div>
         <div v-if="this.learningTreeAsList.length>0">

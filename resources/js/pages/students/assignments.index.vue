@@ -10,7 +10,7 @@
       ok-title="Submit"
 
     >
-      <b-form ref="form" @submit.stop.prevent="submitUploadAssignmentFile">
+      <b-form ref="form">
         <b-form-file
           ref="assignmentFileInput"
           v-model="form.assignmentFile"
@@ -42,7 +42,12 @@
       <b-card title="Summary">
         <b-card-text>
           <p>
-            Submitted File: <b-button variant="link" style="padding:0px; padding-bottom:3px" v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">{{this.assignmentFileInfo.original_filename}}</b-button><br>
+            Submitted File:
+            <b-button variant="link" style="padding:0px; padding-bottom:3px"
+                      v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">
+              {{this.assignmentFileInfo.original_filename}}
+            </b-button>
+            <br>
             Score: {{this.assignmentFileInfo.score}}<br>
             Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
             Date graded: {{this.assignmentFileInfo.date_graded}}<br>
@@ -59,13 +64,12 @@
     </b-modal>
 
 
-
     <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <div v-show="data.item.is_available">
-            <a href="" v-on:click.prevent="getStudentView(data.item.id)">{{ data.item.name }}</a>
+              <a href="" v-on:click.prevent="getStudentView(data.item.id)">{{ data.item.name }}</a>
             </div>
             <div v-show="!data.item.is_available">
               {{ data.item.name }}
@@ -74,10 +78,10 @@
         </template>
         <template v-slot:cell(files)="data">
           <div v-if="data.item.assignment_files === 1">
-          <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
-                  v-b-modal.modal-upload-assignment-file></b-icon>
-          <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
-                 ></b-icon>
+            <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
+                    v-b-modal.modal-upload-assignment-file></b-icon>
+            <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
+            ></b-icon>
           </div>
           <div v-else>
             N/A
@@ -100,7 +104,8 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
-  import {downloadSubmission} from '~/helpers/Assignmentfiles'
+  import {downloadSubmission} from '~/helpers/AssignmentFiles'
+  import {submitUploadFile} from '~/helpers/UploadFiles'
 
   const now = new Date()
 
@@ -116,6 +121,7 @@
     data: () => ({
       form: new Form({
         assignmentFile: null,
+        assignmentId: null
       }),
       assignmentFileInfo: {},
       uploading: false,
@@ -147,6 +153,7 @@
     }),
     created() {
       this.downloadSubmission = downloadSubmission
+      this.submitUploadFile = submitUploadFile
     },
     mounted() {
       this.courseId = this.$route.params.courseId
@@ -163,8 +170,8 @@
         try {
           const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
           this.assignmentFileInfo = data.assignment_file_info
-          if (!this.assignmentFileInfo){
-           this.$noty.info("You can't have any feedback if you haven't submitted a file!")
+          if (!this.assignmentFileInfo) {
+            this.$noty.info("You can't have any feedback if you haven't submitted a file!")
             return false
           }
           this.assignmentFileInfo = data.assignment_file_info
@@ -191,52 +198,25 @@
 
 
       },
-      handleOk(bvModalEvt) {
+      async handleOk(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
-        if (this.uploading){
+        if (this.uploading) {
           this.$noty.info('Please be patient while the file is uploading.')
           return false
         }
-        this.submitUploadAssignmentFile()
-      },
-      async submitUploadAssignmentFile() {
-        try {
-          console.log(this.form)
-          this.form.errors.set('assignmentFile', null)
-          this.uploading = true
-          //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
-          let formData = new FormData();
-          formData.append('assignmentFile', this.form.assignmentFile)
-          formData.append('assignmentId', this.assignmentId)
-          formData.append('_method', 'put'); // add this
-          const {data} = await axios.post('/api/assignment-files', formData)
-          if (data.type === 'error') {
-            this.form.errors.set('assignmentFile', data.message)
-          } else {
-            this.$noty.success(data.message)
-            this.$nextTick(() => {
-              this.$bvModal.hide('modal-upload-assignment-file')
-            })
-          }
-        } catch (error) {
-          if (error.message.includes('status code 413')) {
-            error.message = 'The maximum size allowed is 10MB.'
-          }
-          this.$noty.error(error.message)
-
-        }
+        this.uploading = true
+        await this.submitUploadFile('assignment',this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
         this.uploading = false
-        this.$refs['assignmentFileInput'].reset()
-
       },
+
       resetModalForms() {
         // alert('reset modal')
       },
       openUploadAssignmentFileModal(assignmentId) {
         this.form.errors.clear('assignmentFile')
-        this.assignmentId = assignmentId
+        this.form.assignmentId = assignmentId
       },
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
