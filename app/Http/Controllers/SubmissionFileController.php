@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\Rule;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 
@@ -114,6 +115,8 @@ class SubmissionFileController extends Controller
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
+        $type = $request->type;
+
         $assignment = Assignment::find($assignment_id);
         $authorized = Gate::inspect('uploadAssignmentFile', [$assignmentFile, $assignment]);
         if (!$authorized->allowed()) {
@@ -135,7 +138,8 @@ class SubmissionFileController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                'assignmentFile' => ['required', 'mimes:pdf', 'max:500000']
+                'assignmentFile' => ['required', 'mimes:pdf', 'max:500000'],
+                'type' => ['required', Rule::in(['question', 'assignment'])],
             ]);
 
             if ($validator->fails()) {
@@ -145,23 +149,36 @@ class SubmissionFileController extends Controller
 
 
             //save locally and to S3
-            $submission = $request->file('assignmentFile')->store("assignments/$assignment_id", 'local');
+            $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put("$submission", $submissionContents);
+            switch ($type) {
+                case('assignment'):
+                    $assignmentFile->updateOrCreate(
+                        ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
+                        ['submission' => basename($submission),
+                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                            'date_submitted' => Carbon::now()]
+                    );
+                    break;
+                case('question'):
+                    $questionFile->updateOrCreate(
+                        ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
+                        ['submission' => basename($submission),
+                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                            'date_submitted' => Carbon::now()]
+                    );
 
 
-            $assignmentFile->updateOrCreate(
-                ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
-                ['submission' => basename($submission),
-                    'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
-                    'date_submitted' => Carbon::now()]
-            );
+                    break;
+            }
+
             $response['type'] = 'success';
-            $response['message'] = 'Your assignment submission has been saved.';
+            $response['message'] = 'Your file submission has been saved.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to save your file submission.  Please try again or contact us for assistance.";
         }
         return $response;
 
