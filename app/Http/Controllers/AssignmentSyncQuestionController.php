@@ -17,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 
 class AssignmentSyncQuestionController extends Controller
 {
+
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
 
@@ -74,7 +75,32 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
+    public function toggleQuestionFiles(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion){
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                                            ->where('question_id', $question->id)
+                                            ->update(['question_files' => $request->question_files]);
+            $response['type'] = $request->question_files ? 'success' : 'info';
+            $response['message'] = $request->question_files ? 'Your students can now upload a question file for this question.'
+                                                            : 'Your student can no longer upload a question file for this question.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
