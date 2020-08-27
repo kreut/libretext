@@ -37,7 +37,16 @@ class InvitationController extends Controller
             $ta_access_code->create(['course_id' => $course->id,
                 'access_code' => $access_code]);
 
-            Mail::to($data['email'])->send(new inviteTa($access_code));
+            $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+            $to_email = $data['email'];
+            $beautymail->send('emails.ta_invitation', ['access_code' => $access_code], function($message)
+            use ($to_email) {
+                $message
+                    ->from('adapt@libretexts.org')
+                    ->to($to_email)
+                    ->subject('Invitation to Grade');
+            });
+
             $response['message'] = 'Your TA has been sent an email inviting them to this course.';
             $response['type'] = 'success';
         } catch (Exception $e) {

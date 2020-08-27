@@ -11,6 +11,7 @@ use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
+
 use App\Exceptions\Handler;
 use \Exception;
 
