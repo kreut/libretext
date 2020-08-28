@@ -30,9 +30,7 @@ class SubmissionFileController extends Controller
     {
 
         $response['type'] = 'error';
-
         $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
-
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -40,13 +38,19 @@ class SubmissionFileController extends Controller
         }
 
         try {
-
             $assignmentFilesByUser = [];
 
-            $assignmentFile = new AssignmentFile;
-            $user_and_assignment_file_info = $assignmentFile->getUserAndAssignmentFileInfo($assignment);
+            switch ($type){
+                case('assignment'):
+                    $user_and_submission_file_info = $submissionFile->getUserAndAssignmentFileInfo($assignment);
+                    break;
+                case('question'):
+
+                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment);
+            }
+
             $response['type'] = 'success';
-            $response['user_and_assignment_file_info'] = $user_and_assignment_file_info;
+            $response['user_and_assignment_file_info'] = $user_and_submission_file_info;
 
         } catch (Exception $e) {
             $h = new Handler(app());
