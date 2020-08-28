@@ -80,6 +80,7 @@ class SubmissionFileController extends Controller
     public function getTemporaryUrlFromRequest(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
     {
         $response['type'] = 'error';
+
         $course = $assignment->find($request->assignment_id)->course;
         $authorized = Gate::inspect('createTemporaryUrl', [$assignmentFile, $course]);
 
@@ -93,7 +94,7 @@ class SubmissionFileController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to retrieve the file.  Please try again or contact us for assistance.";
         }
         return $response;
     }
