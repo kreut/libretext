@@ -40,6 +40,40 @@ class QuestionsViewTest extends TestCase
 
     }
     /** @test */
+
+    public function cannot_store_a_question_file_if_it_is_not_in_the_assignment() {
+
+
+    }
+
+    /** @test */
+
+    public function cannot_store_a_question_file_if_it_has_the_wrong_type() {
+//testing for question/assignment
+
+    }
+
+    /** @test */
+
+    public function cannot_store_a_question_file() {
+
+
+    }
+
+    /** @test */
+
+    public function can_toggle_question_files_if_you_are_the_owner() {
+
+
+    }
+
+    /** @test */
+
+    public function cannot_toggle_question_files_if_you_are_not_the_owner() {
+
+
+    }
+    /** @test */
     public function can_submit_response()
     {
 
