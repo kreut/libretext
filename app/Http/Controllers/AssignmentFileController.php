@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\User;
+use App\AssignmentFile;
 use App\SubmissionFile;
 use App\Assignment;
 use App\Extension;
@@ -23,7 +24,7 @@ class AssignmentFileController extends Controller
 {
 
     //getSubmissionFileController?
-    public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, SubmissionFile $submissionFile)
+    public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, SubmissionFile $submissionFile, AssignmentFile $assignmentFile)
     {
         $user_id = Auth::user()->id;
 

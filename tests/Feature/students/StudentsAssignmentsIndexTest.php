@@ -9,7 +9,7 @@ use App\User;
 use App\Course;
 use App\Assignment;
 use App\Enrollment;
-use App\AssignmentFile;
+use App\SubmissionFile;
 
 class StudentsAssignmentsIndexTest extends TestCase
 {
@@ -38,7 +38,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         //student not enrolled
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
-        $this->assignment_file = factory(AssignmentFile::class)->create(['user_id' => $this->student_user->id]);
+        $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'assignment', 'user_id' => $this->student_user->id]);
     }
 
     /** @test */

@@ -123,6 +123,7 @@ class AssignmentFileTest extends TestCase
             [
                 'assignment_id' => $this->assignment->id,
                 'user_id' => $this->student_user->id,
+                'type' => 'assignment',
                 'textFeedback' => 'Some text feedback'
             ]
         )

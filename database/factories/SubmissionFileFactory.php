@@ -2,8 +2,9 @@
 
 /** @var \Illuminate\Database\Eloquent\Factory $factory */
 
-use App\Model;
+use App\SubmissionFile;
 use Faker\Generator as Faker;
+use Carbon\Carbon;
 
 $factory->define(SubmissionFile::class, function (Faker $faker) {
     $file_path = "assignments/1/fake_1.pdf";
