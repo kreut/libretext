@@ -274,15 +274,14 @@
       async getAssignmentFiles() {
         try {
           const {data} = await axios.get(`/api/submission-files/question/${this.assignmentId}`)
-          console.log(data)
 
-
-
-          const {data} = await axios.get(`/api/submission-files/assignment/${this.assignmentId}`)
+         // const {data} = await axios.get(`/api/submission-files/assignment/${this.assignmentId}`)
           if (data.type === 'error') {
             this.$noty.error(data.message)
             return false
           }
+          console.log(data)
+          return false
           this.assignmentFiles = data.user_and_assignment_file_info
           this.textFeedbackForm.textFeedback = this.assignmentFiles[0]['text_feedback']
         } catch (error) {

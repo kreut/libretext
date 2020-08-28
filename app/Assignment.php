@@ -21,13 +21,14 @@ class Assignment extends Model
     public function course() {
         return $this->belongsTo('App\Course');
     }
-    public function assignmentFiles()
+    public function assignmentFileSubmissions()
     {
         return $this->hasMany('App\SubmissionFile')->where('type','a');
     }
 
-    public function questionFiles()
+    public function questionFileSubmissions()
     {
         return $this->hasMany('App\SubmissionFile')->where('type','q');
     }
+
 }
