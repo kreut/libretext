@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\User;
-use App\AssignmentFile;
+use App\SubmissionFile;
 use App\Assignment;
 use App\Extension;
 use App\Http\Requests\StoreTextFeedback;
@@ -23,7 +23,7 @@ class AssignmentFileController extends Controller
 {
 
     //getSubmissionFileController?
-    public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, AssignmentFile $assignmentFile)
+    public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, SubmissionFile $submissionFile)
     {
         $user_id = Auth::user()->id;
 
@@ -38,21 +38,22 @@ class AssignmentFileController extends Controller
 
 
         try {
-            $assignmentFile = AssignmentFile::where('user_id', $user_id)
+            $submissionFile = SubmissionFile::where('user_id', $user_id)
                 ->where('assignment_id', $assignment->id)
+                ->where('type','a')
                 ->first();
-            if (!$assignmentFile) {
+            if (!$submissionFile) {
                 $response['type'] = 'success';
                 $response['assignment_file_info'] = null;
                 return $response;
             }
-            $submission = $assignmentFile->submission ?? null;
-            $file_feedback = $assignmentFile->file_feedback ?? null;
-            $text_feedback = $assignmentFile->text_feedback ?? 'None';
-            $original_filename = $assignmentFile->original_filename;
-            $date_submitted = $assignmentFile->date_submitted;
-            $date_graded = $assignmentFile->date_graded ?? "Not yet graded";
-            $score = $assignmentFile->score ?? "N/A";
+            $submission = $submissionFile->submission ?? null;
+            $file_feedback = $submissionFile->file_feedback ?? null;
+            $text_feedback = $submissionFile->text_feedback ?? 'None';
+            $original_filename = $submissionFile->original_filename;
+            $date_submitted = $submissionFile->date_submitted;
+            $date_graded = $submissionFile->date_graded ?? "Not yet graded";
+            $score = $submissionFile->score ?? "N/A";
             $response['assignment_file_info'] = [
                 'assignment_id' => $assignment->id,
                 'submission' => $submission,
@@ -75,11 +76,11 @@ class AssignmentFileController extends Controller
     }
 
 //getSubmissionFilesByAssignment
-    public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment, AssignmentFile $assignmentFile)
+    public function getAssignmentFilesByAssignment(Request $request, Assignment $assignment, SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$assignmentFile, $assignment]);
+        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
 
 
         if (!$authorized->allowed()) {
@@ -87,9 +88,7 @@ class AssignmentFileController extends Controller
             return $response;
         }
 
-
         try {
-
 
             $assignmentFilesByUser = [];
 

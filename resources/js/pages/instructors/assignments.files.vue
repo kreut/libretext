@@ -199,6 +199,8 @@
           let formData = new FormData();
           formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
           formData.append('assignmentId', this.assignmentId)
+          formData.append('type', 'assignment') ///TODO: make this abstract!!!
+
           formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/submission-files/file-feedback', formData)

@@ -25,8 +25,6 @@ class SubmissionFileController extends Controller
 {
 
 
-
-
     public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile)
     {
 
@@ -75,6 +73,7 @@ class SubmissionFileController extends Controller
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
         $student_user_id = $request->user_id;
+        $type = $request->type;
         $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
 
 
@@ -83,13 +82,27 @@ class SubmissionFileController extends Controller
             return $response;
         }
 
+        if (!in_array($type, ['question', 'assignment'])) {
+            $response['message'] = 'That is not a valid type of submission file.';
+            return $response;
+        }
+
         try {
 
             $data = $request->validated();
-            DB::table('assignment_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
-                ->update(['text_feedback' => $data['textFeedback']]);
+            switch ($type) {
+                case('assignment'):
+                    DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('type', 'a')
+                        ->update(['text_feedback' => $data['textFeedback']]);
+                    break;
+                case('question'):
+
+
+                    break;
+            }
 
             $response['type'] = 'success';
             $response['message'] = 'Your comments have been saved.';
@@ -104,6 +117,7 @@ class SubmissionFileController extends Controller
 
 
     //storeSubmission
+
     /**
      * Store a newly created resource in storage.
      *
@@ -154,17 +168,17 @@ class SubmissionFileController extends Controller
 
             //save locally and to S3
 
-            $submission_file = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
-            $submissionContents = Storage::disk('local')->get($submission_file);
-            Storage::disk('s3')->put($submission_file, $submissionContents);
+            $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
+            $submissionContents = Storage::disk('local')->get($submission);
+            Storage::disk('s3')->put($submission, $submissionContents);
             switch ($type) {
                 case('assignment'):
                     $submissionFile->updateOrCreate(
                         ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
                         ['type' => 'a',
-                        'submission_file' => basename($submission_file),
-                        'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
-                        'date_submitted' => Carbon::now()]
+                            'submission' => basename($submission),
+                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                            'date_submitted' => Carbon::now()]
                     );
                     break;
                 case('question'):
@@ -194,9 +208,11 @@ class SubmissionFileController extends Controller
     public function storeFileFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
 
+
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
         $student_user_id = $request->userId;
+        $type = $request->type;
 
         $authorized = Gate::inspect('uploadFileFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id),]);
         if (!$authorized->allowed()) {
@@ -210,7 +226,10 @@ class SubmissionFileController extends Controller
             //wait 30 seconds between uploads
             //no more than 10 uploads per assignment
             //delete the file if there was an exception???
-
+            if (!in_array($type, ['question', 'assignment'])) {
+                $response['message'] = 'That is not a valid type of submission file.';
+                return $response;
+            }
             $validator = Validator::make($request->all(), [
                 'fileFeedback' => ['required', 'mimes:pdf', 'max:500000']
             ]);
@@ -224,11 +243,19 @@ class SubmissionFileController extends Controller
             $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($fileFeedback);
             Storage::disk('s3')->put("$fileFeedback", $feedbackContents);
-            DB::table('assignment_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
-                ->update(['file_feedback' => basename($fileFeedback)]);
+            switch ($type) {
+                case('assignment'):
 
+                    DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('type', 'q')
+                        ->update(['file_feedback' => basename($fileFeedback)]);
+                    break;
+                case('question'):
+
+                    break;
+            }
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
             $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($fileFeedback));

@@ -23,6 +23,6 @@ class Assignment extends Model
     }
     public function assignmentFiles()
     {
-        return $this->hasMany('App\AssignmentFile');
+        return $this->hasMany('App\SubmissionFile')->where('type','a');
     }
 }
