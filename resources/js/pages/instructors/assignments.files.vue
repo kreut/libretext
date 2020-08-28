@@ -1,10 +1,10 @@
 <template>
-  <div v-if="assignmentFiles.length>0">
+  <div v-if="submissionFiles.length>0">
     <div class="overflow-auto">
       <b-pagination
-        v-on:input="changePage(currentPage)"
-        v-model="currentPage"
-        :total-rows="assignmentFiles.length"
+        v-on:input="changePage(currentSubmissionPage)"
+        v-model="currentSubmissionPage"
+        :total-rows="submissionFiles.length"
         :per-page="perPage"
         align="center"
         first-number
@@ -18,10 +18,10 @@
           <b-card title="Submission Information">
             <b-card-text>
               <p>
-                Name: {{ this.assignmentFiles[currentPage - 1]['name'] }}<br>
-                Date Submitted: {{ this.assignmentFiles[currentPage - 1]['date_submitted'] }}<br>
-                Date Graded: {{ this.assignmentFiles[currentPage - 1]['date_graded'] }}<br>
-                Base Score: {{ this.assignmentFiles[currentPage - 1]['score'] }}</p>
+                Name: {{ this.submissionFiles[currentSubmissionPage - 1]['name'] }}<br>
+                Date Submitted: {{ this.submissionFiles[currentSubmissionPage - 1]['date_submitted'] }}<br>
+                Date Graded: {{ this.submissionFiles[currentSubmissionPage - 1]['date_graded'] }}<br>
+                Base Score: {{ this.submissionFiles[currentSubmissionPage - 1]['score'] }}</p>
               <hr>
               <b-form-group
                 id="fieldset-horizontal"
@@ -77,12 +77,12 @@
       <div class="row">
         <div class="col-sm">
           <b-button variant="outline-primary"
-                    v-on:click="downloadSubmission(assignmentId, assignmentFiles[currentPage - 1]['submission'], assignmentFiles[currentPage - 1]['original_filename'], $noty)">
+                    v-on:click="downloadSubmission(submissionId, submissionFiles[currentSubmissionPage - 1]['submission'], submissionFiles[currentSubmissionPage - 1]['original_filename'], $noty)">
             Download Submission
           </b-button>
 
           <toggle-button class="float-right"
-                         @change="toggleView(currentPage)"
+                         @change="toggleView(currentSubmissionPage)"
                          :width="180"
                          :value="viewSubmission"
                          :font-size="14"
@@ -122,16 +122,16 @@
     </div>
     <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
       <div v-show="viewSubmission">
-        <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['submission_url'] !== null)">
-          <iframe width="600" height="600" :src="assignmentFiles[currentPage - 1]['submission_url']"></iframe>
+        <div v-if="submissionFiles.length>0 && (submissionFiles[currentSubmissionPage - 1]['submission_url'] !== null)">
+          <iframe width="600" height="600" :src="submissionFiles[currentSubmissionPage - 1]['submission_url']"></iframe>
         </div>
         <div v-else>
           <span class="text-info">This student has not submitted a file.</span>
         </div>
       </div>
       <div v-show="!viewSubmission">
-        <div v-if="assignmentFiles.length>0 && (assignmentFiles[currentPage - 1]['file_feedback_url'] !== null)">
-          <iframe width="600" height="600" :src="assignmentFiles[currentPage - 1]['file_feedback_url']"></iframe>
+        <div v-if="submissionFiles.length>0 && (submissionFiles[currentSubmissionPage - 1]['file_feedback_url'] !== null)">
+          <iframe width="600" height="600" :src="submissionFiles[currentSubmissionPage - 1]['file_feedback_url']"></iframe>
         </div>
         <div v-else>
           <span class="text-info">You have not uploaded a feedback file.</span>
@@ -147,7 +147,7 @@
   import axios from 'axios'
   import Form from "vform"
   import {ToggleButton} from 'vue-js-toggle-button'
-  import {downloadSubmission} from '~/helpers/AssignmentFiles'
+  import {downloadSubmission} from '~/helpers/SubmissionFiles'
   //import pdf from 'vue-pdf'
 
 
@@ -160,9 +160,9 @@
       loaded: true,
       viewSubmission: true,
       uploading: false,
-      currentPage: 1,
+      currentSubmissionPage: 1,
       perPage: 1,
-      assignmentFiles: [],
+      submissionFiles: [],
       textFeedbackForm: new Form({
         textFeedback: ''
       }),
@@ -177,11 +177,11 @@
       this.downloadSubmission = downloadSubmission
     },
     mounted() {
-      this.assignmentId = this.$route.params.assignmentId
-      this.getAssignmentFiles(this.assignmentId)
+      this.submissionId = this.$route.params.assignmentId
+      this.getSubmissionFiles(this.submissionId)
     },
     methods: {
-      async toggleView(currentPage) {
+      async toggleView(currentSubmissionPage) {
         this.viewSubmission = !this.viewSubmission
       },
       submitScoreForm() {
@@ -198,17 +198,17 @@
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
           let formData = new FormData();
           formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
-          formData.append('assignmentId', this.assignmentId)
-          formData.append('type', 'assignment') ///TODO: make this abstract!!!
+          formData.append('submissionId', this.submissionId)
+          formData.append('type', 'submission') ///TODO: make this abstract!!!
 
-          formData.append('userId', this.assignmentFiles[this.currentPage - 1]['user_id'])
+          formData.append('userId', this.submissionFiles[this.currentSubmissionPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/submission-files/file-feedback', formData)
           if (data.type === 'error') {
             this.fileFeedbackForm.errors.set('fileFeedback', data.message)
           } else {
             this.$noty.success(data.message)
-            this.assignmentFiles[this.currentPage - 1]['file_feedback_url'] = data.file_feedback_url
+            this.submissionFiles[this.currentSubmissionPage - 1]['file_feedback_url'] = data.file_feedback_url
           }
         } catch (error) {
           if (error.message.includes('status code 413')) {
@@ -224,14 +224,14 @@
       async submitTextFeedbackForm() {
         try {
 
-          this.textFeedbackForm.assignment_id = this.assignmentId
-          this.textFeedbackForm.type = 'assignment' //TODO: make this abstract!
-          this.textFeedbackForm.user_id = this.assignmentFiles[this.currentPage - 1]['user_id']
+          this.textFeedbackForm.submission_id = this.submissionId
+          this.textFeedbackForm.type = 'submission' //TODO: make this abstract!
+          this.textFeedbackForm.user_id = this.submissionFiles[this.currentSubmissionPage - 1]['user_id']
 
           const {data} = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
-            this.assignmentFiles[this.currentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
+            this.submissionFiles[this.currentSubmissionPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
           }
         } catch (error) {
           if (!error.message.includes('status code 422')) {
@@ -239,51 +239,51 @@
           }
         }
       },
-      async changePage(currentPage) {
+      async changePage(currentSubmissionPage) {
 
-        this.textFeedbackForm.textFeedback = this.assignmentFiles[this.currentPage - 1]['text_feedback']
-        console.log(this.assignmentFiles[currentPage - 1])
-        await this.getTemporaryUrl('file_feedback', currentPage)
-        await this.getTemporaryUrl('submission', currentPage)
+        this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentSubmissionPage - 1]['text_feedback']
+        console.log(this.submissionFiles[currentSubmissionPage - 1])
+        await this.getTemporaryUrl('file_feedback', currentSubmissionPage)
+        await this.getTemporaryUrl('submission', currentSubmissionPage)
         this.viewSubmission = true
 
 
       },
-      async getTemporaryUrl(type, currentPage) {
-        if (this.assignmentFiles[currentPage - 1][type] && !this.assignmentFiles[currentPage - 1][`${type}_url`]) {
+      async getTemporaryUrl(type, currentSubmissionPage) {
+        if (this.submissionFiles[currentSubmissionPage - 1][type] && !this.submissionFiles[currentSubmissionPage - 1][`${type}_url`]) {
           try {
             const {data} = await axios.post('/api/submission-files/get-temporary-url-from-request',
               {
-                'assignment_id': this.assignmentId,
-                'file': this.assignmentFiles[currentPage - 1][type]
+                'submission_id': this.submissionId,
+                'file': this.submissionFiles[currentSubmissionPage - 1][type]
               })
             if (data.type === 'error') {
               this.$noty.error(data.message)
               return false
             }
-            this.assignmentFiles[currentPage - 1][`${type}_url`] = data.temporary_url
+            this.submissionFiles[currentSubmissionPage - 1][`${type}_url`] = data.temporary_url
           } catch (error){
             this.$noty.error(error.message)
           }
         }
 
       },
-      assignmentUrlExists(currentPage) {
-        return (this.assignmentFiles[currentPage - 1]['submission_url'] !== null)
+      submissionUrlExists(currentSubmissionPage) {
+        return (this.submissionFiles[currentSubmissionPage - 1]['submission_url'] !== null)
       },
-      async getAssignmentFiles() {
+      async getSubmissionFiles() {
         try {
-          const {data} = await axios.get(`/api/submission-files/question/${this.assignmentId}`)
+         // const {data} = await axios.get(`/api/submission-files/question/${this.submissionId}`)
 
-         // const {data} = await axios.get(`/api/submission-files/assignment/${this.assignmentId}`)
+          const {data} = await axios.get(`/api/submission-files/assignment/${this.submissionId}`)
           if (data.type === 'error') {
             this.$noty.error(data.message)
             return false
           }
-          console.log(data)
-          return false
-          this.assignmentFiles = data.user_and_assignment_file_info
-          this.textFeedbackForm.textFeedback = this.assignmentFiles[0]['text_feedback']
+         // console.log(data)
+        //  return false
+          this.submissionFiles = data.user_and_submission_file_info
+          this.textFeedbackForm.textFeedback = this.submissionFiles[0]['text_feedback']
         } catch (error) {
           this.$noty.error(error.message)
         }

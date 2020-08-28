@@ -50,7 +50,7 @@ class SubmissionFileController extends Controller
             }
 
             $response['type'] = 'success';
-            $response['user_and_assignment_file_info'] = $user_and_submission_file_info;
+            $response['user_and_submission_file_info'] = $user_and_submission_file_info;
 
         } catch (Exception $e) {
             $h = new Handler(app());

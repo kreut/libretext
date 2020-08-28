@@ -104,7 +104,7 @@
 <script>
   import axios from 'axios'
   import Form from "vform"
-  import {downloadSubmission} from '~/helpers/AssignmentFiles'
+  import {downloadSubmission} from '~/helpers/SubmissionFiles'
   import {submitUploadFile} from '~/helpers/UploadFiles'
 
   const now = new Date()
