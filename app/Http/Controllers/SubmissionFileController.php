@@ -30,6 +30,7 @@ class SubmissionFileController extends Controller
     {
 
         $response['type'] = 'error';
+
         $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
 
         if (!$authorized->allowed()) {

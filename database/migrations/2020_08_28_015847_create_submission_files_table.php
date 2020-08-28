@@ -20,7 +20,7 @@ class CreateSubmissionFilesTable extends Migration
             $table->unsignedBigInteger('assignment_id');
             $table->unsignedBigInteger('question_id')->nullable();
             $table->string('original_filename');
-            $table->string('submission_file');
+            $table->string('submission');
             $table->dateTime('date_submitted');
             $table->string('file_feedback')->nullable();
             $table->longText('text_feedback')->nullable();

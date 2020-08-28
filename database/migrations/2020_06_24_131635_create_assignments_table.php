@@ -20,6 +20,7 @@ class CreateAssignmentsTable extends Migration
             $table->dateTime('due');
             $table->enum('num_submissions_needed', ['2', '3', '4', '5', '6', '7', '8', '9']);
             $table->enum('type_of_submission', ['completed', 'correct']);
+            $table->enum('submission_files', ['q','a','0']);
             $table->unsignedBigInteger('course_id');
             $table->foreign('course_id')->references('id')->on('courses');
 

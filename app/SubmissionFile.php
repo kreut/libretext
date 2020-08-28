@@ -56,7 +56,7 @@ class SubmissionFile extends Model
 
             $user_and_submission_file_info[] = $all_info;
         }
-        return $user_and_submission_file_info;
+        return [$user_and_submission_file_info];//create array so that it works like questions below
     }
 
     public function getUserAndQuestionFileInfo(Assignment $assignment)

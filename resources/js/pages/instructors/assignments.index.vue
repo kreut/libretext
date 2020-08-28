@@ -96,18 +96,18 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
-          id="files"
+          id="submission_files"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Files"
-          label-for="Files"
+          label="Submission Files"
+          label-for="Submission Files"
         >
 
-            <b-form-radio-group v-model="form.files" stacked>
-              <b-form-radio name="files" value="assignment_files">At the assignment level</b-form-radio>
-              <b-form-radio name="files" value="question_files">At the question level</b-form-radio>
-              <b-form-radio name="files" value="none">Students cannot upload files</b-form-radio>
-            </b-form-radio-group>
+          <b-form-radio-group v-model="form.submission_files" stacked>
+            <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
+            <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
+            <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+          </b-form-radio-group>
         </b-form-group>
         <b-form-row>
           <b-col lg="5">Give students assignment credit if at least</b-col>
@@ -154,7 +154,7 @@
           <div class="mb-0">
             <span class="pr-1" v-on:click="getQuestions(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
-            <span class="pr-1" v-on:click="getAssignmentFileView(data.item.id, data.item.assignment_files)"> <b-icon
+            <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
@@ -231,7 +231,7 @@
         available_from_time: '09:00:00',
         due_date: '',
         due_time: '09:00:00',
-        files: 'none',
+        submission_files: '0',
         type_of_submission: 'correct',
         num_submissions_needed: '2'
       }),
@@ -247,17 +247,8 @@
 
     },
     methods: {
-      getFiles(assignment){
-        if (assignment.assignment_files){
-          return 'assignment_files'
-        }
-        if (assignment.question_files){
-          return 'question_files'
-        }
-        return 'none'
-      },
       editAssignment(assignment) {
-
+console.log(assignment)
         this.assignmentId = assignment.id
         this.form.name = assignment.name
         this.form.available_from_date = assignment.available_from_date
@@ -265,23 +256,37 @@
         this.form.due_date = assignment.due_date
         this.form.due_time = assignment.due_time
         this.form.type_of_submission = assignment.type_of_submission
-        this.form.files = this.getFiles(assignment)
+        this.form.submission_files = assignment.submission_files
         this.form.num_submissions_needed = assignment.num_submissions_needed
         this.$bvModal.show('modal-assignment-details')
-      },
+      }
+      ,
       getQuestions(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/get`)
-      },
+      }
+      ,
       getStudentView(assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
-      },
-      getAssignmentFileView(assignmentId, assignmentFiles) {
-        if (assignmentFiles === 0) {
+      }
+      ,
+      getSubmissionFileView(assignmentId, submissionFiles) {
+        if (submissionFiles === 0) {
           this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
           return false
         }
-        this.$router.push(`/assignments/${assignmentId}/files`)
-      },
+        let type
+        switch (submissionFiles) {
+          case('q'):
+            type = 'question'
+            break
+          case('a'):
+            type = 'assignment'
+            break
+        }
+
+        this.$router.push(`/assignments/${assignmentId}/${type}-files`)
+      }
+      ,
       async getAssignments() {
         try {
           const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
@@ -298,7 +303,8 @@
         } catch (error) {
           this.$noty.error(error.message)
         }
-      },
+      }
+      ,
       async handleDeleteAssignment() {
         try {
           const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
@@ -307,17 +313,20 @@
         } catch (error) {
           this.$noty.error(error.message)
         }
-      },
+      }
+      ,
       submitAssignmentInfo(bvModalEvt) {
         // Prevent modal from closing
         bvModalEvt.preventDefault()
         // Trigger submit handler
         !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-      },
+      }
+      ,
       deleteAssignment(assignmentId) {
         this.assignmentId = assignmentId
         this.$bvModal.show('modal-delete-assignment')
-      },
+      }
+      ,
       async updateAssignment() {
 
         try {
@@ -333,7 +342,8 @@
             this.$noty.error(error.message)
           }
         }
-      },
+      }
+      ,
       async createAssignment() {
         try {
           this.form.course_id = this.courseId
@@ -348,7 +358,8 @@
             this.$noty.error(error.message)
           }
         }
-      },
+      }
+      ,
       resetAll(modalId) {
         this.getAssignments()
         this.resetModalForms()
@@ -356,7 +367,8 @@
         this.$nextTick(() => {
           this.$bvModal.hide(modalId)
         })
-      },
+      }
+      ,
       resetModalForms() {
         this.form.name = ''
         this.form.available_from_date = ''
@@ -365,10 +377,11 @@
         this.form.due_time = '09:00:00'
         this.form.type_of_submission = 'correct'
         this.form.num_submissions_needed = '2'
-        this.form.files = 'none'
+        this.form.submission_files = '0'
         this.assignmentId = false
         this.form.errors.clear()
-      },
+      }
+      ,
       metaInfo() {
         return {title: this.$t('home')}
       }

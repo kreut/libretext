@@ -36,7 +36,13 @@ class UserSeeder extends Seeder
             'last_name' => 'Student',
             'role' => 3]);
 
-
+        User::create([
+            'first_name' => 'Ima',
+            'last_name' => 'Student',
+            'email' => 'some@student.com',
+            'password' => '$2y$10$yGJn0yActFr2GKvCDnMSMu/ICqG.wfveJgjG1iM.1mjZjteAMUd/G',
+            'role' => 2
+        ]);
 
     }
 }

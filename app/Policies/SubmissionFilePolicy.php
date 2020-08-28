@@ -47,14 +47,15 @@ class SubmissionFilePolicy
     public function viewAssignmentFilesByAssignment(User $user, SubmissionFile $submissionFile, Assignment $assignment)
     {
        $message ='';
+       $is_submission_files = in_array($assignment->submission_files, ['a', 'q']);
        if (((int)$assignment->course->user_id !== $user->id)) {
             $message = 'You are not allowed to access these assignment files.';
         }
 
-        if ((int)$assignment->assignment_files !== 1) {
+        if (!$is_submission_files) {
             $message = 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.';
         }
-        return (((int)$assignment->course->user_id === $user->id) && ((int)$assignment->assignment_files === 1))
+        return (((int)$assignment->course->user_id === $user->id) && $is_submission_files)
             ? Response::allow()
             : Response::deny($message);
     }
