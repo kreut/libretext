@@ -225,6 +225,7 @@
         try {
 
           this.textFeedbackForm.assignment_id = this.assignmentId
+          this.textFeedbackForm.type = 'assignment' //TODO: make this abstract!
           this.textFeedbackForm.user_id = this.assignmentFiles[this.currentPage - 1]['user_id']
 
           const {data} = await this.textFeedbackForm.post('/api/submission-files/text-feedback')

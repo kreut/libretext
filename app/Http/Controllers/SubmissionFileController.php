@@ -74,6 +74,7 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignment_id;
         $student_user_id = $request->user_id;
         $type = $request->type;
+
         $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
 
 
@@ -249,7 +250,7 @@ class SubmissionFileController extends Controller
                     DB::table('submission_files')
                         ->where('user_id', $student_user_id)
                         ->where('assignment_id', $assignment_id)
-                        ->where('type', 'q')
+                        ->where('type', 'a')
                         ->update(['file_feedback' => basename($fileFeedback)]);
                     break;
                 case('question'):

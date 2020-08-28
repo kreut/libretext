@@ -9,7 +9,7 @@ use App\User;
 use App\Course;
 use App\Assignment;
 use App\Enrollment;
-use App\AssignmentFile;
+use App\SubmissionFile;
 
 class AssignmentFileTest extends TestCase
 {
@@ -31,7 +31,7 @@ class AssignmentFileTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
-        $this->assignment_file = factory(AssignmentFile::class)->create(['user_id' => $this->student_user->id]);
+        $this->assignment_file = factory(SubmissionFile::class)->create(['type'=>'a', 'user_id' => $this->student_user->id]);
 
 
     }
