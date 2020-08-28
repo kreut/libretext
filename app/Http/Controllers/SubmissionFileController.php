@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\User;
 use App\AssignmentFile;
+use App\SubmissionFile;
 use App\Assignment;
 use App\Extension;
 use App\Http\Requests\StoreTextFeedback;
@@ -109,9 +110,8 @@ class SubmissionFileController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function storeSubmissionFile(Request $request, AssignmentFile $assignmentFile, Extension $extension)
+    public function storeSubmissionFile(Request $request, AssignmentFile $assignmentFile, Extension $extension, SubmissionFile $submissionFile)
     {
-
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
@@ -137,9 +137,13 @@ class SubmissionFileController extends Controller
 
             }
 
+            if (!in_array($type, ['question', 'assignment'])) {
+                $response['message'] = 'That is not a valid type of submission file.';
+                return $response;
+            }
+
             $validator = Validator::make($request->all(), [
-                'assignmentFile' => ['required', 'mimes:pdf', 'max:500000'],
-                'type' => ['required', Rule::in(['question', 'assignment'])],
+                "{$type}File" => ['required', 'mimes:pdf', 'max:500000']
             ]);
 
             if ($validator->fails()) {
@@ -149,16 +153,18 @@ class SubmissionFileController extends Controller
 
 
             //save locally and to S3
-            $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
-            $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put("$submission", $submissionContents);
+
+            $submission_file = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
+            $submissionContents = Storage::disk('local')->get($submission_file);
+            Storage::disk('s3')->put($submission_file, $submissionContents);
             switch ($type) {
                 case('assignment'):
-                    $assignmentFile->updateOrCreate(
+                    $submissionFile->updateOrCreate(
                         ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
-                        ['submission' => basename($submission),
-                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
-                            'date_submitted' => Carbon::now()]
+                        ['type' => 'a',
+                        'submission_file' => basename($submission_file),
+                        'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                        'date_submitted' => Carbon::now()]
                     );
                     break;
                 case('question'):
@@ -168,9 +174,9 @@ class SubmissionFileController extends Controller
                             'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
                             'date_submitted' => Carbon::now()]
                     );
-
-
                     break;
+
+
             }
 
             $response['type'] = 'success';
