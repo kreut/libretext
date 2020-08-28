@@ -26,10 +26,11 @@ class SubmissionFileController extends Controller
 {
 
     use S3;
-    public function getSubmissionFilesByAssignment(Request $request, Assignment $assignment, SubmissionFile $submissionFile)
+    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
+
         $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
 
 

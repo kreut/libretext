@@ -273,7 +273,7 @@
       },
       async getAssignmentFiles() {
         try {
-          const {data} = await axios.get(`/api/submission-files/${this.assignmentId}`)
+          const {data} = await axios.get(`/api/submission-files/assignment/${this.assignmentId}`)
           if (data.type === 'error') {
             this.$noty.error(data.message)
             return false

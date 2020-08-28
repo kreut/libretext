@@ -72,7 +72,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/submissions', 'SubmissionController@store');
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
-    Route::get('/submission-files/{assignment}', 'SubmissionFileController@getSubmissionFilesByAssignment');
+    Route::get('/submission-files/{type}/{assignment}', 'SubmissionFileController@getSubmissionFilesByAssignment')->where('type', '(question|assignment)');
 
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');

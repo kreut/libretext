@@ -36,31 +36,32 @@ class AssignmentFileTest extends TestCase
 
     }
 
+    /** @test */
+    public function cannot_get_assignment_files_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/submission-files/assignment/{$this->assignment->id}")
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access these assignment files.']);
+
+    }
 
     /** @test */
 
     public function can_get_assignment_files_if_owner()
     {
 
-        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}")
+        $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
 
     }
 
-    /** @test */
-    public function cannot_get_assignment_files_if_not_owner()
-    {
-        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}")
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access these assignment files.']);
 
-    }
 
     /** @test */
     public function cannot_get_assignment_files_if_assignment_files_not_enabled()
     {
         $this->assignment->assignment_files = 0;
         $this->assignment->save();
-        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}")
+        $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'error', 'message' => 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.']);
 
     }
