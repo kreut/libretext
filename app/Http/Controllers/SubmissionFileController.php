@@ -262,6 +262,7 @@ class SubmissionFileController extends Controller
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
+        $question_id = $request->questionId;
         $student_user_id = $request->userId;
         $type = $request->type;
 
@@ -296,7 +297,6 @@ class SubmissionFileController extends Controller
             Storage::disk('s3')->put("$fileFeedback", $feedbackContents);
             switch ($type) {
                 case('assignment'):
-
                     DB::table('submission_files')
                         ->where('user_id', $student_user_id)
                         ->where('assignment_id', $assignment_id)
@@ -304,7 +304,12 @@ class SubmissionFileController extends Controller
                         ->update(['file_feedback' => basename($fileFeedback)]);
                     break;
                 case('question'):
-
+                    DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('type', 'q')
+                        ->update(['file_feedback' => basename($fileFeedback)]);
                     break;
             }
             $response['type'] = 'success';

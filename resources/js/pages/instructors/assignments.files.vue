@@ -208,19 +208,20 @@
           this.fileFeedbackForm.errors.set('fileFeedback', null)
           this.uploading = true
           //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
-          let formData = new FormData();
+          let formData = new FormData()
+          formData.append('type', this.type) //extra not really needed but makes it clearer and prevents accidents with null questionId
           formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
-          formData.append('submissionId', this.submissionId)
-          formData.append('type', 'submission') ///TODO: make this abstract!!!
-
-          formData.append('userId', this.submissionFiles[this.currentStudentPage - 1]['user_id'])
+          formData.append('assignmentId', this.assignmentId)
+          formData.append('questionId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
+console.info(this.currentQuestionPage - 1 +  ' ' + this.currentStudentPage - 1)
+          formData.append('userId', this.submissionFiles[this.currentQuestionPage-1][this.currentStudentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/submission-files/file-feedback', formData)
           if (data.type === 'error') {
             this.fileFeedbackForm.errors.set('fileFeedback', data.message)
           } else {
             this.$noty.success(data.message)
-            this.submissionFiles[this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
           }
         } catch (error) {
           if (error.message.includes('status code 413')) {
