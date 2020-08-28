@@ -105,6 +105,7 @@ class SubmissionFileController extends Controller
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
+        $question_id = $request->question_id;
         $student_user_id = $request->user_id;
         $type = $request->type;
 
@@ -133,7 +134,12 @@ class SubmissionFileController extends Controller
                         ->update(['text_feedback' => $data['textFeedback']]);
                     break;
                 case('question'):
-
+                    DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('type', 'q')
+                        ->update(['text_feedback' => $data['textFeedback']]);
 
                     break;
             }

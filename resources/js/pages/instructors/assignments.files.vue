@@ -86,7 +86,7 @@
       <div class="row">
         <div class="col-sm">
           <b-button variant="outline-primary"
-                    v-on:click="downloadSubmission(submissionId, submissionFiles[currentStudentPage - 1]['submission'], submissionFiles[currentStudentPage - 1]['original_filename'], $noty)">
+                    v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'], $noty)">
             Download Submission
           </b-button>
 
@@ -213,7 +213,6 @@
           formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
           formData.append('assignmentId', this.assignmentId)
           formData.append('questionId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
-console.info(this.currentQuestionPage - 1 +  ' ' + this.currentStudentPage - 1)
           formData.append('userId', this.submissionFiles[this.currentQuestionPage-1][this.currentStudentPage - 1]['user_id'])
           formData.append('_method', 'put') // add this
           const {data} = await axios.post('/api/submission-files/file-feedback', formData)
@@ -237,14 +236,15 @@ console.info(this.currentQuestionPage - 1 +  ' ' + this.currentStudentPage - 1)
       async submitTextFeedbackForm() {
         try {
 
-          this.textFeedbackForm.submission_id = this.submissionId
-          this.textFeedbackForm.type = 'submission' //TODO: make this abstract!
-          this.textFeedbackForm.user_id = this.submissionFiles[this.currentStudentPage - 1]['user_id']
+          this.textFeedbackForm.assignment_id = this.assignmentId
+          this.textFeedbackForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
+          this.textFeedbackForm.type = 'question' //TODO: make this abstract!
+          this.textFeedbackForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
 
           const {data} = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
-            this.submissionFiles[this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
           }
         } catch (error) {
           if (!error.message.includes('status code 422')) {
@@ -270,7 +270,6 @@ console.info(this.currentQuestionPage - 1 +  ' ' + this.currentStudentPage - 1)
             const {data} = await axios.post('/api/submission-files/get-temporary-url-from-request',
               {
                 'assignment_id' : this.assignmentId,
-                'submission_id': this.submissionId,
                 'file': this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][file]
               })
             if (data.type === 'error') {

@@ -19,6 +19,6 @@ export async function downloadSubmission(assignment_id, submission, original_fil
     link.download = original_filename
     link.click()
   } catch (error) {
-    noty.error(message)
+    noty.error(error.message)
   }
 }
