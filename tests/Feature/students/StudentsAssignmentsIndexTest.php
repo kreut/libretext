@@ -48,6 +48,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
             'assignmentFile' => '',
             'assignmentId' => $this->assignment->id,
+            'type' => 'assignment'
         ])
             ->assertJson(['type' => 'error', 'message' => 'The assignment file field is required.']);
 
@@ -106,6 +107,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
             'assignmentFile' => 'sdflkj.jpeg',
             'assignmentId' => $this->assignment->id,
+            'type' => 'assignment'
         ])
             ->assertJson(['type' => 'error', 'message' => 'The assignment file must be a file of type: pdf.']);
 
