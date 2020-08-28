@@ -7,6 +7,7 @@ use App\AssignmentFile;
 use App\SubmissionFile;
 use App\Assignment;
 use App\Extension;
+use App\Traits\S3;
 use App\Http\Requests\StoreTextFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -24,6 +25,36 @@ use \Exception;
 class SubmissionFileController extends Controller
 {
 
+    use S3;
+    public function getSubmissionFilesByAssignment(Request $request, Assignment $assignment, SubmissionFile $submissionFile)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+
+            $assignmentFilesByUser = [];
+
+            $assignmentFile = new AssignmentFile;
+            $user_and_assignment_file_info = $assignmentFile->getUserAndAssignmentFileInfo($assignment);
+            $response['type'] = 'success';
+            $response['user_and_assignment_file_info'] = $user_and_assignment_file_info;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
     {
@@ -62,10 +93,6 @@ class SubmissionFileController extends Controller
         return $response;
     }
 
-    public function getTemporaryUrl($assignment_id, $file)
-    {
-        return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(5));
-    }
 
 
     public function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
