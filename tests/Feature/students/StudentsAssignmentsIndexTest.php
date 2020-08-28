@@ -38,7 +38,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         //student not enrolled
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
-        $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'assignment', 'user_id' => $this->student_user->id]);
+        $this->submission_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id]);
     }
 
     /** @test */
@@ -90,7 +90,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->actingAs($this->student_user_2)->postJson("/api/submission-files/download",
             [
                 'assignment_id' => $this->assignment->id,
-                'submission' => $this->assignment_file->submission
+                'submission' => $this->submission_file->submission
             ]
         )
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);

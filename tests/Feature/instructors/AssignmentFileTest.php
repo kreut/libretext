@@ -59,7 +59,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function cannot_get_assignment_files_if_assignment_files_not_enabled()
     {
-        $this->assignment->assignment_files = 0;
+        $this->assignment->submission_files = 0;
         $this->assignment->save();
         $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'error', 'message' => 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.']);
