@@ -5,6 +5,7 @@ namespace App\Policies;
 use App\User;
 use App\Assignment;
 use App\AssignmentFile;
+use App\SubmissionFile;
 use App\Course;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Support\Facades\DB;
@@ -14,13 +15,13 @@ class AssignmentFilePolicy
 {
     use HandlesAuthorization;
 
-    public function downloadAssignmentFile(User $user, AssignmentFile $assignmentFile, int $assignment_id, string $submission)
+    public function downloadAssignmentFile(User $user, AssignmentFile $assignmentFile, SubmissionFile $submissionFile, int $assignment_id, string $submission)
     {
 
 
         if ($user->role === 3) {
             //student who owns the assignment
-            $user_id = $assignmentFile->where('assignment_id', $assignment_id)
+            $user_id = $submissionFile->where('assignment_id', $assignment_id)
                 ->where('submission', $submission)
                 ->value('user_id');
 
@@ -84,9 +85,9 @@ class AssignmentFilePolicy
 
     }
 
-    public function getAssignmentFileInfoByStudent(User $user, AssignmentFile $assignmentFile, int $assignment_id)
+    public function getAssignmentFileInfoByStudent(User $user, AssignmentFile $assignmentFile, SubmissionFile $submissionFile, int $assignment_id)
     {
-        $assignment_file_user_id = $assignmentFile
+        $assignment_file_user_id = $submissionFile
             ->where('user_id', $user->id)
             ->where('assignment_id', $assignment_id)
             ->value('user_id');

@@ -26,10 +26,11 @@ class AssignmentFileController extends Controller
     //getSubmissionFileController?
     public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, SubmissionFile $submissionFile, AssignmentFile $assignmentFile)
     {
+
         $user_id = Auth::user()->id;
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getAssignmentFileInfoByStudent', [$assignmentFile, $assignment->id]);
+        $authorized = Gate::inspect('getAssignmentFileInfoByStudent', [$assignmentFile, $submissionFile, $assignment->id]);
 
 
         if (!$authorized->allowed()) {
@@ -48,6 +49,8 @@ class AssignmentFileController extends Controller
                 $response['assignment_file_info'] = null;
                 return $response;
             }
+
+
             $submission = $submissionFile->submission ?? null;
             $file_feedback = $submissionFile->file_feedback ?? null;
             $text_feedback = $submissionFile->text_feedback ?? 'None';

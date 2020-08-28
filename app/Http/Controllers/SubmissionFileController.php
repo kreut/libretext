@@ -25,11 +25,11 @@ class SubmissionFileController extends Controller
 {
 
 
-    public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile)
+    public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('downloadAssignmentFile', [$assignmentFile, $request->assignment_id, $request->submission]);
+        $authorized = Gate::inspect('downloadAssignmentFile', [$assignmentFile, $submissionFile, $request->assignment_id, $request->submission]);
 
 
         if (!$authorized->allowed()) {
@@ -130,6 +130,7 @@ class SubmissionFileController extends Controller
 
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
+
         $type = $request->type;
 
         $assignment = Assignment::find($assignment_id);
@@ -157,12 +158,25 @@ class SubmissionFileController extends Controller
                 return $response;
             }
 
+            if ($type === 'question') {
+                $question_id = $request->questionId;
+                $question_is_in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->get()
+                    ->isNotEmpty();
+                if (!$question_is_in_assignment) {
+                    $response['message'] = 'That questions is not in the assignment.';
+                    return $response;
+                }
+
+            }
+
             $validator = Validator::make($request->all(), [
                 "{$type}File" => ['required', 'mimes:pdf', 'max:500000']
             ]);
 
             if ($validator->fails()) {
-                $response['message'] = $validator->errors()->first('assignmentFile');
+                $response['message'] = $validator->errors()->first(`{$type}File`);
                 return $response;
             }
 
@@ -183,10 +197,13 @@ class SubmissionFileController extends Controller
                     );
                     break;
                 case('question'):
-                    $questionFile->updateOrCreate(
-                        ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
-                        ['submission' => basename($submission),
-                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
+                    $submissionFile->updateOrCreate(
+                        ['user_id' => Auth::user()->id,
+                            'assignment_id' => $assignment_id,
+                            'question_id' => $question_id],
+                        ['type' => 'q',
+                            'submission' => basename($submission),
+                            'original_filename' => $request->file('questionFile')->getClientOriginalName(),
                             'date_submitted' => Carbon::now()]
                     );
                     break;
