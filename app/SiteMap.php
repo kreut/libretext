@@ -58,14 +58,23 @@ class SiteMap extends Model
         $library = str_replace('.libretexts.org', '', $host);
         $tokens = $this->tokens;
         $token = $tokens->{$library};
-        $headers = ['Origin' => 'dev.adapt.libretexts.org', 'x-deki-token' => $token];
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
 
-        $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path);
+        $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
 
         try {
-            $response = $this->client->get($final_url, ['debug'=>true, 'headers' => $headers]);
-            $xml = simplexml_load_string($response->getBody());
-            var_dump($xml);
+            $response = $this->client->get($final_url, ['headers' => $headers]);
+            $page_info = json_decode($response->getBody(),true);
+            $id = $page_info['page.parent']['@id'];
+            if ($tags = $page_info['tags']['tag']){
+                print_r($tags);
+                foreach ($tags as $key => $tag){
+
+                echo $tag['@value'] . "\r\n";
+                }
+            }
+          exit;
+
         } catch (Exception $e) {
             echo $e->getMessage();
         }
