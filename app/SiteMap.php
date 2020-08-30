@@ -2,22 +2,41 @@
 
 namespace App;
 
+use App\Question;
 use Illuminate\Database\Eloquent\Model;
 use GuzzleHttp\Client;
 
+use Illuminate\Support\Facades\DB;
+
+
 class SiteMap extends Model
 {
+    protected $tags;
+    protected $questionIds;
+    protected $technologyIds;
+    protected $client;
+    protected $tokens;
+
+    public function __construct(array $attributes = [])
+    {
+        //parent::__construct($attributes);
+
+
+        $this->client = new Client();
+        $this->tokens = $this->getTokens();
+
+    }
 
     public function init()
     {
-        $this->client = new Client();;
-        $this->tokens = $this->getTokens();
+
+
         $sitemaps = $this->getSiteMaps();
         foreach ($sitemaps as $sitemap) {
             echo $sitemap . "\r\n";
             $this->iterateSiteMap($sitemap);
-            exit;
         }
+
 
     }
 
@@ -29,31 +48,47 @@ class SiteMap extends Model
 
     }
 
+    public function isValidAssessment($loc)
+    {
+        $validPaths = ['https://query.libretexts.org/Assessment_Gallery/H5P_Assessments/',
+            'https://query.libretexts.org/Assessment_Gallery/IMathAS_Assessments/',
+            'https://query.libretexts.org/Assessment_Gallery/WeBWorK_Assessments/',
+            'https://query.libretexts.org?title=Assessment_Gallery/'];
+
+        foreach ($validPaths as $path)
+            if (strpos($loc, $path) === 0) {
+                return true;
+            }
+        return false;
+    }
+
     public function iterateSiteMap($sitemap)
     {
         $response = $this->client->get($sitemap);
         $xml = simplexml_load_string($response->getBody());
-        $key = 0;
-        $urls = [];
+
+        $num = 0;
         foreach ($xml->url as $value) {
-            $loc = (string)$value->loc[0];
-            if (strpos($loc, 'Assessment_Gallery') !== false) {
-                $urls[$key] = (string)$value->loc[0];
-                $loc_info = $this->getLocInfo($urls[$key]);
-                print_r($loc_info);
-                $key++;
-                if ($key > 0) {
-                    break;
-                }
+
+            $loc = $value->loc[0];
+            if ($this->isValidAssessment($loc)) {
+                //file_put_contents('sitemap', "$loc  $num \r\n", FILE_APPEND);
+                $this->getLocInfo($loc);
+                $num++;
+                if ($num >6) {return;}
             }
+
         }
+
+
     }
 
     public function getLocInfo($url)
+
     {
 
         $host = parse_url($url)['host'];
-        $path = substr(parse_url($url)['path'],1);
+        $path = substr(parse_url($url)['path'], 1);//get rid of trailing slash
 
         $library = str_replace('.libretexts.org', '', $host);
         $tokens = $this->tokens;
@@ -64,16 +99,31 @@ class SiteMap extends Model
 
         try {
             $response = $this->client->get($final_url, ['headers' => $headers]);
-            $page_info = json_decode($response->getBody(),true);
-            $id = $page_info['page.parent']['@id'];
-            if ($tags = $page_info['tags']['tag']){
-                print_r($tags);
-                foreach ($tags as $key => $tag){
+            $page_info = json_decode($response->getBody(), true);
 
-                echo $tag['@value'] . "\r\n";
+            $technology_id = $page_info['@id'];
+            //file_put_contents('sitemap', "$final_url $technology_id \r\n", FILE_APPEND);
+            $tags = [];
+            if ($page_info['tags']['tag']) {
+                foreach ($page_info['tags']['tag'] as $key => $value) {
+                    $tag = $value['@value'];
+                    if (strpos($tag, 'tech:') === 0) {
+                        $technology = str_replace('tech:', '', $tag);
+                    } else {
+                        $tags[] = strtolower($tag);
+                    }
                 }
             }
-          exit;
+
+            $question = Question::firstOrCreate(['technology_id' => $technology_id, 'technology' => $technology]);
+            $Question = new Question;
+
+            if ($tags) {
+                foreach ($tags as $key => $tag) {
+                    $Question->addTag($tag, mb_strtolower($tag), $question);
+                }
+            }
+
 
         } catch (Exception $e) {
             echo $e->getMessage();

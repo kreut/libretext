@@ -38,6 +38,7 @@ class Question extends Model
         return $this->belongsToMany('App\Tag')->withTimestamps();
     }
 
+
     public function getH5PQuestions(int $offset)
     {
         /** [
@@ -88,7 +89,9 @@ class Question extends Model
         }
         return json_decode($questions);
     }
-    public function addTag($key, $tag, $question){
+
+    public function addTag($key, $tag, $question)
+    {
         if ($key) {
             $tag = Tag::firstOrCreate(compact('tag'));
             if (!$question->tags->contains($tag->id)) {
@@ -175,8 +178,7 @@ class Question extends Model
 
     }
 
-    public
-    function store()
+    public function store()
     {
         $this->storeWebwork();
         $this->storeH5P();
