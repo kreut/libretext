@@ -68,12 +68,21 @@ class SiteMap extends Model
         $xml = simplexml_load_string($response->getBody());
 
         $num = 0;
+        $time = time();
+        $calls = 0;
         foreach ($xml->url as $value) {
 
             $loc = $value->loc[0];
             if ($this->isValidAssessment($loc)) {
                 //file_put_contents('sitemap', "$loc  $num \r\n", FILE_APPEND);
                 $this->getLocInfo($loc);
+                if ($calls === 1){
+                    echo 'time';
+                    time_sleep_until($time+1);
+                    $time = time();
+                    $calls = 0;
+                }
+                $calls ++;
                 $num++;
                 if ($num >6) {return;}
             }
