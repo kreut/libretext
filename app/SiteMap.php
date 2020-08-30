@@ -8,6 +8,8 @@ use GuzzleHttp\Client;
 
 use Illuminate\Support\Facades\DB;
 
+use App\Exceptions\Handler;
+use \Exception;
 
 class SiteMap extends Model
 {
@@ -30,13 +32,18 @@ class SiteMap extends Model
     public function init()
     {
 
+        try {
+            $sitemaps = $this->getSiteMaps();
+            foreach ($sitemaps as $sitemap) {
+                set_time_limit(0);
+                echo $sitemap . "\r\n";
+                $this->iterateSiteMap($sitemap);
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
 
-        $sitemaps = $this->getSiteMaps();
-        foreach ($sitemaps as $sitemap) {
-            echo $sitemap . "\r\n";
-            $this->iterateSiteMap($sitemap);
         }
-
 
     }
 
@@ -68,23 +75,23 @@ class SiteMap extends Model
         $xml = simplexml_load_string($response->getBody());
 
         $num = 0;
-        $time = time();
+        $time = microtime(true);
         $calls = 0;
         foreach ($xml->url as $value) {
 
             $loc = $value->loc[0];
             if ($this->isValidAssessment($loc)) {
-                //file_put_contents('sitemap', "$loc  $num \r\n", FILE_APPEND);
                 $this->getLocInfo($loc);
-                if ($calls === 1){
-                    echo 'time';
-                    time_sleep_until($time+1);
-                    $time = time();
+                if ($calls === 1) {
+                    $new_time = bcadd($time, 1, 10);
+                    file_put_contents('questions.txt', "$loc $time $new_time\r\n", FILE_APPEND);
+                    time_sleep_until($new_time);
+                    $time = microtime(true);
                     $calls = 0;
                 }
-                $calls ++;
+                $calls++;
                 $num++;
-                if ($num >6) {return;}
+                //if ($num >6) {return;}
             }
 
         }
