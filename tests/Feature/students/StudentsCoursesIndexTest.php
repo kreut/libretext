@@ -20,7 +20,7 @@ class StudentsCoursesIndexTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->course = factory(Course::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
 
         $this->course_access_code = 'SomeCode';
         factory(CourseAccessCode::class)->create([

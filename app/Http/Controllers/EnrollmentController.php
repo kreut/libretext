@@ -29,15 +29,11 @@ class EnrollmentController extends Controller
 
         try {
 
-            $raw_condition = (env('DB_CONNECTION') === 'mysql') ? 'CONCAT(first_name, " " , last_name) AS instructor'
-                : 'first_name || " " || last_name AS instructor';
-
-
             $response['enrollments'] = DB::table('courses')
                 ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('enrollments.user_id', '=', $request->user()->id)
-                ->select(DB::raw($raw_condition), 'courses.name', 'courses.start_date', 'courses.end_date', 'courses.id')
+                ->select(DB::raw('CONCAT(first_name, " " , last_name) AS instructor'), 'courses.name', 'courses.start_date', 'courses.end_date', 'courses.id')
                 ->get();
             $response['type'] = 'success';
         } catch (Exception $e) {

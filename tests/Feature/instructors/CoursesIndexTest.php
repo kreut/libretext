@@ -19,8 +19,8 @@ class CoursesIndexTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-        $this->course = factory(Course::class)->create();
-        $this->course_2 = factory(Course::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
@@ -66,7 +66,7 @@ class CoursesIndexTest extends TestCase
             'course_id' => $this->course_2->id]);
 
         $this->actingAs($this->grader_user)->getJson("/api/courses")
-            ->assertJson(['courses' => [['id' => '1'], ['id' => '2']]]);
+            ->assertJson(['courses' => [['name' => 'First Course'], ['name' => 'First Course']]]);
 
     }
 
@@ -79,7 +79,7 @@ class CoursesIndexTest extends TestCase
             'course_id' => $this->course->id]);
 
         $this->actingAs($this->user)->getJson("/api/courses")
-            ->assertJson(['courses' => [['id' => '1']]]);
+            ->assertJson(['courses' => [['name' => 'First Course']]]);
     }
 
     /** @test */

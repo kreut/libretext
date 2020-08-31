@@ -17,8 +17,8 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->course = factory(Course::class)->create();
-        $this->assignment = factory(Assignment::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id'=> $this->course->id]);
 
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
@@ -38,7 +38,12 @@ class StudentsAssignmentsIndexTest extends TestCase
         //student not enrolled
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
-        $this->submission_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id]);
+        $this->submission_file = factory(SubmissionFile::class)
+                                        ->create([
+                                            'assignment_id' => $this->assignment->id,
+                                            'type' => 'a',
+                                            'user_id' => $this->student_user->id
+                                        ]);
     }
 
     /** @test */

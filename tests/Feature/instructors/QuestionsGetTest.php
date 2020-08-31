@@ -23,8 +23,8 @@ class QuestionsGetTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->user_2->role = 3;
-        $this->course = factory(Course::class)->create();
-        $this->assignment = factory(Assignment::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->question = factory(Question::class)->create();
 
 
@@ -88,9 +88,10 @@ class QuestionsGetTest extends TestCase
     public function can_get_assignment_question_ids_if_owner()
     {
         $this->assignment->questions()->attach($this->question);
+
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
             ->assertJson([ 'type' => 'success',
-                'question_ids' => '["1"]']);
+                'question_ids' => "[{$this->question->id}]"]);
 
     }
 

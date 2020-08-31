@@ -15,7 +15,12 @@ class UpdateTechnologyToQuestions extends Migration
      */
     public function up()
     {
-        DB::statement("ALTER TABLE `questions` CHANGE `technology` `technology` ENUM('h5p','webwork','imathas') default NULL;");
+
+        Schema::table('questions', function (Blueprint $table) {
+                DB::statement("ALTER TABLE `questions` CHANGE `technology` `technology` ENUM('h5p','webwork','imathas') default NULL;");
+
+        });
+
 
     }
 

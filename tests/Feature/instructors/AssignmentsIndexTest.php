@@ -19,8 +19,8 @@ class AssignmentsIndexTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->course = factory(Course::class)->create();
-        $this->assignment = factory(Assignment::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
         $this->user_2 = factory(User::class)->create();
         $this->course_2  = factory(Course::class)->create(['user_id' => $this->user_2->id]);
@@ -45,7 +45,7 @@ class AssignmentsIndexTest extends TestCase
     {
 
         $this->actingAs($this->user)->getJson("/api/assignments/courses/{$this->course->id}")
-            ->assertJson([['id'=> 1]]);
+            ->assertJson([['name'=> 'First Assignment']]);
 
     }
 

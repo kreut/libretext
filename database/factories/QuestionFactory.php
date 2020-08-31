@@ -11,5 +11,6 @@ $factory->define(Question::class, function (Faker $faker) {
             'title' => 'some title',
             'author' =>'some_author',
             'technology_id' => 1,
-            'technology' => 'webwork'];
+            'technology' => 'webwork',
+            'location' => 'https://www/webwork.com/some_path'];
 });

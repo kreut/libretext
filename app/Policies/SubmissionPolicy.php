@@ -34,10 +34,10 @@ class SubmissionPolicy
             return Response::deny('No responses will be saved since this assignment is not yet available.');
         }
 
-        $db_raw_unix_timestamp = (env('DB_CONNECTION') === 'mysql') ? 'UNIX_TIMESTAMP(extension) as extension' : "strftime('%s', extension) as extension";
+
         if (time() > strtotime($assignment->due)) {
             $extension = DB::table('extensions')
-                ->select(DB::raw($db_raw_unix_timestamp))
+                ->select(DB::raw('UNIX_TIMESTAMP(extension) as extension'))
                 ->where('assignment_id', $assignment_id)
                 ->where('user_id', $user->id)
                 ->first('extension');

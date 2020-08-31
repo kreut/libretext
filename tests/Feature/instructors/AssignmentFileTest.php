@@ -19,19 +19,21 @@ class AssignmentFileTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->user_2 = factory(User::class)->create(['id' => 2]);
-        $this->course = factory(Course::class)->create();
-        $this->assignment = factory(Assignment::class)->create();
+        $this->user_2 = factory(User::class)->create();
+
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
+
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
         ]);
 
-        $this->assignment_file = factory(SubmissionFile::class)->create(['type'=>'a', 'user_id' => $this->student_user->id]);
+        $this->assignment_file = factory(SubmissionFile::class)->create(['type'=>'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
 
     }
@@ -59,7 +61,7 @@ class AssignmentFileTest extends TestCase
     /** @test */
     public function cannot_get_assignment_files_if_assignment_files_not_enabled()
     {
-        $this->assignment->submission_files = 0;
+        $this->assignment->submission_files = '0';
         $this->assignment->save();
         $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}")
             ->assertJson(['type' => 'error', 'message' => 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.']);

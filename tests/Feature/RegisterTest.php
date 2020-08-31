@@ -17,7 +17,8 @@ class RegisterTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->course = factory(Course::class)->create();
+
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
     }
 
 
