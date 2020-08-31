@@ -144,7 +144,7 @@ class Query extends Model
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $tokens = $this->tokens;
         $token = $tokens->query;
-        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+        $headers = ['Origin' => 'https://dev.adapt.libretexts.org', 'x-deki-token' => $token];
         //https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $response = $this->client->get('https://api.libretexts.org/endpoint/queryEvents?limit=1000', ['debug' => true, 'headers' => $headers]);
         $page_info = json_decode($response->getBody(), true);
