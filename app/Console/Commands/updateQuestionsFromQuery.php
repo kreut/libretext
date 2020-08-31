@@ -3,23 +3,23 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\SiteMap;
+use App\Query;
 
-class ImportSitemap extends Command
+class updateQuestionsFromQuery extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'import:Sitemap';
+    protected $signature = 'query:update';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Imports the libreverse sitemap';
+    protected $description = 'Updates questions by looking at the site updates within a given timeframe';
 
     /**
      * Create a new command instance.
@@ -38,7 +38,7 @@ class ImportSitemap extends Command
      */
     public function handle()
     {
-       $siteMap = new SiteMap();
-       $siteMap->init();
+        $query = new Query();
+        $query->getQueryUpdates();
     }
 }

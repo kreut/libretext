@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\DB;
 use App\Exceptions\Handler;
 use \Exception;
 
-class SiteMap extends Model
+class Query extends Model
 {
     protected $tags;
     protected $questionIds;
@@ -28,7 +28,7 @@ class SiteMap extends Model
 
     }
 
-    public function init()
+    public function import()
     {
 
             $sitemaps = $this->getSiteMaps();
@@ -138,6 +138,17 @@ class SiteMap extends Model
             $key++;
         }
         return $sitemaps;
+    }
+
+    public function getQueryUpdates() {
+        https://api.libretexts.org/endpoint/queryEvents?limit=1000
+        $tokens = $this->tokens;
+        $token = $tokens->query;
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+        //https://api.libretexts.org/endpoint/queryEvents?limit=1000
+        $response = $this->client->get('https://api.libretexts.org/endpoint/queryEvents?limit=1000', ['debug' => true, 'headers' => $headers]);
+        $page_info = json_decode($response->getBody(), true);
+        var_dump($page_info);
     }
 
 
