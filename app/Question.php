@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Question extends Model
 {
 
-    protected $fillable = ['title', 'author', 'technology_id', 'location','technology'];
+    protected $fillable = ['title', 'author', 'page_id', 'location','technology'];
 
     public function __construct(array $attributes = [])
     {
@@ -117,7 +117,7 @@ class Question extends Model
                     'level',
                     'path',
                     DB::raw("CONCAT(`firstname`,' ',`lastname`) AS author"),
-                    DB::raw("CONCAT(`path`,'/',`filename`) AS technology_id"),
+                    DB::raw("CONCAT(`path`,'/',`filename`) AS page_id"),
                     DB::raw("CONCAT(`title`,' - ',OPL_chapter.name,' - ',OPL_section.name,': ',`firstname`,' ',`lastname`) AS textbook_source"))
                 ->get();
             DB::disconnect('webwork');
@@ -126,7 +126,7 @@ class Question extends Model
             echo "Selected questions\r\n";
             foreach ($questions as $value) {
                 $data = ['author' => $value->author,
-                    'technology_id' => $value->technology_id,
+                    'page_id' => $value->page_id,
                     'technology' => 'webwork'];
                 $question = Question::firstOrCreate($data);
                 $this->addTag($value->keyword, mb_strtolower($value->keyword), $question);
@@ -134,7 +134,7 @@ class Question extends Model
                 $this->addTag($value->textbook_source, $value->textbook_source, $question);
                 $this->addTag($value->path, $value->path, $question);
                 $question->refresh();
-                echo $value->technology_id . "\r\n";
+                echo $value->page_id . "\r\n";
             }
             echo "Inserted questions\r\n";
         } catch (Exception $e) {
@@ -154,8 +154,8 @@ class Question extends Model
                 $author = $question[2]->title;
                 $tag_info = $question[3];
                 //$created_at = $this->getCreatedAt($question[4]);  Do I need this?
-                $technology_id = $question[5];
-                $data = compact('title', 'author', 'technology_id') + ['technology' => 'h5p'];
+                $page_id = $question[5];
+                $data = compact('title', 'author', 'page_id') + ['technology' => 'h5p'];
                 $question = $this->firstOrCreate($data);
                 if ($tag_info) {
                     foreach ($tag_info as $value) {
