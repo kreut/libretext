@@ -6,12 +6,11 @@ namespace App\Http\Controllers;
 use App\Invitation;
 use App\Course;
 use App\GraderAccessCode;
-use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Mail;
-use App\Mail\inviteTa;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\EmailInvitation;
 use App\Traits\AccessCodes;
+
 use App\Exceptions\Handler;
 use \Exception;
 
@@ -39,15 +38,22 @@ class InvitationController extends Controller
 
             $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
             $to_email = $data['email'];
-            $beautymail->send('emails.ta_invitation', ['access_code' => $access_code], function($message)
+            $instructor = Auth::user();
+            $instructor_info = ['instructor' => "{$instructor->first_name} {$instructor->last_name}" ,
+                'course' => $course->name,
+                'access_code' => $access_code,
+                'link' => request()->getSchemeAndHttpHost() . '/register/grader'];
+
+            $beautymail->send('emails.grader_invitation', $instructor_info, function($message)
             use ($to_email) {
                 $message
                     ->from('adapt@libretexts.org')
                     ->to($to_email)
+                    ->replyTo(Auth::user()->email)
                     ->subject('Invitation to Grade');
             });
 
-            $response['message'] = 'Your TA has been sent an email inviting them to this course.';
+            $response['message'] = 'Your grader has been sent an email inviting them to this course.';
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
