@@ -148,188 +148,201 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import Form from "vform"
-  import {mapGetters} from "vuex"
+import axios from 'axios'
+import Form from "vform"
+import {mapGetters} from "vuex"
 
-  import {formatDate} from '~/helpers/Date'
+import {formatDate} from '~/helpers/Date'
 
-  const now = new Date()
-  export default {
-    middleware: 'auth',
-    computed: mapGetters({
-      user: 'auth/user'
+const now = new Date()
+export default {
+  middleware: 'auth',
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  data: () => ({
+    fields: [
+      {
+        key: 'name',
+        label: 'Course'
+      },
+      {
+        key: 'start_date',
+        formatter: value => {
+          return formatDate(value)
+        }
+      },
+      {
+        key: 'end_date',
+        formatter: value => {
+          return formatDate(value)
+        }
+      },
+      {
+        key: 'access_code',
+        label: 'Access Code'
+      },
+      'actions'
+    ],
+    sendingEmail: false,
+    courses: [],
+    hasCourses: false,
+    courseId: false, //if there's a courseId if it's an update
+    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    form: new Form({
+      name: '',
+      start_date: '',
+      end_date: ''
     }),
-    data: () => ({
-      fields: [
-        {
-          key: 'name',
-          label: 'Course'
-        },
-        {
-          key: 'start_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        },
-        {
-          key: 'end_date',
-          formatter: value => {
-            return formatDate(value)
-          }
-        },
-        {
-          key: 'access_code',
-          label: 'Access Code'
-        },
-        'actions'
-      ],
-      sendingEmail: false,
-      courses: [],
-      hasCourses: false,
-      courseId: false, //if there's a courseId if it's an update
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      form: new Form({
-        name: '',
-        start_date: '',
-        end_date: ''
-      }),
-      graderForm: new Form({
-        email: ''
-      }),
-      showNoCoursesAlert: false,
-      canViewCourses: false
+    graderForm: new Form({
+      email: ''
     }),
-    mounted() {
-      this.getCourses();
-    },
-    methods: {
-      inviteGrader(courseId) {
-        this.courseId = courseId
+    showNoCoursesAlert: false,
+    canViewCourses: false
+  }),
+  mounted() {
+    this.getCourses();
+  },
+  methods: {
+    async inviteGrader(courseId) {
+      this.courseId = courseId
+      try {
+        const {data} = await this.axios.get(`/api/graders/${this.courseId}`)
+        console.log(data)
+        return false;
+        if (data.type === 'error'){
+          this.$noty.error('We were not able to retrieve your graders.')
+          return false
+        }
         this.$bvModal.show('modal-manage-graders')
-      },
-      async submitInviteGrader(bvModalEvt) {
-        if (this.sendingEmail) {
-          this.$noty.info('Please be patient while we send the email.')
-          return faslse
-        }
-        bvModalEvt.preventDefault()
-        try {
-          this.sendingEmail = true
-          const {data} = await this.graderForm.post(`/api/invitations/${this.courseId}`)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-manage-graders')
 
-        } catch (error) {
-          if (!error.message.includes('status code 422')) {
-            this.$noty.error(error.message)
-          }
-        }
-        this.sendingEmail = false
-      },
-      showAssignments(courseId) {
-        window.location.href = `/instructors/courses/${courseId}/assignments`
+      } catch (error) {
+        this.$noty.error(error.message)
       }
-      ,
-      showScores(courseId) {
-        window.location.href = `/courses/${courseId}/scores`
-      }
-      ,
-      deleteCourse(courseId) {
-        this.courseId = courseId
-        this.$bvModal.show('modal-delete-course')
-      }
-      ,
-      async handleDeleteCourse() {
-        try {
-          const {data} = await axios.delete('/api/courses/' + this.courseId)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-delete-course')
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      }
-      ,
-      editCourse(course) {
-        this.courseId = course.id;
-        this.form.name = course.name
-        this.form.start_date = course.start_date
-        this.form.end_date = course.end_date
-        this.$bvModal.show('modal-course-details')
-      }
-      ,
-      resetModalForms() {
-        this.form.name = ''
-        this.form.start_date = ''
-        this.form.end_date = ''
-        this.graderForm.email = ''
-        this.courseId = false
-        this.form.errors.clear()
-      }
-      ,
-      resetAll(modalId) {
-        this.getCourses()
-        this.resetModalForms()
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide(modalId)
-        })
-      }
-      ,
-      submitCourseInfo(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-        !this.courseId ? this.createCourse() : this.updateCourse()
-      }
-      ,
-      async createCourse() {
-        try {
-          const {data} = await this.form.post('/api/courses')
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-course-details')
 
-        } catch (error) {
-          if (!error.message.includes('status code 422')) {
-            this.$noty.error(error.message)
-          }
-        }
-
-      },
-      async updateCourse() {
-        try {
-          const {data} = await this.form.patch(`/api/courses/${this.courseId}`)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-course-details')
-
-        } catch (error) {
-          if (!error.message.includes('status code 422')) {
-            this.$noty.error(error.message)
-          }
-
-        }
-
-      }
-      ,
-      async getCourses() {
-        try {
-          const {data} = await axios.get('/api/courses')
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-          } else {
-            this.canViewCourses = true
-            this.hasCourses = data.courses.length > 0
-            this.showNoCoursesAlert = !this.hasCourses
-            this.courses = data.courses
-            console.log(data.courses)
-          }
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      }
     },
-    metaInfo() {
-      return {title: this.$t('home')}
+    async submitInviteGrader(bvModalEvt) {
+      if (this.sendingEmail) {
+        this.$noty.info('Please be patient while we send the email.')
+        return faslse
+      }
+      bvModalEvt.preventDefault()
+      try {
+        this.sendingEmail = true
+        const {data} = await this.graderForm.post(`/api/invitations/${this.courseId}`)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-manage-graders')
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+      this.sendingEmail = false
+    },
+    showAssignments(courseId) {
+      window.location.href = `/instructors/courses/${courseId}/assignments`
     }
+    ,
+    showScores(courseId) {
+      window.location.href = `/courses/${courseId}/scores`
+    }
+    ,
+    deleteCourse(courseId) {
+      this.courseId = courseId
+      this.$bvModal.show('modal-delete-course')
+    }
+    ,
+    async handleDeleteCourse() {
+      try {
+        const {data} = await axios.delete('/api/courses/' + this.courseId)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-delete-course')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
+    ,
+    editCourse(course) {
+      this.courseId = course.id;
+      this.form.name = course.name
+      this.form.start_date = course.start_date
+      this.form.end_date = course.end_date
+      this.$bvModal.show('modal-course-details')
+    }
+    ,
+    resetModalForms() {
+      this.form.name = ''
+      this.form.start_date = ''
+      this.form.end_date = ''
+      this.graderForm.email = ''
+      this.courseId = false
+      this.form.errors.clear()
+    }
+    ,
+    resetAll(modalId) {
+      this.getCourses()
+      this.resetModalForms()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    }
+    ,
+    submitCourseInfo(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      !this.courseId ? this.createCourse() : this.updateCourse()
+    }
+    ,
+    async createCourse() {
+      try {
+        const {data} = await this.form.post('/api/courses')
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-course-details')
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+
+    },
+    async updateCourse() {
+      try {
+        const {data} = await this.form.patch(`/api/courses/${this.courseId}`)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-course-details')
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+
+      }
+
+    }
+    ,
+    async getCourses() {
+      try {
+        const {data} = await axios.get('/api/courses')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        } else {
+          this.canViewCourses = true
+          this.hasCourses = data.courses.length > 0
+          this.showNoCoursesAlert = !this.hasCourses
+          this.courses = data.courses
+          console.log(data.courses)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
+  },
+  metaInfo() {
+    return {title: this.$t('home')}
   }
+}
 </script>
