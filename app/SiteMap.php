@@ -23,7 +23,6 @@ class SiteMap extends Model
     {
         //parent::__construct($attributes);
 
-
         $this->client = new Client();
         $this->tokens = $this->getTokens();
 
@@ -32,19 +31,12 @@ class SiteMap extends Model
     public function init()
     {
 
-        try {
             $sitemaps = $this->getSiteMaps();
             foreach ($sitemaps as $sitemap) {
                 set_time_limit(0);
                 echo $sitemap . "\r\n";
                 $this->iterateSiteMap($sitemap);
             }
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-
-        }
-
     }
 
     public function getTokens()
@@ -74,37 +66,23 @@ class SiteMap extends Model
         $response = $this->client->get($sitemap);
         $xml = simplexml_load_string($response->getBody());
 
-        $num = 0;
-        $time = microtime(true);
-        $calls = 0;
         foreach ($xml->url as $value) {
 
             $loc = $value->loc[0];
             if ($this->isValidAssessment($loc)) {
                 $this->getLocInfo($loc);
-                if ($calls === 1) {
-                    $new_time = bcadd($time, 1, 10);
-                    file_put_contents('questions.txt', "$loc $time $new_time\r\n", FILE_APPEND);
-                    time_sleep_until($new_time);
-                    $time = microtime(true);
-                    $calls = 0;
-                }
-                $calls++;
-                $num++;
-                //if ($num >6) {return;}
+                usleep(500000);
+                file_put_contents('questions.txt', "$loc \r\n", FILE_APPEND);
             }
-
         }
-
-
     }
 
-    public function getLocInfo($url)
+    public function getLocInfo($loc)
 
     {
-
-        $host = parse_url($url)['host'];
-        $path = substr(parse_url($url)['path'], 1);//get rid of trailing slash
+        try {
+        $host = parse_url($loc)['host'];
+        $path = substr(parse_url($loc)['path'], 1);//get rid of trailing slash
 
         $library = str_replace('.libretexts.org', '', $host);
         $tokens = $this->tokens;
@@ -113,7 +91,6 @@ class SiteMap extends Model
 
         $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
 
-        try {
             $response = $this->client->get($final_url, ['headers' => $headers]);
             $page_info = json_decode($response->getBody(), true);
 
@@ -131,7 +108,9 @@ class SiteMap extends Model
                 }
             }
 
-            $question = Question::firstOrCreate(['technology_id' => $technology_id, 'technology' => $technology]);
+            $question = Question::firstOrCreate(['technology_id' => $technology_id,
+                'technology' => $technology,
+                'location' =>  $loc]);
             $Question = new Question;
 
             if ($tags) {
@@ -140,15 +119,14 @@ class SiteMap extends Model
                 }
             }
 
-
         } catch (Exception $e) {
-            echo $e->getMessage();
+            file_put_contents('site_map_errors', $e->getMessage() . ":  $loc \r\n", FILE_APPEND);
         }
-
 
     }
 
-    public function getSiteMaps()
+    public
+    function getSiteMaps()
     {
 
         $response = $this->client->get('https://query.libretexts.org/sitemap.xml');
