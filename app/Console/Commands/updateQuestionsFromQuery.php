@@ -19,7 +19,7 @@ class updateQuestionsFromQuery extends Command
      *
      * @var string
      */
-    protected $description = 'Updates questions by looking at the site updates within a given timeframe';
+    protected $description = 'Update query question tags.';
 
     /**
      * Create a new command instance.

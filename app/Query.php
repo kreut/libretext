@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\MindTouchEvent;
 use App\Question;
 use Illuminate\Database\Eloquent\Model;
 use GuzzleHttp\Client;
@@ -163,7 +164,9 @@ class Query extends Model
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $tokens = $this->tokens;
         $token = $tokens->query;
-        exec('curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: ' . $token . '" https://api.libretexts.org/endpoint/queryEvents?limit=1', $output, $return_var);
+        $command = 'curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: ' . $token . '" https://api.libretexts.org/endpoint/queryEvents?limit=1000';
+
+        exec($command, $output, $return_var);
         if ($return_var > 0) {
             Log::error("getQueryUpdates failed with return_var: $return_var");
             exit;
@@ -181,18 +184,19 @@ class Query extends Model
             exit;
         }
 
+        /**
+         * echo $value->event['mt-epoch'] . "\r\n";
+         * echo $value->event->page->path . "\r\n";
+         **/
         foreach ($xml->children() as $key => $value) {
-            echo $value->event['mt-epoch'] . "\r\n";
-            echo $value->event->page['id'] . "\r\n";
-            echo $value->event->page->path . "\r\n";
-            echo $value->event['datetime'] . "\r\n";//hold the datetime for now
-            //use this to update tags
-            //use this to delete
-            //do the insert if it starts with Assessment_Gallery
 
+            $page_id = $value->event->page['id'];
+            //if the question exists, add it to the database
+            if (DB::table('questions')->where('page_id', $page_id)->first()) {
+                MindTouchEvent::firstOrCreate(['page_id' => $page_id,
+                    'event_time' => date("Y-m-d H:i:s", strtotime($value->event['datetime'])),
+                'event' => $value->event['type']]);
+            }
         }
-
     }
-
-
 }
