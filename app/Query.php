@@ -72,9 +72,13 @@ class Query extends Model
 
             $loc = $value->loc[0];
             if ($this->isValidAssessment($loc)) {
-                $this->getLocInfo($loc);
-                usleep(500000);
-                file_put_contents('questions.txt', "$loc \r\n", FILE_APPEND);
+                $used_api_to_get_tags = $this->getLocInfo($loc);
+                if ($used_api_to_get_tags) {
+                    usleep(500000);
+                    file_put_contents('query_imported_questions-' . date('Y-m-d') . '.txt', "$loc \r\n", FILE_APPEND);
+                } else {
+                    file_put_contents('query_skipped_imported_questions-' . date('Y-m-d') . '.txt', "$loc \r\n", FILE_APPEND);
+                }
             }
         }
     }
@@ -83,14 +87,20 @@ class Query extends Model
 
     {
         try {
-            $host = parse_url($loc)['host'];
-            if (!isset(parse_url($loc)['path'])){
+            $parsed_url = parse_url($loc);
+            if (!isset($parsed_url['path'])) {
+                //some were malformed with ?title=Assessment_Gallery instead of /Assessment_Gallery
                 $loc = str_replace('?title=Assessment_Gallery', '/Assessment_Gallery', $loc);
+                $parsed_url = parse_url($loc);
             }
-            $path = substr(parse_url($loc)['path'], 1);//get rid of trailing slash
-            $question = Questions::where(['location', 'sdfsdfsd']);
-            echo $question;
-            exit;
+
+
+            $question_exists_in_db = DB::table('questions')->where('location', $loc)->first();
+            if ($question_exists_in_db) {
+                return false;//didn't use the API
+            }
+            $host = $parsed_url['host'];
+            $path = substr($parsed_url['path'], 1);//get rid of trailing slash
             $library = str_replace('.libretexts.org', '', $host);
             $tokens = $this->tokens;
             $token = $tokens->{$library};
@@ -127,8 +137,9 @@ class Query extends Model
             }
 
         } catch (Exception $e) {
-            file_put_contents('site_map_errors', $e->getMessage() . ":  $loc \r\n", FILE_APPEND);
+            file_put_contents('query_import_errors-' . date('Y-m-d') . '.txt', $e->getMessage() . ":  $loc \r\n", FILE_APPEND);
         }
+        return true;//used the API
 
     }
 
@@ -152,7 +163,7 @@ class Query extends Model
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $tokens = $this->tokens;
         $token = $tokens->query;
-        exec('curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: a448c425eb772bcb52c076f975c34d1c8daade15cb76de17d1d90f87f1f44471" https://api.libretexts.org/endpoint/queryEvents?limit=1', $output, $return_var);
+        exec('curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: ' . $token . '" https://api.libretexts.org/endpoint/queryEvents?limit=1', $output, $return_var);
         if ($return_var > 0) {
             Log::error("getQueryUpdates failed with return_var: $return_var");
             exit;
@@ -170,7 +181,7 @@ class Query extends Model
             exit;
         }
 
-        foreach ($xml->children() as $key=>$value){
+        foreach ($xml->children() as $key => $value) {
             echo $value->event['mt-epoch'] . "\r\n";
             echo $value->event->page['id'] . "\r\n";
             echo $value->event->page->path . "\r\n";

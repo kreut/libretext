@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use Illuminate\Support\Facades\DB;
 
 class RenameTechnologyIdColumnToQuestions extends Migration
 {
@@ -13,6 +14,9 @@ class RenameTechnologyIdColumnToQuestions extends Migration
      */
     public function up()
     {
+        DB::connection()->getDoctrineSchemaManager()
+                        ->getDatabasePlatform()
+                        ->registerDoctrineTypeMapping('enum', 'string');
         Schema::table('questions', function (Blueprint $table) {
             $table->renameColumn('technology_id','page_id');
         });
