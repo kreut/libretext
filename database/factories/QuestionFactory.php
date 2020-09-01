@@ -10,7 +10,7 @@ $factory->define(Question::class, function (Faker $faker) {
         [
             'title' => 'some title',
             'author' =>'some_author',
-            'technology_id' => 1,
+            'page_id' => 1,
             'technology' => 'webwork',
             'location' => 'https://www/webwork.com/some_path'];
 });

@@ -82,6 +82,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/invitations/{course}', 'InvitationController@emailInvitation');
 
+    Route::get('/graders/{course}', 'UserController@getGraders');
+
 });
 
 Route::post('results', 'ResultController@store');

@@ -125,6 +125,13 @@ class CoursePolicy
             : Response::deny('You are not allowed to delete this course.');
     }
 
+    public function getGraders(User $user, Course $course)
+    {
+        return $this->ownsCourseByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the graders.');
+    }
+
     /**
      * Determine whether the user can restore the course.
      *

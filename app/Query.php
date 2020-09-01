@@ -101,8 +101,8 @@ class Query extends Model
             $response = $this->client->get($final_url, ['headers' => $headers]);
             $page_info = json_decode($response->getBody(), true);
 
-            $technology_id = $page_info['@id'];
-            //file_put_contents('sitemap', "$final_url $technology_id \r\n", FILE_APPEND);
+            $page_id = $page_info['@id'];
+            //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
             $tags = [];
             if ($page_info['tags']['tag']) {
                 foreach ($page_info['tags']['tag'] as $key => $value) {
@@ -115,7 +115,7 @@ class Query extends Model
                 }
             }
 
-            $question = Question::firstOrCreate(['technology_id' => $technology_id,
+            $question = Question::firstOrCreate(['page_id' => $page_id,
                 'technology' => $technology,
                 'location' => $loc]);
             $Question = new Question;
