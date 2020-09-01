@@ -49,6 +49,8 @@ class Query extends Model
 
     public function isValidAssessment($loc)
     {
+
+
         $validPaths = ['https://query.libretexts.org/Assessment_Gallery/H5P_Assessments/',
             'https://query.libretexts.org/Assessment_Gallery/IMathAS_Assessments/',
             'https://query.libretexts.org/Assessment_Gallery/WeBWorK_Assessments/',
@@ -82,8 +84,13 @@ class Query extends Model
     {
         try {
             $host = parse_url($loc)['host'];
+            if (!isset(parse_url($loc)['path'])){
+                $loc = str_replace('?title=Assessment_Gallery', '/Assessment_Gallery', $loc);
+            }
             $path = substr(parse_url($loc)['path'], 1);//get rid of trailing slash
-
+            $question = Questions::where(['location', 'sdfsdfsd']);
+            echo $question;
+            exit;
             $library = str_replace('.libretexts.org', '', $host);
             $tokens = $this->tokens;
             $token = $tokens->{$library};
