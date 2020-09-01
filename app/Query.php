@@ -5,7 +5,7 @@ namespace App;
 use App\Question;
 use Illuminate\Database\Eloquent\Model;
 use GuzzleHttp\Client;
-
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Exceptions\Handler;
@@ -31,12 +31,12 @@ class Query extends Model
     public function import()
     {
 
-            $sitemaps = $this->getSiteMaps();
-            foreach ($sitemaps as $sitemap) {
-                set_time_limit(0);
-                echo $sitemap . "\r\n";
-                $this->iterateSiteMap($sitemap);
-            }
+        $sitemaps = $this->getSiteMaps();
+        foreach ($sitemaps as $sitemap) {
+            set_time_limit(0);
+            echo $sitemap . "\r\n";
+            $this->iterateSiteMap($sitemap);
+        }
     }
 
     public function getTokens()
@@ -81,15 +81,15 @@ class Query extends Model
 
     {
         try {
-        $host = parse_url($loc)['host'];
-        $path = substr(parse_url($loc)['path'], 1);//get rid of trailing slash
+            $host = parse_url($loc)['host'];
+            $path = substr(parse_url($loc)['path'], 1);//get rid of trailing slash
 
-        $library = str_replace('.libretexts.org', '', $host);
-        $tokens = $this->tokens;
-        $token = $tokens->{$library};
-        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+            $library = str_replace('.libretexts.org', '', $host);
+            $tokens = $this->tokens;
+            $token = $tokens->{$library};
+            $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
 
-        $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
+            $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
 
             $response = $this->client->get($final_url, ['headers' => $headers]);
             $page_info = json_decode($response->getBody(), true);
@@ -110,7 +110,7 @@ class Query extends Model
 
             $question = Question::firstOrCreate(['technology_id' => $technology_id,
                 'technology' => $technology,
-                'location' =>  $loc]);
+                'location' => $loc]);
             $Question = new Question;
 
             if ($tags) {
@@ -140,14 +140,39 @@ class Query extends Model
         return $sitemaps;
     }
 
-    public function getQueryUpdates() {
+    public function getQueryUpdates()
+    {
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $tokens = $this->tokens;
         $token = $tokens->query;
-        exec('curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: a448c425eb772bcb52c076f975c34d1c8daade15cb76de17d1d90f87f1f44471" https://api.libretexts.org/endpoint/queryEvents?limit=10', $output);
-        $xml = strstr($output[10], "<summaries");
+        exec('curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: a448c425eb772bcb52c076f975c34d1c8daade15cb76de17d1d90f87f1f44471" https://api.libretexts.org/endpoint/queryEvents?limit=1', $output, $return_var);
+        if ($return_var > 0) {
+            Log::error("getQueryUpdates failed with return_var: $return_var");
+            exit;
+        }
+        $has_summaries = false;
+        foreach ($output as $key => $value) {
+            if (strpos($value, '<summaries') === 0) {
+                $has_summaries = true;
+                $xml = simplexml_load_string($value);
+                break;
+            }
+        }
+        if (!$has_summaries) {
+            Log::error("getQueryUpdates failed because none of the output started with <summaries");
+            exit;
+        }
 
-        file_put_contents('update', $xml);
+        foreach ($xml->children() as $key=>$value){
+            echo $value->event['mt-epoch'] . "\r\n";
+            echo $value->event->page['id'] . "\r\n";
+            echo $value->event->page->path . "\r\n";
+            echo $value->event['datetime'] . "\r\n";//hold the datetime for now
+            //use this to update tags
+            //use this to delete
+            //do the insert if it starts with Assessment_Gallery
+
+        }
 
     }
 
