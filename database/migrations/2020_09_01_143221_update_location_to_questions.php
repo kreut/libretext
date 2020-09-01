@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class RenameTechnologyIdColumnToQuestions extends Migration
+class UpdateLocationToQuestions extends Migration
 {
     /**
      * Run the migrations.
@@ -14,7 +14,7 @@ class RenameTechnologyIdColumnToQuestions extends Migration
     public function up()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->renameColumn('technology_id','page_id');
+            $table->string('location', 500)->change();
         });
     }
 
@@ -26,7 +26,7 @@ class RenameTechnologyIdColumnToQuestions extends Migration
     public function down()
     {
         Schema::table('questions', function (Blueprint $table) {
-            $table->renameColumn('page_id','technology_id');
+            //
         });
     }
 }
