@@ -84,6 +84,34 @@ class Query extends Model
         }
     }
 
+    public function updateTags()
+    {
+        //get all the ones that must be updated
+        $MindTouchEvent = MindTouchEvent::where('status', NULL)->where('event', 'page.tag:update')->get();
+
+        foreach ($MindTouchEvent as $key => $mind_touch_event) {
+
+            DB::beginTransaction();
+
+            try {
+                $page_id = $mind_touch_event->page_id;
+                $question = Question::where('page_id', $page_id)->first();
+                $parsed_url = parse_url($question->location);
+                $page_info = $this->getPageInfo($parsed_url);
+                usleep(500000);
+                $question->tags()->detach();
+                $technology_and_tags = $this->getTechnologyAndTags($page_info);
+                $this->addTagsToQuestion($question, $technology_and_tags['tags']);
+                $mind_touch_event->status = 'updated';
+                $mind_touch_event->save();
+                DB::commit();
+            } catch (Exception $e) {
+                DB::rollback();
+                Log::error("updateTags failed with page_id $page_id");
+            }
+        }
+    }
+
     public function getLocInfo($loc)
 
     {
@@ -100,48 +128,67 @@ class Query extends Model
             if ($question_exists_in_db) {
                 return false;//didn't use the API
             }
-            $host = $parsed_url['host'];
-            $path = substr($parsed_url['path'], 1);//get rid of trailing slash
-            $library = str_replace('.libretexts.org', '', $host);
-            $tokens = $this->tokens;
-            $token = $tokens->{$library};
-            $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
-
-            $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
-
-            $response = $this->client->get($final_url, ['headers' => $headers]);
-            $page_info = json_decode($response->getBody(), true);
+            $page_info = $this->getPageInfo($parsed_url);
 
             $page_id = $page_info['@id'];
             //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
-            $tags = [];
-            if ($page_info['tags']['tag']) {
-                foreach ($page_info['tags']['tag'] as $key => $value) {
-                    $tag = $value['@value'];
-                    if (strpos($tag, 'tech:') === 0) {
-                        $technology = str_replace('tech:', '', $tag);
-                    } else {
-                        $tags[] = strtolower($tag);
-                    }
-                }
-            }
-
+            $technology_and_tags = $this->getTechnologyAndTags($page_info);
             $question = Question::firstOrCreate(['page_id' => $page_id,
-                'technology' => $technology,
+                'technology' => $technology_and_tags['technology'],
                 'location' => $loc]);
-            $Question = new Question;
+            $this->addTagsToQuestion($question, $technology_and_tags['tags']);
 
-            if ($tags) {
-                foreach ($tags as $key => $tag) {
-                    $Question->addTag($tag, mb_strtolower($tag), $question);
-                }
-            }
 
         } catch (Exception $e) {
             file_put_contents('query_import_errors-' . date('Y-m-d') . '.txt', $e->getMessage() . ":  $loc \r\n", FILE_APPEND);
         }
         return true;//used the API
 
+    }
+
+    function addTagsToQuestion($question, array $tags)
+    {
+        $Question = new Question;
+
+        if ($tags) {
+            foreach ($tags as $key => $tag) {
+                $Question->addTag($tag, mb_strtolower($tag), $question);
+            }
+        }
+    }
+
+    public
+    function getTechnologyAndTags($page_info)
+    {
+        $tags = [];
+        if ($page_info['tags']['tag']) {
+            foreach ($page_info['tags']['tag'] as $key => $value) {
+                $tag = $value['@value'];
+                if (strpos($tag, 'tech:') === 0) {
+                    $technology = str_replace('tech:', '', $tag);
+                } else {
+                    $tags[] = strtolower($tag);
+                }
+            }
+        }
+        return compact('tags', 'technology');
+    }
+
+    public
+    function getPageInfo(array $parsed_url)
+    {
+        $host = $parsed_url['host'];
+        $path = substr($parsed_url['path'], 1);//get rid of trailing slash
+        $library = str_replace('.libretexts.org', '', $host);
+        $tokens = $this->tokens;
+        $token = $tokens->{$library};
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+
+        $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
+
+        $response = $this->client->get($final_url, ['headers' => $headers]);
+        $page_info = json_decode($response->getBody(), true);
+        return $page_info;
     }
 
     public
@@ -159,7 +206,8 @@ class Query extends Model
         return $sitemaps;
     }
 
-    public function getQueryUpdates()
+    public
+    function getQueryUpdates()
     {
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $tokens = $this->tokens;
@@ -195,7 +243,7 @@ class Query extends Model
             if (DB::table('questions')->where('page_id', $page_id)->first()) {
                 MindTouchEvent::firstOrCreate(['page_id' => $page_id,
                     'event_time' => date("Y-m-d H:i:s", strtotime($value->event['datetime'])),
-                'event' => $value->event['type']]);
+                    'event' => $value->event['type']]);
             }
         }
     }
