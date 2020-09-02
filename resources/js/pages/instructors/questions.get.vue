@@ -128,14 +128,14 @@ export default {
     }
     ,
     addTag() {
+      console.log(this.query)
       if (this.query.includes("PageId=")) {
         let pageId = this.query.replace("PageId=", '')
-        if (!(pageId >>> 0 === parseFloat(pageId))) {
+        if (!((pageId >>> 0) === parseFloat(pageId))) {
           this.$noty.error("Your page id should be a positive integer.")
-          return false
+          return
         } else {
           this.chosenTags.push(this.query)
-          this.getQuestionsByTags()
         }
       }
       if ((this.query !== '') && this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
@@ -196,6 +196,7 @@ export default {
       this.showQuestions = false
       this.gettingQuestions = true
       this.addTag() //in case they didn't click
+
       try {
         if (this.chosenTags.length === 0) {
           this.$noty.error('Please choose at least one tag.')
@@ -208,13 +209,13 @@ export default {
         if (questionsByTags.type === 'success' && questionsByTags.questions.length > 0) {
           //get whether in the assignment and get the url
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
-         // console.log(data)
+          // console.log(data)
           let questionInfo = data
-         // console.log(questionInfo)
+          // console.log(questionInfo)
           if (questionInfo.type === 'success') {
 
             for (let i = 0; i < questionsByTags.questions.length; i++) {
-            //  console.log(questionsByTags.questions)
+              //  console.log(questionsByTags.questions)
               questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
               questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
 
@@ -222,7 +223,7 @@ export default {
               questionsByTags.questions[i].questionIframeId = `getQuestionIframe-${i}`
             }
             this.questions = questionsByTags.questions
-           // console.log(this.questions)
+            // console.log(this.questions)
             this.showQuestions = true
           } else {
             this.$noty.error(questionIds.message)

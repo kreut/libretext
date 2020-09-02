@@ -29,18 +29,42 @@ class QuestionsGetTest extends TestCase
 
 
     }
+
     /** @test */
 
-    public function if_page_id_is_included_there_should_be_no_other_tags(){
+    public function if_page_id_is_included_there_should_be_no_other_tags()
+    {
         $this->markTestIncomplete(
-           'TODO'
+            'TODO'
         );
 
 
     }
+
+    /**@test */
+    public function returns_an_error_with_an_invalid_page_id()
+    {
+
+        $this->markTestIncomplete(
+            'TODO'
+        );
+
+
+    }
+
+    /**@test */
+    public function returns_the_correct_question_given_a_query_page_id()
+    {
+        $this->markTestIncomplete(
+            'TODO'
+        );
+
+    }
+
     /** @test */
 
-    public function user_gets_message_if_there_are_no_questions_associated_with_a_tag(){
+    public function user_gets_message_if_there_are_no_questions_associated_with_a_tag()
+    {
         $this->markTestIncomplete(
             'TODO'
         );
@@ -50,7 +74,8 @@ class QuestionsGetTest extends TestCase
 
     /** @test */
 
-    public function user_gets_message_if_there_are_no_questions_associated_with_an_intersection_of_tags(){
+    public function user_gets_message_if_there_are_no_questions_associated_with_an_intersection_of_tags()
+    {
         $this->markTestIncomplete(
             'TODO'
         );
@@ -59,13 +84,14 @@ class QuestionsGetTest extends TestCase
     }
 
 
-/** @test */
+    /** @test */
     public function can_get_tags_if_not_student()
     {
         $this->actingAs($this->user)->getJson("/api/tags")
             ->assertJson(['type' => 'success']);
 
     }
+
     /** @test */
     public function cannot_get_tags_if_student()
     {
@@ -74,7 +100,8 @@ class QuestionsGetTest extends TestCase
                 'message' => 'You are not allowed to retrieve the tags from the database.']);
 
     }
-/** @test */
+
+    /** @test */
     public function can_add_a_question_to_an_assignment_if_you_are_the_owner()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
@@ -82,20 +109,22 @@ class QuestionsGetTest extends TestCase
     }
 
 
-/** @test */
+    /** @test */
     public function cannot_add_a_question_to_an_assignment_if_you_are_not_the_owner()
     {
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'error',
                 'message' => 'You are not allowed to add a question to this assignment.']);
     }
-/** @test */
+
+    /** @test */
     public function can_remove_a_question_to_an_assignment_if_you_are_the_owner()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
-/** @test */
+
+    /** @test */
     public function cannot_remove_a_question_to_an_assignment_if_you_are_not_the_owner()
     {
 
@@ -104,7 +133,8 @@ class QuestionsGetTest extends TestCase
                 'message' => 'You are not allowed to remove this question from this assignment.']);
 
     }
-/** @test  */
+
+    /** @test */
     public function can_get_questions_by_tags()
     {
         $tag = factory(Tag::class)->create(['tag' => 'some tag']);
@@ -114,13 +144,14 @@ class QuestionsGetTest extends TestCase
 
 
     }
-/** @test */
+
+    /** @test */
     public function can_get_assignment_question_ids_if_owner()
     {
         $this->assignment->questions()->attach($this->question);
 
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
-            ->assertJson([ 'type' => 'success',
+            ->assertJson(['type' => 'success',
                 'question_ids' => "[{$this->question->id}]"]);
 
     }
@@ -130,7 +161,7 @@ class QuestionsGetTest extends TestCase
     {
         $this->assignment->questions()->attach($this->question);
         $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
-            ->assertJson([ 'type' => 'error']);
+            ->assertJson(['type' => 'error']);
 
     }
 

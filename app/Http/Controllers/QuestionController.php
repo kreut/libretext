@@ -13,10 +13,10 @@ use Illuminate\Support\Facades\Gate;
 
 class QuestionController extends Controller
 {
-    public function getQuestionsByTags(Request $request, Question $question)
+    public function getQuestionsByTags(Request $request, Question $Question)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('viewAny', $question);
+        $authorized = Gate::inspect('viewAny', $Question);
 
         if (!$authorized->allowed()) {
 
@@ -25,12 +25,12 @@ class QuestionController extends Controller
         }
 
         $page_id = $this->validatePageId($request);
-        $questions = [];
 
-            $question_ids = $page_id ? $this->getQuestionIdsByPageId($request, $response)
-                : $this->getQuestionIdsByWordTags($request, $response);
 
-            $questions = Question::whereIn('id', $question_ids)->get();
+        $question_ids = $page_id ? $this->getQuestionIdsByPageId($page_id, $Question)
+            : $this->getQuestionIdsByWordTags($request);
+
+        $questions = Question::whereIn('id', $question_ids)->get();
 
 
         foreach ($questions as $key => $question) {
@@ -42,17 +42,30 @@ class QuestionController extends Controller
             'questions' => $questions];
 
     }
-public function getQuestionIdsByPageId(Request $request, $response){
-        $question_ids = [];
-        return $question_ids;
-}
-    public function getQuestionIdsByWordTags(Request $request, $response)
+
+    public function getQuestionIdsByPageId(int $page_id, Question $Question)
+    {
+        $question = $Question::where('page_id', $page_id)->first();
+        if (!$question) {
+            echo json_encode(['type' => 'error', 'message' => 'That is not a valid query Page Id.']);
+            exit;
+        }
+        return [$question->id];
+    }
+
+    public function getQuestionIdsByWordTags(Request $request)
     {
         $chosen_tags = DB::table('tags')
             ->whereIn('tag', $request->get('tags'))
             ->get()
             ->pluck('id');
-        if (!$chosen_tags) return ['type' => 'error'];
+        if (!$chosen_tags) {
+            echo json_encode([
+                'type' => 'error',
+                'message' => 'We could not find the tags in our database.']);
+            exit;
+
+        }
         $question_ids_grouped_by_tag = [];
         //get all of the question ids for each of the tags
         foreach ($chosen_tags as $key => $chosen_tag) {
@@ -83,18 +96,19 @@ public function getQuestionIdsByPageId(Request $request, $response){
 
     public function validatePageId(Request $request)
     {
-        $pageIdTag = false;
+        $page_id = false;
+
         foreach ($request->get('tags') as $tag) {
             if (stripos($tag, 'pageid=') !== false) {
-                $pageIdTag = true;
+                $page_id = str_ireplace('pageid=', '', $tag);
             }
         }
 
-        if ($pageIdTag && (count($request->get('tags')) > 1)) {
+        if ($page_id && (count($request->get('tags')) > 1)) {
             $response['message'] = "If you would like to search by page id, please don't include other tags.";
             echo json_encode($response);
             exit;
         }
-        return $pageIdTag;
+        return $page_id;
     }
 }
