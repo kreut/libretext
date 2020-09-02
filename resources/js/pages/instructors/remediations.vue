@@ -42,8 +42,21 @@ export default {
     chosenId: '',
     library: null,
     libraryColors: {
+      'bio': '#00b224',
+      'biz': 'rgb(32, 117, 55)',
       'chem': 'rgb(0, 191, 255)',
-      'biz': 'rgb(32, 117, 55)'
+      'eng': '#ff6a00',
+      'espanol': '#d77b00',
+      'human': '#00bc94',
+      'k12': '#5cbf1c',
+      'law': '#1c5d73',
+      'math': '#3737bf',
+      'med': '#e52817',
+      'query': '#0060bc',
+      'phys': '#841fcc',
+      'socialsci': '#f20c92',
+      'stats': '#05baff',
+      'workforce': '#bf4000'
     },
     libraryOptions: [
       {value: null, text: 'Please select  the library'},
@@ -55,6 +68,7 @@ export default {
       {value: 'geo', text: 'Geology'},
       {value: 'human', text: 'Humanities'},
       {value: 'k12', text: 'K12'},
+      {value: 'law', text: 'Law'},
       {value: 'math', text: 'Mathematics'},
       {value: 'med', text: 'Medicine'},
       {value: 'phys', text: 'Physics'},
@@ -489,7 +503,7 @@ ${body}
   src: local('Roboto Bold'), local('Roboto-Bold'), url(https://fonts.gstatic.com/s/roboto/v20/KFOlCnqEu92Fr1MmWUlfBBc4AMP6lQ.woff2) format('woff2');
   unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+2074, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
 }
-/**
+
 body, html {
   margin: 0px;
   padding: 0px;
@@ -497,8 +511,7 @@ body, html {
   background-repeat: repeat;
   background-size: 30px 30px;
 }
-**/
- */
+
 
 #navigation {
   height: 71px;
