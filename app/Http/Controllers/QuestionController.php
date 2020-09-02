@@ -20,9 +20,11 @@ class QuestionController extends Controller
 
         if (!$authorized->allowed()) {
 
-            $response['message'] = $authorized->message() ;
+            $response['message'] = $authorized->message();
             return $response;
         }
+
+        $this->validatePageId($request);
 
 
         $chosen_tags = DB::table('tags')
@@ -34,13 +36,13 @@ class QuestionController extends Controller
         //get all of the question ids for each of the tags
         foreach ($chosen_tags as $key => $chosen_tag) {
             $question_ids_grouped_by_tag[$key] = DB::table('question_tag')
-                                                ->select('question_id')
-                                                ->where('tag_id', '=', $chosen_tag)
-                                                ->get()
-                                                 ->pluck('question_id')->toArray();
-            if (!$question_ids_grouped_by_tag[$key] ){
+                ->select('question_id')
+                ->where('tag_id', '=', $chosen_tag)
+                ->get()
+                ->pluck('question_id')->toArray();
+            if (!$question_ids_grouped_by_tag[$key]) {
                 return ['type' => 'error',
-                        'message' => 'There are no questions associated with those tags.'];
+                    'message' => 'There are no questions associated with those tags.'];
             }
         }
         //now intersect them for each group
@@ -49,7 +51,7 @@ class QuestionController extends Controller
             $intersected_question_ids = array_intersect($question_ids, $question_group);
         }
         if (!count($intersected_question_ids)) {
-           return ['type' => 'error',
+            return ['type' => 'error',
                 'message' => 'There are no questions associated with those tags.'];
         }
 
@@ -63,5 +65,22 @@ class QuestionController extends Controller
         return ['type' => 'success',
             'questions' => $questions];
 
+    }
+
+
+    public function validatePageId(Request $request)
+    {
+        $pageIdTag = false;
+        foreach ($request->get('tags') as $tag) {
+            if (stripos($tag, 'pageid=') !== false) {
+                $pageIdTag = true;
+            }
+        }
+
+        if ($pageIdTag && (count($request->get('tags')) > 1)) {
+            $response['message'] = "If you would like to search by page id, please don't include other tags.";
+            echo json_encode($response);
+            exit;
+        }
     }
 }
