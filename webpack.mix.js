@@ -1,3 +1,4 @@
+
 const path = require('path')
 const fs = require('fs-extra')
 const mix = require('laravel-mix')
@@ -13,6 +14,7 @@ mix.babel([
   'resources/js/helpers/Date.js',
   'resources/js/helpers/LoginRedirect.js'
 ], 'public/assets/js/combined.js')
+
 
   .disableNotifications()
 
