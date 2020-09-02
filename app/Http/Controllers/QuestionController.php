@@ -24,9 +24,30 @@ class QuestionController extends Controller
             return $response;
         }
 
-        $this->validatePageId($request);
+        $page_id = $this->validatePageId($request);
+        $questions = [];
+
+            $question_ids = $page_id ? $this->getQuestionIdsByPageId($request, $response)
+                : $this->getQuestionIdsByWordTags($request, $response);
+
+            $questions = Question::whereIn('id', $question_ids)->get();
 
 
+        foreach ($questions as $key => $question) {
+            $questions[$key]['inAssignment'] = false;
+
+        }
+
+        return ['type' => 'success',
+            'questions' => $questions];
+
+    }
+public function getQuestionIdsByPageId(Request $request, $response){
+        $question_ids = [];
+        return $question_ids;
+}
+    public function getQuestionIdsByWordTags(Request $request, $response)
+    {
         $chosen_tags = DB::table('tags')
             ->whereIn('tag', $request->get('tags'))
             ->get()
@@ -41,32 +62,24 @@ class QuestionController extends Controller
                 ->get()
                 ->pluck('question_id')->toArray();
             if (!$question_ids_grouped_by_tag[$key]) {
-                return ['type' => 'error',
-                    'message' => 'There are no questions associated with those tags.'];
+                echo json_encode(['type' => 'error',
+                    'message' => 'There are no questions associated with those tags.']);
+                exit;
             }
         }
         //now intersect them for each group
         $question_ids = $question_ids_grouped_by_tag[0];
+        $intersected_question_ids = [];
         foreach ($question_ids_grouped_by_tag as $question_group) {
             $intersected_question_ids = array_intersect($question_ids, $question_group);
         }
         if (!count($intersected_question_ids)) {
-            return ['type' => 'error',
-                'message' => 'There are no questions associated with those tags.'];
+            echo json_encode(['type' => 'error',
+                'message' => 'There are no questions associated with those tags.']);
+            exit;
         }
-
-        $questions = Question::whereIn('id', $intersected_question_ids)->get();
-
-        foreach ($questions as $key => $question) {
-            $questions[$key]['inAssignment'] = false;
-
-        }
-
-        return ['type' => 'success',
-            'questions' => $questions];
-
+        return $intersected_question_ids;
     }
-
 
     public function validatePageId(Request $request)
     {
@@ -82,5 +95,6 @@ class QuestionController extends Controller
             echo json_encode($response);
             exit;
         }
+        return $pageIdTag;
     }
 }

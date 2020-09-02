@@ -38,6 +38,25 @@ class QuestionsGetTest extends TestCase
 
 
     }
+    /** @test */
+
+    public function user_gets_message_if_there_are_no_questions_associated_with_a_tag(){
+        $this->markTestIncomplete(
+            'TODO'
+        );
+
+
+    }
+
+    /** @test */
+
+    public function user_gets_message_if_there_are_no_questions_associated_with_an_intersection_of_tags(){
+        $this->markTestIncomplete(
+            'TODO'
+        );
+
+
+    }
 
 
 /** @test */
