@@ -346,3 +346,10 @@ export default {
   }
 }
 </script>
+<style>
+body, html {
+  overflow: visible;
+
+}
+
+</style>
