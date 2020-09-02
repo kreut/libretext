@@ -13,8 +13,9 @@ class UpdatePageIdToQuestions extends Migration
      */
     public function up()
     {
+        DB::connection()->getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
         Schema::table('questions', function (Blueprint $table) {
-            $table->unsignedBigInteger('page_id')->change();
+            $table->unsignedBigInteger('page_id')->charset(null)->collation(null)->change();
             $table->unique('page_id');
         });
     }
