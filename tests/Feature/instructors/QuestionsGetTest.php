@@ -9,6 +9,7 @@ use App\User;
 use App\Tag;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class QuestionsGetTest extends TestCase
@@ -170,7 +171,13 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function can_get_assignment_question_ids_if_owner()
     {
-        $this->assignment->questions()->attach($this->question);
+
+        DB::table('assignment_question')
+            ->insert([
+                'assignment_id' => $this->assignment->id,
+                'question_id' => $this->question->id,
+                'points' => $this->assignment->default_points_per_question
+            ]);
 
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
             ->assertJson(['type' => 'success',
@@ -181,7 +188,12 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function cannot_get_assignment_question_ids_if_not_owner()
     {
-        $this->assignment->questions()->attach($this->question);
+        DB::table('assignment_question')
+            ->insert([
+                'assignment_id' => $this->assignment->id,
+                'question_id' => $this->question->id,
+                'points' => $this->assignment->default_points_per_question
+            ]);
         $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
             ->assertJson(['type' => 'error']);
 

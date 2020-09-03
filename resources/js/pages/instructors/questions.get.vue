@@ -209,9 +209,9 @@ export default {
         if (questionsByTags.type === 'success' && questionsByTags.questions.length > 0) {
           //get whether in the assignment and get the url
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
-          // console.log(data)
+          console.log(data)
           let questionInfo = data
-          // console.log(questionInfo)
+
           if (questionInfo.type === 'success') {
 
             for (let i = 0; i < questionsByTags.questions.length; i++) {

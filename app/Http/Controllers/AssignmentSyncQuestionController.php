@@ -58,7 +58,14 @@ class AssignmentSyncQuestionController extends Controller
                 ->get();
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
+                    //for getQuestionsByAssignment (internal)
                     $response['questions'][$question_info->question_id] = $question_info;
+                    //for the axios call from questions.get.vue
+                    $response['question_ids'][] = $question_info->question_id;
+                    if ($question_info->question_files) {
+                        $response['question_files'][] = $question_info->question_id;
+                    }
+
                 }
             }
         } catch (Exception $e) {
@@ -207,7 +214,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_ids = [];
             $question_files = [];
             $points = [];
-            foreach ($assignment_question_info['questions'] as $question){
+            foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
                 $points[$question->question_id] = $question->points;
