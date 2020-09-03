@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use Illuminate\Http\Request;
+use App\Http\Requests\updateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
 use App\AssignmentQuestion;
@@ -52,17 +53,12 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $response['type'] = 'success';
-            $response['question_ids'] = [];
-            $response['question_files'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->get();
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
-                    $response['question_ids'][] = $question_info->question_id;
-                    if ($question_info->question_files) {
-                        $response['question_files'][] = $question_info->question_id;
-                    }
+                    $response['questions'][$question_info->question_id] = $question_info;
                 }
             }
         } catch (Exception $e) {
@@ -96,7 +92,37 @@ class AssignmentSyncQuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error toggling the file upload option.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public function updatePoints(updateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $data = $request->validated();
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['points' => $request->points]);
+            $response['type'] = 'success';
+            $response['message'] = 'The number of points have been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the number of points.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -114,15 +140,23 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         try {
-            $assignment->questions()->syncWithoutDetaching($question);
+            DB::table('assignment_question')
+                ->insert([
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'points' => $assignment->default_points_per_question //don't need to test since tested already when creating an assignment
+                ]);
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
         } catch (Exception $e) {
+
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error adding the question to the assignment.  Please try again or contact us for assistance.";
         }
+
         return $response;
 
     }
@@ -168,11 +202,16 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
 
 
-
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
-            $question_ids =  $assignment_question_info['question_ids'];
-            $question_files = $assignment_question_info['question_files'];
+            $question_ids = [];
+            $question_files = [];
+            $points = [];
+            foreach ($assignment_question_info['questions'] as $question){
+                $question_ids[$question->question_id] = $question->question_id;
+                $question_files[$question->question_id] = $question->question_files;
+                $points[$question->question_id] = $question->points;
+            }
 
 
             $instructor_user_id = $assignment->course->user_id;
@@ -201,7 +240,8 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             foreach ($assignment->questions as $key => $question) {
-                $assignment->questions[$key]['questionFiles'] = in_array($question->id,$question_files);//camel case because using in vue
+                $assignment->questions[$key]['points'] = $points[$question->id];
+                $assignment->questions[$key]['questionFiles'] = $question_files[$question->id];//camel case because using in vue
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,

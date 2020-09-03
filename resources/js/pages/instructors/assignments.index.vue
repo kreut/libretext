@@ -120,10 +120,9 @@
           <b-form-row>
             <b-col lg="3">
               <b-form-input
-                id="name"
+                id="points_per_question"
                 v-model="form.default_points_per_question"
                 type="text"
-                aria-describedby="number_of_points_per_question_help"
                 placeholder=""
                 :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
                 @keydown="form.errors.clear('default_points_per_question')"

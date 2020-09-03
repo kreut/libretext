@@ -41,6 +41,28 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /** @test */
+
+    public function cannot_update_points_if_not_owner() {
+
+        $this->markTestIncomplete('TOD');
+    }
+
+    /** @test */
+
+    public function cannot_update_points_if_points_are_not_valid() {
+
+        $this->markTestIncomplete('TOD');
+    }
+
+    /** @test */
+
+    public function can_update_points_if_points_if_owner() {
+
+        $this->markTestIncomplete('TOD');
+    }
+
+
     /**@test */
     public function returns_an_error_with_an_invalid_page_id()
     {

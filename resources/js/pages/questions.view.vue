@@ -1,6 +1,7 @@
 <template>
   <div>
 
+
     <b-modal
       id="modal-upload-question-file"
       ref="modal"
@@ -10,10 +11,11 @@
       ok-title="Submit"
 
     >
+
       <b-form ref="form">
         <b-form-file
           ref="questionFileInput"
-          v-model="form.questionFile"
+          v-model="uploadForm.questionFile"
           placeholder="Choose a .pdf file or drop it here..."
           drop-placeholder="Drop file here..."
           accept=".pdf"
@@ -23,17 +25,49 @@
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
-        <div class="help-block invalid-feedback">{{ form.errors.get('questionFile')}}
+        <div class="help-block invalid-feedback">{{ uploadForm.errors.get('questionFile') }}
         </div>
 
       </b-form>
     </b-modal>
 
 
-
-
     <div v-if="!initializing">
       <PageTitle v-bind:title="this.title"></PageTitle>
+      <b-form ref="form">
+
+        <b-form-group
+          id="points"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Number of points for this question"
+          label-for="points"
+        >
+
+          <b-form-row>
+            <b-col lg="2">
+              <b-form-input
+                id="points"
+                v-model="questionPointsForm.points"
+                :value="questions[currentPage-1].points"
+                type="text"
+                placeholder=""
+                :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                @keydown="questionPointsForm.errors.clear('points')"
+              >
+              </b-form-input>
+              <has-error :form="questionPointsForm" field="points"></has-error>
+            </b-col>
+            <b-col lg="2">
+              <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points</b-button>
+            </b-col>
+          </b-form-row>
+
+        </b-form-group>
+
+      </b-form>
+
+
       <div v-if="questions.length">
         <div class="d-flex justify-content-between">
           <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
@@ -46,11 +80,12 @@
               :per-page="perPage"
               first-number
               last-number
-              v-on:input="resetLearningTree(questions[currentPage - 1].learning_tree)"
+              v-on:input="changePage(currentPage)"
             ></b-pagination>
           </div>
           <div v-if="user.role !== 3">
-            <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)"  variant="danger">Remove Question</b-button>
+            <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+            </b-button>
             <toggle-button
               @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
               :width="250"
@@ -62,8 +97,10 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
           <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-            <b-button variant="primary" class="mr-2" v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
-                    v-b-modal.modal-upload-question-file>Upload File</b-button>
+            <b-button variant="primary" class="mr-2"
+                      v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
+                      v-b-modal.modal-upload-question-file>Upload File
+            </b-button>
             <b-button variant="secondary">View Comments</b-button>
 
           </div>
@@ -142,16 +179,16 @@
                 style="width: 1px;min-width: 100%;"
                 v-if="!showQuestion"
                 v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
-                >
+        >
         </iframe>
-        <div  v-if="showQuestion"  v-show="iframeLoaded">
-        <iframe v-bind:id="questions[currentPage-1].questionIframeId"
-                allowtransparency="true" frameborder="0"
-                v-bind:src="questions[currentPage-1].src"
-                v-on:load="showIframe(questions[currentPage-1].questionIframeId)"
-                style="width: 1px;min-width: 100%;"
-                >
-        </iframe>
+        <div v-if="showQuestion" v-show="iframeLoaded">
+          <iframe v-bind:id="questions[currentPage-1].questionIframeId"
+                  allowtransparency="true" frameborder="0"
+                  v-bind:src="questions[currentPage-1].src"
+                  v-on:load="showIframe(questions[currentPage-1].questionIframeId)"
+                  style="width: 1px;min-width: 100%;"
+          >
+          </iframe>
         </div>
 
 
@@ -192,8 +229,13 @@ export default {
   },
   data: () => ({
     uploading: false,
-    form: new Form({
+    uploadForm: new Form({
       questionFile: null,
+      assignmentId: null,
+      questionId: null
+    }),
+    questionPointsForm: new Form({
+      points: null,
       assignmentId: null,
       questionId: null
     }),
@@ -241,34 +283,47 @@ export default {
           }
 
         } else {
-         // console.log('Hello Event')
+          // console.log('Hello Event')
         }
       }
       window.addEventListener("message", receiveMessage, false)
     }
   },
   methods: {
+    async updatePoints(questionId) {
+      try {
+
+        const {data} = await this.questionPointsForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-points`)
+        this.$noty[data.type](data.message)
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+
+    },
     resetModalForms() {
       // alert('reset modal')
     },
     openUploadQuestionFileModal(questionId) {
-      this.form.errors.clear('questionFile')
-      this.form.questionId = questionId
-      this.form.assignmentId = this.assignmentId
+      this.uploadForm.errors.clear('questionFile')
+      this.uploadForm.questionId = questionId
+      this.uploadForm.assignmentId = this.assignmentId
     },
-  async handleOk(bvModalEvt) {
-    // Prevent modal from closing
-    bvModalEvt.preventDefault()
-    // Trigger submit handler
-    if (this.uploading) {
-      this.$noty.info('Please be patient while the file is uploading.')
-      return false
-    }
-    this.uploading = true
-    await this.submitUploadFile('question', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
-    this.uploading = false
-  },
-    viewOriginalQuestion(){
+    async handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      if (this.uploading) {
+        this.$noty.info('Please be patient while the file is uploading.')
+        return false
+      }
+      this.uploading = true
+      await this.submitUploadFile('question', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+      this.uploading = false
+    },
+    viewOriginalQuestion() {
       this.showQuestion = true
     },
     showIframe(id) {
@@ -294,7 +349,9 @@ export default {
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
     },
-    async resetLearningTree(learningTree) {
+    async changePage(currentPage) {
+      this.questionPointsForm.points = this.questions[currentPage - 1].points
+      let learningTree = this.questions[currentPage - 1].learning_tree
       this.showQuestion = true
       this.learningTreeAsList = []
       if (learningTree) {
@@ -303,7 +360,7 @@ export default {
         //loop through each with parent having this level
         let pageId
         let library
-       // console.log('length ' + learningTree.length)
+        // console.log('length ' + learningTree.length)
         for (let i = 0; i < learningTree.length; i++) {
           let remediation = learningTree[i]
           //get the library and page ids
@@ -368,13 +425,13 @@ export default {
         const {data} = await axios.get(`/api/assignments/${assignmentId}`)
         this.title = `${data.name} Assignment Questions`
       } catch (error) {
-          this.$noty.error(error.message)
+        this.$noty.error(error.message)
       }
     },
     async getSelectedQuestions(assignmentId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
-       // console.log(JSON.parse(JSON.stringify(data)))
+        // console.log(JSON.parse(JSON.stringify(data)))
 
 
         if (data.type === 'error') {
@@ -382,7 +439,9 @@ export default {
           return false
         }
         this.questions = data.questions
-       // console.log(data.questions)
+        // console.log(data.questions)
+
+        this.questionPointsForm.points = this.questions[0].points
         for (let i = 0; i < this.questions.length; i++) {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])
           this.questions[i].questionIframeId = `viewQuestionIframe-${this.questions[i].id}`
