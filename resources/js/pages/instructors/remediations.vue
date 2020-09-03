@@ -1,5 +1,8 @@
 <template>
   <div>
+    <div id="get-more-assignment-questions">
+      <b-button size="sm" variant="info" v-on:click="getMoreQuestions">Get More Questions</b-button>
+    </div>
     <div id="leftcard">
         <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
       <div id="search">
@@ -187,6 +190,12 @@ ${body}
 
   },
   methods: {
+    getMoreQuestions(){
+      //I couldn't figure  out how to scope the CSS from Flowy: window.location
+      //performs a refresh which solved the problem.
+      window.location = `/assignments/${this.$route.params.assignmentId}/questions/get`
+
+    },
     async getLearningTreeByQuestionId(questionId) {
       console.log('getting learning tree')
       try {
@@ -652,12 +661,19 @@ body, html {
   margin-top: 15px;
 }
 
+#get-more-assignment-questions{
+  width: 300px;
+  text-align:center;
+  margin-left:-100px;
+  margin-top: -10px;
+  margin-bottom: 5px;
+}
 #leftcard {
   width: 300px;
 background-color: #F8F8F8;
   border: 1px solid #E8E8EF;
   box-sizing: border-box;
-  padding-top: 10px;
+  padding-top: 15px;
   padding-left: 20px;
   height: 500px;
 margin-left:-100px;

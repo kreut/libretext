@@ -55,7 +55,7 @@
         <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
           <b-button variant="primary">Add Question</b-button>
         </div>
-        <div class="mt-1 mb-2" v-on:click="$router.push(`/instructors/remediations/${questions[currentPage-1].id}`)">
+        <div class="mt-1 mb-2" v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)">
           <b-button variant="info">Create Learning Tree</b-button>
         </div>
       </div>
@@ -250,3 +250,9 @@ export default {
 }
 
 </script>
+<style>
+body, html {
+  overflow: visible;
+
+}
+</style>
