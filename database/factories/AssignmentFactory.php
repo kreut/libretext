@@ -10,7 +10,6 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'name' => 'First Assignment',
         'available_from' => '2020-06-10 09:00:00',
         'due' => '2027-06-12 09:00:00',
-        'num_submissions_needed' => 3,
-        'submission_files' => 'a',
-        'type_of_submission' => 'correct'];
+        'default_points_per_question' => 2,
+        'submission_files' => 'a'];
 });

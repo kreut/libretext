@@ -109,30 +109,31 @@
             <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <b-form-row>
-          <b-col lg="5">Give students assignment credit if at least</b-col>
-          <b-col lg="1">
-            <b-form-select v-model="form.num_submissions_needed"
-                           :options="numSubmissionsNeeded"
-                           class="mb-3"
-                           value-field="item"
-                           text-field="name"
-                           disabled-field="notEnabled">
-            </b-form-select>
-          </b-col>
-          <b-col lg="4" class="d-flex justify-content-center">
-            of the submitted responses are
-          </b-col>
-          <b-col lg="2">
-            <b-form-select v-model="form.type_of_submission"
-                           :options="completedOrCorrectOptions"
-                           class="mb-3"
-                           value-field="item"
-                           text-field="name"
-                           disabled-field="notEnabled">
-            </b-form-select>
-          </b-col>
-        </b-form-row>
+        <b-form-group
+          id="default_points_per_question"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Points Per Question"
+          label-for="number_of_points_per_question"
+        >
+
+          <b-form-row>
+            <b-col lg="3">
+              <b-form-input
+                id="name"
+                v-model="form.default_points_per_question"
+                type="text"
+                aria-describedby="number_of_points_per_question_help"
+                placeholder=""
+                :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                @keydown="form.errors.clear('default_points_per_question')"
+              >
+              </b-form-input>
+              <has-error :form="form" field="default_points_per_question"></has-error>
+            </b-col>
+          </b-form-row>
+
+        </b-form-group>
       </b-form>
     </b-modal>
 
@@ -183,11 +184,6 @@
 
   const now = new Date()
 
-  let numSubmissionsNeeded = []
-  for (let numSubmission of ['2', '3', '4', '5', '6', '7', '8', '9']) {
-    numSubmissionsNeeded.push({item: numSubmission, name: numSubmission})
-  }
-
   const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   let formatDateAndTime = value => {
     let date = new Date(value)
@@ -222,7 +218,10 @@
             return formatDateAndTime(value)
           }
         },
-        'credit_given_if_at_least',
+        {
+          key: 'number_of_questions',
+          tdClass: 'td-center'
+        },
         'actions'
       ],
       form: new Form({
@@ -237,7 +236,7 @@
       }),
       hasAssignments: false,
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      numSubmissionsNeeded: numSubmissionsNeeded,
+      defaultPointsPointsPerQuestion: '',
       canViewAssignments: false,
       showNoAssignmentsAlert: false,
     }),
@@ -388,3 +387,8 @@ console.log(assignment)
     }
   }
 </script>
+<style>
+.td-center {
+  text-align: center;
+}
+</style>

@@ -41,7 +41,7 @@ class AssignmentController extends Controller
             $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
             $assignments = $course->assignments;
             foreach ($course->assignments as $key => $assignment) {
-                $assignments[$key]['credit_given_if_at_least'] = "{$assignment['num_submissions_needed']} questions are {$assignment['type_of_submission']}";
+                $assignments[$key]['number_of_questions'] = count($assignment->questions);
                 $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
                 $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
                 if (Auth::user()->role === 3) {
@@ -97,8 +97,7 @@ class AssignmentController extends Controller
                 ['name' => $data['name'],
                     'available_from' => $data['available_from_date'] . ' ' . $data['available_from_time'],
                     'due' => $data['due_date'] . ' ' . $data['due_time'],
-                    'num_submissions_needed' => $data['num_submissions_needed'],
-                    'type_of_submission' => $data['type_of_submission'],
+                    'default_points_per_question' => $data['default_points_per_question'],
                     'submission_files' => $data['submission_files'],
                     'course_id' => $course->id
                 ]

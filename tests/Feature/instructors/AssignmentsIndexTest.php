@@ -32,9 +32,8 @@ class AssignmentsIndexTest extends TestCase
             'available_from_time' => '09:00:00',
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
-            'num_submissions_needed' => 3,
-            'submission_files' => 'a',
-            'type_of_submission' => 'correct'];
+            'default_points_per_question' => 2,
+            'submission_files' => 'a'];
 
     }
 
@@ -124,6 +123,29 @@ class AssignmentsIndexTest extends TestCase
         $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
             ->assertJsonValidationErrors(['due_date']);
     }
+
+    /** @test */
+    public function must_include_valid_default_points_per_question()
+    {
+
+        $this->assignment_info['default_points_per_question'] = "";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['default_points_per_question']);
+
+        $this->assignment_info['default_points_per_question'] = "1.9";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['default_points_per_question']);
+
+        $this->assignment_info['default_points_per_question'] = "10000";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['default_points_per_question']);
+
+        $this->assignment_info['default_points_per_question'] = "-3";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['default_points_per_question']);
+    }
+
+
 
 /** @test */
     public function must_include_valid_due_time()
