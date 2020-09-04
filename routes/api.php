@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::post('mind-touch-events/update', 'MindTouchEventsController@update')->middleware('cors');
+Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt-test', 'Auth\UserController@getAuthenticatedUser');
 
 Route::group(['middleware' => 'auth:api'], function () {
