@@ -12,6 +12,8 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::post('mind-touch-events/update', 'MindTouchEventsController@update')->middleware('cors');
 Route::post('jwt-test', 'Auth\UserController@getAuthenticatedUser');
 
 Route::group(['middleware' => 'auth:api'], function () {
