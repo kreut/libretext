@@ -211,6 +211,62 @@ class Query extends Model
         return $page_info;
     }
 
+    public function updatePageInfoByPageId( int $page_id){
+
+        $staging = (env('APP_ENV') === 'staging');
+        if (!$page_id) {
+            LOG:info('No page id');
+            return false;
+        }
+        if ($staging) {
+            $page_id = 1939; //for testing purposes
+            //Works if you update a tag or title is updated
+        }
+        //first save the latest updates
+        try {
+
+
+            //save the latest updates; this one should now be available.
+            sleep(2); //not the best!  but allow for race conditions; want MindTouch to do the update first
+            $page_info = $this->getPageInfoByPageId($page_id);
+            LOG::info($page_info);
+
+            $question = Question::where('page_id', $page_id)->first();
+            DB::beginTransaction();
+            if (!$question) {
+                LOG::info('creating');
+                //get the info from query then add to the database
+                $question = Question::create(['page_id' => $page_id,
+                    'technology' => 'h5p',
+                    'location' => $page_info['uri.ui']]);
+            } else {
+                //the path may have changed so I need to update it
+                $question->location = $page_info['uri.ui'];
+                $question->save();
+                LOG::info('updating');
+
+            }
+
+            //now get the tags from Query and update
+            $tag_info = $this->getTagsByPageId($page_id);
+            $tags = [];
+            LOG::info('getting tags');
+            LOG::info($tag_info);
+            if ($tag_info['@count'] > 0) {
+                foreach ($tag_info['tag'] as $key => $tag) {
+                    $tags[] = $tag['@value'];
+                }
+                $this->addTagsToQuestion($question, $tags);
+            }
+            DB::commit();
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+        }
+    }
+
     public
     function getSiteMaps()
     {
