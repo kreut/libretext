@@ -9,11 +9,16 @@ use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
+use App\Traits\MindTouchTokens;
+
 use App\Exceptions\Handler;
 use \Exception;
 
 class Query extends Model
 {
+
+    use MindTouchTokens;
+
     protected $tags;
     protected $questionIds;
     protected $technologyIds;
@@ -40,13 +45,6 @@ class Query extends Model
         }
     }
 
-    public function getTokens()
-    {
-        $response = $this->client->get('https://files.libretexts.org/authenBrowser.json');
-        return json_decode($response->getBody());
-
-
-    }
 
     public function isValidAssessment($loc)
     {
@@ -86,8 +84,10 @@ class Query extends Model
 
     public function updateTags()
     {
-        //get all the ones that must be updated
-        $MindTouchEvent = MindTouchEvent::where('status', NULL)->where('event', 'page.tag:update')->get();
+        //update based on either a single event or all possible tag update events
+        $MindTouchEvent =  MindTouchEvent::where('status', NULL)
+                                             ->where('event', 'page.tag:update')
+                                            ->get();
 
         foreach ($MindTouchEvent as $key => $mind_touch_event) {
 
@@ -97,7 +97,7 @@ class Query extends Model
                 $page_id = $mind_touch_event->page_id;
                 $question = Question::where('page_id', $page_id)->first();
                 $parsed_url = parse_url($question->location);
-                $page_info = $this->getPageInfo($parsed_url);
+                $page_info = $this->getPageInfoByParsedUrl($parsed_url);
                 usleep(500000);
                 $question->tags()->detach();
                 $technology_and_tags = $this->getTechnologyAndTags($page_info);
@@ -128,7 +128,7 @@ class Query extends Model
             if ($question_exists_in_db) {
                 return false;//didn't use the API
             }
-            $page_info = $this->getPageInfo($parsed_url);
+            $page_info = $this->getPageInfoByParsedUrl($parsed_url);
 
             $page_id = $page_info['@id'];
             //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
@@ -174,8 +174,32 @@ class Query extends Model
         return compact('tags', 'technology');
     }
 
+    public function getPageInfoByPageId(int $page_id){
+        $tokens = $this->tokens;
+        $token = $tokens->query;
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+
+        $final_url = "https://query.libretexts.org/@api/deki/deki/pages/{$page_id}/info?dream.out.format=json";
+
+        $response = $this->client->get($final_url, ['headers' => $headers]);
+        $page_info = json_decode($response->getBody(), true);
+        return $page_info;
+    }
+
+    public function getTagsByPageId(int $page_id){
+        $tokens = $this->tokens;
+        $token = $tokens->query;
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+
+        $final_url = "https://query.libretexts.org/@api/deki/deki/pages/{$page_id}/tags?dream.out.format=json";
+
+        $response = $this->client->get($final_url, ['headers' => $headers]);
+        $page_info = json_decode($response->getBody(), true);
+        return $page_info;
+    }
+
     public
-    function getPageInfo(array $parsed_url)
+    function getPageInfoByParsedUrl(array $parsed_url)
     {
         $host = $parsed_url['host'];
         $path = substr($parsed_url['path'], 1);//get rid of trailing slash
@@ -206,47 +230,5 @@ class Query extends Model
         return $sitemaps;
     }
 
-    public
-    function getQueryUpdates()
-    {
-        https://api.libretexts.org/endpoint/queryEvents?limit=1000
-        $tokens = $this->tokens;
-        $token = $tokens->query;
-        $command = 'curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: ' . $token . '" https://api.libretexts.org/endpoint/queryEvents?limit=1000';
 
-        exec($command, $output, $return_var);
-        if ($return_var > 0) {
-            Log::error("getQueryUpdates failed with return_var: $return_var");
-            exit;
-        }
-        $has_summaries = false;
-        foreach ($output as $key => $value) {
-            if (strpos($value, '<summaries') === 0) {
-                $has_summaries = true;
-                $xml = simplexml_load_string($value);
-                break;
-            }
-        }
-        if (!$has_summaries) {
-            Log::error("getQueryUpdates failed because none of the output started with <summaries");
-            exit;
-        }
-
-        /**
-         * echo $value->event['mt-epoch'] . "\r\n";
-         * echo $value->event->page->path . "\r\n";
-         **/
-        foreach ($xml->children() as $key => $value) {
-
-            $page_id = $value->event->page['id'];
-            $event_id = $value->event['id'];
-            //if the question exists, add it to the database
-            if (DB::table('questions')->where('page_id', $page_id)->first()) {
-                MindTouchEvent::firstOrCreate(['event_id' => $event_id,
-                    'page_id' => $page_id,
-                    'event_time' => date("Y-m-d H:i:s", strtotime($value->event['datetime'])),
-                    'event' => $value->event['type'],]);
-            }
-        }
-    }
 }

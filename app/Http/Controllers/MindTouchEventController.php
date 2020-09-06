@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\MindTouchEvent;
 use App\Question;
 use App\Query;
 use Illuminate\Http\Request;
@@ -18,49 +19,60 @@ class MindTouchEventController extends Controller
     {
         LOG::info($request->all());
 
-
-        /*  Could be:
-         * 1.  A new Question
-         * 2.  Updated Tags
-         * 3.  A change in the location name
-         */
-        //new tags
-        $tags = $request->tags;
-        if ($tags) {
-            $tags = json_decode($request->tags, true);
-            $lower_case_tags = [];
-            foreach ($tags as $key => $tag) {
-                $lower_case_tags[$key] = mb_strtolower($tag);
-            }
+        $page_id = $request->page_id;
+        if (!$page_id) {
+            return false;
         }
+        //first save the latest updates
 
-
-        $Query = new Query();
+        $MindTouchEvent = new MindTouchEvent();
         try {
             DB::beginTransaction();
-            $question = Question::where('page_id', $request->page_id)->first();
-            if ($question) {
-                LOG::info('question exists');
-                LOG::info('Current Location: ' . $question->location);
-                //maybe the location was updated....
-                if ($question->location !== $request->location) {
-                    $question->location = $request->location;
-                    $question->save();
-                }
-            } else {
-                LOg::info('new question');
-                //new question
-                $question = Question::create(['page_id' => $request->page_id,
-                    'technology' => 'h5p',
-                    'location' => $request->location]);
+
+            //save the latest updates; this one should now be available.
+            sleep(2); //not the best!  but allow for race conditions; want MindTouch to do the update first
+            $MindTouchEvent->saveMindTouchEvents();
+            //get the latest update by page id which is not a success
+            $mind_touch_event = $MindTouchEvent->where('page_id', $page_id)
+                ->where('status', '<>', 'success')
+                ->orderBy('event_time', 'desc')
+                ->first();
+
+            if (!$mind_touch_event) {
+                //missed it so will get it on the hourly
+                return false;
             }
-            //handle the tags
-            if ($tags) {
-                LOG::info('updating tags');
-                $question->tags()->detach();//get rid of the current tags
-                $Query->addTagsToQuestion($question, $lower_case_tags);
+
+            $Query = new Query();
+            $question = Question::where('page_id', $page_id)->first();
+            $page_info = $Query->getPageInfoByPageId($page_id);
+            LOG::info($page_info);
+            if (!$question) {
+                LOG::info('creating');
+                //get the info from query then add to the database
+                $question = Question::create(['page_id' => $page_id,
+                    'technology' => 'h5p',
+                    'location' => $page_info['uri.ui']]);
             } else {
-                Log::info('not updating tags');
+                //the path may have changed so I need to update it
+                $question->location = $page_info['uri.ui'];
+                $question->save();
+                LOG::info('updating');
+                dd($page_info['uri.ui']);
+
+            }
+
+            //now get the tags from Query and update
+            $tag_info = $Query->getTagsByPageId($page_id);
+            $tags = [];
+            if ($tag_info['@count'] > 0) {
+                foreach ($tag_info['tag'] as $key => $tag) {
+                    $tags[] = $tag['@value'];
+                }
+                LOG::info($tags);
+                $this->addTagsToQuestion($question, $tags);
+                $mind_touch_event->status = 'updated';
+                $mind_touch_event->save();
             }
             DB::commit();
 
