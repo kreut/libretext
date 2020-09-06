@@ -211,11 +211,11 @@ class Query extends Model
         return $page_info;
     }
 
-    public function updatePageInfoByPageId( int $page_id){
-
+    public function updatePageInfoByPageId( int $page_id, $time_in_between = 2000000){
+        Log::info('updatePageInfoByPageId');
         $staging = (env('APP_ENV') === 'staging');
         if (!$page_id) {
-            LOG:info('No page id');
+            Log::info('No page id');
             return false;
         }
         if ($staging) {
@@ -227,14 +227,14 @@ class Query extends Model
 
 
             //save the latest updates; this one should now be available.
-            sleep(2); //not the best!  but allow for race conditions; want MindTouch to do the update first
+            usleep($time_in_between); //not the best!  but allow for race conditions; want MindTouch to do the update first
             $page_info = $this->getPageInfoByPageId($page_id);
-            LOG::info($page_info);
+            Log::info($page_info);
 
             $question = Question::where('page_id', $page_id)->first();
             DB::beginTransaction();
             if (!$question) {
-                LOG::info('creating');
+                Log::info('creating');
                 //get the info from query then add to the database
                 $question = Question::create(['page_id' => $page_id,
                     'technology' => 'h5p',
@@ -243,15 +243,15 @@ class Query extends Model
                 //the path may have changed so I need to update it
                 $question->location = $page_info['uri.ui'];
                 $question->save();
-                LOG::info('updating');
+                Log::info('updating');
 
             }
 
             //now get the tags from Query and update
             $tag_info = $this->getTagsByPageId($page_id);
             $tags = [];
-            LOG::info('getting tags');
-            LOG::info($tag_info);
+            Log::info('getting tags');
+            Log::info($tag_info);
             if ($tag_info['@count'] > 0) {
                 foreach ($tag_info['tag'] as $key => $tag) {
                     $tags[] = $tag['@value'];
@@ -259,11 +259,12 @@ class Query extends Model
                 $this->addTagsToQuestion($question, $tags);
             }
             DB::commit();
-
+            return true;
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
+            return false;
         }
     }
 

@@ -2,6 +2,7 @@
 
 namespace App;
 
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -10,6 +11,7 @@ use App\Traits\MindTouchTokens;
 class MindTouchEvent extends Model
 {
     use MindTouchTokens;
+
     protected $guarded = [];
     protected $tokens;
 
@@ -19,12 +21,13 @@ class MindTouchEvent extends Model
         $this->tokens = $this->getTokens();
     }
 
-    public function question(){
+    public function question()
+    {
         return $this->hasOne('App\Question', 'page_id');
     }
 
     public
-    function saveMindTouchEvents()
+    function updateQuestionsByMindTouchEvents()
     {
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
         $token = $this->tokens->query;
@@ -32,7 +35,7 @@ class MindTouchEvent extends Model
 
         exec($command, $output, $return_var);
         if ($return_var > 0) {
-            Log::error("saveEvents failed with return_var: $return_var");
+            Log::error("updateQuestionsByMindTouchEvents failed with return_var: $return_var");
             exit;
         }
         $has_summaries = false;
@@ -44,10 +47,10 @@ class MindTouchEvent extends Model
             }
         }
         if (!$has_summaries) {
-            Log::error("saveMindTouchEvents failed because none of the output started with <summaries");
+            Log::error("updateQuestionsByMindTouchEvents failed because none of the output started with <summaries");
             exit;
         }
-
+Log::info('Finished curl');
         /**
          * echo $value->event['mt-epoch'] . "\r\n";
          * echo $value->event->page->path . "\r\n";
@@ -64,5 +67,29 @@ class MindTouchEvent extends Model
                     'event' => $value->event['type'],]);
             }
         }
+        Log::info('Saved events to database');
+        //now update the events....
+        $events_to_update = DB::table('mind_touch_events')->where('status', null)->get();
+        $Query = new Query;
+        if ($events_to_update->isNotEmpty()) {
+            Log::info('Updating questions by mind touch events.');
+            foreach ($events_to_update as $key => $event) {
+                Log::info('updating ' . $event->page_id);
+                $updated = $Query->updatePageInfoByPageId($event->page_id, 500000);
+                Log::info('updatePageResult' . $updated);
+                if ($updated) {
+                    $page_to_update = MindTouchEvent::where('id', $event->id)->first();
+                    $page_to_update->status = 'updated';
+                    $page_to_update->save();
+
+                } else {
+                    Log::info('Did not update ' . $event->page_id);
+                }
+
+            }
+        } else {
+            Log::info('No questions to update by mind touch events.');
+        }
+        Log::info('Finished updating events.');
     }
 }
