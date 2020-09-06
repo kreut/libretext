@@ -4,12 +4,15 @@
 namespace App\Traits;
 
 
+use GuzzleHttp\Client;
+
 trait MindTouchTokens
 
 {
     public function getTokens()
     {
-        $response = $this->client->get('https://files.libretexts.org/authenBrowser.json');
+        $client = new Client();
+        $response = $client->get('https://files.libretexts.org/authenBrowser.json');
         return json_decode($response->getBody());
 
 

@@ -11,6 +11,13 @@ class MindTouchEvent extends Model
 {
     use MindTouchTokens;
     protected $guarded = [];
+    protected $tokens;
+
+    public function __construct(array $attributes = [])
+    {
+        parent::__construct($attributes);
+        $this->tokens = $this->getTokens();
+    }
 
     public function question(){
         return $this->hasOne('App\Question', 'page_id');
@@ -20,8 +27,7 @@ class MindTouchEvent extends Model
     function saveMindTouchEvents()
     {
         https://api.libretexts.org/endpoint/queryEvents?limit=1000
-        $tokens = $this->tokens;
-        $token = $tokens->query;
+        $token = $this->tokens->query;
         $command = 'curl -i -H "Accept: application/json" -H "origin: https://dev.adapt.libretexts.org" -H "x-deki-token: ' . $token . '" https://api.libretexts.org/endpoint/queryEvents?limit=1000';
 
         exec($command, $output, $return_var);
