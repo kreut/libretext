@@ -183,8 +183,8 @@ class Query extends Model
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/info?dream.out.format=json";
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
-        $page_info = json_decode($response->getBody(), true);
-        return $page_info;
+        return json_decode($response->getBody(), true);
+
     }
 
     public function getTagsByPageId(int $page_id){
@@ -193,8 +193,8 @@ class Query extends Model
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/tags?dream.out.format=json";
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
-        $page_info = json_decode($response->getBody(), true);
-        return $page_info;
+        return json_decode($response->getBody(), true);
+
     }
 
     public

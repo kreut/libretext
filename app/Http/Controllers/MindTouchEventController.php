@@ -26,6 +26,7 @@ class MindTouchEventController extends Controller
         }
         if ($staging) {
             $page_id = 1939; //for testing purposes
+            //Works if you update a tag or title is updated
         }
         //first save the latest updates
         try {
@@ -50,19 +51,19 @@ class MindTouchEventController extends Controller
                 $question->location = $page_info['uri.ui'];
                 $question->save();
                 LOG::info('updating');
-                dd($page_info['uri.ui']);
 
             }
 
             //now get the tags from Query and update
             $tag_info = $Query->getTagsByPageId($page_id);
             $tags = [];
+            LOG::info('getting tags');
+            LOG::info($tag_info);
             if ($tag_info['@count'] > 0) {
                 foreach ($tag_info['tag'] as $key => $tag) {
                     $tags[] = $tag['@value'];
                 }
-                LOG::info($tags);
-                $this->addTagsToQuestion($question, $tags);
+                $Query->addTagsToQuestion($question, $tags);
             }
             DB::commit();
 
