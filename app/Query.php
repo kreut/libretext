@@ -239,11 +239,13 @@ class Query extends Model
         foreach ($xml->children() as $key => $value) {
 
             $page_id = $value->event->page['id'];
+            $event_id = $value->event['id'];
             //if the question exists, add it to the database
             if (DB::table('questions')->where('page_id', $page_id)->first()) {
-                MindTouchEvent::firstOrCreate(['page_id' => $page_id,
+                MindTouchEvent::firstOrCreate(['event_id' => $event_id,
+                    'page_id' => $page_id,
                     'event_time' => date("Y-m-d H:i:s", strtotime($value->event['datetime'])),
-                    'event' => $value->event['type']]);
+                    'event' => $value->event['type'],]);
             }
         }
     }
