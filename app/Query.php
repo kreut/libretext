@@ -31,6 +31,8 @@ class Query extends Model
 
         $this->client = new Client();
         $this->tokens = $this->getTokens();
+        $this->library = 'query';
+        $this->token = $this->tokens->{$this->library};
 
     }
 
@@ -175,11 +177,10 @@ class Query extends Model
     }
 
     public function getPageInfoByPageId(int $page_id){
-        $tokens = $this->tokens;
-        $token = $tokens->query;
-        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
 
-        $final_url = "https://query.libretexts.org/@api/deki/deki/pages/{$page_id}/info?dream.out.format=json";
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
+
+        $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/info?dream.out.format=json";
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
         $page_info = json_decode($response->getBody(), true);
@@ -187,11 +188,9 @@ class Query extends Model
     }
 
     public function getTagsByPageId(int $page_id){
-        $tokens = $this->tokens;
-        $token = $tokens->query;
-        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
 
-        $final_url = "https://query.libretexts.org/@api/deki/deki/pages/{$page_id}/tags?dream.out.format=json";
+        $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/tags?dream.out.format=json";
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
         $page_info = json_decode($response->getBody(), true);
@@ -201,14 +200,11 @@ class Query extends Model
     public
     function getPageInfoByParsedUrl(array $parsed_url)
     {
-        $host = $parsed_url['host'];
-        $path = substr($parsed_url['path'], 1);//get rid of trailing slash
-        $library = str_replace('.libretexts.org', '', $host);
-        $tokens = $this->tokens;
-        $token = $tokens->{$library};
-        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $token];
 
-        $final_url = "https://$library.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
+        $path = substr($parsed_url['path'], 1);//get rid of trailing slash
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
+
+        $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/=" . urlencode($path) . '?dream.out.format=json';
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
         $page_info = json_decode($response->getBody(), true);

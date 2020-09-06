@@ -58,7 +58,7 @@ class MindTouchEvent extends Model
             $event_id = $value->event['id'];
             //if the question exists, add it to the database
             if (DB::table('questions')->where('page_id', $page_id)->first()) {
-                MindTouchEvent::firstOrCreate(['event_id' => $event_id,
+                MindTouchEvent::firstOrCreate(['id' => $event_id,
                     'page_id' => $page_id,
                     'event_time' => date("Y-m-d H:i:s", strtotime($value->event['datetime'])),
                     'event' => $value->event['type'],]);

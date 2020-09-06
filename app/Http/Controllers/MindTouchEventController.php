@@ -18,35 +18,27 @@ class MindTouchEventController extends Controller
     public function update(Request $request)
     {
         LOG::info($request->all());
-
+        $staging = (env('APP_ENV') === 'staging');
         $page_id = $request->page_id;
         if (!$page_id) {
+            LOG:info('No page id');
             return false;
         }
+        if ($staging) {
+            $page_id = 1939; //for testing purposes
+        }
         //first save the latest updates
-
-        $MindTouchEvent = new MindTouchEvent();
         try {
-            DB::beginTransaction();
+
 
             //save the latest updates; this one should now be available.
             sleep(2); //not the best!  but allow for race conditions; want MindTouch to do the update first
-            $MindTouchEvent->saveMindTouchEvents();
-            //get the latest update by page id which is not a success
-            $mind_touch_event = $MindTouchEvent->where('page_id', $page_id)
-                ->where('status', '<>', 'success')
-                ->orderBy('event_time', 'desc')
-                ->first();
-
-            if (!$mind_touch_event) {
-                //missed it so will get it on the hourly
-                return false;
-            }
-
             $Query = new Query();
-            $question = Question::where('page_id', $page_id)->first();
             $page_info = $Query->getPageInfoByPageId($page_id);
             LOG::info($page_info);
+
+            $question = Question::where('page_id', $page_id)->first();
+            DB::beginTransaction();
             if (!$question) {
                 LOG::info('creating');
                 //get the info from query then add to the database
@@ -71,8 +63,6 @@ class MindTouchEventController extends Controller
                 }
                 LOG::info($tags);
                 $this->addTagsToQuestion($question, $tags);
-                $mind_touch_event->status = 'updated';
-                $mind_touch_event->save();
             }
             DB::commit();
 
