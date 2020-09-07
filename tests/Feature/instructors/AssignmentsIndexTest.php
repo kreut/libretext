@@ -32,6 +32,7 @@ class AssignmentsIndexTest extends TestCase
             'available_from_time' => '09:00:00',
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
+            'scoring_type' => 'p',
             'default_points_per_question' => 2,
             'submission_files' => 'a'];
 
@@ -48,6 +49,23 @@ class AssignmentsIndexTest extends TestCase
 
     }
 
+    /** @test */
+    public function must_submit_a_valid_scoring_type() {
+        $this->markTestIncomplete(
+            'check if c or p'
+        );
+
+    }
+
+    /** @test */
+    public function can_submit_scoring_type_completed() {
+        $assignment_info = $this->assignment_info;
+        unset($assignment_info['default_points_per_question']);
+        $this->markTestIncomplete(
+            'submit without the default points'
+        );
+
+    }
     /** @test */
     public function cannot_get_assignments_if_you_are_a_student()
     {

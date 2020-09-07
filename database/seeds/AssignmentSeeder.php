@@ -24,6 +24,7 @@ class AssignmentSeeder extends Seeder
                 'name' => $faker->text(15),
                 'available_from' => $current_date->add(($i + 2) . ' weeks')->format('Y-m-d H:i:00'),
                 'due' => $current_date->add(($i + 3) . ' weeks')->format('Y-m-d H:i:00'),
+                'scoring_type' => 'p',
                 'default_points_per_question' => 2,
                 'course_id' => $course->id
             ]);

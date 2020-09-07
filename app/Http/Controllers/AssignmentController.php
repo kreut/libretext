@@ -97,7 +97,8 @@ class AssignmentController extends Controller
                 ['name' => $data['name'],
                     'available_from' => $data['available_from_date'] . ' ' . $data['available_from_time'],
                     'due' => $data['due_date'] . ' ' . $data['due_time'],
-                    'default_points_per_question' => $data['default_points_per_question'],
+                    'default_points_per_question' => $data['default_points_per_question'] ?? null,
+                    'scoring_type' => $data['scoring_type'],
                     'submission_files' => $data['submission_files'],
                     'course_id' => $course->id
                 ]

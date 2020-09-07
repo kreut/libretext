@@ -5,6 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+
 class StoreAssignment extends FormRequest
 {
     /**
@@ -32,9 +33,12 @@ class StoreAssignment extends FormRequest
             'due_date' => 'required|date|after:available_from_date',
             'available_from_time' => 'required|date_format:H:i:00',
             'due_time' => 'required|date_format:H:i:00',
-            'default_points_per_question' => 'required|integer|min:0|max:100',
+            'scoring_type' => Rule::in(['c','p']),
             'submission_files' => Rule::in(['q','a',0]),
         ];
+      if ($this->scoring_type === 'p'){
+          $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
+      }
         return $rules;
     }
 

@@ -200,10 +200,9 @@
 
   const now = new Date()
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
   let formatDateAndTime = value => {
     let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+    return date.getMonth() + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
   }
 
 
@@ -233,6 +232,14 @@
           formatter: value => {
             return formatDateAndTime(value)
           }
+        },
+        {
+          key: 'scoring_type',
+          formatter: value => {
+            let scoring_type = (value === 'c') ? 'Completed/Incompleted' : 'Points'
+            return scoring_type
+          }
+
         },
         {
           key: 'number_of_questions',
@@ -278,6 +285,8 @@ console.log(assignment)
         this.form.type_of_submission = assignment.type_of_submission
         this.form.submission_files = assignment.submission_files
         this.form.num_submissions_needed = assignment.num_submissions_needed
+        this.form.default_points_per_question = assignment.default_points_per_question
+        this.form.scoring_type = assignment.scoring_type
         this.$bvModal.show('modal-assignment-details')
       }
       ,
