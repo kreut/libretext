@@ -22,11 +22,21 @@ class QuestionsViewTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-        $this->course = factory(Course::class)->create();
-        $this->assignment = factory(Assignment::class)->create();
-        $this->question = factory(Question::class)->create();
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->question = factory(Question::class)->create(['page_id'=>1]);
+        $this->question_2 = factory(Question::class)->create(['page_id'=>2]);
 
-        $this->assignment->questions()->attach(Question::find($this->question->id));
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'points'=> 10
+        ]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question_2->id,
+            'points'=> 10
+        ]);;
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -39,9 +49,42 @@ class QuestionsViewTest extends TestCase
         ]);
 
     }
+
+    /** @test */
+
+    public function assignments_of_scoring_type_c_will_count_the_number_of_submissions_and_compare_to_the_number_of_questions(){
+    $this->assignment->scoring_type = 'c';
+    $this->assignment->save();
+
+    $this->actingAs($this->student_user)->postJson("/api/submissions",[
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'submission' => 'some submission']);
+
+    $score = DB::table('scores')->where('user_id', $this->student_user->id)
+                            ->where('assignment_id', $this->assignment->id)
+                            ->first();
+    $this->assertEquals(null, $score, 'No score saved in not completed assignment.');
+
+
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions",[
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question_2->id,
+            'submission' => 'some other submission'])
+            ->assertJson(['type' => 'success']);
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->get()
+            ->pluck('score');
+        $this->assertEquals('C', $score[0], 'Assignment marked as completed when all questions are answered.');
+
+    }
     /** @test */
 
     public function assignments_of_scoring_type_s_and_no_question_files_will_compute_the_score_based_on_the_question_points(){
+
         /* 1.submit a response
            2. insert the submission
            3. Add all of the points from that students questions
@@ -55,16 +98,11 @@ class QuestionsViewTest extends TestCase
            2. insert the submission
            3. Take the max of each question and file points
            4. update the score the assignment **/
+
+
     }
 
-    /** @test */
 
-    public function assignments_of_scoring_type_c_will_count_the_number_of_submissions_and_compare_to_the_number_of_questions(){
-        /* 1.submit a response
-           2. insert the submission
-           3. Take the max of each question and file points
-           4. update the score the assignment **/
-    }
 
     /** @test */
 

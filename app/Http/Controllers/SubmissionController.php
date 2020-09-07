@@ -21,7 +21,7 @@ class SubmissionController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Submission $submission)
+    public function store(Request $request, Submission $submission, Assignment $Assignment)
     {
 
         $data['user_id'] = $request->user()->id;
@@ -32,42 +32,66 @@ class SubmissionController extends Controller
 
         $response['type'] = 'error';
 
-        $authorized = Gate::inspect('store', [$submission, Assignment::find($data['assignment_id']), $data['assignment_id'], $data['question_id']]);
+        $assignment = $Assignment->find($data['assignment_id']);
+
+        $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
 
         if (!$authorized->allowed()) {
 
             $response['message'] = $authorized->message();
             return $response;
         }
+
+
+        /**TODO: FIX THIS!!!**/
+        $data['score'] = $assignment->default_points_per_question;
+
+
         try {
 
             //do the extension stuff also
-
 
             $submission = Submission::where('user_id', '=', $data['user_id'])
                 ->where('assignment_id', '=', $data['assignment_id'])
                 ->where('question_id', '=', $data['question_id'])
                 ->first();
+            if ($submission) {
+                $submission->submission = $data['submission'];
+                $submission->score = $data['score'];
 
-            $submission ? $submission->update(['submission' => $data['submission']])
-                : Submission::Create($data);
+            } else {
 
-            //update the score if it's supposed to be updated
-            $num_submissions_by_assignment = DB::table('submissions')
-                ->where('user_id', '=', $data['user_id'])
-                ->where('assignment_id', '=', $data['assignment_id'])
-                ->count();
-            $response['message'] = 'Your response has been recorded.';
-            if ($num_submissions_by_assignment >= 2) {
-                Score::firstOrCreate(['user_id' => $data['user_id'],
-                    'assignment_id' => $data['assignment_id'],
-                    'score' => 'C']);
-                $response['message'] = "Your assignment has been marked completed.";
+                Submission::create($data);
+
             }
-            $response['type'] = 'success';
+            //update the score if it's supposed to be updated
+            switch ($assignment->scoring_type) {
+                case 'c':
+                    $num_submissions_by_assignment = DB::table('submissions')
+                        ->where('user_id', $data['user_id'])
+                        ->where('assignment_id', $assignment->id)
+                        ->count();
+                    $response['message'] = 'Your response has been recorded.';
+                    if ($num_submissions_by_assignment === count($assignment->questions)) {
+                        Score::firstOrCreate(['user_id' => $data['user_id'],
+                            'assignment_id' => $assignment->id,
+                            'score' => 'C']);
+                        $response['message'] = "Your assignment has been marked completed.";
+                    }
+                    $response['type'] = 'success';
+                    break;
+                case 'p':
+                    ///todo....
+                    ///
+                    ///
+                    break;
+            }
+
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
+            dd($e->getMessage());
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
         }
         return $response;
