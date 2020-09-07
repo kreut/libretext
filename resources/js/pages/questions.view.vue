@@ -32,8 +32,8 @@
     </b-modal>
 
 
+      <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="!initializing">
-      <PageTitle v-bind:title="this.title"></PageTitle>
       <b-form ref="form">
 
         <b-form-group
@@ -198,13 +198,14 @@
           <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
             <b-button variant="success">Get More Questions</b-button>
           </div>
-          <div class="mt-4">
-            <b-alert :show="true" variant="warning"><a href="#" class="alert-link">This assignment currently has no
-              questions.
-            </a></b-alert>
-          </div>
         </div>
       </div>
+    </div>
+    <div class="mt-4">
+      <b-alert :show="!questions.length" variant="warning"><a href="#" class="alert-link">This assignment currently has no
+        questions.
+      </a>
+      </b-alert>
     </div>
   </div>
 </template>
@@ -440,7 +441,9 @@ export default {
         }
         this.questions = data.questions
         // console.log(data.questions)
-
+      if (this.questions.length === 0) {
+        return false
+      }
         this.questionPointsForm.points = this.questions[0].points
         for (let i = 0; i < this.questions.length; i++) {
           this.questions[i].src = this.getQuestionSrc(this.questions[i])

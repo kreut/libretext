@@ -52,7 +52,7 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-            $response['type'] = 'success';
+            $response['questions'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->get();
@@ -68,6 +68,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
             }
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -214,6 +215,10 @@ class AssignmentSyncQuestionController extends Controller
             $question_ids = [];
             $question_files = [];
             $points = [];
+            if (!$assignment_question_info['questions']){
+                $response['questions'] = [];
+                return $response;
+            }
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
