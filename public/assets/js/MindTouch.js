@@ -44,7 +44,7 @@ $(document).on('click', '#mt-summary', function () {
     }
   } catch (e) {
 
-    console.error(err.message);
+    console.error(e.message);
 
   }
 });

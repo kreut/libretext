@@ -110,6 +110,23 @@
           </b-form-radio-group>
         </b-form-group>
         <b-form-group
+          id="scoring_type"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Scoring Type"
+          label-for="Scoring Type"
+        >
+
+          <b-form-radio-group v-model="form.scoring_type"  stacked>
+            <span v-on:click="resetDefaultPointsPerQuestion">
+
+          <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
+                </span>
+            <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="form.scoring_type === 'p'"
           id="default_points_per_question"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -120,7 +137,7 @@
           <b-form-row>
             <b-col lg="3">
               <b-form-input
-                id="points_per_question"
+                id="default_points_per_question"
                 v-model="form.default_points_per_question"
                 type="text"
                 placeholder=""
@@ -231,11 +248,12 @@
         due_time: '09:00:00',
         submission_files: '0',
         type_of_submission: 'correct',
-        num_submissions_needed: '2'
+        scoring_type: 'c',
+        num_submissions_needed: '2',
+        default_points_per_question: ''
       }),
       hasAssignments: false,
       min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      defaultPointsPointsPerQuestion: '',
       canViewAssignments: false,
       showNoAssignmentsAlert: false,
     }),
@@ -245,6 +263,10 @@
 
     },
     methods: {
+      resetDefaultPointsPerQuestion(){
+        console.log('click')
+        this.form.default_points_per_question = ''
+      },
       editAssignment(assignment) {
 console.log(assignment)
         this.assignmentId = assignment.id
@@ -376,6 +398,9 @@ console.log(assignment)
         this.form.type_of_submission = 'correct'
         this.form.num_submissions_needed = '2'
         this.form.submission_files = '0'
+        this.form.default_points_per_question = ''
+        this.form.scoring_type = 'c'
+
         this.assignmentId = false
         this.form.errors.clear()
       }
