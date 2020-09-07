@@ -41,6 +41,33 @@ class QuestionsViewTest extends TestCase
     }
     /** @test */
 
+    public function assignments_of_scoring_type_s_and_no_question_files_will_compute_the_score_based_on_the_question_points(){
+        /* 1.submit a response
+           2. insert the submission
+           3. Add all of the points from that students questions
+           4. update the score the assignment **/
+    }
+
+    /** @test */
+
+    public function assignments_of_scoring_type_s_and_question_files_will_find_the_max_of_each_question_points_and_file_points(){
+        /* 1.submit a response
+           2. insert the submission
+           3. Take the max of each question and file points
+           4. update the score the assignment **/
+    }
+
+    /** @test */
+
+    public function assignments_of_scoring_type_c_will_count_the_number_of_submissions_and_compare_to_the_number_of_questions(){
+        /* 1.submit a response
+           2. insert the submission
+           3. Take the max of each question and file points
+           4. update the score the assignment **/
+    }
+
+    /** @test */
+
     public function cannot_store_a_question_file_if_it_is_not_in_the_assignment() {
 
 

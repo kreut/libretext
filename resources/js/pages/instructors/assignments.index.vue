@@ -96,6 +96,23 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
+          id="scoring_type"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Scoring Type"
+          label-for="Scoring Type"
+        >
+
+          <b-form-radio-group v-model="form.scoring_type"  stacked>
+            <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
+
+          <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
+                </span>
+            <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-if="form.scoring_type === 'p'"
           id="submission_files"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -109,29 +126,14 @@
             <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <b-form-group
-          id="scoring_type"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Scoring Type"
-          label-for="Scoring Type"
-        >
 
-          <b-form-radio-group v-model="form.scoring_type"  stacked>
-            <span v-on:click="resetDefaultPointsPerQuestion">
-
-          <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
-                </span>
-            <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
         <b-form-group
           v-if="form.scoring_type === 'p'"
           id="default_points_per_question"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Points Per Question"
-          label-for="number_of_points_per_question"
+          label="Default Points/Question"
+          label-for="default_points_per_question"
         >
 
           <b-form-row>
@@ -270,9 +272,10 @@
 
     },
     methods: {
-      resetDefaultPointsPerQuestion(){
+      resetSubmissionFilesAndPointsPerQuestion(){
         console.log('click')
         this.form.default_points_per_question = ''
+        this.form.submission_files = 0
       },
       editAssignment(assignment) {
 console.log(assignment)
