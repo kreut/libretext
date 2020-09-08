@@ -38,6 +38,7 @@ class Score extends Model
         }
 
         $assignment_score = 0;
+
         switch ($submission_files_type) {
             case('q'):
                 $submission_files = DB::table('submission_files')
@@ -57,13 +58,8 @@ class Score extends Model
                 break;
             case('a'):
 
-                $assignment_score_from_questions = 0;
-                //get the assignment points for the questions
-                foreach ($assignment_question_scores_info as $score) {
-                    $question_points = $score['question'] ?? 0;
-                    $assignment_score_from_questions = $assignment_score_from_questions + $question_points;
-                }
 
+                $assignment_score_from_questions = $this->getAssignmentScoreFromQuestions($assignment_question_scores_info);
 
                 //get the points from the submission
                 $submission_file = DB::table('submission_files')
@@ -84,16 +80,27 @@ class Score extends Model
                 break;
 
             case('0'):
-                dd('0 or string');
+                $assignment_score = $this->getAssignmentScoreFromQuestions($assignment_question_scores_info);
+
                 break;
-            case(0):
-                dd('see above note');
-                break;
+
         }
         DB::table('scores')
             ->updateOrInsert(
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
                 ['score' => $assignment_score]);
 
+    }
+
+
+    public function getAssignmentScoreFromQuestions(array $assignment_question_scores_info) {
+        $assignment_score_from_questions = 0;
+        //get the assignment points for the questions
+        foreach ($assignment_question_scores_info as $score) {
+            $question_points = $score['question'] ?? 0;
+            $assignment_score_from_questions = $assignment_score_from_questions + $question_points;
+        }
+
+        return $assignment_score_from_questions;
     }
 }

@@ -84,7 +84,9 @@ class QuestionsViewTest extends TestCase
     /** @test */
 
     public function assignments_of_scoring_type_s_and_no_question_files_will_compute_the_score_based_on_the_question_points(){
-        $this->actingAs($this->student_user)->postJson("/api/submissions",[
+        $this->assignment->submission_files = '0';
+        $this->assignment->save();
+       $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
             'question_id'=> $this->question->id,
             'submission' => 'some submission']);
@@ -101,7 +103,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions",[
             'assignment_id' => $this->assignment->id,
-            'question_id'=> $this->question->id,
+            'question_id'=> $this->question_2->id,
             'submission' => 'some submission']);
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
@@ -150,6 +152,13 @@ class QuestionsViewTest extends TestCase
     /** @test */
 
     public function cannot_toggle_question_files_if_you_are_not_the_owner() {
+
+
+    }
+
+    /** @test */
+
+    public function will_mark_assignment_as_completed_if_number_of_questions_is_equal_to_number_of_questions(){
 
 
     }

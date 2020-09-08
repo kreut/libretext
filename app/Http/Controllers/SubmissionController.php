@@ -71,7 +71,6 @@ class SubmissionController extends Controller
                 Submission::create($data);
             }
 
-
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {
                 case 'c':
@@ -79,8 +78,7 @@ class SubmissionController extends Controller
                         ->where('user_id', $data['user_id'])
                         ->where('assignment_id', $assignment->id)
                         ->count();
-                    $response['message'] = 'Your response has been recorded.';
-                    if ($num_submissions_by_assignment === count($assignment->questions)) {
+                    if ((int) $num_submissions_by_assignment === count($assignment->questions)) {
                         Score::firstOrCreate(['user_id' => $data['user_id'],
                             'assignment_id' => $assignment->id,
                             'score' => 'C']);
@@ -90,6 +88,7 @@ class SubmissionController extends Controller
                     break;
                 case 'p':
                     $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
+                    $response['type'] = 'success';
                     break;
             }
 
@@ -99,7 +98,9 @@ class SubmissionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
         }
+
         return $response;
+
     }
 
 
