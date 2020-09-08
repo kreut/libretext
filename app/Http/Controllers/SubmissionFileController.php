@@ -2,13 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Score;
 use App\User;
 use App\AssignmentFile;
 use App\SubmissionFile;
 use App\Assignment;
+use App\Submission;
 use App\Extension;
 use App\Traits\S3;
 use App\Http\Requests\StoreTextFeedback;
+use App\Http\Requests\StoreScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -26,6 +29,7 @@ class SubmissionFileController extends Controller
 {
 
     use S3;
+
     public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, SubmissionFile $submissionFile)
     {
 
@@ -41,7 +45,7 @@ class SubmissionFileController extends Controller
         try {
             $assignmentFilesByUser = [];
 
-            switch ($type){
+            switch ($type) {
                 case('assignment'):
                     $user_and_submission_file_info = $submissionFile->getUserAndAssignmentFileInfo($assignment);
                     break;
@@ -101,7 +105,6 @@ class SubmissionFileController extends Controller
     }
 
 
-
     public function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
         $response['type'] = 'error';
@@ -126,24 +129,8 @@ class SubmissionFileController extends Controller
         try {
 
             $data = $request->validated();
-            switch ($type) {
-                case('assignment'):
-                    DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('type', 'a')
-                        ->update(['text_feedback' => $data['textFeedback']]);
-                    break;
-                case('question'):
-                    DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('question_id', $question_id)
-                        ->where('type', 'q')
-                        ->update(['text_feedback' => $data['textFeedback']]);
+            $this->updateTextFeedbackOrScore($type, 'text_feedback', $data['textFeedback'], $student_user_id, $assignment_id, $question_id);
 
-                    break;
-            }
 
             $response['type'] = 'success';
             $response['message'] = 'Your comments have been saved.';
@@ -156,7 +143,72 @@ class SubmissionFileController extends Controller
 
     }
 
+    public function storeScore(StoreScore $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment, Score $score)
+    {
 
+
+        $response['type'] = 'error';
+        $assignment_id = $request->assignment_id;
+        $question_id = $request->question_id;
+        $student_user_id = $request->user_id;
+        $type = $request->type;
+
+        $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
+
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        if (!in_array($type, ['question', 'assignment'])) {
+            $response['message'] = 'That is not a valid type of submission file.';
+            return $response;
+        }
+
+        try {
+            $data = $request->validated();
+
+            DB::beginTransaction();
+
+            $this->updateTextFeedbackOrScore($type, 'score', $data['score'], $student_user_id, $assignment_id, $question_id);
+            $score->updateAssignmentScore($student_user_id, $assignment_id);
+
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The score has been saved.';
+        } catch (Exception $e) {
+
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save the score.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function updateTextFeedbackOrScore(string $type, string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
+    {
+        switch ($type) {
+            case('assignment'):
+                DB::table('submission_files')
+                    ->where('user_id', $student_user_id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('type', 'a')
+                    ->update([$column => $value]);
+                break;
+            case('question'):
+                DB::table('submission_files')
+                    ->where('user_id', $student_user_id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->where('type', 'q')
+                    ->update([$column => $value]);
+
+                break;
+        }
+    }
     //storeSubmission
 
     /**

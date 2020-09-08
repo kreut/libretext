@@ -21,7 +21,7 @@ class SubmissionController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Submission $submission, Assignment $Assignment)
+    public function store(Request $request, Submission $submission, Assignment $Assignment, Score $score)
     {
 
         $data['user_id'] = $request->user()->id;
@@ -43,8 +43,14 @@ class SubmissionController extends Controller
         }
 
 
-        /**TODO: FIX THIS!!!**/
-        $data['score'] = $assignment->default_points_per_question;
+
+
+        if (env('DB_DATABASE')) {
+            $data['score'] = $assignment->default_points_per_question;
+        } else {
+
+            /**TODO: FIX THIS!!! Should be the actual score....**/
+        }
 
 
         try {
@@ -55,15 +61,17 @@ class SubmissionController extends Controller
                 ->where('assignment_id', '=', $data['assignment_id'])
                 ->where('question_id', '=', $data['question_id'])
                 ->first();
+
             if ($submission) {
+
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
 
             } else {
-
                 Submission::create($data);
-
             }
+
+
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {
                 case 'c':
@@ -81,9 +89,8 @@ class SubmissionController extends Controller
                     $response['type'] = 'success';
                     break;
                 case 'p':
-                    ///todo....
-                    ///
-                    ///
+                    $score->updateAssignmentScore($data['user_id'], $assignment->id);
+
                     break;
             }
 
@@ -91,7 +98,6 @@ class SubmissionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            dd($e->getMessage());
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
         }
         return $response;

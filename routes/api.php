@@ -78,10 +78,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/submission-files/{type}/{assignment}', 'SubmissionFileController@getSubmissionFilesByAssignment')->where('type', '(question|assignment)');
 
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
+    Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
+    Route::post('/submission-files/score', 'SubmissionFileController@storeScore');
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
-    Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
+
 
     Route::post('/invitations/{course}', 'InvitationController@emailInvitation');
 

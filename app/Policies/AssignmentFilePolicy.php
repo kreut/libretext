@@ -107,4 +107,13 @@ class AssignmentFilePolicy
             : Response::deny('You are not allowed to upload feedback for this assignment.');
 
     }
+
+    public function storeScore(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
+    {
+
+        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to provide a score for this assignment.');
+
+    }
 }

@@ -64,7 +64,7 @@ class QuestionsViewTest extends TestCase
     $score = DB::table('scores')->where('user_id', $this->student_user->id)
                             ->where('assignment_id', $this->assignment->id)
                             ->first();
-    $this->assertEquals(null, $score, 'No score saved in not completed assignment.');
+    $this->assertEquals(null, $score, 'No assignment score saved in not completed assignment.');
 
 
 
@@ -84,23 +84,38 @@ class QuestionsViewTest extends TestCase
     /** @test */
 
     public function assignments_of_scoring_type_s_and_no_question_files_will_compute_the_score_based_on_the_question_points(){
+        $this->actingAs($this->student_user)->postJson("/api/submissions",[
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'submission' => 'some submission']);
 
-        /* 1.submit a response
-           2. insert the submission
-           3. Add all of the points from that students questions
-           4. update the score the assignment **/
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->get()
+            ->pluck('score');
+
+
+       $this->assertEquals($this->assignment->default_points_per_question, $score[0], 'Score saved when student submits.');
+
+       //do it again and it should update
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions",[
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'submission' => 'some submission']);
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->get()
+            ->pluck('score');
+
+        $this->assertEquals(2*$this->assignment->default_points_per_question, $score[0], 'Score saved when student submits.');
+
+
     }
 
     /** @test */
 
-    public function assignments_of_scoring_type_s_and_question_files_will_find_the_max_of_each_question_points_and_file_points(){
-        /* 1.submit a response
-           2. insert the submission
-           3. Take the max of each question and file points
-           4. update the score the assignment **/
-
-
-    }
 
 
 

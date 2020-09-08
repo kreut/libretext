@@ -2,8 +2,12 @@
 
 namespace Tests\Feature\instructors;
 
+use App\Question;
+use App\Score;
+use App\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 use App\User;
 use App\Course;
@@ -33,7 +37,113 @@ class AssignmentFileTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
-        $this->assignment_file = factory(SubmissionFile::class)->create(['type'=>'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+        $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+
+        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10
+        ]);
+        $this->question_file = factory(SubmissionFile::class)->create([
+            'type' => 'q',
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id
+        ]);
+
+
+    }
+
+    /** @test */
+    public function assignments_of_scoring_type_s_and_submission_files_at_the_question_level_will_use_min_of_the_points_per_question_compared_to_the_sum_of_the_question_and_file_points()
+    {
+
+        $this->assignment->submission_files = 'q';///question level
+        $this->assignment->save();
+        $question_score = 5;
+
+        $file_submission_score = 2.0;
+        $assignment_question = DB::table('assignment_question')
+            ->where('question_id', $this->question->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'submission' => 'some other submission',
+            'score' => $question_score]);
+
+
+        //Now submit a question_file score
+        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' =>  $file_submission_score])
+        ->assertJson(['type'=> 'success']);
+
+
+       $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+
+        $this->assertEquals( $score->score, min((float) $assignment_question->points, (float) ($question_score + $file_submission_score)), 'Sum is smaller than the number of points');
+        //Now submit a question_file score
+        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' =>  100*$file_submission_score])
+            ->assertJson(['type'=> 'success']);
+
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+
+        $this->assertEquals( (float) $score->score, (float) min($assignment_question->points, $question_score + 100*$file_submission_score), 'Sum is larger than the number of points');
+    }
+
+
+
+    /** @test */
+
+    public function assignments_of_scoring_type_p_and_assignment_file_will_find_the_max_of_the_total_question_points_and_file_points()
+    {
+        /* 1.submit a response
+           2. insert the submission
+           3. Take the max of each question and file points
+           4. update the score the assignment **/
+
+
+    }
+
+    /** @test */
+    public function owner_can_submit_score()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function non_owner_can_not_submit_score()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function score_must_be_valid()
+    {
 
 
     }
@@ -55,7 +165,6 @@ class AssignmentFileTest extends TestCase
             ->assertJson(['type' => 'success']);
 
     }
-
 
 
     /** @test */

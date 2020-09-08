@@ -212,8 +212,30 @@
       async toggleView(currentStudentPage) {
         this.viewSubmission = !this.viewSubmission
       },
-      submitScoreForm() {
-        alert("todo")
+     async submitScoreForm() {
+       try {
+
+         this.scoreForm.assignment_id = this.assignmentId
+         this.scoreForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
+         this.scoreForm.type = this.type
+         this.scoreForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
+
+         const {data} = await this.scoreForm.post('/api/submission-files/score')
+         this.$noty[data.type](data.message)
+         if (data.type === 'success') {
+           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['score'] = this.scoreForm.score
+         }
+       } catch (error) {
+         if (!error.message.includes('status code 422')) {
+           this.$noty.error(error.message)
+         }
+       }
+
+
+
+
+
+
       },
       async uploadFileFeedback() {
         try {
@@ -254,7 +276,7 @@
 
           this.textFeedbackForm.assignment_id = this.assignmentId
           this.textFeedbackForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
-          this.textFeedbackForm.type = 'question' //TODO: make this abstract!
+          this.textFeedbackForm.type = this.type
           this.textFeedbackForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
 
           const {data} = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
