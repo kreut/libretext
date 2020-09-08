@@ -143,7 +143,7 @@ class SubmissionFileController extends Controller
 
     }
 
-    public function storeScore(StoreScore $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment, Score $score)
+    public function storeScore(StoreScore $request, AssignmentFile $assignmentFile, User $user, Assignment $Assignment, Score $score)
     {
 
 
@@ -152,8 +152,8 @@ class SubmissionFileController extends Controller
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
         $type = $request->type;
-
-        $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
+        $assignment = $Assignment->find($assignment_id);
+        $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment]);
 
 
         if (!$authorized->allowed()) {
@@ -172,7 +172,7 @@ class SubmissionFileController extends Controller
             DB::beginTransaction();
 
             $this->updateTextFeedbackOrScore($type, 'score', $data['score'], $student_user_id, $assignment_id, $question_id);
-            $score->updateAssignmentScore($student_user_id, $assignment_id);
+            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->submission_files);
 
             DB::commit();
             $response['type'] = 'success';

@@ -89,8 +89,7 @@ class SubmissionController extends Controller
                     $response['type'] = 'success';
                     break;
                 case 'p':
-                    $score->updateAssignmentScore($data['user_id'], $assignment->id);
-
+                    $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
                     break;
             }
 
