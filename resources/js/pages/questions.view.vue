@@ -215,7 +215,6 @@
 import axios from 'axios'
 import Form from 'vform'
 import {mapGetters} from "vuex"
-import {getQuestionSrc} from '~/helpers/Questions'
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'

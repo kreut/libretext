@@ -50,6 +50,7 @@ export default {
       'chem': 'rgb(0, 191, 255)',
       'eng': '#ff6a00',
       'espanol': '#d77b00',
+      'geo': '#e5a800',
       'human': '#00bc94',
       'k12': '#5cbf1c',
       'law': '#1c5d73',
