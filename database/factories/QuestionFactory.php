@@ -9,8 +9,9 @@ $factory->define(Question::class, function (Faker $faker) {
     return
         [
             'title' => 'some title',
-            'author' =>'some_author',
+            'author' => 'some_author',
             'page_id' => 1,
             'technology' => 'webwork',
-            'location' => 'https://www/webwork.com/some_path'];
+            'location' => 'https://www/webwork.com/some_path',
+            'body' => 'some type of iframe'];
 });
