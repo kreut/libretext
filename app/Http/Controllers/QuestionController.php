@@ -30,11 +30,14 @@ class QuestionController extends Controller
         $question_ids = $page_id ? $this->getQuestionIdsByPageId($page_id, $Question)
             : $this->getQuestionIdsByWordTags($request);
 
-        $questions = Question::whereIn('id', $question_ids)->get();
+        $questions = Question::select('id','page_id','body')->whereIn('id', $question_ids)->get();
 
-
+        $iframe_id = 1;
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
+
+            //find all the locations of iframe
+            $questions[$key]['body'] = str_replace('<iframe ', "<iframe style='width: 1px;min-width: 100%;' id='iframe_{$iframe_id}'", $questions[$key]['body']);
 
         }
 

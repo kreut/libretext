@@ -55,7 +55,8 @@
         <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
           <b-button variant="primary">Add Question</b-button>
         </div>
-        <div class="mt-1 mb-2" v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)">
+        <div class="mt-1 mb-2"
+             v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)">
           <b-button variant="info">Create Learning Tree</b-button>
         </div>
       </div>
@@ -70,14 +71,8 @@
           :color="{checked: '#007BFF', unchecked: '#75C791'}"
           :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
       </div>
-      <iframe v-bind:id="questions[currentPage-1].questionIframeId"
-              allowtransparency="true" frameborder="0"
-              v-bind:src="questions[currentPage-1].src"
-              v-on:load="showIframe(questions[currentPage-1].questionIframeId)" v-show="iframeLoaded"
-              style="width: 1px;min-width: 100%;"
-      >
 
-      </iframe>
+      <div v-html="questions[currentPage-1].body"></div>
     </div>
   </div>
 </template>
@@ -85,7 +80,6 @@
 <script>
 import axios from 'axios'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-import {getQuestionSrc} from '~/helpers/Questions'
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 
@@ -109,7 +103,6 @@ export default {
     showPage: false
   }),
   created() {
-    this.getQuestionSrc = getQuestionSrc
     this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
@@ -216,11 +209,11 @@ export default {
 
             for (let i = 0; i < questionsByTags.questions.length; i++) {
               //  console.log(questionsByTags.questions)
-              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
-              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+              if (questionInfo.questions.length) {
+                questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
+                questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+              }
 
-              questionsByTags.questions[i].src = this.getQuestionSrc(questionsByTags.questions[i])
-              questionsByTags.questions[i].questionIframeId = `getQuestionIframe-${i}`
             }
             this.questions = questionsByTags.questions
             // console.log(this.questions)
