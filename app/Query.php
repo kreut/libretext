@@ -128,16 +128,20 @@ class Query extends Model
 
             $question_exists_in_db = DB::table('questions')->where('location', $loc)->first();
             if ($question_exists_in_db) {
-                return false;//didn't use the API
+                //return false;//didn't use the API
             }
             $page_info = $this->getPageInfoByParsedUrl($parsed_url);
 
             $page_id = $page_info['@id'];
             //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
             $technology_and_tags = $this->getTechnologyAndTags($page_info);
-            $question = Question::firstOrCreate(['page_id' => $page_id,
-                'technology' => $technology_and_tags['technology'],
-                'location' => $loc]);
+            $contents = $this->getContentsByPageId($page_id);
+$data = ['page_id' => $page_id,
+    'technology' => $technology_and_tags['technology'],
+    'location' => $loc,
+    'contents' => $contents['body'][0]];
+
+            $question = Question::firstOrCreate($data);
             $this->addTagsToQuestion($question, $technology_and_tags['tags']);
 
 
@@ -147,6 +151,19 @@ class Query extends Model
         return true;//used the API
 
     }
+
+    public function getContentsByPageId($page_id){
+        https://query.libretexts.org/@api/deki/pages/1860/contents
+
+        $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
+
+        $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/contents?dream.out.format=json";
+
+        $response = $this->client->get($final_url, ['headers' => $headers]);
+        return json_decode($response->getBody(), true);
+
+    }
+
 
     function addTagsToQuestion($question, array $tags)
     {
