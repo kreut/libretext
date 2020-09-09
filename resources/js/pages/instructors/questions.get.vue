@@ -203,19 +203,14 @@ export default {
         if (questionsByTags.type === 'success' && questionsByTags.questions.length > 0) {
           //get whether in the assignment and get the url
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
-          console.log(data)
+
           let questionInfo = data
-
+          let numQuestions = Object.keys(questionInfo.questions).length //not sure why but I had to treat as an object
           if (questionInfo.type === 'success') {
-
-            for (let i = 0; i < questionsByTags.questions.length; i++) {
-              //  console.log(questionsByTags.questions)
-              if (questionInfo.questions.length) {
+            for (let i = 0; i < numQuestions; i++) {
                 questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
                 questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
               }
-
-            }
 
             this.questions = questionsByTags.questions
             let iframe_id = this.questions[0].iframe_id;
