@@ -133,17 +133,22 @@ class Query extends Model
             $page_info = $this->getPageInfoByParsedUrl($parsed_url);
 
             $page_id = $page_info['@id'];
-            //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
-            $technology_and_tags = $this->getTechnologyAndTags($page_info);
             $contents = $this->getContentsByPageId($page_id);
-$data = ['page_id' => $page_id,
-    'technology' => $technology_and_tags['technology'],
-    'location' => $loc,
-    'contents' => $contents['body'][0]];
+            $body = $contents['body'][0];
+            if (strpos( $body, '<iframe') !== false){
+                //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
+                $technology_and_tags = $this->getTechnologyAndTags($page_info);
 
-            $question = Question::firstOrCreate($data);
-            $this->addTagsToQuestion($question, $technology_and_tags['tags']);
+                $data = ['page_id' => $page_id,
+                    'technology' => $technology_and_tags['technology'],
+                    'location' => $loc,
+                    'body' => $body];
 
+                $question = Question::firstOrCreate($data);
+                $this->addTagsToQuestion($question, $technology_and_tags['tags']);
+            } else {
+                file_put_contents('query_skipped_imported_questions-' . date('Y-m-d') . '.txt', "$loc \r\n", FILE_APPEND);
+            }
 
         } catch (Exception $e) {
             file_put_contents('query_import_errors-' . date('Y-m-d') . '.txt', $e->getMessage() . ":  $loc \r\n", FILE_APPEND);
