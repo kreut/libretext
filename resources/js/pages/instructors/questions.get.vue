@@ -44,7 +44,7 @@
         align="center"
         first-number
         last-number
-        v-on:input=changePage(currentPage)"
+        v-on:input="changePage(currentPage)"
       ></b-pagination>
     </div>
     <div v-if="showQuestions">

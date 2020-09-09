@@ -9,7 +9,6 @@ exports.formatDate = void 0;
 var formatDate = function formatDate(value) {
   var months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   var date = new Date(value.replace(' ', 'T'));
-  consol.log(date);
   return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear();
 };
 

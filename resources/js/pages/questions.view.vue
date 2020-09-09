@@ -315,6 +315,10 @@ export default {
     },
     viewOriginalQuestion() {
       this.showQuestion = true
+      this.$nextTick(() => {
+        this.showIframe(this.questions[this.currentPage - 1].iframe_id)
+      })
+
     },
     showIframe(id) {
       this.iframeLoaded = true
@@ -340,10 +344,11 @@ export default {
       }
     },
     async changePage(currentPage) {
-      this.questionPointsForm.points = this.questions[currentPage - 1].points
-      let learningTree = this.questions[currentPage - 1].learning_tree
+
       this.showQuestion = true
         this.$nextTick(() => {
+          this.questionPointsForm.points = this.questions[currentPage - 1].points
+          let learningTree = this.questions[currentPage - 1].learning_tree
           let iframe_id = this.questions[currentPage-1].iframe_id
           iFrameResize({log: true}, `#${iframe_id}`)
         })
@@ -458,6 +463,12 @@ export default {
         axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
         this.$noty.info('The question has been removed from the assignment.')
         this.questions.splice(currentPage - 1, 1);
+        if (this.currentPage === 1){
+          this.currentPage = this.currentPage;
+        } else {
+          this.currentPage = this.currentPage-1;
+        }
+
       } catch (error) {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
