@@ -204,7 +204,7 @@
 
   let formatDateAndTime = value => {
     let date = new Date(value)
-    return date.getMonth() + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+    return (1+date.getMonth()) + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
   }
 
 

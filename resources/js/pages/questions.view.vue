@@ -34,7 +34,7 @@
 
       <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="!initializing">
-      <b-form ref="form">
+      <b-form ref="form" v-if="user.role === 2">
 
         <b-form-group
           id="points"
