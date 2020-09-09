@@ -343,6 +343,10 @@ export default {
       this.questionPointsForm.points = this.questions[currentPage - 1].points
       let learningTree = this.questions[currentPage - 1].learning_tree
       this.showQuestion = true
+        this.$nextTick(() => {
+          let iframe_id = this.questions[currentPage-1].iframe_id
+          iFrameResize({log: true}, `#${iframe_id}`)
+        })
       this.learningTreeAsList = []
       if (learningTree) {
         //loop through and get all with parent = -1
@@ -429,7 +433,10 @@ export default {
           return false
         }
         this.questions = data.questions
-
+        let iframe_id = this.questions[0].iframe_id;
+        this.$nextTick(() => {
+          iFrameResize({log: true}, `#${iframe_id}`)
+        })
         // console.log(data.questions)
       if (this.questions.length === 0) {
         return false

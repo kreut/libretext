@@ -44,6 +44,7 @@
         align="center"
         first-number
         last-number
+        v-on:input=changePage(currentPage)"
       ></b-pagination>
     </div>
     <div v-if="showQuestions">
@@ -71,7 +72,6 @@
           :color="{checked: '#007BFF', unchecked: '#75C791'}"
           :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
       </div>
-
       <div v-html="questions[currentPage-1].body"></div>
     </div>
   </div>
@@ -110,11 +110,12 @@ export default {
     this.tags = this.getTags()
   },
   methods: {
-    showIframe(id) {
-      this.iframeLoaded = true
-      iFrameResize({log: true}, `#${id}`)
-    }
-    ,
+    changePage(currentPage){
+      this.$nextTick(() => {
+        let iframe_id = this.questions[currentPage-1].iframe_id
+        iFrameResize({log: true}, `#${iframe_id}`)
+      })
+    },
     removeTag(chosenTag) {
       this.chosenTags = _.without(this.chosenTags, chosenTag);
       console.log(this.chosenTags)
@@ -215,7 +216,12 @@ export default {
               }
 
             }
+
             this.questions = questionsByTags.questions
+            let iframe_id = this.questions[0].iframe_id;
+            this.$nextTick(() => {
+              iFrameResize({log: true}, `#${iframe_id}`)
+            })
             // console.log(this.questions)
             this.showQuestions = true
           } else {

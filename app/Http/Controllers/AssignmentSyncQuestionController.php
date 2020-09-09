@@ -273,7 +273,8 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
-                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $problemJWT);
+                $assignment->questions[$key]->iframe_id =  $this->createIframeId();
+                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id ,$problemJWT);
 
                 if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];

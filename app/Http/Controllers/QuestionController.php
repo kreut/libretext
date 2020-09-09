@@ -34,11 +34,10 @@ class QuestionController extends Controller
 
         $questions = Question::select('id','page_id','body')->whereIn('id', $question_ids)->get();
 
-        $iframe_id = 1;
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
-
-            $questions[$key]['body'] = $this->formatIframe($questions[$key]['body']);
+            $questions[$key]['iframe_id'] =  $this->createIframeId();
+            $questions[$key]['body'] = $this->formatIframe($questions[$key]['body'], $questions[$key]['iframe_id']);
 
         }
 

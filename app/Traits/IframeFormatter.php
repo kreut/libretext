@@ -7,9 +7,15 @@ namespace App\Traits;
 trait iframeFormatter
 
 {
-   public function formatIframe($body, $problemJWT = '')
+
+    public function createIframeId(){
+        $permitted_chars = 'abcdefghijklmnopqrstuvwxyz';
+        return substr(str_shuffle($permitted_chars), 0, 10);
+    }
+
+   public function formatIframe($body, $id, $problemJWT = '')
    {
-       $id = md5(rand());//needed unqiue ids for the iframe Resizer
+
        $body = str_replace('<iframe ', "<iframe style='width: 1px;min-width: 100%;' id='$id' ", $body);
        if ($problemJWT) {
            preg_match('/src="([^"]+)"/', $body, $match);
