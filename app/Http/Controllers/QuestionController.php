@@ -6,6 +6,7 @@ use App\Tag;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Question_Tag;
+use App\Traits\IframeFormatter;
 
 use App\Exceptions\Handler;
 use Illuminate\Support\Facades\DB;
@@ -13,6 +14,7 @@ use Illuminate\Support\Facades\Gate;
 
 class QuestionController extends Controller
 {
+    use IframeFormatter;
     public function getQuestionsByTags(Request $request, Question $Question)
     {
         $response['type'] = 'error';
@@ -36,8 +38,7 @@ class QuestionController extends Controller
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
 
-            //find all the locations of iframe
-            $questions[$key]['body'] = str_replace('<iframe ', "<iframe style='width: 1px;min-width: 100%;' id='iframe_{$iframe_id}'", $questions[$key]['body']);
+            $questions[$key]['body'] = $this->formatIframe($questions[$key]['body']);
 
         }
 

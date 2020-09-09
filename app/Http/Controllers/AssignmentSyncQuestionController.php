@@ -9,7 +9,8 @@ use Illuminate\Http\Request;
 use App\Http\Requests\updateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
-use App\AssignmentQuestion;
+
+use App\Traits\iframeFormatter;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -19,6 +20,7 @@ use Illuminate\Support\Facades\DB;
 class AssignmentSyncQuestionController extends Controller
 {
 
+    use IframeFormatter;
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
 
@@ -270,7 +272,9 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['language'] = 'en';
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
                 }
-                $assignment->questions[$key]->token = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $problemJWT);
+
                 if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {

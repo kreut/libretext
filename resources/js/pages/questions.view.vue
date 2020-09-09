@@ -181,16 +181,7 @@
                 v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
         >
         </iframe>
-        <div v-if="showQuestion" v-show="iframeLoaded">
-          <iframe v-bind:id="questions[currentPage-1].questionIframeId"
-                  allowtransparency="true" frameborder="0"
-                  v-bind:src="questions[currentPage-1].src"
-                  v-on:load="showIframe(questions[currentPage-1].questionIframeId)"
-                  style="width: 1px;min-width: 100%;"
-          >
-          </iframe>
-        </div>
-
+        <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
 
       </div>
       <div v-else>
@@ -202,7 +193,7 @@
       </div>
     </div>
     <div class="mt-4">
-      <b-alert :show="!questions.length" variant="warning"><a href="#" class="alert-link">This assignment currently has no
+      <b-alert :show="!initializing && !questions.length" variant="warning"><a href="#" class="alert-link">This assignment currently has no
         questions.
       </a>
       </b-alert>
@@ -256,7 +247,6 @@ export default {
     assignmentId: ''
   }),
   created() {
-    this.getQuestionSrc = getQuestionSrc
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
   },
@@ -431,7 +421,7 @@ export default {
     async getSelectedQuestions(assignmentId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
-        // console.log(JSON.parse(JSON.stringify(data)))
+        console.log(JSON.parse(JSON.stringify(data)))
 
 
         if (data.type === 'error') {
@@ -439,21 +429,19 @@ export default {
           return false
         }
         this.questions = data.questions
+
         // console.log(data.questions)
       if (this.questions.length === 0) {
         return false
       }
         this.questionPointsForm.points = this.questions[0].points
-        for (let i = 0; i < this.questions.length; i++) {
-          this.questions[i].src = this.getQuestionSrc(this.questions[i])
-          this.questions[i].questionIframeId = `viewQuestionIframe-${this.questions[i].id}`
-        }
 
         this.initializing = false
       } catch (error) {
         alert(error)
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
       }
+      this.iframeLoaded = true
     },
     getQuestionsForAssignment() {
       this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
