@@ -1,6 +1,16 @@
 <template>
   <div>
     <div v-if="submissionFiles.length>0">
+      <b-card class="col-4">
+      <b-form-group id="grade-view" label="Current Grade View:" label-for="grade-view">
+        <b-form-select
+          id="grade-view"
+          v-model="gradeView"
+          v-on:change="getView"
+          :options="gradeViews"
+        ></b-form-select>
+      </b-form-group>
+      </b-card>
       <div v-show="type === 'question'">
        Question
         <div class="overflow-auto">
@@ -180,6 +190,13 @@
     },
     middleware: 'auth',
     data: () => ({
+      gradeViews:    [
+        {text: 'All Students', value: 'all_students'},
+        {text: 'Ungraded Submissions', value:'ungraded_submissions'},
+        {text: 'Graded Submissions', value: 'graded_submissions'},
+        {text: 'Students Without Submissions', value: 'no_submissions'}
+        ],
+      gradeView: 'all_students',
       type: '',
       loaded: true,
       viewSubmission: true,
@@ -209,7 +226,10 @@
       this.getSubmissionFiles(this.assignmentId)
     },
     methods: {
-      async toggleView(currentStudentPage) {
+      async getView(view) {
+            //get the
+      },
+      async toggleView() {
         this.viewSubmission = !this.viewSubmission
       },
      async submitScoreForm() {
