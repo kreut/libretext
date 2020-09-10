@@ -205,11 +205,13 @@ export default {
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
 
           let questionInfo = data
-          let numQuestions = Object.keys(questionInfo.questions).length //not sure why but I had to treat as an object
+
           if (questionInfo.type === 'success') {
-            for (let i = 0; i < numQuestions; i++) {
-                questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
-                questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+            for (let i = 0; i < questionsByTags.questions.length; i++) {
+
+              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
+
+              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
               }
 
             this.questions = questionsByTags.questions

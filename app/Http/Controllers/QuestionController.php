@@ -62,24 +62,32 @@ class QuestionController extends Controller
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
             try {
-                $page_info = $Query->getPageInfoByPageId(102629);
-                $question = Question::create(['page_id' => $page_id,
-                    'technology' => 'h5p',
-                    'location' => $page_info['uri.ui']]);
-                $tag_info = $Query->getTagsByPageId($page_id);
-                $tags = [];
-                if ($tag_info['@count'] > 0) {
-                    foreach ($tag_info['tag'] as $key => $tag) {
-                        if (isset($tag['@value'])) {
-                            $tags[] = $tag['@value'];
-                        }
+            //$page_id = 102629;  //Frankenstein test
+                $page_info = $Query->getPageInfoByPageId($page_id);
+
+                $contents = $Query->getContentsByPageId($page_id);
+                $body = $contents['body'][0];
+
+                if (strpos($body, '<iframe') !== false) {
+                    //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
+                    $technology_and_tags = $Query->getTechnologyAndTags($page_info);
+
+                    $data = ['page_id' => $page_id,
+                        'technology' => $technology_and_tags['technology'],
+                        'location' => $page_info['uri.ui'],
+                        'body' => $body];
+
+                    $question = Question::firstOrCreate($data);
+                    if ($technology_and_tags['tags']) {
+                        $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
                     }
-                    if ($tags) {
-                        $Query->addTagsToQuestion($question, $tags);
-                    }
+
+                } else {
+                    echo json_encode(['type' => 'error',
+                        'message' => "We couldn't find an iframe embedded question on that page."]);
+                    exit;
+
                 }
-
-
 
             } catch (Exception $e ){
                 echo json_encode(['type' => 'error',

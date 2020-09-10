@@ -271,6 +271,9 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['webwork']['language'] = 'en';
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
+                    $custom_claims['webwork']['sourceFilePath'] = 'TODO';
+                    $custom_claims['webwork']['answerSubmitted'] = '0';
+                    $custom_claims['webwork']['problemUUID'] = rand(1,100000);
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                 $assignment->questions[$key]->iframe_id =  $this->createIframeId();

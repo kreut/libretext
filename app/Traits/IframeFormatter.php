@@ -16,7 +16,9 @@ trait iframeFormatter
    public function formatIframe($body, $id, $problemJWT = '')
    {
 
+
        $body = str_replace('<iframe ', "<iframe style='width: 1px;min-width: 100%;' id='$id' ", $body);
+
        if ($problemJWT) {
            preg_match('/src="([^"]+)"/', $body, $match);
            $url = $match[1];

@@ -87,9 +87,9 @@ class Query extends Model
     public function updateTags()
     {
         //update based on either a single event or all possible tag update events
-        $MindTouchEvent =  MindTouchEvent::where('status', NULL)
-                                             ->where('event', 'page.tag:update')
-                                            ->get();
+        $MindTouchEvent = MindTouchEvent::where('status', NULL)
+            ->where('event', 'page.tag:update')
+            ->get();
 
         foreach ($MindTouchEvent as $key => $mind_touch_event) {
 
@@ -126,16 +126,17 @@ class Query extends Model
             }
 
 
-            $question_exists_in_db = DB::table('questions')->where('location', $loc)->first();
-           if ($question_exists_in_db) {
-                return false;//didn't use the API
-            }
+            /*  $question_exists_in_db = DB::table('questions')->where('location', $loc)->first();
+             if ($question_exists_in_db) {
+                  return false;//didn't use the API
+              }
+            */
             $page_info = $this->getPageInfoByParsedUrl($parsed_url);
 
             $page_id = $page_info['@id'];
             $contents = $this->getContentsByPageId($page_id);
             $body = $contents['body'][0];
-            if (strpos( $body, 'iframe') !== false){
+            if (strpos($body, '<iframe') !== false) {
                 //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
                 $technology_and_tags = $this->getTechnologyAndTags($page_info);
 
@@ -157,7 +158,8 @@ class Query extends Model
 
     }
 
-    public function getContentsByPageId($page_id){
+    public function getContentsByPageId($page_id)
+    {
         https://query.libretexts.org/@api/deki/pages/1860/contents
 
         $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
@@ -185,20 +187,24 @@ class Query extends Model
     function getTechnologyAndTags($page_info)
     {
         $tags = [];
-        if ($page_info['tags']['tag']) {
+        $technology = 'none';
+        if (isset($page_info['tags']['tag'])) {
             foreach ($page_info['tags']['tag'] as $key => $value) {
-                $tag = $value['@value'];
-                if (strpos($tag, 'tech:') === 0) {
-                    $technology = str_replace('tech:', '', $tag);
-                } else {
-                    $tags[] = strtolower($tag);
+                $tag = $value['@value'] ?? false;
+                if ($tag) {
+                    if (strpos($tag, 'tech:') === 0) {
+                        $technology = str_replace('tech:', '', $tag);
+                    } else {
+                        $tags[] = strtolower($tag);
+                    }
                 }
             }
         }
         return compact('tags', 'technology');
     }
 
-    public function getPageInfoByPageId(int $page_id){
+    public function getPageInfoByPageId(int $page_id)
+    {
 
         $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
 
@@ -209,7 +215,8 @@ class Query extends Model
 
     }
 
-    public function getTagsByPageId(int $page_id){
+    public function getTagsByPageId(int $page_id)
+    {
         $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
 
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/tags?dream.out.format=json";
@@ -233,7 +240,8 @@ class Query extends Model
         return $page_info;
     }
 
-    public function updatePageInfoByPageId( int $page_id, $time_in_between = 2000000){
+    public function updatePageInfoByPageId(int $page_id, $time_in_between = 2000000)
+    {
         Log::info('updatePageInfoByPageId');
         $staging = (env('APP_ENV') === 'staging');
         if (!$page_id) {
@@ -252,14 +260,17 @@ class Query extends Model
             usleep($time_in_between); //not the best!  but allow for race conditions; want MindTouch to do the update first
             $page_info = $this->getPageInfoByPageId($page_id);
             Log::info($page_info);
-
             $question = Question::where('page_id', $page_id)->first();
+
+            $technology = $this->getTechnologyAndTags($page_info);
+
+
             DB::beginTransaction();
             if (!$question) {
                 Log::info('creating');
                 //get the info from query then add to the database
                 $question = Question::create(['page_id' => $page_id,
-                    'technology' => 'h5p',
+                    'technology' => $technology,
                     'location' => $page_info['uri.ui']]);
             } else {
                 //the path may have changed so I need to update it
