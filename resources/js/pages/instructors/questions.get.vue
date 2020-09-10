@@ -47,22 +47,22 @@
         v-on:input="changePage(currentPage)"
       ></b-pagination>
     </div>
-    <div v-if="showQuestions">
-      <div class="d-flex col-4 justify-content-between">
-        <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+<div v-if="showQuestions">
+      <div class="d-flex">
+        <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
              v-on:click="removeQuestion(questions[currentPage-1])">
           <b-button variant="danger">Remove Question</b-button>
         </div>
-        <div v-else class="mt-1 mb-2" v-on:click="addQuestion(questions[currentPage-1])">
-          <b-button variant="primary">Add Question</b-button>
-        </div>
-        <div class="mt-1 mb-2"
-             v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)">
-          <b-button variant="info">Create Learning Tree</b-button>
-        </div>
-      </div>
-      <div v-if="questions[currentPage-1].inAssignment">
+<div>
+          <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2" v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question</b-button>
+
+          <b-button v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+                    v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                    variant="info">Create Learning Tree
+          </b-button>
+
         <toggle-button
+          v-if="questions[currentPage-1].inAssignment"
           @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
           :width="250"
           :value="questions[currentPage-1].questionFiles"
@@ -71,6 +71,7 @@
           :margin="4"
           :color="{checked: '#007BFF', unchecked: '#75C791'}"
           :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+      </div>
       </div>
       <div v-html="questions[currentPage-1].body"></div>
     </div>

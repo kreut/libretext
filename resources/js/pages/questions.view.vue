@@ -44,6 +44,7 @@
             :per-page="perPage"
             first-number
             last-number
+            align="center"
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
@@ -56,9 +57,11 @@
             <div v-if="user.role !== 3">
               <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
               </b-button>
-                <b-button class="mt-1 mb-2"  v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)" variant="info">
-                  Create Learning Tree
-                </b-button>
+              <b-button class="mt-1 mb-2"
+                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                        variant="info">
+                Create Learning Tree
+              </b-button>
 
               <toggle-button
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
