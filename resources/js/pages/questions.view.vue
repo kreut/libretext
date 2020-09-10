@@ -33,7 +33,7 @@
 
 
       <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
-    <div v-if="!initializing">
+    <div v-if="questions.length && !initializing">
       <b-form ref="form" v-if="user.role === 2">
 
         <b-form-group
@@ -192,8 +192,11 @@
         </div>
       </div>
     </div>
-    <div class="mt-4">
-      <b-alert :show="!initializing && !questions.length" variant="warning"><a href="#" class="alert-link">This assignment currently has no
+    <div class="mt-4" v-if="!initializing && !questions.length">
+      <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
+        <b-button variant="success">Get Questions</b-button>
+      </div>
+      <b-alert show variant="warning"><a href="#" class="alert-link">This assignment currently has no
         questions.
       </a>
       </b-alert>
@@ -248,13 +251,16 @@ export default {
     assignmentId: ''
   }),
   created() {
+
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
   },
   mounted() {
+
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentName(this.assignmentId)
     this.getSelectedQuestions(this.assignmentId)
+
     h5pResizer()
     let vm = this
     if (this.user.role === 3) {
@@ -440,14 +446,16 @@ export default {
           return false
         }
         this.questions = data.questions
+        if (!this.questions.length){
+          this.initializing = false
+          return false
+        }
+
         let iframe_id = this.questions[0].iframe_id;
         this.$nextTick(() => {
           iFrameResize({log: true}, `#${iframe_id}`)
         })
-        // console.log(data.questions)
-      if (this.questions.length === 0) {
-        return false
-      }
+
         this.questionPointsForm.points = this.questions[0].points
 
         this.initializing = false
@@ -465,9 +473,8 @@ export default {
         axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
         this.$noty.info('The question has been removed from the assignment.')
         this.questions.splice(currentPage - 1, 1);
-        if (this.currentPage === 1){
-          this.currentPage = this.currentPage;
-        } else {
+
+        if (this.currentPage !== 1){ f
           this.currentPage = this.currentPage-1;
         }
 
