@@ -209,6 +209,7 @@ import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
+import {h5pResizer} from "~/helpers/H5PResizer"
 
 export default {
   middleware: 'auth',
@@ -254,6 +255,7 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentName(this.assignmentId)
     this.getSelectedQuestions(this.assignmentId)
+    h5pResizer()
     let vm = this
     if (this.user.role === 3) {
       let receiveMessage = async function (event) {

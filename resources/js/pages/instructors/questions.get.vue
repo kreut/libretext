@@ -82,6 +82,7 @@ import axios from 'axios'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
+import {h5pResizer} from "~/helpers/H5PResizer"
 
 export default {
   components: {
@@ -108,6 +109,7 @@ export default {
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
     this.tags = this.getTags()
+    h5pResizer()
   },
   methods: {
     changePage(currentPage){
