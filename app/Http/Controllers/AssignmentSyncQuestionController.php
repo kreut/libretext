@@ -10,7 +10,7 @@ use App\Http\Requests\updateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
 
-use App\Traits\iframeFormatter;
+use App\Traits\IframeFormatter;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -55,6 +55,8 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $response['questions'] = [];
+            $response['question_files']= [];
+            $response['question_ids'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->get();

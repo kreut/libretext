@@ -112,9 +112,9 @@ export default {
     h5pResizer()
   },
   methods: {
-    changePage(currentPage){
+    changePage(currentPage) {
       this.$nextTick(() => {
-        let iframe_id = this.questions[currentPage-1].iframe_id
+        let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: true}, `#${iframe_id}`)
       })
     },
@@ -207,13 +207,17 @@ export default {
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
 
           let questionInfo = data
+console.log('bytags')
+          console.log(questionsByTags.questions)
+          console.log('by assignment')
+          console.log(questionInfo)
+          if ((questionInfo.type === 'success')) {
 
-          if (questionInfo.type === 'success') {
-            for (let i = 0; i < questionsByTags.questions.length; i++) {
+              for (let i = 0; i < questionsByTags.questions.length; i++) {
 
-              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
+                questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
 
-              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+                questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
               }
 
             this.questions = questionsByTags.questions
@@ -228,7 +232,7 @@ export default {
           }
         } else {
           let timeout = questionsByTags.timeout ? questionsByTags.timeout : 6000
-          this.$noty.error(questionsByTags.message,{timeout:timeout})
+          this.$noty.error(questionsByTags.message, {timeout: timeout})
         }
 
       } catch (error) {
