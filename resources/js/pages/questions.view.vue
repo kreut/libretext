@@ -32,70 +32,80 @@
     </b-modal>
 
 
-      <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
+    <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
-      <b-form ref="form" v-if="user.role === 2">
-
-        <b-form-group
-          id="points"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Number of points for this question"
-          label-for="points"
-        >
-
-          <b-form-row>
-            <b-col lg="2">
-              <b-form-input
-                id="points"
-                v-model="questionPointsForm.points"
-                :value="questions[currentPage-1].points"
-                type="text"
-                placeholder=""
-                :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                @keydown="questionPointsForm.errors.clear('points')"
-              >
-              </b-form-input>
-              <has-error :form="questionPointsForm" field="points"></has-error>
-            </b-col>
-            <b-col lg="2">
-              <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points</b-button>
-            </b-col>
-          </b-form-row>
-
-        </b-form-group>
-
-      </b-form>
-
 
       <div v-if="questions.length">
-        <div class="d-flex justify-content-between">
-          <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
-            <b-button variant="success">Get Questions</b-button>
+
+        <div class="overflow-auto">
+          <b-pagination
+            v-model="currentPage"
+            :total-rows="questions.length"
+            :per-page="perPage"
+            first-number
+            last-number
+            v-on:input="changePage(currentPage)"
+          ></b-pagination>
+        </div>
+
+        <div>
+          <div class="d-flex">
+            <div class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
+              <b-button variant="success">Get Questions</b-button>
+            </div>
+            <div v-if="user.role !== 3">
+              <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+              </b-button>
+                <b-button class="mt-1 mb-2"  v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)" variant="info">
+                  Create Learning Tree
+                </b-button>
+
+              <toggle-button
+                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                :width="250"
+                :value="questions[currentPage-1].questionFiles"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+            </div>
+
           </div>
-          <div class="overflow-auto">
-            <b-pagination
-              v-model="currentPage"
-              :total-rows="questions.length"
-              :per-page="perPage"
-              first-number
-              last-number
-              v-on:input="changePage(currentPage)"
-            ></b-pagination>
-          </div>
-          <div v-if="user.role !== 3">
-            <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
-            </b-button>
-            <toggle-button
-              @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-              :width="250"
-              :value="questions[currentPage-1].questionFiles"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#007BFF', unchecked: '#75C791'}"
-              :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
-          </div>
+          <b-form ref="form" v-if="user.role === 2">
+
+            <b-form-group
+              id="points"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Number of points for this question"
+              label-for="points"
+            >
+
+              <b-form-row>
+                <b-col lg="2">
+                  <b-form-input
+                    id="points"
+                    v-model="questionPointsForm.points"
+                    :value="questions[currentPage-1].points"
+                    type="text"
+                    placeholder=""
+                    :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                    @keydown="questionPointsForm.errors.clear('points')"
+                  >
+                  </b-form-input>
+                  <has-error :form="questionPointsForm" field="points"></has-error>
+                </b-col>
+                <b-col lg="2">
+                  <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
+                  </b-button>
+                </b-col>
+              </b-form-row>
+
+            </b-form-group>
+
+          </b-form>
+
           <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
             <b-button variant="primary" class="mr-2"
                       v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
@@ -354,12 +364,12 @@ export default {
     async changePage(currentPage) {
 
       this.showQuestion = true
-        this.$nextTick(() => {
-          this.questionPointsForm.points = this.questions[currentPage - 1].points
-          let learningTree = this.questions[currentPage - 1].learning_tree
-          let iframe_id = this.questions[currentPage-1].iframe_id
-          iFrameResize({log: true}, `#${iframe_id}`)
-        })
+      this.$nextTick(() => {
+        this.questionPointsForm.points = this.questions[currentPage - 1].points
+        let learningTree = this.questions[currentPage - 1].learning_tree
+        let iframe_id = this.questions[currentPage - 1].iframe_id
+        iFrameResize({log: true}, `#${iframe_id}`)
+      })
       this.learningTreeAsList = []
       if (learningTree) {
         //loop through and get all with parent = -1
@@ -446,7 +456,7 @@ export default {
           return false
         }
         this.questions = data.questions
-        if (!this.questions.length){
+        if (!this.questions.length) {
           this.initializing = false
           return false
         }
@@ -474,8 +484,9 @@ export default {
         this.$noty.info('The question has been removed from the assignment.')
         this.questions.splice(currentPage - 1, 1);
 
-        if (this.currentPage !== 1){ f
-          this.currentPage = this.currentPage-1;
+        if (this.currentPage !== 1) {
+          f
+          this.currentPage = this.currentPage - 1;
         }
 
       } catch (error) {

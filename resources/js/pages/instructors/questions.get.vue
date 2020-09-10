@@ -207,7 +207,7 @@ export default {
           const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions/question-info`)
 
           let questionInfo = data
-console.log('bytags')
+
           console.log(questionsByTags.questions)
           console.log('by assignment')
           console.log(questionInfo)
