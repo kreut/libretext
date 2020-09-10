@@ -223,8 +223,8 @@ export default {
             this.$noty.error(questionIds.message)
           }
         } else {
-
-          this.$noty.error(questionsByTags.message)
+          let timeout = questionsByTags.timeout ? questionsByTags.timeout : 6000
+          this.$noty.error(questionsByTags.message,{timeout:timeout})
         }
 
       } catch (error) {

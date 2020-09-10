@@ -6,15 +6,19 @@ use App\Tag;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Question_Tag;
+use App\Query;
 use App\Traits\IframeFormatter;
 
 use App\Exceptions\Handler;
+use \Exception;
+
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class QuestionController extends Controller
 {
     use IframeFormatter;
+
     public function getQuestionsByTags(Request $request, Question $Question)
     {
         $response['type'] = 'error';
@@ -32,11 +36,11 @@ class QuestionController extends Controller
         $question_ids = $page_id ? $this->getQuestionIdsByPageId($page_id, $Question)
             : $this->getQuestionIdsByWordTags($request);
 
-        $questions = Question::select('id','page_id','body')->whereIn('id', $question_ids)->get();
+        $questions = Question::select('id', 'page_id', 'body')->whereIn('id', $question_ids)->get();
 
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
-            $questions[$key]['iframe_id'] =  $this->createIframeId();
+            $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['body'] = $this->formatIframe($questions[$key]['body'], $questions[$key]['iframe_id']);
 
         }
@@ -50,8 +54,40 @@ class QuestionController extends Controller
     {
         $question = $Question::where('page_id', $page_id)->first();
         if (!$question) {
-            echo json_encode(['type' => 'error', 'message' => 'That is not a valid query Page Id.']);
-            exit;
+
+            //maybe it was just created and doesnt' exist yet...
+            ///get it from query
+            ///enter it into the database if I can get it
+            ///
+            /// getPageInfoByPageId(int $page_id)
+            $Query = new Query();
+            try {
+                $page_info = $Query->getPageInfoByPageId(102629);
+                $question = Question::create(['page_id' => $page_id,
+                    'technology' => 'h5p',
+                    'location' => $page_info['uri.ui']]);
+                $tag_info = $Query->getTagsByPageId($page_id);
+                $tags = [];
+                if ($tag_info['@count'] > 0) {
+                    foreach ($tag_info['tag'] as $key => $tag) {
+                        if (isset($tag['@value'])) {
+                            $tags[] = $tag['@value'];
+                        }
+                    }
+                    if ($tags) {
+                        $Query->addTagsToQuestion($question, $tags);
+                    }
+                }
+
+
+
+            } catch (Exception $e ){
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+
         }
         return [$question->id];
     }

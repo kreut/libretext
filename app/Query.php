@@ -78,7 +78,7 @@ class Query extends Model
                     usleep(500000);
                     file_put_contents('query_imported_questions-' . date('Y-m-d') . '.txt', "$loc \r\n", FILE_APPEND);
                 } else {
-                    file_put_contents('query_skipped_imported_questions-' . date('Y-m-d') . '.txt', "$loc \r\n", FILE_APPEND);
+                    file_put_contents('query_skipped_imported_questions-' . date('Y-m-d') . '.txt', "No api used: git$loc \r\n", FILE_APPEND);
                 }
             }
         }
@@ -127,15 +127,15 @@ class Query extends Model
 
 
             $question_exists_in_db = DB::table('questions')->where('location', $loc)->first();
-            if ($question_exists_in_db) {
-                //return false;//didn't use the API
+           if ($question_exists_in_db) {
+                return false;//didn't use the API
             }
             $page_info = $this->getPageInfoByParsedUrl($parsed_url);
 
             $page_id = $page_info['@id'];
             $contents = $this->getContentsByPageId($page_id);
             $body = $contents['body'][0];
-            if (strpos( $body, '<iframe') !== false){
+            if (strpos( $body, 'iframe') !== false){
                 //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
                 $technology_and_tags = $this->getTechnologyAndTags($page_info);
 
@@ -276,9 +276,13 @@ class Query extends Model
             Log::info($tag_info);
             if ($tag_info['@count'] > 0) {
                 foreach ($tag_info['tag'] as $key => $tag) {
-                    $tags[] = $tag['@value'];
+                    if (isset($tag['@value'])) {
+                        $tags[] = $tag['@value'];
+                    }
                 }
-                $this->addTagsToQuestion($question, $tags);
+                if ($tags) {
+                    $this->addTagsToQuestion($question, $tags);
+                }
             }
             DB::commit();
             return true;
