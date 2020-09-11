@@ -249,6 +249,7 @@ export default {
     }),
     remediationIframeId: '',
     iframeLoaded: false,
+    showedInvalidTechnologyMessage: false,
     loadedTitles: false,
     showQuestion: true,
     remediationSrc: '',
@@ -278,7 +279,24 @@ export default {
     let vm = this
     if (this.user.role === 3) {
       let receiveMessage = async function (event) {
-        if (event.data.action !== 'hello') {
+        console.log(event)
+        let technology = vm.getTechnology(event.origin)
+        if (!technology && !vm.showedInvalidTechnologyMessage) {
+          vm.$noty.error('This question does not have a valid technology.  Please ask your instructor to contact support.')
+          vm.showedInvalidTechnologyMessage = true
+        }
+
+    let jsonData
+        try {
+          jsonData = JSON.parse(event.data)
+        } catch (e) {
+          jsonData = {}
+        }
+
+        let actionableEvent = ((technology === 'imathas') && (jsonData.subject === 'lti.ext.imathas.result'))
+
+
+        if (actionableEvent) {
           let submission_data = {
             'submission': event.data,
             'assignment_id': vm.assignmentId,
@@ -287,20 +305,31 @@ export default {
           console.log(submission_data)
 
           //if incorrect, show the learning tree stuff...
-          let {data} = await axios.post('/api/submissions', submission_data)
-          //console.log(data)
+          const {data} = await axios.post('/api/submissions', submission_data)
+          console.log(data)
           if (data.message) {
-            //Will add this later when we've worked out what it means to submit...vm.$noty[data.type](data.message)
+            vm.$noty[data.type](data.message)
           }
-
-        } else {
-          // console.log('Hello Event')
         }
       }
       window.addEventListener("message", receiveMessage, false)
     }
   },
   methods: {
+    getTechnology(body) {
+      let technology
+
+      if (body.includes('h5p.libretexts.org')) {
+        technology = 'h5p'
+      } else if (body.includes('imathas.libretexts.org')) {
+        technology = 'imathas'
+      } else if (body.includes('webwork.libretexts.org')) {
+        technology = 'webwork'
+      } else {
+        technology = false
+      }
+      return technology
+    },
     async updatePoints(questionId) {
       try {
 
@@ -369,20 +398,21 @@ export default {
       this.showQuestion = true
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
-        let learningTree = this.questions[currentPage - 1].learning_tree
+        console.log(this.questions[currentPage - 1])
+        this.learningTree = this.questions[currentPage - 1].learning_tree
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: true}, `#${iframe_id}`)
       })
       this.learningTreeAsList = []
-      if (learningTree) {
+      if (this.learningTree) {
         //loop through and get all with parent = -1
-
+console.error(this.learningTree)
         //loop through each with parent having this level
         let pageId
         let library
         // console.log('length ' + learningTree.length)
-        for (let i = 0; i < learningTree.length; i++) {
-          let remediation = learningTree[i]
+        for (let i = 0; i < this.length; i++) {
+          let remediation = this.learningTree[i]
           //get the library and page ids
           //go to the server and return with the student learning objectives
           // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}

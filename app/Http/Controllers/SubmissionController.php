@@ -43,13 +43,11 @@ class SubmissionController extends Controller
         }
 
 
-
-
         if (env('DB_DATABASE')) {
             $data['score'] = $assignment->default_points_per_question;
         } else {
 
-            /**TODO: FIX THIS!!! Should be the actual score....**/
+
         }
 
 
@@ -66,8 +64,10 @@ class SubmissionController extends Controller
 
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
+                $submission->save();
 
             } else {
+
                 Submission::create($data);
             }
 
@@ -78,7 +78,7 @@ class SubmissionController extends Controller
                         ->where('user_id', $data['user_id'])
                         ->where('assignment_id', $assignment->id)
                         ->count();
-                    if ((int) $num_submissions_by_assignment === count($assignment->questions)) {
+                    if ((int)$num_submissions_by_assignment === count($assignment->questions)) {
                         Score::firstOrCreate(['user_id' => $data['user_id'],
                             'assignment_id' => $assignment->id,
                             'score' => 'C']);
@@ -92,7 +92,7 @@ class SubmissionController extends Controller
                     break;
             }
 
-
+            $response['message'] = 'Your question submission was saved.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
