@@ -2,6 +2,7 @@ import axios from 'axios'
 
 export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal) {
   let typeFile = type + 'File'
+
   try {
     form.errors.set(typeFile, null)
     //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
@@ -13,6 +14,7 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
     formData.append('type', type)
     formData.append('_method', 'put'); // add this
     const {data} = await axios.post(`/api/submission-files`, formData)
+    console.log(data)
     if (data.type === 'error') {
       form.errors.set(typeFile, data.message)
     } else {

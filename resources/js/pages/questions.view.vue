@@ -331,7 +331,7 @@ export default {
         return false
       }
       this.uploading = true
-      await this.submitUploadFile('question', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+      await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
       this.uploading = false
     },
     viewOriginalQuestion() {
