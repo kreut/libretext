@@ -46,15 +46,15 @@ class SubmissionFile extends Model
 
         foreach ($assignment->course->enrolledUsers as $key => $user) {
             //get the assignment info, getting the temporary url of the first submission for viewing
-                $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
-                $question_id = null;//at the assignment level
-                $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
-                $text_feedback = $assignmentFilesByUser[$user->id]->text_feedback ?? null;
-                $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
-                $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
-                $date_graded = $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
-                $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
-                $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
+            $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
+            $question_id = null;//at the assignment level
+            $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
+            $text_feedback = $assignmentFilesByUser[$user->id]->text_feedback ?? null;
+            $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
+            $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
+            $date_graded = $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
+            $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
+            $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
             if ($this->inGradeView($all_info, $grade_view)) {
                 $user_and_submission_file_info[] = $all_info;
 
@@ -72,13 +72,13 @@ class SubmissionFile extends Model
                 $in_grade_view = true;
                 break;
             case('ungradedSubmissions'):
-                $in_grade_view  = $file['submission'] &&  ($file['date_graded'] === "Not yet graded");
+                $in_grade_view = $file['submission'] && ($file['date_graded'] === 'Not yet graded');
                 break;
             case('gradedSubmissions'):
-                $in_grade_view  = $file['submission'] && ($file['date_graded'] !== "Not yet graded");
+                $in_grade_view = $file['submission'] && ($file['date_graded'] !== 'Not yet graded');
                 break;
             case('studentsWithoutSubmissions'):
-                $in_grade_view  = !$file['submission'];
+                $in_grade_view = !$file['submission'];
                 break;
 
         }
@@ -107,23 +107,41 @@ class SubmissionFile extends Model
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
             foreach ($assignment->course->enrolledUsers as $key => $user) {
                 //get the assignment info, getting the temporary url of the first submission for viewing
-                    $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
-                    $question_id = $question->question_id;
-                    $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
-                    $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
-                    $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
-                    $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
-                    $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? "Not yet graded";
-                    $score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
-                    $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
-                    if ($this->inGradeView($all_info, $grade_view)) {
-                        $user_and_submission_file_info[$question->question_id][$key] = $all_info;
+                $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
+                $question_id = $question->question_id;
+                $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
+                $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
+                $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
+                $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
+                $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? "Not yet graded";
+                $score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
+                $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
+                if ($this->inGradeView($all_info, $grade_view)) {
+                    $user_and_submission_file_info[$question->question_id][$key] = $all_info;
                 }
             }
         }
-
-        return array_values($user_and_submission_file_info);
+        //re-key so that pagninate can handle it
+        return $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
     }
 
+    public function reKeyUserAndSubmissionFileInfo(array $user_and_submission_file_info)
+    {
+        $re_keyed_by_question_and_user_info = [];
+        if ($user_and_submission_file_info) {
 
+            $re_keyed_by_user_info = [];
+            foreach ($user_and_submission_file_info as $question => $students) {
+                $re_keyed_by_user_info[$question] = [];
+                foreach ($students as $student) {
+                    $re_keyed_by_user_info[$question][] = $student;
+                }
+            }
+            $re_keyed_by_question_and_user_info = [];
+            foreach ($re_keyed_by_user_info as $value) {
+                array_push($re_keyed_by_question_and_user_info, $value);
+            }
+        }
+        return $re_keyed_by_question_and_user_info;
+    }
 }

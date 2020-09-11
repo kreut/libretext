@@ -13,7 +13,7 @@
       </b-card>
       <div v-if="!showNoFileSubmissionsExistAlert">
         <div v-show="type === 'question'">
-          Question
+          <div class="text-center h5">Question</div>
           <div class="overflow-auto">
             <b-pagination
               v-on:input="changePage(currentQuestionPage)"
@@ -231,9 +231,6 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
-    async getView(view) {
-      //get the
-    },
     async toggleView() {
       this.viewSubmission = !this.viewSubmission
     },
@@ -312,7 +309,7 @@ export default {
       }
     },
     async changePage() {
-
+      console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
       console.log(this.currentQuestionPage - 1)
       console.log(this.currentStudentPage - 1)
@@ -345,6 +342,18 @@ export default {
     submissionUrlExists(currentStudentPage) {
       return (this.submissionFiles[currentStudentPage - 1]['submission_url'] !== null)
     },
+    hasSubmissions(user_and_submission_file_info, type) {
+      let hasSubmissions
+      switch (type) {
+        case('question'):
+          hasSubmissions = (user_and_submission_file_info.length > 0)
+          break;
+        case ('assignment'):
+          hasSubmissions = (user_and_submission_file_info[0].length > 0)
+          break;
+      }
+      return hasSubmissions
+    },
     async getSubmissionFiles(gradeView) {
       try {
         const {data} = await axios.get(`/api/submission-files/${this.type}/${this.assignmentId}/${gradeView}`)
@@ -352,18 +361,18 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        if (data.user_and_submission_file_info[0].length === 0) {
-          this.showNoFileSubmissionsExistAlert = true
+        console.log(data.user_and_submission_file_info)
+        this.showNoFileSubmissionsExistAlert = !this.hasSubmissions(data.user_and_submission_file_info, this.type)
+        if (this.showNoFileSubmissionsExistAlert) {
           return false
-        } else {
-          this.showNoFileSubmissionsExistAlert = false
         }
-
 
         this.submissionFiles = data.user_and_submission_file_info
 
         this.numStudents = Object.keys(this.submissionFiles[0]).length;
         console.log(this.submissionFiles)
+        this.currentQuestionPage = 1
+        this.currentStudentPage = 1
         this.textFeedbackForm.textFeedback = this.submissionFiles[0]['text_feedback']
       } catch (error) {
         this.$noty.error(error.message)

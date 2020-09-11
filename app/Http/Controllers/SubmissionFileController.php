@@ -195,7 +195,7 @@ class SubmissionFileController extends Controller
                     ->where('user_id', $student_user_id)
                     ->where('assignment_id', $assignment_id)
                     ->where('type', 'a')
-                    ->update([$column => $value]);
+                    ->update([$column => $value, 'date_graded'=> DB::raw('now()')]);
                 break;
             case('question'):
                 DB::table('submission_files')
@@ -203,7 +203,7 @@ class SubmissionFileController extends Controller
                     ->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->where('type', 'q')
-                    ->update([$column => $value]);
+                    ->update([$column => $value, 'date_graded' => DB::raw('now()')]);
 
                 break;
         }
