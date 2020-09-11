@@ -1,9 +1,9 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="Add Questions"></PageTitle>
+    <PageTitle :title="title"></PageTitle>
     <p>Use the search box you can find questions by tag.
       The tag can be a word associated with the question or can be the query library page id. To search
-      by page id, please use the tag id={id}. For example, id=112358.
+      by page id, please use the tag: id={id}. For example, id=112358.
       Note that adding multiple tags will result in a search result which matches all of the conditions.</p>
     <div class="col-5 p-0">
       <vue-bootstrap-typeahead
@@ -102,17 +102,29 @@ export default {
     question: {},
     showQuestions: false,
     gettingQuestions: false,
-    showPage: false
+    showPage: false,
+    title: ''
   }),
   created() {
     this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
+    this.getTitle()
     this.tags = this.getTags()
     h5pResizer()
   },
   methods: {
+    async getTitle() {
+      try {
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+       this.title =  `Add Questions to ${data.name}`
+      } catch (error) {
+        console.log(error.message)
+       this.title = 'Add Questions'
+      }
+
+    },
     changePage(currentPage) {
       this.$nextTick(() => {
         let iframe_id = this.questions[currentPage - 1].iframe_id

@@ -122,6 +122,7 @@ class AssignmentController extends Controller
      */
     public function show(Assignment $assignment)
     {
+
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
 
