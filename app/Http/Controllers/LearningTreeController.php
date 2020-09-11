@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLearningTree;
 use App\LearningTree;
+use App\Query;
 use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -77,11 +78,11 @@ class LearningTreeController extends Controller
 
     public function getDefaultLearningTree()
     {
-       return  <<<EOT
+        return <<<EOT
 {"html":"<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/adapt.svg'>Assessment</p></div><div class='blockydiv'></div><div class='blockyinfo'>The original question.</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"}]}]}
 EOT;
 
-               }
+    }
 
     /**
      * Display the specified resource.
@@ -117,37 +118,20 @@ EOT;
 
     }
 
-    /**
-     * Show the form for editing the specified resource.
-     *
-     * @param \App\LearningTree $learningTree
-     * @return \Illuminate\Http\Response
-     */
-    public function edit(LearningTree $learningTree)
+    public function validateRemediation(string $library, int $pageId)
     {
-        //
-    }
 
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\LearningTree $learningTree
-     * @return \Illuminate\Http\Response
-     */
-    public function update(Request $request, LearningTree $learningTree)
-    {
-        //
-    }
+        $Query = new Query(['library' => $library]);
+        $response['type'] = 'error';
+        try {
+            dd($Query->getContentsByPageId($pageId));
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.";
+        }
+return $response;
 
-    /**
-     * Remove the specified resource from storage.
-     *
-     * @param \App\LearningTree $learningTree
-     * @return \Illuminate\Http\Response
-     */
-    public function destroy(LearningTree $learningTree)
-    {
-        //
     }
 }

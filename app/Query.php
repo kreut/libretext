@@ -31,7 +31,8 @@ class Query extends Model
 
         $this->client = new Client();
         $this->tokens = $this->getTokens();
-        $this->library = 'query';
+        if ($attributes['library'])
+        $this->library = $attributes['library'] ?? 'query';
         $this->token = $this->tokens->{$this->library};
 
     }

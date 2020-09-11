@@ -10,8 +10,8 @@
           <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
         </div>
         <div class="d-flex flex-row">
-          <b-form-input v-model="pageId" style="width: 100px" placeholder="Page Id"></b-form-input>
-          <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation">Add Remediation</b-button>
+          <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"></b-form-input>
+          <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation"> <b-spinner v-if="validatingRemediation"small label="Spinning"></b-spinner> Add Remediation</b-button>
         </div>
 
       </div>
@@ -38,6 +38,7 @@ export default {
     return {title: this.$t('home')}
   },
   data: () => ({
+    validatingRemediation: false,
     panelHidden: false,
     studentLearningObjectives: '',
     title: window.config.appName,
@@ -248,7 +249,9 @@ ${body}
 
       this.$bvModal.show('student-learning-objective-modal')
     },
-    validateRemediation() {
+
+    async addRemediation() {
+
       if (!this.library) {
         this.$noty.error('Please choose a library.')
         return false
@@ -257,13 +260,18 @@ ${body}
         this.$noty.error('Your Page Id should be a positive integer.')
         return false
       }
-      return true
-    },
-    addRemediation() {
-      if (!this.validateRemediation()) {
-        return false
+      try {
+        this.validatingRemediation = true
+        const {data} = await axios.get(`/api/learning-trees/validate-remediation/${this.library}/${this.pageId}`)
+        this.validatingRemediation = false
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
       }
-
+      this.validatingRemediation = false
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
 
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
