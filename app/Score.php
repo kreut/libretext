@@ -22,6 +22,7 @@ class Score extends Model
 
         $assignment_questions = DB::table('assignment_question')->where('assignment_id', $assignment_id)->get();
 
+        $assignment_question_scores_info = [];
         foreach ($assignment_questions as $question) {
             $assignment_question_scores_info[$question->question_id]['points'] = $question->points;
         }
@@ -32,7 +33,6 @@ class Score extends Model
             ->where('user_id', $student_user_id)->get();
         if ($submissions->isNotEmpty()) {
             foreach ($submissions as $submission) {
-
                 $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
             }
         }
@@ -57,10 +57,9 @@ class Score extends Model
                 }
                 break;
             case('a'):
-
-
-                $assignment_score_from_questions = $this->getAssignmentScoreFromQuestions($assignment_question_scores_info);
-
+                    $assignment_score_from_questions = $assignment_question_scores_info ?
+                        $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
+                        : 0;
                 //get the points from the submission
                 $submission_file = DB::table('submission_files')
                     ->where('assignment_id', $assignment_id)
@@ -76,11 +75,13 @@ class Score extends Model
 
                 }
 
-                $assignment_score = min( $total_assignment_points,$points_from_submissions);
+                $assignment_score = min($total_assignment_points, $points_from_submissions);
                 break;
 
             case('0'):
-                $assignment_score = $this->getAssignmentScoreFromQuestions($assignment_question_scores_info);
+                $assignment_score_from_questions = $assignment_question_scores_info ?
+                    $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
+                    : 0;
 
                 break;
 
@@ -93,7 +94,8 @@ class Score extends Model
     }
 
 
-    public function getAssignmentScoreFromQuestions(array $assignment_question_scores_info) {
+    public function getAssignmentScoreFromQuestions(array $assignment_question_scores_info)
+    {
         $assignment_score_from_questions = 0;
         //get the assignment points for the questions
         foreach ($assignment_question_scores_info as $score) {

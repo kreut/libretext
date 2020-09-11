@@ -30,7 +30,7 @@ class SubmissionFileController extends Controller
 
     use S3;
 
-    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, SubmissionFile $submissionFile)
+    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
@@ -43,15 +43,14 @@ class SubmissionFileController extends Controller
         }
 
         try {
-            $assignmentFilesByUser = [];
 
             switch ($type) {
                 case('assignment'):
-                    $user_and_submission_file_info = $submissionFile->getUserAndAssignmentFileInfo($assignment);
+                    $user_and_submission_file_info = $submissionFile->getUserAndAssignmentFileInfo($assignment, $gradeView);
+
                     break;
                 case('question'):
-
-                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment);
+                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView);
             }
 
             $response['type'] = 'success';
@@ -278,29 +277,32 @@ class SubmissionFileController extends Controller
             $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put($submission, $submissionContents);
+            $submission_file_data =   ['type' => $type[0],
+                'submission' => basename($submission),
+                'original_filename' => $request->file("{$type}File")->getClientOriginalName(),
+                'file_feedback' => null,
+                'text_feedback' => null,
+                'date_graded' => null,
+                'score' => null,
+                'date_submitted' => Carbon::now()];
             switch ($type) {
                 case('assignment'):
                     $submissionFile->updateOrCreate(
-                        ['user_id' => Auth::user()->id, 'assignment_id' => $assignment_id],
-                        ['type' => 'a',
-                            'submission' => basename($submission),
-                            'original_filename' => $request->file('assignmentFile')->getClientOriginalName(),
-                            'date_submitted' => Carbon::now()]
+                        ['user_id' => Auth::user()->id,
+                            'assignment_id' => $assignment_id,
+                            'type' => $type[0]],
+                      $submission_file_data
                     );
                     break;
                 case('question'):
                     $submissionFile->updateOrCreate(
                         ['user_id' => Auth::user()->id,
                             'assignment_id' => $assignment_id,
-                            'question_id' => $question_id],
-                        ['type' => 'q',
-                            'submission' => basename($submission),
-                            'original_filename' => $request->file('questionFile')->getClientOriginalName(),
-                            'date_submitted' => Carbon::now()]
+                            'question_id' => $question_id,
+                            'type' => $type[0]],
+                        $submission_file_data
                     );
                     break;
-
-
             }
 
             $response['type'] = 'success';

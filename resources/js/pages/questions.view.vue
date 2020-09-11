@@ -109,7 +109,7 @@
 
           </b-form>
 
-          <div v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+          <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
             <b-button variant="primary" class="mr-2"
                       v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
                       v-b-modal.modal-upload-question-file>Upload File
