@@ -146,8 +146,8 @@ class QuestionController extends Controller
         $page_id = false;
 
         foreach ($request->get('tags') as $tag) {
-            if (stripos($tag, 'pageid=') !== false) {
-                $page_id = str_ireplace('pageid=', '', $tag);
+            if (stripos($tag, 'id=') !== false) {
+                $page_id = str_ireplace('id=', '', $tag);
             }
         }
 

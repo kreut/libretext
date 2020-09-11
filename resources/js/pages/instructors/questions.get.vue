@@ -3,7 +3,7 @@
     <PageTitle title="Add Questions"></PageTitle>
     <p>Use the search box you can find questions by tag.
       The tag can be a word associated with the question or can be the query library page id. To search
-      by page id, please use the tag PageId={pageId}. For example, PageId=112358.
+      by page id, please use the tag id={id}. For example, id=112358.
       Note that adding multiple tags will result in a search result which matches all of the conditions.</p>
     <div class="col-5 p-0">
       <vue-bootstrap-typeahead
@@ -126,9 +126,9 @@ export default {
     ,
     addTag() {
       console.log(this.query)
-      if (this.query.includes("PageId=")) {
-        let pageId = this.query.replace("PageId=", '')
-        if (!((pageId >>> 0) === parseFloat(pageId))) {
+      if (this.query.includes("id=")) {
+        let id = this.query.replace("id=", '')
+        if (!((id >>> 0) === parseFloat(id))) {
           this.$noty.error("Your page id should be a positive integer.")
           return
         } else {
