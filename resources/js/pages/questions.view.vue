@@ -34,7 +34,6 @@
 
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
-
       <div v-if="questions.length">
 
         <div class="overflow-auto">
@@ -108,6 +107,7 @@
             </b-form-group>
 
           </b-form>
+            <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage"><strong>{{ this.submissionDataMessage }}</strong></b-alert>
 
           <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
             <b-button variant="primary" class="mr-2"
@@ -236,6 +236,9 @@ export default {
     ToggleButton
   },
   data: () => ({
+    submissionDataType: 'error',
+    submissionDataMessage: '',
+    showSubmissionMessage: false,
     uploading: false,
     uploadForm: new Form({
       questionFile: null,
@@ -279,22 +282,16 @@ export default {
     let vm = this
     if (this.user.role === 3) {
       let receiveMessage = async function (event) {
-        console.log(event)
         let technology = vm.getTechnology(event.origin)
-        if (!technology && !vm.showedInvalidTechnologyMessage) {
-          vm.$noty.error('This question does not have a valid technology.  Please ask your instructor to contact support.')
-          vm.showedInvalidTechnologyMessage = true
-        }
-
-    let jsonData
+        console.log(technology)
+        console.log(event.data)
+        let actionableEvent
         try {
-          jsonData = JSON.parse(event.data)
-        } catch (e) {
-          jsonData = {}
+          actionableEvent = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
+            || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+        } catch (error) {
+          actionableEvent = false
         }
-console.log(jsonData)
-        let actionableEvent = ((technology === 'imathas') && (jsonData.subject === 'lti.ext.imathas.result'))
-
 
         if (actionableEvent) {
           let submission_data = {
@@ -302,13 +299,14 @@ console.log(jsonData)
             'assignment_id': vm.assignmentId,
             'question_id': vm.questions[vm.currentPage - 1].id
           }
+          console.log('submitted')
           console.log(submission_data)
 
           //if incorrect, show the learning tree stuff...
           const {data} = await axios.post('/api/submissions', submission_data)
           console.log(data)
           if (data.message) {
-            vm.$noty[data.type](data.message)
+            vm.showResponse(data)
           }
         }
       }
@@ -316,9 +314,14 @@ console.log(jsonData)
     }
   },
   methods: {
+    showResponse(data) {
+      console.log('showing response')
+      this.submissionDataType = data.type
+      this.submissionDataMessage = data.message
+      this.showSubmissionMessage = true
+    },
     getTechnology(body) {
       let technology
-
       if (body.includes('h5p.libretexts.org')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
@@ -396,6 +399,7 @@ console.log(jsonData)
     async changePage(currentPage) {
 
       this.showQuestion = true
+      this.showSubmissionMessage = false
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         console.log(this.questions[currentPage - 1])
@@ -406,7 +410,7 @@ console.log(jsonData)
       this.learningTreeAsList = []
       if (this.learningTree) {
         //loop through and get all with parent = -1
-console.error(this.learningTree)
+        console.error(this.learningTree)
         //loop through each with parent having this level
         let pageId
         let library

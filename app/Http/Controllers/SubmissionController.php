@@ -30,7 +30,7 @@ class SubmissionController extends Controller
         $data['submission'] = $request->input('submission');
 
 
-        $response['type'] = 'error';
+        $response['type'] = 'danger';//using an alert instead of a noty because it wasn't working with post message
 
         $assignment = $Assignment->find($data['assignment_id']);
 
