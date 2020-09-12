@@ -65,8 +65,13 @@
           </div>
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right">Time zone</label>
-            <div class="col-md-7">
-              <b-form-select v-model="form.timezone" :options="timezones" mb-3></b-form-select>
+            <div class="col-md-7" v-on:change="removeTimeZoneError()">
+              <b-form-select v-model="form.time_zone"
+                             :options="timeZones"
+                             :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                          >
+                          </b-form-select>
+              <has-error :form="form" field="time_zone"/>
             </div>
           </div>
           <div class="form-group row">
@@ -104,18 +109,15 @@ export default {
   },
   mounted() {
     this.setRegistrationType(this.$route.path)
-    //alert(Intl.DateTimeFormat().resolvedOptions().timeZone)
     let timeZones = getTimeZones()
-    //name alternative name
-    console.log(this.timeZones)
-    let usedTimezones = []
+    let usedTimeZones = []
     for (let i = 0; i < timeZones.length; i++) {
-      if (!usedTimezones.includes(timeZones[i].alternativeName)) {
+      if (!usedTimeZones.includes(timeZones[i].alternativeName)) {
         if (timeZones[i].name === Intl.DateTimeFormat().resolvedOptions().timeZone) {
-          this.form.timezone = timeZones[i].name
+          this.form.time_zone = timeZones[i].name
         }
-        this.timezones.push({value: timeZones[i].name, text: timeZones[i].alternativeName})
-        usedTimezones.push(timeZones[i].alternativeName)
+        this.timeZones.push({value: timeZones[i].name, text: timeZones[i].alternativeName})
+        usedTimeZones.push(timeZones[i].alternativeName)
       }
     }
   },
@@ -133,9 +135,9 @@ export default {
       password_confirmation: '',
       access_code: '',
       registration_type: '',
-      timezone: null
+      time_zone: null
     }),
-    timezones: [
+    timeZones: [
       {value: null, text: 'Please select a time zone'},
     ],
     mustVerifyEmail: false,
@@ -145,6 +147,9 @@ export default {
   }),
 
   methods: {
+    removeTimeZoneError(){
+      this.form.errors.clear('time_zone')
+    },
     setRegistrationType(path) {
       this.form.registration_type = path.replace('/register/', '')
       switch (this.form.registration_type) {
