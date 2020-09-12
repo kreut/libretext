@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreAssignment;
 
+
 use \Illuminate\Http\Request;
 
 use App\Exceptions\Handler;
@@ -90,13 +91,12 @@ class AssignmentController extends Controller
         }
 
         $response['type'] = 'error';
-
         try {
             $data = $request->validated();
             Assignment::create(
                 ['name' => $data['name'],
-                    'available_from' => $data['available_from_date'] . ' ' . $data['available_from_time'],
-                    'due' => $data['due_date'] . ' ' . $data['due_time'],
+                    'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
+                    'due' =>$this->convertLocalMysqlFormattedDateToUTC( $data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'default_points_per_question' => $data['default_points_per_question'] ?? null,
                     'scoring_type' => $data['scoring_type'],
                     'submission_files' => $data['submission_files'],
@@ -161,9 +161,9 @@ class AssignmentController extends Controller
 
         try {
             $data = $request->validated();
-            $data['available_from'] = $data['available_from_date'] . ' ' . $data['available_from_time'];
+            $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
-            $data['due'] = $data['due_date'] . ' ' . $data['due_time'];
+            $data['due'] =$this->convertLocalMysqlFormattedDateToUTC( $data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
             //remove what's not needed
             foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
                 unset($data[$value]);
