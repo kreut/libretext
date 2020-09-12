@@ -292,7 +292,7 @@ export default {
         } catch (e) {
           jsonData = {}
         }
-
+console.log(jsonData)
         let actionableEvent = ((technology === 'imathas') && (jsonData.subject === 'lti.ext.imathas.result'))
 
 
