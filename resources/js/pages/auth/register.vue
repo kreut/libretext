@@ -63,7 +63,12 @@
               <has-error :form="form" field="access_code"/>
             </div>
           </div>
-
+          <div class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+            <div class="col-md-7">
+              <b-form-select v-model="form.timezone" :options="timezones" mb-3></b-form-select>
+            </div>
+          </div>
           <div class="form-group row">
             <div class="col-md-7 offset-md-3 d-flex">
               <!-- Submit Button -->
@@ -82,83 +87,102 @@
 </template>
 
 <script>
-  import Form from 'vform'
-  import LoginWithGithub from '~/components/LoginWithGithub'
-  import {redirectOnLogin} from '~/helpers/LoginRedirect'
+import Form from 'vform'
+import LoginWithGithub from '~/components/LoginWithGithub'
+import {redirectOnLogin} from '~/helpers/LoginRedirect'
+import {getTimeZones, rawTimeZones, timeZonesNames} from "@vvo/tzdb";
 
-  export default {
-    middleware: 'guest',
+export default {
+  middleware: 'guest',
 
-    components: {
-      LoginWithGithub
-    },
+  components: {
+    LoginWithGithub
+  },
 
-    metaInfo() {
-      return {title: this.$t('register')}
-    },
-    mounted() {
-      this.setRegistrationType(this.$route.path)
-    },
-    watch: {
-      '$route'(to) {
-        this.setRegistrationType(to.path)
+  metaInfo() {
+    return {title: this.$t('register')}
+  },
+  mounted() {
+    this.setRegistrationType(this.$route.path)
+    //alert(Intl.DateTimeFormat().resolvedOptions().timeZone)
+    let timeZones = getTimeZones()
+    //name alternative name
+    console.log(this.timeZones)
+    let usedTimezones = []
+    for (let i = 0; i < timeZones.length; i++) {
+      if (!usedTimezones.includes(timeZones[i].alternativeName)) {
+        if (timeZones[i].name === Intl.DateTimeFormat().resolvedOptions().timeZone) {
+          this.form.timezone = timeZones[i].name
+        }
+        this.timezones.push({value: timeZones[i].name, text: timeZones[i].alternativeName})
+        usedTimezones.push(timeZones[i].alternativeName)
       }
-    },
-    data: () => ({
-      form: new Form({
-        first_name: '',
-        last_name: '',
-        email: '',
-        password: '',
-        password_confirmation: '',
-        access_code: '',
-        registration_type: ''
-      }),
-      mustVerifyEmail: false,
-      isGrader: false,
-      isInstructor: false,
-      registrationTitle: ''
+    }
+  },
+  watch: {
+    '$route'(to) {
+      this.setRegistrationType(to.path)
+    }
+  },
+  data: () => ({
+    form: new Form({
+      first_name: '',
+      last_name: '',
+      email: '',
+      password: '',
+      password_confirmation: '',
+      access_code: '',
+      registration_type: '',
+      timezone: null
     }),
+    timezones: [
+      {value: null, text: 'Please select a time zone'},
+    ],
+    mustVerifyEmail: false,
+    isGrader: false,
+    isInstructor: false,
+    registrationTitle: ''
+  }),
 
-    methods: {
-      setRegistrationType(path) {
-        this.form.registration_type = path.replace('/register/', '')
-        switch (this.form.registration_type) {
-          case 'instructor':
-            this.registrationTitle = 'Instructor Registration'
-            this.isInstructor = true
-            break
-          case 'student':
-            this.registrationTitle = 'Student Registration'
-            break
-          case 'grader':
-            this.registrationTitle = 'Grader Registration'
-            this.isGrader = true
-            break
-        }
+  methods: {
+    setRegistrationType(path) {
+      this.form.registration_type = path.replace('/register/', '')
+      switch (this.form.registration_type) {
+        case 'instructor':
+          this.registrationTitle = 'Instructor Registration'
+          this.isInstructor = true
+          break
+        case 'student':
+          this.registrationTitle = 'Student Registration'
+          break
+        case 'grader':
+          this.registrationTitle = 'Grader Registration'
+          this.isGrader = true
+          break
+      }
 
-      },
-      async register() {
+    },
+    async register() {
 
-        // Register the user.
-        const {data} = await this.form.post('/api/register')
-        // Must verify email fist.
-        if (data.status) {
-          this.mustVerifyEmail = true
-        } else {
-          // Log in the user.
-          const {data: {token}} = await this.form.post('/api/login')
+      // Register the user.
+      const {data} = await this.form.post('/api/register')
+      // Must verify email fist.
+      if (data.status) {
+        this.mustVerifyEmail = true
+      } else {
+        // Log in the user.
+        const {data: {token}} = await this.form.post('/api/login')
 
-          // Save the token.
-          this.$store.dispatch('auth/saveToken', {token})
+        // Save the token.
+        this.$store.dispatch('auth/saveToken', {token})
 
-          // Update the user.
-          await this.$store.dispatch('auth/updateUser', {user: data})
+        // Update the user.
+        await this.$store.dispatch('auth/updateUser', {user: data})
 
-          // Redirect to the correct home page
-          redirectOnLogin(this.$store, this.$router)
-        }
+        // Redirect to the correct home page
+        redirectOnLogin(this.$store, this.$router)
       }
     }
   }
+}
 </script>
