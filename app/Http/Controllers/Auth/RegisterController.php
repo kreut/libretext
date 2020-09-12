@@ -112,6 +112,7 @@ class RegisterController extends Controller
                 $user->last_name = $data['last_name'];
                 $user->email = $data['email'];
                 $user->password = bcrypt($data['password']);
+                $user->time_zone = $data['time_zone'];
                 $user->role = $role;
                 $user->save();
                 if ($role === 4) {
