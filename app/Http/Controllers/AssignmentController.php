@@ -43,20 +43,34 @@ class AssignmentController extends Controller
             $assignments = $course->assignments;
             foreach ($course->assignments as $key => $assignment) {
                 $assignments[$key]['number_of_questions'] = count($assignment->questions);
-                $assignments[$key]['available_from_date'] = $this->getDateFromSqlTimestamp($assignment['available_from']);
-                $assignments[$key]['available_from_time'] = $this->getTimeFromSqlTimestamp($assignment['available_from']);
+
+                $available_from = $assignment['available_from'];
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
                     $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
                     $assignments[$key]['is_extension'] = isset($extensions_by_assignment[$assignment->id]);
-                    $assignments[$key]['due'] = ['due_date' => $due, 'is_extension' => $is_extension];
-                    $assignments[$key]['is_available'] = strtotime($assignment['available_from']) < time();
+
+                    $assignments[$key]['due'] = [
+                        'due_date' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone), //for viewing
+                        'is_extension' => $is_extension
+                    ];//for viewing
+
+                    //for comparing I just want the UTC version
+                    $assignments[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments[$key]['past_due'] = $due < time();
+
                 } else {
                     $due = $assignment['due'];
+
+                    $assignments[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
+                    //for the editing form
+                    $assignments[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                    $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                    $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                    $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                 }
-                $assignments[$key]['due_date'] = $this->getDateFromSqlTimestamp($due);
-                $assignments[$key]['due_time'] = $this->getTimeFromSqlTimestamp($due);
+//same regardless of whether you're a student
+                $assignments[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
 
 
             }
@@ -96,7 +110,7 @@ class AssignmentController extends Controller
             Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
-                    'due' =>$this->convertLocalMysqlFormattedDateToUTC( $data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
+                    'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'default_points_per_question' => $data['default_points_per_question'] ?? null,
                     'scoring_type' => $data['scoring_type'],
                     'submission_files' => $data['submission_files'],
@@ -163,7 +177,7 @@ class AssignmentController extends Controller
             $data = $request->validated();
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
-            $data['due'] =$this->convertLocalMysqlFormattedDateToUTC( $data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
+            $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
             //remove what's not needed
             foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
                 unset($data[$value]);
