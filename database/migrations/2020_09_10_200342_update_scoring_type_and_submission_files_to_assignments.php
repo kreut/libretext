@@ -13,6 +13,7 @@ class UpdateScoringTypeAndSubmissionFilesToAssignments extends Migration
      */
     public function up()
     {
+        DB::connection()->getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
         Schema::table('assignments', function (Blueprint $table) {
             $table->string('scoring_type',1)
                     ->comment("p=points, c=completed")->change();

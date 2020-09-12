@@ -13,6 +13,7 @@ class UpdateTypeAsStringToSubmissionFiles extends Migration
      */
     public function up()
     {
+        DB::connection()->getDoctrineSchemaManager()->getDatabasePlatform()->registerDoctrineTypeMapping('enum', 'string');
         Schema::table('submission_files', function (Blueprint $table) {
             $table->string('type',1)
                 ->comment("q=question, c=assignment")->change();
