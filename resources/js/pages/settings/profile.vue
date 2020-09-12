@@ -4,6 +4,9 @@
       <alert-success :form="form" :message="$t('info_updated')" />
 
       <!-- Name -->
+      <div class="text-center mb-2">
+      <strong>All of your assignment due dates use {{currentTimeZone}} for the time zone.</strong>
+      </div>
       <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
         <div class="col-md-7">
@@ -36,6 +39,7 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
+import {getTimeZones, rawTimeZones, timeZonesNames} from "@vvo/tzdb";
 
 export default {
   scrollToTop: false,
@@ -48,7 +52,8 @@ export default {
     form: new Form({
       name: '',
       email: ''
-    })
+    }),
+    currentTimeZone: ''
   }),
 
   computed: mapGetters({
@@ -61,7 +66,15 @@ export default {
       this.form[key] = this.user[key]
     })
   },
+mounted() {
+  let timeZones = getTimeZones()
 
+  for (let i = 0; i < timeZones.length; i++) {
+     if( timeZones[i].name === this.user.time_zone) {
+       this.currentTimeZone = timeZones[i].alternativeName
+     }
+  }
+},
   methods: {
     async update () {
       const { data } = await this.form.patch('/api/settings/profile')
