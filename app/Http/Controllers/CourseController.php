@@ -116,6 +116,7 @@ class CourseController extends Controller
                 $fake_student = new User();
                 $fake_student->last_name = 'Student';
                 $fake_student->first_name = 'Fake';
+                $fake_student->time_zone = auth()->user()->time_zone;
                 $fake_student->role = 3;
                 $fake_student->save();
 

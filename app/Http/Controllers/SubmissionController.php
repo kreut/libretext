@@ -30,7 +30,7 @@ class SubmissionController extends Controller
         $data['submission'] = $request->input('submission');
 
 
-        $response['type'] = 'danger';//using an alert instead of a noty because it wasn't working with post message
+        $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
 
         $assignment = $Assignment->find($data['assignment_id']);
 
@@ -43,7 +43,7 @@ class SubmissionController extends Controller
         }
 
 
-        if (env('DB_DATABASE')) {
+        if (env('DB_DATABASE') === 'test_libretext') {
             $data['score'] = $assignment->default_points_per_question;
         } else {
 
@@ -69,6 +69,7 @@ class SubmissionController extends Controller
             } else {
 
                 Submission::create($data);
+
             }
 
             //update the score if it's supposed to be updated

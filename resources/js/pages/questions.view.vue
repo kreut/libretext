@@ -236,7 +236,7 @@ export default {
     ToggleButton
   },
   data: () => ({
-    submissionDataType: 'error',
+    submissionDataType: 'danger',
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
@@ -316,7 +316,7 @@ export default {
   methods: {
     showResponse(data) {
       console.log('showing response')
-      this.submissionDataType = data.type
+      this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
     },
@@ -507,7 +507,7 @@ export default {
 
         this.initializing = false
       } catch (error) {
-        alert(error)
+
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
       }
       this.iframeLoaded = true

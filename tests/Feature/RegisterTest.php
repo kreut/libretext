@@ -31,10 +31,11 @@ class RegisterTest extends TestCase
             'email' => 'test@test.app',
             'password' => 'secret',
             'password_confirmation' => 'secret',
+            'time_zone' => 'America/Los_Angeles',
             'registration_type' => 'student'
         ])
         ->assertSuccessful()
-        ->assertJsonStructure(['id', 'first_name', 'last_name', 'email']);
+        ->assertJsonStructure(['id', 'first_name', 'last_name', 'email', 'time_zone']);
     }
 
     /** @test */
@@ -47,6 +48,7 @@ class RegisterTest extends TestCase
             'password' => 'secret',
             'password_confirmation' => 'secret',
             'registration_type' => 'grader',
+            'time_zone' => 'America/Los_Angeles',
             'access_code' => 'some bad code'
         ])
             ->assertJsonValidationErrors(['access_code']);
@@ -64,6 +66,7 @@ class RegisterTest extends TestCase
             'password' => 'secret',
             'password_confirmation' => 'secret',
             'registration_type' => 'grader',
+            'time_zone' => 'America/Los_Angeles',
             'access_code' => 'a_valid_code'
         ])
             ->assertJson(['role' => 4]);
@@ -79,9 +82,29 @@ class RegisterTest extends TestCase
             'email' => 'test@test.app',
             'password' => 'secret',
             'password_confirmation' => 'secret',
-            'registration_type' => 'student'
+            'registration_type' => 'student',
+            'time_zone' => 'America/Los_Angeles'
         ])
         ->assertStatus(422)
         ->assertJsonValidationErrors(['email']);
     }
+
+    /** @test */
+    public function can_not_register_with_invalid_time_zone()
+    {
+
+
+        $this->postJson('/api/register', [
+            'first_name' => 'Test',
+            'last_name' => 'User',
+            'email' => 'test@test.app',
+            'password' => 'secret',
+            'password_confirmation' => 'secret',
+            'registration_type' => 'student',
+            'time_zone' => 'some fake time zone'
+        ])
+            ->assertStatus(422)
+            ->assertJsonValidationErrors(['time_zone']);
+    }
+
 }

@@ -18,6 +18,7 @@ class UserSeeder extends Seeder
             'last_name' => 'Kean',
             'email' => 'me@me.com',
             'password' => '$2y$10$yGJn0yActFr2GKvCDnMSMu/ICqG.wfveJgjG1iM.1mjZjteAMUd/G',
+            'time_zone' => 'America/Los_Angeles',
             'role' => 2
         ]);
         $faker = Factory::create();

@@ -31,6 +31,7 @@ class Score extends Model
         $submissions = DB::table('submissions')
             ->where('assignment_id', $assignment_id)
             ->where('user_id', $student_user_id)->get();
+
         if ($submissions->isNotEmpty()) {
             foreach ($submissions as $submission) {
                 $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
@@ -79,7 +80,7 @@ class Score extends Model
                 break;
 
             case('0'):
-                $assignment_score_from_questions = $assignment_question_scores_info ?
+               $assignment_score= $assignment_question_scores_info ?
                     $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
                     : 0;
 
