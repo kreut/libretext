@@ -6,10 +6,10 @@ use App\Course;
 use App\User;
 use App\CourseAccessCode;
 use App\Enrollment;
-use App\Assignment;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use App\Traits\DateFormatter;
 
 
 use App\Exceptions\Handler;
@@ -17,6 +17,9 @@ use \Exception;
 
 class CourseController extends Controller
 {
+
+    use DateFormatter;
+
     /**
      *
      *  Get the authenticated user's courses
@@ -99,6 +102,11 @@ class CourseController extends Controller
             DB::transaction(function () use ($request, $course, $course_access_code, $enrollment) {
                 $data = $request->validated();
                 $data['user_id'] = auth()->user()->id;
+
+
+                $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
+                $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
+
                 //create the course
                 $new_course = $course->create($data);
                 //create the access code
@@ -147,8 +155,11 @@ class CourseController extends Controller
         }
 
         try {
-            $request->validated();
-            $course->update($request->except('user_id'));
+            $data = $request->validated();
+            $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
+            $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
+
+            $course->update($data);
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been updated.";
         } catch (Exception $e) {
