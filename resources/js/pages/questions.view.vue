@@ -107,7 +107,8 @@
             </b-form-group>
 
           </b-form>
-            <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage"><strong>{{ this.submissionDataMessage }}</strong></b-alert>
+          <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
+            <strong>{{ this.submissionDataMessage }}</strong></b-alert>
 
           <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
             <b-button variant="primary" class="mr-2"
@@ -194,6 +195,7 @@
                 v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
         >
         </iframe>
+
         <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
 
       </div>
@@ -282,6 +284,7 @@ export default {
     let vm = this
     if (this.user.role === 3) {
       let receiveMessage = async function (event) {
+        vm.hideResponse()
         let technology = vm.getTechnology(event.origin)
         console.log(technology)
         console.log(event.data)
@@ -297,16 +300,22 @@ export default {
           let submission_data = {
             'submission': event.data,
             'assignment_id': vm.assignmentId,
-            'question_id': vm.questions[vm.currentPage - 1].id
+            'question_id': vm.questions[vm.currentPage - 1].id,
+            'technology': technology
           }
           console.log('submitted')
           console.log(submission_data)
 
           //if incorrect, show the learning tree stuff...
-          const {data} = await axios.post('/api/submissions', submission_data)
-          console.log(data)
-          if (data.message) {
-            vm.showResponse(data)
+          try {
+            const {data} = await axios.post('/api/submissions', submission_data)
+            console.log(data)
+            if (data.message) {
+              vm.showResponse(data)
+            }
+          } catch (error) {
+            alert(`We could not save your submission:  ${error.message}.  Please try again or contact us for assistance.`)
+
           }
         }
       }
@@ -314,6 +323,9 @@ export default {
     }
   },
   methods: {
+    hideResponse() {
+      this.showSubmissionMessage = false
+    },
     showResponse(data) {
       console.log('showing response')
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'

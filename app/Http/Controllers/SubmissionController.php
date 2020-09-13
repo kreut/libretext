@@ -6,8 +6,10 @@ use App\Submission;
 use App\Score;
 use App\Assignment;
 use Illuminate\Http\Request;
+use App\Http\Requests\StoreSubmission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -21,20 +23,21 @@ class SubmissionController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(Request $request, Submission $submission, Assignment $Assignment, Score $score)
+    public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
     {
-
-        $data['user_id'] = $request->user()->id;
-        $data['assignment_id'] = $request->input('assignment_id');
-        $data['question_id'] = $request->input('question_id');
-        $data['submission'] = $request->input('submission');
-
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
 
+        $data = $request->validated();
+        $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
 
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
+
+        $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+            ->where('question_id', $data['question_id'])
+            ->select('points')
+            ->first();
 
         if (!$authorized->allowed()) {
 
@@ -46,6 +49,8 @@ class SubmissionController extends Controller
         if (env('DB_DATABASE') === 'test_libretext') {
             $data['score'] = $assignment->default_points_per_question;
         } else {
+            $submission = json_decode($data['submission']);
+            $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
 
 
         }
