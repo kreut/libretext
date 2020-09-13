@@ -224,7 +224,7 @@ export default {
     async submitInviteGrader(bvModalEvt) {
       if (this.sendingEmail) {
         this.$noty.info('Please be patient while we send the email.')
-        return faslse
+        return false
       }
       bvModalEvt.preventDefault()
       try {
