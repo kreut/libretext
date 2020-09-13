@@ -10,12 +10,16 @@ use App\Http\Requests\StoreSubmission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use App\Traits\JWT;
+
 
 use App\Exceptions\Handler;
 use \Exception;
 
 class SubmissionController extends Controller
 {
+
+    use JWT;
 
     /**
      * Store a newly created resource in storage.
@@ -50,8 +54,14 @@ class SubmissionController extends Controller
             $data['score'] = $assignment->default_points_per_question;
         } else {
             $submission = json_decode($data['submission']);
-            $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
-
+            switch ($data['technology']) {
+                case('h5p'):
+                    $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                    break;
+                case('imathas'):
+                    $payload = $this->getPayload($submission->jwt);
+                 $data['score'] = floatval($assignment_question->points) * floatval($payload->score);
+            }
 
         }
 
