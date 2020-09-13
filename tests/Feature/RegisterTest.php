@@ -104,7 +104,7 @@ class RegisterTest extends TestCase
             'time_zone' => 'some fake time zone'
         ])
             ->assertStatus(422)
-            ->assertJsonValidationErrors(['time_zone']);
+            ->assertJsonValidationErrors('time_zone');
     }
 
 }
