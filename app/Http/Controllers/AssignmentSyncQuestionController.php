@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 use App\Http\Requests\updateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
+use App\Submission;
 
 use App\Traits\IframeFormatter;
+use App\Traits\DateFormatter;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -21,6 +23,7 @@ class AssignmentSyncQuestionController extends Controller
 {
 
     use IframeFormatter;
+    use DateFormatter;
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
 
@@ -199,7 +202,7 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getQuestionsToView(Assignment $assignment)
+    public function getQuestionsToView(Assignment $assignment, Submission $Submission)
     {
 
 
@@ -223,6 +226,8 @@ class AssignmentSyncQuestionController extends Controller
                 $response['questions'] = [];
                 return $response;
             }
+
+            $last_submitteds = $Submission->getSubmissionDatesByAssignmentIdAndUser($assignment->id,  Auth::user());
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
@@ -262,6 +267,11 @@ class AssignmentSyncQuestionController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
+
+
+                $assignment->questions[$key]['last_submitted'] = isset($last_submitteds[$question->id]) ?
+                                        'The date of your last submission was ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
+                                        : 'You have not made any submissions for this question.';
                 $custom_claims["{$question->technology}"] = '';
                 if ($question->technology === 'webwork') {
                     $custom_claims['webwork'] = [];
@@ -289,7 +299,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->learning_tree = '';
                 }
             }
-
             $response['questions'] = $assignment->questions;
         } catch (Exception $e) {
             $h = new Handler(app());

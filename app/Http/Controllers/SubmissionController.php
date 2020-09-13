@@ -5,12 +5,15 @@ namespace App\Http\Controllers;
 use App\Submission;
 use App\Score;
 use App\Assignment;
+
 use Illuminate\Http\Request;
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Traits\JWT;
+use App\Traits\DateFormatter;
+
 
 
 use App\Exceptions\Handler;
@@ -20,6 +23,7 @@ class SubmissionController extends Controller
 {
 
     use JWT;
+    use DateFormatter;
 
     /**
      * Store a newly created resource in storage.
@@ -109,6 +113,7 @@ class SubmissionController extends Controller
             }
 
             $response['message'] = 'Your question submission was saved.';
+            $response['last_submitted'] = 'The date of your last submission was ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

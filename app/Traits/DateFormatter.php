@@ -42,8 +42,14 @@ trait DateFormatter
         $dt->setTimeZone(new \DateTimeZone($to_time_zone));
 
         return $dt->format('Y-m-d H:i:s');
+    }
 
+    public function convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(string $datetime, string $to_time_zone)
+    {
+        $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
+        $dt->setTimeZone(new \DateTimeZone($to_time_zone));
 
+        return $dt->format('F d, Y g:i:s a');
     }
 
     public function convertUTCMysqlFormattedDateToLocalTime(string $datetime, string $to_time_zone)

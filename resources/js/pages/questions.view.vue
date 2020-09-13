@@ -35,6 +35,9 @@
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
+        <div class="mb-3 text-center">
+          <h4>{{ questions[currentPage - 1].last_submitted }}</h4>
+        </div>
 
         <div class="overflow-auto">
           <b-pagination
@@ -197,7 +200,6 @@
         </iframe>
 
         <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
-
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
@@ -329,6 +331,9 @@ export default {
     showResponse(data) {
       console.log('showing response')
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
+      if (data.type === 'success') {
+        this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted;
+      }
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
     },

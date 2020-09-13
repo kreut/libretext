@@ -10,6 +10,23 @@ class Submission extends Model
 {
     protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score'];
 
+
+    public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
+    {
+        $last_submitted_by_user = [];
+        $submissions = DB::table('submissions')
+            ->where('assignment_id', $assignment_id)
+            ->where('user_id', $user->id)
+            ->select('updated_at', 'question_id')
+            ->get();
+
+        foreach ($submissions as $key => $value) {
+            $last_submitted_by_user[$value->question_id] = $value->updated_at;
+        }
+
+        return $last_submitted_by_user;
+    }
+
     public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignment_ids, User $user)
     {
         $submissions_count_by_assignment_id = [];
