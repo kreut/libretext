@@ -144,7 +144,8 @@
             return dateAndTime + ' ' + extension
           }
         },
-        'credit_given_if_at_least',
+        'number_submitted',
+        'score',
         'files'
       ],
       hasAssignments: false,

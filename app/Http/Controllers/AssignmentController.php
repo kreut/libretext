@@ -7,6 +7,7 @@ use App\Traits\DateFormatter;
 use App\Course;
 use App\Score;
 use App\Extension;
+use App\Submission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -29,7 +30,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return mixed
      */
-    public function index(Course $course, Extension $extension)
+    public function index(Course $course, Extension $extension, Score $Score, Submission $Submission)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -40,6 +41,8 @@ class AssignmentController extends Controller
         }
         try {
             $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
+            $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
+            $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
             $assignments = $course->assignments;
             foreach ($course->assignments as $key => $assignment) {
                 $assignments[$key]['number_of_questions'] = count($assignment->questions);
@@ -58,6 +61,12 @@ class AssignmentController extends Controller
                     //for comparing I just want the UTC version
                     $assignments[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments[$key]['past_due'] = $due < time();
+                    if (isset($scores_by_assignment[$assignment->id])) {
+                        $assignments[$key]['score'] = $scores_by_assignment[$assignment->id];
+                    } else {
+                        $assignments[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Not completed';
+                    }
+                    $assignments[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
 
                 } else {
                     $due = $assignment['due'];
@@ -68,7 +77,7 @@ class AssignmentController extends Controller
                     $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                }
+                     }
 //same regardless of whether you're a student
                 $assignments[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
 
@@ -80,6 +89,7 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error retrieving your assignments.  Please try again by refreshing the page or contact us for assistance.";
             return $response;
         }
+
         return $assignments;
     }
 

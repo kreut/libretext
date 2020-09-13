@@ -58,9 +58,9 @@ class Score extends Model
                 }
                 break;
             case('a'):
-                    $assignment_score_from_questions = $assignment_question_scores_info ?
-                        $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
-                        : 0;
+                $assignment_score_from_questions = $assignment_question_scores_info ?
+                    $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
+                    : 0;
                 //get the points from the submission
                 $submission_file = DB::table('submission_files')
                     ->where('assignment_id', $assignment_id)
@@ -80,7 +80,7 @@ class Score extends Model
                 break;
 
             case('0'):
-               $assignment_score= $assignment_question_scores_info ?
+                $assignment_score = $assignment_question_scores_info ?
                     $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
                     : 0;
 
@@ -91,6 +91,32 @@ class Score extends Model
             ->updateOrInsert(
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
                 ['score' => $assignment_score]);
+
+    }
+
+    public function getUserScoresByCourse(Course $course, User $user)
+    {
+
+        $assignment_ids = $course->assignments()->pluck('id');
+
+        $scores = DB::table('scores')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('user_id', $user->id)
+            ->get();
+
+        $scores_by_assignment = [];
+        foreach ($scores as $key => $value) {
+            $scores_by_assignment[$value->assignment_id] = $value->score;
+        }
+
+        $course_scores = [];
+        foreach ($assignment_ids as $assignment_id) {
+            if (isset($scores_by_assignment[$assignment_id])) {
+                $course_scores[$assignment_id] = $scores_by_assignment[$assignment_id];
+            }
+
+        }
+        return $course_scores;
 
     }
 
