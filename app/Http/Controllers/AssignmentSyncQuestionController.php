@@ -270,7 +270,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $assignment->questions[$key]['last_submitted'] = isset($last_submitteds[$question->id]) ?
-                                        'The date of your last submission was ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
+                                        'You last answered this question on ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
                                         : 'You have not made any submissions for this question.';
                 $custom_claims["{$question->technology}"] = '';
                 if ($question->technology === 'webwork') {

@@ -35,7 +35,7 @@
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
-        <div class="mb-3 text-center">
+        <div class="mb-3 text-center" v-if="user.role === 3">
           <h4>{{ questions[currentPage - 1].last_submitted }}</h4>
         </div>
 
@@ -66,6 +66,7 @@
               </b-button>
 
               <toggle-button
+                v-if="questionFilesAllowed"
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
                 :width="250"
                 :value="questions[currentPage-1].questionFiles"
@@ -279,7 +280,7 @@ export default {
   mounted() {
 
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentName(this.assignmentId)
+    this.getAssignmentInfo()
     this.getSelectedQuestions(this.assignmentId)
 
     h5pResizer()
@@ -336,6 +337,9 @@ export default {
       }
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
+      setTimeout(() => {
+        this.showSubmissionMessage = false;
+      }, 3000);
     },
     getTechnology(body) {
       let technology
@@ -355,7 +359,9 @@ export default {
 
         const {data} = await this.questionPointsForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-points`)
         this.$noty[data.type](data.message)
-
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].points = this.questionPointsForm.points
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -491,12 +497,14 @@ export default {
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
     },
-    async getAssignmentName(assignmentId) {
+    async getAssignmentInfo() {
       try {
-        const {data} = await axios.get(`/api/assignments/${assignmentId}`)
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
         this.title = `${data.name} Assignment Questions`
+        this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
       } catch (error) {
         this.$noty.error(error.message)
+        this.title = 'Assignment Questions'
       }
     },
     async getSelectedQuestions(assignmentId) {

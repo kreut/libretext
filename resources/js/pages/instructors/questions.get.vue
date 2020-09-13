@@ -1,4 +1,11 @@
 <template>
+  <div>
+  <div v-if="isLoading" class="text-center">
+    <h3>
+      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+      Loading...
+    </h3>
+  </div>
   <div v-if="showPage">
     <PageTitle :title="title"></PageTitle>
     <p>Use the search box you can find questions by tag.
@@ -62,7 +69,7 @@
           </b-button>
 
         <toggle-button
-          v-if="questions[currentPage-1].inAssignment"
+          v-if="questionFilesAllowed && questions[currentPage-1].inAssignment"
           @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
           :width="250"
           :value="questions[currentPage-1].questionFiles"
@@ -75,6 +82,7 @@
       </div>
       <div v-html="questions[currentPage-1].body"></div>
     </div>
+  </div>
   </div>
 </template>
 
@@ -92,6 +100,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    isLoading: false,
     iframeLoaded: false,
     perPage: 1,
     currentPage: 1,
@@ -109,21 +118,23 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
+    this.isLoading = true
     this.assignmentId = this.$route.params.assignmentId
-    this.getTitle()
+    this.getAssignmentInfo()
     this.tags = this.getTags()
     h5pResizer()
   },
   methods: {
-    async getTitle() {
+    async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
-       this.title =  `Add Questions to ${data.name}`
+       this.title =  `Add Questions to "${data.name}"`
+        this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
+
       } catch (error) {
         console.log(error.message)
        this.title = 'Add Questions'
       }
-
     },
     changePage(currentPage) {
       this.$nextTick(() => {
@@ -162,6 +173,7 @@ export default {
         } else {
           this.tags = data.tags
           this.showPage = true
+          this.isLoading = false
         }
       } catch (error) {
         this.$noty.error(error.message)
