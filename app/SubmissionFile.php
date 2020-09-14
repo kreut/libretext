@@ -87,11 +87,11 @@ class SubmissionFile extends Model
 
     }
 
-    public function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view)
+    public function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
     {
 
 
-        foreach ($assignment->questionFileSubmissions as $key => $question_file) {
+            foreach ($assignment->questionFileSubmissions as $key => $question_file) {
             $question_file->needs_grading = $question_file->date_graded ?
                 Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded)
                 : true;
@@ -105,7 +105,8 @@ class SubmissionFile extends Model
             ->get();
 
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
-            foreach ($assignment->course->enrolledUsers as $key => $user) {
+            foreach ($users as $key => $user) {
+
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
                 $question_id = $question->question_id;
@@ -121,7 +122,7 @@ class SubmissionFile extends Model
                 }
             }
         }
-        //re-key so that pagninate can handle it
+        //re-key so that paginate can handle it
         return $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
     }
 

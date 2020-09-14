@@ -50,7 +50,7 @@ class SubmissionFileController extends Controller
 
                     break;
                 case('question'):
-                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView);
+                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $assignment->course->enrolledUsers);
             }
 
             $response['type'] = 'success';

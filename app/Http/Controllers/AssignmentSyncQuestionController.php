@@ -10,6 +10,7 @@ use App\Http\Requests\updateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
 use App\Submission;
+use App\SubmissionFile;
 
 use App\Traits\IframeFormatter;
 use App\Traits\DateFormatter;
@@ -18,12 +19,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
+use App\Traits\S3;
 
 class AssignmentSyncQuestionController extends Controller
 {
 
     use IframeFormatter;
     use DateFormatter;
+    use S3;
+
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
 
@@ -58,7 +62,7 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $response['questions'] = [];
-            $response['question_files']= [];
+            $response['question_files'] = [];
             $response['question_ids'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
@@ -202,7 +206,7 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getQuestionsToView(Assignment $assignment, Submission $Submission)
+    public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
 
@@ -222,12 +226,29 @@ class AssignmentSyncQuestionController extends Controller
             $question_ids = [];
             $question_files = [];
             $points = [];
-            if (!$assignment_question_info['questions']){
+            if (!$assignment_question_info['questions']) {
                 $response['questions'] = [];
                 return $response;
             }
 
-            $last_submitteds = $Submission->getSubmissionDatesByAssignmentIdAndUser($assignment->id,  Auth::user());
+
+            $last_submitteds = $Submission->getSubmissionDatesByAssignmentIdAndUser($assignment->id, Auth::user());
+            $user_as_collection = collect([Auth::user()]);
+            $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
+            $submission_files = [];
+
+            //want to just pull out the single user which will be returned for each question
+            foreach ($submission_files_by_question_and_user as $key => $submission) {
+                $submission_files[] = $submission[0];
+
+            }
+
+            $submission_files_by_question_id = [];
+            foreach ($submission_files as $submission_file) {
+                $submission_files_by_question_id[$submission_file['question_id']] = $submission_file;
+            }
+
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
@@ -259,10 +280,37 @@ class AssignmentSyncQuestionController extends Controller
                     $other_instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
                 }
             }
-
+//only get the first temporary urls...you'll get the rest onChange page in Vue
+            //this way we don't have to make tons of calls to S3 on initial page load
+            $got_first_temporary_url = false;
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
-                $assignment->questions[$key]['questionFiles'] = $question_files[$question->id];//camel case because using in vue
+
+                $has_question_files = $question_files[$question->id];
+                $assignment->questions[$key]['questionFiles'] = $has_question_files ;//camel case because using in vue
+                if ($has_question_files) {
+                    $submission_file = $submission_files_by_question_id[$question->id] ?? false;
+                    $assignment->questions[$key]['submission'] = $submission_file['submission'];
+                    $assignment->questions[$key]['submission_file_exists'] = $assignment->questions[$key]['submission'];
+                    $assignment->questions[$key]['original_filename'] = $submission_file['original_filename'] ?? null;
+                    $assignment->questions[$key]['date_submitted'] = isset($submission_file['date_submitted'])
+                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_submitted'], Auth::user()->time_zone)
+                        : 'N/A';
+                    $assignment->questions[$key]['date_graded'] = ($submission_file['date_graded'] !== 'Not yet graded')
+                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_graded'], Auth::user()->time_zone)
+                        : 'N/A';
+                    $assignment->questions[$key]['file_feedback_exists'] = isset($submission_file['file_feedback']);
+                    $assignment->questions[$key]['file_feedback'] = $submission_file['file_feedback'] ?? null;
+                    $assignment->questions[$key]['text_feedback'] = $submission_file['text_feedback'] ?? 'N/A';
+                    $assignment->questions[$key]['submission_file_score'] = $submission_file['score'] ?? 'N/A';
+                    if (!$got_first_temporary_url && $submission_file) {
+                        $assignment->questions[$key]['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $submission_file['submission']);
+                        if ($submission_file['file_feedback']) {
+                            $assignment->questions[$key]['file_feedback_url'] = $this->getTemporaryUrl($assignment->id, $submission_file['file_feedback']);
+                        }
+                        $got_first_temporary_url = true;
+                    }
+                }
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
@@ -270,8 +318,8 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $assignment->questions[$key]['last_submitted'] = isset($last_submitteds[$question->id]) ?
-                                        'You last answered this question on ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
-                                        : 'You have not made any submissions for this question.';
+                    'You last answered this question on ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
+                    : 'You have not submitted any responses to this question.';
                 $custom_claims["{$question->technology}"] = '';
                 if ($question->technology === 'webwork') {
                     $custom_claims['webwork'] = [];
@@ -285,11 +333,11 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
                     $custom_claims['webwork']['sourceFilePath'] = 'TODO';
                     $custom_claims['webwork']['answerSubmitted'] = '0';
-                    $custom_claims['webwork']['problemUUID'] = rand(1,100000);
+                    $custom_claims['webwork']['problemUUID'] = rand(1, 100000);
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
-                $assignment->questions[$key]->iframe_id =  $this->createIframeId();
-                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id ,$problemJWT);
+                $assignment->questions[$key]->iframe_id = $this->createIframeId();
+                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
 
                 if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
@@ -300,6 +348,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
             $response['questions'] = $assignment->questions;
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

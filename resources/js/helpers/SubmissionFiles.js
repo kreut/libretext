@@ -12,7 +12,7 @@ export async function downloadSubmission(assignment_id, submission, original_fil
         'submission': submission
       }
     })
-    noty.success("The assignment file is being downloaded")
+    noty.success("The file is being downloaded")
     let blob = new Blob([data], {type: 'application/pdf'})
     let link = document.createElement('a')
     link.href = window.URL.createObjectURL(blob)

@@ -115,11 +115,40 @@
             <strong>{{ this.submissionDataMessage }}</strong></b-alert>
 
           <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-            <b-button variant="primary" class="mr-2"
-                      v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
-                      v-b-modal.modal-upload-question-file>Upload File
-            </b-button>
-            <b-button variant="secondary">View Comments</b-button>
+            <div class="col-6">
+              <b-card title="File Submission Information">
+                <b-card-text>
+
+                  Uploaded file:
+                  <span v-if="questions[currentPage-1].submission_file_exists">
+                  <a href=""
+                     v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
+                    {{ questions[currentPage-1].original_filename }}
+                  </a>
+                  <span v-if="!questions[currentPage-1].submission_file_exists"
+                        No files have been uploaded
+                  </span><br>
+                  Date Submitted: {{ questions[currentPage-1].date_submitted }}<br>
+                  Date Graded: {{ questions[currentPage - 1].date_graded }}<br>
+                  File Feedback: <span v-if="!questions[currentPage-1].file_feedback">
+                                      N/A
+                  </span>
+                  <span v-if="questions[currentPage-1].file_feedback">
+                     <a href=""
+                        v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback, $noty)">
+                    file_feedback
+                  </a>
+                  </span>
+                  <br>
+                  Comments: {{ questions[currentPage - 1].text_feedback }}<br>
+                  File Score: {{ questions[currentPage - 1].submission_file_score }}<br>
+                  <b-button variant="primary" class="float-right mr-2"
+                            v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
+                            v-b-modal.modal-upload-question-file>Upload New File
+                  </b-button>
+                </b-card-text>
+              </b-card>
+            </div>
 
           </div>
         </div>
@@ -231,6 +260,7 @@ import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
+import {downloadSubmission} from '~/helpers/SubmissionFiles'
 
 export default {
   middleware: 'auth',
@@ -276,6 +306,7 @@ export default {
 
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
+    this.downloadSubmission = downloadSubmission
   },
   mounted() {
 
