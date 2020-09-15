@@ -20,6 +20,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 
 use App\Traits\S3;
+use App\Traits\SubmissionFiles;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -27,6 +28,7 @@ class AssignmentSyncQuestionController extends Controller
     use IframeFormatter;
     use DateFormatter;
     use S3;
+    use SubmissionFiles;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
@@ -232,7 +234,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
 
-            $last_submitteds = $Submission->getSubmissionDatesByAssignmentIdAndUser($assignment->id, Auth::user());
+
             $user_as_collection = collect([Auth::user()]);
             $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
             $submission_files = [];
@@ -287,27 +289,25 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
                 $has_question_files = $question_files[$question->id];
-                $assignment->questions[$key]['questionFiles'] = $has_question_files ;//camel case because using in vue
+                $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
                 if ($has_question_files) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
-                    $assignment->questions[$key]['submission_file_exists'] = $assignment->questions[$key]['submission'];
-                    $assignment->questions[$key]['original_filename'] = $submission_file['original_filename'] ?? null;
-                    $assignment->questions[$key]['date_submitted'] = isset($submission_file['date_submitted'])
-                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_submitted'], Auth::user()->time_zone)
-                        : 'N/A';
-                    $assignment->questions[$key]['date_graded'] = ($submission_file['date_graded'] !== 'Not yet graded')
-                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_graded'], Auth::user()->time_zone)
-                        : 'N/A';
-                    $assignment->questions[$key]['file_feedback_exists'] = isset($submission_file['file_feedback']);
-                    $assignment->questions[$key]['file_feedback'] = $submission_file['file_feedback'] ?? null;
-                    $assignment->questions[$key]['text_feedback'] = $submission_file['text_feedback'] ?? 'N/A';
-                    $assignment->questions[$key]['submission_file_score'] = $submission_file['score'] ?? 'N/A';
-                    if (!$got_first_temporary_url && $submission_file) {
-                        $assignment->questions[$key]['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $submission_file['submission']);
-                        if ($submission_file['file_feedback']) {
-                            $assignment->questions[$key]['file_feedback_url'] = $this->getTemporaryUrl($assignment->id, $submission_file['file_feedback']);
-                        }
+                    $assignment->questions[$key]['submission_file_exists'] = (boolean) $assignment->questions[$key]['submission'];
+
+
+                    $formatted_submission_file_info = $this->getFormattedSubmissionFileInfo($submission_file, $assignment->id, $this);
+
+                    $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
+                    $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
+                    $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
+                    $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
+                    $assignment->questions[$key]['file_feedback'] = $formatted_submission_file_info['file_feedback'];
+                    $assignment->questions[$key]['text_feedback'] = $formatted_submission_file_info['text_feedback'];
+                    $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
+                    if (!$got_first_temporary_url) {
+                        $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'];
+                        $assignment->questions[$key]['file_feedback_url'] = $formatted_submission_file_info['file_feedback_url'];
                         $got_first_temporary_url = true;
                     }
                 }
@@ -317,9 +317,6 @@ class AssignmentSyncQuestionController extends Controller
                     'technology' => $question->technology]];
 
 
-                $assignment->questions[$key]['last_submitted'] = isset($last_submitteds[$question->id]) ?
-                    'You last answered this question on ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitteds[$question->id], Auth::user()->time_zone)
-                    : 'You have not submitted any responses to this question.';
                 $custom_claims["{$question->technology}"] = '';
                 if ($question->technology === 'webwork') {
                     $custom_claims['webwork'] = [];

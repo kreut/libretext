@@ -114,7 +114,7 @@ class SubmissionFile extends Model
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
-                $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? "Not yet graded";
+                $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
                 $score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
                 if ($this->inGradeView($all_info, $grade_view)) {

@@ -119,14 +119,14 @@
             <div class="col-6">
               <b-card title="File Submission Information">
                 <b-card-text>
-
                   Uploaded file:
                   <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
                      v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
                     {{ questions[currentPage-1].original_filename }}
                   </a>
-                  <span v-if="!questions[currentPage-1].submission_file_exists"
+                  </span>
+                  <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                   </span><br>
                   Date Submitted: {{ questions[currentPage-1].date_submitted }}<br>
@@ -455,7 +455,6 @@ export default {
       }
     },
     async changePage(currentPage) {
-
       this.showQuestion = true
       this.showSubmissionMessage = false
       this.$nextTick(() => {

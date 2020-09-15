@@ -2,19 +2,17 @@
 
 namespace App\Http\Controllers;
 
-use App\User;
+
 use App\AssignmentFile;
 use App\SubmissionFile;
 use App\Assignment;
-use App\Extension;
-use App\Http\Requests\StoreTextFeedback;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\DB;
-use Carbon\Carbon;
-use Illuminate\Support\Facades\Validator;
+
+use App\Traits\DateFormatter;
+use App\Traits\SubmissionFiles;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -23,7 +21,8 @@ use \Exception;
 class AssignmentFileController extends Controller
 {
 
-    //getSubmissionFileController?
+    use DateFormatter;
+    use SubmissionFiles;
     public function getAssignmentFileInfoByStudent(Request $request, Assignment $assignment, SubmissionFile $submissionFile, AssignmentFile $assignmentFile)
     {
 
@@ -50,7 +49,10 @@ class AssignmentFileController extends Controller
                 return $response;
             }
 
+            $response['assignment_file_info']  = $this->getFormattedSubmissionFileInfo($submissionFile, $assignment->id, $this);
 
+
+            /*
             $submission = $submissionFile->submission ?? null;
             $file_feedback = $submissionFile->file_feedback ?? null;
             $text_feedback = $submissionFile->text_feedback ?? 'None';
@@ -68,7 +70,7 @@ class AssignmentFileController extends Controller
                 'date_graded' => $date_graded,
                 'score' => $score,
                 'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
-                'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
+                'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];*/
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -49,7 +49,7 @@
               {{this.assignmentFileInfo.original_filename}}
             </b-button>
             <br>
-            Score: {{this.assignmentFileInfo.score}}<br>
+            Score: {{this.assignmentFileInfo.submission_file_score}}<br>
             Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
             Date graded: {{this.assignmentFileInfo.date_graded}}<br>
             Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
@@ -178,7 +178,7 @@
             this.$noty.info("You can't have any feedback if you haven't submitted a file!")
             return false
           }
-          this.assignmentFileInfo = data.assignment_file_info
+         console.log(this.assignmentFileInfo)
 
           this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback');
           if (data.type === 'error') {
