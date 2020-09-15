@@ -13,12 +13,13 @@
     >
 
       <b-form ref="form">
+        <p>Accepted file types are: {{getAcceptedFileTypes() }}.</p>
         <b-form-file
           ref="questionFileInput"
           v-model="uploadForm.questionFile"
-          placeholder="Choose a .pdf file or drop it here..."
+          placeholder="Choose a file or drop it here..."
           drop-placeholder="Drop file here..."
-          accept=".pdf,.txt,.png,.jpeg,.jpg"
+          :accept="getAcceptedFileTypes()"
         ></b-form-file>
         <div v-if="uploading">
           <b-spinner small type="grow"></b-spinner>
@@ -259,6 +260,7 @@ import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
+import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
 import {downloadSubmission} from '~/helpers/SubmissionFiles'
 
@@ -306,6 +308,7 @@ export default {
 
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
+    this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSubmission = downloadSubmission
   },
   mounted() {

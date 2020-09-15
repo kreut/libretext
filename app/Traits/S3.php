@@ -12,7 +12,7 @@ trait S3
     }
 
     public function fileValidator() {
-        return ['required', 'mimes:pdf,txt,png,jpeg,jpg', 'max:500000'];
+        return ['required', 'mimes:pdf,txt,png,jpeg,jpg', 'max:500000'];//update in UploadFiles.js
     }
 
 }
