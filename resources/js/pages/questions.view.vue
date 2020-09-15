@@ -18,7 +18,7 @@
           v-model="uploadForm.questionFile"
           placeholder="Choose a .pdf file or drop it here..."
           drop-placeholder="Drop file here..."
-          accept=".pdf"
+          accept=".pdf,.txt,.png,.jpeg,.jpg"
         ></b-form-file>
         <div v-if="uploading">
           <b-spinner small type="grow"></b-spinner>
@@ -417,8 +417,9 @@ export default {
         return false
       }
       this.uploading = true
-      await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+       await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1])
       this.uploading = false
+      console.log(this.questions[this.currentPage - 1])
     },
     viewOriginalQuestion() {
       this.showQuestion = true

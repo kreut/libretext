@@ -7,9 +7,10 @@ use App\User;
 use App\AssignmentFile;
 use App\SubmissionFile;
 use App\Assignment;
-use App\Submission;
+
 use App\Extension;
 use App\Traits\S3;
+use App\Traits\DateFormatter;
 use App\Http\Requests\StoreTextFeedback;
 use App\Http\Requests\StoreScore;
 use Illuminate\Http\Request;
@@ -17,7 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Validation\Rule;
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 
@@ -29,6 +30,7 @@ class SubmissionFileController extends Controller
 {
 
     use S3;
+    use DateFormatter;
 
     public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile)
     {
@@ -263,7 +265,7 @@ class SubmissionFileController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                "{$type}File" => ['required', 'mimes:pdf', 'max:500000']
+                "{$type}File" => $this->fileValidator()
             ]);
 
             if ($validator->fails()) {
@@ -277,9 +279,10 @@ class SubmissionFileController extends Controller
             $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put($submission, $submissionContents);
+            $original_filename = $request->file("{$type}File")->getClientOriginalName();
             $submission_file_data =   ['type' => $type[0],
                 'submission' => basename($submission),
-                'original_filename' => $request->file("{$type}File")->getClientOriginalName(),
+                'original_filename' => $original_filename,
                 'file_feedback' => null,
                 'text_feedback' => null,
                 'date_graded' => null,
@@ -307,6 +310,8 @@ class SubmissionFileController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = 'Your file submission has been saved.';
+            $response['original_filename'] = $original_filename;
+            $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -344,7 +349,7 @@ class SubmissionFileController extends Controller
                 return $response;
             }
             $validator = Validator::make($request->all(), [
-                'fileFeedback' => ['required', 'mimes:pdf', 'max:500000']
+                'fileFeedback' => $this->fileValidator()
             ]);
 
             if ($validator->fails()) {

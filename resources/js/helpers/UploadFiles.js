@@ -1,6 +1,6 @@
 import axios from 'axios'
 
-export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal) {
+export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal, uploadFile) {
   let typeFile = type + 'File'
 
   try {
@@ -22,6 +22,14 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
       nextTick(() => {
         bvModal.hide(`modal-upload-${type}-file`)
       })
+
+      console.log(uploadFile)
+      uploadFile.date_submitted = data.date_submitted
+      uploadFile.original_filename = data.original_filename
+      uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
+      uploadFile.file_feedback = null
+      uploadFile.submission_file_exists = true
+
     }
   } catch (error) {
     if (error.message.includes('status code 413')) {

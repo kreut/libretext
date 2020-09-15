@@ -6,7 +6,6 @@ use App\Submission;
 use App\Score;
 use App\Assignment;
 
-use Illuminate\Http\Request;
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
