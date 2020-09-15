@@ -26,13 +26,15 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
         bvModal.hide(`modal-upload-${type}-file`)
       })
 
-      console.log(uploadFile)
-      uploadFile.date_submitted = data.date_submitted
-      uploadFile.original_filename = data.original_filename
-      uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
-      uploadFile.file_feedback = null
-      uploadFile.submission_file_exists = true
-
+     if (type === 'question') {
+       //immediate feedback for them to see.
+       //for assignments, they'll have to click on something else to get the information
+       uploadFile.date_submitted = data.date_submitted
+       uploadFile.original_filename = data.original_filename
+       uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
+       uploadFile.file_feedback = null
+       uploadFile.submission_file_exists = true
+     }
     }
   } catch (error) {
     if (error.message.includes('status code 413')) {

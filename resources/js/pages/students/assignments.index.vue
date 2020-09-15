@@ -11,12 +11,13 @@
 
     >
       <b-form ref="form">
+        <p>Accepted file types are: {{getAcceptedFileTypes() }}.</p>
         <b-form-file
           ref="assignmentFileInput"
           v-model="form.assignmentFile"
-          placeholder="Choose a .pdf file or drop it here..."
+          placeholder="Choose a file or drop it here..."
           drop-placeholder="Drop file here..."
-          accept=".pdf"
+          :accept="getAcceptedFileTypes()"
         ></b-form-file>
         <div v-if="uploading">
           <b-spinner small type="grow"></b-spinner>
@@ -106,6 +107,7 @@
   import Form from "vform"
   import {downloadSubmission} from '~/helpers/SubmissionFiles'
   import {submitUploadFile} from '~/helpers/UploadFiles'
+  import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 
   const now = new Date()
 
@@ -155,6 +157,7 @@
     created() {
       this.downloadSubmission = downloadSubmission
       this.submitUploadFile = submitUploadFile
+      this.getAcceptedFileTypes = getAcceptedFileTypes
     },
     mounted() {
       this.courseId = this.$route.params.courseId
