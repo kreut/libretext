@@ -110,11 +110,11 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
 
         $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'assignmentFile' => 'sdflkj.jpeg',
+            'assignmentFile' => 'sdflkj.ziggy',
             'assignmentId' => $this->assignment->id,
             'type' => 'assignment'
         ])
-            ->assertJson(['type' => 'error', 'message' => 'The assignment file must be a file of type: pdf.']);
+            ->assertJson(['type' => 'error', 'message' => 'The assignment file must be a file of type: pdf, txt, png, jpeg, jpg.']);
 
 
     }
