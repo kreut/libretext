@@ -103,7 +103,7 @@
           label-for="Scoring Type"
         >
 
-          <b-form-radio-group v-model="form.scoring_type"  stacked>
+          <b-form-radio-group v-model="form.scoring_type" stacked>
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
@@ -163,7 +163,8 @@
       ok-title="Yes, release solutions!"
 
     >
-      <p>By releasing the solutions, students will be able to see the solutions to all of the questions in the assignment.</p>
+      <p>By releasing the solutions, students will be able to see the solutions to all of the questions in the
+        assignment.</p>
       <p><strong>Once the solutions become available, they cannot be hidden again!</strong></p>
     </b-modal>
     <b-modal
@@ -187,8 +188,9 @@
             <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
- <span class="pr-1" v-on:click="releaseSolutions(data.item.id)"> <b-icon
-   icon="envelope-open"></b-icon></span>
+            <span class="pr-1" v-on:click="releaseSolutions(data.item)">
+              <b-icon :variant="solutionsReleasedColor(data.item)" icon="envelope-open"></b-icon>
+            </span>
 
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
@@ -209,247 +211,255 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import Form from "vform"
-  import {mapGetters} from "vuex"
+import axios from 'axios'
+import Form from "vform"
+import {mapGetters} from "vuex"
 
 
-  const now = new Date()
+const now = new Date()
 
-  let formatDateAndTime = value => {
-    let date = new Date(value)
-    return (1+date.getMonth()) + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
-  }
+let formatDateAndTime = value => {
+  let date = new Date(value)
+  return (1 + date.getMonth()) + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+}
 
 
-  export default {
-    middleware: 'auth',
-    computed: mapGetters({
-      user: 'auth/user'
-    }),
-    data: () => ({
-      assignmentId: false, //if there's a assignmentId it's an update
-      assignments: [],
-      completedOrCorrectOptions: [
-        {item: 'correct', name: 'correct'},
-        {item: 'completed', name: 'completed'}
-      ],
-      courseId: false,
-      fields: [
-        'name',
-        {
-          key: 'available_from',
-          formatter: value => {
-            return formatDateAndTime(value)
-          }
-        },
-        {
-          key: 'due',
-          formatter: value => {
-            return formatDateAndTime(value)
-          }
-        },
-        {
-          key: 'scoring_type',
-          formatter: value => {
-            let scoring_type = (value === 'c') ? 'Completed/Incompleted' : 'Points'
-            return scoring_type
-          }
-
-        },
-        {
-          key: 'number_of_questions',
-          tdClass: 'td-center'
-        },
-        'actions'
-      ],
-      form: new Form({
-        name: '',
-        available_from_date: '',
-        available_from_time: '09:00:00',
-        due_date: '',
-        due_time: '09:00:00',
-        submission_files: '0',
-        type_of_submission: 'correct',
-        scoring_type: 'c',
-        num_submissions_needed: '2',
-        default_points_per_question: ''
-      }),
-      hasAssignments: false,
-      min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-      canViewAssignments: false,
-      showNoAssignmentsAlert: false,
-    }),
-    mounted() {
-      this.courseId = this.$route.params.courseId
-      this.getAssignments();
-
-    },
-    methods: {
-      releaseSolutions(assignmentId) {
-        this.$bvModal.show('modal-release-solutions')
-        this.assignmentId = assignmentId
-      },
-      async handleReleaseSolutions(bvModalEvt){
-        bvModalEvt.preventDefault()
-        try {
-          const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-release-solutions')
-        } catch (error) {
-          this.$noty.error(error.message)
+export default {
+  middleware: 'auth',
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  data: () => ({
+    assignmentId: false, //if there's a assignmentId it's an update
+    assignments: [],
+    completedOrCorrectOptions: [
+      {item: 'correct', name: 'correct'},
+      {item: 'completed', name: 'completed'}
+    ],
+    courseId: false,
+    fields: [
+      'name',
+      {
+        key: 'available_from',
+        formatter: value => {
+          return formatDateAndTime(value)
         }
       },
-      resetSubmissionFilesAndPointsPerQuestion(){
-        console.log('click')
-        this.form.default_points_per_question = ''
-        this.form.submission_files = 0
+      {
+        key: 'due',
+        formatter: value => {
+          return formatDateAndTime(value)
+        }
       },
-      editAssignment(assignment) {
-console.log(assignment)
-        this.assignmentId = assignment.id
-        this.form.name = assignment.name
-        this.form.available_from_date = assignment.available_from_date
-        this.form.available_from_time = assignment.available_from_time
-        this.form.due_date = assignment.due_date
-        this.form.due_time = assignment.due_time
-        this.form.type_of_submission = assignment.type_of_submission
-        this.form.submission_files = assignment.submission_files
-        this.form.num_submissions_needed = assignment.num_submissions_needed
-        this.form.default_points_per_question = assignment.default_points_per_question
-        this.form.scoring_type = assignment.scoring_type
-        this.$bvModal.show('modal-assignment-details')
+      {
+        key: 'scoring_type',
+        formatter: value => {
+          return (value === 'c') ? 'Completed/Incompleted' : 'Points'
+
+        }
+
+      },
+      {
+        key: 'number_of_questions',
+        tdClass: 'td-center'
+      },
+      'actions'
+    ],
+    form: new Form({
+      name: '',
+      available_from_date: '',
+      available_from_time: '09:00:00',
+      due_date: '',
+      due_time: '09:00:00',
+      submission_files: '0',
+      type_of_submission: 'correct',
+      scoring_type: 'c',
+      num_submissions_needed: '2',
+      default_points_per_question: ''
+    }),
+    hasAssignments: false,
+    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    canViewAssignments: false,
+    showNoAssignmentsAlert: false,
+  }),
+  mounted() {
+    this.courseId = this.$route.params.courseId
+    this.getAssignments();
+
+  },
+  methods: {
+    solutionsReleasedColor(assignment){
+      return (assignment.solutions_released===1) ? 'success' : 'secondary'
+    },
+    releaseSolutions(assignment) {
+      console.log(assignment)
+      if (assignment.solutions_released){
+        this.$noty.info('The solutions to this assignment are already available to your students.')
+        return false
       }
-      ,
-      getQuestions(assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/get`)
+      this.$bvModal.show('modal-release-solutions')
+      this.assignmentId = assignment.id
+    },
+    async handleReleaseSolutions(bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-release-solutions')
+      } catch (error) {
+        this.$noty.error(error.message)
       }
-      ,
-      getStudentView(assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    },
+    resetSubmissionFilesAndPointsPerQuestion() {
+      console.log('click')
+      this.form.default_points_per_question = ''
+      this.form.submission_files = 0
+    },
+    editAssignment(assignment) {
+      console.log(assignment)
+      this.assignmentId = assignment.id
+      this.form.name = assignment.name
+      this.form.available_from_date = assignment.available_from_date
+      this.form.available_from_time = assignment.available_from_time
+      this.form.due_date = assignment.due_date
+      this.form.due_time = assignment.due_time
+      this.form.type_of_submission = assignment.type_of_submission
+      this.form.submission_files = assignment.submission_files
+      this.form.num_submissions_needed = assignment.num_submissions_needed
+      this.form.default_points_per_question = assignment.default_points_per_question
+      this.form.scoring_type = assignment.scoring_type
+      this.$bvModal.show('modal-assignment-details')
+    }
+    ,
+    getQuestions(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/get`)
+    }
+    ,
+    getStudentView(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    }
+    ,
+    getSubmissionFileView(assignmentId, submissionFiles) {
+      if (submissionFiles === 0) {
+        this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
+        return false
       }
-      ,
-      getSubmissionFileView(assignmentId, submissionFiles) {
-        if (submissionFiles === 0) {
-          this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
+      let type
+      switch (submissionFiles) {
+        case('q'):
+          type = 'question'
+          break
+        case('a'):
+          type = 'assignment'
+          break
+      }
+
+      this.$router.push(`/assignments/${assignmentId}/${type}-files`)
+    }
+    ,
+    async getAssignments() {
+      try {
+        const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
           return false
         }
-        let type
-        switch (submissionFiles) {
-          case('q'):
-            type = 'question'
-            break
-          case('a'):
-            type = 'assignment'
-            break
-        }
+        this.canViewAssignments = true
+        this.hasAssignments = data.length > 0
+        this.showNoAssignmentsAlert = !this.hasAssignments
+        this.assignments = data
 
-        this.$router.push(`/assignments/${assignmentId}/${type}-files`)
-      }
-      ,
-      async getAssignments() {
-        try {
-          const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
-          console.log(data)
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            return false
-          }
-          this.canViewAssignments = true
-          this.hasAssignments = data.length > 0
-          this.showNoAssignmentsAlert = !this.hasAssignments
-          this.assignments = data
-
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      }
-      ,
-      async handleDeleteAssignment() {
-        try {
-          const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-delete-assignment')
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-      }
-      ,
-      submitAssignmentInfo(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-        !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-      }
-      ,
-      deleteAssignment(assignmentId) {
-        this.assignmentId = assignmentId
-        this.$bvModal.show('modal-delete-assignment')
-      }
-      ,
-      async updateAssignment() {
-
-        try {
-
-          const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-
-          console.log(data)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-assignment-details')
-
-        } catch (error) {
-          if (!error.message.includes('status code 422')) {
-            this.$noty.error(error.message)
-          }
-        }
-      }
-      ,
-      async createAssignment() {
-        try {
-          this.form.course_id = this.courseId
-          const {data} = await this.form.post(`/api/assignments`)
-
-          console.log(data)
-          this.$noty[data.type](data.message)
-          this.resetAll('modal-assignment-details')
-
-        } catch (error) {
-          if (!error.message.includes('status code 422')) {
-            this.$noty.error(error.message)
-          }
-        }
-      }
-      ,
-      resetAll(modalId) {
-        this.getAssignments()
-        this.resetModalForms()
-        // Hide the modal manually
-        this.$nextTick(() => {
-          this.$bvModal.hide(modalId)
-        })
-      }
-      ,
-      resetModalForms() {
-        this.form.name = ''
-        this.form.available_from_date = ''
-        this.form.available_from_time = '09:00:00'
-        this.form.due_date = ''
-        this.form.due_time = '09:00:00'
-        this.form.type_of_submission = 'correct'
-        this.form.num_submissions_needed = '2'
-        this.form.submission_files = '0'
-        this.form.default_points_per_question = ''
-        this.form.scoring_type = 'c'
-
-        this.assignmentId = false
-        this.form.errors.clear()
-      }
-      ,
-      metaInfo() {
-        return {title: this.$t('home')}
+      } catch (error) {
+        this.$noty.error(error.message)
       }
     }
+    ,
+    async handleDeleteAssignment() {
+      try {
+        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-delete-assignment')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
+    ,
+    submitAssignmentInfo(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      !this.assignmentId ? this.createAssignment() : this.updateAssignment()
+    }
+    ,
+    deleteAssignment(assignmentId) {
+      this.assignmentId = assignmentId
+      this.$bvModal.show('modal-delete-assignment')
+    }
+    ,
+    async updateAssignment() {
+
+      try {
+
+        const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
+
+        console.log(data)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-assignment-details')
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    }
+    ,
+    async createAssignment() {
+      try {
+        this.form.course_id = this.courseId
+        const {data} = await this.form.post(`/api/assignments`)
+
+        console.log(data)
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-assignment-details')
+
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    }
+    ,
+    resetAll(modalId) {
+      this.getAssignments()
+      this.resetModalForms()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    }
+    ,
+    resetModalForms() {
+      this.form.name = ''
+      this.form.available_from_date = ''
+      this.form.available_from_time = '09:00:00'
+      this.form.due_date = ''
+      this.form.due_time = '09:00:00'
+      this.form.type_of_submission = 'correct'
+      this.form.num_submissions_needed = '2'
+      this.form.submission_files = '0'
+      this.form.default_points_per_question = ''
+      this.form.scoring_type = 'c'
+
+      this.assignmentId = false
+      this.form.errors.clear()
+    }
+    ,
+    metaInfo() {
+      return {title: this.$t('home')}
+    }
   }
+}
 </script>
 <style>
 .td-center {

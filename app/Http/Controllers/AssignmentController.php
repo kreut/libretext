@@ -34,7 +34,7 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment->update(['solutions_shown'=> 1]);
+            $assignment->update(['solutions_released'=> 1]);
             $response['type'] = 'success';
             $response['message'] = "Your students can now view the solutions to <strong>{$assignment->name}</strong>.";
         } catch (Exception $e) {

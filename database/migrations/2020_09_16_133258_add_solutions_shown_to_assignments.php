@@ -14,7 +14,7 @@ class AddSolutionsShownToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->boolean('solutions_shown')->default(0)->after('submission_files');
+            $table->boolean('solutions_released')->default(0)->after('submission_files');
         });
     }
 
@@ -26,7 +26,7 @@ class AddSolutionsShownToAssignments extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->dropColumn('solutions_shown');
+            $table->dropColumn('solutions_released');
         });
     }
 }
