@@ -25,6 +25,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+    Route::patch('/course-access-codes', 'CourseAccessCodeController@update');
 
     Route::get('/courses', 'CourseController@index');
     Route::post('/courses', 'CourseController@store');

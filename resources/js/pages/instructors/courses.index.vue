@@ -120,6 +120,18 @@
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
     </b-modal>
+    <b-modal
+      id="modal-update-course-access-code"
+      ref="modal"
+      title="Confirm Refresh Access Code"
+      @ok="handleUpdateAccessCode"
+      @hidden="resetModalForms"
+      ok-title="Yes, refresh the access code!"
+
+    >
+      <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
+    </b-modal>
+
     <div v-if="hasCourses">
       <b-table striped hover :fields="fields" :items="courses">
         <template v-slot:cell(actions)="data">
@@ -130,7 +142,9 @@
             <span v-if="user.role === 2">
               <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
               <span class="pr-1" v-on:click="inviteGrader(data.item.id)"><b-icon icon="people"></b-icon></span>
-              <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+              <span class="pr-1" v-on:click="updateAccessCode(data.item)"> <b-icon
+                icon="arrow-repeat"></b-icon></span>
+                <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
             </span>
           </div>
         </template>
@@ -186,6 +200,7 @@ export default {
     ],
     sendingEmail: false,
     courses: [],
+    course: null,
     hasCourses: false,
     courseId: false, //if there's a courseId if it's an update
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
@@ -204,12 +219,32 @@ export default {
     this.getCourses();
   },
   methods: {
+    async handleUpdateAccessCode(bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const {data} = await axios.patch('/api/course-access-codes', {course_id: this.courseId})
+        if (data.type === 'error'){
+          this.$noty.error('We were not able to update your access code.')
+          return false
+        }
+        this.$noty.success(data.message)
+        this.course.access_code = data.access_code
+        this.$nextTick(() => {
+          this.$bvModal.hide('modal-update-course-access-code')
+        })
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+
+
+
+    },
     async inviteGrader(courseId) {
       this.courseId = courseId
       try {
         const {data} = await this.axios.get(`/api/graders/${this.courseId}`)
-        console.log(data)
-        return false;
+
         if (data.type === 'error'){
           this.$noty.error('We were not able to retrieve your graders.')
           return false
@@ -269,6 +304,11 @@ export default {
       this.form.start_date = course.start_date
       this.form.end_date = course.end_date
       this.$bvModal.show('modal-course-details')
+    },
+    updateAccessCode(course) {
+      this.courseId = course.id
+      this.course = course
+      this.$bvModal.show('modal-update-course-access-code')
     }
     ,
     resetModalForms() {

@@ -28,7 +28,15 @@ class CoursesIndexTest extends TestCase
         Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course_2->id]);
 
     }
+/** @test */
+    public function owner_can_refresh_course_access_code(){
 
+    }
+
+    /** @test */
+    public function non_owner_cannot_refresh_course_access_code(){
+
+    }
     /** @test */
     public function user_cannot_email_grader_invitation_without_a_valid_email()
     {
