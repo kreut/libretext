@@ -35,6 +35,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignments/courses/{course}/', 'AssignmentController@index');
     Route::get('/assignments/{assignment}', 'AssignmentController@show');
     Route::post('/assignments', 'AssignmentController@store');
+    Route::patch('/assignments/{assignment}/release-solutions', 'AssignmentController@releaseSolutions');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 

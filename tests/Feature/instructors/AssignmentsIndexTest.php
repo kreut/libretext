@@ -50,6 +50,19 @@ class AssignmentsIndexTest extends TestCase
     }
 
     /** @test */
+
+    public function owener_can_update_solutions_shown(){
+
+    }
+
+    /** @test */
+
+    public function cannot_update_solutions_shown_if_not_owner(){
+
+    }
+
+
+    /** @test */
     public function must_submit_a_valid_scoring_type() {
         $this->markTestIncomplete(
             'check if c or p'

@@ -23,6 +23,27 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
+    public function releaseSolutions(Request $request, Assignment $assignment){
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['solutions_shown'=> 1]);
+            $response['type'] = 'success';
+            $response['message'] = "Your students can now view the solutions to <strong>{$assignment->name}</strong>.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
     /**
      *
      * Display all assignments for the course

@@ -154,7 +154,18 @@
         </b-form-group>
       </b-form>
     </b-modal>
+    <b-modal
+      id="modal-release-solutions"
+      ref="modal"
+      title="Confirm Release Solutions"
+      @ok="handleReleaseSolutions"
+      @hidden="resetModalForms"
+      ok-title="Yes, release solutions!"
 
+    >
+      <p>By releasing the solutions, students will be able to see the solutions to all of the questions in the assignment.</p>
+      <p><strong>Once the solutions become available, they cannot be hidden again!</strong></p>
+    </b-modal>
     <b-modal
       id="modal-delete-assignment"
       ref="modal"
@@ -176,6 +187,9 @@
             <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
+ <span class="pr-1" v-on:click="releaseSolutions(data.item.id)"> <b-icon
+   icon="envelope-open"></b-icon></span>
+
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
               </span>
@@ -272,6 +286,20 @@
 
     },
     methods: {
+      releaseSolutions(assignmentId) {
+        this.$bvModal.show('modal-release-solutions')
+        this.assignmentId = assignmentId
+      },
+      async handleReleaseSolutions(bvModalEvt){
+        bvModalEvt.preventDefault()
+        try {
+          const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
+          this.$noty[data.type](data.message)
+          this.resetAll('modal-release-solutions')
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      },
       resetSubmissionFilesAndPointsPerQuestion(){
         console.log('click')
         this.form.default_points_per_question = ''
