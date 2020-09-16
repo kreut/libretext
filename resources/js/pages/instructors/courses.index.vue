@@ -15,16 +15,26 @@
       ok-title="Submit"
     >
       <b-form ref="form">
+        <div v-if="graders.length">
+        Your current graders:<br>
+        <ol id="graders">
+          <li v-for="grader in graders" :key="grader.id">
+            {{ grader.name }}
+          </li>
+        </ol>
+        </div>
+
         <b-form-group
           id="email"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Email"
+          label="New Grader"
           label-for="email"
         >
           <b-form-input
             id="email"
             v-model="graderForm.email"
+            placeholder="Email Address"
             type="text"
             :class="{ 'is-invalid': graderForm.errors.has('email') }"
             @keydown="graderForm.errors.clear('email')"
@@ -34,8 +44,9 @@
         </b-form-group>
         <div v-if="sendingEmail" class="float-right">
           <b-spinner small type="grow"></b-spinner>
-          Sending Email...
+          Sending Email..
         </div>
+
       </b-form>
     </b-modal>
 
@@ -209,6 +220,7 @@ export default {
       start_date: '',
       end_date: ''
     }),
+    graders: {},
     graderForm: new Form({
       email: ''
     }),
@@ -241,10 +253,12 @@ export default {
 
     },
     async inviteGrader(courseId) {
+
       this.courseId = courseId
       try {
-        const {data} = await this.axios.get(`/api/graders/${this.courseId}`)
-
+        const {data} = await axios.get(`/api/graders/${this.courseId}`)
+        this.graders = data.graders
+        console.log(data)
         if (data.type === 'error'){
           this.$noty.error('We were not able to retrieve your graders.')
           return false

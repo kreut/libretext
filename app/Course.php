@@ -60,8 +60,9 @@ class Course extends Model
     }
 
     public function graders() {
-        return $this->hasMany('App\Grader');
-    }
+        //return $this->hasMany('App\Grader');
+       return $this->hasManyThrough('App\User', 'App\Grader', 'course_id','id', 'id', 'user_id');
+         }
 
 
 

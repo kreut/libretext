@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -21,7 +22,13 @@ class UserController extends Controller
             return $response;
         }
         try {
-            $response['graders'] = $course->graders;
+            $response['graders']  = [];
+            foreach ($course->graders as $grader){
+                $response['graders'][] = [
+                    'name' => $grader->first_name . ' ' . $grader->last_name,
+                    'id' => $grader->user_id
+                ];
+            }
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -13,9 +13,11 @@
         "laravel/socialite": "^4.3",
         "laravel/tinker": "^2.0",
         "laravel/ui": "^2.0",
+        "snowfire/beautymail": "^1.1",
         "tymon/jwt-auth": "^1.0.0"
     },
     "require-dev": {
+        "barryvdh/laravel-debugbar": "^3.5",
         "beyondcode/laravel-dump-server": "^1.4.0",
         "doctrine/dbal": "^2.9",
         "facade/ignition": "^2.0",
