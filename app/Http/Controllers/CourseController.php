@@ -203,6 +203,7 @@ class CourseController extends Controller
                 $course->enrollments()->delete();
                 $course->graders()->delete();
                 $course->delete();
+
             });
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";

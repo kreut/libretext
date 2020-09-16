@@ -59,11 +59,16 @@ class Course extends Model
         return $this->hasOne('App\CourseAccessCode');
     }
 
-    public function graders() {
-        //return $this->hasMany('App\Grader');
-       return $this->hasManyThrough('App\User', 'App\Grader', 'course_id','id', 'id', 'user_id');
-         }
+    public function graderNamesAndIds()
+    {
+        return $this->hasManyThrough('App\User', 'App\Grader', 'course_id', 'id', 'id', 'user_id');
+    }
 
+    public function graders()
+    {
+        return $this->hasMany('App\Grader');
+
+    }
 
 
     public function isGrader()

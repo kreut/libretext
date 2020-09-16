@@ -22,7 +22,7 @@ class GraderController extends Controller
         }
         try {
             $response['graders'] = [];
-            foreach ($course->graders as $grader) {
+            foreach ($course->graderNamesAndIds() as $grader) {
                 $response['graders'][] = [
                     'name' => $grader->first_name . ' ' . $grader->last_name,
                     'id' => $grader->id
