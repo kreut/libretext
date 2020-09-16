@@ -39,7 +39,11 @@ class AssignmentsIndexTest extends TestCase
     }
 
 
+/** @test **/
+    public function will_only_update_the_name_and_dates_if_there_is_already_a_submission(){
 
+
+    }
    /** @test */
     public function can_get_your_assignments()
     {

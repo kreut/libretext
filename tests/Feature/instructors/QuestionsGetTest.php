@@ -31,6 +31,23 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /**@test**/
+    public function can_not_add_a_question_if_students_have_already_made_a_submission(){
+
+
+    }
+
+    /**@test**/
+    public function can_not_update_a_question_if_students_have_already_made_a_submission(){
+
+//not sure if this is even a real thing: I have an update in the controller but nothing in the questions.get.vue?
+    }
+
+    /**@test**/
+    public function can_not_add_remove_a_question_if_students_have_already_made_a_submission(){
+
+
+    }
     /** @test */
 
     public function if_page_id_is_included_there_should_be_no_other_tags()

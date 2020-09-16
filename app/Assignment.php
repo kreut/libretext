@@ -31,4 +31,8 @@ class Assignment extends Model
         return $this->hasMany('App\SubmissionFile')->where('type','q');
     }
 
+    public function submissions(){
+        return $this->hasMany('App\Submission');
+    }
+
 }
