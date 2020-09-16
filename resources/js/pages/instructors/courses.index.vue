@@ -16,12 +16,13 @@
     >
       <b-form ref="form">
         <div v-if="graders.length">
-        Your current graders:<br>
-        <ol id="graders">
-          <li v-for="grader in graders" :key="grader.id">
-            {{ grader.name }}
-          </li>
-        </ol>
+          Your current graders:<br>
+          <ol id="graders">
+            <li v-for="grader in graders" :key="grader.id">
+              {{ grader.name }}
+              <b-icon icon="trash" v-on:click="deleteGrader(grader.id)"></b-icon>
+            </li>
+          </ol>
         </div>
 
         <b-form-group
@@ -231,11 +232,28 @@ export default {
     this.getCourses();
   },
   methods: {
+    async deleteGrader(userId) {
+      try {
+        const {data} = await axios.delete(`/api/grader/${this.courseId}/${userId}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error('We were not able to remove the grader from the course.  Please try again or contact us for assistance.')
+          return false
+        }
+        this.$noty.success(data.message)
+        //remove the grad
+        this.graders = this.graders.filter(grader => parseFloat(grader.id) !== parseFloat(userId))
+
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async handleUpdateAccessCode(bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
         const {data} = await axios.patch('/api/course-access-codes', {course_id: this.courseId})
-        if (data.type === 'error'){
+        if (data.type === 'error') {
           this.$noty.error('We were not able to update your access code.')
           return false
         }
@@ -249,17 +267,14 @@ export default {
       }
 
 
-
-
     },
     async inviteGrader(courseId) {
-
       this.courseId = courseId
       try {
-        const {data} = await axios.get(`/api/graders/${this.courseId}`)
+        const {data} = await axios.get(`/api/grader/${this.courseId}`)
         this.graders = data.graders
         console.log(data)
-        if (data.type === 'error'){
+        if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve your graders.')
           return false
         }

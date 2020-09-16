@@ -6,11 +6,12 @@ use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use \App\Traits\CommonPolicies;
 
 class CoursePolicy
 {
     use HandlesAuthorization;
-    use \App\Traits\CommonPolicies;
+    use CommonPolicies;
 
     /**
      * Determine whether the user can view any courses.
@@ -125,12 +126,7 @@ class CoursePolicy
             : Response::deny('You are not allowed to delete this course.');
     }
 
-    public function getGraders(User $user, Course $course)
-    {
-        return $this->ownsCourseByUser($course, $user)
-            ? Response::allow()
-            : Response::deny('You are not allowed to get the graders.');
-    }
+
 
     /**
      * Determine whether the user can restore the course.

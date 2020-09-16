@@ -37,6 +37,16 @@ class CoursesIndexTest extends TestCase
     public function non_owner_cannot_refresh_course_access_code(){
 
     }
+
+    /** @test */
+    public function owner_can_remove_a_grader_from_a_course(){
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_remove_a_grader_from_a_course(){
+
+    }
     /** @test */
     public function user_cannot_email_grader_invitation_without_a_valid_email()
     {
