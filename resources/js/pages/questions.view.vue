@@ -13,7 +13,7 @@
     >
 
       <b-form ref="form">
-        <p>Accepted file types are: {{getAcceptedFileTypes() }}.</p>
+        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
         <b-form-file
           ref="questionFileInput"
           v-model="uploadForm.questionFile"
@@ -54,32 +54,38 @@
 
         <div>
           <div class="d-flex">
-            <div class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
-              <b-button variant="success">Get Questions</b-button>
-            </div>
             <div v-if="user.role !== 3">
-              <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
-              </b-button>
-              <b-button class="mt-1 mb-2"
-                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                        variant="info">
-                Create Learning Tree
-              </b-button>
+              <div v-if="has_submissions">
+                <b-alert variant="info" show>
+                  <strong>Since students have already submitted responses, you can view the questions but you can't add or remove them.
+                    In addition, you can't update the number of points per question.</strong></b-alert>
+              </div>
+              <div v-if="!has_submissions">
+                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Get
+                  Questions
+                </b-button>
+                <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+                </b-button>
+                <b-button class="mt-1 mb-2"
+                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                          variant="info">
+                  Create Learning Tree
+                </b-button>
 
-              <toggle-button
-                v-if="questionFilesAllowed"
-                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                :width="250"
-                :value="questions[currentPage-1].questionFiles"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+                <toggle-button
+                  v-if="questionFilesAllowed"
+                  @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                  :width="250"
+                  :value="questions[currentPage-1].questionFiles"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                  :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+              </div>
             </div>
-
           </div>
-          <b-form ref="form" v-if="user.role === 2">
+          <b-form ref="form" v-if="!has_submissions && (user.role !== 3)">
 
             <b-form-group
               id="points"
@@ -123,13 +129,13 @@
                   <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
                      v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
-                    {{ questions[currentPage-1].original_filename }}
+                    {{ questions[currentPage - 1].original_filename }}
                   </a>
                   </span>
                   <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                   </span><br>
-                  Date Submitted: {{ questions[currentPage-1].date_submitted }}<br>
+                  Date Submitted: {{ questions[currentPage - 1].date_submitted }}<br>
                   Date Graded: {{ questions[currentPage - 1].date_graded }}<br>
                   File Feedback: <span v-if="!questions[currentPage-1].file_feedback">
                                       N/A
@@ -273,6 +279,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    has_submissions: false,
     submissionDataType: 'danger',
     submissionDataMessage: '',
     showSubmissionMessage: false,
@@ -420,7 +427,7 @@ export default {
         return false
       }
       this.uploading = true
-       await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1])
+      await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1])
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },
@@ -535,6 +542,7 @@ export default {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
         this.title = `${data.name} Assignment Questions`
+        this.has_submissions = data.has_submissions
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
       } catch (error) {
         this.$noty.error(error.message)

@@ -98,7 +98,8 @@ class AssignmentController extends Controller
                     $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                     }
+                    $assignments[$key]['has_submissions'] = +!$assignment->submissions->isEmpty();//return as 0 or 1
+                }
 //same regardless of whether you're a student
                 $assignments[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
 
@@ -176,7 +177,9 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
-            return Assignment::find($assignment->id);
+            $assignment = Assignment::find($assignment->id);
+            $assignment->has_submissions = $assignment->submissions->isNotEmpty();
+            return $assignment;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

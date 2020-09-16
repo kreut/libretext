@@ -55,7 +55,7 @@ class AssignmentSyncQuestionPolicy
     {
         $authorized = ($assignment->submissions->isEmpty()) && ($user->id === ((int)$assignment->course->user_id));
         $message = (!$assignment->submissions->isEmpty())
-            ? "You can't add a question to this assignment since students have already submitted responses."
+            ? "You can't update the question points since students have already submitted responses."
             : 'You are not allowed to add a question to this assignment.';
 
         return $authorized

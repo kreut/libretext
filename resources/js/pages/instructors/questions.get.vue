@@ -1,88 +1,90 @@
 <template>
   <div>
-  <div v-if="isLoading" class="text-center">
-    <h3>
-      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-      Loading...
-    </h3>
-  </div>
-  <div v-if="showPage">
-    <PageTitle :title="title"></PageTitle>
-    <p>Use the search box you can find questions by tag.
-      The tag can be a word associated with the question or can be the query library page id. To search
-      by page id, please use the tag: id={id}. For example, id=112358.
-      Note that adding multiple tags will result in a search result which matches all of the conditions.</p>
-    <div class="col-5 p-0">
-      <vue-bootstrap-typeahead
-        v-model="query"
-        :data="tags"
-        placeholder="Enter a tag or page id"
-        ref="queryTypeahead"
-      />
+    <div v-if="isLoading" class="text-center">
+      <h3>
+        <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+        Loading...
+      </h3>
     </div>
-    <div class="mt-3 d-flex flex-row">
-      <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
-      <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">
-        <b-spinner small type="grow" v-if="gettingQuestions"></b-spinner>
-        Get Questions
-      </b-button>
-      <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
-    </div>
-    <hr>
-    <div>
-      <h5>Chosen Tags:</h5>
-      <div v-if="chosenTags.length>0">
-        <ol>
-          <li v-for="chosenTag in chosenTags" :key="chosenTag">
+    <div v-if="showPage">
+      <PageTitle :title="title"></PageTitle>
+      <p>Use the search box you can find questions by tag.
+        The tag can be a word associated with the question or can be the query library page id. To search
+        by page id, please use the tag: id={id}. For example, id=112358.
+        Note that adding multiple tags will result in a search result which matches all of the conditions.</p>
+      <div class="col-5 p-0">
+        <vue-bootstrap-typeahead
+          v-model="query"
+          :data="tags"
+          placeholder="Enter a tag or page id"
+          ref="queryTypeahead"
+        />
+      </div>
+      <div class="mt-3 d-flex flex-row">
+        <b-button variant="primary" v-on:click="addTag()" class="mr-2">Add Tag</b-button>
+        <b-button variant="success" v-on:click="getQuestionsByTags()" class="mr-2">
+          <b-spinner small type="grow" v-if="gettingQuestions"></b-spinner>
+          Get Questions
+        </b-button>
+        <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
+      </div>
+      <hr>
+      <div>
+        <h5>Chosen Tags:</h5>
+        <div v-if="chosenTags.length>0">
+          <ol>
+            <li v-for="chosenTag in chosenTags" :key="chosenTag">
             <span v-on:click="removeTag(chosenTag)">{{ chosenTag }}<b-icon icon="trash"
                                                                            variant="danger"></b-icon></span>
-          </li>
-        </ol>
-      </div>
-      <div v-else>
-        <span class="text-danger">No tags have been chosen.</span>
-      </div>
-    </div>
-    <div class="overflow-auto" v-if="questions.length>0">
-      <b-pagination
-        v-model="currentPage"
-        :total-rows="questions.length"
-        :per-page="perPage"
-        align="center"
-        first-number
-        last-number
-        v-on:input="changePage(currentPage)"
-      ></b-pagination>
-    </div>
-<div v-if="showQuestions">
-      <div class="d-flex">
-        <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
-             v-on:click="removeQuestion(questions[currentPage-1])">
-          <b-button variant="danger">Remove Question</b-button>
+            </li>
+          </ol>
         </div>
-<div>
-          <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2" v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question</b-button>
-
-          <b-button v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
-                    v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                    variant="info">Create Learning Tree
-          </b-button>
-
-        <toggle-button
-          v-if="questionFilesAllowed && questions[currentPage-1].inAssignment"
-          @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-          :width="250"
-          :value="questions[currentPage-1].questionFiles"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="{checked: '#007BFF', unchecked: '#75C791'}"
-          :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+        <div v-else>
+          <span class="text-danger">No tags have been chosen.</span>
+        </div>
       </div>
+      <div class="overflow-auto" v-if="questions.length>0">
+        <b-pagination
+          v-model="currentPage"
+          :total-rows="questions.length"
+          :per-page="perPage"
+          align="center"
+          first-number
+          last-number
+          v-on:input="changePage(currentPage)"
+        ></b-pagination>
       </div>
-      <div v-html="questions[currentPage-1].body"></div>
+      <div v-if="showQuestions">
+        <div class="d-flex">
+          <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
+               v-on:click="removeQuestion(questions[currentPage-1])">
+            <b-button variant="danger">Remove Question</b-button>
+          </div>
+          <div>
+            <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
+                      v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question
+            </b-button>
+
+            <b-button v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+                      v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                      variant="info">Create Learning Tree
+            </b-button>
+
+            <toggle-button
+              v-if="questionFilesAllowed && questions[currentPage-1].inAssignment"
+              @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+              :width="250"
+              :value="questions[currentPage-1].questionFiles"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="{checked: '#007BFF', unchecked: '#75C791'}"
+              :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+          </div>
+        </div>
+        <div v-html="questions[currentPage-1].body"></div>
+      </div>
     </div>
-  </div>
   </div>
 </template>
 
@@ -100,6 +102,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    continueLoading: true,
     isLoading: false,
     iframeLoaded: false,
     perPage: 1,
@@ -121,19 +124,27 @@ export default {
     this.isLoading = true
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
-    this.tags = this.getTags()
-    h5pResizer()
+
   },
   methods: {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
-       this.title =  `Add Questions to "${data.name}"`
+        if (data.has_submissions) {
+          this.isLoading = false
+          this.$noty.error("You can't add or remove questions from the assignment since students have already submitted responses.")
+          this.continueLoading = false
+        }
+        this.title = `Add Questions to "${data.name}"`
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
 
       } catch (error) {
         console.log(error.message)
-       this.title = 'Add Questions'
+        this.title = 'Add Questions'
+      }
+      if (this.continueLoading) {//OK to load the rest of the page
+        this.tags = this.getTags()
+        h5pResizer()
       }
     },
     changePage(currentPage) {
@@ -238,12 +249,12 @@ export default {
           console.log(questionInfo)
           if ((questionInfo.type === 'success')) {
 
-              for (let i = 0; i < questionsByTags.questions.length; i++) {
+            for (let i = 0; i < questionsByTags.questions.length; i++) {
 
-                questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
+              questionsByTags.questions[i].inAssignment = questionInfo.question_ids.includes(questionsByTags.questions[i].id)
 
-                questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
-              }
+              questionsByTags.questions[i].questionFiles = questionInfo.question_files.includes(questionsByTags.questions[i].id)
+            }
 
             this.questions = questionsByTags.questions
             let iframe_id = this.questions[0].iframe_id;

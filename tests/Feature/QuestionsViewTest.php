@@ -95,6 +95,13 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    /**@test**/
+    public function can_not_update_question_points_if_students_have_already_made_a_submission(){
+
+//not sure if this is even a real thing: I have an update in the controller but nothing in the questions.get.vue?
+    }
+
+
     /**@test* */
 
     public function the_submission_is_a_string()

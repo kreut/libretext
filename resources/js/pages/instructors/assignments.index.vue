@@ -183,7 +183,8 @@
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <span class="pr-1" v-on:click="getQuestions(data.item.id)"><b-icon icon="question-circle"></b-icon></span>
+            <span class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
+              :variant="hasSubmissionsColor(data.item)"  icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
@@ -288,12 +289,17 @@ export default {
 
   },
   methods: {
-    solutionsReleasedColor(assignment){
-      return (assignment.solutions_released===1) ? 'success' : 'secondary'
+    hasSubmissionsColor(assignment) {
+      return (assignment.has_submissions === 1) ? 'warning' : 'secondary'
+
+
+    },
+    solutionsReleasedColor(assignment) {
+      return (assignment.solutions_released === 1) ? 'success' : 'secondary'
     },
     releaseSolutions(assignment) {
       console.log(assignment)
-      if (assignment.solutions_released){
+      if (assignment.solutions_released) {
         this.$noty.info('The solutions to this assignment are already available to your students.')
         return false
       }
@@ -331,8 +337,12 @@ export default {
       this.$bvModal.show('modal-assignment-details')
     }
     ,
-    getQuestions(assignmentId) {
-      this.$router.push(`/assignments/${assignmentId}/questions/get`)
+    getQuestions(assignment) {
+      if (assignment.has_submissions) {
+        this.$noty.info("You can't add/remove questions for this assignment since students have already submitted solutions.")
+        return false
+      }
+      this.$router.push(`/assignments/${assignment.id}/questions/get`)
     }
     ,
     getStudentView(assignmentId) {
