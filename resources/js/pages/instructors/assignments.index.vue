@@ -154,7 +154,7 @@
 
           </b-form-group>
         </div>
-        <div else>
+        <div v-if="has_submissions">
           <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
           can't change the scoring type, the default points per question, or the type of file uploads. </strong></b-alert>
         </div>
@@ -330,7 +330,7 @@ export default {
     },
     editAssignment(assignment) {
       console.log(assignment)
-      this.has_submissions = assignment.has_submissions
+      this.has_submissions = (assignment.has_submissions === 1)
       this.assignmentId = assignment.id
       this.form.name = assignment.name
       this.form.available_from_date = assignment.available_from_date
