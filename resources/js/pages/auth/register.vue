@@ -69,8 +69,8 @@
               <b-form-select v-model="form.time_zone"
                              :options="timeZones"
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                          >
-                          </b-form-select>
+              >
+              </b-form-select>
               <has-error :form="form" field="time_zone"/>
             </div>
           </div>
@@ -95,7 +95,8 @@
 import Form from 'vform'
 import LoginWithGithub from '~/components/LoginWithGithub'
 import {redirectOnLogin} from '~/helpers/LoginRedirect'
-import {getTimeZones, rawTimeZones, timeZonesNames} from "@vvo/tzdb";
+import {getTimeZones} from "@vvo/tzdb"
+import {populateTimeZoneSelect} from "~/helpers/TimeZones"
 
 export default {
   middleware: 'guest',
@@ -110,16 +111,7 @@ export default {
   mounted() {
     this.setRegistrationType(this.$route.path)
     let timeZones = getTimeZones()
-    let usedTimeZones = []
-    for (let i = 0; i < timeZones.length; i++) {
-      if (!usedTimeZones.includes(timeZones[i].alternativeName)) {
-        if (timeZones[i].name === Intl.DateTimeFormat().resolvedOptions().timeZone) {
-          this.form.time_zone = timeZones[i].name
-        }
-        this.timeZones.push({value: timeZones[i].name, text: timeZones[i].alternativeName})
-        usedTimeZones.push(timeZones[i].alternativeName)
-      }
-    }
+    populateTimeZoneSelect(timeZones, this)
   },
   watch: {
     '$route'(to) {
@@ -147,7 +139,7 @@ export default {
   }),
 
   methods: {
-    removeTimeZoneError(){
+    removeTimeZoneError() {
       this.form.errors.clear('time_zone')
     },
     setRegistrationType(path) {
@@ -168,24 +160,29 @@ export default {
 
     },
     async register() {
+      try {
+        // Register the user.
+        const {data} = await this.form.post('/api/register')
+        // Must verify email fist.
+        if (data.status) {
+          this.mustVerifyEmail = true
+        } else {
+          // Log in the user.
+          const {data: {token}} = await this.form.post('/api/login')
 
-      // Register the user.
-      const {data} = await this.form.post('/api/register')
-      // Must verify email fist.
-      if (data.status) {
-        this.mustVerifyEmail = true
-      } else {
-        // Log in the user.
-        const {data: {token}} = await this.form.post('/api/login')
+          // Save the token.
+          this.$store.dispatch('auth/saveToken', {token})
 
-        // Save the token.
-        this.$store.dispatch('auth/saveToken', {token})
+          // Update the user.
+          await this.$store.dispatch('auth/updateUser', {user: data})
 
-        // Update the user.
-        await this.$store.dispatch('auth/updateUser', {user: data})
-
-        // Redirect to the correct home page
-        redirectOnLogin(this.$store, this.$router)
+          // Redirect to the correct home page
+          redirectOnLogin(this.$store, this.$router)
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     }
   }

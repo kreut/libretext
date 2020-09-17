@@ -2,26 +2,36 @@
 
 namespace App\Http\Controllers\Settings;
 
+use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
-use Illuminate\Http\Request;
+use App\Http\Requests\Profile;
+use \Exception;
 
 class ProfileController extends Controller
 {
+
+
     /**
-     * Update the user's profile information.
-     *
-     * @param  \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param Profile $request
+     * @return mixed
+     * @throws \Exception
      */
-    public function update(Request $request)
+    public function update(Profile $request)
     {
         $user = $request->user();
+        $response['type'] = 'error';
+        try {
+            $data = $request->validated();
+            $user->update($data);
+            $response['type'] = 'success';
+            $response['message'] = 'Your profile has been updated.';
+            $response['user'] = $user;
 
-        $this->validate($request, [
-            'name' => 'required',
-            'email' => 'required|email|unique:users,email,'.$user->id,
-        ]);
-
-        return tap($user)->update($request->only('name', 'email'));
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating your profile.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 }

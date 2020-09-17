@@ -1,17 +1,19 @@
 <template>
   <card :title="$t('your_info')">
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
-      <alert-success :form="form" :message="$t('info_updated')" />
 
       <!-- Name -->
-      <div class="text-center mb-2">
-      <strong>All of your assignment due dates use {{currentTimeZone}} for the time zone.</strong>
-      </div>
       <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
-        <div class="col-md-7">
-          <input v-model="form.name" :class="{ 'is-invalid': form.errors.has('name') }" class="form-control" type="text" name="name">
-          <has-error :form="form" field="name" />
+        <div class="col-md-3">
+          <input v-model="form.first_name" :class="{ 'is-invalid': form.errors.has('first_name') }"
+                 class="form-control" type="text" name="first_name" placeholder="First">
+          <has-error :form="form" field="first_name"/>
+        </div>
+        <div class="col-md-4">
+          <input v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
+                 class="form-control" type="text" name="last_name" placeholder="Last">
+          <has-error :form="form" field="last_name"/>
         </div>
       </div>
 
@@ -23,7 +25,17 @@
           <has-error :form="form" field="email" />
         </div>
       </div>
-
+      <div class="form-group row">
+        <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+        <div class="col-md-7" v-on:change="removeTimeZoneError()">
+          <b-form-select v-model="form.time_zone"
+                         :options="timeZones"
+                         :class="{ 'is-invalid': form.errors.has('time_zone') }"
+          >
+          </b-form-select>
+          <has-error :form="form" field="time_zone"/>
+        </div>
+      </div>
       <!-- Submit Button -->
       <div class="form-group row">
         <div class="col-md-9 ml-md-auto">
@@ -39,20 +51,26 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import {getTimeZones, rawTimeZones, timeZonesNames} from "@vvo/tzdb";
+import {getTimeZones} from "@vvo/tzdb"
+import {populateTimeZoneSelect} from "~/helpers/TimeZones"
 
 export default {
   scrollToTop: false,
 
-  metaInfo () {
-    return { title: this.$t('settings') }
+  metaInfo() {
+    return {title: this.$t('settings')}
   },
 
   data: () => ({
     form: new Form({
-      name: '',
-      email: ''
+      first_name: '',
+      last_name: '',
+      email: '',
+      time_zone: null
     }),
+    timeZones: [
+      {value: null, text: 'Please select a time zone'},
+    ],
     currentTimeZone: ''
   }),
 
@@ -60,26 +78,35 @@ export default {
     user: 'auth/user'
   }),
 
-  created () {
+  created() {
     // Fill the form with user data.
     this.form.keys().forEach(key => {
       this.form[key] = this.user[key]
     })
   },
-mounted() {
-  let timeZones = getTimeZones()
+  mounted() {
+    let timeZones = getTimeZones()
+    populateTimeZoneSelect(timeZones, this)
+    this.form.time_zone = this.user.time_zone
 
-  for (let i = 0; i < timeZones.length; i++) {
-     if( timeZones[i].name === this.user.time_zone) {
-       this.currentTimeZone = timeZones[i].alternativeName
-     }
-  }
-},
+  },
   methods: {
-    async update () {
-      const { data } = await this.form.patch('/api/settings/profile')
+    removeTimeZoneError() {
+      this.form.errors.clear('time_zone')
+    },
+    async update() {
+      try {
+        const {data} = await this.form.patch('/api/settings/profile')
+        this.$noty[data.type](data.message)
+        if (data.type === 'success'){
+          this.$store.dispatch('auth/updateUser', {user: data.user})
+        }
 
-      this.$store.dispatch('auth/updateUser', { user: data })
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
     }
   }
 }
