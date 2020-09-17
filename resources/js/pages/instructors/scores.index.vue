@@ -86,10 +86,21 @@
           label-for="Override Score"
         >
           <b-form-row>
-            <div>
-              <b-form-select v-model="form.score" :options="options"></b-form-select>
-            </div>
+            <b-col lg="3">
+              <b-form-input
+                id="score"
+                v-model="form.score"
+                type="text"
+                placeholder=""
+                :class="{ 'is-invalid': form.errors.has('score') }"
+                @keydown="form.errors.clear('score')"
+              >
+              </b-form-input>
+              <has-error :form="form" field="score"></has-error>
+            </b-col>
           </b-form-row>
+
+
 
         </b-form-group>
         </div>
@@ -151,16 +162,7 @@ export default {
     assignmentsArray: [],
     hasExtension: false,
     canViewScores: false,
-    assignmentScoringTypes: [],
-    options: [
-      {value: null, text: 'Please select an option'},
-      {value: 'C', text: 'Completed'},
-      {value: '1', text: '1'},
-      {value: '2', text: '2'},
-      {value: '3', text: '3'},
-      {value: '4', text: '4'},
-      {value: '5', text: '5'},
-    ]
+    assignmentScoringTypes: []
   }),
   mounted() {
     this.courseId = this.$route.params.courseId
