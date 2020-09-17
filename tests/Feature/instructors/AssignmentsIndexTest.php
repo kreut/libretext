@@ -44,6 +44,8 @@ class AssignmentsIndexTest extends TestCase
 
 
     }
+
+
    /** @test */
     public function can_get_your_assignments()
     {

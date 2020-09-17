@@ -95,63 +95,69 @@
             </b-col>
           </b-form-row>
         </b-form-group>
-        <b-form-group
-          id="scoring_type"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Scoring Type"
-          label-for="Scoring Type"
-        >
+        <div v-if="!has_submissions">
+          <b-form-group
+            id="scoring_type"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Scoring Type"
+            label-for="Scoring Type"
+          >
 
-          <b-form-radio-group v-model="form.scoring_type" stacked>
+            <b-form-radio-group v-model="form.scoring_type" stacked>
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
                 </span>
-            <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
-        <b-form-group
-          v-if="form.scoring_type === 'p'"
-          id="submission_files"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Submission Files"
-          label-for="Submission Files"
-        >
+              <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
+            v-if="form.scoring_type === 'p'"
+            id="submission_files"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Submission Files"
+            label-for="Submission Files"
+          >
 
-          <b-form-radio-group v-model="form.submission_files" stacked>
-            <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
-            <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
-            <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
-          </b-form-radio-group>
-        </b-form-group>
+            <b-form-radio-group v-model="form.submission_files" stacked>
+              <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
+              <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
+              <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
 
-        <b-form-group
-          v-if="form.scoring_type === 'p'"
-          id="default_points_per_question"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Default Points/Question"
-          label-for="default_points_per_question"
-        >
+          <b-form-group
+            v-if="form.scoring_type === 'p'"
+            id="default_points_per_question"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Default Points/Question"
+            label-for="default_points_per_question"
+          >
 
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-input
-                id="default_points_per_question"
-                v-model="form.default_points_per_question"
-                type="text"
-                placeholder=""
-                :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                @keydown="form.errors.clear('default_points_per_question')"
-              >
-              </b-form-input>
-              <has-error :form="form" field="default_points_per_question"></has-error>
-            </b-col>
-          </b-form-row>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="default_points_per_question"
+                  v-model="form.default_points_per_question"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                  @keydown="form.errors.clear('default_points_per_question')"
+                >
+                </b-form-input>
+                <has-error :form="form" field="default_points_per_question"></has-error>
+              </b-col>
+            </b-form-row>
 
-        </b-form-group>
+          </b-form-group>
+        </div>
+        <div else>
+          <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
+          can't change the scoring type, the default points per question, or the type of file uploads. </strong></b-alert>
+        </div>
       </b-form>
     </b-modal>
     <b-modal
@@ -184,7 +190,7 @@
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
             <span class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
-              :variant="hasSubmissionsColor(data.item)"  icon="question-circle"></b-icon></span>
+              :variant="hasSubmissionsColor(data.item)" icon="question-circle"></b-icon></span>
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
@@ -279,6 +285,7 @@ export default {
       default_points_per_question: ''
     }),
     hasAssignments: false,
+    has_submissions: false,
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
     canViewAssignments: false,
     showNoAssignmentsAlert: false,
@@ -323,6 +330,7 @@ export default {
     },
     editAssignment(assignment) {
       console.log(assignment)
+      this.has_submissions = assignment.has_submissions
       this.assignmentId = assignment.id
       this.form.name = assignment.name
       this.form.available_from_date = assignment.available_from_date

@@ -23,7 +23,8 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
-    public function releaseSolutions(Request $request, Assignment $assignment){
+    public function releaseSolutions(Request $request, Assignment $assignment)
+    {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -34,7 +35,7 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment->update(['solutions_released'=> 1]);
+            $assignment->update(['solutions_released' => 1]);
             $response['type'] = 'success';
             $response['message'] = "Your students can now view the solutions to <strong>{$assignment->name}</strong>.";
         } catch (Exception $e) {
@@ -44,6 +45,7 @@ class AssignmentController extends Controller
         }
         return $response;
     }
+
     /**
      *
      * Display all assignments for the course
@@ -216,7 +218,12 @@ class AssignmentController extends Controller
             foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
                 unset($data[$value]);
             }
-
+            //submissions exist so don't let them change the things below
+            if ($assignment->submissions->isNotEmpty()) {
+                unset($data['scoring_type']);
+                unset($data['default_points_per_question']);
+                unset($data['submission_files']);
+            }
             $assignment->update($data);
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
