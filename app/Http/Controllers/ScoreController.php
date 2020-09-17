@@ -61,7 +61,8 @@ class ScoreController extends Controller
             $columns = [];
             $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
             foreach ($assignments as $assignment) {
-                $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? '-';
+                $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
+                $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
                 if (isset($extension[$user_id][$assignment->id])) {
                     $score = 'Extension';
                 }
