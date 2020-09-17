@@ -197,7 +197,7 @@ class SubmissionFileController extends Controller
                     ->where('user_id', $student_user_id)
                     ->where('assignment_id', $assignment_id)
                     ->where('type', 'a')
-                    ->update([$column => $value, 'date_graded'=> DB::raw('now()')]);
+                    ->update([$column => $value, 'date_graded' => DB::raw('now()')]);
                 break;
             case('question'):
                 DB::table('submission_files')
@@ -222,6 +222,7 @@ class SubmissionFileController extends Controller
     {
 
         $response['type'] = 'error';
+        $max_number_of_uploads_allowed = 3;//number allowed per question/assignment
         $assignment_id = $request->assignmentId;
 
         $type = $request->type;
@@ -264,6 +265,30 @@ class SubmissionFileController extends Controller
 
             }
 
+
+            switch ($type) {
+                case('assignment'):
+                    $latest_submission = DB::table('submission_files')
+                        ->where('assignment_id', $assignment_id)
+                        ->where('user_id', Auth::user()->id)
+                        ->first();
+                    break;
+                case('question'):
+                    $latest_submission = DB::table('submission_files')
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('user_id', Auth::user()->id)
+                        ->select('upload_count')
+                        ->first();
+                    break;
+            }
+            $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
+            if ($upload_count + 1 > $max_number_of_uploads_allowed) {
+                $response['message'] = 'You have exceed the number of times that you can re-upload a submission.';
+                return $response;
+
+            }
+
             $validator = Validator::make($request->all(), [
                 "{$type}File" => $this->fileValidator()
             ]);
@@ -280,13 +305,14 @@ class SubmissionFileController extends Controller
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put($submission, $submissionContents);
             $original_filename = $request->file("{$type}File")->getClientOriginalName();
-            $submission_file_data =   ['type' => $type[0],
+            $submission_file_data = ['type' => $type[0],
                 'submission' => basename($submission),
                 'original_filename' => $original_filename,
                 'file_feedback' => null,
                 'text_feedback' => null,
                 'date_graded' => null,
                 'score' => null,
+                'upload_count' => $upload_count + 1,
                 'date_submitted' => Carbon::now()];
             switch ($type) {
                 case('assignment'):
@@ -294,7 +320,7 @@ class SubmissionFileController extends Controller
                         ['user_id' => Auth::user()->id,
                             'assignment_id' => $assignment_id,
                             'type' => $type[0]],
-                      $submission_file_data
+                        $submission_file_data
                     );
                     break;
                 case('question'):
@@ -309,7 +335,7 @@ class SubmissionFileController extends Controller
             }
 
             $response['type'] = 'success';
-            $response['message'] = 'Your file submission has been saved.';
+            $response['message'] = "Your file submission has been saved.  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             $response['original_filename'] = $original_filename;
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
         } catch (Exception $e) {

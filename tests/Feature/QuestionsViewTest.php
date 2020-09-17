@@ -179,8 +179,13 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads(){
 
+}
+    /** @test */
+    public function cannot_store_a_file_if_the_size_of_the_file_exceeds_the_max_size_permitted(){
 
+    }
     /** @test */
 
     public function cannot_store_a_question_file_if_it_is_not_in_the_assignment()
@@ -411,7 +416,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->actingAs($this->user_2)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'error',
-                'message' => 'You are not allowed to remove this question from this assignment.']);
+                'message' => 'You are not allowed to remove a question to this assignment.']);
     }
 
 }
