@@ -31,7 +31,7 @@ class Profile extends FormRequest
             'email' =>   'required|email|unique:users,email,'.Auth::user()->id
         ];
 
-        $rules['time_zone'] = new IsValidTimezone();
+        $rules['time_zone'] = new isValidTimeZone();
        return $rules;
     }
 }

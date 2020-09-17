@@ -4,7 +4,7 @@
 namespace App\Traits;
 
 
-trait iframeFormatter
+trait IframeFormatter
 
 {
 
