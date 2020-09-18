@@ -67,7 +67,11 @@ class ScoreController extends Controller
                 if (isset($extension[$user_id][$assignment->id])) {
                     $score .= ' (E)';
                 }
+if ($assignment->scoring_type === 'c'){
 
+        $score = ($score === 'c') ? 'Complete' : 'Incomplete';
+
+}
                 $columns[$assignment->id] = $score;
                 $download_row_data["{$assignment->id}"] = $score;
             }
