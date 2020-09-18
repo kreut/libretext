@@ -42,8 +42,7 @@ class LearningTreeController extends Controller
 
             $data = $request->validated();
 
-            DB::table('learning_trees')
-                ->updateOrInsert(
+            LearningTree::updateOrCreate(
                     ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
                     ['learning_tree' => $learning_tree_parsed]
                 );

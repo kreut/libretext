@@ -284,6 +284,8 @@ class SubmissionFileController extends Controller
                     break;
             }
             $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
+
+
             if ($upload_count + 1 > $max_number_of_uploads_allowed) {
                 $response['message'] = 'You have exceed the number of times that you can re-upload a submission.';
                 return $response;
@@ -368,9 +370,6 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            //wait 30 seconds between uploads
-            //no more than 10 uploads per assignment
-            //delete the file if there was an exception???
             if (!in_array($type, ['question', 'assignment'])) {
                 $response['message'] = 'That is not a valid type of submission file.';
                 return $response;
