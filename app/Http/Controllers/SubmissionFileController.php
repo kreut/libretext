@@ -306,7 +306,7 @@ class SubmissionFileController extends Controller
 
             $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put($submission, $submissionContents,['StorageClass' => 'STANDARD_IA']);
+            Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
             $original_filename = $request->file("{$type}File")->getClientOriginalName();
             $submission_file_data = ['type' => $type[0],
                 'submission' => basename($submission),
@@ -354,7 +354,6 @@ class SubmissionFileController extends Controller
     public function storeFileFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
 
-
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
@@ -383,10 +382,34 @@ class SubmissionFileController extends Controller
                 return $response;
             }
 
+            switch ($type) {
+                case('assignment'):
+                    $file_feedback_exists = DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('type', 'a')
+                        ->whereNotNull('file_feedback')
+                        ->first();
+                    break;
+                case('question'):
+                    $file_feedback_exists = DB::table('submission_files')
+                        ->where('user_id', $student_user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('type', 'q')
+                        ->whereNotNull('file_feedback')
+                        ->first();
+                    break;
+            }
+            if ($file_feedback_exists) {
+                $response['message'] = "You can only upload file feedback once per student submission.";
+                return $response;
+            }
+
             //save locally and to S3
             $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($fileFeedback);
-            Storage::disk('s3')->put($fileFeedback, $feedbackContents,['StorageClass' => 'STANDARD_IA']);
+            Storage::disk('s3')->put($fileFeedback, $feedbackContents, ['StorageClass' => 'STANDARD_IA']);
             switch ($type) {
                 case('assignment'):
                     DB::table('submission_files')

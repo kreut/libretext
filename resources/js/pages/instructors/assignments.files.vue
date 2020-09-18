@@ -128,9 +128,9 @@
                   <b-form-file
                     ref="fileFeedbackInput"
                     v-model="fileFeedbackForm.fileFeedback"
-                    placeholder="Choose a .pdf file..."
+                    placeholder="Choose a file or drop it here..."
                     drop-placeholder="Drop file here..."
-                    accept=".pdf"
+                    :accept="getAcceptedFileTypes()"
                   ></b-form-file>
                   <span class="ml-3">
                 <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
@@ -186,6 +186,7 @@ import axios from 'axios'
 import Form from "vform"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {downloadSubmission} from '~/helpers/SubmissionFiles'
+import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 //import pdf from 'vue-pdf'
 
 
@@ -224,6 +225,7 @@ export default {
   }),
   created() {
     this.downloadSubmission = downloadSubmission
+    this.getAcceptedFileTypes = getAcceptedFileTypes
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
