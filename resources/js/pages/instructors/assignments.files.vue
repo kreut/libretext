@@ -244,8 +244,10 @@ export default {
 
         const {data} = await this.scoreForm.post('/api/submission-files/score')
         this.$noty[data.type](data.message)
+        console.log(data)
         if (data.type === 'success') {
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['score'] = this.scoreForm.score
+          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['date_graded'] = data.date_graded
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
