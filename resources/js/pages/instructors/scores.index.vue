@@ -328,6 +328,7 @@ export default {
           this.fields = data.table.fields  //Name
           this.downloadFields = data.download_fields
           this.downloadData = data.download_data
+
           console.log(this.downloadFields)
           console.log(this.downloadData)
 

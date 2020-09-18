@@ -67,13 +67,11 @@ class ScoreController extends Controller
                 if (isset($extension[$user_id][$assignment->id])) {
                     $score .= ' (E)';
                 }
-if ($assignment->scoring_type === 'c'){
-
-        $score = ($score === 'c') ? 'Complete' : 'Incomplete';
-
-}
+                if ($assignment->scoring_type === 'c') {
+                    $score = ($score === 'c') ? 'Complete' : 'Incomplete';//easier to read
+                }
                 $columns[$assignment->id] = $score;
-                $download_row_data["{$assignment->id}"] = $score;
+                $download_row_data["{$assignment->id}"] = str_replace(' (E)','',$score);//get rid of the extension info
             }
             $columns['name'] = $name;
             $columns['userId'] = $user_id;
