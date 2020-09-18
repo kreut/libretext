@@ -219,6 +219,10 @@
         // alert('reset modal')
       },
       openUploadAssignmentFileModal(assignmentId) {
+        console.log(this.assignmentFileInfo)
+        return false
+        console.log(assignment)
+        return false
         this.form.errors.clear('assignmentFile')
         this.form.assignmentId = assignmentId
       },

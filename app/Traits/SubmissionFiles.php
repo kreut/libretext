@@ -16,6 +16,8 @@ trait SubmissionFiles
 
         //last_submitted is handled at the question and assignment level
         $formatted_submission_file_info = [];
+        $formatted_submission_file_info['assignment_id'] = $assignment_id;
+        $formatted_submission_file_info['submission'] = $submission_file['submission'] ?? null;
         $formatted_submission_file_info['original_filename'] = $submission_file['original_filename'] ?? null;
         $formatted_submission_file_info['date_submitted'] = isset($submission_file['date_submitted'])
             ? $helpers->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_submitted'], Auth::user()->time_zone)
