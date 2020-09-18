@@ -109,6 +109,11 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to view courses.']);
 
     }
+    /** @test */
+
+    public function correctly_handles_different_timezones() {
+
+    }
 
     /** @test */
     public function can_delete_a_course_if_you_are_the_owner()

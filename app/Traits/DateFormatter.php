@@ -36,6 +36,14 @@ trait DateFormatter
 
     }
 
+    public function convertUTCMysqlFormattedDateToLocalTime(string $datetime, string $to_time_zone)
+    {
+        $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
+        $dt->setTimeZone(new \DateTimeZone($to_time_zone));
+        return $dt->format('H:i:s');
+
+    }
+
     public function convertUTCMysqlFormattedDateToLocalDateAndTime(string $datetime, string $to_time_zone)
     {
         $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
@@ -52,11 +60,5 @@ trait DateFormatter
         return $dt->format('F d, Y \a\t g:i:sa');
     }
 
-    public function convertUTCMysqlFormattedDateToLocalTime(string $datetime, string $to_time_zone)
-    {
-        $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
-        $dt->setTimeZone(new \DateTimeZone($to_time_zone));
-        return $dt->format('H:i:s');
 
-    }
 }

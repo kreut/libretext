@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Extension;
 use App\Assignment;
 use App\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Traits\DateFormatter;
 use Illuminate\Http\Request;
@@ -43,11 +44,9 @@ class ExtensionController extends Controller
 
             $data = $request->validated();
 
-            Extension::create(
-                ['extension' => $data['extension_date'] . ' ' . $data['extension_time'],
-                    'user_id' => $user->id,
-                    'assignment_id' => $assignment->id
-                ]
+            Extension::updateOrCreate(
+                [ 'user_id' => $user->id, 'assignment_id' => $assignment->id],
+                ['extension' => $this->convertLocalMysqlFormattedDateToUTC($data['extension_date'] . ' ' . $data['extension_time'], Auth::user()->time_zone)]
             );
 
             $response['type'] = 'success';
@@ -77,61 +76,25 @@ class ExtensionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
-        $extension = DB::table('extensions')
-            ->where('assignment_id', $assignment->id)
-            ->where('user_id', $user->id)
-            ->first()
-            ->extension;
-
-        if ($extension) {
-            $response['type'] = 'success';
-            $response['extension_date'] = $this->getDateFromSqlTimestamp($extension);
-            $response['extension_time'] = $this->getTimeFromSqlTimestamp($extension);
-
-        }
-        return $response;
-
-    }
-
-
-    /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Extension $extension
-     * @return \Illuminate\Http\Response
-     */
-    public function update(StoreExtension $request, Assignment $assignment, User $user, Extension $extension)
-    {
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('update', [$extension, $assignment->id, $user->id]);
-
-        if (!$authorized->allowed()) {
-            $response['type'] = 'error';
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
         try {
-
-
-            $data = $request->validated();
-            Extension::where('user_id', $user->id)
+            $extension = DB::table('extensions')
                 ->where('assignment_id', $assignment->id)
-                ->update(['extension' => $data['extension_date'] . ' ' . $data['extension_time']]);
-
-
+                ->where('user_id', $user->id)
+                ->first();
             $response['type'] = 'success';
-            $response['message'] = 'The extension has been updated.';
-
+            $response['extension_date'] = '';
+            $response['extension_time'] = '';
+            if ($extension) {
+                $response['extension_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($extension->extension, Auth::user()->time_zone);
+                $response['extension_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($extension->extension, Auth::user()->time_zone);
+            }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error retrieving the extension.  Please try again or contact us for assistance.";
         }
         return $response;
+
     }
 
 

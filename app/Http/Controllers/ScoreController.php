@@ -12,6 +12,7 @@ use Illuminate\Support\Facades\Gate;
 
 use App\Exceptions\Handler;
 use \Exception;
+use Illuminate\Support\Facades\Validator;
 
 class ScoreController extends Controller
 {
@@ -38,7 +39,7 @@ class ScoreController extends Controller
         $assignments = $course->assignments->sortBy('due');
 
         if ($assignments->isEmpty()) {
-           return ['hasAssignments' => false];
+            return ['hasAssignments' => false];
         }
 
         $scores = $course->scores;
@@ -64,7 +65,7 @@ class ScoreController extends Controller
                 $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
                 $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
                 if (isset($extension[$user_id][$assignment->id])) {
-                    $score = 'Extension';
+                    $score .= ' (E)';
                 }
 
                 $columns[$assignment->id] = $score;
@@ -106,7 +107,7 @@ class ScoreController extends Controller
     function update(Request $request, Assignment $assignment, User $user, Score $score)
     {
 
-    $response['type'] = 'error';
+        $response['type'] = 'error';
         $authorized = Gate::inspect('update', [$score, $assignment->id, $user->id]);
 
         if (!$authorized->allowed()) {
@@ -115,10 +116,29 @@ class ScoreController extends Controller
             return $response;
         }
 
+        switch (Assignment::find($assignment->id)->scoring_type) {
+            case('p'):
+                $validator = Validator::make($request->all(), [
+                    'score' => 'required|numeric|min:0|not_in:0'
+                ]);
+
+                if ($validator->fails()) {
+                    $response['message'] = $validator->errors()->first('score');
+                    return $response;
+                }
+                break;
+
+            case('c'):
+                //nothing to validate
+
+
+                break;
+
+
+        }
+
         try {
 
-
-            //todo: validate the data as a possible score (completed or not
             Score::updateOrCreate(
                 ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['score' => $request->score]
@@ -135,7 +155,34 @@ class ScoreController extends Controller
         return $response;
     }
 
+    public function getScoreByAssignmentAndStudent(Request $request, Assignment $assignment, User $user, Score $Score)
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getScoreByAssignmentAndStudent', [$Score, $assignment->id, $user->id]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
+        try {
+            $score = $Score->where('assignment_id', $assignment->id)
+                ->where('user_id', $user->id)
+                ->first();
+            $response['score'] = $score ? $score->score : 0;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
 
 }

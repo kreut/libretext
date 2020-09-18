@@ -107,7 +107,7 @@
             <b-form-radio-group v-model="form.scoring_type" stacked>
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
-          <b-form-radio name="scoring_type" value="c">Completed/Incompleted</b-form-radio>
+          <b-form-radio name="scoring_type" value="c">Completed/Incomplete</b-form-radio>
                 </span>
               <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
             </b-form-radio-group>
@@ -261,7 +261,7 @@ export default {
       {
         key: 'scoring_type',
         formatter: value => {
-          return (value === 'c') ? 'Completed/Incompleted' : 'Points'
+          return (value === 'c') ? 'Complete/Incomplete' : 'Points'
 
         }
 

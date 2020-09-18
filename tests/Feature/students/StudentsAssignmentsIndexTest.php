@@ -118,6 +118,12 @@ class StudentsAssignmentsIndexTest extends TestCase
 
 
     }
+    /** @test */
+
+    public function correctly_handles_different_timezones() {
+
+    }
+
 
     /** @test */
     public function cannot_store_assignment_file_if_not_enrolled_in_course()

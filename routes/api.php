@@ -42,12 +42,10 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/scores/{course}', 'ScoreController@index');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
-
+    Route::get('/scores/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
 
     Route::get('/extensions/{assignment}/{user}', 'ExtensionController@show');
     Route::post('/extensions/{assignment}/{user}', 'ExtensionController@store');
-    Route::patch('/extensions/{assignment}/{user}', 'ExtensionController@update');
-
 
 
     Route::get('/tags', 'TagController@index');

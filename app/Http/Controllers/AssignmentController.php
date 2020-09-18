@@ -87,7 +87,7 @@ class AssignmentController extends Controller
                     if (isset($scores_by_assignment[$assignment->id])) {
                         $assignments[$key]['score'] = $scores_by_assignment[$assignment->id];
                     } else {
-                        $assignments[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Not completed';
+                        $assignments[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
                     }
                     $assignments[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
 
