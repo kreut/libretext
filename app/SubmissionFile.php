@@ -5,11 +5,14 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Traits\S3;
+use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 class SubmissionFile extends Model
 {
     use S3;
+    use DateFormatter;
 
     protected $guarded = [];
 
@@ -51,8 +54,12 @@ class SubmissionFile extends Model
             $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
             $text_feedback = $assignmentFilesByUser[$user->id]->text_feedback ?? null;
             $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
-            $date_submitted = $assignmentFilesByUser[$user->id]->date_submitted ?? null;
-            $date_graded = $assignmentFilesByUser[$user->id]->date_graded ?? "Not yet graded";
+            $date_submitted = isset($assignmentFilesByUser[$user->id]->date_submitted)
+                ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignmentFilesByUser[$user->id]->date_submitted, Auth::user()->time_zone)
+                : null;
+            $date_graded = isset($assignmentFilesByUser[$user->id]->date_graded)
+                ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignmentFilesByUser[$user->id]->date_graded, Auth::user()->time_zone)
+                : "Not yet graded";
             $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
             $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
             if ($this->inGradeView($all_info, $grade_view)) {
@@ -91,7 +98,7 @@ class SubmissionFile extends Model
     {
 
 
-            foreach ($assignment->questionFileSubmissions as $key => $question_file) {
+        foreach ($assignment->questionFileSubmissions as $key => $question_file) {
             $question_file->needs_grading = $question_file->date_graded ?
                 Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded)
                 : true;
@@ -113,8 +120,12 @@ class SubmissionFile extends Model
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
-                $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
-                $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
+                $date_submitted = isset($questionFilesByUser[$question->question_id][$user->id]->date_submitted)
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_submitted, Auth::user()->time_zone)
+                    : null;
+                $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->timne_zone)
+                    : null;
                 $score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
                 if ($this->inGradeView($all_info, $grade_view)) {
