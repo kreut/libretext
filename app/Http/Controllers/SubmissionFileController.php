@@ -303,7 +303,7 @@ class SubmissionFileController extends Controller
 
             $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put($submission, $submissionContents);
+            Storage::disk('s3')->put($submission, $submissionContents,['StorageClass' => 'STANDARD_IA']);
             $original_filename = $request->file("{$type}File")->getClientOriginalName();
             $submission_file_data = ['type' => $type[0],
                 'submission' => basename($submission),
@@ -386,7 +386,7 @@ class SubmissionFileController extends Controller
             //save locally and to S3
             $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($fileFeedback);
-            Storage::disk('s3')->put("$fileFeedback", $feedbackContents);
+            Storage::disk('s3')->put($fileFeedback, $feedbackContents,['StorageClass' => 'STANDARD_IA']);
             switch ($type) {
                 case('assignment'):
                     DB::table('submission_files')

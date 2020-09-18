@@ -12,7 +12,7 @@ $factory->define(AssignmentFile::class, function (Faker $faker) {
     }
     $submissionContents = Storage::disk('local')->get($file_path);
     if (!Storage::disk('s3')->exists($file_path)) {
-        Storage::disk('s3')->put($file_path, $submissionContents);
+        Storage::disk('s3')->put($file_path, $submissionContents,['StorageClass' => 'STANDARD_IA']);
     }
 
     return ['user_id' => 2,

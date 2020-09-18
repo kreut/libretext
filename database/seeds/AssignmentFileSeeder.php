@@ -13,7 +13,7 @@ class AssignmentFileSeeder extends Seeder
      * @return void
      */
     public function run()
-    {z
+    {
         foreach ([2, 3, 4] as $value){
         AssignmentFile::create(['user_id' => $value,
             'assignment_id' => 1,
@@ -21,7 +21,7 @@ class AssignmentFileSeeder extends Seeder
             'original_filename' => 'orig_fake_' . $value.'.pdf',
             'date_submitted' => Carbon::now()]);
             $submissionContents = Storage::disk('local')->get("assignments/1/fake_$value.pdf");
-            Storage::disk('s3')->put("assignments/1/fake_$value.pdf",  $submissionContents);
+            Storage::disk('s3')->put("assignments/1/fake_$value.pdf",  $submissionContents,['StorageClass' => 'STANDARD_IA']);
         }
     }
 }
