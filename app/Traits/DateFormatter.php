@@ -57,7 +57,7 @@ trait DateFormatter
         $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
         $dt->setTimeZone(new \DateTimeZone($to_time_zone));
 
-        return $dt->format('F d, Y \a\t g:i:sa');
+        return $dt->format('F d, Y g:i:sa');
     }
 
 
