@@ -16,6 +16,8 @@ use Illuminate\Support\Facades\Route;
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt-test', 'Auth\UserController@getAuthenticatedUser');
 Route::post('/contact-us', 'ContactUsController@contactUs');
+Route::get('/jwe/encode', 'JWEController@encode');
+Route::get('/jwe2/encode', 'JWE2Controller@encode');
 
 Route::group(['middleware' => 'auth:api'], function () {
     Route::post('logout', 'Auth\LoginController@logout');
