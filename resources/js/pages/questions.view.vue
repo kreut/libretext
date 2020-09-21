@@ -159,7 +159,7 @@
 
           </div>
         </div>
-        <div v-if="this.learningTreeAsList.length>0">
+        <div v-if="learningTreeAsList.length>0">
           <b-alert show>
 
             <div class="text-center" v-if="!loadedTitles">
@@ -467,10 +467,10 @@ export default {
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         console.log(this.questions[currentPage - 1])
-        this.learningTree = this.questions[currentPage - 1].learning_tree
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: true}, `#${iframe_id}`)
       })
+      this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
       if (this.learningTree) {
         //loop through and get all with parent = -1
@@ -479,7 +479,7 @@ export default {
         let pageId
         let library
         // console.log('length ' + learningTree.length)
-        for (let i = 0; i < this.length; i++) {
+        for (let i = 0; i < this.learningTree.length; i++) {
           let remediation = this.learningTree[i]
           //get the library and page ids
           //go to the server and return with the student learning objectives
