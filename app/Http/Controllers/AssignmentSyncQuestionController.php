@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\JWTModel;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -295,6 +296,7 @@ class AssignmentSyncQuestionController extends Controller
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
             $domd = new \DOMDocument();
+            $JWTModel = new JWTModel();
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
@@ -328,30 +330,41 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $custom_claims["{$question->technology}"] = '';
-                if ($question->technology === 'webwork') {
-                    $custom_claims['webwork'] = [];
-                    $custom_claims['webwork']['problemSeed'] = '1234567';
-                    $custom_claims['webwork']['courseID'] = 'daemon_course';
-                    $custom_claims['webwork']['userID'] = 'daemon';
-                    $custom_claims['webwork']['course_password'] = 'daemon';
-                    $custom_claims['webwork']['showSummary'] = 1;
-                    $custom_claims['webwork']['displayMode'] = 'MathJax';
-                    $custom_claims['webwork']['language'] = 'en';
-                    $custom_claims['webwork']['outputformat'] = 'libretexts';
+                switch ($question->technology) {
+                    case('webwork'):
 
-                    $src = $this->getIframeSrcFromHtml($domd, $question['body']);
+                        $custom_claims['webwork'] = [];
+                        $custom_claims['webwork']['problemSeed'] = '1234567';
+                        $custom_claims['webwork']['courseID'] = 'daemon_course';
+                        $custom_claims['webwork']['userID'] = 'daemon';
+                        $custom_claims['webwork']['course_password'] = 'daemon';
+                        $custom_claims['webwork']['showSummary'] = 1;
+                        $custom_claims['webwork']['displayMode'] = 'MathJax';
+                        $custom_claims['webwork']['language'] = 'en';
+                        $custom_claims['webwork']['outputformat'] = 'libretexts';
 
-                    parse_str($src, $output);
-                    $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];
-                    $custom_claims['webwork']['answersSubmitted'] = '0';
-                    $custom_claims['webwork']['displayMode'] = 'MathJax';
-                    $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
-                    $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
-                    $custom_claims['webwork']['language'] = 'en';
-                    $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
+                        $src = $this->getIframeSrcFromHtml($domd, $question['body']);
+
+                        parse_str($src, $output);
+                        $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];
+                        $custom_claims['webwork']['answersSubmitted'] = '0';
+                        $custom_claims['webwork']['displayMode'] = 'MathJax';
+                        $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
+                        $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
+                        $custom_claims['webwork']['language'] = 'en';
+                        $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+
+                        //$problemJWT = $JWTModel->encode($problemJWT);
+                        break;
+                    case('imathas'):
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        break;
+                    case('h5p'):
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        break;
+
                 }
-                $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
-
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
                 $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
 
