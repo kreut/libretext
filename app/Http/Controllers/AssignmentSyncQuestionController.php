@@ -351,6 +351,7 @@ class AssignmentSyncQuestionController extends Controller
                     $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
                 $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
 
