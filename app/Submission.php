@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 
 use App\Traits\DateFormatter;
 
@@ -26,7 +27,7 @@ class Submission extends Model
 
         // $data = $request->validated();//TODO: validate here!!!!!
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
-
+       // Log::info(print_r($request->all(), true));
 
 
         $data = $request;
@@ -67,15 +68,21 @@ class Submission extends Model
                     $data['score'] = floatval($assignment_question->points) * floatval($payload->score);
                     break;
                 case('webwork'):
-                    LOG::info('case webwork');
-                    $arr = json_decode($data['submission'], true);
-                    LOG::info('data');
-                    $num_questions = count($arr['score']);
-                    $score = 0;
-                    foreach ($arr['score'] as $value) {
-                        $score = $score + $value['score'];
+                   // Log::info('case webwork');
+                    $submission = $data['submission'];
+
+                    $data['score'] = 0;
+                    $num_questions = 0;
+                    foreach ($submission->score as $value) {
+                        $data['score'] = $data['score'] + floatval($value->score);
+                        $num_questions++;
                     }
-                    $data['score'] = floatval($assignment_question->points) * floatval($score / $num_questions);
+
+                   // Log::info($num_questions);
+                    $data['score'] = $num_questions
+                        ? floatval($assignment_question->points) * floatval($data['score'] / $num_questions)
+                        : 0;
+                    $data['submission'] = json_encode($data['submission']);
                     break;
                 default:
                     $response['message'] = 'That is not a valid technology.';
@@ -97,12 +104,16 @@ class Submission extends Model
             if ($submission) {
 
                 $submission->submission = $data['submission'];
+
                 $submission->score = $data['score'];
                 $submission->save();
 
             } else {
-
-                Submission::create($data);
+                Submission::create(['user_id' => $data['user_id'],
+                    'assignment_id' => $data['assignment_id'],
+                    'question_id' => $data['question_id'],
+                    'submission' => $data['submission'],
+                    'score' => $data['score']]);
 
             }
 

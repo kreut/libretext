@@ -14,8 +14,7 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
-//Route::post('jwt-test', 'Auth\UserController@getAuthenticatedUser');
-//Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
+Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
 Route::post('jwt-test', 'JWTController@processAnswerJWT');
 Route::post('/contact-us', 'ContactUsController@contactUs');
 Route::get('/jwt/init', 'JWTController@init');
