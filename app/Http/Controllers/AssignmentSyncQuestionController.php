@@ -328,9 +328,21 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['webwork']['language'] = 'en';
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
-                    $custom_claims['webwork']['sourceFilePath'] = 'TODO';
-                    $custom_claims['webwork']['answerSubmitted'] = '0';
-                    $custom_claims['webwork']['problemUUID'] = rand(1, 100000);
+                    $domd = new \DOMDocument();
+                    libxml_use_internal_errors(true);//errors from DOM that I don't care about
+                    $domd->loadHTML($question['body']);
+                    libxml_use_internal_errors(false);
+                    $iFrame = $domd->getElementsByTagName('iframe')->item(0);
+                    $src = $iFrame->getAttribute('src');
+                    parse_str($src, $output);
+                    $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];//'Library/Valdosta/APEX_Calculus/1.6/APEX_1.6_12.pg';
+                    $custom_claims['webwork']['answersSubmitted'] = '0';
+                    $custom_claims['webwork']['displayMode'] = 'MathJax';
+                    $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
+                    $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
+                    $custom_claims['webwork']['language'] = 'en';
+                    $question['body'] = str_replace('webwork.libretexts.org', 'demo.webwork.rochester.edu', $question['body']);
+
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
