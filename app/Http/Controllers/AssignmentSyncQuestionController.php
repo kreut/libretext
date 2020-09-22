@@ -207,6 +207,7 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
+
     function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
@@ -216,6 +217,7 @@ class AssignmentSyncQuestionController extends Controller
         return $iFrame->getAttribute('src');
 
     }
+
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
@@ -240,7 +242,6 @@ class AssignmentSyncQuestionController extends Controller
                 $response['questions'] = [];
                 return $response;
             }
-
 
 
             $user_as_collection = collect([Auth::user()]);
@@ -302,7 +303,7 @@ class AssignmentSyncQuestionController extends Controller
                 if ($has_question_files) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
-                    $assignment->questions[$key]['submission_file_exists'] = (boolean) $assignment->questions[$key]['submission'];
+                    $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
 
 
                     $formatted_submission_file_info = $this->getFormattedSubmissionFileInfo($submission_file, $assignment->id, $this);
@@ -341,14 +342,13 @@ class AssignmentSyncQuestionController extends Controller
                     $src = $this->getIframeSrcFromHtml($domd, $question['body']);
 
                     parse_str($src, $output);
-                    $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];//'Library/Valdosta/APEX_Calculus/1.6/APEX_1.6_12.pg';
+                    $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];
                     $custom_claims['webwork']['answersSubmitted'] = '0';
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
                     $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                     $custom_claims['webwork']['language'] = 'en';
-                    $question['body'] = str_replace('webwork.libretexts.org', 'demo.webwork.rochester.edu', $question['body']);
-
+                    $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
                 }
                 $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();

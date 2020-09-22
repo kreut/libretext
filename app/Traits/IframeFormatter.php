@@ -23,7 +23,8 @@ trait IframeFormatter
            preg_match('/src="([^"]+)"/', $body, $match);
            $url = $match[1];
            if ($url) {
-               $body = str_replace($url, $url . "&problemJWT=$problemJWT", $body);
+               $and = (substr($url, -1) === '?') ? '' : '&';//just the problemJWT or with query parameters
+               $body = str_replace($url, $url . "{$and}problemJWT=$problemJWT", $body);
            }
        }
        return $body;
