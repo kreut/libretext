@@ -18,12 +18,10 @@
         "snowfire/beautymail": "^1.1",
         "tymon/jwt-auth": "^1.0.0",
         "web-token/jwt-core": "^2.2",
-        "web-token/jwt-easy": "^2.2",
         "web-token/jwt-encryption": "^2.2",
         "web-token/jwt-encryption-algorithm-aescbc": "^2.2",
         "web-token/jwt-encryption-algorithm-aesgcm": "^2.2",
         "web-token/jwt-encryption-algorithm-aeskw": "^2.2",
-        "web-token/jwt-encryption-algorithm-rsa": "^2.2",
         "web-token/jwt-key-mgmt": "^2.2"
     },
     "require-dev": {

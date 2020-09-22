@@ -11,13 +11,10 @@ use Jose\Component\Encryption\Compression\Deflate;
 use Jose\Component\Encryption\JWEBuilder;
 use Jose\Component\Encryption\Serializer\CompactSerializer;
 use Jose\Component\Encryption\Serializer\JWESerializerManager;
-
-
 use Jose\Component\Encryption\JWEDecrypter;
 
-use Jose\Easy\Load;
 
-class JWE2Controller extends Controller
+class JWTController extends Controller
 {
     public function encode()
     {
