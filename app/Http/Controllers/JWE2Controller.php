@@ -4,13 +4,19 @@ namespace App\Http\Controllers;
 
 use Jose\Component\Core\AlgorithmManager;
 use Jose\Component\Encryption\Algorithm\KeyEncryption\A256KW;
-use Jose\Component\Encryption\Algorithm\ContentEncryption\A256CBCHS512;
+use Jose\Component\Encryption\Algorithm\ContentEncryption\A256GCM;
+use Jose\Component\Encryption\Algorithm\KeyEncryption\A128KW;
+use Jose\Component\Encryption\Algorithm\KeyEncryption\RSAOAEP;
+use Jose\Component\Encryption\Algorithm\ContentEncryption\A128CBCHS256;
 use Jose\Component\Encryption\Compression\CompressionMethodManager;
 use Jose\Component\Core\JWK;
 use Jose\Component\Encryption\Compression\Deflate;
 use Jose\Component\Encryption\JWEBuilder;
 use Jose\Component\Encryption\Serializer\CompactSerializer;
 use Jose\Component\Encryption\Serializer\JWESerializerManager;
+use Jose\Component\KeyManagement\JWKFactory;
+
+
 
 
 use Jose\Component\Encryption\JWEDecrypter;
@@ -21,14 +27,16 @@ class JWE2Controller extends Controller
 {
     public function encode()
     {
+
+
         // The key encryption algorithm manager with the A256KW algorithm.
         $keyEncryptionAlgorithmManager = new AlgorithmManager([
-            new A256KW(),
+            new RSAOAEP(),
         ]);
 
 // The content encryption algorithm manager with the A256CBC-HS256 algorithm.
         $contentEncryptionAlgorithmManager = new AlgorithmManager([
-            new A256CBCHS512(),
+            new A256GCM(), //A256GCM
         ]);
 
 // The compression method manager with the DEF (Deflate) method.
@@ -43,27 +51,34 @@ class JWE2Controller extends Controller
             $compressionMethodManager
         );
 
+       //webwork-rsa.pub to encode
+        $jwk = JWKFactory::createRSAKey(
+            4096, // Size in bits of the key. We recommend at least 2048 bits.
+            [
+                'alg' => 'RSA-OAEP', // This key must only be used with the RSA-OAEP-256 algorithm
+                'use' => 'enc'    // This key is used for encryption/decryption operations only
+            ]);
+
         //Our key
-        $jwk = new JWK([
-            'kty' => 'oct',
-            'k' => 'dzI6nbW4OcNF-AtfxGAmuyz7IpHRudBI0WgGjZWgaRJt6prBn3DARXgUR8NVwKhfL43QBIU2Un3AvCGCHRgY4TbEqhOi8-i98xxmCggNjde4oaW6wkJ2NgM3Ss9SOX9zS3lcVzdCMdum-RwVJ301kbin4UtGztuzJBeg5oVN00MGxjC2xWwyI0tgXVs-zJs5WlafCuGfX1HrVkIf5bvpE0MQCSjdJpSeVao6-RSTYDajZf7T88a2eVjeW31mMAg-jzAWfUrii61T_bYPJFOXW8kkRWoa1InLRdG6bKB9wQs9-VdXZP60Q4Yuj_WZ-lO7qV9AEFrUkkjpaDgZT86w2g',
-        ]);
+
 
 // The payload we want to encrypt. It MUST be a string.
         $payload = json_encode([
             'iat' => time(),
             'nbf' => time(),
-            'exp' => time() + 3600,
+            'exp' => time() + 3600, //TODO: shorten
             'iss' => 'My service',
             'aud' => 'Your application',
         ]);
+
+
 
         $jwe = $jweBuilder
             ->create()              // We want to create a new JWE
             ->withPayload($payload) // We set the payload
             ->withSharedProtectedHeader([
-                'alg' => 'A256KW',        // Key Encryption Algorithm
-                'enc' => 'A256CBC-HS512', // Content Encryption Algorithm
+                'alg' => 'RSA-OAEP',        // Key Encryption --- Algorithm RSA-OAEP
+                'enc' => 'A256GCM', // Content Encryption  --- Algorithm A256GCM
                 'zip' => 'DEF'            // We enable the compression (irrelevant as the payload is small, just for the example).
             ])
             ->addRecipient($jwk)    // We add a recipient (a shared key or public key).
@@ -75,14 +90,15 @@ class JWE2Controller extends Controller
 //dd($token);
 echo "Encrypted token: $token\r\n\r\n";
 
-// The key encryption algorithm manager with the A256KW algorithm.
+        // The key encryption algorithm manager with the A256KW algorithm.
         $keyEncryptionAlgorithmManager = new AlgorithmManager([
-            new A256KW(),
+            new RSAOAEP(),
         ]);
+
 
 // The content encryption algorithm manager with the A256CBC-HS256 algorithm.
         $contentEncryptionAlgorithmManager = new AlgorithmManager([
-            new A256CBCHS512(),
+            new A256GCM(),
         ]);
 
 // The compression method manager with the DEF (Deflate) method.
@@ -97,11 +113,7 @@ echo "Encrypted token: $token\r\n\r\n";
             $compressionMethodManager
         );
 
-        // Our key.
-        $jwk = new JWK([
-            'kty' => 'oct',
-            'k' => 'dzI6nbW4OcNF-AtfxGAmuyz7IpHRudBI0WgGjZWgaRJt6prBn3DARXgUR8NVwKhfL43QBIU2Un3AvCGCHRgY4TbEqhOi8-i98xxmCggNjde4oaW6wkJ2NgM3Ss9SOX9zS3lcVzdCMdum-RwVJ301kbin4UtGztuzJBeg5oVN00MGxjC2xWwyI0tgXVs-zJs5WlafCuGfX1HrVkIf5bvpE0MQCSjdJpSeVao6-RSTYDajZf7T88a2eVjeW31mMAg-jzAWfUrii61T_bYPJFOXW8kkRWoa1InLRdG6bKB9wQs9-VdXZP60Q4Yuj_WZ-lO7qV9AEFrUkkjpaDgZT86w2g',
-        ]);
+
 
 // The serializer manager. We only use the JWE Compact Serialization Mode.
         $serializerManager = new JWESerializerManager([
@@ -116,7 +128,7 @@ echo "Encrypted token: $token\r\n\r\n";
 
 // We decrypt the token. This method does NOT check the header.
         $success = $jweDecrypter->decryptUsingKey($jwe, $jwk, 0);
-
+echo  $success . 'jere';
         echo "\r\n" . $jwe->getPayload();
 
     }
