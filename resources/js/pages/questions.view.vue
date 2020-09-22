@@ -332,6 +332,7 @@ export default {
         let technology = vm.getTechnology(event.origin)
         console.log(technology)
         console.log(event.data)
+        console.log(event)
         let actionableEvent
         try {
           actionableEvent = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
