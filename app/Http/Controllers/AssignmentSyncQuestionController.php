@@ -207,7 +207,15 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
+    function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
+    {
+        libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $domd->loadHTML($html);
+        libxml_use_internal_errors(false);
+        $iFrame = $domd->getElementsByTagName('iframe')->item(0);
+        return $iFrame->getAttribute('src');
 
+    }
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
@@ -285,6 +293,7 @@ class AssignmentSyncQuestionController extends Controller
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
+            $domd = new \DOMDocument();
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
@@ -328,12 +337,9 @@ class AssignmentSyncQuestionController extends Controller
                     $custom_claims['webwork']['displayMode'] = 'MathJax';
                     $custom_claims['webwork']['language'] = 'en';
                     $custom_claims['webwork']['outputformat'] = 'libretexts';
-                    $domd = new \DOMDocument();
-                    libxml_use_internal_errors(true);//errors from DOM that I don't care about
-                    $domd->loadHTML($question['body']);
-                    libxml_use_internal_errors(false);
-                    $iFrame = $domd->getElementsByTagName('iframe')->item(0);
-                    $src = $iFrame->getAttribute('src');
+
+                    $src = $this->getIframeSrcFromHtml($domd, $question['body']);
+
                     parse_str($src, $output);
                     $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];//'Library/Valdosta/APEX_Calculus/1.6/APEX_1.6_12.pg';
                     $custom_claims['webwork']['answersSubmitted'] = '0';
