@@ -3,7 +3,6 @@
 namespace App;
 
 use App\Exceptions\Handler;
-use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -11,8 +10,12 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 
+use App\Traits\DateFormatter;
+
 class Submission extends Model
 {
+    use DateFormatter;
+
     protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score'];
 
 
@@ -21,7 +24,11 @@ class Submission extends Model
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
 
-        //$data = $request->validated();TODO: validate here!!!!!
+        // $data = $request->validated();//TODO: validate here!!!!!
+        // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
+
+
+
         $data = $request;
         $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
@@ -60,7 +67,9 @@ class Submission extends Model
                     $data['score'] = floatval($assignment_question->points) * floatval($payload->score);
                     break;
                 case('webwork'):
+                    LOG::info('case webwork');
                     $arr = json_decode($data['submission'], true);
+                    LOG::info('data');
                     $num_questions = count($arr['score']);
                     $score = 0;
                     foreach ($arr['score'] as $value) {
