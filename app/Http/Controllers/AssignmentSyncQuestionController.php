@@ -359,7 +359,7 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
-                        $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
+                        $question['body'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
                         break;
                     case('imathas'):
                         $custom_claims['imathas'] = [];
