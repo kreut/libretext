@@ -366,7 +366,7 @@ class AssignmentSyncQuestionController extends Controller
                         $src = $this->getIframeSrcFromHtml($domd, $question['body']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
                         $custom_claims['imathas']['seed'] = 1234;
-                        $question['body'] = '<iframe class="imathas_problem" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="400" width="100%"></iframe>';
+                        $question['body'] = '<iframe class="imathas_problem" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                         break;
                     case('h5p'):
                        // $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());

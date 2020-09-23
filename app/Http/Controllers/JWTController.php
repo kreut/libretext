@@ -13,7 +13,7 @@ use App\Traits\JWT;
 
 class JWTController extends Controller
 {
-use JWT;
+    use JWT;
 
     public function init()
     {
@@ -25,8 +25,9 @@ use JWT;
 
     public function validateToken()
     {
+
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
-        try {
+        try {;
             if (!$user = \JWTAuth::parseToken()->authenticate()) {
                 return response()->json(['user_not_found'], 404);
             }
@@ -51,15 +52,21 @@ use JWT;
     public function processAnswerJWT()
     {
 
-        $payload= $this->validateToken();//get the payload
-        $answerJWT  = json_decode($payload);//convert it to an array
+        $payload = $this->validateToken();//get the payload
+        $answerJWT = json_decode($payload);//convert it to an array
         $problemJWT = $this->getPayload($answerJWT->problemJWT);//inside the answer JWT
 
         $request = new storeSubmission();
-        $request['assignment_id'] =  $problemJWT->adapt->assignment_id;
-        $request['question_id'] =  $problemJWT->adapt->question_id;
-        $request['technology'] =  $problemJWT->adapt->technology;
-        $request['submission'] =  $answerJWT;
+        $request['assignment_id'] = $problemJWT->adapt->assignment_id;
+        $request['question_id'] = $problemJWT->adapt->question_id;
+        $request['technology'] = $problemJWT->adapt->technology;
+        $request['submission'] = $answerJWT;
+
+        if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
+           $response['message'] = 'Score field was null.';
+           $response['type'] = 'error';
+           return $response;
+        }
         $Submission = new Submission();
         return $Submission->store($request, new Submission(), new Assignment(), new Score());
     }

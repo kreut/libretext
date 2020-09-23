@@ -57,7 +57,8 @@
             <div v-if="user.role !== 3">
               <div v-if="has_submissions">
                 <b-alert variant="info" show>
-                  <strong>Since students have already submitted responses, you can view the questions but you can't add or remove them.
+                  <strong>Since students have already submitted responses, you can view the questions but you can't add
+                    or remove them.
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
               <div v-if="!has_submissions">
@@ -333,15 +334,19 @@ export default {
         console.log(technology)
         console.log(event.data)
         console.log(event)
-        let actionableEvent
+        let clientSideSubmit
+        let serverSideSubmit
         try {
-          actionableEvent = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
-            || ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+          clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
         } catch (error) {
-          actionableEvent = false
+          clientSideSubmit = serverSideSubmit = false
         }
 
-        if (actionableEvent) {
+        if (serverSideSubmit) {
+          vm.showResponse(JSON.parse(event.data))
+        }
+        if (clientSideSubmit) {
           let submission_data = {
             'submission': event.data,
             'assignment_id': vm.assignmentId,

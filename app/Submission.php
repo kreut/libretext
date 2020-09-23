@@ -64,13 +64,13 @@ class Submission extends Model
                     $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
                     break;
                 case('imathas'):
-                    $payload = $this->getPayload($submission->jwt);
-                    $data['score'] = floatval($assignment_question->points) * floatval($payload->score);
+                    $submission = $data['submission'];
+                    $data['score'] = floatval($submission->score);
+                    $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
                     break;
                 case('webwork'):
                    // Log::info('case webwork');
                     $submission = $data['submission'];
-
                     $data['score'] = 0;
                     $num_questions = 0;
                     foreach ($submission->score as $value) {
