@@ -334,14 +334,38 @@ export default {
         console.log(technology)
         console.log(event.data)
         console.log(event)
+        if (technology === 'imathas') {
+
+
+        }
         let clientSideSubmit
         let serverSideSubmit
+        let iMathASResize
         try {
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
+
+        } catch (error) {
+          clientSideSubmit = false
+        }
+        try {
           serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
         } catch (error) {
-          clientSideSubmit = serverSideSubmit = false
+          serverSideSubmit = false
         }
+
+        try {
+          iMathASResize = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.frameResize'))
+        } catch (error) {
+          iMathASResize = false
+        }
+
+    if (iMathASResize){
+      let embedWrap = document.getElementById('embed1wrap')
+      embedWrap.setAttribute('height',JSON.parse(event.data).wrapheight)
+      let iframe = embedWrap.getElementsByTagName("iframe")[0]
+      iframe.setAttribute("height", JSON.parse(event.data).height);
+    }
+
 
         if (serverSideSubmit) {
           vm.showResponse(JSON.parse(event.data))
@@ -386,7 +410,7 @@ export default {
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false;
-      }, 3000);
+      }, 5000);
     },
     getTechnology(body) {
       let technology
