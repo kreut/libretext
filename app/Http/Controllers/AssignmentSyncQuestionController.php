@@ -209,7 +209,7 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
+    public function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
         $domd->loadHTML($html);
@@ -218,6 +218,15 @@ class AssignmentSyncQuestionController extends Controller
         return $iFrame->getAttribute('src');
 
     }
+
+    public function getQueryParamFromSrc(string $src, string $query_param)
+    {
+        $url_components = parse_url($src);
+        parse_str($url_components['query'], $output);
+        return $output[$query_param];
+    }
+
+
 
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
@@ -344,27 +353,27 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['outputformat'] = 'libretexts';
 
                         $src = $this->getIframeSrcFromHtml($domd, $question['body']);
-
-                        parse_str($src, $output);
-                        $custom_claims['webwork']['sourceFilePath'] = $output['sourceFilePath'];
+                        $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($src, 'sourceFilePath');
                         $custom_claims['webwork']['answersSubmitted'] = '0';
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
                         $custom_claims['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
                         $question['body'] = '<iframe class="webwork_problem" src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
-
-                        //$problemJWT = $JWTModel->encode($problemJWT);
                         break;
                     case('imathas'):
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        $custom_claims['imathas'] = [];
+                        $src = $this->getIframeSrcFromHtml($domd, $question['body']);
+                        $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
+                        $question['body'] = '<iframe class="imathas_problem" src="https://imathas.libretexts.org/imathas/embedq2.php?"></iframe>';
                         break;
                     case('h5p'):
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                       // $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
 
                 }
+                //$problemJWT = $JWTModel->encode($problemJWT);
+                $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
                 $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
 
