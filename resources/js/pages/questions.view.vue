@@ -56,9 +56,9 @@
             <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
               <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
             <div v-if="solutionsReleased">
-              <span class="font-weight-bold">Correct response:</span> {{
+              <!--<span class="font-weight-bold">Correct response:</span> {{
                 questions[currentPage - 1].correct_response
-              }}<br>
+              }}<br>-->
               <span class="font-weight-bold">Your score:</span> {{ questions[currentPage - 1].submission_score }}<br>
             </div>
           </div>

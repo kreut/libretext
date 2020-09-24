@@ -239,12 +239,12 @@ class AssignmentSyncQuestionController extends Controller
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response;
-                    $correct_response = $submission_object->object->definition->correctResponsesPattern;
+                    //$correct_response = $submission_object->object->definition->correctResponsesPattern;
                     $last_submitted = $submission->updated_at;
                     break;
                 case('webwork'):
                     $student_response = 'webworkTODO';
-                    $correct_response = 'webworkTODO';
+                    //$correct_response = 'webworkTODO';
                     break;
                 case('imathas'):
                     $tks = explode('.', $submission_object->state);
@@ -252,7 +252,7 @@ class AssignmentSyncQuestionController extends Controller
                     $state= json_decode(base64_decode($bodyb64));
 
                     $student_response  = json_encode($state->stuanswers);
-                    $correct_response = 'N/A';
+                    //$correct_response = 'N/A';
                     $last_submitted = $submission->updated_at;
                     break;
             }
