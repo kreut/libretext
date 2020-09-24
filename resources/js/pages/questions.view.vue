@@ -51,7 +51,9 @@
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
-
+        <div class="text-center"><h5>This question is worth {{ questions[currentPage - 1].points }} points.</h5></div>
+        Last response: {{ questions[currentPage - 1].student_response }}<br>
+        Correct response:{{ questions[currentPage - 1].correct_response }}<br>
         <div>
           <div class="d-flex">
             <div v-if="user.role !== 3">
@@ -359,12 +361,12 @@ export default {
           iMathASResize = false
         }
 
-    if (iMathASResize){
-      let embedWrap = document.getElementById('embed1wrap')
-      embedWrap.setAttribute('height',JSON.parse(event.data).wrapheight)
-      let iframe = embedWrap.getElementsByTagName("iframe")[0]
-      iframe.setAttribute("height", JSON.parse(event.data).height);
-    }
+        if (iMathASResize) {
+          let embedWrap = document.getElementById('embed1wrap')
+          embedWrap.setAttribute('height', JSON.parse(event.data).wrapheight)
+          let iframe = embedWrap.getElementsByTagName("iframe")[0]
+          iframe.setAttribute("height", JSON.parse(event.data).height);
+        }
 
 
         if (serverSideSubmit) {

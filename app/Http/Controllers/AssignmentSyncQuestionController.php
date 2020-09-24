@@ -226,6 +226,36 @@ class AssignmentSyncQuestionController extends Controller
         return $output[$query_param];
     }
 
+    public function getResponseInfo($submissions_by_question_id, $question_technologies, $question_id)
+    {
+        $student_response = 'N/A';
+        $correct_response = null;
+        $score = 'N/A';
+        if (isset($submissions_by_question_id[$question_id])) {
+            $submission = $submissions_by_question_id[$question_id];
+            $submission_object = json_decode($submission->submission);
+            $score = $submission->score;
+            switch ($question_technologies[$question_id]) {
+                case('h5p'):
+                    $student_response = $submission_object->result->response;
+                    $correct_response = $submission_object->object->definition->correctResponsesPattern;
+                    break;
+                case('webwork'):
+                    $student_response = 'webworkTODO';
+                    $correct_response = 'webworkTODO';
+                    break;
+                case('imathas'):
+                    $student_response = 'imathasTODO';
+                    $correct_response = 'imathasTODO';
+                    break;
+            }
+        }
+
+        return [$student_response, $correct_response, $score];
+
+
+    }
+
 
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
@@ -278,6 +308,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_info = DB::table('questions')
                 ->whereIn('id', $question_ids)
                 ->get();
+
             $question_technologies = [];
             foreach ($question_info as $key => $question) {
                 $question_technologies[$question->id] = $question->technology;
@@ -289,30 +320,13 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', Auth::user()->id)
                 ->get();
             //  dd($question_ids);
+            $submissions_by_question_id = [];
             if ($submissions) {
-                foreach ($submissions as $key => $submission) {
-                    $question_id = $submission->question_id;
-                    $submission_object = json_decode($submission->submission);
-                    $student_response = null;
-                    $correct_response = null;
-                    switch ($question_technologies[$submission->question_id]) {
-                        case('h5p'):
-                            $student_response = $submission_object->result->response;
-                            $correct_response = $submission_object->object->definition->correctResponsesPattern;
-                            break;
-                        case('webwork'):
-                            break;
-                        case('imathas'):
-
-                            break;
-
-                    }
-                    $responses[$question_id]['student_response'] = $student_response;
-                    $responses[$question_id]['correct_response'] = $correct_response;
-                    $responses[$question_id]['score'] = $submission->score;
+                foreach ($submissions as $key => $value) {
+                    $submissions_by_question_id[$value->question_id] = $value;
                 }
-
             }
+
 
             $instructor_user_id = $assignment->course->user_id;
             $instructor_learning_trees = DB::table('learning_trees')
@@ -346,9 +360,10 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                $assignment->questions[$key]['student_response'] =  $responses[$question_id]['student_response'] ?? null;
-                $assignment->questions[$key]['correct_response'] = $responses[$question_id]['correct_response'] ?? null;
-                $assignment->questions[$key]['submission_score'] = $responses[$question_id]['score'] ?? null;
+                [$student_response, $correct_response, $submission_score] = $this->getResponseInfo($submissions_by_question_id,$question_technologies, $question->id);
+                $assignment->questions[$key]['student_response'] = $student_response;
+                $assignment->questions[$key]['correct_response'] = $correct_response;
+                $assignment->questions[$key]['submission_score'] = $submission_score;
 
                 $has_question_files = $question_files[$question->id];
                 $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
