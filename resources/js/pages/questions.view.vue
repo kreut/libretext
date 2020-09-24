@@ -36,9 +36,6 @@
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
-        <div class="mb-3 text-center" v-if="user.role === 3">
-          <h4>{{ questions[currentPage - 1].last_submitted }}</h4>
-        </div>
 
         <div class="overflow-auto">
           <b-pagination
@@ -51,9 +48,19 @@
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
-        <div class="text-center"><h5>This question is worth {{ questions[currentPage - 1].points }} points.</h5></div>
-        Last response: {{ questions[currentPage - 1].student_response }}<br>
-        Correct response:{{ questions[currentPage - 1].correct_response }}<br>
+        <div class="card mb-2">
+          <div class="card-body">
+            <p>
+              <span class="font-italic font-weight-bold">This question is worth {{ questions[currentPage - 1].points }} points.</span>
+            </p>
+            <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
+            <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
+            <span class="font-weight-bold">Correct response:</span> {{
+              questions[currentPage - 1].correct_response
+            }}<br>
+            <span class="font-weight-bold">Your score:</span> {{ questions[currentPage - 1].submission_score }}<br>
+          </div>
+        </div>
         <div>
           <div class="d-flex">
             <div v-if="user.role !== 3">
@@ -121,9 +128,6 @@
             </b-form-group>
 
           </b-form>
-          <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
-            <strong>{{ this.submissionDataMessage }}</strong></b-alert>
-
           <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
             <div class="col-6">
               <b-card title="File Submission Information">
@@ -240,6 +244,8 @@
         </iframe>
 
         <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
+        <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
+          <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert>
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
@@ -407,6 +413,7 @@ export default {
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       if (data.type === 'success') {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted;
+        this.questions[this.currentPage - 1]['student_response'] = data.student_response;
       }
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true

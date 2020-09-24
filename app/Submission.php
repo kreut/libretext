@@ -27,7 +27,7 @@ class Submission extends Model
 
         // $data = $request->validated();//TODO: validate here!!!!!
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
-       // Log::info(print_r($request->all(), true));
+        // Log::info(print_r($request->all(), true));
 
 
         $data = $request;
@@ -57,19 +57,21 @@ class Submission extends Model
         if (env('DB_DATABASE') === 'test_libretext') {
             $data['score'] = $assignment->default_points_per_question;
         } else {
-
+            $student_response = 'N/A';
             switch ($data['technology']) {
                 case('h5p'):
                     $submission = json_decode($data['submission']);
                     $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                    $student_response = $submission->result->response;
                     break;
                 case('imathas'):
                     $submission = $data['submission'];
                     $data['score'] = floatval($submission->score);
                     $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
+                    $student_response = 'todo for imathas';
                     break;
                 case('webwork'):
-                   // Log::info('case webwork');
+                    // Log::info('case webwork');
                     $submission = $data['submission'];
                     $data['score'] = 0;
                     $num_questions = 0;
@@ -77,8 +79,9 @@ class Submission extends Model
                         $data['score'] = $data['score'] + floatval($value->score);
                         $num_questions++;
                     }
+                    $student_response = 'todo for webwork';
 
-                   // Log::info($num_questions);
+                    // Log::info($num_questions);
                     $data['score'] = $num_questions
                         ? floatval($assignment_question->points) * floatval($data['score'] / $num_questions)
                         : 0;
@@ -139,7 +142,9 @@ class Submission extends Model
             }
 
             $response['message'] = 'Your question submission was saved.';
-            $response['last_submitted'] = 'The date of your last submission was ' . $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
+            $response['last_submitted'] =  $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
+            $response['student_response'] = $student_response;
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

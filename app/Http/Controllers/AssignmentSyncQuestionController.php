@@ -231,6 +231,7 @@ class AssignmentSyncQuestionController extends Controller
         $student_response = 'N/A';
         $correct_response = null;
         $score = 'N/A';
+        $last_submitted = 'N/A';
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $submission_object = json_decode($submission->submission);
@@ -239,6 +240,7 @@ class AssignmentSyncQuestionController extends Controller
                 case('h5p'):
                     $student_response = $submission_object->result->response;
                     $correct_response = $submission_object->object->definition->correctResponsesPattern;
+                    $last_submitted = $submission->updated_at;
                     break;
                 case('webwork'):
                     $student_response = 'webworkTODO';
@@ -251,7 +253,7 @@ class AssignmentSyncQuestionController extends Controller
             }
         }
 
-        return [$student_response, $correct_response, $score];
+        return [$student_response, $correct_response, $score, $last_submitted];
 
 
     }
@@ -314,7 +316,7 @@ class AssignmentSyncQuestionController extends Controller
                 $question_technologies[$question->id] = $question->technology;
             }
 
-            $responses = [];
+
             $submissions = DB::table('submissions')
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', Auth::user()->id)
@@ -360,11 +362,13 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                [$student_response, $correct_response, $submission_score] = $this->getResponseInfo($submissions_by_question_id,$question_technologies, $question->id);
+                [$student_response, $correct_response, $submission_score, $last_submitted] = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['correct_response'] = $correct_response;
                 $assignment->questions[$key]['submission_score'] = $submission_score;
-
+                $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone)
+                    : $last_submitted;
                 $has_question_files = $question_files[$question->id];
                 $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
                 if ($has_question_files) {
