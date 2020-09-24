@@ -54,11 +54,13 @@
               <span class="font-italic font-weight-bold">This question is worth {{ questions[currentPage - 1].points }} points.</span>
             </p>
             <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
-            <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
-            <span class="font-weight-bold">Correct response:</span> {{
-              questions[currentPage - 1].correct_response
-            }}<br>
-            <span class="font-weight-bold">Your score:</span> {{ questions[currentPage - 1].submission_score }}<br>
+              <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
+            <div v-if="solutionsReleased">
+              <span class="font-weight-bold">Correct response:</span> {{
+                questions[currentPage - 1].correct_response
+              }}<br>
+              <span class="font-weight-bold">Your score:</span> {{ questions[currentPage - 1].submission_score }}<br>
+            </div>
           </div>
         </div>
         <div>
@@ -583,6 +585,7 @@ export default {
         this.title = `${data.name} Assignment Questions`
         this.has_submissions = data.has_submissions
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
+        this.solutionsReleased = Boolean(Number(data.solutions_released))
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assignment Questions'

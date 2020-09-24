@@ -329,7 +329,6 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
 
-
             $instructor_user_id = $assignment->course->user_id;
             $instructor_learning_trees = DB::table('learning_trees')
                 ->whereIn('question_id', $question_ids)
@@ -364,8 +363,11 @@ class AssignmentSyncQuestionController extends Controller
 
                 [$student_response, $correct_response, $submission_score, $last_submitted] = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
                 $assignment->questions[$key]['student_response'] = $student_response;
-                $assignment->questions[$key]['correct_response'] = $correct_response;
-                $assignment->questions[$key]['submission_score'] = $submission_score;
+                if ($assignment->solutions_released) {
+                    $assignment->questions[$key]['correct_response'] = $correct_response;
+                    $assignment->questions[$key]['submission_score'] = $submission_score;
+                }
+
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone)
                     : $last_submitted;
