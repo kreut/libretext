@@ -272,8 +272,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
             'question_id' => 0,
             'submission' => 'some submission'])
             ->assertJson(['type' => 'error',
-                'message' => 'No responses will be saved since that question is not in the assignment.']);
-
+                'message' => 'That question is not part of the assignment.']);
     }
 
     /** @test */

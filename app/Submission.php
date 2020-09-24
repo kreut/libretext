@@ -53,11 +53,10 @@ class Submission extends Model
             return $response;
         }
 
-
+        $student_response = 'N/A';
         if (env('DB_DATABASE') === 'test_libretext') {
             $data['score'] = $assignment->default_points_per_question;
         } else {
-            $student_response = 'N/A';
             switch ($data['technology']) {
                 case('h5p'):
                     $submission = json_decode($data['submission']);
