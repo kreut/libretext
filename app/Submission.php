@@ -66,8 +66,12 @@ class Submission extends Model
                 case('imathas'):
                     $submission = $data['submission'];
                     $data['score'] = floatval($submission->score);
+
+                    $tks = explode('.', $submission->state);
+                    list($headb64, $bodyb64, $cryptob64) = $tks;
+                    $student_response  = $submission->state->stuanswers;
+
                     $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
-                    $student_response = 'todo for imathas';
                     break;
                 case('webwork'):
                     // Log::info('case webwork');

@@ -247,8 +247,13 @@ class AssignmentSyncQuestionController extends Controller
                     $correct_response = 'webworkTODO';
                     break;
                 case('imathas'):
-                    $student_response = 'imathasTODO';
-                    $correct_response = 'imathasTODO';
+                    $tks = explode('.', $submission_object->state);
+                    list($headb64, $bodyb64, $cryptob64) = $tks;
+                    $state= json_decode(base64_decode($bodyb64));
+
+                    $student_response  = json_encode($state->stuanswers);
+                    $correct_response = 'N/A';
+                    $last_submitted = $submission->updated_at;
                     break;
             }
         }
