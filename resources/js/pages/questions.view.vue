@@ -412,6 +412,7 @@ export default {
     },
     showResponse(data) {
       console.log('showing response')
+      console.log(data)
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       if (data.type === 'success') {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted;

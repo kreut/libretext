@@ -69,7 +69,8 @@ class Submission extends Model
 
                     $tks = explode('.', $submission->state);
                     list($headb64, $bodyb64, $cryptob64) = $tks;
-                    $student_response  = $submission->state->stuanswers;
+                    $state = json_decode(base64_decode($bodyb64));
+                    $student_response  = $state->stuanswers;
 
                     $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
                     break;

@@ -55,6 +55,7 @@ class JWTController extends Controller
             return json_encode(['type' => 'error', 'message' => $message, 'payload' => $payload]);
         }
         $problemJWT = $this->getPayload($answerJWT->problemJWT);//inside the answer JWT
+
         $missing_properties = !(
             isset($problemJWT->adapt) &&
             isset($problemJWT->adapt->assignment_id) &&
