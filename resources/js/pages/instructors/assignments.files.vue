@@ -1,6 +1,7 @@
 <template>
   <div>
     <div v-if="submissionFiles.length>0">
+
       <b-card class="col-4">
         <b-form-group id="grade-view" label="Current Grade View:" label-for="grade-view">
           <b-form-select
@@ -38,116 +39,120 @@
             last-number
           ></b-pagination>
         </div>
-        <div class="container">
-          <div class="row">
-            <div class="col-sm">
-              <b-card title="Submission Information">
-                <b-card-text>
-                  <p>
-                    Name: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
-                    Date Submitted: {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
-                      1]['date_submitted']
-                    }}<br>
-                    Date Graded: {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
-                    }}<br>
-                    Base Score: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['score'] }}</p>
-                  <hr>
-                  <b-form-group
-                    id="fieldset-horizontal"
-                    label-cols-sm="6"
-                    label-cols-lg="5"
-                    label=" Score With Submission:"
-                    label-for="input-horizontal"
-                  >
-                    <b-form-input id="input-horizontal"
-                                  v-model="scoreForm.score"
-                                  type="text"
-                                  placeholder="Enter the score"
-                                  :class="{ 'is-invalid': scoreForm.errors.has('score') }"
-                                  @keydown="scoreForm.errors.clear('score')"
-                    ></b-form-input>
-                    <has-error :form="scoreForm" field="score"></has-error>
-                    <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit Score
-                    </b-button>
-                  </b-form-group>
-                </b-card-text>
-              </b-card>
-
-            </div>
-
-            <div class="col-sm">
-              <b-card title="Optional Text Comments">
-                <b-card-text>
-                  <b-form ref="form">
-                    <b-form-textarea
-                      id="text_comments"
-                      v-model="textFeedbackForm.textFeedback"
-                      placeholder="Enter something..."
-                      rows="6"
-                      max-rows="6"
-                      :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
-                      @keydown="textFeedbackForm.errors.clear('textFeedback')"
-                    >
-
-                    </b-form-textarea>
-                    <has-error :form="textFeedbackForm" field="textFeedback"></has-error>
-                    <div class="row mt-4 float-right">
-                      <b-button variant="primary" v-on:click="submitTextFeedbackForm">Save Comments</b-button>
-                    </div>
-                  </b-form>
-                </b-card-text>
-              </b-card>
-            </div>
-          </div>
-        </div>
-        <hr>
-        <div class="container">
-          <div class="row">
-            <div class="col-sm">
-              <b-button variant="outline-primary"
-                        v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'], $noty)">
-                Download Submission
-              </b-button>
-
-              <toggle-button class="float-right"
-                             @change="toggleView(currentStudentPage)"
-                             :width="180"
-                             :value="viewSubmission"
-                             :font-size="14"
-                             :margin="4"
-                             :sync="true"
-                             :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                             :labels="{unchecked: 'View Submission', checked: 'View File Feedback'}"/>
-
-            </div>
-            <b-form ref="form">
+        <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
+          <div class="container">
+            <div class="row">
               <div class="col-sm">
-                <b-input-group>
-                  <b-form-file
-                    ref="fileFeedbackInput"
-                    v-model="fileFeedbackForm.fileFeedback"
-                    placeholder="Choose a file or drop it here..."
-                    drop-placeholder="Drop file here..."
-                    :accept="getAcceptedFileTypes()"
-                  ></b-form-file>
-                  <span class="ml-3">
-                <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
-                </span>
-                </b-input-group>
-                <div v-if="uploading">
-                  <b-spinner small type="grow"></b-spinner>
-                  Uploading file...
-                </div>
-                <input type="hidden" class="form-control is-invalid">
-                <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback') }}
-                </div>
-
+                <b-card title="Submission Information">
+                  <b-card-text>
+                    <p>
+                      Name: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
+                      Date Submitted: {{
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
+                        1]['date_submitted']
+                      }}<br>
+                      Date Graded: {{
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                      }}<br>
+                      Base Score: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['score'] }}
+                    </p>
+                    <hr>
+                    <b-form-group
+                      id="fieldset-horizontal"
+                      label-cols-sm="6"
+                      label-cols-lg="5"
+                      label=" Score With Submission:"
+                      label-for="input-horizontal"
+                    >
+                      <b-form-input id="input-horizontal"
+                                    v-model="scoreForm.score"
+                                    type="text"
+                                    placeholder="Enter the score"
+                                    :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                                    @keydown="scoreForm.errors.clear('score')"
+                      ></b-form-input>
+                      <has-error :form="scoreForm" field="score"></has-error>
+                      <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit
+                        Score
+                      </b-button>
+                    </b-form-group>
+                  </b-card-text>
+                </b-card>
 
               </div>
 
-            </b-form>
+              <div class="col-sm">
+                <b-card title="Optional Text Comments">
+                  <b-card-text>
+                    <b-form ref="form">
+                      <b-form-textarea
+                        id="text_comments"
+                        v-model="textFeedbackForm.textFeedback"
+                        placeholder="Enter something..."
+                        rows="6"
+                        max-rows="6"
+                        :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
+                        @keydown="textFeedbackForm.errors.clear('textFeedback')"
+                      >
+
+                      </b-form-textarea>
+                      <has-error :form="textFeedbackForm" field="textFeedback"></has-error>
+                      <div class="row mt-4 float-right">
+                        <b-button variant="primary" v-on:click="submitTextFeedbackForm">Save Comments</b-button>
+                      </div>
+                    </b-form>
+                  </b-card-text>
+                </b-card>
+              </div>
+            </div>
+          </div>
+          <hr>
+          <div class="container">
+            <div class="row">
+              <div class="col-sm">
+                <b-button variant="outline-primary"
+                          v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'], $noty)">
+                  Download Submission
+                </b-button>
+
+                <toggle-button class="float-right"
+                               @change="toggleView(currentStudentPage)"
+                               :width="180"
+                               :value="viewSubmission"
+                               :font-size="14"
+                               :margin="4"
+                               :sync="true"
+                               :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                               :labels="{unchecked: 'View Submission', checked: 'View File Feedback'}"/>
+
+              </div>
+              <b-form ref="form">
+                <div class="col-sm">
+                  <b-input-group>
+                    <b-form-file
+                      ref="fileFeedbackInput"
+                      v-model="fileFeedbackForm.fileFeedback"
+                      placeholder="Choose a file or drop it here..."
+                      drop-placeholder="Drop file here..."
+                      :accept="getAcceptedFileTypes()"
+                    ></b-form-file>
+                    <span class="ml-3">
+                <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
+                </span>
+                  </b-input-group>
+                  <div v-if="uploading">
+                    <b-spinner small type="grow"></b-spinner>
+                    Uploading file...
+                  </div>
+                  <input type="hidden" class="form-control is-invalid">
+                  <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback') }}
+                  </div>
+
+
+                </div>
+
+              </b-form>
+            </div>
           </div>
         </div>
         <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
@@ -158,7 +163,7 @@
                       :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"></iframe>
             </div>
             <div v-else>
-              <span class="text-info">This student has not submitted a file.</span>
+              <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name']}} has not submitted a file.</span>
             </div>
           </div>
           <div v-show="!viewSubmission">
@@ -199,8 +204,7 @@ export default {
     gradeViews: [
       {text: 'All Students', value: 'allStudents'},
       {text: 'Ungraded Submissions', value: 'ungradedSubmissions'},
-      {text: 'Graded Submissions', value: 'gradedSubmissions'},
-      {text: 'Students Without Submissions', value: 'studentsWithoutSubmissions'}
+      {text: 'Graded Submissions', value: 'gradedSubmissions'}
     ],
     gradeView: 'allStudents',
     type: '',
@@ -313,6 +317,7 @@ export default {
       }
     },
     async changePage() {
+
       console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
       console.log(this.currentQuestionPage - 1)
