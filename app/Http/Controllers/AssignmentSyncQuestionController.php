@@ -192,7 +192,6 @@ class AssignmentSyncQuestionController extends Controller
 
 
         if (!$authorized->allowed()) {
-
             $response['message'] = $authorized->message();
             return $response;
         }

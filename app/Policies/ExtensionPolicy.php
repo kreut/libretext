@@ -24,7 +24,7 @@ class ExtensionPolicy
      */
     public function store(User $user, Extension $extension, int $assignment_id, int $student_user_id)
     {
-        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to create an extension for this student/assignment.');
 
@@ -39,7 +39,7 @@ class ExtensionPolicy
      */
     public function update(User $user, Extension $extension, int $assignment_id, int $student_user_id)
     {
-        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this extension.');
 
@@ -54,7 +54,7 @@ class ExtensionPolicy
      */
     public function view(User $user, Extension $extension, int $assignment_id, int $student_user_id)
     {
-        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to view this extension.');
 

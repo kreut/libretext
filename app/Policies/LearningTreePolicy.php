@@ -19,7 +19,7 @@ class LearningTreePolicy
      */
     public function store(User $user)
     {
-        return $this->IsNotStudent($user)
+        return ((int) $user->role === 2)
             ? Response::allow()
             : Response::deny('You are not allowed to save Learning Trees.');
 

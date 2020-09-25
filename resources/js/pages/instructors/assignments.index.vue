@@ -189,8 +189,10 @@
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
+             <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
               :variant="hasSubmissionsColor(data.item)" icon="question-circle"></b-icon></span>
+             </span>
             <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>

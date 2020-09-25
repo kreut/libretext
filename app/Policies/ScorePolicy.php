@@ -23,7 +23,7 @@ class ScorePolicy
     public function update(User $user,  Score $score, int $assignment_id, int $student_user_id)
     {
 
-        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this score.');
 
@@ -32,7 +32,7 @@ class ScorePolicy
     public function getScoreByAssignmentAndStudent(User $user,  Score $score, int $assignment_id, int $student_user_id)
     {
 
-        return $this->ownsResourceByAssignmentAndStudent($user, $assignment_id, $student_user_id)
+        return $this->ownsResourceByAssignmentAndStudentOrWasGivenAccessByOwner($user, $assignment_id, $student_user_id)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve this score.');
 

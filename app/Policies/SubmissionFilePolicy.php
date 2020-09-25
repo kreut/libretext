@@ -46,16 +46,17 @@ class SubmissionFilePolicy
 
     public function viewAssignmentFilesByAssignment(User $user, SubmissionFile $submissionFile, Assignment $assignment)
     {
-       $message ='';
-       $is_submission_files = in_array($assignment->submission_files, ['a', 'q']);
-       if (((int)$assignment->course->user_id !== $user->id)) {
+        $message = '';
+        $is_submission_files = in_array($assignment->submission_files, ['a', 'q']);
+        $has_access = $assignment->course->isGrader() || ((int)$assignment->course->user_id === $user->id);
+        if (!$has_access) {
             $message = 'You are not allowed to access these assignment files.';
         }
 
         if (!$is_submission_files) {
             $message = 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.';
         }
-        return (((int)$assignment->course->user_id === $user->id) && $is_submission_files)
+        return ($has_access && $is_submission_files)
             ? Response::allow()
             : Response::deny($message);
     }
@@ -72,7 +73,7 @@ class SubmissionFilePolicy
     public function canProvideFeedback($assignment, $student_user_id, $instructor_user_id)
     {
         //student is enrolled in the course containing the assignment
-        //the person doing the upload is the owner of the course
+        //the person doing the upload is the owner of the course or a grader
         return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int)$assignment->course->user_id === $instructor_user_id);
     }
 

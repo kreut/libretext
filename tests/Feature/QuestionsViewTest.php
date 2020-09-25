@@ -418,4 +418,10 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
                 'message' => 'You are not allowed to remove a question to this assignment.']);
     }
 
+    /** @test */
+    public function can_view_page_if_grader_in_course(){
+
+
+    }
+
 }

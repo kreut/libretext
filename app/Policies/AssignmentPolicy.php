@@ -33,8 +33,19 @@ class AssignmentPolicy
      */
     public function view(User $user, Assignment $assignment)
     {
-        $has_access = ($user->role === 3) ? $assignment->course->enrollments->contains('user_id', $user->id)
-            : $this->ownsCourseByUser($assignment->course, $user);
+        switch ($user->role){
+            case(2):
+                $has_access =    $this->ownsCourseByUser($assignment->course, $user);
+                break;
+            case(3):
+                $has_access =   $assignment->course->enrollments->contains('user_id', $user->id);
+                break;
+            case(4):
+                $has_access = $assignment->course->isGrader();
+                break;
+            default:
+                false;
+        }
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to access this assignment.');

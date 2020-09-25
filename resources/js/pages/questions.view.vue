@@ -65,7 +65,7 @@
         </div>
         <div>
           <div class="d-flex">
-            <div v-if="user.role !== 3">
+            <div v-if="isInstructor()">
               <div v-if="has_submissions">
                 <b-alert variant="info" show>
                   <strong>Since students have already submitted responses, you can view the questions but you can't add
@@ -97,7 +97,7 @@
               </div>
             </div>
           </div>
-          <b-form ref="form" v-if="!has_submissions && (user.role !== 3)">
+          <b-form ref="form" v-if="!has_submissions && (isInstructor())">
 
             <b-form-group
               id="points"
@@ -106,7 +106,6 @@
               label="Number of points for this question"
               label-for="points"
             >
-
               <b-form-row>
                 <b-col lg="2">
                   <b-form-input
@@ -251,14 +250,14 @@
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
-          <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
+          <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
             <b-button variant="success">Get More Questions</b-button>
           </div>
         </div>
       </div>
     </div>
     <div class="mt-4" v-if="!initializing && !questions.length">
-      <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="user.role !== 3">
+      <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
         <b-button variant="success">Get Questions</b-button>
       </div>
       <b-alert show variant="warning"><a href="#" class="alert-link">This assignment currently has no
@@ -332,8 +331,11 @@ export default {
   mounted() {
 
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentInfo()
-    this.getSelectedQuestions(this.assignmentId)
+    let canView = this.getAssignmentInfo()
+    if (!canView){
+      return false
+    }
+      this.getSelectedQuestions(this.assignmentId)
 
     h5pResizer()
     let vm = this
@@ -407,6 +409,10 @@ export default {
     }
   },
   methods: {
+    isInstructor(){
+      console.log(this.user.role)
+      return (this.user.role === 2)
+    },
     hideResponse() {
       this.showSubmissionMessage = false
     },
@@ -583,6 +589,9 @@ export default {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        if (data.type === 'error'){
+          return false
+        }
         this.title = `${data.name} Assignment Questions`
         this.has_submissions = data.has_submissions
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
@@ -591,6 +600,7 @@ export default {
         this.$noty.error(error.message)
         this.title = 'Assignment Questions'
       }
+      return true
     },
     async getSelectedQuestions(assignmentId) {
       try {
@@ -627,12 +637,14 @@ export default {
     },
     async removeQuestion(currentPage) {
       try {
-        axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
+        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
         this.$noty.info('The question has been removed from the assignment.')
         this.questions.splice(currentPage - 1, 1);
-
         if (this.currentPage !== 1) {
-          f
           this.currentPage = this.currentPage - 1;
         }
 

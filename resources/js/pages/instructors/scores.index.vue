@@ -169,7 +169,7 @@ export default {
   mounted() {
     this.courseId = this.$route.params.courseId
     this.getAssignmentScoringTypes()
-    this.getScores();
+    this.getScores()
   },
   methods: {
     async getAssignmentScoringTypes() {

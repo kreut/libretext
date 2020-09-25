@@ -26,7 +26,7 @@ class AssignmentSyncQuestionPolicy
         $authorized = ($assignment->submissions->isEmpty()) && ($user->id === ((int)$assignment->course->user_id));
         $message = (!$assignment->submissions->isEmpty())
             ? "You can't remove a question from this assignment since students have already submitted responses."
-            : 'You are not allowed to remove a question to this assignment.';
+            : 'You are not allowed to remove a question from this assignment.';
         return $authorized
             ? Response::allow()
             : Response::deny($message);

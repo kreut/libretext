@@ -40,7 +40,7 @@ class AssignmentFilePolicy
     public function createTemporaryUrl(User $user, AssignmentFile $assignmentFile, Course $course)
     {
 
-        return ((int)$course->user_id === $user->id)
+        return ($course->isGrader() || (int)$course->user_id === $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to create a temporary URL.');
     }
@@ -73,7 +73,8 @@ class AssignmentFilePolicy
     {
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course
-        return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int)$assignment->course->user_id === $instructor_user_id);
+        return $assignment->course->enrollments->contains('user_id', $student_user_id)
+            && (($assignment->course->isGrader()) || ((int)$assignment->course->user_id === $instructor_user_id));
     }
 
     public function storeTextFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)

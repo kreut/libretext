@@ -94,6 +94,7 @@ import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
+import {mapGetters} from "vuex";
 
 export default {
   components: {
@@ -101,6 +102,9 @@ export default {
     ToggleButton
   },
   middleware: 'auth',
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   data: () => ({
     continueLoading: true,
     isLoading: false,
@@ -121,6 +125,10 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
+    if (this.user.role !== 2){
+      this.$noty.error("You do not have access to this page.")
+      return false
+    }
     this.isLoading = true
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
