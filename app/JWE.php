@@ -14,7 +14,7 @@ use Jose\Component\Encryption\Serializer\CompactSerializer;
 use Jose\Component\Encryption\Serializer\JWESerializerManager;
 use Jose\Component\Encryption\JWEDecrypter;
 
-class JWTModel extends Model
+class JWE extends Model
 {
 
     protected $keyEncryptionAlgorithmManager;

@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
-use App\JWTModel;
+use App\JWE;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -362,7 +362,7 @@ class AssignmentSyncQuestionController extends Controller
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
             $domd = new \DOMDocument();
-            $JWTModel = new JWTModel();
+            $JWE = new JWE();
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
@@ -430,6 +430,7 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
                         $question['body'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
                     case('imathas'):
                         $custom_claims['imathas'] = [];
@@ -440,14 +441,15 @@ class AssignmentSyncQuestionController extends Controller
                         $question['body'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
+                        $problemJWT =$JWE->encode( \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
                         break;
                     case('h5p'):
-                        // $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        //NOT USED FOR anything at the moment
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
 
                 }
-                //$problemJWT = $JWTModel->encode($problemJWT);
-                $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
                 $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
 

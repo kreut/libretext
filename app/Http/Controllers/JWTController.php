@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Http\Requests\StoreSubmission;
-use App\JWTModel;
+use App\JWE;
 use App\Score;
 use App\Submission;
 use Illuminate\Http\Request;
@@ -17,10 +17,10 @@ class JWTController extends Controller
 
     public function init()
     {
-        $JWTModel = new JWTModel();
-        $token = $JWTModel->encode('My really secret payload that only Henry knows.');
+        $JWE = new JWE();
+        $token = $JWE->encode('My really secret payload that only Henry knows.');
         echo "The encrypted token: " . $token;
-        echo "The decrypted token: " . $JWTModel->decode($token);
+        echo "The decrypted token: " . $JWE->decode($token);
     }
 
     public function validateToken(Request $request)
