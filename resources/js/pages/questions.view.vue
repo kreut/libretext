@@ -341,7 +341,6 @@ export default {
     let vm = this
     if (this.user.role === 3) {
       let receiveMessage = async function (event) {
-        vm.hideResponse()
         let technology = vm.getTechnology(event.origin)
         console.log(technology)
         console.log(event.data)
@@ -394,6 +393,7 @@ export default {
 
           //if incorrect, show the learning tree stuff...
           try {
+            vm.hideResponse()
             const {data} = await axios.post('/api/submissions', submission_data)
             console.log(data)
             if (data.message) {
