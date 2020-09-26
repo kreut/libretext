@@ -420,7 +420,7 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
                         $custom_claims['webwork']['language'] = 'en';
                         $custom_claims['webwork']['outputformat'] = 'libretexts';
-
+                        $custom_claims['webwork']['showCorrectButton'] = 1;
                         $src = $this->getIframeSrcFromHtml($domd, $question['body']);
                         $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($src, 'sourceFilePath');
                         $custom_claims['webwork']['answersSubmitted'] = '0';
