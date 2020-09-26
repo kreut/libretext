@@ -42,7 +42,11 @@ class Submission extends Model
         if (!$assignment_question) {
             $response['message'] = 'That question is not part of the assignment.';
             return $response;
+        }
 
+        if ($assignment->solutions_released){
+            $response['message'] = 'You submission will not be saved since the solutions have been released.';
+            return $response;
         }
 
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
