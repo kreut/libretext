@@ -40,6 +40,9 @@
             last-number
           ></b-pagination>
         </div>
+        <div v-if="type === 'question'" class="text-center">
+         <h5 class="font-italic">This question is out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
+        </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
           <div class="container">
             <div class="row">
@@ -235,7 +238,6 @@ export default {
     this.getAcceptedFileTypes = getAcceptedFileTypes
   },
   mounted() {
-    this.assignmentId = this.$route.params.assignmentId
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
     this.type = this.$route.params.typeFiles.replace('-files', '') //question or assignment

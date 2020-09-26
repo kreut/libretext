@@ -99,6 +99,7 @@ class SubmissionFile extends Model
     public function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
     {
 
+
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
@@ -114,11 +115,12 @@ class SubmissionFile extends Model
             ->where('assignment_id', $assignment->id)
             ->where('question_files', 1)
             ->get();
+
         $points = [];
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
-            $points[$question->question_id] = $question->points;
-            foreach ($users as $key => $user) {
 
+            foreach ($users as $key => $user) {
+                $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
                 $question_id = $question->question_id;
@@ -141,7 +143,14 @@ class SubmissionFile extends Model
                 }
             }
         }
-        return $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
+        $reKeyedUserAndSubmissionFileInfo = $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
+        foreach ($reKeyedUserAndSubmissionFileInfo as $question => $user_question) {
+            foreach ($user_question as $key => $info) {
+                $reKeyedUserAndSubmissionFileInfo[$question][$key]['points'] = $points[$info['question_id']][$info['user_id']];
+            }
+        }
+
+        return $reKeyedUserAndSubmissionFileInfo;
 
 
     }
