@@ -51,9 +51,30 @@ class Score extends Model
                         $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score;
                     }
                 }
+              /*  dd($assignment_question_scores_info);
+                array:5 [
+                7 => array:3 [
+                "points" => "5.00"
+    "question" => "0.00"
+    "file" => null
+  ]
+  95325 => array:1 [
+                "points" => "5.00"
+            ]
+  129 => array:1 [
+                "file" => "5.00"
+            ]
+  166 => array:1 [
+                "file" => null
+            ]
+  29992 => array:1 [
+                "file" => null
+            ]
+]**/
                 foreach ($assignment_question_scores_info as $score) {
                     $question_points = $score['question'] ?? 0;
                     $file_points = $score['file'] ?? 0;
+                    $score = $score['points'] ?? 0;
                     $assignment_score = $assignment_score + min($score['points'], $question_points + $file_points);
                 }
                 break;

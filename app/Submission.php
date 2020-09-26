@@ -77,8 +77,11 @@ class Submission extends Model
                 case('webwork'):
                     // Log::info('case webwork');
                     $submission = $data['submission'];
-                    $data['score'] = 0;
+                    $data['score'] = $submission->score->score;
+                    Log::info('Score: ' . $submission->score->score);
+                    /**$data['score'] = 0;
                     $num_questions = 0;
+                    Log::info(var_dump($data['submission']));
                     foreach ($submission->score as $value) {
                         $data['score'] = $data['score'] + floatval($value->score);
                         $num_questions++;
@@ -88,7 +91,7 @@ class Submission extends Model
                     // Log::info($num_questions);
                     $data['score'] = $num_questions
                         ? floatval($assignment_question->points) * floatval($data['score'] / $num_questions)
-                        : 0;
+                        : 0;**/
                     $data['submission'] = json_encode($data['submission']);
                     break;
                 default:

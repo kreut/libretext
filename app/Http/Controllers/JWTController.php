@@ -44,6 +44,7 @@ class JWTController extends Controller
     {
 
         $payload = $this->validateToken($request);//get the payload
+        Log::info($payload);
         $answerJWT = json_decode($payload);//convert it to an object
         //if the token was bad return a message
         if (isset($answerJWT->type) && $answerJWT->type === 'error') {

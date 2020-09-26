@@ -124,7 +124,7 @@ class SubmissionFile extends Model
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_submitted, Auth::user()->time_zone)
                     : null;
                 $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
-                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->timne_zone)
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
                     : null;
                 $score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $all_info = $this->getAllInfo($user, $assignment, $key, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
