@@ -51,15 +51,30 @@
         <div class="card mb-2">
           <div class="card-body">
             <p>
-              <span class="font-italic font-weight-bold">This question is worth {{ questions[currentPage - 1].points }} points.</span>
+
+              <span v-if="(user.role === 3)">
+                 <span class="font-italic font-weight-bold">
+                <span v-if="!questions[currentPage-1].questionFiles">
+                 This question is worth {{ questions[currentPage - 1].points }} points.
+              </span>
+              <span v-if="questions[currentPage-1].questionFiles">
+                You achieved a total score of
+                {{ questions[currentPage - 1].total_score }}
+                out of a possible
+                {{ questions[currentPage - 1].points }} points.</span>
+                 </span>
+              </span>
             </p>
+
             <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
-              <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
+            <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
             <div v-if="solutionsReleased">
               <!--<span class="font-weight-bold">Correct response:</span> {{
                 questions[currentPage - 1].correct_response
               }}<br>-->
-              <span class="font-weight-bold">Your score:</span> {{ questions[currentPage - 1].submission_score }}<br>
+              <span class="font-weight-bold">Question Score:</span> {{
+                questions[currentPage - 1].submission_score
+              }}<br>
             </div>
           </div>
         </div>
@@ -133,7 +148,7 @@
             <div class="col-6">
               <b-card title="File Submission Information">
                 <b-card-text>
-                  Uploaded file:
+                  <strong> Uploaded file:</strong>
                   <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
                      v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
@@ -143,9 +158,9 @@
                   <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                   </span><br>
-                  Date Submitted: {{ questions[currentPage - 1].date_submitted }}<br>
-                  Date Graded: {{ questions[currentPage - 1].date_graded }}<br>
-                  File Feedback: <span v-if="!questions[currentPage-1].file_feedback">
+                  <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                  <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                  <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
                                       N/A
                   </span>
                   <span v-if="questions[currentPage-1].file_feedback">
@@ -155,8 +170,8 @@
                   </a>
                   </span>
                   <br>
-                  Comments: {{ questions[currentPage - 1].text_feedback }}<br>
-                  File Score: {{ questions[currentPage - 1].submission_file_score }}<br>
+                  <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+                  <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
                   <b-button variant="primary" class="float-right mr-2"
                             v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
                             v-b-modal.modal-upload-question-file>Upload New File
@@ -332,10 +347,10 @@ export default {
 
     this.assignmentId = this.$route.params.assignmentId
     let canView = this.getAssignmentInfo()
-    if (!canView){
+    if (!canView) {
       return false
     }
-      this.getSelectedQuestions(this.assignmentId)
+    this.getSelectedQuestions(this.assignmentId)
 
     h5pResizer()
     let vm = this
@@ -409,7 +424,7 @@ export default {
     }
   },
   methods: {
-    isInstructor(){
+    isInstructor() {
       console.log(this.user.role)
       return (this.user.role === 2)
     },
@@ -589,7 +604,7 @@ export default {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
-        if (data.type === 'error'){
+        if (data.type === 'error') {
           return false
         }
         this.title = `${data.name} Assignment Questions`

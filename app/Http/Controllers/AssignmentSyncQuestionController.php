@@ -229,7 +229,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         $student_response = 'N/A';
         $correct_response = null;
-        $score = 'N/A';
+        $score = 0;
         $last_submitted = 'N/A';
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
@@ -248,9 +248,9 @@ class AssignmentSyncQuestionController extends Controller
                 case('imathas'):
                     $tks = explode('.', $submission_object->state);
                     list($headb64, $bodyb64, $cryptob64) = $tks;
-                    $state= json_decode(base64_decode($bodyb64));
+                    $state = json_decode(base64_decode($bodyb64));
 
-                    $student_response  = json_encode($state->stuanswers);
+                    $student_response = json_encode($state->stuanswers);
                     //$correct_response = 'N/A';
                     $last_submitted = $submission->updated_at;
                     break;
@@ -398,6 +398,8 @@ class AssignmentSyncQuestionController extends Controller
                         $got_first_temporary_url = true;
                     }
                 }
+                $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
+                $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
 
 
                 //set up the questionJWT
@@ -440,7 +442,7 @@ class AssignmentSyncQuestionController extends Controller
                         $question['body'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
-                        $problemJWT =$JWE->encode( \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
+                        $problemJWT = $JWE->encode(\JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
                         break;
                     case('h5p'):
                         //NOT USED FOR anything at the moment
