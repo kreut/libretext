@@ -30,8 +30,8 @@ class SubmissionFile extends Model
             'date_graded' => $date_graded,
             'question_submission_score' => $question_submission_score,
             'file_submission_score' => $file_submission_score,
-            'submission_url' => $this->getTemporaryUrl($assignment->id, $submission),
-            'file_feedback_url' =>  $this->getTemporaryUrl($assignment->id, $file_feedback)];
+            'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
+            'file_feedback_url' =>  $submission ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
 
     }
 
