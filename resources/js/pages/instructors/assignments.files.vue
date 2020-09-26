@@ -1,5 +1,6 @@
 <template>
   <div>
+    <PageTitle v-bind:title="this.title"></PageTitle>
     <div v-if="submissionFiles.length>0">
 
       <b-card class="col-4">
@@ -46,22 +47,23 @@
                 <b-card title="Submission Information">
                   <b-card-text>
                     <p>
-                      Name: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
-                      Date Submitted: {{
+                      <strong>Name:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
+                      <strong>Date Submitted:</strong> {{
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
                         1]['date_submitted']
                       }}<br>
-                      Date Graded: {{
+                      <strong>Date Graded:</strong> {{
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                       }}<br>
-                      Base Score: {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['score'] }}
+                      <strong>Question Submission Score:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] }}<br>
+                      <strong>File Submission Score:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] }}
                     </p>
                     <hr>
                     <b-form-group
                       id="fieldset-horizontal"
                       label-cols-sm="6"
                       label-cols-lg="5"
-                      label=" Score With Submission:"
+                      label="File Submission Score:"
                       label-for="input-horizontal"
                     >
                       <b-form-input id="input-horizontal"
@@ -208,6 +210,7 @@ export default {
     ],
     gradeView: 'allStudents',
     type: '',
+    title:'',
     loaded: true,
     viewSubmission: true,
     showNoFileSubmissionsExistAlert: false,
@@ -233,10 +236,22 @@ export default {
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
+    this.assignmentId = this.$route.params.assignmentId
+    this.getAssignmentInfo()
     this.type = this.$route.params.typeFiles.replace('-files', '') //question or assignment
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    async getAssignmentInfo() {
+      try {
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+
+        this.title = `Grade File Submissions For "${data.name}"`
+
+      } catch (error) {
+        this.title = 'Grade File Submissions'
+      }
+    },
     async toggleView() {
       this.viewSubmission = !this.viewSubmission
     },
@@ -252,7 +267,7 @@ export default {
         this.$noty[data.type](data.message)
         console.log(data)
         if (data.type === 'success') {
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['score'] = this.scoreForm.score
+          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_submission_score'] = this.scoreForm.score
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['date_graded'] = data.date_graded
         }
       } catch (error) {
@@ -351,14 +366,15 @@ export default {
     submissionUrlExists(currentStudentPage) {
       return (this.submissionFiles[currentStudentPage - 1]['submission_url'] !== null)
     },
-    hasSubmissions(user_and_submission_file_info, type) {
+    hasSubmissions(data, type) {
       let hasSubmissions
+      console.error(data.user_and_submission_file_info)
       switch (type) {
         case('question'):
-          hasSubmissions = (user_and_submission_file_info.length > 0)
+          hasSubmissions = (data.user_and_submission_file_info.length > 0)
           break;
         case ('assignment'):
-          hasSubmissions = (user_and_submission_file_info[0].length > 0)
+          hasSubmissions = (data.user_and_submission_file_info[0].length > 0)
           break;
       }
       return hasSubmissions
@@ -370,8 +386,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        console.log(data.user_and_submission_file_info)
-        this.showNoFileSubmissionsExistAlert = !this.hasSubmissions(data.user_and_submission_file_info, this.type)
+        this.showNoFileSubmissionsExistAlert = !this.hasSubmissions(data, this.type)
         if (this.showNoFileSubmissionsExistAlert) {
           return false
         }
