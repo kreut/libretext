@@ -31,7 +31,7 @@ class SubmissionFile extends Model
             'question_submission_score' => $question_submission_score,
             'file_submission_score' => $file_submission_score,
             'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
-            'file_feedback_url' =>  $submission ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
+            'file_feedback_url' => $submission ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
 
     }
 
@@ -61,7 +61,7 @@ class SubmissionFile extends Model
                 ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignmentFilesByUser[$user->id]->date_graded, Auth::user()->time_zone)
                 : "Not yet graded";
             $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
-            $all_info = $this->getAllInfo($user, $assignment,$submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
+            $all_info = $this->getAllInfo($user, $assignment, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
             if ($this->inGradeView($all_info, $grade_view)) {
                 $user_and_submission_file_info[] = $all_info;
 
@@ -125,13 +125,26 @@ class SubmissionFile extends Model
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
-                $date_submitted = isset($questionFilesByUser[$question->question_id][$user->id]->date_submitted)
-                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_submitted, Auth::user()->time_zone)
-                    : null;
-                $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
-                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
-                    : null;
 
+
+
+               /**TODO: clean up the next bit of code!!!!
+                * Though it works, it's a hack.  Basically, if a single user is getting their file info, there's no need to do the
+                * formatting of the date because it's done already.
+                * However, if it's for the class it has to be done.
+                * **/
+
+                if (count($users) === 1) {
+                    $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
+                    $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
+                } else {
+                    $date_submitted = isset($questionFilesByUser[$question->question_id][$user->id]->date_submitted)
+                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_submitted, Auth::user()->time_zone)
+                        : null;
+                    $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
+                        ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
+                        : null;
+                }
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
