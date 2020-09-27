@@ -79,10 +79,10 @@ class SubmissionFile extends Model
                 $in_grade_view = true;
                 break;
             case('ungradedSubmissions'):
-                $in_grade_view = $file['submission'] && ($file['date_graded'] === 'Not yet graded');
+                $in_grade_view = $file['submission'] && ($file['date_graded'] === NUll);
                 break;
             case('gradedSubmissions'):
-                $in_grade_view = $file['submission'] && ($file['date_graded'] !== 'Not yet graded');
+                $in_grade_view = $file['submission'] && ($file['date_graded'] !== NULL);
                 break;
             case('studentsWithoutSubmissions'):
                 $in_grade_view = !$file['submission'];
