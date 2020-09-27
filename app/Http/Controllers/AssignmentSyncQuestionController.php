@@ -19,6 +19,7 @@ use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
@@ -266,7 +267,7 @@ class AssignmentSyncQuestionController extends Controller
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
-
+Log:info('getting questions');
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
 
@@ -277,7 +278,7 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $response['type'] = 'success';
 
-
+            Log::info('a');
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];

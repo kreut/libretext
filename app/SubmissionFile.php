@@ -98,6 +98,7 @@ class SubmissionFile extends Model
     {
 
 
+        ///what if null?
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
@@ -155,6 +156,7 @@ class SubmissionFile extends Model
             }
         }
         $reKeyedUserAndSubmissionFileInfo = $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
+
         foreach ($reKeyedUserAndSubmissionFileInfo as $question => $user_question) {
             foreach ($user_question as $key => $info) {
                 $reKeyedUserAndSubmissionFileInfo[$question][$key]['points'] = $points[$info['question_id']][$info['user_id']];

@@ -15,6 +15,7 @@ use App\Traits\DateFormatter;
 
 class Submission extends Model
 {
+
     use DateFormatter;
 
     protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score'];
@@ -22,7 +23,7 @@ class Submission extends Model
 
     public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
     {
-
+       Log::info('save');
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
 
         // $data = $request->validated();//TODO: validate here!!!!!

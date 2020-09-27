@@ -3,7 +3,8 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 class Assignment extends Model
 {
     protected $guarded = [];
@@ -32,7 +33,9 @@ class Assignment extends Model
     }
 
     public function submissions(){
-        return $this->hasMany('App\Submission');
+
+      return $this->hasMany('App\Submission');
+
     }
 
 }

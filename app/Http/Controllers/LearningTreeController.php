@@ -123,7 +123,7 @@ EOT;
         $Query = new Query(['library' => $library]);
         $response['type'] = 'error';
         try {
-            dd($Query->getContentsByPageId($pageId));
+            $Query->getContentsByPageId($pageId);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
