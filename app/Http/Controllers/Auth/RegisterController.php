@@ -15,7 +15,7 @@ use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\DB;
 use App\Rules\IsValidInstructorAccessCode;
 use App\Rules\IsValidGraderAccessCode;
-use App\Rules\isValidTimeZone;
+use App\Rules\IsValidTimeZone;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -75,7 +75,7 @@ class RegisterController extends Controller
         if ($data['registration_type'] === 'grader') {
             $validator['access_code'] = new IsValidGraderAccessCode();
         }
-        $validator['time_zone'] = new isValidTimeZone();
+        $validator['time_zone'] = new IsValidTimeZone();
         return Validator::make($data, $validator);
     }
 
