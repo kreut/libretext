@@ -83,6 +83,7 @@ class Submission extends Model
                     $submission = $data['submission'];
                     $data['score'] = $submission->score->score;
                     Log::info('Score: ' . $submission->score->score);
+
                     /**$data['score'] = 0;
                     $num_questions = 0;
                     Log::info(var_dump($data['submission']));
@@ -161,7 +162,7 @@ class Submission extends Model
             $h->report($e);
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
         }
-
+Log::info($response);
         return $response;
 
     }
