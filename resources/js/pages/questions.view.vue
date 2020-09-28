@@ -54,7 +54,7 @@
 
               <span v-if="(user.role === 3)">
                  <span class="font-italic font-weight-bold">
-                <span v-if="!questions[currentPage-1].questionFiles">
+                <span v-if="solutionsReleased && !questions[currentPage-1].questionFiles">
                  This question is worth {{ questions[currentPage - 1].points }} points.
               </span>
               <span v-if="questions[currentPage-1].questionFiles">
