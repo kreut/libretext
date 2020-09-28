@@ -183,11 +183,26 @@ class Query extends Model
         }
     }
 
+    public function getTechnologyFromBody($body)
+    {
+
+        if (strpos($body, 'h5p.libretexts.org') !== false) {
+            return 'h5p';
+        }
+        if (strpos($body, 'webwork.libretexts.org') !== false) {
+            return 'webwork';
+        }
+        if (strpos($body, 'imathas.libretexts.org') !== false) {
+            return 'imathas';
+        }
+        return false;
+    }
+
     public
     function getTechnologyAndTags($page_info)
     {
         $tags = [];
-        $technology = 'none';
+        $technology = false;
         if (isset($page_info['tags']['tag'])) {
             foreach ($page_info['tags']['tag'] as $key => $value) {
                 $tag = $value['@value'] ?? false;

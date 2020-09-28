@@ -99,7 +99,15 @@ class Score extends Model
     public function getUserScoresByCourse(Course $course, User $user)
     {
 
-        $assignment_ids = $course->assignments()->pluck('id');
+        $assignments = $course->assignments;
+        $assignment_ids = [];
+        $solutions_released = [];
+        $scoring_types = [];
+        foreach ($assignments as $assignment){
+            $assignment_ids[] = $assignment->id;
+            $solutions_released[$assignment->id] = $assignment->solutions_released;
+            $scoring_types[$assignment->id] = $assignment->scoring_type;
+        }
 
         $scores = DB::table('scores')
             ->whereIn('assignment_id', $assignment_ids)
@@ -107,16 +115,20 @@ class Score extends Model
             ->get();
 
         $scores_by_assignment = [];
+
         foreach ($scores as $key => $value) {
-            $scores_by_assignment[$value->assignment_id] = $value->score;
-        }
+            $score = $value->score;
+            if ($scoring_types[$value->assignment_id] == 'c'){
+                $score =  ( $score === 'c') ? 'Complete' : 'Incomplete';
+            }
+            $scores_by_assignment[$value->assignment_id] = $solutions_released[$value->assignment_id] ? $score : 'Not yet released';
+           }
 
         $course_scores = [];
         foreach ($assignment_ids as $assignment_id) {
             if (isset($scores_by_assignment[$assignment_id])) {
                 $course_scores[$assignment_id] = $scores_by_assignment[$assignment_id];
             }
-
         }
         return $course_scores;
 

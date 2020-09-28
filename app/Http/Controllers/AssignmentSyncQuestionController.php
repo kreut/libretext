@@ -267,7 +267,8 @@ class AssignmentSyncQuestionController extends Controller
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
-Log:info('getting questions');
+        Log:
+        info('getting questions');
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
 
@@ -277,8 +278,6 @@ Log:info('getting questions');
         }
         try {
             $response['type'] = 'success';
-
-            Log::info('a');
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];
@@ -453,8 +452,10 @@ Log:info('getting questions');
                 }
 
                 $assignment->questions[$key]->iframe_id = $this->createIframeId();
+                Log::info($assignment->questions[$key]->iframe_id);
                 $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
-
+                Log::info($assignment->questions[$key]->body);
+                Log::info($assignment->questions[$key]->body);
                 if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {

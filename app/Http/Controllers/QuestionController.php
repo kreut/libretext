@@ -62,7 +62,7 @@ class QuestionController extends Controller
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
             try {
-            //$page_id = 102629;  //Frankenstein test
+                //$page_id = 102629;  //Frankenstein test
                 $page_info = $Query->getPageInfoByPageId($page_id);
 
                 $contents = $Query->getContentsByPageId($page_id);
@@ -71,7 +71,16 @@ class QuestionController extends Controller
                 if (strpos($body, '<iframe') !== false) {
                     //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
                     $technology_and_tags = $Query->getTechnologyAndTags($page_info);
+                    if (!$technology_and_tags['technology']) {
+                        $technology_and_tags['technology'] = $Query->getTechnologyFromBody($body);
+                        if (!$technology_and_tags['technology']) {
+                            echo json_encode(['type' => 'error',
+                                'message' => "That question is not one of the valid technologies."]);
+                            exit;
 
+                        }
+
+                    }
                     $data = ['page_id' => $page_id,
                         'technology' => $technology_and_tags['technology'],
                         'location' => $page_info['uri.ui'],
@@ -89,7 +98,7 @@ class QuestionController extends Controller
 
                 }
 
-            } catch (Exception $e ){
+            } catch (Exception $e) {
                 echo json_encode(['type' => 'error',
                     'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                     'timeout' => 12000]);
