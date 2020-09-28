@@ -47,6 +47,92 @@ class QuestionsViewTest extends TestCase
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
         ]);
+        $this->h5pSubmission = [
+            'technology' => 'h5p',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' =>   '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
+       ];
+
+    }
+
+    /** @test */
+
+    public function must_submit_a_question_with_a_valid_technology()
+    {
+        $this->assignment->submission_files = '0';
+        $this->assignment->save();
+        $this->h5pSubmission['technology'] = 'bogus technology';
+        $this->actingAs($this->student_user)->postJson("/api/submissions",     $this->h5pSubmission)->assertStatus(422);
+
+    }
+    /** @test */
+    public function must_submit_a_question_with_a_valid_assignment_number()
+    {
+        $this->assignment->submission_files = '0';
+        $this->h5pSubmission['assignment_id'] = false;
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions",
+            $this->h5pSubmission)  ->assertStatus(422);
+
+    }
+/** @test */
+    public function must_submit_a_question_with_a_valid_question_number()
+    {
+        $this->assignment->submission_files = '0';
+        $this->assignment->save();
+        $this->h5pSubmission['question_id'] = false;
+        $this->actingAs($this->student_user)->postJson("/api/submissions",
+            $this->h5pSubmission)  ->assertStatus(422);
+
+    }
+
+
+        /** @test */
+
+    public function assignments_of_scoring_type_p_and_no_question_files_will_compute_the_score_based_on_the_question_points()
+    {
+        $this->assignment->submission_files = '0';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions",
+            $this->h5pSubmission);
+
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->get()
+            ->pluck('score');
+        $points_1 = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->get()
+            ->pluck('points');
+
+
+        $this->assertEquals(number_format($points_1[0],2), number_format($score[0],2), 'Score saved when student submits.');
+
+        //do it again and it should update
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", [
+            'technology' => 'h5p',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'submission' =>  $this->h5pSubmission['submission']]
+        );
+
+        $points_2 = DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question_2->id)
+            ->get()
+            ->pluck('points');
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->get()
+            ->pluck('score');
+
+        $this->assertEquals(number_format($points_1[0] + $points_2[0],2), number_format($score[0],2), 'Score saved when student submits.');
+
 
     }
 
@@ -95,8 +181,9 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /**@test**/
-    public function can_not_update_question_points_if_students_have_already_made_a_submission(){
+    /**@test* */
+    public function can_not_update_question_points_if_students_have_already_made_a_submission()
+    {
 
 //not sure if this is even a real thing: I have an update in the controller but nothing in the questions.get.vue?
     }
@@ -117,10 +204,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->scoring_type = 'c';
         $this->assignment->save();
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission);
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
             ->where('assignment_id', $this->assignment->id)
@@ -129,9 +213,10 @@ class QuestionsViewTest extends TestCase
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", [
+            'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
-            'submission' => 'some other submission'])
+            'submission' =>  $this->h5pSubmission['submission']])
             ->assertJson(['type' => 'success']);
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
@@ -142,50 +227,19 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
 
-    public function assignments_of_scoring_type_s_and_no_question_files_will_compute_the_score_based_on_the_question_points()
+    /** @test */
+    public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()
     {
-        $this->assignment->submission_files = '0';
-        $this->assignment->save();
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission']);
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->get()
-            ->pluck('score');
-
-
-        $this->assertEquals($this->assignment->default_points_per_question, $score[0], 'Score saved when student submits.');
-
-        //do it again and it should update
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question_2->id,
-            'submission' => 'some submission']);
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->get()
-            ->pluck('score');
-
-        $this->assertEquals(2 * $this->assignment->default_points_per_question, $score[0], 'Score saved when student submits.');
-
 
     }
 
     /** @test */
-public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads(){
-
-}
-    /** @test */
-    public function cannot_store_a_file_if_the_size_of_the_file_exceeds_the_max_size_permitted(){
+    public function cannot_store_a_file_if_the_size_of_the_file_exceeds_the_max_size_permitted()
+    {
 
     }
+
     /** @test */
 
     public function cannot_store_a_question_file_if_it_is_not_in_the_assignment()
@@ -238,10 +292,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
     public function can_submit_response()
     {
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
 
     }
@@ -250,16 +301,11 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
     public function can_update_response()
     {
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission']);
+        ///to do ---- change the second one to see if the database actually updated!
+        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission);
 
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some other submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
 
     }
@@ -278,10 +324,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
     /** @test */
     public function cannot_submit_response_if_user_not_enrolled_in_course()
     {
-        $this->actingAs($this->student_user_2)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user_2)->postJson("/api/submissions",   $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since the assignment is not part of your course.']);
 
@@ -297,10 +340,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
             'assignment_id' => $this->assignment->id,
             'extension' => '2027-01-01 09:00:00']);
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
 
     }
@@ -311,10 +351,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
             ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
 
     }
@@ -329,10 +366,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
             'assignment_id' => $this->assignment->id,
             'extension' => '2020-01-01 09:00:00']);
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since your extension for this assignment has passed.']);
 
@@ -345,10 +379,7 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
         $this->assignment->save();
 
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some submission'])
+        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since this assignment is not yet available.']);
 
@@ -419,7 +450,8 @@ public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_num
     }
 
     /** @test */
-    public function can_view_page_if_grader_in_course(){
+    public function can_view_page_if_grader_in_course()
+    {
 
 
     }

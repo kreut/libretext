@@ -403,6 +403,7 @@ export default {
             'question_id': vm.questions[vm.currentPage - 1].id,
             'technology': technology
           }
+
           console.log('submitted')
           console.log(submission_data)
 
@@ -411,12 +412,17 @@ export default {
             vm.hideResponse()
             const {data} = await axios.post('/api/submissions', submission_data)
             console.log(data)
-            if (data.message) {
-              vm.showResponse(data)
+            if (!data.message) {
+              data.type = error
+              data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
+            vm.showResponse(data)
           } catch (error) {
-            alert(`We could not save your submission:  ${error.message}.  Please try again or contact us for assistance.`)
-
+            console.log(error)
+            console.log(error)
+            error.type = 'error'
+            error.message = `The following error occurred: ${error}. Please refresh the page and try again and contact us if the problem persists.`
+            vm.showResponse(error)
           }
         }
       }

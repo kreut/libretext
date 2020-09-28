@@ -67,6 +67,11 @@ class JWTController extends Controller
             return json_encode(['type' => 'error', 'message' => $message, 'payload' => $payload]);
         }
 
+        if (!in_array($problemJWT->adapt->technology,['webwork', 'imathas'])) {
+        $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
+        return json_encode(['type' => 'error', 'message' => $message, 'payload' => $payload]);
+        }
+
         //good to go!
         $request = new storeSubmission();
         $request['assignment_id'] = $problemJWT->adapt->assignment_id;

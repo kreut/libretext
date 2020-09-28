@@ -59,9 +59,6 @@ class Submission extends Model
         }
 
         $student_response = 'N/A';
-        if (env('DB_DATABASE') === 'test_libretext') {
-            $data['score'] = $assignment->default_points_per_question;
-        } else {
             switch ($data['technology']) {
                 case('h5p'):
                     $submission = json_decode($data['submission']);
@@ -102,11 +99,8 @@ class Submission extends Model
                     break;
                 default:
                     $response['message'] = 'That is not a valid technology.';
-                    break;
+                    return $response;
             }
-
-        }
-
 
         try {
 
@@ -122,7 +116,6 @@ class Submission extends Model
                 $submission->submission = $data['submission'];
 
                 $submission->score = $data['score'];
-                $submission->save();
 
             } else {
                 Submission::create(['user_id' => $data['user_id'],

@@ -30,21 +30,20 @@ class Score extends Model
             $assignment_question_scores_info[$question->question_id]['question'] = 0;
             $assignment_question_scores_info[$question->question_id]['file'] = 0;//need for file uploads
         }
-
+        $submissions = DB::table('submissions')
+            ->where('assignment_id', $assignment_id)
+            ->where('user_id', $student_user_id)->get();
+        if ($submissions->isNotEmpty()) {
+            foreach ($submissions as $submission) {
+                $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
+            }
+        }
         switch ($submission_files_type) {
             case('q'):
-                $submissions = DB::table('submissions')
-                    ->where('assignment_id', $assignment_id)
-                    ->where('user_id', $student_user_id)->get();
                 $submission_files = DB::table('submission_files')
                     ->where('assignment_id', $assignment_id)
                     ->where('type', 'q') //'q', 'a', or 0
                     ->where('user_id', $student_user_id)->get();
-                if ($submissions->isNotEmpty()) {
-                    foreach ($submissions as $submission) {
-                        $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
-                    }
-                }
                 if ($submission_files->isNotEmpty()) {
                     foreach ($submission_files as $submission_file) {
                         $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
@@ -82,10 +81,9 @@ class Score extends Model
                 break;
 
             case('0'):
-                $assignment_score = $assignment_question_scores_info ?
+                      $assignment_score = $assignment_question_scores_info ?
                     $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
                     : 0;
-
                 break;
 
         }
@@ -137,6 +135,7 @@ class Score extends Model
 
     public function getAssignmentScoreFromQuestions(array $assignment_question_scores_info)
     {
+
         $assignment_score_from_questions = 0;
         //get the assignment points for the questions
         foreach ($assignment_question_scores_info as $score) {

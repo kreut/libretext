@@ -175,7 +175,7 @@ class QuestionsGetTest extends TestCase
 
         $this->actingAs($this->user_2)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'error',
-                'message' => 'You are not allowed to remove a question fromq this assignment.']);
+                'message' => 'You are not allowed to remove a question from this assignment.']);
 
     }
 
