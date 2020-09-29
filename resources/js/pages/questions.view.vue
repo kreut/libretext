@@ -395,6 +395,7 @@ export default {
 
 
         if (serverSideSubmit) {
+          console.log('serverSideSubmit')
           vm.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
@@ -458,7 +459,7 @@ export default {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
-      } else if (body.includes('webwork.libretexts.org')) {
+      } else if (body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
         technology = 'webwork'
       } else {
         technology = false
@@ -510,7 +511,7 @@ export default {
     },
     showIframe(id) {
       this.iframeLoaded = true
-      iFrameResize({log: true}, `#${id}`)
+      iFrameResize({log: false}, `#${id}`)
     },
     back(remediationObject) {
       let parentIdToShow = false
@@ -538,7 +539,7 @@ export default {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         console.log(this.questions[currentPage - 1])
         let iframe_id = this.questions[currentPage - 1].iframe_id
-        iFrameResize({log: true}, `#${iframe_id}`)
+        iFrameResize({log: false}, `#${iframe_id}`)
       })
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
