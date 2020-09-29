@@ -644,7 +644,7 @@ export default {
 
         let iframe_id = this.questions[0].iframe_id;
         this.$nextTick(() => {
-          iFrameResize({log: true}, `#${iframe_id}`)
+          iFrameResize({log: false}, `#${iframe_id}`)
         })
 
         this.questionPointsForm.points = this.questions[0].points
