@@ -15,7 +15,6 @@ class SubmissionController extends Controller
 
     public function store(StoreSubmission $request, Assignment $Assignment, Score $score)
     {
-        Log::info('store submission');
         $Submission = new Submission();
         return $Submission->store($request, new Submission(), $Assignment, $score);
 

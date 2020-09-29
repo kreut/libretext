@@ -23,7 +23,7 @@ class Submission extends Model
 
     public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
     {
-       Log::info('save');
+
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
 
         // $data = $request->validated();//TODO: validate here!!!!!
@@ -156,7 +156,7 @@ class Submission extends Model
             $h->report($e);
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
         }
-Log::info($response);
+
         return $response;
 
     }
