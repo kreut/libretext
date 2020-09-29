@@ -374,7 +374,8 @@ export default {
           clientSideSubmit = false
         }
         try {
-          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result'))
+          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result')
+          || (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
         } catch (error) {
           serverSideSubmit = false
         }
