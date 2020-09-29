@@ -114,8 +114,8 @@ class Submission extends Model
             if ($submission) {
 
                 $submission->submission = $data['submission'];
-
                 $submission->score = $data['score'];
+                $submission->save();
 
             } else {
                 Submission::create(['user_id' => $data['user_id'],
