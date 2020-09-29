@@ -344,22 +344,26 @@ export default {
     this.downloadSubmission = downloadSubmission
   },
   mounted() {
-
     this.assignmentId = this.$route.params.assignmentId
     let canView = this.getAssignmentInfo()
     if (!canView) {
       return false
     }
     this.getSelectedQuestions(this.assignmentId)
-
     h5pResizer()
-    let vm = this
-    if (this.user.role === 3) {
-      let receiveMessage = async function (event) {
-        let technology = vm.getTechnology(event.origin)
-        console.log(technology)
-        console.log(event.data)
-        console.log(event)
+    window.addEventListener('message', this.receiveMessage, false)
+
+  },
+  beforeDestroy () {
+    window.removeEventListener('message', this.receiveMessage)
+  },
+  methods: {
+      async receiveMessage(event) {
+      if (this.user.role === 3) {
+        let technology = this.getTechnology(event.origin)
+       // console.log(technology)
+       // console.log(event.data)
+       // console.log(event)
         if (technology === 'imathas') {
 
 
@@ -396,13 +400,13 @@ export default {
 
         if (serverSideSubmit) {
           console.log('serverSideSubmit')
-          vm.showResponse(JSON.parse(event.data))
+          this.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
           let submission_data = {
             'submission': event.data,
-            'assignment_id': vm.assignmentId,
-            'question_id': vm.questions[vm.currentPage - 1].id,
+            'assignment_id': this.assignmentId,
+            'question_id': this.questions[this.currentPage - 1].id,
             'technology': technology
           }
 
@@ -411,27 +415,21 @@ export default {
 
           //if incorrect, show the learning tree stuff...
           try {
-            vm.hideResponse()
+            this.hideResponse()
             const {data} = await axios.post('/api/submissions', submission_data)
-            console.log(data)
             if (!data.message) {
               data.type = error
               data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
-            vm.showResponse(data)
+            this.showResponse(data)
           } catch (error) {
-            console.log(error)
-            console.log(error)
             error.type = 'error'
             error.message = `The following error occurred: ${error}. Please refresh the page and try again and contact us if the problem persists.`
-            vm.showResponse(error)
+            this.showResponse(error)
           }
         }
       }
-      window.addEventListener("message", receiveMessage, false)
-    }
-  },
-  methods: {
+    },
     isInstructor() {
       console.log(this.user.role)
       return (this.user.role === 2)
@@ -441,7 +439,6 @@ export default {
     },
     showResponse(data) {
       console.log('showing response')
-      console.log(data)
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       if (data.type === 'success') {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted;

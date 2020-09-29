@@ -105,10 +105,9 @@ class Submission extends Model
         try {
 
             //do the extension stuff also
-
-            $submission = Submission::where('user_id', '=', $data['user_id'])
-                ->where('assignment_id', '=', $data['assignment_id'])
-                ->where('question_id', '=', $data['question_id'])
+            $submission = Submission::where('user_id',  $data['user_id'])
+                ->where('assignment_id',  $data['assignment_id'])
+                ->where('question_id',  $data['question_id'])
                 ->first();
 
             if ($submission) {
