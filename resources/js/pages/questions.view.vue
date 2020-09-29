@@ -50,22 +50,25 @@
         </div>
         <div class="card mb-2">
           <div class="card-body">
-            <p>
 
-              <span v-if="(user.role === 3)">
-                 <span class="font-italic font-weight-bold">
-                <span v-if="solutionsReleased && !questions[currentPage-1].questionFiles">
+            <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
+              <div v-if="solutionsReleased">
+                <p>
+                <span v-if="!questions[currentPage-1].questionFiles">
                  This question is worth {{ questions[currentPage - 1].points }} points.
               </span>
-              <span v-if="questions[currentPage-1].questionFiles">
+                  <span v-if="questions[currentPage-1].questionFiles">
                 You achieved a total score of
                 {{ questions[currentPage - 1].total_score }}
                 out of a possible
                 {{ questions[currentPage - 1].points }} points.</span>
-                 </span>
-              </span>
-            </p>
+                </p>
+              </div>
+              <div v-if="!solutionsReleased">
+                <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
+              </div>
 
+            </div>
             <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
             <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
             <div v-if="solutionsReleased">
@@ -304,6 +307,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    solutionsReleased: false,
     has_submissions: false,
     submissionDataType: 'danger',
     submissionDataMessage: '',
@@ -354,16 +358,16 @@ export default {
     window.addEventListener('message', this.receiveMessage, false)
 
   },
-  beforeDestroy () {
+  beforeDestroy() {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-      async receiveMessage(event) {
+    async receiveMessage(event) {
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
-       // console.log(technology)
-       // console.log(event.data)
-       // console.log(event)
+        // console.log(technology)
+        // console.log(event.data)
+        // console.log(event)
         if (technology === 'imathas') {
 
 
@@ -379,7 +383,7 @@ export default {
         }
         try {
           serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result')
-          || (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
+            || (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
         } catch (error) {
           serverSideSubmit = false
         }
