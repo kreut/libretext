@@ -38,7 +38,7 @@
             </b-col>
           </b-form-row>
         </b-form-group>
-
+        <div v-show="!solutionsReleased">
         <b-form-group
           id="available_from"
           label-cols-sm="4"
@@ -180,7 +180,11 @@
             can't change the source of the questions, the scoring type, the default points per question, or the type of file uploads. </strong>
           </b-alert>
         </div>
-
+        </div>
+        <div v-show="solutionsReleased">
+          <b-alert variant="info" show><strong>You have already released the solutions to this assignment.  At this point, the only item that you can update is the assignment's name.</strong>
+          </b-alert>
+        </div>
       </b-form>
     </b-modal>
     <b-modal
@@ -263,6 +267,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    solutionsReleased:false,
     assignmentId: false, //if there's a assignmentId it's an update
     assignments: [],
     completedOrCorrectOptions: [
@@ -358,6 +363,7 @@ export default {
     editAssignment(assignment) {
       console.log(assignment)
       this.has_submissions = (assignment.has_submissions === 1)
+      this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
       this.form.name = assignment.name
       this.form.available_from_date = assignment.available_from_date

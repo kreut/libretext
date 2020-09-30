@@ -101,6 +101,7 @@ class AssignmentController extends Controller
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     $assignments[$key]['has_submissions'] = +!$assignment->submissions->isEmpty();//return as 0 or 1
+
                 }
 //same regardless of whether you're a student
                 $assignments[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
