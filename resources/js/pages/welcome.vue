@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="basic-layout d-flex  justify-content-center bg" :style="{backgroundImage:'url(/assets/img/hatice-yardim-5LvC-QX0OOc-unsplash.jpg)'}">
+    <div class="basic-layout d-flex  justify-content-center bg" :style="{backgroundImage:'url(/assets/img/soundtrap-ddwbTn5HDdQ-unsplash.jpg)'}">
       <div class="text-center">
         <div class="title font-italic text-white">
           {{ title }}
