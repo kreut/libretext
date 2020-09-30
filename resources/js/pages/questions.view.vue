@@ -278,10 +278,13 @@
       <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
         <b-button variant="success">Get Questions</b-button>
       </div>
-      <b-alert show variant="warning"><a href="#" class="alert-link">This assignment currently has no
-        questions.
+
+      <b-alert show variant="warning"><a href="#" class="alert-link">
+        <span v-show="source === 'a'">This assignment currently has no questions.</span>
+        <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
       </a>
       </b-alert>
+
     </div>
   </div>
 </template>
@@ -307,6 +310,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    source: 'a',
     solutionsReleased: false,
     has_submissions: false,
     submissionDataType: 'danger',
@@ -353,9 +357,17 @@ export default {
     if (!canView) {
       return false
     }
-    this.getSelectedQuestions(this.assignmentId)
-    h5pResizer()
-    window.addEventListener('message', this.receiveMessage, false)
+    if (this.source === 'a') {
+      this.getSelectedQuestions(this.assignmentId)
+      h5pResizer()
+      window.addEventListener('message', this.receiveMessage, false)
+    } else {
+
+
+
+
+
+    }
 
   },
   beforeDestroy() {
@@ -616,8 +628,10 @@ export default {
         if (data.type === 'error') {
           return false
         }
+
         this.title = `${data.name} Assignment Questions`
         this.has_submissions = data.has_submissions
+        this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))
       } catch (error) {

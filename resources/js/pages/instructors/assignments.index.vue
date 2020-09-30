@@ -194,6 +194,7 @@
     >
       <p>By releasing the solutions, students will be able to see the solutions to all of the questions in the
         assignment.</p>
+      <p>In addition, students will be able to see their assignment score.</p>
       <p><strong>Once the solutions become available, they cannot be hidden again!</strong></p>
     </b-modal>
     <b-modal
@@ -213,11 +214,11 @@
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
              <span v-if="user.role === 2">
-            <span class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
+            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
               :variant="hasSubmissionsColor(data.item)" icon="question-circle"></b-icon></span>
              </span>
-            <span class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
-            <span class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
+            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
+            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="releaseSolutions(data.item)">
@@ -225,7 +226,7 @@
             </span>
 
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
+            <b-icon  icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
               </span>
           </div>
         </template>
@@ -363,6 +364,7 @@ export default {
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
       this.form.due_time = assignment.due_time
+      this.form.source = assignment.source
       this.form.type_of_submission = assignment.type_of_submission
       this.form.submission_files = assignment.submission_files
       this.form.num_submissions_needed = assignment.num_submissions_needed

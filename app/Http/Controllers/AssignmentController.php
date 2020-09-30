@@ -145,6 +145,7 @@ class AssignmentController extends Controller
                 ['name' => $data['name'],
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
+                    'source' => $data['source'],
                     'default_points_per_question' => $data['default_points_per_question'] ?? null,
                     'scoring_type' => $data['scoring_type'],
                     'submission_files' => $data['submission_files'],

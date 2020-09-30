@@ -45,7 +45,7 @@ class Submission extends Model
             return $response;
         }
 
-        if ($assignment->solutions_released){
+        if ($assignment->solutions_released) {
             $response['message'] = 'You submission will not be saved since the solutions have been released.';
             return $response;
         }
@@ -59,55 +59,55 @@ class Submission extends Model
         }
 
         $student_response = 'N/A';
-            switch ($data['technology']) {
-                case('h5p'):
-                    $submission = json_decode($data['submission']);
-                    $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
-                    $student_response = $submission->result->response;
-                    break;
-                case('imathas'):
-                    $submission = $data['submission'];
-                    $data['score'] = floatval($submission->score);
+        switch ($data['technology']) {
+            case('h5p'):
+                $submission = json_decode($data['submission']);
+                $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                $student_response = $submission->result->response;
+                break;
+            case('imathas'):
+                $submission = $data['submission'];
+                $data['score'] = floatval($submission->score);
 
-                    $tks = explode('.', $submission->state);
-                    list($headb64, $bodyb64, $cryptob64) = $tks;
-                    $state = json_decode(base64_decode($bodyb64));
-                    $student_response  = $state->stuanswers;
+                $tks = explode('.', $submission->state);
+                list($headb64, $bodyb64, $cryptob64) = $tks;
+                $state = json_decode(base64_decode($bodyb64));
+                $student_response = $state->stuanswers;
 
-                    $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
-                    break;
-                case('webwork'):
-                    // Log::info('case webwork');
-                    $submission = $data['submission'];
-                    $data['score'] = $submission->score->score;
-                    Log::info('Score: ' . $submission->score->score);
+                $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
+                break;
+            case('webwork'):
+                // Log::info('case webwork');
+                $submission = $data['submission'];
+                $data['score'] = $submission->score->score;
+                Log::info('Score: ' . $submission->score->score);
 
-                    /**$data['score'] = 0;
-                    $num_questions = 0;
-                    Log::info(var_dump($data['submission']));
-                    foreach ($submission->score as $value) {
-                        $data['score'] = $data['score'] + floatval($value->score);
-                        $num_questions++;
-                    }
-                    $student_response = 'todo for webwork';
-
-                    // Log::info($num_questions);
-                    $data['score'] = $num_questions
-                        ? floatval($assignment_question->points) * floatval($data['score'] / $num_questions)
-                        : 0;**/
-                    $data['submission'] = json_encode($data['submission']);
-                    break;
-                default:
-                    $response['message'] = 'That is not a valid technology.';
-                    return $response;
-            }
+                /**$data['score'] = 0;
+                 * $num_questions = 0;
+                 * Log::info(var_dump($data['submission']));
+                 * foreach ($submission->score as $value) {
+                 * $data['score'] = $data['score'] + floatval($value->score);
+                 * $num_questions++;
+                 * }
+                 * $student_response = 'todo for webwork';
+                 *
+                 * // Log::info($num_questions);
+                 * $data['score'] = $num_questions
+                 * ? floatval($assignment_question->points) * floatval($data['score'] / $num_questions)
+                 * : 0;**/
+                $data['submission'] = json_encode($data['submission']);
+                break;
+            default:
+                $response['message'] = 'That is not a valid technology.';
+                return $response;
+        }
 
         try {
 
             //do the extension stuff also
-            $submission = Submission::where('user_id',  $data['user_id'])
-                ->where('assignment_id',  $data['assignment_id'])
-                ->where('question_id',  $data['question_id'])
+            $submission = Submission::where('user_id', $data['user_id'])
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
                 ->first();
 
             if ($submission) {
@@ -147,7 +147,7 @@ class Submission extends Model
             }
 
             $response['message'] = 'Your question submission was saved.';
-            $response['last_submitted'] =  $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
+            $response['last_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
             $response['student_response'] = $student_response;
 
         } catch (Exception $e) {
@@ -197,19 +197,31 @@ class Submission extends Model
     {
         $AssignmentSyncQuestion = new AssignmentSyncQuestion();
         $num_sumbissions_per_assignment = [];
-        $assignment_ids = $course->assignments()->pluck('id');
+        $assignment_source = [];
+        $assignment_ids = collect([]);
+        $assignments = $course->assignments;
+        if ($assignments->isNotEmpty()) {
 
-        if ($assignment_ids->isNotEmpty()) {
+            foreach ($course->assignments as $assignment) {
+                $assignment_ids[] = $assignment->id;
+                $assignment_source[$assignment->id] = $assignment->source;
+
+            }
+
             $questions_count_by_assignment_id = $AssignmentSyncQuestion->getQuestionCountByAssignmentIds($assignment_ids);
-
 
             $submissions_count_by_assignment_id = $this->getSubmissionsCountByAssignmentIdsAndUser($assignment_ids, $user);
             //set to 0 if there are no questions
             foreach ($assignment_ids as $assignment_id) {
                 $num_questions = $questions_count_by_assignment_id[$assignment_id] ?? 0;
                 $num_submissions = $submissions_count_by_assignment_id[$assignment_id] ?? 0;
-
-                $num_sumbissions_per_assignment[$assignment_id] = ($num_questions === 0) ? "No questions" : "$num_submissions/$num_questions";
+                switch ($assignment_source[$assignment_id]) {
+                    case('a'):
+                        $num_sumbissions_per_assignment[$assignment_id] = ($num_questions === 0) ? "No questions" : "$num_submissions/$num_questions";
+                        break;
+                    case('x'):
+                        $num_sumbissions_per_assignment[$assignment_id] = 'N/A';
+                }
             }
         }
         return $num_sumbissions_per_assignment;
