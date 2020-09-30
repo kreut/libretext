@@ -33,19 +33,14 @@ class AssignmentsIndexTest extends TestCase
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
             'scoring_type' => 'p',
+            'source' => 'a',
             'default_points_per_question' => 2,
             'submission_files' => 'a'];
 
     }
 
 
-    /** @test */
 
-    public function must_be_of_a_valid_source() {
-
-
-
-    }
 /** @test **/
     public function will_only_update_the_name_and_dates_if_there_is_already_a_submission(){
 
@@ -138,6 +133,16 @@ class AssignmentsIndexTest extends TestCase
     {
         $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
             ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+
+    public function must_be_of_a_valid_source() {
+        $this->assignment_info['source'] = "";
+        $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
+            ->assertJsonValidationErrors(['source']);
+
 
     }
 
