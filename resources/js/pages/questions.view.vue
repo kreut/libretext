@@ -48,39 +48,6 @@
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
-        <div class="card mb-2">
-          <div class="card-body">
-
-            <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
-              <div v-if="solutionsReleased">
-                <p>
-                <span v-if="!questions[currentPage-1].questionFiles">
-                 This question is worth {{ questions[currentPage - 1].points }} points.
-              </span>
-                  <span v-if="questions[currentPage-1].questionFiles">
-                You achieved a total score of
-                {{ questions[currentPage - 1].total_score }}
-                out of a possible
-                {{ questions[currentPage - 1].points }} points.</span>
-                </p>
-              </div>
-              <div v-if="!solutionsReleased">
-                <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
-              </div>
-
-            </div>
-            <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
-            <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
-            <div v-if="solutionsReleased">
-              <!--<span class="font-weight-bold">Correct response:</span> {{
-                questions[currentPage - 1].correct_response
-              }}<br>-->
-              <span class="font-weight-bold">Question Score:</span> {{
-                questions[currentPage - 1].submission_score
-              }}<br>
-            </div>
-          </div>
-        </div>
         <div>
           <div class="d-flex">
             <div v-if="isInstructor()">
@@ -147,124 +114,172 @@
             </b-form-group>
 
           </b-form>
+          <b-container>
+            <b-row>
+              <b-col cols="8">
+              <div v-if="learningTreeAsList.length>0">
+                <b-alert show>
+
+                  <div class="text-center" v-if="!loadedTitles">
+                    <h5>
+                      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+                      Loading
+                    </h5>
+                  </div>
+                  <div v-else>
+                    <div class="d-flex justify-content-between mb-2">
+                      <h5>Need some help? Explore the topics below.</h5>
+                      <b-button class="float-right" :disabled="showQuestion" variant="primary"
+                                v-on:click="viewOriginalQuestion">View Original
+                        Question
+                      </b-button>
+
+                    </div>
+                    <hr>
+                    <b-container class="bv-example-row">
+                      <b-row align-h="center">
+                        <template v-for="remediationObject in this.learningTreeAsList">
+                          <b-col cols="4" v-for="(value, name) in remediationObject" v-bind:key="value.id"
+                                 v-if="(remediationObject.show) && (name === 'title')">
+                            <b-row align-h="center">
+                              <b-col cols="4">
+                                <div class="h2 mb-0">
+                                  <b-icon variant="info" v-if="remediationObject.parent > 0"
+                                          v-on:click="back(remediationObject)" icon="arrow-up-square-fill">
+                                  </b-icon>
+                                </div>
+                              </b-col>
+                            </b-row>
+                            <div class="border border-info mr-1 p-3 rounded">
+                              <b-row align-h="center">
+                                <div class="mr-1 ml-2"><strong>{{ remediationObject.title }}</strong></div>
+                                <b-button size="sm" class="mr-2" variant="success"
+                                          v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                                  Go!
+                                </b-button>
+                              </b-row>
+                            </div>
+                            <b-container>
+                              <b-row align-h="center">
+                                <b-col cols="4">
+                                  <div class="h2 mb-0">
+                                    <b-icon v-if="remediationObject.children.length"
+                                            v-on:click="more(remediationObject)" icon="arrow-down-square-fill"
+                                            variant="info">
+                                    </b-icon>
+                                  </div>
+                                </b-col>
+                              </b-row>
+                            </b-container>
+                          </b-col>
+                        </template>
+                      </b-row>
+                    </b-container>
+                  </div>
+                </b-alert>
+              </div>
+
+              <div v-if="!iframeLoaded" class="text-center">
+                <h5>
+                  <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+                  Loading...
+                </h5>
+              </div>
+              <iframe v-bind:id="remediationIframeId"
+                      allowtransparency="true" frameborder="0"
+                      v-bind:src="remediationSrc"
+                      style="width: 1px;min-width: 100%;"
+                      v-if="!showQuestion"
+                      v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
+              >
+              </iframe>
+              <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
+                <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
+                  <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert></b-col>
+
+              <b-col>
+          <div class="card mb-2">
+                <div class="card-body">
+
+                  <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
+                    <div v-if="solutionsReleased">
+                      <p>
+                <span v-if="!questions[currentPage-1].questionFiles">
+                 This question is worth {{ questions[currentPage - 1].points }} points.
+              </span>
+                        <span v-if="questions[currentPage-1].questionFiles">
+                You achieved a total score of
+                {{ questions[currentPage - 1].total_score }}
+                out of a possible
+                {{ questions[currentPage - 1].points }} points.</span>
+                      </p>
+                    </div>
+                    <div v-if="!solutionsReleased">
+                      <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
+                    </div>
+
+                  </div>
+                  <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
+                  <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
+                  <div v-if="solutionsReleased">
+                    <!--<span class="font-weight-bold">Correct response:</span> {{
+                      questions[currentPage - 1].correct_response
+                    }}<br>-->
+                    <span class="font-weight-bold">Question Score:</span> {{
+                      questions[currentPage - 1].submission_score
+                    }}<br>
+                  </div>
+                </div>
+              </div>
           <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-            <div class="col-6">
-              <b-card title="File Submission Information">
-                <b-card-text>
-                  <strong> Uploaded file:</strong>
-                  <span v-if="questions[currentPage-1].submission_file_exists">
+
+                  <b-card title="File Submission Information">
+                    <b-card-text>
+                      <strong> Uploaded file:</strong>
+                      <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
                      v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
                     {{ questions[currentPage - 1].original_filename }}
                   </a>
                   </span>
-                  <span v-if="!questions[currentPage-1].submission_file_exists">
+                      <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                   </span><br>
-                  <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
-                  <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
-                  <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
+                      <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                      <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                      <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
                                       N/A
                   </span>
-                  <span v-if="questions[currentPage-1].file_feedback">
+                      <span v-if="questions[currentPage-1].file_feedback">
                      <a href=""
                         v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback, $noty)">
                     file_feedback
                   </a>
                   </span>
-                  <br>
-                  <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-                  <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
-                  <b-button variant="primary" class="float-right mr-2"
-                            v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
-                            v-b-modal.modal-upload-question-file>Upload New File
-                  </b-button>
-                </b-card-text>
-              </b-card>
-            </div>
+                      <br>
+                      <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+                      <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
+                      <b-button variant="primary" class="float-right mr-2"
+                                v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
+                                v-b-modal.modal-upload-question-file>Upload New File
+                      </b-button>
+                    </b-card-text>
+                  </b-card>
 
-          </div>
-        </div>
-        <div v-if="learningTreeAsList.length>0">
-          <b-alert show>
-
-            <div class="text-center" v-if="!loadedTitles">
-              <h5>
-                <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-                Loading
-              </h5>
-            </div>
-            <div v-else>
-              <div class="d-flex justify-content-between mb-2">
-                <h5>Need some help? Explore the topics below.</h5>
-                <b-button class="float-right" :disabled="showQuestion" variant="primary"
-                          v-on:click="viewOriginalQuestion">View Original
-                  Question
-                </b-button>
 
               </div>
-              <hr>
-              <b-container class="bv-example-row">
-                <b-row align-h="center">
-                  <template v-for="remediationObject in this.learningTreeAsList">
-                    <b-col cols="4" v-for="(value, name) in remediationObject" v-bind:key="value.id"
-                           v-if="(remediationObject.show) && (name === 'title')">
-                      <b-row align-h="center">
-                        <b-col cols="4">
-                          <div class="h2 mb-0">
-                            <b-icon variant="info" v-if="remediationObject.parent > 0"
-                                    v-on:click="back(remediationObject)" icon="arrow-up-square-fill">
-                            </b-icon>
-                          </div>
-                        </b-col>
-                      </b-row>
-                      <div class="border border-info mr-1 p-3 rounded">
-                        <b-row align-h="center">
-                          <div class="mr-1 ml-2"><strong>{{ remediationObject.title }}</strong></div>
-                          <b-button size="sm" class="mr-2" variant="success"
-                                    v-on:click="explore(remediationObject.library, remediationObject.pageId)">
-                            Go!
-                          </b-button>
-                        </b-row>
-                      </div>
-                      <b-container>
-                        <b-row align-h="center">
-                          <b-col cols="4">
-                            <div class="h2 mb-0">
-                              <b-icon v-if="remediationObject.children.length"
-                                      v-on:click="more(remediationObject)" icon="arrow-down-square-fill"
-                                      variant="info">
-                              </b-icon>
-                            </div>
-                          </b-col>
-                        </b-row>
-                      </b-container>
-                    </b-col>
-                  </template>
-                </b-row>
-              </b-container>
-            </div>
-          </b-alert>
+              </b-col>
+            </b-row>
+          </b-container>
+
+
+
+
+
         </div>
 
-        <div v-if="!iframeLoaded" class="text-center">
-          <h5>
-            <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-            Loading...
-          </h5>
-        </div>
-        <iframe v-bind:id="remediationIframeId"
-                allowtransparency="true" frameborder="0"
-                v-bind:src="remediationSrc"
-                style="width: 1px;min-width: 100%;"
-                v-if="!showQuestion"
-                v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
-        >
-        </iframe>
 
-        <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
-        <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
-          <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert>
+
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
