@@ -257,9 +257,11 @@ class AssignmentController extends Controller
 
         try {
             DB::transaction(function () use ($assignment) {
-                DB::table('assignment_question')->where('assignment_id', '=', $assignment->id)->delete();
-                DB::table('extensions')->where('assignment_id', '=', $assignment->id)->delete();
-                DB::table('scores')->where('assignment_id', '=', $assignment->id)->delete();
+                DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
+                DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
+                DB::table('scores')->where('assignment_id',  $assignment->id)->delete();
+                DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
+                DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
                 $assignment->delete();
             });
             $response['type'] = 'success';
