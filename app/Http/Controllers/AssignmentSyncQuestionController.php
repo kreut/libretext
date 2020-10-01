@@ -429,6 +429,9 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
+                        $custom_claims['webwork']['showHints'] = 1;
+                        $custom_claims['webwork']['showSolution'] = 1;
+                        $custom_claims['webwork']['showDebug'] = 1;
 
                         $question['body'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
                         $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
