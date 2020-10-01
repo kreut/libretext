@@ -58,7 +58,7 @@
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
               <div v-if="!has_submissions">
-                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Get
+                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
                   Questions
                 </b-button>
                 <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
@@ -291,7 +291,7 @@
     </div>
     <div class="mt-4" v-if="!initializing && !questions.length">
       <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
-        <b-button variant="success">Get Questions</b-button>
+        <b-button variant="success">Add Questions</b-button>
       </div>
 
       <b-alert show variant="warning"><a href="#" class="alert-link">

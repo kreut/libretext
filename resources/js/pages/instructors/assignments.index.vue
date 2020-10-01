@@ -215,13 +215,17 @@
     </b-modal>
     <div v-if="hasAssignments">
       <b-table striped hover :fields="fields" :items="assignments">
+        <template v-slot:cell(name)="data">
+          <div class="mb-0">
+            <a href=""  v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
+          </div>
+        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
              <span v-if="user.role === 2">
             <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
-              :variant="hasSubmissionsColor(data.item)" icon="question-circle"></b-icon></span>
+              :variant="hasSubmissionsColor(data.item)" icon="plus-circle"></b-icon></span>
              </span>
-            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getStudentView(data.item.id)"><b-icon icon="eye"></b-icon></span>
             <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
@@ -329,7 +333,7 @@ export default {
   },
   methods: {
     hasSubmissionsColor(assignment) {
-      return (assignment.has_submissions === 1) ? 'warning' : 'secondary'
+      return (assignment.has_submissions === 1) ? 'warning' : ''
 
 
     },
@@ -384,11 +388,20 @@ export default {
         this.$noty.info("You can't add/remove questions for this assignment since students have already submitted solutions.")
         return false
       }
+
+      if (assignment.has_submissions === 1){
+        this.$noty.info("Students have already submitted responses to this assignment, you won't be able to add or remove questions.")
+
+      }
       this.$router.push(`/assignments/${assignment.id}/questions/get`)
     }
     ,
-    getStudentView(assignmentId) {
-      this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    getStudentView(assignment) {
+      if (assignment.source === 'x'){
+        this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
+        return false
+      }
+      this.$router.push(`/assignments/${assignment.id}/questions/view`)
     }
     ,
     getSubmissionFileView(assignmentId, submissionFiles) {
