@@ -11,7 +11,7 @@
 
     >
       <b-form ref="form">
-        <p>Accepted file types are: {{getAcceptedFileTypes() }}.</p>
+        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
         <b-form-file
           ref="assignmentFileInput"
           v-model="form.assignmentFile"
@@ -24,7 +24,7 @@
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
-        <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile')}}
+        <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile') }}
         </div>
 
       </b-form>
@@ -46,13 +46,13 @@
             Submitted File:
             <b-button variant="link" style="padding:0px; padding-bottom:3px"
                       v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">
-              {{this.assignmentFileInfo.original_filename}}
+              {{ this.assignmentFileInfo.original_filename }}
             </b-button>
             <br>
-            Score: {{this.assignmentFileInfo.submission_file_score}}<br>
-            Date submitted: {{this.assignmentFileInfo.date_submitted}}<br>
-            Date graded: {{this.assignmentFileInfo.date_graded}}<br>
-            Text feedback: {{this.assignmentFileInfo.text_feedback}}<br>
+            Score: {{ this.assignmentFileInfo.submission_file_score }}<br>
+            Date submitted: {{ this.assignmentFileInfo.date_submitted }}<br>
+            Date graded: {{ this.assignmentFileInfo.date_graded }}<br>
+            Text feedback: {{ this.assignmentFileInfo.text_feedback }}<br>
           <hr>
 
         </b-card-text>
@@ -70,7 +70,7 @@
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <div v-show="data.item.is_available">
-              <a href="" v-on:click.prevent="getStudentView(data.item.id)">{{ data.item.name }}</a>
+              <a href="" v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
             </div>
             <div v-show="!data.item.is_available">
               {{ data.item.name }}
@@ -103,152 +103,155 @@
 </template>
 
 <script>
-  import axios from 'axios'
-  import Form from "vform"
-  import {downloadSubmission} from '~/helpers/SubmissionFiles'
-  import {submitUploadFile} from '~/helpers/UploadFiles'
-  import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
+import axios from 'axios'
+import Form from "vform"
+import {downloadSubmission} from '~/helpers/SubmissionFiles'
+import {submitUploadFile} from '~/helpers/UploadFiles'
+import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 
-  const now = new Date()
+const now = new Date()
 
-  const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-  let formatDateAndTime = value => {
-    let date = new Date(value)
-    return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
-  }
+const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
+let formatDateAndTime = value => {
+  let date = new Date(value)
+  return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+}
 
 
-  export default {
-    middleware: 'auth',
-    data: () => ({
-      form: new Form({
-        assignmentFile: null,
-        assignmentId: null
-      }),
-      assignmentFileInfo: {},
-      uploading: false,
-      assignments: [],
-      courseId: false,
-      fields: [
-        'name',
-        {
-          key: 'available_from',
-          formatter: value => {
-            return formatDateAndTime(value)
-          }
-        },
-        {
-          key: 'due',
-          formatter: value => {
-            let dateAndTime = formatDateAndTime(value.due_date)
-            let extension = value.is_extension ? '(Extension)' : ''
-
-            return dateAndTime + ' ' + extension
-          }
-        },
-        'number_submitted',
-        'score',
-        'files'
-      ],
-      hasAssignments: false,
-      showNoAssignmentsAlert: false,
-      canViewAssignments: false
+export default {
+  middleware: 'auth',
+  data: () => ({
+    form: new Form({
+      assignmentFile: null,
+      assignmentId: null
     }),
-    created() {
-      this.downloadSubmission = downloadSubmission
-      this.submitUploadFile = submitUploadFile
-      this.getAcceptedFileTypes = getAcceptedFileTypes
-    },
-    mounted() {
-      this.courseId = this.$route.params.courseId
-      this.getAssignments()
-    },
-    methods: {
-
-      closeAssignmentSubmissionFeedbackModal() {
-        this.$nextTick(() => {
-          this.$bvModal.hide('modal-assignment-submission-feedback')
-        })
-      },
-      async getAssignmentFileInfo(assignmentId) {
-        try {
-          const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
-          this.assignmentFileInfo = data.assignment_file_info
-          if (!this.assignmentFileInfo) {
-            this.$noty.info("You can't have any feedback if you haven't submitted a file!")
-            return false
-          }
-         console.log(this.assignmentFileInfo)
-
-          this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback');
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            this.$nextTick(() => {
-              this.$bvModal.hide('modal-assignment-submission-feedback')
-            })
-            return false
-          }
-        } catch (error) {
-          if (error.message.includes('status code 413')) {
-            error.message = 'The maximum size allowed is 10MB.'
-          }
-          this.$noty.error(error.message)
-
+    assignmentFileInfo: {},
+    uploading: false,
+    assignments: [],
+    courseId: false,
+    fields: [
+      'name',
+      {
+        key: 'available_from',
+        formatter: value => {
+          return formatDateAndTime(value)
         }
-        //get the text comments
-        //get the score
-        //the the temporary url of the feedback
-        //get the download url of your current submission
-
-
       },
-      async handleOk(bvModalEvt) {
-        // Prevent modal from closing
-        bvModalEvt.preventDefault()
-        // Trigger submit handler
-        if (this.uploading) {
-          this.$noty.info('Please be patient while the file is uploading.')
+      {
+        key: 'due',
+        formatter: value => {
+          let dateAndTime = formatDateAndTime(value.due_date)
+          let extension = value.is_extension ? '(Extension)' : ''
+
+          return dateAndTime + ' ' + extension
+        }
+      },
+      'number_submitted',
+      'score',
+      'files'
+    ],
+    hasAssignments: false,
+    showNoAssignmentsAlert: false,
+    canViewAssignments: false
+  }),
+  created() {
+    this.downloadSubmission = downloadSubmission
+    this.submitUploadFile = submitUploadFile
+    this.getAcceptedFileTypes = getAcceptedFileTypes
+  },
+  mounted() {
+    this.courseId = this.$route.params.courseId
+    this.getAssignments()
+  },
+  methods: {
+
+    closeAssignmentSubmissionFeedbackModal() {
+      this.$nextTick(() => {
+        this.$bvModal.hide('modal-assignment-submission-feedback')
+      })
+    },
+    async getAssignmentFileInfo(assignmentId) {
+      try {
+        const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
+        this.assignmentFileInfo = data.assignment_file_info
+        if (!this.assignmentFileInfo) {
+          this.$noty.info("You can't have any feedback if you haven't submitted a file!")
           return false
         }
-        this.uploading = true
-        await this.submitUploadFile('assignment',this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
-        this.uploading = false
-      },
-
-      resetModalForms() {
-        // alert('reset modal')
-      },
-      openUploadAssignmentFileModal(assignmentId) {
         console.log(this.assignmentFileInfo)
-        return false
-        console.log(assignment)
-        return false
-        this.form.errors.clear('assignmentFile')
-        this.form.assignmentId = assignmentId
-      },
-      getStudentView(assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/questions/view`)
-      },
-      async getAssignments() {
-        try {
-          const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
-          console.log(data)
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            return false
-          }
-          this.canViewAssignments = true
-          this.hasAssignments = data.length > 0
-          this.showNoAssignmentsAlert = !this.hasAssignments
-          this.assignments = data
 
-        } catch (error) {
-          alert(error.response)
+        this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback');
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.$nextTick(() => {
+            this.$bvModal.hide('modal-assignment-submission-feedback')
+          })
+          return false
         }
-      },
-      metaInfo() {
-        return {title: this.$t('home')}
+      } catch (error) {
+        if (error.message.includes('status code 413')) {
+          error.message = 'The maximum size allowed is 10MB.'
+        }
+        this.$noty.error(error.message)
+
       }
+      //get the text comments
+      //get the score
+      //the the temporary url of the feedback
+      //get the download url of your current submission
+
+
+    },
+    async handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      if (this.uploading) {
+        this.$noty.info('Please be patient while the file is uploading.')
+        return false
+      }
+      this.uploading = true
+      await this.submitUploadFile('assignment', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+      this.uploading = false
+    },
+
+    resetModalForms() {
+      // alert('reset modal')
+    },
+    openUploadAssignmentFileModal(assignmentId) {
+      console.log(this.assignmentFileInfo)
+      return false
+      console.log(assignment)
+      return false
+      this.form.errors.clear('assignmentFile')
+      this.form.assignmentId = assignmentId
+    },
+    getStudentView(assignment) {
+
+      (assignment.source === 'a')
+        ? this.$router.push(`/assignments/${assignment.id}/questions/view`)
+        : this.$noty.info('This is an external assignment.  Please contact your instructor for more information.')
+    },
+    async getAssignments() {
+      try {
+        const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.canViewAssignments = true
+        this.hasAssignments = data.length > 0
+        this.showNoAssignmentsAlert = !this.hasAssignments
+        this.assignments = data
+
+      } catch (error) {
+        alert(error.response)
+      }
+    },
+    metaInfo() {
+      return {title: this.$t('home')}
     }
   }
+}
 </script>
