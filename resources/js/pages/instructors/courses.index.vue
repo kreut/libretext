@@ -146,10 +146,13 @@
 
     <div v-if="hasCourses">
       <b-table striped hover :fields="fields" :items="courses">
+        <template v-slot:cell(name)="data">
+          <div class="mb-0">
+            <a href="" v-on:click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
+          </div>
+        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <span class="pr-1" v-on:click="showAssignments(data.item.id)"><b-icon
-              icon="file-earmark-text"></b-icon></span>
             <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
             <span v-if="user.role === 2">
               <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
@@ -305,11 +308,12 @@ export default {
       this.sendingEmail = false
     },
     showAssignments(courseId) {
-      window.location.href = `/instructors/courses/${courseId}/assignments`
+      this.$router.push(`/instructors/courses/${courseId}/assignments`)
     }
     ,
     showScores(courseId) {
       window.location.href = `/courses/${courseId}/scores`
+      this.$router.push(`/courses/${courseId}/scores`)
     }
     ,
     deleteCourse(courseId) {
