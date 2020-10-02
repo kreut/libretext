@@ -289,7 +289,15 @@ MATHJAX;
 
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/info?dream.out.format=json";
 
-        $response = $this->client->get($final_url, ['headers' => $headers]);
+        $final_url = "https://api.libretexts.org/endpoint/contents";
+        $data = ['path' => $page_id,
+            'subdomain' => $this->library,
+            'mode' => 'view'
+        ];
+        $headers = ['Origin' => 'https://adapt.libretexts.org'];
+        $response = $this->client->put( $final_url, ['headers' => ['Origin' => 'https://adapt.libretexts.org'],
+            'json' => $data]);
+        dd(json_decode($response->getBody()));
         return json_decode($response->getBody(), true);
 
     }
