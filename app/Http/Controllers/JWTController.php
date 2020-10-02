@@ -23,41 +23,40 @@ class JWTController extends Controller
         echo "The decrypted token: " . $JWE->decode($token);
     }
 
-    public function validateToken(Request $request)
+    public function validateToken(string $token)
     {
-
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
+
+        $response['type'] = 'error';
         try {
-            if (!$user = \JWTAuth::parseToken()->authenticate()) {
-                return json_encode(['type' => 'error', 'message' => 'User not found', 'token' => $request->header('Authorization')]);
+            if (!$user = auth()->setToken($token)->user()) {
+                $response['message'] = 'User not found';
+            } else {
+                $response['type'] = 'success';
             }
 
         } catch (\Exception $e) {
-            return json_encode(['type' => 'error', 'message' => $e->getMessage(), 'token' => $request->header('Authorization')]);
+            $response['message'] = $e->getMessage();
         }
+        return $response;
     }
 
 
     public function processAnswerJWT(Request $request)
     {
-
-        $this->validateToken($request);
-        Log::info($request->getContent());
-        $tks = explode('.', $request->getContent());
-        list($headb64, $body64, $cryptob64) =  $tks;
-
-       $answerJWT = json_decode(base64_decode($body64));
-       log::info(json_encode($answerJWT));
+        $content = $request->getContent();
+        $response = $this->validateToken($content);
+        if ($response['type'] === 'error') {
+            return json_encode($response);
+        }
+        $answerJWT = $this->getPayload($content);
 //if the token isn't formed correctly return a message
         if (!isset($answerJWT->problemJWT)) {
             $message = "You are missing the problemJWT in your answerJWT!";
             return json_encode(['type' => 'error', 'message' => $message]);
         }
-        $problemJWT = $answerJWT->problemJWT;//inside the answer JWT
-        $tks = explode('.',   $problemJWT );
-        list($headb64, $body64, $cryptob64) =  $tks;
-        $problemJWT = json_decode(base64_decode($body64));
-        log::info(json_encode($problemJWT));
+
+        $problemJWT = $this->getPayload($answerJWT->problemJWT);
 
         $missing_properties = !(
             isset($problemJWT->adapt) &&
@@ -69,9 +68,9 @@ class JWTController extends Controller
             return json_encode(['type' => 'error', 'message' => $message]);
         }
 
-        if (!in_array($problemJWT->adapt->technology,['webwork', 'imathas'])) {
-        $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
-        return json_encode(['type' => 'error', 'message' => $message]);
+        if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
+            $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
+            return json_encode(['type' => 'error', 'message' => $message]);
         }
 
         //good to go!
