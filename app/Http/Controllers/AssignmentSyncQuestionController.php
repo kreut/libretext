@@ -277,7 +277,6 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-            $response['type'] = 'success';
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];
@@ -360,6 +359,7 @@ class AssignmentSyncQuestionController extends Controller
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
+            $iframe_technology= true;
             $domd = new \DOMDocument();
             $JWE = new JWE();
             foreach ($assignment->questions as $key => $question) {
@@ -451,12 +451,20 @@ class AssignmentSyncQuestionController extends Controller
                         //NOT USED FOR anything at the moment
                         $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
+                    case('text'):
+                        $iframe_technology = false;
+                        break;
+                    default:
+                        $response['message'] =  "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by Adapt.";
+                        echo json_encode($response);
+                        exit;
 
                 }
-
-                $assignment->questions[$key]->iframe_id = $this->createIframeId();
-                $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
-                if (isset($instructor_learning_trees_by_question_id[$question->id])) {
+               if ($iframe_technology) {
+                   $assignment->questions[$key]->iframe_id = $this->createIframeId();
+                   $assignment->questions[$key]->body = $this->formatIframe($question['body'], $assignment->questions[$key]->iframe_id, $problemJWT);
+               }
+               if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $other_instructor_learning_trees_by_question_id[$question->id];
@@ -464,6 +472,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->learning_tree = '';
                 }
             }
+            $response['type'] = 'success';
             $response['questions'] = $assignment->questions;
 
         } catch (Exception $e) {

@@ -68,9 +68,9 @@ class QuestionController extends Controller
                 $contents = $Query->getContentsByPageId($page_id);
                 $body = $contents['body'][0];
 
+                $technology_and_tags = $Query->getTechnologyAndTags($page_info);
                 if (strpos($body, '<iframe') !== false) {
                     //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
-                    $technology_and_tags = $Query->getTechnologyAndTags($page_info);
                     if (!$technology_and_tags['technology']) {
                         $technology_and_tags['technology'] = $Query->getTechnologyFromBody($body);
                         if (!$technology_and_tags['technology']) {
@@ -79,24 +79,25 @@ class QuestionController extends Controller
                             exit;
 
                         }
-
                     }
-                    $data = ['page_id' => $page_id,
-                        'technology' => $technology_and_tags['technology'],
-                        'location' => $page_info['uri.ui'],
-                        'body' => $body];
-
-                    $question = Question::firstOrCreate($data);
-                    if ($technology_and_tags['tags']) {
-                        $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
-                    }
-
                 } else {
-                    echo json_encode(['type' => 'error',
-                        'message' => "We couldn't find an iframe embedded question on that page."]);
-                    exit;
+                    if ($technology_and_tags['technology'] !== 'tech:text') {
+                        echo json_encode(['type' => 'error',
+                            'message' => "That question neither has an iframe nor does it have 'tech:text' as one of the tags."]);
+                        exit;
 
+                    }
                 }
+                $data = ['page_id' => $page_id,
+                    'technology' => $technology_and_tags['technology'],
+                    'location' => $page_info['uri.ui'],
+                    'body' => $body];
+
+                $question = Question::firstOrCreate($data);
+                if ($technology_and_tags['tags']) {
+                    $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
+                }
+
 
             } catch (Exception $e) {
                 echo json_encode(['type' => 'error',
