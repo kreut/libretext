@@ -81,12 +81,7 @@ class QuestionController extends Controller
                         }
                     }
                 } else {
-                    if ($technology_and_tags['technology'] !== 'tech:text') {
-                        echo json_encode(['type' => 'error',
-                            'message' => "That question neither has an iframe nor does it have 'tech:text' as one of the tags."]);
-                        exit;
-
-                    }
+                    $technology_and_tags['technology'] = 'text';
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology_and_tags['technology'],
