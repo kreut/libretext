@@ -223,7 +223,7 @@ class SubmissionFileController extends Controller
     {
 
         $response['type'] = 'error';
-        $max_number_of_uploads_allowed = 3;//number allowed per question/assignment
+        $max_number_of_uploads_allowed = 5;//number allowed per question/assignment
         $assignment_id = $request->assignmentId;
 
         $type = $request->type;
