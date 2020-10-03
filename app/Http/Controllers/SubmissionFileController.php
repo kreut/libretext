@@ -74,13 +74,16 @@ class SubmissionFileController extends Controller
         $authorized = Gate::inspect('downloadAssignmentFile', [$assignmentFile, $submissionFile, $request->assignment_id, $request->submission]);
 
 
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
+        try {
+            if (!$authorized->allowed()) {
+                throw new Exception($authorized->message());
+            }
+           return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            return null;
         }
-
-        return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
-
     }
 
     public function getTemporaryUrlFromRequest(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
@@ -338,6 +341,7 @@ class SubmissionFileController extends Controller
             }
 
             $response['type'] = 'success';
+            $response['submission'] = basename($submission);
             $response['message'] = "Your file submission has been saved.  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             $response['original_filename'] = $original_filename;
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);

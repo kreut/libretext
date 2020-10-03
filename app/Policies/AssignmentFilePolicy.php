@@ -15,23 +15,28 @@ class AssignmentFilePolicy
 {
     use HandlesAuthorization;
 
-    public function downloadAssignmentFile(User $user, AssignmentFile $assignmentFile, SubmissionFile $submissionFile, int $assignment_id, string $submission)
+    public function downloadAssignmentFile(User $user, AssignmentFile $assignmentFile, SubmissionFile $submissionFile, int $assignment_id, string $filename)
     {
+switch($user->role){
+    case(2):
+        $has_access = (int) Assignment::find($assignment_id)->course->user_id ===  $user->id;
+        break;
+    case(3):
+        //student who owns the assignment or the file feedback
+        $user_id = $submissionFile->where('assignment_id', $assignment_id)
+            ->where('submission', $filename)
+            ->orWhere('file_feedback', $filename)
+            ->value('user_id');
+        $has_access = (int)$user_id === $user->id;
+        break;
+    case(4):
+        $has_access = (int) Assignment::find($assignment_id)->course->isGrader();
+        break;
 
+    break;
+}
 
-        if ($user->role === 3) {
-            //student who owns the assignment
-            $user_id = $submissionFile->where('assignment_id', $assignment_id)
-                ->where('submission', $submission)
-                ->value('user_id');
-
-        } else {
-            //instructor is owner of the course
-            $user_id = Assignment::find($assignment_id) ? Assignment::find($assignment_id)->course->user_id : null;
-        }
-
-
-        return ((int)$user_id === $user->id) ?
+        return ($has_access) ?
             Response::allow()
             : Response::deny('You are not allowed to download that assignment file.');
 

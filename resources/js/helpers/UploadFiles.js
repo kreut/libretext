@@ -34,6 +34,7 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
        uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
        uploadFile.file_feedback = null
        uploadFile.submission_file_exists = true
+       uploadFile.submission = data.submission
      }
     }
   } catch (error) {
