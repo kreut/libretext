@@ -267,8 +267,6 @@ class AssignmentSyncQuestionController extends Controller
     public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
-        Log:
-        info('getting questions');
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
 
