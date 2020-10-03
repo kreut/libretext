@@ -176,19 +176,56 @@ class Submission extends Model
         return $last_submitted_by_user;
     }
 
-    public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignment_ids, User $user)
+    public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
     {
-        $submissions_count_by_assignment_id = [];
-        $submissions_count = DB::table('submissions')
+
+        $assignment_question_submissions = [];
+        $assignment_file_submissions = [];
+        $results = DB::table('submissions')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->groupBy('assignment_id')
-            ->select(DB::raw('count(*) as num_submissions'), 'assignment_id')
+            ->select('question_id', 'assignment_id')
             ->get();
-        //reoorganize by assignment id
-        foreach ($submissions_count as $key => $value) {
-            $submissions_count_by_assignment_id[$value->assignment_id] = $value->num_submissions;
+        foreach ($results as $key => $value) {
+            $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
         }
+
+        $results = DB::table('submission_files')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('user_id', $user->id)
+            ->where('type', 'q')
+            ->select('question_id', 'assignment_id')
+            ->get();
+        foreach ($results as $key => $value) {
+            $assignment_file_submissions[$value->assignment_id][] = $value->question_id;
+        }
+
+
+        $submissions_count_by_assignment_id = [];
+        foreach ($assignments as $assignment) {
+            $question_submissions= [];
+            $file_submissions = [];
+            if (isset($assignment_question_submissions[$assignment->id])) {
+                foreach ($assignment_question_submissions[$assignment->id] as $question_id) {
+                    $question_submissions[] = $question_id;
+                }
+            }
+            if (isset($assignment_file_submissions[$assignment->id])) {
+                foreach ($assignment_file_submissions[$assignment->id] as $question_id) {
+                    $file_submissions[] = $question_id;
+                }
+            }
+            $total_submissions_for_assignment = 0;
+            foreach ($assignment->questions as $question) {
+                if (in_array($question->id, $question_submissions) || in_array($question->id, $file_submissions)) {
+                    $total_submissions_for_assignment++;
+                }
+
+                $submissions_count_by_assignment_id[$assignment->id] = $total_submissions_for_assignment;
+            }
+
+        }
+
         return $submissions_count_by_assignment_id;
     }
 
@@ -210,7 +247,7 @@ class Submission extends Model
 
             $questions_count_by_assignment_id = $AssignmentSyncQuestion->getQuestionCountByAssignmentIds($assignment_ids);
 
-            $submissions_count_by_assignment_id = $this->getSubmissionsCountByAssignmentIdsAndUser($assignment_ids, $user);
+            $submissions_count_by_assignment_id = $this->getSubmissionsCountByAssignmentIdsAndUser($course->assignments, $assignment_ids, $user);
             //set to 0 if there are no questions
             foreach ($assignment_ids as $assignment_id) {
                 $num_questions = $questions_count_by_assignment_id[$assignment_id] ?? 0;
