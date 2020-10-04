@@ -66,6 +66,9 @@ class QuestionController extends Controller
             ///
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
+            $scraped_question = false;
+            $technology_and_tags['technology'] = false;
+            $body = '';
             try {
                // id=102629;  //Frankenstein test
                 $page_info = $Query->getPageInfoByPageId($page_id);
@@ -107,6 +110,9 @@ class QuestionController extends Controller
                 if ($technology_and_tags['tags']) {
                     $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
                 }
+            }
+dd($body);
+            START here: why is the html all cray-cray?
 
             } catch (Exception $e) {
                 echo json_encode(['type' => 'error',

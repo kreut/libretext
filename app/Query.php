@@ -168,6 +168,36 @@ class Query extends Model
 
         $response = $this->client->get($final_url, ['headers' => $headers]);
         return json_decode($response->getBody(), true);
+    }
+
+    function getBodyFromPrivatePage(int $page_id)
+    {
+        $curl = curl_init();
+
+        curl_setopt_array($curl, [
+            CURLOPT_FAILONERROR => true,
+            CURLOPT_URL => "https://api.libretexts.org/endpoint/contents",
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_ENCODING => "",
+            CURLOPT_MAXREDIRS => 10,
+            CURLOPT_TIMEOUT => 0,
+            CURLOPT_FOLLOWLOCATION => true,
+            CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
+            CURLOPT_CUSTOMREQUEST => "PUT",
+            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"query","mode": "view"}',
+            CURLOPT_HTTPHEADER => [
+                "Origin: https://adapt.libretexts.org",
+                "Content-Type: text/plain"
+            ],
+        ]);
+
+        $response = curl_exec($curl);
+
+        if (curl_errno($curl)) {
+            throw new Exception (curl_error($curl));
+        }
+        curl_close($curl);
+        return $response;
 
     }
 
@@ -289,15 +319,7 @@ MATHJAX;
 
         $final_url = "https://{$this->library}.libretexts.org/@api/deki/pages/{$page_id}/info?dream.out.format=json";
 
-        $final_url = "https://api.libretexts.org/endpoint/contents";
-        $data = ['path' => $page_id,
-            'subdomain' => $this->library,
-            'mode' => 'view'
-        ];
-        $headers = ['Origin' => 'https://adapt.libretexts.org'];
-        $response = $this->client->put( $final_url, ['headers' => ['Origin' => 'https://adapt.libretexts.org'],
-            'json' => $data]);
-        dd(json_decode($response->getBody()));
+        $response = $this->client->get($final_url, ['headers' => $headers]);
         return json_decode($response->getBody(), true);
 
     }
