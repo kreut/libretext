@@ -198,6 +198,23 @@ class Query extends Model
         return false;
     }
 
+    public function getTechnologyIframeFromBody($body, $technology)
+    {
+
+        $domd = new \DOMDocument();
+        libxml_use_internal_errors(true);//errors from DOM that I don't care about
+        $domd->loadHTML($body);
+        libxml_use_internal_errors(false);
+        $iframes = $domd->getElementsByTagName('iframe');
+        $iframe = '';
+        foreach ($iframes as $iframe) {
+            if (strpos($iframe->getAttribute('src'),$technology )!== false) {
+                break;
+            }
+        }
+        return $domd->saveHTML($iframe);
+    }
+
     public
     function getTechnologyAndTags($page_info)
     {

@@ -14,6 +14,7 @@ use \Exception;
 
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 
 class QuestionController extends Controller
 {
@@ -62,10 +63,12 @@ class QuestionController extends Controller
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
             try {
-                //$page_id = 102629;  //Frankenstein test
+                $page_id = 102629;  //Frankenstein test
                 $page_info = $Query->getPageInfoByPageId($page_id);
 
                 $contents = $Query->getContentsByPageId($page_id);
+
+
                 $body = $contents['body'][0];
 
                 $technology_and_tags = $Query->getTechnologyAndTags($page_info);
@@ -80,9 +83,16 @@ class QuestionController extends Controller
 
                         }
                     }
+                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology_and_tags['technology']);
+                  $body = str_replace($technology_iframe,'', $body);
+                    Storage::disk('public')->put("{$page_id}.html", $body);
+                    exit;
                 } else {
                     $technology_and_tags['technology'] = 'text';
                 }
+
+
+
                 $data = ['page_id' => $page_id,
                     'technology' => $technology_and_tags['technology'],
                     'location' => $page_info['uri.ui'],
@@ -92,6 +102,9 @@ class QuestionController extends Controller
                 if ($technology_and_tags['tags']) {
                     $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
                 }
+
+                Storage::disk('public')->put("{$page_id}.html", $body);
+
 
 
             } catch (Exception $e) {
