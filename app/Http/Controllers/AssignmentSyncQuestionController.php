@@ -264,7 +264,7 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function getQuestionsToView(Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
+    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
     {
 
         $response['type'] = 'error';
@@ -469,7 +469,13 @@ class AssignmentSyncQuestionController extends Controller
                 } else {
                     $assignment->questions[$key]->learning_tree = '';
                 }
-            }
+
+               //Frankenstein type problems
+
+                $assignment->questions[$key]->non_technology_iframe_src =  $question['non_technology']  ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+      }
+
+
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions;
 

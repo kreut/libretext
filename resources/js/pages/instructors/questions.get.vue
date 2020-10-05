@@ -82,10 +82,9 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
         </div>
-        {{ showQuestions}}
-{{ questions[currentPage-1].non_technology }}
-        <iframe id="myIframe"
-                allowtransparency="true" frameborder="0"
+        <iframe id="non-technology-iframe"
+                allowtransparency="true"
+                frameborder="0"
                 v-bind:src="questions[currentPage-1].non_technology_iframe_src"
                 style="width: 1px;min-width: 100%;"
                 v-if="showQuestions && questions[currentPage-1].non_technology"
@@ -166,7 +165,8 @@ export default {
     changePage(currentPage) {
       this.$nextTick(() => {
         let iframe_id = this.questions[currentPage - 1].iframe_id
-        iFrameResize({log: true}, `#${iframe_id}`)
+        iFrameResize({log: false}, `#${iframe_id}`)
+        iFrameResize({ log: false }, '#non-technology-iframe')
       })
     },
     removeTag(chosenTag) {
@@ -275,8 +275,8 @@ export default {
             this.questions = questionsByTags.questions
             let iframe_id = this.questions[0].iframe_id;
             this.$nextTick(() => {
-              iFrameResize({log: true}, `#${iframe_id}`)
-              iFrameResize({ log: true }, '#myIframe')
+              iFrameResize({log: false}, `#${iframe_id}`)
+              iFrameResize({ log: false }, '#non-technology-iframe')
             })
             // console.log(this.questions)
             this.showQuestions = true

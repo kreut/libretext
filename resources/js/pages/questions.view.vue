@@ -193,10 +193,16 @@
                       v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
               >
               </iframe>
-              <div v-if="showQuestion" v-html="questions[currentPage-1].technology_iframe"></div>
+                <iframe id="non-technology-iframe"
+                        allowtransparency="true"
+                        frameborder="0"
+                        v-bind:src="questions[currentPage-1].non_technology_iframe_src"
+                        style="width: 1px;min-width: 100%;"
+                        v-show="showQuestion && questions[currentPage-1].non_technology"
+                ></iframe>
+              <div v-show="showQuestion" v-html="questions[currentPage-1].technology_iframe"></div>
                 <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
                   <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert></b-col>
-
               <b-col>
           <div class="card mb-2">
                 <div class="card-body">
@@ -540,6 +546,7 @@ export default {
     showIframe(id) {
       this.iframeLoaded = true
       iFrameResize({log: false}, `#${id}`)
+      iFrameResize({ log: false }, '#non-technology-iframe')
     },
     back(remediationObject) {
       let parentIdToShow = false
@@ -568,6 +575,7 @@ export default {
         console.log(this.questions[currentPage - 1])
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: false}, `#${iframe_id}`)
+        iFrameResize({ log: false }, '#non-technology-iframe')
       })
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
@@ -674,6 +682,7 @@ export default {
         let iframe_id = this.questions[0].iframe_id;
         this.$nextTick(() => {
           iFrameResize({log: false}, `#${iframe_id}`)
+          iFrameResize({ log: false }, '#non-technology-iframe')
         })
 
         this.questionPointsForm.points = this.questions[0].points
