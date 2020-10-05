@@ -9,7 +9,7 @@
       @ok="handleOk"
       @hidden="resetModalForms"
       ok-title="Submit"
-
+      size="lg"
     >
 
       <b-form ref="form">
