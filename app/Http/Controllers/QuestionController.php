@@ -39,14 +39,14 @@ class QuestionController extends Controller
             : $this->getQuestionIdsByWordTags($request);
 
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
-                                ->whereIn('id', $question_ids)->get();
+            ->whereIn('id', $question_ids)->get();
 
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] =  $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
-            $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'],  $question['iframe_id']);
+            $questions[$key]['non_technology_iframe_src'] = $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+            $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
 
         }
 
@@ -66,15 +66,28 @@ class QuestionController extends Controller
             ///
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
-            $scraped_question = false;
+            $private_question = false;
             $technology_and_tags['technology'] = false;
             $body = '';
             try {
-               // id=102629;  //Frankenstein test
+                // id=102629;  //Frankenstein test
                 $page_info = $Query->getPageInfoByPageId($page_id);
                 $contents = $Query->getContentsByPageId($page_id);
+            } catch (Exception $e) {
+                if (strpos($e->getMessage(), '403 Forbidden') === false) {
+                    //some other error besides forbidden
+                    echo json_encode(['type' => 'error',
+                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                        'timeout' => 12000]);
+                    exit;
+                }
+                $private_question = true;
+            }
 
-                $body = $contents['body'][0];
+            try {
+
+                    $body = $private_question ? $Query->getBodyFromPrivatePage($page_id) : $contents['body'][0];
+
                 $technology_and_tags = $Query->getTechnologyAndTags($page_info);
                 if ($technology = $Query->getTechnologyFromBody($body)) {
                     $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
@@ -82,11 +95,11 @@ class QuestionController extends Controller
                     $non_technology = str_replace($technology_iframe, '', $body);
                     $has_non_technology = trim($non_technology) !== '';
 
-                    if ($has_non_technology){
+                    if ($has_non_technology) {
                         //Frankenstein type problem
                         $non_technology = $Query->addExtras($request, $non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
-                                'MathJax'=>false]);
+                                'MathJax' => false]);
                         Storage::disk('public')->put("{$page_id}.html", $non_technology);
 
                     }
@@ -95,10 +108,10 @@ class QuestionController extends Controller
                     $has_non_technology = true;
                     $non_technology = $Query->addExtras($request, $body,
                         ['glMol' => false,
-                        'MathJax' => true
+                            'MathJax' => true
                         ]);
                     $technology = 'text';
-                    Storage::disk('public')->put("{$page_id}.html",  $non_technology );
+                    Storage::disk('public')->put("{$page_id}.html", $non_technology);
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology,
@@ -110,9 +123,7 @@ class QuestionController extends Controller
                 if ($technology_and_tags['tags']) {
                     $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
                 }
-            }
-dd($body);
-            START here: why is the html all cray-cray?
+
 
             } catch (Exception $e) {
                 echo json_encode(['type' => 'error',
