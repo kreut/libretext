@@ -227,19 +227,35 @@ SCRIPTS;
 
     }
 
-    public function getResizerScript()
+    public function addMathJaxScript()
     {
-        return <<<SCRIPT
-   <script type="text/javascript">
-   </script>
-SCRIPT;
+return <<<MATHJAX
+<script type="text/x-mathjax-config">/*<![CDATA[*/
+  MathJax.Ajax.config.path["mhchem"] =
+            "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
+        MathJax.Hub.Config({ jax: ["input/TeX","input/MathML","output/SVG"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js"],
+  TeX: {
+        extensions: ["autobold.js","mhchem.js","color.js","cancel.js", "AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    "HTML-CSS": { linebreaks: { automatic: true , width: "90%"}, scale: 85, mtextFontInherit: false},
+menuSettings: { zscale: "150%", zoom: "Double-Click" },
+         SVG: { linebreaks: { automatic: true } }});
+/*]]>*/</script>
+
+<script type="text/javascript" async="true" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
+
+MATHJAX;
     }
 
-    public function addExtras($request, $body)
+    public function addExtras($request, string $body, array $extras)
     {
         $scripts = '<script type="text/javascript" src="' . $request->root() . '/assets/js/hostIFrameResizer.js"></script>';
-        if (strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false) {
-            $scripts .= $this->addGlMolScripts();
+       if ($extras['glMol']){
+           $scripts .= $this->addGlMolScripts();
+       }
+       if ($extras['MathJax']){
+            $scripts .= $this->addMathJaxScript();
         }
         return $scripts . $body;
 

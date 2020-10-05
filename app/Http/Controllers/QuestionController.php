@@ -81,14 +81,21 @@ class QuestionController extends Controller
 
                     if ($has_non_technology){
                         //Frankenstein type problem
-                        $non_technology = $Query->addExtras($request, $non_technology);
+                        $non_technology = $Query->addExtras($request, $non_technology,
+                            ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
+                                'MathJax'=>false]);
                         Storage::disk('public')->put("{$page_id}.html", $non_technology);
 
                     }
                 } else {
                     $technology_iframe = '';
                     $has_non_technology = true;
-                    Storage::disk('public')->put("{$page_id}.html", $body);
+                    $non_technology = $Query->addExtras($request, $body,
+                        ['glMol' => false,
+                        'MathJax' => true
+                        ]);
+                    $technology = 'text';
+                    Storage::disk('public')->put("{$page_id}.html",  $non_technology );
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology,
