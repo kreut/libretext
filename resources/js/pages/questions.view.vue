@@ -679,7 +679,6 @@ export default {
         }
 
         let iframe_id = this.questions[0].iframe_id;
-        iframe_id = 'embed1'
         this.$nextTick(() => {
           iFrameResize({log: false}, `#${iframe_id}`)
           iFrameResize({log: false}, '#non-technology-iframe')

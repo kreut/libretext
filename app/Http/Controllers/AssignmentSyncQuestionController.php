@@ -460,8 +460,8 @@ class AssignmentSyncQuestionController extends Controller
                 }
                if ($iframe_technology) {
                    $assignment->questions[$key]->iframe_id = $this->createIframeId();
-                   $assignment->questions[$key]->body = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
-               }
+                   $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
+              }
                if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
