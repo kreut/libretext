@@ -384,9 +384,6 @@ export default {
       this.getSelectedQuestions(this.assignmentId)
       h5pResizer()
       window.addEventListener('message', this.receiveMessage, false)
-    } else {
-
-
     }
 
   },
@@ -672,6 +669,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+
         this.questions = data.questions
         if (!this.questions.length) {
           this.initializing = false

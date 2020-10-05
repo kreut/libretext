@@ -281,6 +281,7 @@ class AssignmentSyncQuestionController extends Controller
             $question_files = [];
             $points = [];
             if (!$assignment_question_info['questions']) {
+                $response['type'] = 'success';
                 $response['questions'] = [];
                 return $response;
             }
