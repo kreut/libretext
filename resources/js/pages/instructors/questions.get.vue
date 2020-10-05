@@ -82,6 +82,7 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
         </div>
+        <div>
         <iframe id="non-technology-iframe"
                 allowtransparency="true"
                 frameborder="0"
@@ -89,6 +90,7 @@
                 style="width: 1px;min-width: 100%;"
                 v-if="showQuestions && questions[currentPage-1].non_technology"
         ></iframe>
+      </div>
         <div v-html="questions[currentPage-1].technology_iframe"></div>
       </div>
     </div>

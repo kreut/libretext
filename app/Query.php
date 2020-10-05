@@ -215,24 +215,33 @@ class Query extends Model
         return $domd->saveHTML($iframe);
     }
 
-    public function addGlMolScripts($body)
+    public function addGlMolScripts()
     {
-        $scripts = <<<SCRIPTS
+        return <<<SCRIPTS
  <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
  <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
  <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
  <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
  <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
 SCRIPTS;
-        return $scripts . $body;
+
     }
 
-    public function addExtras($body)
+    public function getResizerScript()
     {
+        return <<<SCRIPT
+   <script type="text/javascript">
+   </script>
+SCRIPT;
+    }
+
+    public function addExtras($request, $body)
+    {
+        $scripts = '<script type="text/javascript" src="' . $request->root() . '/assets/js/hostIFrameResizer.js"></script>';
         if (strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false) {
-            $body = $this->addGlMolScripts($body);
+            $scripts .= $this->addGlMolScripts();
         }
-        return $body;
+        return $scripts . $body;
 
 
     }

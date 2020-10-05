@@ -48,75 +48,74 @@
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
-        <div>
-          <div class="d-flex">
-            <div v-if="isInstructor()">
-              <div v-if="has_submissions">
-                <b-alert variant="info" show>
-                  <strong>Since students have already submitted responses, you can view the questions but you can't add
-                    or remove them.
-                    In addition, you can't update the number of points per question.</strong></b-alert>
-              </div>
-              <div v-if="!has_submissions">
-                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
-                  Questions
-                </b-button>
-                <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
-                </b-button>
-                <b-button class="mt-1 mb-2"
-                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                          variant="info">
-                  Create Learning Tree
-                </b-button>
+        <div class="d-flex">
+          <div v-if="isInstructor()">
+            <div v-if="has_submissions">
+              <b-alert variant="info" show>
+                <strong>Since students have already submitted responses, you can view the questions but you can't add
+                  or remove them.
+                  In addition, you can't update the number of points per question.</strong></b-alert>
+            </div>
+            <div v-if="!has_submissions">
+              <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
+                Questions
+              </b-button>
+              <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+              </b-button>
+              <b-button class="mt-1 mb-2"
+                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                        variant="info">
+                Create Learning Tree
+              </b-button>
 
-                <toggle-button
-                  v-if="questionFilesAllowed"
-                  @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                  :width="250"
-                  :value="questions[currentPage-1].questionFiles"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                  :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
-              </div>
+              <toggle-button
+                v-if="questionFilesAllowed"
+                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                :width="250"
+                :value="questions[currentPage-1].questionFiles"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
             </div>
           </div>
-          <b-form ref="form" v-if="!has_submissions && (isInstructor())">
+        </div>
+        <b-form ref="form" v-if="!has_submissions && (isInstructor())">
 
-            <b-form-group
-              id="points"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Number of points for this question"
-              label-for="points"
-            >
-              <b-form-row>
-                <b-col lg="2">
-                  <b-form-input
-                    id="points"
-                    v-model="questionPointsForm.points"
-                    :value="questions[currentPage-1].points"
-                    type="text"
-                    placeholder=""
-                    :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                    @keydown="questionPointsForm.errors.clear('points')"
-                  >
-                  </b-form-input>
-                  <has-error :form="questionPointsForm" field="points"></has-error>
-                </b-col>
-                <b-col lg="2">
-                  <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
-                  </b-button>
-                </b-col>
-              </b-form-row>
+          <b-form-group
+            id="points"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Number of points for this question"
+            label-for="points"
+          >
+            <b-form-row>
+              <b-col lg="2">
+                <b-form-input
+                  id="points"
+                  v-model="questionPointsForm.points"
+                  :value="questions[currentPage-1].points"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                  @keydown="questionPointsForm.errors.clear('points')"
+                >
+                </b-form-input>
+                <has-error :form="questionPointsForm" field="points"></has-error>
+              </b-col>
+              <b-col lg="2">
+                <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
+                </b-button>
+              </b-col>
+            </b-form-row>
 
-            </b-form-group>
+          </b-form-group>
 
-          </b-form>
-          <b-container>
-            <b-row>
-              <b-col cols="8">
+        </b-form>
+        <b-container>
+          <b-row>
+            <b-col cols="8">
               <div v-if="learningTreeAsList.length>0">
                 <b-alert show>
 
@@ -193,18 +192,26 @@
                       v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
               >
               </iframe>
+              <div v-if="showQuestion">
+                <div>
                 <iframe id="non-technology-iframe"
                         allowtransparency="true"
                         frameborder="0"
                         v-bind:src="questions[currentPage-1].non_technology_iframe_src"
                         style="width: 1px;min-width: 100%;"
                         v-show="showQuestion && questions[currentPage-1].non_technology"
-                ></iframe>
-              <div v-show="showQuestion" v-html="questions[currentPage-1].technology_iframe"></div>
+                >
+
+                </iframe>
+                </div>
+                <div v-html="questions[currentPage-1].technology_iframe"></div>
                 <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
-                  <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert></b-col>
-              <b-col>
-          <div class="card mb-2">
+                  <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert>
+
+              </div>
+            </b-col>
+            <b-col cols="4">
+              <div class="card mb-2">
                 <div class="card-body">
 
                   <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
@@ -225,7 +232,9 @@
                     </div>
 
                   </div>
-                  <span class="font-weight-bold">Last submitted:</span> {{ questions[currentPage - 1].last_submitted }}<br>
+                  <span class="font-weight-bold">Last submitted:</span> {{
+                    questions[currentPage - 1].last_submitted
+                  }}<br>
                   <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
                   <div v-if="solutionsReleased">
                     <!--<span class="font-weight-bold">Correct response:</span> {{
@@ -237,53 +246,46 @@
                   </div>
                 </div>
               </div>
-          <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+              <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
 
-                  <b-card title="File Submission Information">
-                    <b-card-text>
-                      <strong> Uploaded file:</strong>
-                      <span v-if="questions[currentPage-1].submission_file_exists">
+                <b-card title="File Submission Information">
+                  <b-card-text>
+                    <strong> Uploaded file:</strong>
+                    <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
                      v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
                     {{ questions[currentPage - 1].original_filename }}
                   </a>
                   </span>
-                      <span v-if="!questions[currentPage-1].submission_file_exists">
+                    <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                   </span><br>
-                      <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
-                      <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
-                      <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
+                    <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                    <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                    <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
                                       N/A
                   </span>
-                      <span v-if="questions[currentPage-1].file_feedback">
+                    <span v-if="questions[currentPage-1].file_feedback">
                      <a href=""
                         v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback, $noty)">
                     file_feedback
                   </a>
                   </span>
-                      <br>
-                      <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-                      <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
-                      <b-button variant="primary" class="float-right mr-2"
-                                v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
-                                v-b-modal.modal-upload-question-file>Upload New File
-                      </b-button>
-                    </b-card-text>
-                  </b-card>
+                    <br>
+                    <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+                    <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
+                    <b-button variant="primary" class="float-right mr-2"
+                              v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
+                              v-b-modal.modal-upload-question-file>Upload New File
+                    </b-button>
+                  </b-card-text>
+                </b-card>
 
 
               </div>
-              </b-col>
-            </b-row>
-          </b-container>
-
-
-
-
-
-        </div>
-
+            </b-col>
+          </b-row>
+        </b-container>
 
 
       </div>
@@ -383,9 +385,6 @@ export default {
       h5pResizer()
       window.addEventListener('message', this.receiveMessage, false)
     } else {
-
-
-
 
 
     }
@@ -546,7 +545,7 @@ export default {
     showIframe(id) {
       this.iframeLoaded = true
       iFrameResize({log: false}, `#${id}`)
-      iFrameResize({ log: false }, '#non-technology-iframe')
+      iFrameResize({log: false}, '#non-technology-iframe')
     },
     back(remediationObject) {
       let parentIdToShow = false
@@ -575,7 +574,7 @@ export default {
         console.log(this.questions[currentPage - 1])
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: false}, `#${iframe_id}`)
-        iFrameResize({ log: false }, '#non-technology-iframe')
+        iFrameResize({log: false}, '#non-technology-iframe')
       })
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
@@ -680,9 +679,10 @@ export default {
         }
 
         let iframe_id = this.questions[0].iframe_id;
+        iframe_id = 'embed1'
         this.$nextTick(() => {
           iFrameResize({log: false}, `#${iframe_id}`)
-          iFrameResize({ log: false }, '#non-technology-iframe')
+          iFrameResize({log: false}, '#non-technology-iframe')
         })
 
         this.questionPointsForm.points = this.questions[0].points

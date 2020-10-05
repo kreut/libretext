@@ -35,7 +35,7 @@ class QuestionController extends Controller
         $page_id = $this->validatePageId($request);
 
 
-        $question_ids = $page_id ? $this->getQuestionIdsByPageId($page_id, $Question)
+        $question_ids = $page_id ? $this->getQuestionIdsByPageId($request, $page_id, $Question)
             : $this->getQuestionIdsByWordTags($request);
 
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
@@ -55,7 +55,7 @@ class QuestionController extends Controller
 
     }
 
-    public function getQuestionIdsByPageId(int $page_id, Question $Question)
+    public function getQuestionIdsByPageId(Request $request, int $page_id, Question $Question)
     {
         $question = $Question::where('page_id', $page_id)->first();
         if (!$question) {
@@ -81,7 +81,7 @@ class QuestionController extends Controller
 
                     if ($has_non_technology){
                         //Frankenstein type problem
-                        $non_technology = $Query->addExtras($non_technology);
+                        $non_technology = $Query->addExtras($request, $non_technology);
                         Storage::disk('public')->put("{$page_id}.html", $non_technology);
 
                     }
