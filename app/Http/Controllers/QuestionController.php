@@ -15,6 +15,7 @@ use \Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class QuestionController extends Controller
 {
@@ -37,12 +38,15 @@ class QuestionController extends Controller
         $question_ids = $page_id ? $this->getQuestionIdsByPageId($page_id, $Question)
             : $this->getQuestionIdsByWordTags($request);
 
-        $questions = Question::select('id', 'page_id', 'body')->whereIn('id', $question_ids)->get();
+        $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
+                                ->whereIn('id', $question_ids)->get();
 
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
-            $questions[$key]['body'] = $this->formatIframe($questions[$key]['body'], $questions[$key]['iframe_id']);
+            $questions[$key]['non_technology'] = $question['non_technology'];
+            $questions[$key]['non_technology_iframe_src'] =  $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+            $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'],  $question['iframe_id']);
 
         }
 
@@ -63,49 +67,39 @@ class QuestionController extends Controller
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
             try {
-                $page_id = 102629;  //Frankenstein test
+               // id=102629;  //Frankenstein test
                 $page_info = $Query->getPageInfoByPageId($page_id);
-
                 $contents = $Query->getContentsByPageId($page_id);
 
-
                 $body = $contents['body'][0];
-
                 $technology_and_tags = $Query->getTechnologyAndTags($page_info);
-                if (strpos($body, '<iframe') !== false) {
-                    //file_put_contents('sitemap', "$final_url $page_id \r\n", FILE_APPEND);
-                    if (!$technology_and_tags['technology']) {
-                        $technology_and_tags['technology'] = $Query->getTechnologyFromBody($body);
-                        if (!$technology_and_tags['technology']) {
-                            echo json_encode(['type' => 'error',
-                                'message' => "That question is not one of the valid technologies."]);
-                            exit;
+                if ($technology = $Query->getTechnologyFromBody($body)) {
+                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
 
-                        }
+                    $non_technology = str_replace($technology_iframe, '', $body);
+                    $has_non_technology = trim($non_technology) !== '';
+
+                    if ($has_non_technology){
+                        //Frankenstein type problem
+                        $non_technology = $Query->addExtras($non_technology);
+                        Storage::disk('public')->put("{$page_id}.html", $non_technology);
+
                     }
-                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology_and_tags['technology']);
-                  $body = str_replace($technology_iframe,'', $body);
-                    Storage::disk('public')->put("{$page_id}.html", $body);
-                    exit;
                 } else {
-                    $technology_and_tags['technology'] = 'text';
+                    $technology_iframe = '';
+                    $has_non_technology = true;
+                    Storage::disk('public')->put("{$page_id}.html", $body);
                 }
-
-
-
                 $data = ['page_id' => $page_id,
-                    'technology' => $technology_and_tags['technology'],
+                    'technology' => $technology,
                     'location' => $page_info['uri.ui'],
-                    'body' => $body];
+                    'non_technology' => $has_non_technology,
+                    'technology_iframe' => $technology_iframe];
 
                 $question = Question::firstOrCreate($data);
                 if ($technology_and_tags['tags']) {
                     $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
                 }
-
-                Storage::disk('public')->put("{$page_id}.html", $body);
-
-
 
             } catch (Exception $e) {
                 echo json_encode(['type' => 'error',

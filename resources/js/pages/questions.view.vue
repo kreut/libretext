@@ -193,7 +193,7 @@
                       v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
               >
               </iframe>
-              <div v-if="showQuestion" v-html="questions[currentPage-1].body"></div>
+              <div v-if="showQuestion" v-html="questions[currentPage-1].technology_iframe"></div>
                 <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
                   <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert></b-col>
 

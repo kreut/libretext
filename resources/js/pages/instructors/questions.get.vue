@@ -82,7 +82,15 @@
               :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
           </div>
         </div>
-        <div v-html="questions[currentPage-1].body"></div>
+        {{ showQuestions}}
+{{ questions[currentPage-1].non_technology }}
+        <iframe v-bind:id="1"
+                allowtransparency="true" frameborder="0"
+                v-bind:src="questions[currentPage-1].non_technology_iframe_src"
+                style="width: 1px;min-width: 100%;"
+                v-if="showQuestions && questions[currentPage-1].non_technology"
+        ></iframe>
+        <div v-html="questions[currentPage-1].technology_iframe"></div>
       </div>
     </div>
   </div>
@@ -125,7 +133,7 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
   },
   mounted() {
-    if (this.user.role !== 2){
+    if (this.user.role !== 2) {
       this.$noty.error("You do not have access to this page.")
       return false
     }
