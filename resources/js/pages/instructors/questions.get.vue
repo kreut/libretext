@@ -84,7 +84,7 @@
         </div>
         {{ showQuestions}}
 {{ questions[currentPage-1].non_technology }}
-        <iframe v-bind:id="1"
+        <iframe id="myIframe"
                 allowtransparency="true" frameborder="0"
                 v-bind:src="questions[currentPage-1].non_technology_iframe_src"
                 style="width: 1px;min-width: 100%;"
@@ -276,6 +276,7 @@ export default {
             let iframe_id = this.questions[0].iframe_id;
             this.$nextTick(() => {
               iFrameResize({log: true}, `#${iframe_id}`)
+              iFrameResize({ log: true }, '#myIframe')
             })
             // console.log(this.questions)
             this.showQuestions = true
