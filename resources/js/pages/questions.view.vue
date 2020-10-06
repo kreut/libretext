@@ -72,7 +72,7 @@
                 v-if="questionFilesAllowed"
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
                 :width="250"
-                :value="questions[currentPage-1].questionFiles"
+                :value="Boolean(questions[currentPage-1].questionFiles)"
                 :sync="true"
                 :font-size="14"
                 :margin="4"
