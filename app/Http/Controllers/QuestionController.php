@@ -66,13 +66,16 @@ class QuestionController extends Controller
             ///
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
-            $private_question = false;
             $technology_and_tags['technology'] = false;
-            $body = '';
+            $technology_and_tags['tags'] = false;
+
             try {
                 // id=102629;  //Frankenstein test
+                //Public type questions
                 $page_info = $Query->getPageInfoByPageId($page_id);
+                $technology_and_tags = $Query->getTechnologyAndTags($page_info);
                 $contents = $Query->getContentsByPageId($page_id);
+                $body = $contents['body'][0];
             } catch (Exception $e) {
                 if (strpos($e->getMessage(), '403 Forbidden') === false) {
                     //some other error besides forbidden
@@ -81,14 +84,20 @@ class QuestionController extends Controller
                         'timeout' => 12000]);
                     exit;
                 }
-                $private_question = true;
+
+                //private page so try again!
+                try {
+                    $body = $Query->getBodyFromPrivatePage($page_id);
+                } catch (Exception $e) {
+                    echo json_encode(['type' => 'error',
+                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                        'timeout' => 12000]);
+                    exit;
+                }
             }
 
             try {
 
-                    $body = $private_question ? $Query->getBodyFromPrivatePage($page_id) : $contents['body'][0];
-
-                $technology_and_tags = $Query->getTechnologyAndTags($page_info);
                 if ($technology = $Query->getTechnologyFromBody($body)) {
                     $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
 
@@ -115,7 +124,6 @@ class QuestionController extends Controller
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology,
-                    'location' => $page_info['uri.ui'],
                     'non_technology' => $has_non_technology,
                     'technology_iframe' => $technology_iframe];
 

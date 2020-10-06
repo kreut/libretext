@@ -192,7 +192,7 @@ class Query extends Model
         ]);
 
         $response = curl_exec($curl);
-dd($response);
+
         if (curl_errno($curl)) {
             throw new Exception (curl_error($curl));
         }
@@ -259,7 +259,7 @@ SCRIPTS;
 
     public function addMathJaxScript()
     {
-return <<<MATHJAX
+        return <<<MATHJAX
 <script type="text/x-mathjax-config">/*<![CDATA[*/
   MathJax.Ajax.config.path["mhchem"] =
             "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
@@ -281,10 +281,10 @@ MATHJAX;
     public function addExtras($request, string $body, array $extras)
     {
         $scripts = '<script type="text/javascript" src="' . $request->root() . '/assets/js/hostIFrameResizer.js"></script>';
-       if ($extras['glMol']){
-           $scripts .= $this->addGlMolScripts();
-       }
-       if ($extras['MathJax']){
+        if ($extras['glMol']) {
+            $scripts .= $this->addGlMolScripts();
+        }
+        if ($extras['MathJax']) {
             $scripts .= $this->addMathJaxScript();
         }
         return $scripts . $body;

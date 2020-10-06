@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\DB;
 class Question extends Model
 {
 
-    protected $fillable = ['title', 'author', 'page_id', 'technology_iframe', 'non_technology', 'location','technology'];
+    protected $fillable = [ 'page_id', 'technology_iframe', 'non_technology', 'technology'];
 
     public function __construct(array $attributes = [])
     {
