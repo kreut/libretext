@@ -163,7 +163,7 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
-    public function can_remove_a_question_to_an_assignment_if_you_are_the_owner()
+    public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'success']);

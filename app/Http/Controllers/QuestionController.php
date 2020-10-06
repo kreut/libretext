@@ -67,7 +67,7 @@ class QuestionController extends Controller
             /// getPageInfoByPageId(int $page_id)
             $Query = new Query();
             $technology_and_tags['technology'] = false;
-            $technology_and_tags['tags'] = false;
+            $technology_and_tags['tags'] = [];
 
             try {
                 // id=102629;  //Frankenstein test
@@ -77,6 +77,7 @@ class QuestionController extends Controller
                 $contents = $Query->getContentsByPageId($page_id);
                 $body = $contents['body'][0];
             } catch (Exception $e) {
+
                 if (strpos($e->getMessage(), '403 Forbidden') === false) {
                     //some other error besides forbidden
                     echo json_encode(['type' => 'error',
@@ -188,7 +189,6 @@ class QuestionController extends Controller
     public function validatePageId(Request $request)
     {
         $page_id = false;
-
         foreach ($request->get('tags') as $tag) {
             if (stripos($tag, 'id=') !== false) {
                 $page_id = str_ireplace('id=', '', $tag);
