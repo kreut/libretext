@@ -184,7 +184,7 @@ class Query extends Model
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "PUT",
-            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"query","mode": "view"}',
+            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"query","mode": "view", "format":"xhtml"}',
             CURLOPT_HTTPHEADER => [
                 "Origin: https://adapt.libretexts.org",
                 "Content-Type: text/plain"
@@ -192,7 +192,7 @@ class Query extends Model
         ]);
 
         $response = curl_exec($curl);
-
+dd($response);
         if (curl_errno($curl)) {
             throw new Exception (curl_error($curl));
         }
