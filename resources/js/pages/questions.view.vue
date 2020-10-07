@@ -394,6 +394,16 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async updateLastSubmittedAndLastResponse(assignmentId, questionId){
+      try {
+       const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
+        this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
+        this.questions[this.currentPage - 1]['student_response'] = data.student_response
+        console.log(data)
+      } catch (error){
+        console.log(error);
+      }
+    },
     async receiveMessage(event) {
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
@@ -457,11 +467,11 @@ export default {
               data.type = error
               data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
-            this.showResponse(data)
+            await this.showResponse(data)
           } catch (error) {
             error.type = 'error'
             error.message = `The following error occurred: ${error}. Please refresh the page and try again and contact us if the problem persists.`
-            this.showResponse(error)
+            await this.showResponse(error)
           }
         }
       }
@@ -473,12 +483,11 @@ export default {
     hideResponse() {
       this.showSubmissionMessage = false
     },
-    showResponse(data) {
+    async showResponse(data) {
       console.log('showing response')
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       if (data.type === 'success') {
-        this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted;
-        this.questions[this.currentPage - 1]['student_response'] = data.student_response;
+        await this.updateLastSubmittedAndLastResponse(this.assignmentId,this.questions[this.currentPage - 1].id)
       }
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true

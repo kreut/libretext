@@ -21,6 +21,7 @@ class Score extends Model
         //for each question add the submitted question score + submitted file score and max out at the score for the question
 
         $assignment_questions = DB::table('assignment_question')->where('assignment_id', $assignment_id)->get();
+
         $assignment_score = 0;
         //initialize
         $assignment_question_scores_info = [];
@@ -30,6 +31,7 @@ class Score extends Model
             $assignment_question_scores_info[$question->question_id]['question'] = 0;
             $assignment_question_scores_info[$question->question_id]['file'] = 0;//need for file uploads
         }
+
         $submissions = DB::table('submissions')
             ->where('assignment_id', $assignment_id)
             ->where('user_id', $student_user_id)->get();
@@ -40,10 +42,12 @@ class Score extends Model
         }
         switch ($submission_files_type) {
             case('q'):
+
                 $submission_files = DB::table('submission_files')
                     ->where('assignment_id', $assignment_id)
                     ->where('type', 'q') //'q', 'a', or 0
                     ->where('user_id', $student_user_id)->get();
+
                 if ($submission_files->isNotEmpty()) {
                     foreach ($submission_files as $submission_file) {
                         $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score

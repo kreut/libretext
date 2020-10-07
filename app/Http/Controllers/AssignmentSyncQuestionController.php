@@ -228,17 +228,37 @@ class AssignmentSyncQuestionController extends Controller
         return $output[$query_param];
     }
 
+    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question)
+    {
+        /**helper function to get the response info from server side technologies...*/
+
+        $submission = DB::table('submissions')
+            ->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->first();
+
+
+        $submissions_by_question_id[$question->id] = $submission;
+        $question_technologies[$question->id] = Question::find($question->id)->technology;
+        $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+
+        return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'], Auth::user()->time_zone),
+            'student_response' => $response_info['student_response']
+        ];
+    }
+
     public function getResponseInfo($submissions_by_question_id, $question_technologies, $question_id)
     {
         $student_response = 'N/A';
         $correct_response = null;
-        $score = 0;
+        $submission_score = 0;
         $last_submitted = 'N/A';
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
             $submission_object = json_decode($submission->submission);
-            $score = $submission->score;
+            $submission_score = $submission->score;
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response;
@@ -275,9 +295,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-
-        return [$student_response, $correct_response, $score, $last_submitted];
-
+return compact('student_response', 'correct_response', 'submission_score', 'last_submitted');
 
     }
 
@@ -336,7 +354,7 @@ class AssignmentSyncQuestionController extends Controller
                 $question_technologies[$question->id] = $question->technology;
             }
 
-
+            //these question_ids come from the assignment
             $submissions = DB::table('submissions')
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', Auth::user()->id)
@@ -382,7 +400,14 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                [$student_response, $correct_response, $submission_score, $last_submitted] = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+                $response_info  = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+
+                $student_response = $response_info['student_response'];
+                $correct_response = $response_info['correct_response'];
+                $submission_score = $response_info['submission_score'];
+                $last_submitted = $response_info['last_submitted'];
+
+
                 $assignment->questions[$key]['student_response'] = $student_response;
                 if ($assignment->solutions_released) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
