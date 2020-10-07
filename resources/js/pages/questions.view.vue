@@ -84,6 +84,7 @@
         <b-form ref="form" v-if="!has_submissions && (isInstructor())">
 
           <b-form-group
+            v-if="(questions[currentPage-1].source === 'a') && (questions[currentPage-1].scoring_type === 'p')"
             id="points"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -194,15 +195,15 @@
               </iframe>
               <div v-if="showQuestion">
                 <div>
-                <iframe id="non-technology-iframe"
-                        allowtransparency="true"
-                        frameborder="0"
-                        v-bind:src="questions[currentPage-1].non_technology_iframe_src"
-                        style="width: 1px;min-width: 100%;"
-                        v-show="showQuestion && questions[currentPage-1].non_technology"
-                >
+                  <iframe id="non-technology-iframe"
+                          allowtransparency="true"
+                          frameborder="0"
+                          v-bind:src="questions[currentPage-1].non_technology_iframe_src"
+                          style="width: 1px;min-width: 100%;"
+                          v-show="showQuestion && questions[currentPage-1].non_technology"
+                  >
 
-                </iframe>
+                  </iframe>
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
                 <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
@@ -215,28 +216,29 @@
                 <div class="card-body">
 
                   <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
-                    <div v-if="solutionsReleased">
-                      <p>
+                    <div v-if="(scoring_type === 'p')">
+                      <div v-if="solutionsReleased">
+                        <p>
                 <span v-if="!questions[currentPage-1].questionFiles">
                  This question is worth {{ questions[currentPage - 1].points }} points.
               </span>
-                        <span v-if="questions[currentPage-1].questionFiles">
+                          <span v-if="questions[currentPage-1].questionFiles">
                 You achieved a total score of
                 {{ questions[currentPage - 1].total_score }}
                 out of a possible
                 {{ questions[currentPage - 1].points }} points.</span>
-                      </p>
+                        </p>
+                      </div>
+                      <div v-if="!solutionsReleased">
+                        <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
+                      </div>
                     </div>
-                    <div v-if="!solutionsReleased">
-                      <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
-                    </div>
-
                   </div>
                   <span class="font-weight-bold">Last submitted:</span> {{
                     questions[currentPage - 1].last_submitted
                   }}<br>
                   <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
-                  <div v-if="solutionsReleased">
+                  <div v-if="(scoring_type === 'p') && solutionsReleased">
                     <!--<span class="font-weight-bold">Correct response:</span> {{
                       questions[currentPage - 1].correct_response
                     }}<br>-->
@@ -334,6 +336,7 @@ export default {
   },
   data: () => ({
     source: 'a',
+    scoring_type: '',
     solutionsReleased: false,
     has_submissions: false,
     submissionDataType: 'danger',
@@ -653,6 +656,7 @@ export default {
         this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))
+        this.scoring_type = data.scoring_type
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assignment Questions'

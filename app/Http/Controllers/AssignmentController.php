@@ -117,7 +117,14 @@ class AssignmentController extends Controller
 
         return $assignments;
     }
-
+    function getDefaultPointsPerQuestion(array $data)
+    {
+        $default_points_per_question = null;
+        if ($data['source'] === 'a') {
+            $default_points_per_question = ($data['scoring_type'] === 'p') ? $data['default_points_per_question'] : 0;
+        }
+        return $default_points_per_question;
+    }
 
     /**
      *
@@ -147,7 +154,7 @@ class AssignmentController extends Controller
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
-                    'default_points_per_question' => $data['default_points_per_question'] ?? null,
+                    'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
                     'submission_files' => $data['submission_files'],
                     'course_id' => $course->id
@@ -221,6 +228,8 @@ class AssignmentController extends Controller
                 unset($data[$value]);
             }
             //submissions exist so don't let them change the things below
+
+            $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
             if ($assignment->submissions->isNotEmpty()) {
                 unset($data['scoring_type']);
                 unset($data['default_points_per_question']);

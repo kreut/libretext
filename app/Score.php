@@ -81,7 +81,7 @@ class Score extends Model
                 break;
 
             case('0'):
-                      $assignment_score = $assignment_question_scores_info ?
+                $assignment_score = $assignment_question_scores_info ?
                     $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
                     : 0;
                 break;
@@ -101,34 +101,42 @@ class Score extends Model
         $assignment_ids = [];
         $solutions_released = [];
         $scoring_types = [];
-        foreach ($assignments as $assignment){
+        $scores_by_assignment = [];
+
+
+//initialize
+        foreach ($assignments as $assignment) {
             $assignment_ids[] = $assignment->id;
             $solutions_released[$assignment->id] = $assignment->solutions_released;
             $scoring_types[$assignment->id] = $assignment->scoring_type;
-        }
+            if ($assignment->scoring_type === 'p') {
+                $scores_by_assignment[$assignment->id] = ($assignment->solutions_released)
+                    ? 0 : 'Not yet released';
 
+            } else {
+                $scores_by_assignment[$assignment->id] = 'Incomplete';
+
+            }
+
+        }
         $scores = DB::table('scores')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
             ->get();
 
-        $scores_by_assignment = [];
-
+//show the score for points only if the solutions have been released
+//otherwise show the score
         foreach ($scores as $key => $value) {
-            $score = $value->score;
-            if ($scoring_types[$value->assignment_id] == 'c'){
-                $score =  ( $score === 'c') ? 'Complete' : 'Incomplete';
-            }
-            $scores_by_assignment[$value->assignment_id] = $solutions_released[$value->assignment_id] ? $score : 'Not yet released';
-           }
-
-        $course_scores = [];
-        foreach ($assignment_ids as $assignment_id) {
-            if (isset($scores_by_assignment[$assignment_id])) {
-                $course_scores[$assignment_id] = $scores_by_assignment[$assignment_id];
+            if ( $scoring_types[$value->assignment_id] === 'p') {
+                if ($solutions_released[$value->assignment_id]) {
+                    $scores_by_assignment[$value->assignment_id] = $value->score;
+                }
+            } else {
+                $scores_by_assignment[$value->assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';
             }
         }
-        return $course_scores;
+
+        return $scores_by_assignment;
 
     }
 

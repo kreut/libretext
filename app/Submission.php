@@ -133,9 +133,9 @@ class Submission extends Model
                         ->where('assignment_id', $assignment->id)
                         ->count();
                     if ((int)$num_submissions_by_assignment === count($assignment->questions)) {
-                        Score::firstOrCreate(['user_id' => $data['user_id'],
-                            'assignment_id' => $assignment->id,
-                            'score' => 'C']);
+                        Score::updateOrCreate(['user_id' => $data['user_id'],
+                            'assignment_id' => $assignment->id],
+                            ['score' => 'c']);
                         $response['message'] = "Your assignment has been marked completed.";
                     }
                     $response['type'] = 'success';

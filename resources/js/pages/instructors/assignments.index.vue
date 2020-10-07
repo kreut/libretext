@@ -318,7 +318,7 @@ export default {
       source: 'a',
       scoring_type: 'c',
       num_submissions_needed: '2',
-      default_points_per_question: ''
+      default_points_per_question: '10'
     }),
     hasAssignments: false,
     has_submissions: false,
@@ -361,7 +361,7 @@ export default {
     },
     resetSubmissionFilesAndPointsPerQuestion() {
       console.log('click')
-      this.form.default_points_per_question = ''
+      this.form.default_points_per_question = 10
       this.form.submission_files = 0
     },
     editAssignment(assignment) {
@@ -513,7 +513,7 @@ export default {
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
       this.form.submission_files = '0'
-      this.form.default_points_per_question = ''
+      this.form.default_points_per_question = '10'
       this.form.scoring_type = 'c'
 
       this.assignmentId = false
