@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
+use App\Traits\JWT;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -31,6 +32,7 @@ class AssignmentSyncQuestionController extends Controller
     use DateFormatter;
     use S3;
     use SubmissionFiles;
+    use JWT;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
@@ -234,17 +236,32 @@ class AssignmentSyncQuestionController extends Controller
         $last_submitted = 'N/A';
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
+            $last_submitted = $submission->updated_at;
             $submission_object = json_decode($submission->submission);
             $score = $submission->score;
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response;
                     //$correct_response = $submission_object->object->definition->correctResponsesPattern;
-                    $last_submitted = $submission->updated_at;
                     break;
                 case('webwork'):
-                    $student_response = 'webworkTODO';
-                    //$correct_response = 'webworkTODO';
+                    $student_response = 'N/A';
+                    $student_response_arr = [];
+                    $session_JWT = $this->getPayload($submission_object->sessionJWT);
+
+                    if ($session_JWT->answersSubmitted) {
+                        $answer_template = (array)$session_JWT->answerTemplate;
+                        foreach ($answer_template as $key => $value) {
+                            if (is_numeric($key)) {
+                                $student_response_arr[$key] = $value->answer->student_ans;
+                            }
+                        }
+                    }
+                    if ($student_response_arr) {
+                        ksort($student_response_arr);//order by keys
+                        $student_response = implode(',', $student_response_arr);
+                    }
+
                     break;
                 case('imathas'):
                     $tks = explode('.', $submission_object->state);
@@ -255,6 +272,7 @@ class AssignmentSyncQuestionController extends Controller
                     //$correct_response = 'N/A';
                     $last_submitted = $submission->updated_at;
                     break;
+
             }
         }
 
@@ -358,7 +376,7 @@ class AssignmentSyncQuestionController extends Controller
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
-            $iframe_technology= true;
+            $iframe_technology = true;
             $domd = new \DOMDocument();
             $JWE = new JWE();
             foreach ($assignment->questions as $key => $question) {
@@ -454,16 +472,16 @@ class AssignmentSyncQuestionController extends Controller
                         $iframe_technology = false;
                         break;
                     default:
-                        $response['message'] =  "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by Adapt.";
+                        $response['message'] = "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by Adapt.";
                         echo json_encode($response);
                         exit;
 
                 }
-               if ($iframe_technology) {
-                   $assignment->questions[$key]->iframe_id = $this->createIframeId();
-                   $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
-              }
-               if (isset($instructor_learning_trees_by_question_id[$question->id])) {
+                if ($iframe_technology) {
+                    $assignment->questions[$key]->iframe_id = $this->createIframeId();
+                    $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
+                }
+                if (isset($instructor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
                 } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
                     $assignment->questions[$key]->learning_tree = $other_instructor_learning_trees_by_question_id[$question->id];
@@ -471,10 +489,10 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->learning_tree = '';
                 }
 
-               //Frankenstein type problems
+                //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src =  $question['non_technology']  ? $request->root() . "/storage/{$question['page_id']}.html" : '';
-      }
+                $assignment->questions[$key]->non_technology_iframe_src = $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+            }
 
 
             $response['type'] = 'success';
