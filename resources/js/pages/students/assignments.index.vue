@@ -108,13 +108,11 @@ import Form from "vform"
 import {downloadSubmission} from '~/helpers/SubmissionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
+import moment from 'moment'
 
-const now = new Date()
-
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
 let formatDateAndTime = value => {
-  let date = new Date(value)
-  return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+  console.log(value)
+  return moment(value, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A')
 }
 
 

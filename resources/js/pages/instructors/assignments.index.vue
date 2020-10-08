@@ -255,13 +255,13 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
+import moment from 'moment'
 
 
-const now = new Date()
 
 let formatDateAndTime = value => {
-  let date = new Date(value)
-  return (1 + date.getMonth()) + '/' + date.getDate() + '/' + date.getFullYear() + ' ' + date.toLocaleTimeString()
+  console.log(value)
+  return moment(value, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A')
 }
 
 
@@ -322,7 +322,7 @@ export default {
     }),
     hasAssignments: false,
     has_submissions: false,
-    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    min: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
     canViewAssignments: false,
     showNoAssignmentsAlert: false,
   }),

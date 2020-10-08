@@ -180,8 +180,8 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
+import moment from 'moment'
 
-import {formatDate} from '~/helpers/Date'
 
 const now = new Date()
 export default {
@@ -198,13 +198,13 @@ export default {
       {
         key: 'start_date',
         formatter: value => {
-          return formatDate(value)
+          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
         }
       },
       {
         key: 'end_date',
         formatter: value => {
-          return formatDate(value)
+          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
         }
       },
       {

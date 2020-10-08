@@ -59,8 +59,7 @@
 <script>
 import axios from 'axios'
 import Form from "vform"
-import {formatDate} from '~/helpers/Date'
-
+import moment from 'moment'
 
 export default {
   middleware: 'auth',
@@ -74,13 +73,13 @@ export default {
       {
         key: 'start_date',
         formatter: value => {
-          return formatDate(value)
+          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
         }
       },
       {
         key: 'end_date',
         formatter: value => {
-          return formatDate(value)
+          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
         }
       }
     ],

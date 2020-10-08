@@ -126,13 +126,6 @@ import axios from 'axios'
 import Form from "vform"
 
 
-const now = new Date()
-
-const months = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-let formatDateAndTime = value => {
-  let date = new Date(value)
-  return months[date.getMonth()] + ' ' + date.getDate() + ', ' + date.getFullYear() + ' ' + date.toLocaleTimeString()
-}
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -140,7 +133,7 @@ let formatDateAndTime = value => {
 export default {
   middleware: 'auth',
   data: () => ({
-    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
+    min: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
     form: new Form({
       extension_date: '',
       extension_time: '',
