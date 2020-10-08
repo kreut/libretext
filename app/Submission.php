@@ -103,7 +103,7 @@ class Submission extends Model
         }
 
         try {
-
+            DB::beginTransaction();
             //do the extension stuff also
             $submission = Submission::where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
@@ -149,8 +149,9 @@ class Submission extends Model
             $response['message'] = 'Your question submission was saved.';
             $response['last_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
             $response['student_response'] = $student_response;
-
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error saving your response.  Please try again or contact us for assistance.";
