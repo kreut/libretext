@@ -394,10 +394,10 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;
-            $iframe_technology = true;
             $domd = new \DOMDocument();
             $JWE = new JWE();
             foreach ($assignment->questions as $key => $question) {
+                $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
                 $response_info  = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
@@ -488,6 +488,7 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
                         $problemJWT = $JWE->encode(\JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
+
                         break;
                     case('h5p'):
                         //NOT USED FOR anything at the moment
