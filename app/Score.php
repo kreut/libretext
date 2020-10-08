@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Carbon\Carbon;
 
 class Score extends Model
 {
@@ -98,7 +99,7 @@ class Score extends Model
         DB::table('scores')
             ->updateOrInsert(
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
-                ['score' => $assignment_score]);
+                ['score' => $assignment_score, 'updated_at' => Carbon::now()]);
 
     }
 
