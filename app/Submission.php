@@ -58,12 +58,11 @@ class Submission extends Model
             return $response;
         }
 
-        $student_response = 'N/A';
+
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
                 $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
-                $student_response = $submission->result->response;
                 break;
             case('imathas'):
                 $submission = $data['submission'];
@@ -72,7 +71,7 @@ class Submission extends Model
                 $tks = explode('.', $submission->state);
                 list($headb64, $bodyb64, $cryptob64) = $tks;
                 $state = json_decode(base64_decode($bodyb64));
-                $student_response = $state->stuanswers;
+
 
                 $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
                 break;
@@ -122,19 +121,14 @@ class Submission extends Model
                         Score::updateOrCreate(['user_id' => $data['user_id'],
                             'assignment_id' => $assignment->id],
                             ['score' => 'c']);
-                        $response['message'] = "Your assignment has been marked completed.";
                     }
-                    $response['type'] = 'success';
                     break;
                 case 'p':
                     $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
-                    $response['type'] = 'success';
                     break;
             }
-
+            $response['type'] = 'success';
             $response['message'] = 'Your question submission was saved.';
-            $response['last_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date("Y-m-d H:i:s"), Auth::user()->time_zone);
-            $response['student_response'] = $student_response;
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
