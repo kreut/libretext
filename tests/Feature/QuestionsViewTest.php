@@ -223,7 +223,7 @@ class QuestionsViewTest extends TestCase
             ->where('assignment_id', $this->assignment->id)
             ->get()
             ->pluck('score');
-        $this->assertEquals('C', $score[0], 'Assignment marked as completed when all questions are answered.');
+        $this->assertEquals('c', $score[0], 'Assignment marked as completed when all questions are answered.');
 
     }
 
