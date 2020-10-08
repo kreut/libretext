@@ -116,7 +116,7 @@
         </b-form>
         <b-container>
           <b-row>
-            <b-col cols="8">
+            <b-col :cols="questionCols">
               <div v-if="learningTreeAsList.length>0">
                 <b-alert show>
 
@@ -211,11 +211,11 @@
 
               </div>
             </b-col>
-            <b-col cols="4">
+            <b-col cols="4" v-if="(user.role === 3)">
               <div class="card mb-2">
                 <div class="card-body">
 
-                  <div v-if="(user.role === 3)" class="font-italic font-weight-bold">
+                  <div class="font-italic font-weight-bold">
                     <div v-if="(scoring_type === 'p')">
                       <div v-if="solutionsReleased">
                         <p>
@@ -335,6 +335,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    questionCols: 1,
     source: 'a',
     scoring_type: '',
     solutionsReleased: false,
@@ -378,6 +379,8 @@ export default {
     this.downloadSubmission = downloadSubmission
   },
   mounted() {
+    this.questionCols = (this.user.role === 2) ? '12' : '8' //students have more info to see
+    console.log(this.user.role)
     this.assignmentId = this.$route.params.assignmentId
     let canView = this.getAssignmentInfo()
     if (!canView) {
