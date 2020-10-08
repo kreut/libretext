@@ -42,7 +42,7 @@ class JWE extends Model
 
         $this->jwk = new JWK([
             'kty' => 'oct',
-            'k' => 'itsgs9h6RUXQLkNjHMb2CCcJ32cu1CyQ', //TODO: load from my .env file so it's out of version control
+            'k' => 'webwork', //TODO: load from my .env file so it's out of version control
         ]);
 
 
