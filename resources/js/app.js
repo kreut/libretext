@@ -26,6 +26,7 @@ Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)
+Vue.use(require('vue-moment'));
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
