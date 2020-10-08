@@ -43,6 +43,12 @@
             <a href="" v-on:click.prevent="getAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
         </template>
+        <template v-slot:cell(start_date)="data">
+         {{  $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+        </template>
+        <template v-slot:cell(end_date)="data">
+        {{  $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+        </template>
       </b-table>
     </div>
     <div v-else>
@@ -59,7 +65,7 @@
 <script>
 import axios from 'axios'
 import Form from "vform"
-import moment from 'moment'
+
 
 export default {
   middleware: 'auth',
@@ -71,16 +77,10 @@ export default {
       },
       'instructor',
       {
-        key: 'start_date',
-        formatter: value => {
-          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-        }
+        key: 'start_date'
       },
       {
-        key: 'end_date',
-        formatter: value => {
-          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-        }
+        key: 'end_date'
       }
     ],
     enrolledInCourses: [],

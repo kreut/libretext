@@ -151,6 +151,12 @@
             <a href="" v-on:click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
         </template>
+        <template v-slot:cell(start_date)="data">
+         {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+        </template>
+        <template v-slot:cell(end_date)="data">
+          {{ $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
             <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
@@ -180,8 +186,6 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
-import moment from 'moment'
-
 
 const now = new Date()
 export default {
@@ -196,16 +200,10 @@ export default {
         label: 'Course'
       },
       {
-        key: 'start_date',
-        formatter: value => {
-          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-        }
+        key: 'start_date'
       },
       {
-        key: 'end_date',
-        formatter: value => {
-          return moment(value, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-        }
+        key: 'end_date'
       },
       {
         key: 'access_code',

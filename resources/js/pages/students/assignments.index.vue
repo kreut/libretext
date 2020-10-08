@@ -77,6 +77,14 @@
             </div>
           </div>
         </template>
+        <template v-slot:cell(available_from)="data">
+         {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+        </template>
+        <template v-slot:cell(due)="data">
+          {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+          {{data.item.due.is_extension ? '(Extension)' : ''}}
+        </template>
+
         <template v-slot:cell(files)="data">
           <div v-if="data.item.submission_files === 'a'">
             <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
@@ -108,13 +116,6 @@ import Form from "vform"
 import {downloadSubmission} from '~/helpers/SubmissionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
-import moment from 'moment'
-
-let formatDateAndTime = value => {
-  console.log(value)
-  return moment(value, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A')
-}
-
 
 export default {
   middleware: 'auth',
@@ -129,21 +130,8 @@ export default {
     courseId: false,
     fields: [
       'name',
-      {
-        key: 'available_from',
-        formatter: value => {
-          return formatDateAndTime(value)
-        }
-      },
-      {
-        key: 'due',
-        formatter: value => {
-          let dateAndTime = formatDateAndTime(value.due_date)
-          let extension = value.is_extension ? '(Extension)' : ''
-
-          return dateAndTime + ' ' + extension
-        }
-      },
+      'available_from',
+       'due',
       'number_submitted',
       'score',
       'files'

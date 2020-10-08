@@ -16,6 +16,12 @@ import 'vuejs-noty/dist/vuejs-noty.css' //https://github.com/renoguyon/vuejs-not
 
 import iFrameResize from 'iframe-resizer/js/iframeResizer'
 
+import VueMoment from 'vue-moment'
+
+
+
+
+
 Vue.directive('resize', {
   bind: function (el, {value = {}}) {
     el.addEventListener('load', () => iFrameResize(value, el))
@@ -26,7 +32,9 @@ Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)
-Vue.use(require('vue-moment'));
+Vue.use(VueMoment)
+
+console.log(Vue.moment().locale())
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */

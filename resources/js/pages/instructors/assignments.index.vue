@@ -39,150 +39,152 @@
           </b-form-row>
         </b-form-group>
         <div v-show="!solutionsReleased">
-        <b-form-group
-          id="available_from"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Available on"
-          label-for="Available on"
-        >
-          <b-form-row>
-            <b-col lg="7">
-              <b-form-datepicker
-                v-model="form.available_from_date"
-                :min="min"
-                :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                v-on:shown="form.errors.clear('available_from_date')">
-              </b-form-datepicker>
-              <has-error :form="form" field="available_from_date"></has-error>
-            </b-col>
-            <b-col>
-              <b-form-timepicker v-model="form.available_from_time"
-                                 locale="en"
-                                 :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                 v-on:shown="form.errors.clear('available_from_time')">
-
-              </b-form-timepicker>
-              <has-error :form="form" field="available_from_time"></has-error>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-
-        <b-form-group
-          id="due"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Due Date"
-          label-for="Due Date"
-        >
-          <b-form-row>
-            <b-col lg="7">
-              <b-form-datepicker
-                v-model="form.due_date"
-                :min="min"
-                :class="{ 'is-invalid': form.errors.has('due_date') }"
-                v-on:shown="form.errors.clear('due_date')">
-              </b-form-datepicker>
-              <has-error :form="form" field="due_date"></has-error>
-            </b-col>
-            <b-col>
-              <b-form-timepicker v-model="form.due_time"
-                                 locale="en"
-                                 :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                 v-on:shown="form.errors.clear('due_time')">
-              </b-form-timepicker>
-              <has-error :form="form" field="due_time"></has-error>
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <div v-if="!has_submissions">
           <b-form-group
-            id="source"
+            id="available_from"
             label-cols-sm="4"
             label-cols-lg="3"
-            label="Source"
-            label-for="Source"
+            label="Available on"
+            label-for="Available on"
           >
+            <b-form-row>
+              <b-col lg="7">
+                <b-form-datepicker
+                  v-model="form.available_from_date"
+                  :min="min"
+                  :class="{ 'is-invalid': form.errors.has('available_from_date') }"
+                  v-on:shown="form.errors.clear('available_from_date')">
+                </b-form-datepicker>
+                <has-error :form="form" field="available_from_date"></has-error>
+              </b-col>
+              <b-col>
+                <b-form-timepicker v-model="form.available_from_time"
+                                   locale="en"
+                                   :class="{ 'is-invalid': form.errors.has('available_from_time') }"
+                                   v-on:shown="form.errors.clear('available_from_time')">
 
-            <b-form-radio-group v-model="form.source" stacked>
+                </b-form-timepicker>
+                <has-error :form="form" field="available_from_time"></has-error>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+
+          <b-form-group
+            id="due"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Due Date"
+            label-for="Due Date"
+          >
+            <b-form-row>
+              <b-col lg="7">
+                <b-form-datepicker
+                  v-model="form.due_date"
+                  :min="min"
+                  :class="{ 'is-invalid': form.errors.has('due_date') }"
+                  v-on:shown="form.errors.clear('due_date')">
+                </b-form-datepicker>
+                <has-error :form="form" field="due_date"></has-error>
+              </b-col>
+              <b-col>
+                <b-form-timepicker v-model="form.due_time"
+                                   locale="en"
+                                   :class="{ 'is-invalid': form.errors.has('due_time') }"
+                                   v-on:shown="form.errors.clear('due_time')">
+                </b-form-timepicker>
+                <has-error :form="form" field="due_time"></has-error>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <div v-if="!has_submissions">
+            <b-form-group
+              id="source"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Source"
+              label-for="Source"
+            >
+
+              <b-form-radio-group v-model="form.source" stacked>
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="source" value="a">Adapt</b-form-radio>
                 </span>
-              <b-form-radio name="scoring_type" value="x">External</b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-        </div>
+                <b-form-radio name="scoring_type" value="x">External</b-form-radio>
+              </b-form-radio-group>
+            </b-form-group>
+          </div>
 
-        <div v-if="!has_submissions">
-          <b-form-group
-            id="scoring_type"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Scoring Type"
-            label-for="Scoring Type"
-          >
+          <div v-if="!has_submissions">
+            <b-form-group
+              id="scoring_type"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Scoring Type"
+              label-for="Scoring Type"
+            >
 
-            <b-form-radio-group v-model="form.scoring_type" stacked>
+              <b-form-radio-group v-model="form.scoring_type" stacked>
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
                 </span>
-              <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <div v-show="form.source === 'a'">
-            <b-form-group
-              v-if="form.scoring_type === 'p'"
-              id="submission_files"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Submission Files"
-              label-for="Submission Files"
-            >
-
-              <b-form-radio-group v-model="form.submission_files" stacked>
-                <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
-                <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
-                <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+                <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
               </b-form-radio-group>
             </b-form-group>
+            <div v-show="form.source === 'a'">
+              <b-form-group
+                v-if="form.scoring_type === 'p'"
+                id="submission_files"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label="Submission Files"
+                label-for="Submission Files"
+              >
 
-            <b-form-group
-              v-if="form.scoring_type === 'p'"
-              id="default_points_per_question"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Default Points/Question"
-              label-for="default_points_per_question"
-            >
+                <b-form-radio-group v-model="form.submission_files" stacked>
+                  <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
+                  <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
+                  <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+                </b-form-radio-group>
+              </b-form-group>
 
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-input
-                    id="default_points_per_question"
-                    v-model="form.default_points_per_question"
-                    type="text"
-                    placeholder=""
-                    :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                    @keydown="form.errors.clear('default_points_per_question')"
-                  >
-                  </b-form-input>
-                  <has-error :form="form" field="default_points_per_question"></has-error>
-                </b-col>
-              </b-form-row>
+              <b-form-group
+                v-if="form.scoring_type === 'p'"
+                id="default_points_per_question"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label="Default Points/Question"
+                label-for="default_points_per_question"
+              >
 
-            </b-form-group>
+                <b-form-row>
+                  <b-col lg="3">
+                    <b-form-input
+                      id="default_points_per_question"
+                      v-model="form.default_points_per_question"
+                      type="text"
+                      placeholder=""
+                      :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                      @keydown="form.errors.clear('default_points_per_question')"
+                    >
+                    </b-form-input>
+                    <has-error :form="form" field="default_points_per_question"></has-error>
+                  </b-col>
+                </b-form-row>
+
+              </b-form-group>
+            </div>
+          </div>
+          <div v-if="has_submissions">
+            <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
+              can't change the source of the questions, the scoring type, the default points per question, or the type
+              of file uploads. </strong>
+            </b-alert>
           </div>
         </div>
-        <div v-if="has_submissions">
-          <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
-            can't change the source of the questions, the scoring type, the default points per question, or the type of file uploads. </strong>
-          </b-alert>
-        </div>
-        </div>
         <div v-show="solutionsReleased">
-          <b-alert variant="info" show><strong>You have already released the solutions to this assignment.  At this point, the only item that you can update is the assignment's name.</strong>
+          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. At this
+            point, the only item that you can update is the assignment's name.</strong>
           </b-alert>
         </div>
       </b-form>
@@ -217,16 +219,25 @@
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
-            <a href=""  v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
+            <a href="" v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
           </div>
         </template>
+
+        <template v-slot:cell(availble_from)="data">
+          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+        </template>
+        <template v-slot:cell(due)="data">
+          {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+        </template>
+
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
              <span v-if="user.role === 2">
             <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
               :variant="hasSubmissionsColor(data.item)" icon="plus-circle"></b-icon></span>
              </span>
-            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
+            <span v-show="data.item.source === 'a'" class="pr-1"
+                  v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="releaseSolutions(data.item)">
@@ -234,7 +245,7 @@
             </span>
 
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <b-icon  icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
+            <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
               </span>
           </div>
         </template>
@@ -255,14 +266,6 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
-import moment from 'moment'
-
-
-
-let formatDateAndTime = value => {
-  console.log(value)
-  return moment(value, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A')
-}
 
 
 export default {
@@ -271,7 +274,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
-    solutionsReleased:false,
+    solutionsReleased: false,
     assignmentId: false, //if there's a assignmentId it's an update
     assignments: [],
     completedOrCorrectOptions: [
@@ -282,16 +285,10 @@ export default {
     fields: [
       'name',
       {
-        key: 'available_from',
-        formatter: value => {
-          return formatDateAndTime(value)
-        }
+        key: 'available_from'
       },
       {
-        key: 'due',
-        formatter: value => {
-          return formatDateAndTime(value)
-        }
+        key: 'due'
       },
       {
         key: 'scoring_type',
@@ -322,13 +319,14 @@ export default {
     }),
     hasAssignments: false,
     has_submissions: false,
-    min: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+    min: '',
     canViewAssignments: false,
     showNoAssignmentsAlert: false,
   }),
   mounted() {
     this.courseId = this.$route.params.courseId
     this.getAssignments();
+    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
 
   },
   methods: {
@@ -389,7 +387,7 @@ export default {
         return false
       }
 
-      if (assignment.has_submissions === 1){
+      if (assignment.has_submissions === 1) {
         this.$noty.info("Students have already submitted responses to this assignment, you won't be able to add or remove questions.")
 
       }
@@ -397,7 +395,7 @@ export default {
     }
     ,
     getStudentView(assignment) {
-      if (assignment.source === 'x'){
+      if (assignment.source === 'x') {
         this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
         return false
       }

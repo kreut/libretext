@@ -133,7 +133,7 @@ import Form from "vform"
 export default {
   middleware: 'auth',
   data: () => ({
-    min: moment(moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+    min: '',
     form: new Form({
       extension_date: '',
       extension_time: '',
@@ -162,6 +162,7 @@ export default {
   mounted() {
     this.courseId = this.$route.params.courseId
     this.getAssignmentScoringTypes()
+    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getScores()
   },
   methods: {

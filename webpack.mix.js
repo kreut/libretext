@@ -20,9 +20,6 @@ if (mix.inProduction()) {
 }
 
 mix.webpackConfig({
-  externals: {
-    moment: 'moment'
-  },
   plugins: [
     // new BundleAnalyzerPlugin()
   ],
