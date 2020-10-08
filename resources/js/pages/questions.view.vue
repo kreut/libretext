@@ -408,6 +408,7 @@ export default {
       }
     },
     async receiveMessage(event) {
+      console.log(event.data)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
         // console.log(technology)
@@ -446,10 +447,10 @@ export default {
           iframe.setAttribute("height", JSON.parse(event.data).height);
         }
 
-
+console.log('server side submit' + serverSideSubmit)
         if (serverSideSubmit) {
           console.log('serverSideSubmit')
-          this.showResponse(JSON.parse(event.data))
+         await this.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
           let submission_data = {
@@ -466,6 +467,7 @@ export default {
           try {
             this.hideResponse()
             const {data} = await axios.post('/api/submissions', submission_data)
+            console.log(data)
             if (!data.message) {
               data.type = error
               data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
@@ -489,14 +491,14 @@ export default {
     async showResponse(data) {
       console.log('showing response')
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
-      if (data.type === 'success') {
-        await this.updateLastSubmittedAndLastResponse(this.assignmentId,this.questions[this.currentPage - 1].id)
-      }
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false;
       }, 5000);
+      if (data.type === 'success') {
+        await this.updateLastSubmittedAndLastResponse(this.assignmentId,this.questions[this.currentPage - 1].id)
+      }
     },
     getTechnology(body) {
       let technology

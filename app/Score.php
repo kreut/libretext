@@ -6,6 +6,7 @@ use App\Assignment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class Score extends Model
 {
@@ -25,7 +26,9 @@ class Score extends Model
         $assignment_score = 0;
         //initialize
         $assignment_question_scores_info = [];
+        $question_ids = [];
         foreach ($assignment_questions as $question) {
+            $question_ids[] = $question->question_id;
             $assignment_question_scores_info[$question->question_id] = [];
             $assignment_question_scores_info[$question->question_id]['points'] = $question->points;
             $assignment_question_scores_info[$question->question_id]['question'] = 0;
@@ -46,13 +49,14 @@ class Score extends Model
                 $submission_files = DB::table('submission_files')
                     ->where('assignment_id', $assignment_id)
                     ->where('type', 'q') //'q', 'a', or 0
+                    ->whereIn('question_id', $question_ids)
                     ->where('user_id', $student_user_id)->get();
 
                 if ($submission_files->isNotEmpty()) {
                     foreach ($submission_files as $submission_file) {
-                        $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
-                            ? $submission_file->score
-                            : 0;
+                            $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
+                                ? $submission_file->score
+                                : 0;
                     }
                 }
 
@@ -131,7 +135,7 @@ class Score extends Model
 //show the score for points only if the solutions have been released
 //otherwise show the score
         foreach ($scores as $key => $value) {
-            if ( $scoring_types[$value->assignment_id] === 'p') {
+            if ($scoring_types[$value->assignment_id] === 'p') {
                 if ($solutions_released[$value->assignment_id]) {
                     $scores_by_assignment[$value->assignment_id] = $value->score;
                 }
