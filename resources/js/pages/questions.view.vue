@@ -195,7 +195,7 @@
               </iframe>
               <div v-if="showQuestion">
                 <div>
-                  <iframe id="non-technology-iframe"
+                  <iframe :id="`non-technology-iframe-${currentPage}`"
                           allowtransparency="true"
                           frameborder="0"
                           v-bind:src="questions[currentPage-1].non_technology_iframe_src"
@@ -554,7 +554,7 @@ export default {
     showIframe(id) {
       this.iframeLoaded = true
       iFrameResize({log: false}, `#${id}`)
-      iFrameResize({log: false}, '#non-technology-iframe')
+      iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
     },
     back(remediationObject) {
       let parentIdToShow = false
@@ -583,7 +583,7 @@ export default {
         console.log(this.questions[currentPage - 1])
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: false}, `#${iframe_id}`)
-        iFrameResize({log: false}, '#non-technology-iframe')
+        iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
       })
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
@@ -692,7 +692,7 @@ export default {
         let iframe_id = this.questions[0].iframe_id;
         this.$nextTick(() => {
           iFrameResize({log: false}, `#${iframe_id}`)
-          iFrameResize({log: false}, '#non-technology-iframe')
+          iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
         })
 
         this.questionPointsForm.points = this.questions[0].points
