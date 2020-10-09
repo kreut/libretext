@@ -224,11 +224,11 @@
           </div>
         </template>
 
-        <template v-slot:cell(availble_from)="data">
-          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+        <template v-slot:cell(available_from)="data">
+          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
         </template>
         <template v-slot:cell(due)="data">
-          {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('YYYY-MM-DD h:mm:ss A') }}
+          {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
         </template>
 
         <template v-slot:cell(actions)="data">
