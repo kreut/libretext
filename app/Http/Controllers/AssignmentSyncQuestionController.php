@@ -444,13 +444,12 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
                 $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
 
 
-                //set up the questionJWT
+                //set up the problemJWT
                 $custom_claims = ['adapt' => [
+                    'scheme_and_host' => $request->getSchemeAndHttpHost(),
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
-
-
                 $custom_claims["{$question->technology}"] = '';
                 switch ($question->technology) {
                     case('webwork'):
