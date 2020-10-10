@@ -310,7 +310,6 @@ export default {
     }
     ,
     showScores(courseId) {
-      window.location.href = `/courses/${courseId}/scores`
       this.$router.push(`/courses/${courseId}/scores`)
     }
     ,
