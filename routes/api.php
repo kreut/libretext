@@ -83,6 +83,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{type}/{assignment}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment')->where('type', '(question|assignment)');
 
+    Route::put('/solution-files', 'SolutionController@storeSolutionFile');
+
+
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
     Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
     Route::post('/submission-files/score', 'SubmissionFileController@storeScore');
