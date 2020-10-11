@@ -18,9 +18,11 @@ class CreateSolutionsTable extends Migration
             $table->unsignedBigInteger('question_id');
             $table->unsignedBigInteger('user_id');
             $table->string('file');
+            $table->string('original_filename');
 
             $table->foreign('question_id')->references('id')->on('questions');
             $table->foreign('user_id')->references('id')->on('users');
+            $table->unique(['user_id', 'question_id']);
             $table->timestamps();
         });
     }

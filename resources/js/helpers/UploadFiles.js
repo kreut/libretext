@@ -10,11 +10,12 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
     form.errors.set(typeFile, null)
     //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
     let formData = new FormData();
-    formData.append(typeFile, form[type])
+    formData.append(typeFile, form[typeFile])
     formData.append('assignmentId', form.assignmentId)
     formData.append('questionId', form.questionId)
     formData.append('type', type)
     formData.append('_method', 'put'); // add this
+    console.log(formData)
     const {data} = await axios.post(url , formData)
     console.log(data)
     if (data.type === 'error') {

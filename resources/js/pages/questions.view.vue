@@ -65,7 +65,6 @@
                         variant="info">
                 Create Learning Tree
               </b-button>
-
               <toggle-button
                 v-if="questionFilesAllowed"
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
