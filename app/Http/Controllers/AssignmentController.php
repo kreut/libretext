@@ -12,7 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Requests\StoreAssignment;
-
+use Carbon\Carbon;
 
 use \Illuminate\Http\Request;
 
@@ -117,6 +117,7 @@ class AssignmentController extends Controller
 
         return $assignments;
     }
+
     function getDefaultPointsPerQuestion(array $data)
     {
         $default_points_per_question = null;
@@ -126,6 +127,14 @@ class AssignmentController extends Controller
         return $default_points_per_question;
     }
 
+    public function checkDueDateAfterAvailableDate(StoreAssignment $request){
+        if (Carbon::parse($request->due) <= Carbon::parse( $request->available_from)) {
+            $response['available_after_due'] = true;
+            $response['message'] = 'Your assignment should become due after it becomes available.';
+            echo json_encode($response);
+            exit;
+        }
+    }
     /**
      *
      * Store a newly created resource in storage.
@@ -147,7 +156,9 @@ class AssignmentController extends Controller
         }
 
         $response['type'] = 'error';
+
         try {
+            $this->checkdueDateAfterAvailableDate($request);
             $data = $request->validated();
             Assignment::create(
                 ['name' => $data['name'],
@@ -219,6 +230,7 @@ class AssignmentController extends Controller
         }
 
         try {
+            $this->checkdueDateAfterAvailableDate($request);
             $data = $request->validated();
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
@@ -270,7 +282,7 @@ class AssignmentController extends Controller
             DB::transaction(function () use ($assignment) {
                 DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
                 DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('scores')->where('assignment_id',  $assignment->id)->delete();
+                DB::table('scores')->where('assignment_id', $assignment->id)->delete();
                 DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
                 DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
                 $assignment->delete();

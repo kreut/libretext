@@ -307,6 +307,8 @@ export default {
     ],
     form: new Form({
       name: '',
+      available_from: '',
+      due: '',
       available_from_date: '',
       available_from_time: '09:00:00',
       due_date: '',
@@ -458,6 +460,8 @@ export default {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
+      this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
+      this.form.due = this.form.due_date + ' ' + this.form.due_time
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
     }
     ,
@@ -473,6 +477,12 @@ export default {
         const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
 
         console.log(data)
+        if (data.available_after_due) {
+          //had to create a custom process for checking available date past due date
+          this.form.errors.set('due_date',data.message)
+          console.log(this.form.errors)
+          return false
+        }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-details')
 
@@ -489,6 +499,12 @@ export default {
         const {data} = await this.form.post(`/api/assignments`)
 
         console.log(data)
+        if (data.available_after_due) {
+          //had to create a custom process for checking available date past due date
+          this.form.errors.set('due_date',data.message)
+          console.log(this.form.errors)
+          return false
+        }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-details')
 

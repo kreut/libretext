@@ -30,7 +30,7 @@ class StoreAssignment extends FormRequest
             'name' => ['required',
                 'max:255'],
             'available_from_date' => 'required|date',
-            'due_date' => 'required|date|after:available_from_date',
+            'due_date' => 'required|date',
             'available_from_time' => 'required|date_format:H:i:00',
             'due_time' => 'required|date_format:H:i:00',
             'source' => Rule::in(['a','x']),
