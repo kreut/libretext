@@ -3,7 +3,7 @@
 
 
     <b-modal
-      id="modal-upload-question-file"
+      id="modal-upload-file"
       ref="modal"
       title="Upload File"
       @ok="handleOk"
@@ -11,12 +11,11 @@
       ok-title="Submit"
       size="lg"
     >
-
       <b-form ref="form">
         <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
         <b-form-file
           ref="questionFileInput"
-          v-model="uploadForm.questionFile"
+          v-model="uploadFileForm[`${uploadFileType}File`]"
           placeholder="Choose a file or drop it here..."
           drop-placeholder="Drop file here..."
           :accept="getAcceptedFileTypes()"
@@ -26,9 +25,8 @@
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
-        <div class="help-block invalid-feedback">{{ uploadForm.errors.get('questionFile') }}
+        <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
         </div>
-
       </b-form>
     </b-modal>
 
@@ -78,9 +76,15 @@
                 :margin="4"
                 :color="{checked: '#007BFF', unchecked: '#75C791'}"
                 :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+              <b-button class="mt-1 mb-2"
+                        v-on:click="openUploadFileModal(questions[currentPage-1].id)"
+                        v-b-modal.modal-upload-file>Upload Solution
+              </b-button>
             </div>
           </div>
         </div>
+
+
         <b-form ref="form" v-if="!has_submissions && (isInstructor())">
 
           <b-form-group
@@ -277,8 +281,8 @@
                     <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
                     <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
                     <b-button variant="primary" class="float-right mr-2"
-                              v-on:click="openUploadQuestionFileModal(questions[currentPage-1].id)"
-                              v-b-modal.modal-upload-question-file>Upload New File
+                              v-on:click="openUploadFileModal(questions[currentPage-1].id)"
+                              v-b-modal.modal-upload-file>Upload New File
                     </b-button>
                   </b-card-text>
                 </b-card>
@@ -335,6 +339,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    uploadFileType: '',
     questionCols: 1,
     source: 'a',
     scoring_type: '',
@@ -344,9 +349,12 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
-    uploadForm: new Form({
+    uploadFileForm: new Form({
       questionFile: null,
       assignmentId: null,
+      questionId: null
+    }),
+    uploadSolutionForm: new Form({
       questionId: null
     }),
     questionPointsForm: new Form({
@@ -379,8 +387,11 @@ export default {
     this.downloadSubmission = downloadSubmission
   },
   mounted() {
-    this.questionCols = (this.user.role === 2) ? '12' : '8' //students have more info to see
-    console.log(this.user.role)
+    this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
+    this.uploadFileType = (this.user.role === 2) ?  'solution' : 'question' //students upload question submissions and instructors upload solutions
+    this.uploadFileUrl =  (this.user.role === 2) ?  '/api/solution-files' : '/api/submission-files'
+
+      console.log(this.user.role)
     this.assignmentId = this.$route.params.assignmentId
     let canView = this.getAssignmentInfo()
     if (!canView) {
@@ -531,10 +542,10 @@ console.log('server side submit' + serverSideSubmit)
     resetModalForms() {
       // alert('reset modal')
     },
-    openUploadQuestionFileModal(questionId) {
-      this.uploadForm.errors.clear('questionFile')
-      this.uploadForm.questionId = questionId
-      this.uploadForm.assignmentId = this.assignmentId
+    openUploadFileModal(questionId) {
+      this.uploadFileForm.errors.clear(this.uploadFileType)
+      this.uploadFileForm.questionId = questionId
+      this.uploadFileForm.assignmentId = this.assignmentId
     },
     async handleOk(bvModalEvt) {
       // Prevent modal from closing
@@ -545,7 +556,11 @@ console.log('server side submit' + serverSideSubmit)
         return false
       }
       this.uploading = true
-      await this.submitUploadFile('question', this.uploadForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1])
+      try {
+        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl)
+      } catch(error) {
+
+      }
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },

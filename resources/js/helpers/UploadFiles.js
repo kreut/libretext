@@ -3,27 +3,26 @@ import axios from 'axios'
 export function getAcceptedFileTypes() {
   return '.pdf, .txt, .png, .jpeg, .jpg' //update the validator in the S3 Trait if this changes
 }
-export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal, uploadFile) {
+export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal, uploadFile, url) {
   let typeFile = type + 'File'
 
   try {
     form.errors.set(typeFile, null)
     //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
     let formData = new FormData();
-
-    formData.append(typeFile, form[typeFile])
+    formData.append(typeFile, form[type])
     formData.append('assignmentId', form.assignmentId)
     formData.append('questionId', form.questionId)
     formData.append('type', type)
     formData.append('_method', 'put'); // add this
-    const {data} = await axios.post(`/api/submission-files`, formData)
+    const {data} = await axios.post(url , formData)
     console.log(data)
     if (data.type === 'error') {
-      form.errors.set(typeFile, data.message)
+      form.errors.set(type, data.message)
     } else {
       noty.success(data.message)
       nextTick(() => {
-        bvModal.hide(`modal-upload-${type}-file`)
+        bvModal.hide(`modal-upload-file`)
       })
 
      if (type === 'question') {

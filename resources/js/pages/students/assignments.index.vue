@@ -2,7 +2,7 @@
   <div>
     <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
     <b-modal
-      id="modal-upload-assignment-file"
+      id="modal-upload-file"
       ref="modal"
       title="Upload File"
       @ok="handleOk"
@@ -78,17 +78,17 @@
           </div>
         </template>
         <template v-slot:cell(available_from)="data">
-         {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
+          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
         </template>
         <template v-slot:cell(due)="data">
           {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
-          {{data.item.due.is_extension ? '(Extension)' : ''}}
+          {{ data.item.due.is_extension ? '(Extension)' : '' }}
         </template>
 
         <template v-slot:cell(files)="data">
           <div v-if="data.item.submission_files === 'a'">
             <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
-                    v-b-modal.modal-upload-assignment-file></b-icon>
+                    v-b-modal.modal-uploadmodal-upload-assignment-file-file></b-icon>
             <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
             ></b-icon>
           </div>
@@ -131,7 +131,7 @@ export default {
     fields: [
       'name',
       'available_from',
-       'due',
+      'due',
       'number_submitted',
       'score',
       'files'
@@ -197,7 +197,10 @@ export default {
         return false
       }
       this.uploading = true
-      await this.submitUploadFile('assignment', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal)
+      try {
+        await this.submitUploadFile('assignment', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal, '/api/submission-files')
+      } catch (error) {
+      }
       this.uploading = false
     },
 
