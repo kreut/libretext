@@ -357,9 +357,11 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             //these question_ids come from the assignment
+            //in case an instructor accidentally assigns the same problem twice I added in assignment_id
             $submissions = DB::table('submissions')
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', Auth::user()->id)
+                ->where('assignment_id', $assignment->id)
                 ->get();
             //  dd($question_ids);
             $submissions_by_question_id = [];
