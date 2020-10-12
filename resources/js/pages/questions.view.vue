@@ -47,40 +47,51 @@
           ></b-pagination>
         </div>
         <div class="d-flex">
-          <div v-if="isInstructor()">
-            <div v-if="has_submissions">
-              <b-alert variant="info" show>
-                <strong>Since students have already submitted responses, you can view the questions but you can't add
-                  or remove them.
-                  In addition, you can't update the number of points per question.</strong></b-alert>
-            </div>
-            <div v-if="!has_submissions">
-              <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
-                Questions
-              </b-button>
-              <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
-              </b-button>
-              <b-button class="mt-1 mb-2"
-                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                        variant="info">
-                Create Learning Tree
-              </b-button>
-              <toggle-button
-                v-if="questionFilesAllowed"
-                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                :width="250"
-                :value="Boolean(questions[currentPage-1].questionFiles)"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
-              <b-button class="mt-1 mb-2"
-                        v-on:click="openUploadFileModal(questions[currentPage-1].id)"
-                        v-b-modal.modal-upload-file>Upload Solution
-              </b-button>
-            </div>
-          </div>
+          <b-card title="Question Actions" v-if="isInstructor()" class="mb-4">
+            <b-card-text>
+              <div v-if="has_submissions">
+                <b-alert variant="info" show>
+                  <strong>Since students have already submitted responses, you can view the questions but you can't add
+                    or remove them.
+                    In addition, you can't update the number of points per question.</strong></b-alert>
+              </div>
+              <div v-if="!has_submissions">
+                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
+                  Questions
+                </b-button>
+                <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+                </b-button>
+                <b-button class="mt-1 mb-2"
+                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                          variant="info">
+                  Create Learning Tree
+                </b-button>
+                <toggle-button
+                  v-if="questionFilesAllowed"
+                  @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                  :width="250"
+                  :value="Boolean(questions[currentPage-1].questionFiles)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                  :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+                <br>
+                <b-button class="mt-1 mb-2"
+                          v-on:click="openUploadFileModal(questions[currentPage-1].id)"
+                          v-b-modal.modal-upload-file>Upload Solution
+                </b-button>
+                <span v-if="questions[currentPage-1].solution">
+                Uploaded solution:
+                  <a href=""
+                     v-on:click.prevent="">
+                    {{ questions[currentPage - 1].solution.original_filename }}
+                  </a>
+                  </span>
+                <span v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
+              </div>
+            </b-card-text>
+          </b-card>
         </div>
 
 
@@ -258,7 +269,7 @@
                     <strong> Uploaded file:</strong>
                     <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
-                     v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename, $noty)">
+                     v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)">
                     {{ questions[currentPage - 1].original_filename }}
                   </a>
                   </span>
@@ -272,7 +283,7 @@
                   </span>
                     <span v-if="questions[currentPage-1].file_feedback">
                      <a href=""
-                        v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback, $noty)">
+                        v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)">
                     file_feedback
                   </a>
                   </span>
@@ -327,7 +338,7 @@ import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
-import {downloadSubmission} from '~/helpers/SubmissionFiles'
+import {downloadFile} from '~/helpers/DownloadFiles'
 
 export default {
   middleware: 'auth',
@@ -383,14 +394,14 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.downloadSubmission = downloadSubmission
+    this.downloadFile = downloadFile
   },
   mounted() {
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
-    this.uploadFileType = (this.user.role === 2) ?  'solution' : 'question' //students upload question submissions and instructors upload solutions
-    this.uploadFileUrl =  (this.user.role === 2) ?  '/api/solution-files' : '/api/submission-files'
+    this.uploadFileType = (this.user.role === 2) ? 'solution' : 'question' //students upload question submissions and instructors upload solutions
+    this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
-      console.log(this.user.role)
+    console.log(this.user.role)
     this.assignmentId = this.$route.params.assignmentId
     let canView = this.getAssignmentInfo()
     if (!canView) {
@@ -407,13 +418,22 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    async updateLastSubmittedAndLastResponse(assignmentId, questionId){
+    downloadSubmission(assignmentId, submission, original_filename) {
+      let data =
+        {
+          'assignment_id': assignmentId,
+          'submission': submission
+        }
+      let url = '/api/submission-files/download'
+      this.downloadFile(url, data, original_filename, this.$noty)
+    },
+    async updateLastSubmittedAndLastResponse(assignmentId, questionId) {
       try {
-       const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
+        const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         console.log(data)
-      } catch (error){
+      } catch (error) {
         console.log(error);
       }
     },
@@ -457,10 +477,10 @@ export default {
           iframe.setAttribute("height", JSON.parse(event.data).height);
         }
 
-console.log('server side submit' + serverSideSubmit)
+        console.log('server side submit' + serverSideSubmit)
         if (serverSideSubmit) {
           console.log('serverSideSubmit')
-         await this.showResponse(JSON.parse(event.data))
+          await this.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
           let submission_data = {
@@ -507,7 +527,7 @@ console.log('server side submit' + serverSideSubmit)
         this.showSubmissionMessage = false;
       }, 5000);
       if (data.type === 'success') {
-        await this.updateLastSubmittedAndLastResponse(this.assignmentId,this.questions[this.currentPage - 1].id)
+        await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
       }
     },
     getTechnology(body) {
@@ -557,7 +577,7 @@ console.log('server side submit' + serverSideSubmit)
       this.uploading = true
       try {
         await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl)
-      } catch(error) {
+      } catch (error) {
 
       }
       this.uploading = false

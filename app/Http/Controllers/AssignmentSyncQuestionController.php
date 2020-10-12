@@ -295,7 +295,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-return compact('student_response', 'correct_response', 'submission_score', 'last_submitted');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted');
 
     }
 
@@ -316,6 +316,7 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
             $question_ids = [];
             $question_files = [];
             $points = [];
+            $solutions_by_question_id = [];
             if (!$assignment_question_info['questions']) {
                 $response['type'] = 'success';
                 $response['questions'] = [];
@@ -343,6 +344,7 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
                 $points[$question->question_id] = $question->points;
+                $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
             }
 
             $question_info = DB::table('questions')
@@ -364,6 +366,25 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
             if ($submissions) {
                 foreach ($submissions as $key => $value) {
                     $submissions_by_question_id[$value->question_id] = $value;
+                }
+            }
+
+            if ($assignment->solutions_released || Auth::user()->role === 2) {
+                $solutions = DB::table('solutions')
+                    ->whereIn('question_id', $question_ids)
+                    ->where('user_id', Auth::user()->id)
+                    ->get();
+                //  dd($question_ids);
+                if ($solutions) {
+                    foreach ($solutions as $key => $value) {
+                        $temporary_url = \Storage::disk('s3')->temporaryUrl("solutions/$value->user_id/$value->question_id/$value->file", now()->addMinutes(120));
+
+                        $solutions_by_question_id[$value->question_id] =
+                            [
+                                'original_filename' => $value->original_filename,
+                                'temporary_url' => $temporary_url
+                            ];
+                    }
                 }
             }
 
@@ -400,7 +421,7 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                $response_info  = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+                $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
@@ -418,6 +439,7 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone)
                     : $last_submitted;
                 $has_question_files = $question_files[$question->id];
+
                 $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
                 if ($has_question_files) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
@@ -443,6 +465,9 @@ return compact('student_response', 'correct_response', 'submission_score', 'last
                 $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
                 $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
 
+                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]
+                    ? $solutions_by_question_id[$question->id]
+                    : false;
 
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [

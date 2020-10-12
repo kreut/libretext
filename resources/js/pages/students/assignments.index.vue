@@ -45,7 +45,7 @@
           <p>
             Submitted File:
             <b-button variant="link" style="padding:0px; padding-bottom:3px"
-                      v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename, $noty)">
+                      v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)">
               {{ this.assignmentFileInfo.original_filename }}
             </b-button>
             <br>
@@ -113,7 +113,7 @@
 <script>
 import axios from 'axios'
 import Form from "vform"
-import {downloadSubmission} from '~/helpers/SubmissionFiles'
+import {downloadFile} from '~/helpers/DownloadFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 
@@ -141,7 +141,7 @@ export default {
     canViewAssignments: false
   }),
   created() {
-    this.downloadSubmission = downloadSubmission
+    this.downloadFile = downloadFile
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
   },
@@ -150,7 +150,15 @@ export default {
     this.getAssignments()
   },
   methods: {
-
+    downloadSubmission(assignmentId, submission, original_filename) {
+      let data =
+        {
+          'assignment_id': assignmentId,
+          'submission': submission
+        }
+      let url = '/api/submission-files/download'
+      this.downloadFile(url, data, original_filename, this.$noty)
+    },
     closeAssignmentSubmissionFeedbackModal() {
       this.$nextTick(() => {
         this.$bvModal.hide('modal-assignment-submission-feedback')

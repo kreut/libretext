@@ -1,16 +1,13 @@
 import axios from 'axios'
 
-export async function downloadSubmission(assignment_id, submission, original_filename, noty) {
+export async function downloadFile(url, fileData, originalFilename, noty) {
 
   try {
     const {data} = await axios({
       method: 'post',
-      url: '/api/submission-files/download',
+      url: url,
       responseType: 'arraybuffer',
-      data: {
-        'assignment_id': assignment_id,
-        'submission': submission
-      }
+      data: fileData
     })
     console.log(data)
     if (data.byteLength) {
@@ -18,7 +15,7 @@ export async function downloadSubmission(assignment_id, submission, original_fil
       let blob = new Blob([data], {type: 'application/pdf'})
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
-      link.download = original_filename
+      link.download = originalFilename
       link.click()
     } else {
       noty.error("We were not able to retrieve your file.  Please try again or contact us for assistance.")

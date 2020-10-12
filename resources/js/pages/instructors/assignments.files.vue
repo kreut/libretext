@@ -41,7 +41,8 @@
           ></b-pagination>
         </div>
         <div v-if="type === 'question'" class="text-center">
-         <h5 class="font-italic">This question is out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
+          <h5 class="font-italic">This question is out of
+            {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
           <div class="container">
@@ -50,7 +51,8 @@
                 <b-card title="Submission Information">
                   <b-card-text>
                     <p>
-                      <strong>Name:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
+                      <strong>Name:</strong>
+                      {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
                       <strong>Date Submitted:</strong> {{
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
                         1]['date_submitted']
@@ -58,8 +60,12 @@
                       <strong>Date Graded:</strong> {{
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                       }}<br>
-                      <strong>Question Submission Score:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] }}<br>
-                      <strong>File Submission Score:</strong> {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] }}
+                      <strong>Question Submission Score:</strong> {{
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
+                      }}<br>
+                      <strong>File Submission Score:</strong> {{
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
+                      }}
                     </p>
                     <hr>
                     <b-form-group
@@ -116,7 +122,7 @@
             <div class="row">
               <div class="col-sm">
                 <b-button variant="outline-primary"
-                          v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'], $noty)">
+                          v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
                   Download Submission
                 </b-button>
 
@@ -168,7 +174,7 @@
                       :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"></iframe>
             </div>
             <div v-else>
-              <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name']}} has not submitted a file.</span>
+              <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }} has not submitted a file.</span>
             </div>
           </div>
           <div v-show="!viewSubmission">
@@ -195,7 +201,7 @@
 import axios from 'axios'
 import Form from "vform"
 import {ToggleButton} from 'vue-js-toggle-button'
-import {downloadSubmission} from '~/helpers/SubmissionFiles'
+import {downloadFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 //import pdf from 'vue-pdf'
 
@@ -213,7 +219,7 @@ export default {
     ],
     gradeView: 'allStudents',
     type: '',
-    title:'',
+    title: '',
     loaded: true,
     viewSubmission: true,
     showNoFileSubmissionsExistAlert: false,
@@ -234,7 +240,7 @@ export default {
     }),
   }),
   created() {
-    this.downloadSubmission = downloadSubmission
+    this.downloadFile = downloadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
   },
   mounted() {
@@ -244,6 +250,15 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    downloadSubmission(assignmentId, submission, original_filename) {
+      let data =
+        {
+          'assignment_id': assignmentId,
+          'submission': submission
+        }
+      let url = '/api/submission-files/download'
+      this.downloadFile(url, data, original_filename, this.$noty)
+    },
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
