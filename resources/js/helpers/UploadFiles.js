@@ -15,9 +15,9 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
     formData.append('questionId', form.questionId)
     formData.append('type', type)
     formData.append('_method', 'put'); // add this
-    console.log(formData)
+
     const {data} = await axios.post(url , formData)
-    console.log(data)
+
     if (data.type === 'error') {
       form.errors.set(type, data.message)
     } else {
@@ -35,6 +35,9 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
        uploadFile.file_feedback = null
        uploadFile.submission_file_exists = true
        uploadFile.submission = data.submission
+     }
+     if (type === 'solution'){
+       uploadFile.solution = data.original_filename
      }
     }
   } catch (error) {
