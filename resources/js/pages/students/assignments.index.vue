@@ -206,7 +206,7 @@ export default {
       }
       this.uploading = true
       try {
-        await this.submitUploadFile('assignment', this.form, this.$noty, this.$refs, this.$nextTick, this.$bvModal, '/api/submission-files')
+        await this.submitUploadFile('assignment', this.form, this.$noty, this.$nextTick, this.$bvModal, '/api/submission-files')
       } catch (error) {
       }
       this.uploading = false

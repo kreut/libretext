@@ -3,7 +3,7 @@ import axios from 'axios'
 export function getAcceptedFileTypes() {
   return '.pdf, .txt, .png, .jpeg, .jpg' //update the validator in the S3 Trait if this changes
 }
-export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal, uploadFile, url) {
+export async function submitUploadFile(type, form, noty,  nextTick, bvModal, uploadFile, url) {
   let typeFile = type + 'File'
 
   try {
@@ -25,7 +25,6 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
       nextTick(() => {
         bvModal.hide(`modal-upload-file`)
       })
-
      if (type === 'question') {
        //immediate feedback for them to see.
        //for assignments, they'll have to click on something else to get the information
@@ -47,6 +46,4 @@ export async function submitUploadFile(type, form, noty, refs, nextTick, bvModal
     noty.error(error.message)
 
   }
-  refs[type + 'FileInput'].reset()
-
 }

@@ -6,6 +6,33 @@
         Loading...
       </h3>
     </div>
+    <b-modal
+      id="modal-upload-file"
+      ref="solutionFileInput"
+      title="Upload File"
+      @ok="handleOk"
+      ok-title="Submit"
+      size="lg"
+    >
+      <b-form ref="form">
+        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
+        <b-form-file
+          ref="solutionFileInput"
+          v-model="uploadFileForm.solutionFile"
+          placeholder="Choose a file or drop it here..."
+          drop-placeholder="Drop file here..."
+          :accept="getAcceptedFileTypes()"
+        ></b-form-file>
+        <div v-if="uploading">
+          <b-spinner small type="grow"></b-spinner>
+          Uploading file...
+        </div>
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get('solutionFile') }}
+        </div>
+      </b-form>
+    </b-modal>
+
     <div v-if="showPage">
       <PageTitle :title="title"></PageTitle>
       <p>Use the search box you can find questions by tag.
@@ -26,7 +53,7 @@
           <b-spinner small type="grow" v-if="gettingQuestions"></b-spinner>
           Get Questions
         </b-button>
-        <b-button variant="secondary" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
+        <b-button variant="dark" v-on:click="getStudentView(assignmentId)">View as Student</b-button>
       </div>
       <hr>
       <div>
@@ -34,8 +61,8 @@
         <div v-if="chosenTags.length>0">
           <ol>
             <li v-for="chosenTag in chosenTags" :key="chosenTag">
-            <span v-on:click="removeTag(chosenTag)">{{ chosenTag }}<b-icon icon="trash"
-                                                                           variant="danger"></b-icon></span>
+            <span v-on:click="removeTag(chosenTag)">{{ chosenTag }}
+              <b-icon icon="trash" variant="danger"></b-icon></span>
             </li>
           </ol>
         </div>
@@ -56,41 +83,60 @@
       </div>
       <div v-if="showQuestions">
         <div class="d-flex">
-          <div v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
-               v-on:click="removeQuestion(questions[currentPage-1])">
-            <b-button variant="danger">Remove Question</b-button>
-          </div>
-          <div>
-            <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
-                      v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question
-            </b-button>
+          <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
+                    v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question
+          </b-button>
+          <b-card title="Question Actions" v-if="questions[currentPage-1].inAssignment" class="mb-4">
+            <b-card-text>
 
-            <b-button v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
-                      v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                      variant="info">Create Learning Tree
-            </b-button>
+              <b-button class="mt-1 mb-2 mr-2"
+                        v-on:click="removeQuestion(questions[currentPage-1])" variant="danger">Remove Question
+              </b-button>
 
-            <toggle-button
-              v-if="questionFilesAllowed && questions[currentPage-1].inAssignment"
-              @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-              :width="250"
-              :value="questions[currentPage-1].questionFiles"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#007BFF', unchecked: '#75C791'}"
-              :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
-          </div>
+
+              <b-button class="mt-1 mb-2"
+                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                        variant="info">Create Learning Tree
+              </b-button>
+              <br>
+
+              <toggle-button
+                v-if="questionFilesAllowed"
+                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                :width="250"
+                :value="questions[currentPage-1].questionFiles"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+              <b-button v-if="questions[currentPage-1].inAssignment" class="mt-1 mb-2"
+                        v-on:click="openUploadFileModal(questions[currentPage-1].id)"
+                        v-b-modal.modal-upload-file>Upload Solution
+              </b-button>
+
+              <span v-if="questions[currentPage-1].solution">
+            Uploaded solution:
+            <a href=""
+               v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+              {{ questions[currentPage - 1].solution }}
+            </a>
+            </span>
+              <span
+                v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
+
+            </b-card-text>
+          </b-card>
         </div>
         <div>
-        <iframe id="non-technology-iframe"
-                allowtransparency="true"
-                frameborder="0"
-                v-bind:src="questions[currentPage-1].non_technology_iframe_src"
-                style="width: 1px;min-width: 100%;"
-                v-if="showQuestions && questions[currentPage-1].non_technology"
-        ></iframe>
-      </div>
+          <iframe id="non-technology-iframe"
+                  allowtransparency="true"
+                  frameborder="0"
+                  v-bind:src="questions[currentPage-1].non_technology_iframe_src"
+                  style="width: 1px;min-width: 100%;"
+                  v-if="showQuestions && questions[currentPage-1].non_technology"
+          ></iframe>
+        </div>
         <div v-html="questions[currentPage-1].technology_iframe"></div>
       </div>
     </div>
@@ -104,6 +150,10 @@ import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
 import {mapGetters} from "vuex";
+import {submitUploadFile} from '~/helpers/UploadFiles'
+import {downloadFile} from '~/helpers/DownloadFiles'
+import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
+import Form from "vform";
 
 export default {
   components: {
@@ -115,6 +165,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    uploading: false,
     continueLoading: true,
     isLoading: false,
     iframeLoaded: false,
@@ -128,10 +179,18 @@ export default {
     showQuestions: false,
     gettingQuestions: false,
     showPage: false,
-    title: ''
+    title: '',
+    uploadFileForm: new Form({
+      questionFile: null,
+      assignmentId: null,
+      questionId: null
+    }),
   }),
   created() {
     this.toggleQuestionFiles = toggleQuestionFiles
+    this.submitUploadFile = submitUploadFile
+    this.getAcceptedFileTypes = getAcceptedFileTypes
+    this.downloadFile = downloadFile
   },
   mounted() {
     if (this.user.role !== 2) {
@@ -144,6 +203,38 @@ export default {
 
   },
   methods: {
+    downloadSolutionFile(questionId, original_filename) {
+      let data =
+        {
+          'question_id': questionId,
+          'assignment_id': this.assignmentId
+        }
+      let url = '/api/solution-files/download'
+      console.log(this.$noty)
+      this.downloadFile(url, data, original_filename, this.$noty)
+    },
+    openUploadFileModal(questionId) {
+      this.uploadFileForm.errors.clear(this.uploadFileType)
+      this.uploadFileForm.questionId = questionId
+      this.uploadFileForm.assignmentId = this.assignmentId
+    },
+    async handleOk(bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      if (this.uploading) {
+        this.$noty.info('Please be patient while the file is uploading.')
+        return false
+      }
+      this.uploading = true
+      try {
+        await this.submitUploadFile('solution', this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], '/api/solution-files')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.uploading = false
+      console.log(this.questions[this.currentPage - 1])
+    },
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
@@ -168,7 +259,7 @@ export default {
       this.$nextTick(() => {
         let iframe_id = this.questions[currentPage - 1].iframe_id
         iFrameResize({log: false}, `#${iframe_id}`)
-        iFrameResize({ log: false }, '#non-technology-iframe')
+        iFrameResize({log: false}, '#non-technology-iframe')
       })
     },
     removeTag(chosenTag) {
@@ -278,7 +369,7 @@ export default {
             let iframe_id = this.questions[0].iframe_id;
             this.$nextTick(() => {
               iFrameResize({log: false}, `#${iframe_id}`)
-              iFrameResize({ log: false }, '#non-technology-iframe')
+              iFrameResize({log: false}, '#non-technology-iframe')
             })
             // console.log(this.questions)
             this.showQuestions = true

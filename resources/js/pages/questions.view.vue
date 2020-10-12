@@ -7,7 +7,6 @@
       ref="modal"
       title="Upload File"
       @ok="handleOk"
-      @hidden="resetModalForms"
       ok-title="Submit"
       size="lg"
     >
@@ -343,9 +342,9 @@ import Form from 'vform'
 import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
-import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
+import {submitUploadFile} from '~/helpers/UploadFiles'
 import {downloadFile} from '~/helpers/DownloadFiles'
 
 export default {
@@ -575,9 +574,6 @@ export default {
       }
 
     },
-    resetModalForms() {
-      // alert('reset modal')
-    },
     openUploadFileModal(questionId) {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
@@ -593,7 +589,7 @@ export default {
       }
       this.uploading = true
       try {
-        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$refs, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl)
+        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl)
       } catch (error) {
 
       }

@@ -18,9 +18,13 @@ export async function downloadFile(url, fileData, originalFilename, noty) {
       link.download = originalFilename
       link.click()
     } else {
+      alert(
+        'f'
+      )
       noty.error("We were not able to retrieve your file.  Please try again or contact us for assistance.")
     }
   } catch (error) {
+    alert('bn')
     noty.error(error.message)
   }
 }

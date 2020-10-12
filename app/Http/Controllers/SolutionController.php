@@ -90,7 +90,7 @@ class SolutionController extends Controller
         try {
             $solution_file = $solution->where('user_id', $file_creator_user_id)
             ->where('question_id', $request->question_id)
-            ->first();
+            ->first()->file;
 
             return Storage::disk('s3')->download("solutions/$file_creator_user_id/$solution_file");
         } catch (Exception $e) {
