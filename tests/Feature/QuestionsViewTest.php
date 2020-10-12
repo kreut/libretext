@@ -58,6 +58,68 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
+    public function a_student_cannot_download_a_solution_to_a_question_in_an_assignment_that_is_not_in_an_enrolled_course(){
+
+        $this->actingAs($this->student_user_2)->postJson('/api/solution-files/download', [
+            'question_id' =>$this->question->id,
+            'assignment_id'=>$this->assignment->id])
+            ->assertJson(['message'=>  'You are not allowed to download these solutions.']);
+
+    }
+
+    /** @test */
+
+    public function a_student_can_download_a_solution_uploaded_by_their_instructor(){
+
+
+    }
+
+
+
+/** @test */
+
+    public function an_instructor_can_upload_a_solution_and_store_it_in_s3(){
+
+
+
+
+    }
+    /** @test */
+
+    public function a_non_instructor_cannot_upload_a_solution(){
+        $this->actingAs($this->student_user)->putJson("/api/solution-files", [
+            'question_id' =>1])
+            ->assertJson(['message'=> 'You are not allowed to upload solutions.']);
+
+
+    }
+
+    /** @test */
+
+    public function an_instructor_can_upload_a_solution(){
+
+
+
+
+    }
+
+    /** @test */
+
+    public function you_cannot_download_a_solution_that_is_not_part_of_an_assignment(){
+        $this->actingAs($this->user)->postJson('/api/solution-files/download', [
+            'question_id' =>1000,
+            'assignment_id'=>$this->assignment->id])
+            ->assertJson(['message'=>  'That question is not part of the assignment so you cannot download the solutions.']);
+
+    }
+
+
+
+
+
+
+    /** @test */
+
     public function must_submit_a_question_with_a_valid_technology()
     {
         $this->assignment->submission_files = '0';
