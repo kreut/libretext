@@ -372,9 +372,10 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             if ($assignment->solutions_released || Auth::user()->role === 2) {
+
                 $solutions = DB::table('solutions')
                     ->whereIn('question_id', $question_ids)
-                    ->where('user_id', Auth::user()->id)
+                    ->where('user_id',$assignment->course->user_id)
                     ->get();
                 //  dd($question_ids);
                 if ($solutions) {
@@ -383,7 +384,6 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
             }
-
             $instructor_user_id = $assignment->course->user_id;
             $instructor_learning_trees = DB::table('learning_trees')
                 ->whereIn('question_id', $question_ids)

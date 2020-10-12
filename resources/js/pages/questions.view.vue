@@ -248,6 +248,13 @@
                       </div>
                     </div>
                   </div>
+                  <span v-if="questions[currentPage-1].solution">
+                    <span class="font-weight-bold">Solution:</span>
+                  <a href=""
+                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+                    {{ questions[currentPage - 1].solution }}
+                  </a>
+                  </span></br>
                   <span class="font-weight-bold">Last submitted:</span> {{
                     questions[currentPage - 1].last_submitted
                   }}<br>
