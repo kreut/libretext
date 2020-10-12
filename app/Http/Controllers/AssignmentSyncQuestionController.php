@@ -377,13 +377,7 @@ class AssignmentSyncQuestionController extends Controller
                 //  dd($question_ids);
                 if ($solutions) {
                     foreach ($solutions as $key => $value) {
-                        $temporary_url = \Storage::disk('s3')->temporaryUrl("solutions/$value->user_id/$value->question_id/$value->file", now()->addMinutes(120));
-
-                        $solutions_by_question_id[$value->question_id] =
-                            [
-                                'original_filename' => $value->original_filename,
-                                'temporary_url' => $temporary_url
-                            ];
+                        $solutions_by_question_id[$value->question_id]= $value->original_filename;
                     }
                 }
             }

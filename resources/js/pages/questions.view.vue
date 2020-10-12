@@ -84,8 +84,8 @@
                 <span v-if="questions[currentPage-1].solution">
                 Uploaded solution:
                   <a href=""
-                     v-on:click.prevent="">
-                    {{ questions[currentPage - 1].solution.original_filename }}
+                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+                    {{ questions[currentPage - 1].solution }}
                   </a>
                   </span>
                 <span v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
@@ -418,6 +418,15 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    downloadSolutionFile(questionId,original_filename){
+      let data =
+        {
+          'question_id': questionId,
+          'assignment_id': this.assignmentId
+        }
+      let url = '/api/solution-files/download'
+      this.downloadFile(url, data, original_filename, this.$noty)
+    },
     downloadSubmission(assignmentId, submission, original_filename) {
       let data =
         {
