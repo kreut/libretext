@@ -2,10 +2,10 @@
 
 namespace App\Http\Controllers;
 
-use App\Tag;
+
 use App\Question;
 use Illuminate\Http\Request;
-use App\Question_Tag;
+use App\Solution;
 use App\Query;
 use App\Traits\IframeFormatter;
 
@@ -15,6 +15,7 @@ use \Exception;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 
 class QuestionController extends Controller
@@ -41,13 +42,25 @@ class QuestionController extends Controller
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
             ->whereIn('id', $question_ids)->get();
 
+        $solutions = Solution::select('question_id', 'original_filename')
+            ->whereIn('question_id', $question_ids)
+            ->where('user_id', Auth::user()->id)
+            ->get();
+
+        if (!$solutions->isEmpty()) {
+            foreach ($solutions as $key => $value) {
+                $solutions[$value->question_id] = $value->original_filename;
+
+            }
+        }
+
         foreach ($questions as $key => $question) {
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
             $questions[$key]['non_technology_iframe_src'] = $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
             $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
-
+            $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
 
         return ['type' => 'success',
