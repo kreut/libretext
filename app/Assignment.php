@@ -26,6 +26,10 @@ class Assignment extends Model
         return $this->belongsTo('App\Course');
     }
 
+    public function fileSubmissions(){
+
+        return $this->hasMany('App\SubmissionFile');
+    }
     public function assignmentFileSubmissions()
     {
         return $this->hasMany('App\SubmissionFile')->where('type', 'a');

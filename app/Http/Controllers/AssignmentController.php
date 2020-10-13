@@ -67,6 +67,7 @@ class AssignmentController extends Controller
             $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
             $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
             $assignments = $course->assignments;
+
             foreach ($course->assignments as $key => $assignment) {
                 $assignments[$key]['number_of_questions'] = count($assignment->questions);
 
@@ -100,7 +101,7 @@ class AssignmentController extends Controller
                     $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                    $assignments[$key]['has_submissions'] = +!$assignment->submissions->isEmpty();//return as 0 or 1
+                    $assignments[$key]['has_submissions_or_file_submissions']  = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
 
                 }
 //same regardless of whether you're a student

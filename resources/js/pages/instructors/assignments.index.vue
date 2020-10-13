@@ -96,7 +96,7 @@
               </b-col>
             </b-form-row>
           </b-form-group>
-          <div v-if="!has_submissions">
+          <div v-if="!has_submissions_or_file_submissions">
             <b-form-group
               id="source"
               label-cols-sm="4"
@@ -115,7 +115,7 @@
             </b-form-group>
           </div>
 
-          <div v-if="!has_submissions">
+          <div v-if="!has_submissions_or_file_submissions">
             <b-form-group
               id="scoring_type"
               label-cols-sm="4"
@@ -176,7 +176,7 @@
               </b-form-group>
             </div>
           </div>
-          <div v-if="has_submissions">
+          <div v-if="has_submissions_or_file_submissions">
             <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
               can't change the source of the questions, the scoring type, the default points per question, or the type
               of file uploads. </strong>
@@ -321,7 +321,7 @@ export default {
       default_points_per_question: '10'
     }),
     hasAssignments: false,
-    has_submissions: false,
+    has_submissions_or_file_submissions: false,
     min: '',
     canViewAssignments: false,
     showNoAssignmentsAlert: false,
@@ -339,7 +339,7 @@ export default {
 
     },
     hasSubmissionsColor(assignment) {
-      return (assignment.has_submissions === 1) ? 'warning' : ''
+      return (assignment.has_submissions_or_file_submissions === 1) ? 'warning' : ''
 
 
     },
@@ -372,7 +372,7 @@ export default {
     },
     editAssignment(assignment) {
       console.log(assignment)
-      this.has_submissions = (assignment.has_submissions === 1)
+      this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
       this.form.name = assignment.name
@@ -390,14 +390,14 @@ export default {
     }
     ,
     getQuestions(assignment) {
-      if (assignment.has_submissions) {
-        this.$noty.info("You can't add/remove questions for this assignment since students have already submitted solutions.")
-        return false
+
+      if (Boolean(Number(assignment.has_submissions_or_file_submissions))) {
+        this.$noty.info("Since students have already submitted responses to this assignment, you won't be able to add or remove questions.")
+      return false
       }
-
-      if (assignment.has_submissions === 1) {
-        this.$noty.info("Students have already submitted responses to this assignment, you won't be able to add or remove questions.")
-
+      if (Boolean(Number(assignment.solutions_released))) {
+        this.$noty.info("You have already released the solutions to this assignment, so you won't be able to add or remove questions.")
+        return false
       }
       this.$router.push(`/assignments/${assignment.id}/questions/get`)
     }

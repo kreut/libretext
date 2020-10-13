@@ -48,13 +48,13 @@
         <div class="d-flex">
           <b-card title="Question Actions" v-if="isInstructor()" class="mb-4">
             <b-card-text>
-              <div v-if="has_submissions">
+              <div v-if="has_submissions || solutionsReleased">
                 <b-alert variant="info" show>
-                  <strong>Since students have already submitted responses, you can view the questions but you can't add
-                    or remove them.
+                  <strong>Either students have submitted responses to this assignment or the solutions have been released.
+                    You can view the questions but you can't add or remove them.
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
-              <div v-if="!has_submissions">
+              <div v-if="!(has_submissions || solutionsReleased)">
                 <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
                   Questions
                 </b-button>
@@ -76,6 +76,8 @@
                   :color="{checked: '#007BFF', unchecked: '#75C791'}"
                   :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
                 <br>
+              </div>
+              <div>
                 <b-button class="mt-1 mb-2"
                           v-on:click="openUploadFileModal(questions[currentPage-1].id)"
                           v-b-modal.modal-upload-file>Upload Solution
