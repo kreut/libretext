@@ -232,10 +232,6 @@ class AssignmentController extends Controller
             return $response;
         }
 
-        if ($assignment->hasFileOrQuestionSubmissions()) {
-            $response['message'] = 'A student just submitted a response so you are now limited in what you can edit.  Please re-open the form and try again.';
-            return $response;
-        }
 
         try {
            if ($response = $this->checkdueDateAfterAvailableDate($request)){
@@ -253,7 +249,7 @@ class AssignmentController extends Controller
             //submissions exist so don't let them change the things below
 
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
-            if ($assignment->submissions->isNotEmpty()) {
+            if ($assignment->hasFileOrQuestionSubmissions()) {
                 unset($data['scoring_type']);
                 unset($data['default_points_per_question']);
                 unset($data['submission_files']);

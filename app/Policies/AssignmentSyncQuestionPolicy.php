@@ -23,8 +23,8 @@ class AssignmentSyncQuestionPolicy
      */
     public function delete(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
-        $authorized = ($assignment->submissions->isEmpty()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = (!$assignment->submissions->isEmpty())
+        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
+        $message = ($assignment->hasFileOrQuestionSubmissions())
             ? "You can't remove a question from this assignment since students have already submitted responses."
             : 'You are not allowed to remove a question from this assignment.';
         return $authorized
@@ -41,8 +41,8 @@ class AssignmentSyncQuestionPolicy
      */
     public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
-        $authorized = ($assignment->submissions->isEmpty()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = (!$assignment->submissions->isEmpty())
+        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
+        $message = ($assignment->hasFileOrQuestionSubmissions())
             ? "You can't add a question to this assignment since students have already submitted responses."
             : 'You are not allowed to add a question to this assignment.';
 
@@ -53,10 +53,10 @@ class AssignmentSyncQuestionPolicy
 
     public function update(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
-        $authorized = ($assignment->submissions->isEmpty()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = (!$assignment->submissions->isEmpty())
+        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
+        $message = ($assignment->hasFileOrQuestionSubmissions())
             ? "You can't update the question points since students have already submitted responses."
-            : 'You are not allowed to add a question to this assignment.';
+            : 'You are not allowed to update the question points for this assignment.';
 
         return $authorized
             ? Response::allow()

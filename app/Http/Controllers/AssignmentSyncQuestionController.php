@@ -137,16 +137,11 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
 
-        if ($assignment->hasFileOrQuestionSubmissions()) {
-            $response['message'] = 'A student has already submitted a response so you may no longer change the points for this question.';
-            return $response;
-        }
-
         try {
 
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['points' => $request->points]);
+                ->update(['points' => $data['points']]);
             $response['type'] = 'success';
             $response['message'] = 'The number of points have been updated.';
 
@@ -169,10 +164,6 @@ class AssignmentSyncQuestionController extends Controller
         if (!$authorized->allowed()) {
 
             $response['message'] = $authorized->message();
-            return $response;
-        }
-        if ($assignment->hasFileOrQuestionSubmissions()) {
-            $response['message'] = 'A student has already submitted a response so you may no longer add questions to this assignment.';
             return $response;
         }
         try {
@@ -208,10 +199,6 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
 
-        if ($assignment->hasFileOrQuestionSubmissions()) {
-            $response['message'] = 'A student has already submitted a response so you may no longer remove questions from this assignment.';
-            return $response;
-        }
         try {
             $assignment->questions()->detach($question);
             $response['type'] = 'success';

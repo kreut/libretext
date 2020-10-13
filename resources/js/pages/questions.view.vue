@@ -379,9 +379,7 @@ export default {
       questionId: null
     }),
     questionPointsForm: new Form({
-      points: null,
-      assignmentId: null,
-      questionId: null
+      points: null
     }),
     remediationIframeId: '',
     iframeLoaded: false,
