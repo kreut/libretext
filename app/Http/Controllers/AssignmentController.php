@@ -129,12 +129,13 @@ class AssignmentController extends Controller
     }
 
     public function checkDueDateAfterAvailableDate(StoreAssignment $request){
+        $response = [];
         if (Carbon::parse($request->due) <= Carbon::parse( $request->available_from)) {
             $response['available_after_due'] = true;
             $response['message'] = 'Your assignment should become due after it becomes available.';
-            echo json_encode($response);
-            exit;
+            $response['error'] = true;
         }
+        return $response;
     }
     /**
      *
@@ -159,7 +160,9 @@ class AssignmentController extends Controller
         $response['type'] = 'error';
 
         try {
-            $this->checkdueDateAfterAvailableDate($request);
+            if ($response = $this->checkdueDateAfterAvailableDate($request)){
+                return $response;
+            }
             $data = $request->validated();
             Assignment::create(
                 ['name' => $data['name'],
@@ -213,11 +216,10 @@ class AssignmentController extends Controller
 
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Assignment $assignment
-     * @return \Illuminate\Http\Response
+     * @param StoreAssignment $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
      */
     public function update(StoreAssignment $request, Assignment $assignment)
     {
@@ -231,7 +233,10 @@ class AssignmentController extends Controller
         }
 
         try {
-            $this->checkdueDateAfterAvailableDate($request);
+           if ($response = $this->checkdueDateAfterAvailableDate($request)){
+
+            return $response;
+           }
             $data = $request->validated();
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 

@@ -30,8 +30,10 @@ class AssignmentsIndexTest extends TestCase
             'name' => 'First Assignment',
             'available_from_date' => '2020-06-10',
             'available_from_time' => '09:00:00',
+            'available_from' => '2020-06-10 09:00:00',
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
+            'due' => '2020-06-12 09:00:00',
             'scoring_type' => 'p',
             'source' => 'a',
             'default_points_per_question' => 2,
@@ -114,7 +116,7 @@ class AssignmentsIndexTest extends TestCase
 /** @test */
     public function can_update_an_assignment_if_you_are_the_owner()
     {
-        $this->assignment_info['name'] = "some new name";
+        $this->assignment_info['name'] = 'Some new name';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}",
             $this->assignment_info)
             ->assertJson(['type' => 'success']);
@@ -207,9 +209,9 @@ class AssignmentsIndexTest extends TestCase
     /** @test */
     public function due_date_must_be_after_available_date()
     {
-        $this->assignment_info['due_date'] = "1982-06-06";
+        $this->assignment_info['due'] = "1982-06-06";
         $this->actingAs($this->user)->postJson("/api/assignments",$this->assignment_info)
-            ->assertJsonValidationErrors(['due_date']);
+            ->assertJson(['message' => 'Your assignment should become due after it becomes available.']);
     }
 
 /** @test */
