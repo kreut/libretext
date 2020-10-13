@@ -151,7 +151,7 @@ import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
 import {mapGetters} from "vuex";
 import {submitUploadFile} from '~/helpers/UploadFiles'
-import {downloadFile} from '~/helpers/DownloadFiles'
+import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import Form from "vform";
 
@@ -190,7 +190,7 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.downloadFile = downloadFile
+    this.downloadSolutionFile = downloadSolutionFile
   },
   mounted() {
     if (this.user.role !== 2) {
@@ -203,16 +203,6 @@ export default {
 
   },
   methods: {
-    downloadSolutionFile(questionId, original_filename) {
-      let data =
-        {
-          'question_id': questionId,
-          'assignment_id': this.assignmentId
-        }
-      let url = '/api/solution-files/download'
-      console.log(this.$noty)
-      this.downloadFile(url, data, original_filename, this.$noty)
-    },
     openUploadFileModal(questionId) {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId

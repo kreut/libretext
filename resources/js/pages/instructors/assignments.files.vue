@@ -122,7 +122,7 @@
             <div class="row">
               <div class="col-sm">
                 <b-button variant="outline-primary"
-                          v-on:click="downloadSubmission(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
+                          v-on:click="downloadSubmissionFile(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
                   Download Submission
                 </b-button>
 
@@ -201,7 +201,7 @@
 import axios from 'axios'
 import Form from "vform"
 import {ToggleButton} from 'vue-js-toggle-button'
-import {downloadFile} from '~/helpers/DownloadFiles'
+import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 //import pdf from 'vue-pdf'
 
@@ -240,7 +240,7 @@ export default {
     }),
   }),
   created() {
-    this.downloadFile = downloadFile
+    this.downloadSubmissionFile = downloadSubmissionFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
   },
   mounted() {
@@ -250,15 +250,6 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
-    downloadSubmission(assignmentId, submission, original_filename) {
-      let data =
-        {
-          'assignment_id': assignmentId,
-          'submission': submission
-        }
-      let url = '/api/submission-files/download'
-      this.downloadFile(url, data, original_filename, this.$noty)
-    },
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)

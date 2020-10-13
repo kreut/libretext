@@ -276,7 +276,7 @@
                     <strong> Uploaded file:</strong>
                     <span v-if="questions[currentPage-1].submission_file_exists">
                   <a href=""
-                     v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)">
+                     v-on:click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)">
                     {{ questions[currentPage - 1].original_filename }}
                   </a>
                   </span>
@@ -290,7 +290,7 @@
                   </span>
                     <span v-if="questions[currentPage-1].file_feedback">
                      <a href=""
-                        v-on:click.prevent="downloadSubmission(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)">
+                        v-on:click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)">
                     file_feedback
                   </a>
                   </span>
@@ -345,7 +345,8 @@ import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import {h5pResizer} from "~/helpers/H5PResizer"
 import {submitUploadFile} from '~/helpers/UploadFiles'
-import {downloadFile} from '~/helpers/DownloadFiles'
+import {downloadSolutionFile} from '~/helpers/DownloadFiles'
+import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 
 export default {
   middleware: 'auth',
@@ -401,7 +402,8 @@ export default {
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.downloadFile = downloadFile
+    this.downloadSolutionFile = downloadSolutionFile
+    this.downloadSubmissionFile = downloadSubmissionFile
   },
   mounted() {
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
@@ -425,24 +427,6 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    downloadSolutionFile(questionId,original_filename){
-      let data =
-        {
-          'question_id': questionId,
-          'assignment_id': this.assignmentId
-        }
-      let url = '/api/solution-files/download'
-      this.downloadFile(url, data, original_filename, this.$noty)
-    },
-    downloadSubmission(assignmentId, submission, original_filename) {
-      let data =
-        {
-          'assignment_id': assignmentId,
-          'submission': submission
-        }
-      let url = '/api/submission-files/download'
-      this.downloadFile(url, data, original_filename, this.$noty)
-    },
     async updateLastSubmittedAndLastResponse(assignmentId, questionId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)

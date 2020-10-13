@@ -45,7 +45,7 @@
           <p>
             Submitted File:
             <b-button variant="link" style="padding:0px; padding-bottom:3px"
-                      v-on:click="downloadSubmission(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)">
+                      v-on:click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)">
               {{ this.assignmentFileInfo.original_filename }}
             </b-button>
             <br>
@@ -150,7 +150,7 @@ export default {
     this.getAssignments()
   },
   methods: {
-    downloadSubmission(assignmentId, submission, original_filename) {
+    downloadSubmissionFile(assignmentId, submission, original_filename) {
       let data =
         {
           'assignment_id': assignmentId,

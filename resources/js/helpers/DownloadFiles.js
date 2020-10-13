@@ -1,4 +1,22 @@
 import axios from 'axios'
+export function  downloadSolutionFile(questionId,original_filename){
+  let data =
+    {
+      'question_id': questionId,
+      'assignment_id': this.assignmentId
+    }
+  let url = '/api/solution-files/download'
+  downloadFile(url, data, original_filename, this.$noty)
+}
+export function   downloadSubmissionFile(assignmentId, submission, original_filename) {
+  let data =
+    {
+      'assignment_id': assignmentId,
+      'submission': submission
+    }
+  let url = '/api/submission-files/download'
+  downloadFile(url, data, original_filename, this.$noty)
+}
 
 export async function downloadFile(url, fileData, originalFilename, noty) {
 
@@ -18,13 +36,9 @@ export async function downloadFile(url, fileData, originalFilename, noty) {
       link.download = originalFilename
       link.click()
     } else {
-      alert(
-        'f'
-      )
       noty.error("We were not able to retrieve your file.  Please try again or contact us for assistance.")
     }
   } catch (error) {
-    alert('bn')
     noty.error(error.message)
   }
 }
