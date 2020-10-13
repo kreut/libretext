@@ -35,6 +35,9 @@ class Assignment extends Model
         return $this->hasMany('App\SubmissionFile')->where('type', 'a');
     }
 
+    public function hasFileOrQuestionSubmissions() {
+       return  $this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty();
+    }
     public function questionFileSubmissions()
     {
         return $this->hasMany('App\SubmissionFile')->where('type', 'q');

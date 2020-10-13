@@ -48,13 +48,13 @@
         <div class="d-flex">
           <b-card title="Question Actions" v-if="isInstructor()" class="mb-4">
             <b-card-text>
-              <div v-if="has_submissions || solutionsReleased">
+              <div v-if="has_submissions_or_file_submissions || solutionsReleased">
                 <b-alert variant="info" show>
                   <strong>Either students have submitted responses to this assignment or the solutions have been released.
                     You can view the questions but you can't add or remove them.
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
-              <div v-if="!(has_submissions || solutionsReleased)">
+              <div v-if="!(has_submissions_or_file_submissions || solutionsReleased)">
                 <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
                   Questions
                 </b-button>
@@ -91,44 +91,45 @@
                   </span>
                 <span v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
               </div>
+              <b-form ref="form" v-if="!has_submissions_or_file_submissions && (isInstructor())">
+
+                <b-form-group
+                  v-if="(source === 'a') && (scoring_type === 'p')"
+                  id="points"
+                  label-cols-sm="4"
+                  label-cols-lg="3"
+                  label="Number of points for this question"
+                  label-for="points"
+                >
+                  <b-form-row>
+                    <b-col lg="2">
+                      <b-form-input
+                        id="points"
+                        v-model="questionPointsForm.points"
+                        :value="questions[currentPage-1].points"
+                        type="text"
+                        placeholder=""
+                        :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                        @keydown="questionPointsForm.errors.clear('points')"
+                      >
+                      </b-form-input>
+                      <has-error :form="questionPointsForm" field="points"></has-error>
+                    </b-col>
+                    <b-col>
+                      <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
+                      </b-button>
+                    </b-col>
+                  </b-form-row>
+
+                </b-form-group>
+
+              </b-form>
             </b-card-text>
           </b-card>
         </div>
 
 
-        <b-form ref="form" v-if="!has_submissions && (isInstructor())">
 
-          <b-form-group
-            v-if="(questions[currentPage-1].source === 'a') && (questions[currentPage-1].scoring_type === 'p')"
-            id="points"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Number of points for this question"
-            label-for="points"
-          >
-            <b-form-row>
-              <b-col lg="2">
-                <b-form-input
-                  id="points"
-                  v-model="questionPointsForm.points"
-                  :value="questions[currentPage-1].points"
-                  type="text"
-                  placeholder=""
-                  :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                  @keydown="questionPointsForm.errors.clear('points')"
-                >
-                </b-form-input>
-                <has-error :form="questionPointsForm" field="points"></has-error>
-              </b-col>
-              <b-col lg="2">
-                <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
-                </b-button>
-              </b-col>
-            </b-form-row>
-
-          </b-form-group>
-
-        </b-form>
         <b-container>
           <b-row>
             <b-col :cols="questionCols">
@@ -364,7 +365,7 @@ export default {
     source: 'a',
     scoring_type: '',
     solutionsReleased: false,
-    has_submissions: false,
+    has_submissions_or_file_submissions: false,
     submissionDataType: 'danger',
     submissionDataMessage: '',
     showSubmissionMessage: false,
@@ -526,7 +527,7 @@ export default {
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
       setTimeout(() => {
-        this.showSubmissionMessage = false;
+        this.showSubmissionMessage = false
       }, 5000);
       if (data.type === 'success') {
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
@@ -699,7 +700,8 @@ export default {
         }
 
         this.title = `${data.name} Assignment Questions`
-        this.has_submissions = data.has_submissions
+        this.has_submissions_or_file_submissions = data.has_submissions_or_file_submissions
+
         this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))

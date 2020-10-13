@@ -136,6 +136,12 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
+        if ($assignment->hasFileOrQuestionSubmissions()) {
+            $response['message'] = 'A student has already submitted a response so you may no longer change the points for this question.';
+            return $response;
+        }
+
         try {
 
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
@@ -165,7 +171,10 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        if ($assignment->hasFileOrQuestionSubmissions()) {
+            $response['message'] = 'A student has already submitted a response so you may no longer add questions to this assignment.';
+            return $response;
+        }
         try {
             DB::table('assignment_question')
                 ->insert([
@@ -196,6 +205,11 @@ class AssignmentSyncQuestionController extends Controller
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        if ($assignment->hasFileOrQuestionSubmissions()) {
+            $response['message'] = 'A student has already submitted a response so you may no longer remove questions from this assignment.';
             return $response;
         }
         try {
@@ -375,12 +389,12 @@ class AssignmentSyncQuestionController extends Controller
 
                 $solutions = DB::table('solutions')
                     ->whereIn('question_id', $question_ids)
-                    ->where('user_id',$assignment->course->user_id)
+                    ->where('user_id', $assignment->course->user_id)
                     ->get();
                 //  dd($question_ids);
                 if ($solutions) {
                     foreach ($solutions as $key => $value) {
-                        $solutions_by_question_id[$value->question_id]= $value->original_filename;
+                        $solutions_by_question_id[$value->question_id] = $value->original_filename;
                     }
                 }
             }

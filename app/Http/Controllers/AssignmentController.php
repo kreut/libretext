@@ -204,7 +204,7 @@ class AssignmentController extends Controller
         }
         try {
             $assignment = Assignment::find($assignment->id);
-            $assignment->has_submissions = $assignment->submissions->isNotEmpty();
+            $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
             return $assignment;
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -229,6 +229,11 @@ class AssignmentController extends Controller
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        if ($assignment->hasFileOrQuestionSubmissions()) {
+            $response['message'] = 'A student just submitted a response so you are now limited in what you can edit.  Please re-open the form and try again.';
             return $response;
         }
 
