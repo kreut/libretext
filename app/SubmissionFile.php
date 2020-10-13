@@ -17,7 +17,7 @@ class SubmissionFile extends Model
 
     protected $guarded = [];
 
-    public function getAllInfo(User $user, Assignment $assignment, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
+    public function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
     {
         return ['user_id' => $user->id,
             'name' => $user->first_name . ' ' . $user->last_name,
@@ -29,6 +29,7 @@ class SubmissionFile extends Model
             'text_feedback' => $text_feedback,
             'date_graded' => $date_graded,
             'question_submission_score' => $question_submission_score,
+            'solution' => $solution,
             'file_submission_score' => $file_submission_score,
             'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
             'file_feedback_url' => $submission ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
@@ -51,6 +52,9 @@ class SubmissionFile extends Model
             //get the assignment info, getting the temporary url of the first submission for viewing
             $submission = $assignmentFilesByUser[$user->id]->submission ?? null;
             $question_id = null;//at the assignment level
+
+            $solution = false;  //TODO: just done at the question level
+
             $file_feedback = $assignmentFilesByUser[$user->id]->file_feedback ?? null;
             $text_feedback = $assignmentFilesByUser[$user->id]->text_feedback ?? null;
             $original_filename = $assignmentFilesByUser[$user->id]->original_filename ?? null;
@@ -61,7 +65,7 @@ class SubmissionFile extends Model
                 ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignmentFilesByUser[$user->id]->date_graded, Auth::user()->time_zone)
                 : "Not yet graded";
             $score = $assignmentFilesByUser[$user->id]->score ?? "N/A";
-            $all_info = $this->getAllInfo($user, $assignment, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
+            $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $score);
             if ($this->inGradeView($all_info, $grade_view)) {
                 $user_and_submission_file_info[] = $all_info;
 
@@ -115,6 +119,26 @@ class SubmissionFile extends Model
             ->where('question_files', 1)
             ->get();
 
+        $question_ids = [];
+
+        if ($assignment->questions->isNotEmpty()) {
+            foreach ($assignment->questions as $question) {
+                $question_ids[] = $question->id;
+            }
+        }
+
+        $solutions = DB::table('solutions')
+            ->whereIn('question_id', $question_ids)
+            ->where('user_id',  $assignment->course->user_id)
+            ->get();
+
+        $solutions_by_question_id = [];
+        if ($solutions->isNotEmpty()) {
+            foreach ($solutions as $solution) {
+                $solutions_by_question_id[$solution->question_id] = $solution->original_filename;
+            }
+        }
+
         $points = [];
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
 
@@ -126,14 +150,14 @@ class SubmissionFile extends Model
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
+                $solution = $solutions_by_question_id[$question->question_id] ?? false;
 
 
-
-               /**TODO: clean up the next bit of code!!!!
-                * Though it works, it's a hack.  Basically, if a single user is getting their file info, there's no need to do the
-                * formatting of the date because it's done already.
-                * However, if it's for the class it has to be done.
-                * **/
+                /**TODO: clean up the next bit of code!!!!
+                 * Though it works, it's a hack.  Basically, if a single user is getting their file info, there's no need to do the
+                 * formatting of the date because it's done already.
+                 * However, if it's for the class it has to be done.
+                 * **/
 
                 if (count($users) === 1) {
                     $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
@@ -149,7 +173,7 @@ class SubmissionFile extends Model
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
-                $all_info = $this->getAllInfo($user, $assignment, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
+                $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;
                 }

@@ -43,6 +43,16 @@
         <div v-if="type === 'question'" class="text-center">
           <h5 class="font-italic">This question is out of
             {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
+          <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
+            Solution:
+            <a href=""
+               v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
+              {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] }}
+            </a>
+            </span>
+          <span
+            v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">You currently have no solution uploaded for this question.</span>
+
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
           <div class="container">
@@ -202,6 +212,7 @@ import axios from 'axios'
 import Form from "vform"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
+import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 //import pdf from 'vue-pdf'
 
@@ -241,6 +252,7 @@ export default {
   }),
   created() {
     this.downloadSubmissionFile = downloadSubmissionFile
+    this.downloadSolutionFile = downloadSolutionFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
   },
   mounted() {
