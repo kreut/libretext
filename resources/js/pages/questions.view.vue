@@ -33,7 +33,9 @@
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
-
+        <countdown :time="2 * 24 * 60 * 60 * 1000">
+          <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours, {{ props.minutes }} minutes, {{ props.seconds }} seconds.</template>
+        </countdown>
         <div class="overflow-auto">
           <b-pagination
             v-model="currentPage"
@@ -350,6 +352,9 @@ import {h5pResizer} from "~/helpers/H5PResizer"
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
+
+
+
 
 export default {
   middleware: 'auth',

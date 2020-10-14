@@ -8,6 +8,8 @@ import VueNoty from 'vuejs-noty'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import JsonExcel from 'vue-json-excel'
+import VueCountdown from '@chenfengyuan/vue-countdown'
+Vue.component(VueCountdown.name, VueCountdown)
 
 import '~/plugins'
 import '~/components'
