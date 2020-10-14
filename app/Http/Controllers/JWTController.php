@@ -18,9 +18,9 @@ class JWTController extends Controller
     public function init()
     {
         $JWE = new JWE();
-        $token = $JWE->encode('My really secret payload that only Henry knows.');
+        $token = $JWE->encrypt('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjE6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTYwMjU5NTM5MSwiZXhwIjoyNDY2NTk1MzkxLCJuYmYiOjE2MDI1OTUzOTEsImp0aSI6IlV5alhWSlRzdHdmbkNyZjEiLCJzdWIiOjEsInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.-o0_89Kc5dqt58pbFGw4AktqrndDPb_L5lEmRY4Vqes');
         echo "The encrypted token: " . $token;
-        echo "The decrypted token: " . $JWE->decode($token);
+        echo "The decrypted token: " . $JWE->decrypt($token);
     }
 
     public function validateToken(string $token)

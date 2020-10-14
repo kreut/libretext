@@ -497,18 +497,18 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['showDebug'] = 0;
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        $problemJWT = $JWE->encrypt(\JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
                         break;
                     case('imathas'):
                         $custom_claims['imathas'] = [];
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
                         $custom_claims['imathas']['seed'] = 1234;
-                        $question['technology_iframe'] = '<iframe class="imathas_problem" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
+                        $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                         $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
-                        $problemJWT = $JWE->encode(\JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
+                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
 
                         break;
                     case('h5p'):
