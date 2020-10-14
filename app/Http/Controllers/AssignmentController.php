@@ -101,7 +101,7 @@ class AssignmentController extends Controller
                     $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                    $assignments[$key]['has_submissions_or_file_submissions']  = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
+                    $assignments[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
 
                 }
 //same regardless of whether you're a student
@@ -128,15 +128,17 @@ class AssignmentController extends Controller
         return $default_points_per_question;
     }
 
-    public function checkDueDateAfterAvailableDate(StoreAssignment $request){
+    public function checkDueDateAfterAvailableDate(StoreAssignment $request)
+    {
         $response = [];
-        if (Carbon::parse($request->due) <= Carbon::parse( $request->available_from)) {
+        if (Carbon::parse($request->due) <= Carbon::parse($request->available_from)) {
             $response['available_after_due'] = true;
             $response['message'] = 'Your assignment should become due after it becomes available.';
             $response['error'] = true;
         }
         return $response;
     }
+
     /**
      *
      * Store a newly created resource in storage.
@@ -160,7 +162,7 @@ class AssignmentController extends Controller
         $response['type'] = 'error';
 
         try {
-            if ($response = $this->checkdueDateAfterAvailableDate($request)){
+            if ($response = $this->checkdueDateAfterAvailableDate($request)) {
                 return $response;
             }
             $data = $request->validated();
@@ -197,7 +199,6 @@ class AssignmentController extends Controller
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
-
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -205,12 +206,29 @@ class AssignmentController extends Controller
         try {
             $assignment = Assignment::find($assignment->id);
             $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
+            $assignment->time_left  = $this->getTimeLeft($assignment);
+            $assignment->total_points = $this->getTotalPoints($assignment);
             return $assignment;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+            return $response;
         }
+    }
+
+    public function getTimeLeft(Assignment $assignment){
+        $Extension = new Extension();
+        $extensions_by_user = $Extension->getUserExtensionsByAssignment(Auth::user());
+        $due = $extensions_by_user($assignment->id) ?? $assignment->due;
+        $now = Carbon::now();
+        $assignment->time_left = $now->diffInMilliseconds(Carbon::parse($due));
+    }
+    public function getTotalPoints(Assignment $assignment)
+    {
+        return DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->sum('points');
 
     }
 
@@ -234,10 +252,10 @@ class AssignmentController extends Controller
 
 
         try {
-           if ($response = $this->checkdueDateAfterAvailableDate($request)){
+            if ($response = $this->checkdueDateAfterAvailableDate($request)) {
 
-            return $response;
-           }
+                return $response;
+            }
             $data = $request->validated();
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 

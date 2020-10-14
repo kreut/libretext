@@ -411,19 +411,19 @@ export default {
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
   },
-  mounted() {
+  async mounted() {
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'question' //students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
     console.log(this.user.role)
     this.assignmentId = this.$route.params.assignmentId
-    let canView = this.getAssignmentInfo()
+    let canView = await this.getAssignmentInfo()
     if (!canView) {
       return false
     }
     if (this.source === 'a') {
-      this.getSelectedQuestions(this.assignmentId)
+      await this.getSelectedQuestions(this.assignmentId)
       h5pResizer()
       window.addEventListener('message', this.receiveMessage, false)
     }
@@ -698,7 +698,9 @@ export default {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        console.log(data)
         if (data.type === 'error') {
+          this.$noty.error(data.message)
           return false
         }
 

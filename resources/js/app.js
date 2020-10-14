@@ -21,9 +21,6 @@ import iFrameResize from 'iframe-resizer/js/iframeResizer'
 import VueMoment from 'vue-moment'
 
 
-
-
-
 Vue.directive('resize', {
   bind: function (el, {value = {}}) {
     el.addEventListener('load', () => iFrameResize(value, el))
@@ -36,7 +33,6 @@ Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)
 Vue.use(VueMoment)
 
-console.log(Vue.moment().locale())
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
