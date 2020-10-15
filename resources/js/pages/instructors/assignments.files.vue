@@ -175,6 +175,11 @@
             </div>
           </div>
         </div>
+        <div v-show="viewSubmission">
+        <div  v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null)" class="row mt-4 d-flex justify-content-center">
+          <b-button variant="outline-primary" v-on:click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )">View Submission In New Tab</b-button>
+        </div>
+        </div>
         <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
           <div v-show="viewSubmission">
             <div
@@ -191,7 +196,9 @@
               v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url'] !== null)">
               <iframe width="600" height="600"
                       :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"></iframe>
+
             </div>
+
             <div v-else>
               <span class="text-info">You have not uploaded a feedback file.</span>
             </div>
@@ -261,6 +268,10 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    openInNewTab(url){
+      console.log(url)
+      window.open(url, "_blank");
+    },
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
