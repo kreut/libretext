@@ -43,6 +43,12 @@
         <div v-if="type === 'question'" class="text-center">
           <h5 class="font-italic">This question is out of
             {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
+          <div class="mb-2">
+          <b-button variant="outline-primary"
+                    v-on:click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)">
+            View Question
+          </b-button>
+          </div>
           <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
                    <b-button variant="outline-primary"
                v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
@@ -268,6 +274,9 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    viewQuestion(question_id){
+      window.open(`/questions/${question_id}/view`)
+    },
     openInNewTab(url){
       console.log(url)
       window.open(url, "_blank");

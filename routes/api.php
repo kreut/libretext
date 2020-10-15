@@ -53,7 +53,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
-
+    Route::get('/questions/{question}', 'QuestionController@show');
 
 
     Route::get('/libreverse/library/{library}/page/{pageId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByLibraryAndPageId');

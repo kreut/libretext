@@ -10,6 +10,7 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/questions/:questionId/view', name: 'question.view', component: page('instructors/question.view.vue') },
   { path: '/assignments/:assignmentId/:typeFiles', name: 'assignment.files.index', component: page('instructors/assignments.files.vue') },
   { path: '/instructors/assignment/:assignmentId/remediations/:questionId', name: 'remediation.index', component: page('instructors/remediations.vue') },
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },

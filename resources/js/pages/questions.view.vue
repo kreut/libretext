@@ -426,7 +426,7 @@ export default {
     assignmentId: ''
   }),
   created() {
-
+    h5pResizer()
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
@@ -446,7 +446,6 @@ export default {
     }
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId)
-      h5pResizer()
       window.addEventListener('message', this.receiveMessage, false)
     }
 

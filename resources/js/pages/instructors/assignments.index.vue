@@ -340,7 +340,8 @@ export default {
 
     },
     hasSubmissionsColor(assignment) {
-      return (assignment.has_submissions_or_file_submissions === 1) ? 'warning' : ''
+      //0, 1, 2 since has_submissions_or_file_submissions is additive
+      return (assignment.has_submissions_or_file_submissions > 0) ? 'warning' : ''
 
 
     },
