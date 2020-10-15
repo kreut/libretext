@@ -277,8 +277,8 @@
                   <span v-if="questions[currentPage-1].solution">
                     <span class="font-weight-bold">Solution:</span>
                   <a href=""
-                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
-                    {{ questions[currentPage - 1].solution }}
+                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))">
+                    {{ standardizeFilename(questions[currentPage - 1].solution) }}
                   </a>
                   </span>
                   <br>
@@ -455,6 +455,11 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    standardizeFilename(filename){
+      let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
+      let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')
+       return  `${name}-${this.currentPage}.${ext}`
+    },
     async updateLastSubmittedAndLastResponse(assignmentId, questionId) {
       try {
         const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
@@ -727,6 +732,7 @@ export default {
         }
 
         this.title = `${data.name} Assignment Questions`
+        this.name = data.name
         this.has_submissions_or_file_submissions = data.has_submissions_or_file_submissions
         this.timeLeft = data.time_left
         this.totalPoints = data.total_points.replace(/\.00$/, '')
