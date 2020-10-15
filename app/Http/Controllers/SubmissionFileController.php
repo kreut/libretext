@@ -77,7 +77,7 @@ class SubmissionFileController extends Controller
             if (!$authorized->allowed()) {
                 throw new Exception($authorized->message());
             }
-           return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
+            return Storage::disk('s3')->download("assignments/$request->assignment_id/$request->submission");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -244,10 +244,13 @@ class SubmissionFileController extends Controller
 
             $is_extension = isset($extensions_by_assignment[$assignment->id]);
             $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment->due;
-            if (strtotime($due) < time()) {
+
+            $carbon_due = Carbon::parse($due);
+            $past_grace_period =  $carbon_due->diffInMinutes(Carbon::now(), false) > 20;
+
+            if ($past_grace_period) {
                 $response['message'] = 'You cannot upload a file since this assignment is past due.';
                 return $response;
-
             }
 
             if (!in_array($type, ['question', 'assignment'])) {
