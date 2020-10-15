@@ -44,17 +44,16 @@
           <h5 class="font-italic">This question is out of
             {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
           <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
-            Solution:
-            <a href=""
+                   <b-button variant="outline-primary"
                v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
-              {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] }}
-            </a>
-            </span>
+              Download Solution
+           </b-button>
+          </span>
           <span
             v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">You currently have no solution uploaded for this question.</span>
-
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
+         <hr>
           <div class="container">
             <div class="row">
               <div class="col-sm">
