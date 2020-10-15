@@ -220,10 +220,12 @@ class AssignmentController extends Controller
     public function getTimeLeft(Assignment $assignment){
         $Extension = new Extension();
         $extensions_by_user = $Extension->getUserExtensionsByAssignment(Auth::user());
-        $due = $extensions_by_user($assignment->id) ?? $assignment->due;
+        $due = $extensions_by_user[$assignment->id] ?? $assignment->due;
         $now = Carbon::now();
-        $assignment->time_left = $now->diffInMilliseconds(Carbon::parse($due));
+       return  max($now->diffInMilliseconds(Carbon::parse($due), false),0);
+
     }
+
     public function getTotalPoints(Assignment $assignment)
     {
         return DB::table('assignment_question')

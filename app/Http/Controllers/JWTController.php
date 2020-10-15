@@ -17,19 +17,19 @@ class JWTController extends Controller
 
     public function init()
     {
+
         $JWE = new JWE();
         $token = $JWE->encrypt('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjE6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTYwMjU5NTM5MSwiZXhwIjoyNDY2NTk1MzkxLCJuYmYiOjE2MDI1OTUzOTEsImp0aSI6IlV5alhWSlRzdHdmbkNyZjEiLCJzdWIiOjEsInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.-o0_89Kc5dqt58pbFGw4AktqrndDPb_L5lEmRY4Vqes');
         echo "The encrypted token: " . $token;
-        echo "The decrypted token: " . $JWE->decrypt($token);
+        echo "The decrypted token: " . $JWE->decrypt('eyJwMnMiOiJoSVprUURjRGhsaHhHcGZoSlE0eFpUQ3Y0UER5bmJwN3pRMUxJaXB4d1BIdEktX0NDSzhyeTFlMGJRbEQxa0NkeS1ZUy1qcndXTzc5V3JFSXhFTWJyZyIsInAyYyI6NDA5NiwiYWxnIjoiUEJFUzItSFM1MTIrQTI1NktXIiwiZW5jIjoiQTI1NkdDTSIsInppcCI6IkRFRiJ9.MI8w-3sW6H6nkY_IGIj_PJkbPp_tP4Vz222XukJrrm1HGD5HH-nYTg.hl2NGPjGbYqE6B9n.0vD1ps-m9megozlEgnAQ1GPOBnVe34xHqOELoZqAGi33bKKB2eujpmDcxR1d9jLA3wSabN2YygXWC_03nEzRAyu3T3Oe3_5pM4TOf7s.fSk977KyZQrLMDYV_Bbxhg');
     }
 
-    public function validateToken(string $token)
+    public function validateToken($request)
     {
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
-
         $response['type'] = 'error';
         try {
-            if (!$user = auth()->setToken($token)->user()) {
+            if (!$user = auth()->setRequest($request)->user()) {
                 $response['message'] = 'User not found';
             } else {
                 $response['type'] = 'success';
@@ -44,11 +44,15 @@ class JWTController extends Controller
 
     public function processAnswerJWT(Request $request)
     {
+
         $content = $request->getContent();
-        $response = $this->validateToken($content);
+        Log::info($content);
+        $response = $this->validateToken($request);
         if ($response['type'] === 'error') {
             return json_encode($response);
         }
+
+
         $answerJWT = $this->getPayload($content);
 //if the token isn't formed correctly return a message
         if (!isset($answerJWT->problemJWT)) {

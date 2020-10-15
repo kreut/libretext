@@ -33,9 +33,31 @@
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
-        <countdown :time="2 * 24 * 60 * 60 * 1000">
-          <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours, {{ props.minutes }} minutes, {{ props.seconds }} seconds.</template>
-        </countdown>
+      <div class="mb-3">
+        <b-container>
+          <b-row class="text-center">
+            <b-col>
+            <div v-if="source === 'a' && scoring_type === 'p'">
+              <h4>This assignment is worth {{ totalPoints }} points.</h4>
+            </div>
+            </b-col>
+          </b-row>
+          <b-row class="text-center">
+            <b-col>
+            <div v-if="timeLeft>0">
+              <countdown :time="timeLeft">
+                <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours,
+                  {{ props.minutes }} minutes, {{ props.seconds }} seconds.
+                </template>
+              </countdown>
+            </div>
+            <div v-if="timeLeft===0">
+              The due date has passed.
+            </div>
+            </b-col>
+          </b-row>
+        </b-container>
+      </div>
         <div class="overflow-auto">
           <b-pagination
             v-model="currentPage"
@@ -52,7 +74,8 @@
             <b-card-text>
               <div v-if="has_submissions_or_file_submissions || solutionsReleased">
                 <b-alert variant="info" show>
-                  <strong>Either students have submitted responses to this assignment or the solutions have been released.
+                  <strong>Either students have submitted responses to this assignment or the solutions have been
+                    released.
                     You can view the questions but you can't add or remove them.
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
@@ -129,7 +152,6 @@
             </b-card-text>
           </b-card>
         </div>
-
 
 
         <b-container>
@@ -354,8 +376,6 @@ import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 
 
-
-
 export default {
   middleware: 'auth',
   computed: mapGetters({
@@ -365,6 +385,8 @@ export default {
     ToggleButton
   },
   data: () => ({
+    timeLeft: 0,
+    totalPoints: 0,
     uploadFileType: '',
     questionCols: 1,
     source: 'a',
@@ -706,7 +728,8 @@ export default {
 
         this.title = `${data.name} Assignment Questions`
         this.has_submissions_or_file_submissions = data.has_submissions_or_file_submissions
-
+        this.timeLeft = data.time_left
+        this.totalPoints = data.total_points.replace(/\.00$/, '')
         this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))

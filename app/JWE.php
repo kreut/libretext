@@ -12,9 +12,10 @@ use Jose\Component\Encryption\JWEBuilder;
 use Jose\Component\Encryption\JWEDecrypter;
 use Jose\Component\Encryption\Serializer\CompactSerializer;
 use Jose\Component\KeyManagement\JWKFactory;
-
+use App\Traits\JWT;
 
 class JWE extends Model
+
 {
     public $keyEncryptionAlgorithmManager;
     public $contentEncryptionAlgorithmManager;
@@ -22,6 +23,8 @@ class JWE extends Model
     public $jwk;
     public $serializer;
 
+
+    use JWT;
     public function __construct(array $attributes = [])
     {
         parent::__construct($attributes);
@@ -43,9 +46,11 @@ class JWE extends Model
             $this->compressionMethodManager
         );
 
+        $payload = json_encode($this->getPayload($jwt),JSON_UNESCAPED_SLASHES);
+
         $jwe = $jweBuilder
             ->create()              // We want to create a new JWE
-            ->withPayload($jwt) // We set the payload
+            ->withPayload($payload) // We set the payload
             ->withSharedProtectedHeader(['alg' => 'PBES2-HS512+A256KW',        // Key Encryption Algorithm
                 'enc' => 'A256GCM', // Content Encryption Algorithm
                 'zip' => 'DEF'])            // We enable the compression (irrelevant as the payload is small, just for the example).])

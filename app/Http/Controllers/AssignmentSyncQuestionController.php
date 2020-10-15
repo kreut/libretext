@@ -498,7 +498,7 @@ class AssignmentSyncQuestionController extends Controller
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
                         $problemJWT = $JWE->encrypt(\JWTAuth::customClaims($custom_claims)->fromUser(Auth::user()));
-                        break;
+                       break;
                     case('imathas'):
                         $custom_claims['imathas'] = [];
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
