@@ -33,14 +33,12 @@ export default {
     non_technology_iframe_src: ''
 
   }),
-  created() {
-    h5pResizer()
+  async mounted() {
     if (this.user.role === 3) {
       this.$noty.error('You do not have access to this page.')
       return false
     }
-  },
-  async mounted() {
+    h5pResizer()
     this.questionId = this.$route.params.questionId
     await this.getSelectedQuestions(this.questionId)
   },

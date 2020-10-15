@@ -71,29 +71,30 @@ class QuestionController extends Controller
     public function show(Request $request, Question $Question)
     {
         $response['type'] = 'error';
-       /** $authorized = Gate::inspect('viewAny', $Question);
+        $authorized = Gate::inspect('viewAny', $Question);
 
         if (!$authorized->allowed()) {
 
             $response['message'] = $authorized->message();
             return $response;
-        }**/
-$question = [];
-$response['type'] = 'error';
-$response['message'] = 'We were not able to locate that question in our database.';
+        }
+        $question = [];
+        $response['type'] = 'error';
         $question_info = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
             ->where('id', $Question->id)->first();
 
-if ($question_info) {
-    $question['iframe_id'] = $this->createIframeId();
-    $question['non_technology'] = $question_info['non_technology'];
-    $question['non_technology_iframe_src'] = $question_info['non_technology'] ? $request->root() . "/storage/{$question_info['page_id']}.html" : '';
-    $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
-$response['type']= 'success';
-$response['question'] = $question;
-}
+        if ($question_info) {
+            $question['iframe_id'] = $this->createIframeId();
+            $question['non_technology'] = $question_info['non_technology'];
+            $question['non_technology_iframe_src'] = $question_info['non_technology'] ? $request->root() . "/storage/{$question_info['page_id']}.html" : '';
+            $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
+            $response['type'] = 'success';
+            $response['question'] = $question;
+        } else {
+            $response['message'] = 'We were not able to locate that question in our database.';
+        }
 
-     return $response;
+        return $response;
 
     }
 
