@@ -13,6 +13,7 @@ use Jose\Component\Encryption\JWEDecrypter;
 use Jose\Component\Encryption\Serializer\CompactSerializer;
 use Jose\Component\KeyManagement\JWKFactory;
 use App\Traits\JWT;
+use Illuminate\Support\Facades\Log;
 
 class JWE extends Model
 
@@ -33,7 +34,7 @@ class JWE extends Model
         $this->compressionMethodManager = new CompressionMethodManager([new Deflate(),]);
 
         $this->jwk = JWKFactory::createFromSecret(
-            'secretkey'      // The shared secret
+            env('JWT_SECRET')   // The shared secret
         );
         $this->serializer = new CompactSerializer(); // The serializer
     }

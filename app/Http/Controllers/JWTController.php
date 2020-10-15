@@ -21,7 +21,7 @@ class JWTController extends Controller
         $JWE = new JWE();
         $token = $JWE->encrypt('eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJpc3MiOiJodHRwOlwvXC8xMjcuMC4wLjE6ODAwMFwvYXBpXC9sb2dpbiIsImlhdCI6MTYwMjU5NTM5MSwiZXhwIjoyNDY2NTk1MzkxLCJuYmYiOjE2MDI1OTUzOTEsImp0aSI6IlV5alhWSlRzdHdmbkNyZjEiLCJzdWIiOjEsInBydiI6Ijg3ZTBhZjFlZjlmZDE1ODEyZmRlYzk3MTUzYTE0ZTBiMDQ3NTQ2YWEifQ.-o0_89Kc5dqt58pbFGw4AktqrndDPb_L5lEmRY4Vqes');
         echo "The encrypted token: " . $token;
-        echo "The decrypted token: " . $JWE->decrypt('eyJwMnMiOiJBb3lIZDFBQlE3XzRNcGdPSVFKTFg1QlhuSVlBOTA2SUNTalZBQUpLTExfbFp5SG1KdEpmQndIMjdTX2FBcHhlQ1pjYzFwUkJKREljaEg2R2FHUURUUSIsInAyYyI6NDA5NiwiYWxnIjoiUEJFUzItSFM1MTIrQTI1NktXIiwiZW5jIjoiQTI1NkdDTSIsInppcCI6IkRFRiJ9.udv_AQDWDbx4H2ff8wNJ2fpp17ac_2f2HSHBKUfVoEAA-ffm6Iaqyw.812SfE7su1llwNpt.wvvxDXnBa-HF8Vkp6yWdL4dOAk8oGifShIDhinlQzG4txL2zZVhT2cLRZ9_tIPggmyK2KYCEKLBYmGqnpunQRpEhxd0OqIMrRigOG16OzlnfmX4rJyd_Dabvuwri5UYMGCsPjeCKPi_llUqQc_O8hrbdCxucNxXpcP3r-AK5j30BxChscnw239XuFchHtiAaiRf0ZqT_AGhaGzUJmCIlGT0pZTFW-aRRR10dz3tfzWcQy3siVTrkDuFcd8VeLuObp_szHvXHldkkckySPrwiWz4jiQa8B-2082akQInvB35flouPmJRyZ4vzDbKToP6yEQHhcaIDzbha0Yx12ptVmcRf2PrBhboYAOT-P3hMIafPfQsd12ucTYqva28Lfs7BMq31CeDr-r8YEOjeryDDekXDdPJnRm3eMNLDuGlMRLkj2VQ4s3fiU1UL320ofMjMK6mMJd5pQY8Tl9um6A89p_ABlPxk_vLE4qr1J0K9lG4DsELf862tppp2t0lrj6-RWHsITOEEOU-0_lkvUR7RrYuvo0tKHLanWJD6sXJmg83ECuGAZKJxcnukiTr3Xr-d_xK3lGLtb-F5g6RHSv_Rh4PlTFIxLs6fgSqjQECHLvfg.mUCksybpo09RlxRMoJFQog');
+        echo "The decrypted token: " . $JWE->decrypt($token);
     }
 
     public function validateToken(string $content)
@@ -46,7 +46,6 @@ class JWTController extends Controller
     {
 
         $content = $request->getContent();
-        Log::info($content);
         $response = $this->validateToken($content);
         if ($response['type'] === 'error') {
             return json_encode($response);
@@ -59,8 +58,8 @@ class JWTController extends Controller
             $message = "You are missing the problemJWT in your answerJWT!";
             return json_encode(['type' => 'error', 'message' => $message]);
         }
-
-        $problemJWT = $this->getPayload($answerJWT->problemJWT);
+        $jwe = new JWE();
+        $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT));
 
         $missing_properties = !(
             isset($problemJWT->adapt) &&
