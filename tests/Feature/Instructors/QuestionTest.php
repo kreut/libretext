@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature\instructors;
+namespace Tests\Feature\Instructors;
 
 
 use App\Question;

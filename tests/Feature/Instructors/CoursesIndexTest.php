@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Instructors;
 
 use App\CourseAccessCode;
 use App\User;
