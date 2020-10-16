@@ -32,7 +32,7 @@ class SubmissionFile extends Model
             'solution' => $solution,
             'file_submission_score' => $file_submission_score,
             'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
-            'file_feedback_url' => $submission ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
+            'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
 
     }
 
