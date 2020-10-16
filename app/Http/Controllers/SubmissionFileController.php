@@ -387,7 +387,7 @@ class SubmissionFileController extends Controller
                 $response['message'] = $validator->errors()->first('fileFeedback');
                 return $response;
             }
-
+            $file_feedback_exists = false;
             switch ($type) {
                 case('assignment'):
                     $file_feedback_exists = DB::table('submission_files')

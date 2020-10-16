@@ -1,5 +1,31 @@
 <template>
   <div>
+    <b-modal
+      id="modal-upload-file"
+      ref="modal"
+      title="Upload Feedback File"
+      @ok="handleOk"
+      ok-title="Submit"
+      size="lg"
+    >
+      <b-form ref="form">
+        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
+        <b-form-file
+          ref="fileFeedbackInput"
+          v-model="fileFeedbackForm.fileFeedback"
+          placeholder="Choose a file or drop it here..."
+          drop-placeholder="Drop file here..."
+          :accept="getAcceptedFileTypes()"
+        ></b-form-file>
+        <div v-if="uploading">
+          <b-spinner small type="grow"></b-spinner>
+          Uploading file...
+        </div>
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback') }}
+        </div>
+      </b-form>
+    </b-modal>
     <PageTitle v-bind:title="this.title"></PageTitle>
     <div v-if="submissionFiles.length>0">
 
@@ -28,7 +54,7 @@
             ></b-pagination>
           </div>
         </div>
-        <div class="text-center h5">Student Submission</div>
+        <div class="text-center h5">Student</div>
         <div class="overflow-auto">
           <b-pagination
             v-on:input="changePage()"
@@ -44,14 +70,14 @@
           <h5 class="font-italic">This question is out of
             {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
           <div class="mb-2">
-          <b-button variant="outline-primary"
-                    v-on:click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)">
-            View Question
-          </b-button>
+            <b-button variant="outline-primary"
+                      v-on:click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)">
+              View Question
+            </b-button>
           </div>
           <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
                    <b-button variant="outline-primary"
-               v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
+                             v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
               Download Solution
            </b-button>
           </span>
@@ -59,49 +85,53 @@
             v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">You currently have no solution uploaded for this question.</span>
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
-         <hr>
+          <hr>
           <div class="container">
             <div class="row">
               <div class="col-sm">
-                <b-card title="Submission Information">
+                <b-card title="Student Submission Information" class="h-100">
                   <b-card-text>
-                    <p>
+                    <div>
                       <strong>Name:</strong>
                       {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
                       <strong>Date Submitted:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
-                        1]['date_submitted']
+                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
+                      1]['date_submitted']
                       }}<br>
                       <strong>Date Graded:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                       }}<br>
                       <strong>Question Submission Score:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
+                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
                       }}<br>
                       <strong>File Submission Score:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
+                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
                       }}
-                    </p>
-                    <hr>
-                    <b-form-group
-                      id="fieldset-horizontal"
-                      label-cols-sm="6"
-                      label-cols-lg="5"
-                      label="File Submission Score:"
-                      label-for="input-horizontal"
-                    >
-                      <b-form-input id="input-horizontal"
-                                    v-model="scoreForm.score"
-                                    type="text"
-                                    placeholder="Enter the score"
-                                    :class="{ 'is-invalid': scoreForm.errors.has('score') }"
-                                    @keydown="scoreForm.errors.clear('score')"
-                      ></b-form-input>
-                      <has-error :form="scoreForm" field="score"></has-error>
-                      <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Submit
-                        Score
-                      </b-button>
-                    </b-form-group>
+                      <br>
+                      <br>
+                      <hr>
+                    </div>
+                    <div class="mt-3">
+                      <b-form-group
+                        id="fieldset-horizontal"
+                        label-cols-sm="6"
+                        label-cols-lg="5"
+                        label="File Submission Score:"
+                        label-for="input-horizontal"
+                      >
+                        <b-form-input id="input-horizontal"
+                                      v-model="scoreForm.score"
+                                      type="text"
+                                      placeholder="Enter the score"
+                                      :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                                      @keydown="scoreForm.errors.clear('score')"
+                        ></b-form-input>
+                        <has-error :form="scoreForm" field="score"></has-error>
+                        <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="submitScoreForm">Save
+                          Score
+                        </b-button>
+                      </b-form-group>
+                    </div>
                   </b-card-text>
                 </b-card>
 
@@ -123,9 +153,32 @@
 
                       </b-form-textarea>
                       <has-error :form="textFeedbackForm" field="textFeedback"></has-error>
-                      <div class="row mt-4 float-right">
-                        <b-button variant="primary" v-on:click="submitTextFeedbackForm">Save Comments</b-button>
-                      </div>
+                      <b-container>
+                        <b-row align-h="end" class="m-3">
+                          <b-button variant="primary" v-on:click="submitTextFeedbackForm">Save Comments</b-button>
+                        </b-row>
+                        <hr>
+                        <b-row>
+                          <b-col>
+                            <b-button variant="primary"
+                                      v-on:click="openUploadFileModal()"
+                                      v-b-modal.modal-upload-file>Upload Feedback File
+                            </b-button>
+                          </b-col>
+                          <b-col>
+                            <toggle-button class="float-right"
+                                           @change="toggleView(currentStudentPage)"
+                                           :width="180"
+                                           :value="viewSubmission"
+                                           :font-size="14"
+                                           :margin="4"
+                                           :sync="true"
+                                           :color="{checked: '#007BFF', unchecked: '#75C791'}"
+                                           :labels="{unchecked: 'View Submission File', checked: 'View Feedback File'}"/>
+                          </b-col>
+                        </b-row>
+
+                      </b-container>
                     </b-form>
                   </b-card-text>
                 </b-card>
@@ -135,56 +188,16 @@
           <hr>
           <div class="container">
             <div class="row">
-              <div class="col-sm">
-                <b-button variant="outline-primary"
+                <b-button class="mr-2" variant="outline-primary"
                           v-on:click="downloadSubmissionFile(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
-                  Download Submission
+                  Download Submission File
                 </b-button>
-
-                <toggle-button class="float-right"
-                               @change="toggleView(currentStudentPage)"
-                               :width="180"
-                               :value="viewSubmission"
-                               :font-size="14"
-                               :margin="4"
-                               :sync="true"
-                               :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                               :labels="{unchecked: 'View Submission', checked: 'View File Feedback'}"/>
-
+              <b-button variant="outline-primary"
+                        v-on:click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )">
+                Open Submission File
+              </b-button>
               </div>
-              <b-form ref="form">
-                <div class="col-sm">
-                  <b-input-group>
-                    <b-form-file
-                      ref="fileFeedbackInput"
-                      v-model="fileFeedbackForm.fileFeedback"
-                      placeholder="Choose a file or drop it here..."
-                      drop-placeholder="Drop file here..."
-                      :accept="getAcceptedFileTypes()"
-                    ></b-form-file>
-                    <span class="ml-3">
-                <b-button variant="primary" v-on:click="uploadFileFeedback()">Upload Feedback</b-button>
-                </span>
-                  </b-input-group>
-                  <div v-if="uploading">
-                    <b-spinner small type="grow"></b-spinner>
-                    Uploading file...
-                  </div>
-                  <input type="hidden" class="form-control is-invalid">
-                  <div class="help-block invalid-feedback">{{ fileFeedbackForm.errors.get('fileFeedback') }}
-                  </div>
-
-
-                </div>
-
-              </b-form>
-            </div>
           </div>
-        </div>
-        <div v-show="viewSubmission">
-        <div  v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null)" class="row mt-4 d-flex justify-content-center">
-          <b-button variant="outline-primary" v-on:click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )">View Submission In New Tab</b-button>
-        </div>
         </div>
         <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
           <div v-show="viewSubmission">
@@ -226,7 +239,6 @@ import {ToggleButton} from 'vue-js-toggle-button'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
-//import pdf from 'vue-pdf'
 
 
 export default {
@@ -274,10 +286,10 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
-    viewQuestion(question_id){
+    viewQuestion(question_id) {
       window.open(`/questions/${question_id}/view`)
     },
-    openInNewTab(url){
+    openInNewTab(url) {
       console.log(url)
       window.open(url, "_blank");
     },
@@ -317,7 +329,11 @@ export default {
 
 
     },
-    async uploadFileFeedback() {
+    openUploadFileModal() {
+      this.fileFeedbackForm.errors.clear('fileFeedback')
+    },
+    async handleOk(bvModalEvt ) {
+      bvModalEvt.preventDefault()
       try {
         if (this.uploading) {
           this.$noty.info('Please be patient while the file is uploading.')
@@ -334,11 +350,13 @@ export default {
         formData.append('userId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id'])
         formData.append('_method', 'put') // add this
         const {data} = await axios.post('/api/submission-files/file-feedback', formData)
+        console.log(data)
         if (data.type === 'error') {
           this.fileFeedbackForm.errors.set('fileFeedback', data.message)
         } else {
           this.$noty.success(data.message)
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
+          this.$bvModal.hide('modal-upload-file')
         }
       } catch (error) {
         if (error.message.includes('status code 413')) {
@@ -348,7 +366,7 @@ export default {
 
       }
       this.uploading = false
-      this.$refs['fileFeedbackInput'].reset()
+
 
     },
     async submitTextFeedbackForm() {
