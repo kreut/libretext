@@ -16,6 +16,7 @@ use \Exception;
 use Illuminate\Support\Facades\Validator;
 use App\Traits\S3;
 
+
 class SolutionController extends Controller
 {
 
@@ -69,15 +70,20 @@ class SolutionController extends Controller
                     $response['original_filename'] = $original_filename;
                     break;
                 case('assignment'):
+                    $storage_path = Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
                     $file = $request->file("solutionFile")->store("solutions/$user_id", 'local');
-                    $assignment_file =  "solutions/$user_id/assignment-$assignment_id.pdf";
+                    $assignment_file = "solutions/$user_id/assignment-$assignment_id.pdf";
+                    dd($request->file("solutionFile")->hashName());
+                    if (Storage::disk('local')->exists($assignment_file)) {
+                        Storage::disk('local')->delete($assignment_file);
+                    }
+
                     Storage::move($file, $assignment_file);
-                    $solutionContents = Storage::disk('local')->get($assignment_file);
-                    Storage::disk('s3')->put($assignment_file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
 
-
-                    dd($assignment_file);
-
+                    //$solutionContents = Storage::disk('local')->get($assignment_file);
+                    //Storage::disk('s3')->put($assignment_file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
+                    Storage::makeDirectory("solutions/$user_id/cutups");
+                    $this->cutUpPdf($storage_path . $assignment_file, $storage_path . "solutions/$user_id/cutups");
 
                     $original_filename = $request->file("solutionFile")->getClientOriginalName();
                     $file_data = [

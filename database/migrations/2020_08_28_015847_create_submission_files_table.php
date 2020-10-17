@@ -29,7 +29,7 @@ class CreateSubmissionFilesTable extends Migration
 
             $table->foreign('user_id')->references('id')->on('users');
             $table->foreign('assignment_id')->references('id')->on('assignments');
-            //can't have the unqiueness because the question_id might not exist
+            //can't have the uniqueness because the question_id might not exist
             //can't have the foreign key of the question_id because it might not exist
 
 

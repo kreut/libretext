@@ -3,6 +3,7 @@
 
 namespace App\Traits;
 
+use setasign\Fpdi\Fpdi;
 
 trait S3
 {
@@ -13,6 +14,23 @@ trait S3
 
     public function fileValidator() {
         return ['required', 'mimes:pdf,txt,png,jpeg,jpg', 'max:500000'];//update in UploadFiles.js
+    }
+    function cutUpPdf(string $filename, string $directory)
+    {
+        $pdf = new Fpdi();
+        $pageCount = $pdf->setSourceFile($filename);
+        $file = pathinfo($filename, PATHINFO_FILENAME);
+
+        // Split each page into a new PDF
+        for ($i = 1; $i <= $pageCount; $i++) {
+            $newPdf = new Fpdi();
+            $newPdf->addPage();
+            $newPdf->setSourceFile($filename);
+            $newPdf->useTemplate($newPdf->importPage($i));
+
+            $newFilename = sprintf('%s/%s_%s.pdf', $directory, $file, $i);
+            $newPdf->output($newFilename, 'F');
+        }
     }
 
 }
