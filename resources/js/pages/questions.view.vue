@@ -11,9 +11,9 @@
       size="lg"
     >
       <b-form ref="form">
-        <b-form-group label="Solution Upload Type">
-          <b-form-radio v-model="solution_upload_type" name="solution_upload_type" value="assignment_level">Upload assignment level PDF to cut up</b-form-radio>
-          <b-form-radio v-model="solution_upload_type" name="solution_upload_type" value="question_level">Upload solution just for this question</b-form-radio>
+        <b-form-group label="Upload File">
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">Upload assignment level PDF to cut up</b-form-radio>
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">Upload solution just for this question</b-form-radio>
         </b-form-group>
 
         <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
@@ -390,7 +390,7 @@ export default {
     ToggleButton
   },
   data: () => ({
-    solution_upload_type: 'assignment_level',
+    uploadLevel: 'assignment',
     timeLeft: 0,
     totalPoints: 0,
     uploadFileType: '',
@@ -461,7 +461,7 @@ export default {
   },
   methods: {
     getSolutionUploadTypes(){
-      return this.solution_upload_type === 'assignment_level' ?  getAcceptedFileTypes('.pdf') :  getAcceptedFileTypes()
+      return this.uploadLevel === 'assignment' ?  getAcceptedFileTypes('.pdf') :  getAcceptedFileTypes()
     },
     standardizeFilename(filename){
       let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
@@ -605,6 +605,7 @@ export default {
       this.uploadFileForm.assignmentId = this.assignmentId
     },
     async handleOk(bvModalEvt) {
+      this.uploadFileForm.uploadLevel = this.uploadLevel
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler

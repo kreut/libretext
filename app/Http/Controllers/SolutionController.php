@@ -24,7 +24,14 @@ class SolutionController extends Controller
     public function storeSolutionFile(Request $request, Solution $Solution)
     {
 
+/**
+    If it's a cutup...
+    1. Save the solution file as a whole file with assignment as the row (need this for students later)
+    2. Do the cutup and add those to the cutup database
+    3. Allow them to do the cutups
 
+    4. If a student, do the cut up right off the bat and save to the cutup database then let them add.
+**/
         $response['type'] = 'error';
 
         try {

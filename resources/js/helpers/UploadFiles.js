@@ -14,6 +14,7 @@ export async function submitUploadFile(type, form, noty,  nextTick, bvModal, upl
     formData.append('assignmentId', form.assignmentId)
     formData.append('questionId', form.questionId)
     formData.append('type', type)
+    formData.append('uploadLevel', form.uploadLevel)//at the assignment or question level; used for cutups
     formData.append('_method', 'put'); // add this
 
     const {data} = await axios.post(url , formData)
