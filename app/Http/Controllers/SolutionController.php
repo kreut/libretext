@@ -5,10 +5,13 @@ namespace App\Http\Controllers;
 
 use App\Solution;
 use App\Assignment;
+use App\Cutup;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
+
 use Carbon\Carbon;
 
 use App\Exceptions\Handler;
@@ -22,7 +25,7 @@ class SolutionController extends Controller
 
     use S3;
 
-    public function storeSolutionFile(Request $request, Solution $Solution)
+    public function storeSolutionFile(Request $request, Solution $Solution, Cutup $cutup)
     {
 
 
@@ -48,21 +51,24 @@ class SolutionController extends Controller
             $assignment_id = $request->assignmentId;
             $question_id = $request->questionId;
             $user_id = Auth::user()->id;
-
+            $file = $request->file("solutionFile")->store("solutions/$user_id", 'local');
+            $solutionContents = Storage::disk('local')->get($file);
+            Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
+            $original_filename = $request->file("solutionFile")->getClientOriginalName();
+            $file_data = [
+                'file' => basename($file),
+                'original_filename' => $original_filename,
+                'updated_at' => Carbon::now()];
+            DB::beginTransaction();
             switch ($request->uploadLevel) {
-
                 case('question'):
-                    $file = $request->file("solutionFile")->store("solutions/$user_id", 'local');
-                    $solutionContents = Storage::disk('local')->get($file);
-                    Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
-                    $original_filename = $request->file("solutionFile")->getClientOriginalName();
-                    $file_data = [
-                        'file' => basename($file),
-                        'original_filename' => $original_filename,
-                        'updated_at' => Carbon::now()];
                     $Solution->updateOrCreate(
-                        ['user_id' => $user_id,
-                            'question_id' => $question_id],
+                        [
+                            'user_id' => $user_id,
+                            'type' => 'q',
+                            'assignment_id' => $assignment_id,
+                            'question_id' => $question_id
+                        ],
                         $file_data
                     );
                     $response['type'] = 'success';
@@ -70,21 +76,26 @@ class SolutionController extends Controller
                     $response['original_filename'] = $original_filename;
                     break;
                 case('assignment'):
-                    $storage_path = Storage::disk('local')->getDriver()->getAdapter()->getPathPrefix();
-                    $file = $request->file("solutionFile")->store("solutions/$user_id", 'local');
-                    $assignment_file = "solutions/$user_id/assignment-$assignment_id.pdf";
-                    dd($request->file("solutionFile")->hashName());
-                    if (Storage::disk('local')->exists($assignment_file)) {
-                        Storage::disk('local')->delete($assignment_file);
-                    }
 
-                    Storage::move($file, $assignment_file);
+                    $Solution->updateOrCreate(
+                        [
+                            'user_id' => $user_id,
+                            'type' => 'a',
+                            'assignment_id' => $assignment_id,
+                            'question_id' => $question_id
+                        ],
+                        $file_data
+                    );
 
-                    //$solutionContents = Storage::disk('local')->get($assignment_file);
-                    //Storage::disk('s3')->put($assignment_file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
-                    Storage::makeDirectory("solutions/$user_id/cutups");
-                    $this->cutUpPdf($storage_path . $assignment_file, $storage_path . "solutions/$user_id/cutups");
+                    //get rid of the current ones
+                    Cutup::where('user_id', $user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->delete();
 
+                    Storage::makeDirectory("cutups/$user_id");
+
+
+                    $this->cutUpPdf($file, "cutups/$user_id", $cutup, $assignment_id, $user_id);
                     $original_filename = $request->file("solutionFile")->getClientOriginalName();
                     $file_data = [
                         'file' => basename($file),
@@ -96,19 +107,21 @@ class SolutionController extends Controller
                         $file_data
                     );
                     $response['type'] = 'success';
-                    $response['message'] = 'Your solution has been saved.';
+                    $response['message'] = 'Your pdf has been cutup into questions by page.';
                     $response['original_filename'] = $original_filename;
                     break;
                 default:
                     $response['message'] = 'That is not a valid upload level.  Please contact us for assistance.';
 
-
             }
 
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            return null;
+            $response['message'] = "There was an error saving this solution.  Please try again or contact us for assistance.";
+            return $response;
         }
         return $response;
 

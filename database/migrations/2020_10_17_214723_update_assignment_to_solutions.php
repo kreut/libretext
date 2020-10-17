@@ -18,6 +18,11 @@ class UpdateAssignmentToSolutions extends Migration
         Schema::table('solutions', function (Blueprint $table) {
             $table->unsignedBigInteger('assignment_id')->after('id');
             $table->unsignedBigInteger('question_id')->nullable()->change();
+            $table->string('type')
+                ->after('id')
+                ->nullable(false)
+                ->comment('q=question, a=assignment');
+
             $table->foreign('assignment_id')->references('id')->on('assignments');
             //can't have the uniqueness because the question_id might not exist
             //can't have the foreign key of the question_id because it might not exist
@@ -36,6 +41,9 @@ class UpdateAssignmentToSolutions extends Migration
         Schema::table('solutions', function (Blueprint $table) {
             $table->unsignedBigInteger('question_id')->nullable(false)->change();
             $table->dropColumn('assignment_id');
+            $table->dropColumn('type');
         });
+
+
     }
 }
