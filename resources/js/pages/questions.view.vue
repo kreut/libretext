@@ -11,13 +11,18 @@
       size="lg"
     >
       <b-form ref="form">
-        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
+        <b-form-group label="Solution Upload Type">
+          <b-form-radio v-model="solution_upload_type" name="solution_upload_type" value="assignment_level">Upload assignment level PDF to cut up</b-form-radio>
+          <b-form-radio v-model="solution_upload_type" name="solution_upload_type" value="question_level">Upload solution just for this question</b-form-radio>
+        </b-form-group>
+
+        <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
         <b-form-file
           ref="questionFileInput"
           v-model="uploadFileForm[`${uploadFileType}File`]"
           placeholder="Choose a file or drop it here..."
           drop-placeholder="Drop file here..."
-          :accept="getAcceptedFileTypes()"
+          :accept="getSolutionUploadTypes()"
         ></b-form-file>
         <div v-if="uploading">
           <b-spinner small type="grow"></b-spinner>
@@ -385,6 +390,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    solution_upload_type: 'assignment_level',
     timeLeft: 0,
     totalPoints: 0,
     uploadFileType: '',
@@ -454,6 +460,9 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getSolutionUploadTypes(){
+      return this.solution_upload_type === 'assignment_level' ?  getAcceptedFileTypes('.pdf') :  getAcceptedFileTypes()
+    },
     standardizeFilename(filename){
       let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
       let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')

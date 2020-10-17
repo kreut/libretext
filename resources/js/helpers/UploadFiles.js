@@ -1,7 +1,7 @@
 import axios from 'axios'
 
-export function getAcceptedFileTypes() {
-  return '.pdf, .txt, .png, .jpeg, .jpg' //update the validator in the S3 Trait if this changes
+export function getAcceptedFileTypes(fileTypes = '.pdf, .txt, .png, .jpeg, .jpg') {
+ return fileTypes //update the validator in the S3 Trait if this changes
 }
 export async function submitUploadFile(type, form, noty,  nextTick, bvModal, uploadFile, url) {
   let typeFile = type + 'File'
