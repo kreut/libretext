@@ -50,6 +50,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/extensions/{assignment}/{user}', 'ExtensionController@store');
 
 
+    Route::get('/cutups/{assignment}', 'CutupController@show');
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');

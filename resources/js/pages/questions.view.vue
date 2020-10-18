@@ -12,10 +12,21 @@
     >
       <b-form ref="form">
         <b-form-group label="Upload File">
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">Upload assignment level PDF to cut up</b-form-radio>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">Upload solution just for this question</b-form-radio>
-        </b-form-group>
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">Upload solution just for this
+            question
+          </b-form-radio>
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">Upload assignment level PDF to cut
+            up
+          </b-form-radio>
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="cutup">Upload question from cutup PDF
+          </b-form-radio>
 
+        </b-form-group>
+        <div v-show="uploadLevel === 'cutup'">
+          {{ cutups }}
+
+        </div>
+<div v-show="uploadLevel !== 'cutup'">
         <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
         <b-form-file
           ref="questionFileInput"
@@ -31,38 +42,40 @@
         <input type="hidden" class="form-control is-invalid">
         <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
         </div>
+</div>
       </b-form>
+
     </b-modal>
 
 
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
-      <div class="mb-3">
-        <b-container>
-          <b-row class="text-center">
-            <b-col>
-            <div v-if="source === 'a' && scoring_type === 'p'">
-              <h4>This assignment is worth {{ totalPoints }} points.</h4>
-            </div>
-            </b-col>
-          </b-row>
-          <b-row class="text-center">
-            <b-col>
-            <div v-if="timeLeft>0">
-              <countdown :time="timeLeft">
-                <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours,
-                  {{ props.minutes }} minutes, {{ props.seconds }} seconds.
-                </template>
-              </countdown>
-            </div>
-            <div v-if="timeLeft===0">
-              The due date has passed.
-            </div>
-            </b-col>
-          </b-row>
-        </b-container>
-      </div>
+        <div class="mb-3">
+          <b-container>
+            <b-row class="text-center">
+              <b-col>
+                <div v-if="source === 'a' && scoring_type === 'p'">
+                  <h4>This assignment is worth {{ totalPoints }} points.</h4>
+                </div>
+              </b-col>
+            </b-row>
+            <b-row class="text-center">
+              <b-col>
+                <div v-if="timeLeft>0">
+                  <countdown :time="timeLeft">
+                    <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours,
+                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
+                    </template>
+                  </countdown>
+                </div>
+                <div v-if="timeLeft===0">
+                  The due date has passed.
+                </div>
+              </b-col>
+            </b-row>
+          </b-container>
+        </div>
         <div class="overflow-auto">
           <b-pagination
             v-model="currentPage"
@@ -390,6 +403,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    cutups: [],
     uploadLevel: 'assignment',
     timeLeft: 0,
     totalPoints: 0,
@@ -452,6 +466,7 @@ export default {
     }
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId)
+      await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
 
@@ -460,13 +475,13 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    getSolutionUploadTypes(){
-      return this.uploadLevel === 'assignment' ?  getAcceptedFileTypes('.pdf') :  getAcceptedFileTypes()
+    getSolutionUploadTypes() {
+      return this.uploadLevel === 'assignment' ? getAcceptedFileTypes('.pdf') : getAcceptedFileTypes()
     },
-    standardizeFilename(filename){
+    standardizeFilename(filename) {
       let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
       let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')
-       return  `${name}-${this.currentPage}.${ext}`
+      return `${name}-${this.currentPage}.${ext}`
     },
     async updateLastSubmittedAndLastResponse(assignmentId, questionId) {
       try {
@@ -754,6 +769,20 @@ export default {
         this.title = 'Assignment Questions'
       }
       return true
+    },
+    async getCutups(assignmentId) {
+
+      try {
+        const {data} = await axios.get(`/api/cutups/${assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.cutups = data.cutups
+      } catch (error) {
+
+        this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')
+      }
     },
     async getSelectedQuestions(assignmentId) {
       try {

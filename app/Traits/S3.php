@@ -41,7 +41,7 @@ trait S3
             $cutup->create([
                 'assignment_id' => $assignment_id,
                 'user_id' => $user_id,
-                'file' => "{$file}_{$i}"
+                'file' => "{$file}_{$i}.pdf"
             ]);
             $newPdf->output(  $full_path_to_cutup , 'F');
 
