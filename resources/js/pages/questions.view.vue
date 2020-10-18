@@ -37,36 +37,39 @@
           </div>
           <b-container class="mb-2">
             <b-row align-h="center">
-          <b-button size="sm" variant="outline-primary">Use as solution</b-button>
+              <b-button size="sm" variant="outline-primary"
+                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">Set as
+                solution
+              </b-button>
             </b-row>
           </b-container>
-<div>
-          <b-embed
-            type="iframe"
-            aspect="16by9"
-            v-bind:src="cutups[currentCutup-1].temporary_url"
-            allowfullscreen
-          ></b-embed>
-</div>
+          <div>
+            <b-embed
+              type="iframe"
+              aspect="16by9"
+              v-bind:src="cutups[currentCutup-1].temporary_url"
+              allowfullscreen
+            ></b-embed>
+          </div>
 
         </div>
-<div v-show="uploadLevel !== 'cutup'">
-        <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
-        <b-form-file
-          ref="questionFileInput"
-          v-model="uploadFileForm[`${uploadFileType}File`]"
-          placeholder="Choose a file or drop it here..."
-          drop-placeholder="Drop file here..."
-          :accept="getSolutionUploadTypes()"
-        ></b-form-file>
-        <div v-if="uploading">
-          <b-spinner small type="grow"></b-spinner>
-          Uploading file...
+        <div v-show="uploadLevel !== 'cutup'">
+          <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
+          <b-form-file
+            ref="questionFileInput"
+            v-model="uploadFileForm[`${uploadFileType}File`]"
+            placeholder="Choose a file or drop it here..."
+            drop-placeholder="Drop file here..."
+            :accept="getSolutionUploadTypes()"
+          ></b-form-file>
+          <div v-if="uploading">
+            <b-spinner small type="grow"></b-spinner>
+            Uploading file...
+          </div>
+          <input type="hidden" class="form-control is-invalid">
+          <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
+          </div>
         </div>
-        <input type="hidden" class="form-control is-invalid">
-        <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
-        </div>
-</div>
       </b-form>
 
     </b-modal>
@@ -427,6 +430,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    settingAsSolution: false,
     cutups: [],
     uploadLevel: 'assignment',
     timeLeft: 0,
@@ -794,6 +798,22 @@ export default {
         this.title = 'Assignment Questions'
       }
       return true
+    },
+    async setAsSolution(questionId, cutupId) {
+      if (this.settingAsSolution) {
+        this.$noty.info('Please be patient while your reqeuest is being processed.')
+        return false
+      }
+      this.settingAsSolution = true
+      try {
+        const {data} = await axios.post(`/api/cutups/${questionId}/${cutupId}/set-as-solution`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        console.log(error)
+        this.$noty.error('We could not set this cutup as your solution.  Please try again or contact us for assistance.')
+      }
+      this.$bvModal.hide('modal-upload-file')
+      this.settingAsSolution = false
     },
     async getCutups(assignmentId) {
 

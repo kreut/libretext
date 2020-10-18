@@ -90,8 +90,7 @@ class SolutionController extends Controller
                     );
 
                     //add the cutups
-                    Storage::makeDirectory("cutups/$user_id");
-                    $this->cutUpPdf($file, "cutups/$user_id", $cutup, $assignment_id, $user_id);
+                    $this->cutUpPdf($file, "solutions/$user_id", $cutup, $assignment_id, $user_id);
 
 
                     $response['type'] = 'success';

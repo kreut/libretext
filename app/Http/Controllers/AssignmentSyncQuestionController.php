@@ -385,6 +385,7 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
             }
+
             $instructor_user_id = $assignment->course->user_id;
             $instructor_learning_trees = DB::table('learning_trees')
                 ->whereIn('question_id', $question_ids)

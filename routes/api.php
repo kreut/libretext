@@ -51,6 +51,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     Route::get('/cutups/{assignment}', 'CutupController@show');
+    Route::post('/cutups/{question}/{cutup}/set-as-solution', 'CutupController@setAsSolution');
+
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
