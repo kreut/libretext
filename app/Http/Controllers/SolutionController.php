@@ -66,7 +66,6 @@ class SolutionController extends Controller
                         [
                             'user_id' => $user_id,
                             'type' => 'q',
-                            'assignment_id' => $assignment_id,
                             'question_id' => $question_id
                         ],
                         $file_data
@@ -77,35 +76,24 @@ class SolutionController extends Controller
                     break;
                 case('assignment'):
 
-                    $Solution->updateOrCreate(
-                        [
-                            'user_id' => $user_id,
-                            'type' => 'a',
-                            'assignment_id' => $assignment_id,
-                            'question_id' => $question_id
-                        ],
-                        $file_data
-                    );
-
                     //get rid of the current ones
                     Cutup::where('user_id', $user_id)
                         ->where('assignment_id', $assignment_id)
                         ->delete();
 
-                    Storage::makeDirectory("cutups/$user_id");
-
-
-                    $this->cutUpPdf($file, "cutups/$user_id", $cutup, $assignment_id, $user_id);
-                    $original_filename = $request->file("solutionFile")->getClientOriginalName();
-                    $file_data = [
-                        'file' => basename($file),
-                        'original_filename' => $original_filename,
-                        'updated_at' => Carbon::now()];
+                    //add the new full solution
                     $Solution->updateOrCreate(
                         ['user_id' => $user_id,
-                            'question_id' => $question_id],
+                            'assignment_id' => $assignment_id,
+                            'type' => 'a'],
                         $file_data
                     );
+
+                    //add the cutups
+                    Storage::makeDirectory("cutups/$user_id");
+                    $this->cutUpPdf($file, "cutups/$user_id", $cutup, $assignment_id, $user_id);
+
+
                     $response['type'] = 'success';
                     $response['message'] = 'Your pdf has been cutup into questions by page.';
                     $response['original_filename'] = $original_filename;
