@@ -16,27 +16,31 @@ class CutupController extends Controller
 {
 
     use S3;
+
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
 
-        $user_id =  Auth::user()->id;
+        $user_id = Auth::user()->id;
         $response['type'] = 'error';
-       /* $authorized = Gate::inspect('view', $enrollment);
+        /* $authorized = Gate::inspect('view', $enrollment);
 
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }*/
+         if (!$authorized->allowed()) {
+             $response['message'] = $authorized->message();
+             return $response;
+         }*/
         try {
             $cutups = [];
             $results = $cutup->where('assignment_id', $assignment->id)
-                            ->where('user_id', $user_id)
-                            ->orderBy('id', 'asc')
-                            ->get();
+                ->where('user_id', $user_id)
+                ->orderBy('id', 'asc')
+                ->get();
 
-            if ($results->isNotEmpty()){
-                foreach ($results as $key => $value){
-                    $cutups[$value->id] = \Storage::disk('s3')->temporaryUrl("cutups/$user_id/$value->file", now()->addMinutes(120));
+            if ($results->isNotEmpty()) {
+                foreach ($results as $key => $value) {
+                    $cutups[] = [
+                        'id' => $value->id,
+                        'temporary_url' => \Storage::disk('s3')->temporaryUrl("cutups/$user_id/$value->file", now()->addMinutes(120))
+                    ];
                 }
             }
             $response['type'] = 'success';

@@ -11,7 +11,7 @@
       size="lg"
     >
       <b-form ref="form">
-        <b-form-group label="Upload File">
+        <b-form-group>
           <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">Upload solution just for this
             question
           </b-form-radio>
@@ -22,8 +22,32 @@
           </b-form-radio>
 
         </b-form-group>
-        <div v-show="uploadLevel === 'cutup'">
-          {{ cutups }}
+        <div v-if="uploadLevel === 'cutup'">
+          <div class="overflow-auto">
+            <b-pagination
+              v-model="currentCutup"
+              :total-rows="cutups.length"
+              :limit="10"
+              :per-page="perPage"
+              first-number
+              last-number
+              size="sm"
+              align="center"
+            ></b-pagination>
+          </div>
+          <b-container class="mb-2">
+            <b-row align-h="center">
+          <b-button size="sm" variant="outline-primary">Use as solution</b-button>
+            </b-row>
+          </b-container>
+<div>
+          <b-embed
+            type="iframe"
+            aspect="16by9"
+            v-bind:src="cutups[currentCutup-1].temporary_url"
+            allowfullscreen
+          ></b-embed>
+</div>
 
         </div>
 <div v-show="uploadLevel !== 'cutup'">
@@ -440,6 +464,7 @@ export default {
     learningTreeAsList_1: [],
     perPage: 1,
     currentPage: 1,
+    currentCutup: 1,
     questions: [],
     initializing: true, //use to show a blank screen until all is loaded
     title: '',
