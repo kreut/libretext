@@ -779,6 +779,7 @@ export default {
           return false
         }
         this.cutups = data.cutups
+        console.log(this.cutups)
       } catch (error) {
 
         this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')

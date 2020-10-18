@@ -28,17 +28,19 @@ class CutupController extends Controller
             return $response;
         }*/
         try {
-            $cutups_by_id = [];
-            $cutups = $cutup->where('assignment_id', $assignment->id)
+            $cutups = [];
+            $results = $cutup->where('assignment_id', $assignment->id)
                             ->where('user_id', $user_id)
+                            ->orderBy('id', 'asc')
                             ->get();
 
-            if ($cutups->isNotEmpty()){
-                foreach ($cutups as $key => $value){
-                    $cutups_by_id[$value->id] = \Storage::disk('s3')->temporaryUrl("cutups/$user_id/$value->file", now()->addMinutes(120));
+            if ($results->isNotEmpty()){
+                foreach ($results as $key => $value){
+                    $cutups[$value->id] = \Storage::disk('s3')->temporaryUrl("cutups/$user_id/$value->file", now()->addMinutes(120));
                 }
             }
             $response['type'] = 'success';
+            $response['cutups'] = $cutups;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
