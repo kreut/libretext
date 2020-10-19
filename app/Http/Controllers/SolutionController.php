@@ -120,24 +120,27 @@ class SolutionController extends Controller
 
         //person who created the file
         $assignment = Assignment::find($request->assignment_id);
-
-
-        $authorized = Gate::inspect('downloadSolutionFile', [$solution, $request->question_id, $assignment]);
-        if (!$authorized->allowed()) {
-            throw new Exception($authorized->message());
-        }
+        $level = $request->level;
+        try {
+         $authorized = Gate::inspect('downloadSolutionFile', [$solution, $level,  $assignment,$request->question_id]);
+         if (!$authorized->allowed()) {
+             throw new Exception($authorized->message());
+         }
 
         $file_creator_user_id = $assignment->course->user_id;
-        try {
-            $solution_file = $solution->where('user_id', $file_creator_user_id)
-                ->where('question_id', $request->question_id)
-                ->first()->file;
+
+            $solution_file = ($level === 'q')
+                ? $solution->where('user_id', $file_creator_user_id)
+                    ->where('question_id', $request->question_id)
+                    ->first()->file
+                : $solution->where('user_id', $file_creator_user_id)
+                    ->where('assignment_id', $request->assignment_id)
+                    ->first()->file;
 
             return Storage::disk('s3')->download("solutions/$file_creator_user_id/$solution_file");
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            return null;
         }
     }
 }

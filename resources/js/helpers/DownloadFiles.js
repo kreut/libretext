@@ -1,9 +1,10 @@
 import axios from 'axios'
-export function  downloadSolutionFile(questionId,original_filename){
+export function  downloadSolutionFile(level, assignmentId, questionId, original_filename){
   let data =
     {
+      'level': level,
       'question_id': questionId,
-      'assignment_id': this.assignmentId
+      'assignment_id': assignmentId
     }
   let url = '/api/solution-files/download'
   downloadFile(url, data, original_filename, this.$noty)
@@ -36,6 +37,7 @@ export async function downloadFile(url, fileData, originalFilename, noty) {
       link.download = originalFilename
       link.click()
     } else {
+
       noty.error("We were not able to retrieve your file.  Please try again or contact us for assistance.")
     }
   } catch (error) {

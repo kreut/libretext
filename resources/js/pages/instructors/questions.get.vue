@@ -118,7 +118,7 @@
               <span v-if="questions[currentPage-1].solution">
             Uploaded solution:
             <a href=""
-               v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+               v-on:click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)">
               {{ questions[currentPage - 1].solution }}
             </a>
             </span>

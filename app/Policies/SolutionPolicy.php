@@ -24,10 +24,14 @@ class SolutionPolicy
 
     }
 
-    public function downloadSolutionFile(User $user, Solution $solution, int $question_id, Assignment $assignment)
+    public function downloadSolutionFile(User $user, Solution $solution, string $level, Assignment $assignment,  $question_id)
     {
+//$question_id will be null if it's at the assignment level
+        if ((int) Auth::user()->role === 3 && !$assignment->solutions_released) {
+            return Response::deny("The solutions are not released so you can't download the solution.");
+        }
 
-        if (!$assignment->questions->contains($question_id)) {
+        if ($level === 'q' && !$assignment->questions->contains($question_id)) {
             return Response::deny('That question is not part of the assignment so you cannot download the solutions.');
         }
 

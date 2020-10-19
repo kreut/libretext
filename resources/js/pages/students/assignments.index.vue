@@ -97,6 +97,15 @@
           </div>
         </template>
 
+        <template v-slot:cell(solution_key)="data">
+          <div v-if="data.item.solution_key">
+            <b-button variant="outline-primary" v-on:click="downloadSolutionFile('a', data.item.id, null, data.item.solution_key)">Download</b-button>
+          </div>
+          <div v-else>
+            N/A
+          </div>
+        </template>
+
       </b-table>
     </div>
     <div v-else>
@@ -116,6 +125,7 @@ import Form from "vform"
 import {downloadFile} from '~/helpers/DownloadFiles'
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
+import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 
 export default {
   middleware: 'auth',
@@ -134,16 +144,19 @@ export default {
       'due',
       'number_submitted',
       'score',
-      'files'
+      'files',
+      'solution_key'
     ],
     hasAssignments: false,
     showNoAssignmentsAlert: false,
     canViewAssignments: false
   }),
   created() {
+    this.downloadSolutionFile = downloadSolutionFile
     this.downloadFile = downloadFile
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
+
   },
   mounted() {
     this.courseId = this.$route.params.courseId

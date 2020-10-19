@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\Traits\DateFormatter;
 use App\Course;
+use App\Solution;
 use App\Score;
 use App\Extension;
 use App\Submission;
@@ -53,7 +54,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return mixed
      */
-    public function index(Course $course, Extension $extension, Score $Score, Submission $Submission)
+    public function index(Course $course, Extension $extension, Score $Score, Submission $Submission, Solution $Solution)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -63,6 +64,7 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
+            $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
             $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
             $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
             $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
@@ -91,7 +93,7 @@ class AssignmentController extends Controller
                         $assignments[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
                     }
                     $assignments[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
-
+                    $assignments[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {
                     $due = $assignment['due'];
 

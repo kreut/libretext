@@ -5,23 +5,26 @@
     <b-modal
       id="modal-upload-file"
       ref="modal"
-      title="Upload File"
+      title="Upload Solutions"
       @ok="handleOk"
       ok-title="Submit"
       size="lg"
     >
+      <p>Upload an entire PDF with one solution per page and let Adapt cutup the PDF for you. Or, upload one
+        solution at a time. If you upload a full PDF, students will be able to both download a full solution key
+        and download solutions on a per question basis.</p>
       <b-form ref="form">
         <b-form-group>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" v-on:click="showCutups = true">
             Upload question solutions from cutup PDF
           </b-form-radio>
           <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
             Upload individual question solution
           </b-form-radio>
         </b-form-group>
+{{ showCutups }}
 
-
-        <div v-if="uploadLevel === 'assignment'   && cutups.length>0">
+        <div v-if="uploadLevel === 'assignment' && showCutups">
           <div class="overflow-auto">
             <b-pagination
               v-model="currentCutup"
@@ -34,29 +37,34 @@
               align="center"
             ></b-pagination>
           </div>
-          <b-container class="mb-2">
-            <b-row align-h="center">
-              <b-button size="sm" variant="outline-primary"
-                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
-                Set As Solution
-              </b-button>
-              <b-button class="ml-2" size="sm" variant="outline-secondary"
-                        v-on:click="cutups = []">
-                Upload New PDF
-              </b-button>
-            </b-row>
-          </b-container>
-          <div>
-            <b-embed
-              type="iframe"
-              aspect="16by9"
-              v-bind:src="cutups[currentCutup-1].temporary_url"
-              allowfullscreen
-            ></b-embed>
+            <b-container class="mb-2">
+              <b-row align-h="center">
+                <b-button size="sm" variant="outline-primary"
+                          v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
+                  Set As Solution
+                </b-button>
+                <b-button class="ml-2" size="sm" variant="outline-secondary" v-on:click="showCutups = false">
+                  Upload New PDF
+                </b-button>
+              </b-row>
+            </b-container>
+            <div>
+              <b-embed
+                type="iframe"
+                aspect="16by9"
+                v-bind:src="cutups[currentCutup-1].temporary_url"
+                allowfullscreen
+              ></b-embed>
+            </div>
           </div>
-
-        </div>
-        <div v-show="cutups.length === 0">
+        <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
+          <b-row align-h="center">
+          <b-button class="ml-2" size="sm" variant="outline-primary" v-on:click="showCutups = true">
+            Use Current Cutups
+          </b-button>
+          </b-row>
+        </b-container>
+        <div v-show="uploadLevel === 'question' || !showCutups">
           <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
           <b-form-file
             ref="questionFileInput"
@@ -158,7 +166,7 @@
                 <span v-if="questions[currentPage-1].solution">
                 Uploaded solution:
                   <a href=""
-                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+                     v-on:click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)">
                     {{ questions[currentPage - 1].solution }}
                   </a>
                   </span>
@@ -325,7 +333,7 @@
                   <span v-if="questions[currentPage-1].solution">
                     <span class="font-weight-bold">Solution:</span>
                   <a href=""
-                     v-on:click.prevent="downloadSolutionFile(questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))">
+                     v-on:click.prevent="downloadSolutionFile('q', assignmentId,questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))">
                     {{ standardizeFilename(questions[currentPage - 1].solution) }}
                   </a>
                   </span>
@@ -433,6 +441,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+    showCutups: false,
     settingAsSolution: false,
     cutups: [],
     uploadLevel: 'assignment',
@@ -667,9 +676,9 @@ export default {
         this.$noty.error(error.message)
       }
       await this.getCutups(this.assignmentId)
-      if (!this.cutups.length){
+      if (this.uploadLevel === 'question' || !this.cutups.length) {
         this.$bvModal.hide(`modal-upload-file`)
-        }
+      }
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },
@@ -815,7 +824,7 @@ export default {
       try {
         const {data} = await axios.post(`/api/cutups/${questionId}/${cutupId}/set-as-solution`)
         this.$noty[data.type](data.message)
-        if (data.type === 'success'){
+        if (data.type === 'success') {
           this.questions[this.currentPage - 1].solution = data.cutup
 
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
@@ -837,6 +846,7 @@ export default {
           return false
         }
         this.cutups = data.cutups
+        this.showCutups = this.cutups.length
         console.log(this.cutups)
       } catch (error) {
 
