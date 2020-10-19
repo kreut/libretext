@@ -71,19 +71,22 @@ class CutupController extends Controller
          }*/
         try {
             DB::beginTransaction();
+            $page_number_and_extension = explode('_',$cutup->file)[1];
 
+            $original_filename =  "solution-cutup-$page_number_and_extension";
             //add the new full solution
             $solution->updateOrCreate(
                 ['user_id' => $user_id,
                     'question_id' => $question->id,
                     'type' => 'q'],
-                ['file' => $cutup->file, 'original_filename' => "solution-cutup-{$question->id}.pdf"]
+                ['file' => $cutup->file, 'original_filename' =>   $original_filename]
             );
 
             Cutup::where('id', $cutup->id)->delete();
 
             $response['type'] = 'success';
             $response['message'] = 'Your cutup has been set as the solution.';
+            $response['cutup'] =  $original_filename;
 
             DB::commit();
 

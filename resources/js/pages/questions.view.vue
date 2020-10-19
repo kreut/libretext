@@ -12,17 +12,16 @@
     >
       <b-form ref="form">
         <b-form-group>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">Upload solution just for this
-            question
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">
+            Upload question solutions from cutup PDF
           </b-form-radio>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment">Upload assignment level PDF to cut
-            up
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
+            Upload individual question solution
           </b-form-radio>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="cutup">Upload question from cutup PDF
-          </b-form-radio>
-
         </b-form-group>
-        <div v-if="uploadLevel === 'cutup'">
+
+
+        <div v-if="uploadLevel === 'assignment'   && cutups.length>0">
           <div class="overflow-auto">
             <b-pagination
               v-model="currentCutup"
@@ -38,8 +37,12 @@
           <b-container class="mb-2">
             <b-row align-h="center">
               <b-button size="sm" variant="outline-primary"
-                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">Set as
-                solution
+                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
+                Set As Solution
+              </b-button>
+              <b-button class="ml-2" size="sm" variant="outline-secondary"
+                        v-on:click="cutups = []">
+                Upload New PDF
               </b-button>
             </b-row>
           </b-container>
@@ -53,7 +56,7 @@
           </div>
 
         </div>
-        <div v-show="uploadLevel !== 'cutup'">
+        <div v-show="cutups.length === 0">
           <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
           <b-form-file
             ref="questionFileInput"
@@ -505,7 +508,7 @@ export default {
   },
   methods: {
     getSolutionUploadTypes() {
-      return this.uploadLevel === 'assignment' ? getAcceptedFileTypes('.pdf') : getAcceptedFileTypes()
+      return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
     },
     standardizeFilename(filename) {
       let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
@@ -659,10 +662,14 @@ export default {
       }
       this.uploading = true
       try {
-        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl)
+        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
       } catch (error) {
-
+        this.$noty.error(error.message)
       }
+      await this.getCutups(this.assignmentId)
+      if (!this.cutups.length){
+        this.$bvModal.hide(`modal-upload-file`)
+        }
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },
@@ -808,6 +815,12 @@ export default {
       try {
         const {data} = await axios.post(`/api/cutups/${questionId}/${cutupId}/set-as-solution`)
         this.$noty[data.type](data.message)
+        if (data.type === 'success'){
+          this.questions[this.currentPage - 1].solution = data.cutup
+
+          this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
+
+        }
       } catch (error) {
         console.log(error)
         this.$noty.error('We could not set this cutup as your solution.  Please try again or contact us for assistance.')
