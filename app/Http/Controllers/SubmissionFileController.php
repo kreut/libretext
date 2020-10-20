@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Cutup;
 use App\Score;
 use App\User;
 use App\AssignmentFile;
@@ -216,22 +217,27 @@ class SubmissionFileController extends Controller
     //storeSubmission
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param AssignmentFile $assignmentFile
+     * @param Extension $extension
+     * @param SubmissionFile $submissionFile
+     * @param Cutup $cutup
+     * @return mixed
+     * @throws Exception
      */
-    public function storeSubmissionFile(Request $request, AssignmentFile $assignmentFile, Extension $extension, SubmissionFile $submissionFile)
+    public function storeSubmissionFile(Request $request, Extension $extension, SubmissionFile $submissionFile, Cutup $cutup)
     {
+
 
         $response['type'] = 'error';
         $max_number_of_uploads_allowed = 5;//number allowed per question/assignment
         $assignment_id = $request->assignmentId;
-
-        $type = $request->type;
+        $question_id = $request->questionId;
+        $upload_level = $request->uploadLevel;
+        $user_id = Auth::user()->id;
 
         $assignment = Assignment::find($assignment_id);
-        $authorized = Gate::inspect('uploadAssignmentFile', [$assignmentFile, $assignment]);
+        $authorized = Gate::inspect('uploadSubmissionFile', [$submissionFile, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -253,13 +259,12 @@ class SubmissionFileController extends Controller
                 return $response;
             }
 
-            if (!in_array($type, ['question', 'assignment'])) {
+            if (!in_array($upload_level, ['question', 'assignment'])) {
                 $response['message'] = 'That is not a valid type of submission file.';
                 return $response;
             }
 
-            if ($type === 'question') {
-                $question_id = $request->questionId;
+            if ($upload_level === 'question') {
                 $question_is_in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment_id)
                     ->where('question_id', $question_id)
                     ->get()
@@ -270,20 +275,20 @@ class SubmissionFileController extends Controller
                 }
 
             }
-
-
-            switch ($type) {
+            switch ($upload_level) {
                 case('assignment'):
                     $latest_submission = DB::table('submission_files')
+                        ->where('type', 'a')
                         ->where('assignment_id', $assignment_id)
-                        ->where('user_id', Auth::user()->id)
+                        ->where('user_id', $user_id)
                         ->first();
                     break;
                 case('question'):
                     $latest_submission = DB::table('submission_files')
+                        ->where('type', 'q') //not needed but for completeness
                         ->where('assignment_id', $assignment_id)
                         ->where('question_id', $question_id)
-                        ->where('user_id', Auth::user()->id)
+                        ->where('user_id',$user_id)
                         ->select('upload_count')
                         ->first();
                     break;
@@ -298,22 +303,24 @@ class SubmissionFileController extends Controller
             }
 
             $validator = Validator::make($request->all(), [
-                "{$type}File" => $this->fileValidator()
+                "submissionFile" => $this->fileValidator()
             ]);
 
             if ($validator->fails()) {
-                $response['message'] = $validator->errors()->first(`{$type}File`);
+                $response['message'] = $validator->errors()->first(`submissionFile`);
                 return $response;
             }
 
 
             //save locally and to S3
 
-            $submission = $request->file("{$type}File")->store("assignments/$assignment_id", 'local');
+            $submission = $request->file("submissionFile")->store("assignments/$assignment_id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
-            $original_filename = $request->file("{$type}File")->getClientOriginalName();
-            $submission_file_data = ['type' => $type[0],
+            $original_filename = $request->file("submissionFile")->getClientOriginalName();
+
+            $type = $upload_level[0];
+            $submission_file_data = ['type' => $type,
                 'submission' => basename($submission),
                 'original_filename' => $original_filename,
                 'file_feedback' => null,
@@ -322,14 +329,26 @@ class SubmissionFileController extends Controller
                 'score' => null,
                 'upload_count' => $upload_count + 1,
                 'date_submitted' => Carbon::now()];
-            switch ($type) {
+            DB::beginTransaction();
+
+            switch ($upload_level) {
                 case('assignment'):
+                    //get rid of the current ones
+                    Cutup::where('user_id', $user_id)
+                        ->where('assignment_id', $assignment_id)
+                        ->delete();
+
                     $submissionFile->updateOrCreate(
-                        ['user_id' => Auth::user()->id,
+                        ['user_id' => $user_id,
                             'assignment_id' => $assignment_id,
                             'type' => $type[0]],
                         $submission_file_data
                     );
+                    //add the cutups
+                    $this->cutUpPdf($submission, "assignments/$assignment_id", $cutup, $assignment_id, $user_id);
+
+                    $response['message'] = 'Your PDF has been cutup into questions by page.';
+                    $response['original_filename'] = $original_filename;
                     break;
                 case('question'):
                     $submissionFile->updateOrCreate(
@@ -339,15 +358,16 @@ class SubmissionFileController extends Controller
                             'type' => $type[0]],
                         $submission_file_data
                     );
+                    $response['submission'] = basename($submission);
+                    $response['original_filename'] = $original_filename;
+                    $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     break;
             }
-
-            $response['type'] = 'success';
-            $response['submission'] = basename($submission);
             $response['message'] = "Your file submission has been saved.  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
-            $response['original_filename'] = $original_filename;
-            $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
+            $response['type'] = 'success';
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to save your file submission.  Please try again or contact us for assistance.";

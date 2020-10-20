@@ -94,7 +94,7 @@ class SolutionController extends Controller
 
 
                     $response['type'] = 'success';
-                    $response['message'] = 'Your pdf has been cutup into questions by page.';
+                    $response['message'] = 'Your PDF has been cutup into questions by page.';
                     $response['original_filename'] = $original_filename;
                     break;
                 default:

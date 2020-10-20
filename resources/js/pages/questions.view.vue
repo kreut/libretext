@@ -5,24 +5,33 @@
     <b-modal
       id="modal-upload-file"
       ref="modal"
-      title="Upload Solutions"
+      :title="getModalUploadFileTitle()"
       @ok="handleOk"
       ok-title="Submit"
       size="lg"
     >
-      <p>Upload an entire PDF with one solution per page and let Adapt cutup the PDF for you. Or, upload one
+      <p> <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
         solution at a time. If you upload a full PDF, students will be able to both download a full solution key
-        and download solutions on a per question basis.</p>
+          and download solutions on a per question basis.</span>
+        <span v-if="user.role !==2">
+        Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
+        question file submission at a time, especially helpful if your submissions are in a non-PDF format.
+      </span></p>
       <b-form ref="form">
         <b-form-group>
           <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" v-on:click="showCutups = true">
-            Upload question solutions from cutup PDF
+            Upload
+            <span v-if="user.role === 2">question solutions</span>
+            <span v-if="user.role !== 2">your question file submissions</span>
+            from a full PDF that Adapt will cut up for you
           </b-form-radio>
           <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
-            Upload individual question solution
+            Upload individual
+            <span v-if="user.role === 2">question solution</span>
+            <span v-if="user.role !== 2">question file submissions</span>
           </b-form-radio>
         </b-form-group>
-{{ showCutups }}
+        {{ showCutups }}
 
         <div v-if="uploadLevel === 'assignment' && showCutups">
           <div class="overflow-auto">
@@ -37,31 +46,31 @@
               align="center"
             ></b-pagination>
           </div>
-            <b-container class="mb-2">
-              <b-row align-h="center">
-                <b-button size="sm" variant="outline-primary"
-                          v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
-                  Set As Solution
-                </b-button>
-                <b-button class="ml-2" size="sm" variant="outline-secondary" v-on:click="showCutups = false">
-                  Upload New PDF
-                </b-button>
-              </b-row>
-            </b-container>
-            <div>
-              <b-embed
-                type="iframe"
-                aspect="16by9"
-                v-bind:src="cutups[currentCutup-1].temporary_url"
-                allowfullscreen
-              ></b-embed>
-            </div>
+          <b-container class="mb-2">
+            <b-row align-h="center">
+              <b-button size="sm" variant="outline-primary"
+                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
+                Set As Solution
+              </b-button>
+              <b-button class="ml-2" size="sm" variant="outline-secondary" v-on:click="showCutups = false">
+                Upload New PDF
+              </b-button>
+            </b-row>
+          </b-container>
+          <div>
+            <b-embed
+              type="iframe"
+              aspect="16by9"
+              v-bind:src="cutups[currentCutup-1].temporary_url"
+              allowfullscreen
+            ></b-embed>
           </div>
+        </div>
         <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
           <b-row align-h="center">
-          <b-button class="ml-2" size="sm" variant="outline-primary" v-on:click="showCutups = true">
-            Use Current Cutups
-          </b-button>
+            <b-button class="ml-2" size="sm" variant="outline-primary" v-on:click="showCutups = true">
+              Use Current Cutups
+            </b-button>
           </b-row>
         </b-container>
         <div v-show="uploadLevel === 'question' || !showCutups">
@@ -353,7 +362,6 @@
                 </div>
               </div>
               <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-
                 <b-card title="File Submission Information">
                   <b-card-text>
                     <strong> Uploaded file:</strong>
@@ -380,10 +388,12 @@
                     <br>
                     <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
                     <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
-                    <b-button variant="primary" class="float-right mr-2"
-                              v-on:click="openUploadFileModal(questions[currentPage-1].id)"
-                              v-b-modal.modal-upload-file>Upload New File
-                    </b-button>
+                    <div class="mt-2">
+                      <b-button variant="primary" class="float-right mr-2"
+                                v-on:click="openUploadFileModal(questions[currentPage-1].id)"
+                                v-b-modal.modal-upload-file>Upload New File
+                      </b-button>
+                    </div>
                   </b-card-text>
                 </b-card>
 
@@ -496,7 +506,7 @@ export default {
   },
   async mounted() {
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
-    this.uploadFileType = (this.user.role === 2) ? 'solution' : 'question' //students upload question submissions and instructors upload solutions
+    this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' //students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
     console.log(this.user.role)
@@ -516,6 +526,9 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getModalUploadFileTitle() {
+      return this.user.role === 3 ? 'Upload File Submission' : 'Upload Solutions'
+    },
     getSolutionUploadTypes() {
       return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
     },
@@ -675,9 +688,13 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-      await this.getCutups(this.assignmentId)
-      if (this.uploadLevel === 'question' || !this.cutups.length) {
+
+      if (!this.uploadFileForm.errors.any() &&
+        (this.uploadLevel === 'question' || !this.cutups.length)) {
         this.$bvModal.hide(`modal-upload-file`)
+      }
+      if (!this.uploadFileForm.errors.any()) {
+        await this.getCutups(this.assignmentId)
       }
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])

@@ -61,7 +61,7 @@ class SubmissionFilePolicy
             : Response::deny($message);
     }
 
-    public function uploadAssignmentFile(User $user, SubmissionFile $submissionFile, Assignment $assignment)
+    public function uploadSubmissionFile(User $user, SubmissionFile $submissionFile, Assignment $assignment)
     {
 
         return $assignment->course->enrollments->contains('user_id', $user->id)

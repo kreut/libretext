@@ -41,9 +41,11 @@ class CutupController extends Controller
 
             if ($results->isNotEmpty()) {
                 foreach ($results as $key => $value) {
+                    $dir = (Auth::user()->role == 2) ? "solutions/$user_id/"
+                                                      : "assignments/$assignment->id/";
                     $cutups[] = [
                         'id' => $value->id,
-                        'temporary_url' => \Storage::disk('s3')->temporaryUrl("solutions/$user_id/$value->file", now()->addMinutes(120))
+                        'temporary_url' => \Storage::disk('s3')->temporaryUrl( $dir .$value->file, now()->addMinutes(120))
                     ];
                 }
             }
