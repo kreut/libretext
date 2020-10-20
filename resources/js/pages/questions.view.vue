@@ -31,8 +31,6 @@
             <span v-if="user.role !== 2">question file submissions</span>
           </b-form-radio>
         </b-form-group>
-        {{ showCutups }}
-
         <div v-if="uploadLevel === 'assignment' && showCutups">
           <div class="overflow-auto">
             <b-pagination
@@ -847,9 +845,10 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           //for instructor set the solution, for the student set an original_filename
-          this.questions[this.currentPage - 1].solution = this.questions[this.currentPage - 1].original_filename = data.cutup
+          this.questions[this.currentPage - 1].solution = data.cutup
+          this.questions[this.currentPage - 1].original_filename = data.cutup
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
-
+          this.showCutups = this.cutups.length
         }
       } catch (error) {
         console.log(error)
