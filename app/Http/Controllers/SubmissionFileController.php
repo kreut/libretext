@@ -246,15 +246,7 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-
-            $is_extension = isset($extensions_by_assignment[$assignment->id]);
-            $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment->due;
-
-            $carbon_due = Carbon::parse($due);
-            $past_grace_period =  $carbon_due->diffInMinutes(Carbon::now(), false) > 20;
-
-            if ($past_grace_period) {
+            if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
                 $response['message'] = 'You cannot upload a file since this assignment is past due.';
                 return $response;
             }
@@ -270,7 +262,7 @@ class SubmissionFileController extends Controller
                     ->get()
                     ->isNotEmpty();
                 if (!$question_is_in_assignment) {
-                    $response['message'] = 'That questions is not in the assignment.';
+                    $response['message'] = 'That question is not in the assignment.';
                     return $response;
                 }
 
@@ -297,7 +289,7 @@ class SubmissionFileController extends Controller
 
 
             if ($upload_count + 1 > $max_number_of_uploads_allowed) {
-                $response['message'] = 'You have exceed the number of times that you can re-upload a submission.';
+                $response['message'] = 'You have exceeded the number of times that you can re-upload a file submission.';
                 return $response;
 
             }
@@ -319,8 +311,8 @@ class SubmissionFileController extends Controller
             Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
             $original_filename = $request->file("submissionFile")->getClientOriginalName();
 
-            $type = $upload_level[0];
-            $submission_file_data = ['type' => $type,
+
+            $submission_file_data = ['type' => $upload_level[0],
                 'submission' => basename($submission),
                 'original_filename' => $original_filename,
                 'file_feedback' => null,
@@ -341,7 +333,7 @@ class SubmissionFileController extends Controller
                     $submissionFile->updateOrCreate(
                         ['user_id' => $user_id,
                             'assignment_id' => $assignment_id,
-                            'type' => $type[0]],
+                            'type' => 'a'],
                         $submission_file_data
                     );
                     //add the cutups
@@ -355,7 +347,7 @@ class SubmissionFileController extends Controller
                         ['user_id' => Auth::user()->id,
                             'assignment_id' => $assignment_id,
                             'question_id' => $question_id,
-                            'type' => $type[0]],
+                            'type' => 'q'],
                         $submission_file_data
                     );
                     $response['submission'] = basename($submission);

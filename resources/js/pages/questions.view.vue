@@ -49,8 +49,9 @@
           <b-container class="mb-2">
             <b-row align-h="center">
               <b-button size="sm" variant="outline-primary"
-                        v-on:click="setAsSolution(questions[currentPage-1].id, cutups[currentCutup-1].id)">
-                Set As Solution
+                        v-on:click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id, cutups[currentCutup-1].id)">
+                Set As <span v-if="user.role === 2">Solution</span>
+                <span v-if="user.role !== 2">Question File Submission</span>
               </b-button>
               <b-button class="ml-2" size="sm" variant="outline-secondary" v-on:click="showCutups = false">
                 Upload New PDF
@@ -59,6 +60,7 @@
           </b-container>
           <div>
             <b-embed
+              v-if="cutups.length"
               type="iframe"
               aspect="16by9"
               v-bind:src="cutups[currentCutup-1].temporary_url"
@@ -832,18 +834,18 @@ export default {
       }
       return true
     },
-    async setAsSolution(questionId, cutupId) {
+    async setCutupAsSolutionOrSubmission(questionId, cutupId) {
       if (this.settingAsSolution) {
-        this.$noty.info('Please be patient while your reqeuest is being processed.')
+        this.$noty.info('Please be patient while your request is being processed.')
         return false
       }
       this.settingAsSolution = true
       try {
-        const {data} = await axios.post(`/api/cutups/${questionId}/${cutupId}/set-as-solution`)
+        const {data} = await axios.post(`/api/cutups/${this.assignmentId}/${questionId}/${cutupId}/set-as-solution-or-submission`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.questions[this.currentPage - 1].solution = data.cutup
-
+          //for instructor set the solution, for the student set an original_filename
+          this.questions[this.currentPage - 1].solution = this.questions[this.currentPage - 1].original_filename = data.cutup
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
 
         }

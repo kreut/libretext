@@ -6,6 +6,9 @@ use App\Assignment;
 use App\Cutup;
 use App\Question;
 use App\Solution;
+use App\Extension;
+use App\SubmissionFile;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use App\Exceptions\Handler;
 use \Exception;
@@ -14,12 +17,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
-use Illuminate\Support\Facades\Storage;
+use App\Traits\DateFormatter;
+
+
 
 class CutupController extends Controller
 {
 
     use S3;
+    use DateFormatter;
 
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
@@ -42,10 +48,10 @@ class CutupController extends Controller
             if ($results->isNotEmpty()) {
                 foreach ($results as $key => $value) {
                     $dir = (Auth::user()->role == 2) ? "solutions/$user_id/"
-                                                      : "assignments/$assignment->id/";
+                        : "assignments/$assignment->id/";
                     $cutups[] = [
                         'id' => $value->id,
-                        'temporary_url' => \Storage::disk('s3')->temporaryUrl( $dir .$value->file, now()->addMinutes(120))
+                        'temporary_url' => \Storage::disk('s3')->temporaryUrl($dir . $value->file, now()->addMinutes(120))
                     ];
                 }
             }
@@ -60,8 +66,10 @@ class CutupController extends Controller
 
     }
 
-    public function setAsSolution(Request $request, Question $question, Cutup $cutup, Solution $solution)
+    public function setAsSolutionOrSubmission(Request $request, Assignment $assignment, Question $question, Cutup $cutup, Solution $solution, SubmissionFile $submissionFile, Extension $extension)
     {
+
+        $type = (Auth::user()->role === 2) ? 'solution' : 'submission';
 
         $user_id = Auth::user()->id;
         $response['type'] = 'error';
@@ -73,22 +81,52 @@ class CutupController extends Controller
          }*/
         try {
             DB::beginTransaction();
-            $page_number_and_extension = explode('_',$cutup->file)[1];
+            $page_number_and_extension = explode('_', $cutup->file)[1];
 
-            $original_filename =  "solution-cutup-$page_number_and_extension";
+            $original_filename = "solution-cutup-$page_number_and_extension";
+            switch ($type) {
+                case('solution'):
             //add the new full solution
             $solution->updateOrCreate(
                 ['user_id' => $user_id,
                     'question_id' => $question->id,
                     'type' => 'q'],
-                ['file' => $cutup->file, 'original_filename' =>   $original_filename]
+                ['file' => $cutup->file, 'original_filename' => $original_filename]
             );
+                    $response['message'] = 'Your cutup has been set as the solution.';
+            break;
+                case('submission'):
 
+                    if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
+                        $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
+                        return $response;
+                    }
+
+                    $submission_file_data = ['type' => 'q',
+                        'submission' =>  $cutup->file,
+                        'original_filename' => $original_filename,
+                        'file_feedback' => null,
+                        'text_feedback' => null,
+                        'date_graded' => null,
+                        'score' => null,
+                        'date_submitted' => Carbon::now()];
+                    $submissionFile->updateOrCreate(
+                        ['user_id' => Auth::user()->id,
+                            'assignment_id' => $assignment->id,
+                            'question_id' => $question->id,
+                            'type' => 'q'],
+                        $submission_file_data
+                    );
+                    $response['submission'] = basename($original_filename);
+                    $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
+                    $response['message'] = 'Your cutup has been saved as your file submission for this question.';
+                    break;
+
+        }
             Cutup::where('id', $cutup->id)->delete();
 
             $response['type'] = 'success';
-            $response['message'] = 'Your cutup has been set as the solution.';
-            $response['cutup'] =  $original_filename;
+            $response['cutup'] = $original_filename;
 
             DB::commit();
 

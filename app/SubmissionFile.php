@@ -17,6 +17,16 @@ class SubmissionFile extends Model
 
     protected $guarded = [];
 
+    public function isPastSubmissionFileGracePeriod(Extension $extension, Assignment $assignment){
+
+        $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
+
+        $is_extension = isset($extensions_by_assignment[$assignment->id]);
+        $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment->due;
+
+        $carbon_due = Carbon::parse($due);
+        return  $carbon_due->diffInMinutes(Carbon::now(), false) > 20;
+    }
     public function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
     {
         return ['user_id' => $user->id,
