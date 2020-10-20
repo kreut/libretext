@@ -676,6 +676,7 @@ export default {
       this.uploadFileForm.assignmentId = this.assignmentId
     },
     async handleOk(bvModalEvt) {
+      this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.uploadLevel = this.uploadLevel
       // Prevent modal from closing
       bvModalEvt.preventDefault()
@@ -695,7 +696,8 @@ export default {
         (this.uploadLevel === 'question' || !this.cutups.length)) {
         this.$bvModal.hide(`modal-upload-file`)
       }
-      if (!this.uploadFileForm.errors.any()) {
+
+      if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
         await this.getCutups(this.assignmentId)
       }
       this.uploading = false
@@ -866,7 +868,6 @@ export default {
         }
         this.cutups = data.cutups
         this.showCutups = this.cutups.length
-        console.log(this.cutups)
       } catch (error) {
 
         this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')
