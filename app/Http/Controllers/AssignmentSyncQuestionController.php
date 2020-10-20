@@ -255,6 +255,7 @@ class AssignmentSyncQuestionController extends Controller
         $correct_response = null;
         $submission_score = 0;
         $last_submitted = 'N/A';
+
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
