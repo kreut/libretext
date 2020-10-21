@@ -51,11 +51,11 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
 
         $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'assignmentFile' => '',
+            'submissionFile' => '',
             'assignmentId' => $this->assignment->id,
-            'type' => 'assignment'
+            'uploadLevel' => 'assignment'
         ])
-            ->assertJson(['type' => 'error', 'message' => 'The assignment file field is required.']);
+            ->assertJson(['type' => 'error', 'message' => 'The submission file field is required.']);
 
     }
 
@@ -110,11 +110,11 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
 
         $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'assignmentFile' => 'sdflkj.ziggy',
+            'submissionFile' => 'sdflkj.ziggy',
             'assignmentId' => $this->assignment->id,
-            'type' => 'assignment'
+            'uploadLevel' => 'assignment'
         ])
-            ->assertJson(['type' => 'error', 'message' => 'The assignment file must be a file of type: pdf, txt, png, jpeg, jpg.']);
+            ->assertJson(['type' => 'error', 'message' => 'The submission file must be a file of type: pdf, txt, png, jpeg, jpg.']);
 
 
     }
@@ -130,7 +130,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     {
 
         $this->actingAs($this->student_user_3)->putJson("/api/submission-files", [
-            'assignmentFile' => 'abd.pdf',
+            'submissionFile' => 'abd.pdf',
             'assignmentId' => $this->assignment->id,
         ])
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to upload a file to this assignment.']);

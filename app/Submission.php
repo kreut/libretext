@@ -32,6 +32,7 @@ class Submission extends Model
 
 
         $data = $request;
+
         $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
 

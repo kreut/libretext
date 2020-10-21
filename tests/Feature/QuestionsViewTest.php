@@ -24,7 +24,7 @@ class QuestionsViewTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
 
@@ -67,17 +67,30 @@ class QuestionsViewTest extends TestCase
     }
 
 
+    /** @test */
 
+    public function a_student_cannot_download_a_solution_to_a_question_if_the_solutions_are_not_released(){
+        $this->actingAs($this->student_user)->postJson('/api/solution-files/download', [
+            'level' => 'q',
+            'question_id' =>$this->question->id,
+            'assignment_id'=>$this->assignment->id])
+            ->assertJson(['message' => "The solutions are not released so you can't download the solution."]);
+
+
+    }
 
 
     /** @test */
 
     public function a_student_cannot_download_a_solution_to_a_question_in_an_assignment_that_is_not_in_an_enrolled_course(){
-
-        $this->actingAs($this->student_user_2)->postJson('/api/solution-files/download', [
+        $this->assignment->solutions_released = 1;
+        $this->assignment->save();
+      $this->actingAs($this->student_user_2)->postJson('/api/solution-files/download', [
+            'level' => 'q',
             'question_id' =>$this->question->id,
             'assignment_id'=>$this->assignment->id])
-            ->assertJson(['message'=>  'You are not allowed to download these solutions.']);
+            ->assertJson(['message' => 'You are not allowed to download these solutions.']);
+
 
     }
 
@@ -114,6 +127,7 @@ class QuestionsViewTest extends TestCase
 
     public function you_cannot_download_a_solution_that_is_not_part_of_an_assignment(){
         $this->actingAs($this->user)->postJson('/api/solution-files/download', [
+            'level' => 'q',
             'question_id' =>1000,
             'assignment_id'=>$this->assignment->id])
             ->assertJson(['message'=>  'That question is not part of the assignment so you cannot download the solutions.']);

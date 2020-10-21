@@ -122,8 +122,13 @@ class SolutionController extends Controller
         $assignment = Assignment::find($request->assignment_id);
         $level = $request->level;
         try {
-         $authorized = Gate::inspect('downloadSolutionFile', [$solution, $level,  $assignment,$request->question_id]);
+         $authorized = Gate::inspect('downloadSolutionFile', [$solution, $level,  $assignment, $request->question_id]);
          if (!$authorized->allowed()) {
+             //I don't actually return a message to the user if they're not authorized, I just log it
+             //for testing purposes I want to know why they weren't authorized
+             if (env('DB_DATABASE') === "test_libretext"){
+                 return ['message' => $authorized->message()];
+             }
              throw new Exception($authorized->message());
          }
 

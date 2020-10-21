@@ -3,7 +3,7 @@
     <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
     <div v-if="user.role === 2">
       <div class="row mb-4 float-right" v-if="canViewAssignments">
-        <b-button variant="primary" v-b-modal.modal-assignment-details v-on:click="setAssignmentDates">Add Assignment
+        <b-button variant="primary" v-b-modal.modal-assignment-details v-on:click="initAddAssignment">Add Assignment
         </b-button>
       </div>
     </div>
@@ -333,7 +333,9 @@ export default {
 
   },
   methods: {
-    setAssignmentDates() {
+    initAddAssignment() {
+      this.has_submissions_or_file_submissions = 0
+      this.solutionsReleased = 0
       this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
