@@ -24,6 +24,27 @@ class JWTController extends Controller
         echo "The decrypted token: " . $JWE->decrypt($token);
     }
 
+    public function signWithNewSecret()
+    {
+        //encoding...
+        //
+
+
+        $payload = auth()->payload();
+        print_r($payload->toArray()); // current user info
+        \JWTAuth::getJWTProvider()->setSecret('secret'); //change the secret
+        $claims = ['foo' => 'bar'];//create the claims
+        $token = \JWTAuth::getJWTProvider()->encode(array_merge($claims,$payload->toArray())); //create the token
+
+
+        //set the same secret for encoding
+        $secret = file_get_contents(base_path() . '/JWE/webwork');
+        \JWTAuth::getJWTProvider()->setSecret($secret);
+        //$decoded = \JWTAuth::getJWTProvider()->decode($token);
+        auth()->setToken($token)->getPayload();
+        var_dump(auth()->user());
+    }
+
     public function validateToken(string $content)
     {
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
