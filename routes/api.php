@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-$secret = file_get_contents(base_path() . '/JWE/webwork');
+$secret = str_replace("\r\n", "\n",file_get_contents(base_path() . '/JWE/webwork'));
 \JWTAuth::getJWTProvider()->setSecret($secret);
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
