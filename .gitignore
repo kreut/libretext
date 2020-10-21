@@ -10,7 +10,7 @@ strategy
 /public/dist
 /public/build
 /public/mix-manifest.json
-/JWT-Protected
+/JWE
 .env
 .phpunit.result.cache
 Homestead.json
