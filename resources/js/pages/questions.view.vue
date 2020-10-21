@@ -56,9 +56,8 @@
               </b-button>
             </b-row>
           </b-container>
-          <div>
+          <div v-if="showCutups && cutups.length">
             <b-embed
-              v-if="cutups.length"
               type="iframe"
               aspect="16by9"
               v-bind:src="cutups[currentCutup-1].temporary_url"
@@ -849,10 +848,13 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           //for instructor set the solution, for the student set an original_filename
-          this.questions[this.currentPage - 1].solution = data.cutup
+console.log(data)
           if (this.user.role === 3) {
             this.questions[this.currentPage - 1].original_filename = data.cutup
-            this.questions[this.currentPage - 1].submission = data.submission
+            this.questions[this.currentPage-1].submission_file_exists = true
+          }
+          if (this.user.role === 2){
+            this.questions[this.currentPage - 1].solution = data.cutup
           }
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
           this.showCutups = this.cutups.length

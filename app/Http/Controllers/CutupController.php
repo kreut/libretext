@@ -85,7 +85,6 @@ class CutupController extends Controller
             switch ($type) {
                 case('solution'):
                     //add the new full solution
-                    $original_filename = "solution-cutup-pg-$page_number_and_extension";
                     $solution->updateOrCreate(
                         ['user_id' => $user_id,
                             'question_id' => $question->id,
@@ -93,7 +92,7 @@ class CutupController extends Controller
                         ['file' => $cutup->file, 'original_filename' => $original_filename]
                     );
                     $response['message'] = 'Your cutup has been set as the solution.';
-
+                    $response['cutup'] = "solution-cutup-pg-$page_number_and_extension";
                     break;
                 case('submission'):
                     $original_filename = $submissionFile->where('assignment_id', $assignment->id)
@@ -126,11 +125,12 @@ class CutupController extends Controller
                     $response['submission'] = $cutup->file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';
+                    $response['cutup'] = $original_filename;
                     break;
 
             }
             Cutup::where('id', $cutup->id)->delete();
-            $response['cutup'] = $original_filename;
+
             $response['type'] = 'success';
 
             DB::commit();
