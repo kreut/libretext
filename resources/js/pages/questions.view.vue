@@ -674,7 +674,8 @@ export default {
       this.uploadFileForm.assignmentId = this.assignmentId
     },
     async handleOk(bvModalEvt) {
-      this.uploadFileForm.errors.clear(this.uploadFileType)
+
+
       this.uploadFileForm.uploadLevel = this.uploadLevel
       // Prevent modal from closing
       bvModalEvt.preventDefault()
@@ -684,20 +685,22 @@ export default {
         return false
       }
       this.uploading = true
+
       try {
         await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
       } catch (error) {
         this.$noty.error(error.message)
       }
 
+
+      if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
+        await this.getCutups(this.assignmentId)
+      }
       if (!this.uploadFileForm.errors.any() &&
         (this.uploadLevel === 'question' || !this.cutups.length)) {
         this.$bvModal.hide(`modal-upload-file`)
       }
 
-      if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
-        await this.getCutups(this.assignmentId)
-      }
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },
@@ -842,11 +845,15 @@ export default {
       this.settingAsSolution = true
       try {
         const {data} = await axios.post(`/api/cutups/${this.assignmentId}/${questionId}/${cutupId}/set-as-solution-or-submission`)
+        console.log(data)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           //for instructor set the solution, for the student set an original_filename
           this.questions[this.currentPage - 1].solution = data.cutup
-          this.questions[this.currentPage - 1].original_filename = data.cutup
+          if (this.user.role === 3) {
+            this.questions[this.currentPage - 1].original_filename = data.cutup
+            this.questions[this.currentPage - 1].submission = data.submission
+          }
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
           this.showCutups = this.cutups.length
         }

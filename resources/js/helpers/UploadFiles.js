@@ -8,7 +8,7 @@ export async function submitUploadFile(type, form, noty, nextTick, bvModal, uplo
   let typeFile = type + 'File'
 
   try {
-    form.errors.set(typeFile, null)
+    form.errors.clear(typeFile)
     //https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
     let formData = new FormData();
     formData.append(typeFile, form[typeFile])

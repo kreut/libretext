@@ -20,7 +20,6 @@ use App\Traits\S3;
 use App\Traits\DateFormatter;
 
 
-
 class CutupController extends Controller
 {
 
@@ -82,29 +81,35 @@ class CutupController extends Controller
         try {
             DB::beginTransaction();
             $page_number_and_extension = explode('_', $cutup->file)[1];
-
-            $original_filename = "solution-cutup-$page_number_and_extension";
+            $original_filename = 'filename';
             switch ($type) {
                 case('solution'):
-            //add the new full solution
-            $solution->updateOrCreate(
-                ['user_id' => $user_id,
-                    'question_id' => $question->id,
-                    'type' => 'q'],
-                ['file' => $cutup->file, 'original_filename' => $original_filename]
-            );
+                    //add the new full solution
+                    $original_filename = "solution-cutup-pg-$page_number_and_extension";
+                    $solution->updateOrCreate(
+                        ['user_id' => $user_id,
+                            'question_id' => $question->id,
+                            'type' => 'q'],
+                        ['file' => $cutup->file, 'original_filename' => $original_filename]
+                    );
                     $response['message'] = 'Your cutup has been set as the solution.';
-            break;
-                case('submission'):
+                    $dir ="solutions/$user_id/";
 
+                    break;
+                case('submission'):
+                    $original_filename = $submissionFile->where('assignment_id', $assignment->id)
+                                    ->where('user_id', Auth::user()->id)
+                                    ->where('type','a')
+                                    ->first()
+                                    ->original_filename;
                     if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
                         $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
                         return $response;
                     }
-
+                    $original_filename = basename($original_filename, '.pdf') . "-pg-$page_number_and_extension";
                     $submission_file_data = ['type' => 'q',
-                        'submission' =>  $cutup->file,
-                        'original_filename' => $original_filename,
+                        'submission' => $cutup->file,
+                        'original_filename' =>   $original_filename ,
                         'file_feedback' => null,
                         'text_feedback' => null,
                         'date_graded' => null,
@@ -117,16 +122,17 @@ class CutupController extends Controller
                             'type' => 'q'],
                         $submission_file_data
                     );
-                    $response['submission'] = basename($original_filename);
+
+                        $dir =  "assignments/$assignment->id/";
+                    $response['submission'] = $cutup->file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';
                     break;
 
-        }
+            }
             Cutup::where('id', $cutup->id)->delete();
-
-            $response['type'] = 'success';
             $response['cutup'] = $original_filename;
+            $response['type'] = 'success';
 
             DB::commit();
 
