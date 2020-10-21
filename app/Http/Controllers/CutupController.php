@@ -72,12 +72,12 @@ class CutupController extends Controller
 
         $user_id = Auth::user()->id;
         $response['type'] = 'error';
-        /* $authorized = Gate::inspect('view', $enrollment);
+        $authorized = Gate::inspect('setAsSolutionOrSubmission',[ $cutup, $assignment, $question]);
 
          if (!$authorized->allowed()) {
              $response['message'] = $authorized->message();
              return $response;
-         }*/
+         }
         try {
             DB::beginTransaction();
             $page_number_and_extension = explode('_', $cutup->file)[1];
@@ -93,7 +93,6 @@ class CutupController extends Controller
                         ['file' => $cutup->file, 'original_filename' => $original_filename]
                     );
                     $response['message'] = 'Your cutup has been set as the solution.';
-                    $dir ="solutions/$user_id/";
 
                     break;
                 case('submission'):
@@ -102,6 +101,7 @@ class CutupController extends Controller
                                     ->where('type','a')
                                     ->first()
                                     ->original_filename;
+
                     if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
                         $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
                         return $response;
@@ -123,7 +123,6 @@ class CutupController extends Controller
                         $submission_file_data
                     );
 
-                        $dir =  "assignments/$assignment->id/";
                     $response['submission'] = $cutup->file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';

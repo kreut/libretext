@@ -33,7 +33,7 @@ class AssignmentSyncQuestionPolicy
     }
 
     /**
-     * Determine whether the user can delete the question in the assignment.
+     * Determine whether the user can add the question to the assignment.
      *
      * @param \App\User $user
      * @param \App\Assignment $assignment

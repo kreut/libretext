@@ -6,11 +6,12 @@ use App\Assignment;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use \App\Traits\CommonPolicies;
 
 class AssignmentPolicy
 {
     use HandlesAuthorization;
-    use \App\Traits\CommonPolicies;
+    use CommonPolicies;
 
 
     /**
@@ -33,12 +34,13 @@ class AssignmentPolicy
      */
     public function view(User $user, Assignment $assignment)
     {
-        switch ($user->role){
+
+        switch ($user->role) {
             case(2):
-                $has_access =    $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = $this->ownsCourseByUser($assignment->course, $user);
                 break;
             case(3):
-                $has_access =   $assignment->course->enrollments->contains('user_id', $user->id);
+                $has_access = $assignment->course->enrollments->contains('user_id', $user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
@@ -71,7 +73,7 @@ class AssignmentPolicy
      */
     public function update(User $user, Assignment $assignment)
     {
-        return $user->id === (int) $assignment->course->user_id
+        return $user->id === (int)$assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to update this assignment.');
     }
@@ -86,7 +88,7 @@ class AssignmentPolicy
     public function delete(User $user, Assignment $assignment)
     {
         //added (int) because wasn't working in the test
-        return $user->id === (int) $assignment->course->user_id
+        return $user->id === (int)$assignment->course->user_id
             ? Response::allow()
             : Response::deny('You are not allowed to delete this assignment.');
     }

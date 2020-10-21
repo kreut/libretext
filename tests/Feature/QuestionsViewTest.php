@@ -6,9 +6,11 @@ use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Extension;
-use App\SubmissionFile;
+use App\Cutup;
 use App\User;
 use App\Question;
+use App\SubmissionFile;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -41,6 +43,9 @@ class QuestionsViewTest extends TestCase
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
+        $this->cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+
+
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
 
@@ -52,16 +57,91 @@ class QuestionsViewTest extends TestCase
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'submission' =>   '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
-       ];
+            'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
+        ];
+
+
+    }
+
+    public function createSubmissionFile()
+    {
+        //set up this way since I wouldn't have been able to remove questions below if there was already a submission
+        factory(SubmissionFile::class)->create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'type' => 'a',
+            'original_filename' => 'some original name.pdf']);
+
+    }
+
+    /** @test */
+
+    public function student_cannot_create_cutups_for_a_question_not_in_their_assignment()
+    {
+        factory(Question::class)->create(['id' => 10000000, 'page_id' => 100000000]);
+        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/10000000/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "That question is not in the assignment."]);
 
 
     }
 
     /** @test */
 
-    public function one_cannot_add_a_question_to_an_assignment_if_a_student_has_submitted_a_response(){
+    public function student_can_create_cutups_for_a_question_in_their_assignment()
+    {
+        $this->createSubmissionFile();
+        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "Your cutup has been saved as your file submission for this question."]);
 
+    }
+
+    /** @test */
+
+    public function student_cannot_create_cutups_if_the_assignment_is_past_due()
+    {
+        $this->createSubmissionFile();
+        $this->assignment->due = Carbon::yesterday();
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "You cannot set this cutup as a solution since this assignment is past due."]);
+
+    }
+
+    /** @test */
+
+    public function student_can_create_cutups_if_the_assignment_is_past_due_but_the_extension_has_not_past()
+    {
+        $this->createSubmissionFile();
+        $this->assignment->due = Carbon::yesterday();
+        $this->assignment->save();
+        factory(Extension::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "Your cutup has been saved as your file submission for this question."]);
+
+    }
+
+    /** @test */
+
+    public function instructor_cannot_create_cutups_if_they_are_not_the_owner_of_the_course()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "You are not allowed to create a cutup for this assignment."]);
+
+
+    }
+
+    /** @test */
+
+    public function isntructor_can_create_cutups_if_they_are_the_owner()
+    {
+        $this->actingAs($this->user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/{$this->cutup->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "Your cutup has been set as the solution."]);
+    }
+
+    /** @test */
+
+    public function one_cannot_add_a_question_to_an_assignment_if_a_student_has_submitted_a_response()
+    {
 
 
     }
@@ -69,11 +149,12 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function a_student_cannot_download_a_solution_to_a_question_if_the_solutions_are_not_released(){
+    public function a_student_cannot_download_a_solution_to_a_question_if_the_solutions_are_not_released()
+    {
         $this->actingAs($this->student_user)->postJson('/api/solution-files/download', [
             'level' => 'q',
-            'question_id' =>$this->question->id,
-            'assignment_id'=>$this->assignment->id])
+            'question_id' => $this->question->id,
+            'assignment_id' => $this->assignment->id])
             ->assertJson(['message' => "The solutions are not released so you can't download the solution."]);
 
 
@@ -82,13 +163,14 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function a_student_cannot_download_a_solution_to_a_question_in_an_assignment_that_is_not_in_an_enrolled_course(){
+    public function a_student_cannot_download_a_solution_to_a_question_in_an_assignment_that_is_not_in_an_enrolled_course()
+    {
         $this->assignment->solutions_released = 1;
         $this->assignment->save();
-      $this->actingAs($this->student_user_2)->postJson('/api/solution-files/download', [
+        $this->actingAs($this->student_user_2)->postJson('/api/solution-files/download', [
             'level' => 'q',
-            'question_id' =>$this->question->id,
-            'assignment_id'=>$this->assignment->id])
+            'question_id' => $this->question->id,
+            'assignment_id' => $this->assignment->id])
             ->assertJson(['message' => 'You are not allowed to download these solutions.']);
 
 
@@ -96,47 +178,43 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function a_student_can_download_a_solution_uploaded_by_their_instructor(){
+    public function a_student_can_download_a_solution_uploaded_by_their_instructor()
+    {
 
 
     }
 
 
-
-
     /** @test */
 
-    public function a_non_instructor_cannot_upload_a_solution(){
+    public function a_non_instructor_cannot_upload_a_solution()
+    {
         $this->actingAs($this->student_user)->putJson("/api/solution-files", [
-            'question_id' =>1])
-            ->assertJson(['message'=> 'You are not allowed to upload solutions.']);
+            'question_id' => 1])
+            ->assertJson(['message' => 'You are not allowed to upload solutions.']);
 
 
     }
 
     /** @test */
 
-    public function an_instructor_can_upload_a_solution(){
-
-
+    public function an_instructor_can_upload_a_solution()
+    {
 
 
     }
 
     /** @test */
 
-    public function you_cannot_download_a_solution_that_is_not_part_of_an_assignment(){
+    public function you_cannot_download_a_solution_that_is_not_part_of_an_assignment()
+    {
         $this->actingAs($this->user)->postJson('/api/solution-files/download', [
             'level' => 'q',
-            'question_id' =>1000,
-            'assignment_id'=>$this->assignment->id])
-            ->assertJson(['message'=>  'That question is not part of the assignment so you cannot download the solutions.']);
+            'question_id' => 1000,
+            'assignment_id' => $this->assignment->id])
+            ->assertJson(['message' => 'That question is not part of the assignment so you cannot download the solutions.']);
 
     }
-
-
-
-
 
 
     /** @test */
@@ -146,9 +224,10 @@ class QuestionsViewTest extends TestCase
         $this->assignment->submission_files = '0';
         $this->assignment->save();
         $this->h5pSubmission['technology'] = 'bogus technology';
-        $this->actingAs($this->student_user)->postJson("/api/submissions",     $this->h5pSubmission)->assertStatus(422);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)->assertStatus(422);
 
     }
+
     /** @test */
     public function must_submit_a_question_with_a_valid_assignment_number()
     {
@@ -156,22 +235,23 @@ class QuestionsViewTest extends TestCase
         $this->h5pSubmission['assignment_id'] = false;
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions",
-            $this->h5pSubmission)  ->assertStatus(422);
+            $this->h5pSubmission)->assertStatus(422);
 
     }
-/** @test */
+
+    /** @test */
     public function must_submit_a_question_with_a_valid_question_number()
     {
         $this->assignment->submission_files = '0';
         $this->assignment->save();
         $this->h5pSubmission['question_id'] = false;
         $this->actingAs($this->student_user)->postJson("/api/submissions",
-            $this->h5pSubmission)  ->assertStatus(422);
+            $this->h5pSubmission)->assertStatus(422);
 
     }
 
 
-        /** @test */
+    /** @test */
 
     public function assignments_of_scoring_type_p_and_no_question_files_will_compute_the_score_based_on_the_question_points()
     {
@@ -192,15 +272,15 @@ class QuestionsViewTest extends TestCase
             ->pluck('points');
 
 
-        $this->assertEquals(number_format($points_1[0],2), number_format($score[0],2), 'Score saved when student submits.');
+        $this->assertEquals(number_format($points_1[0], 2), number_format($score[0], 2), 'Score saved when student submits.');
 
         //do it again and it should update
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", [
-            'technology' => 'h5p',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question_2->id,
-            'submission' =>  $this->h5pSubmission['submission']]
+                'technology' => 'h5p',
+                'assignment_id' => $this->assignment->id,
+                'question_id' => $this->question_2->id,
+                'submission' => $this->h5pSubmission['submission']]
         );
 
         $points_2 = DB::table('assignment_question')
@@ -214,7 +294,7 @@ class QuestionsViewTest extends TestCase
             ->get()
             ->pluck('score');
 
-        $this->assertEquals(number_format($points_1[0] + $points_2[0],2), number_format($score[0],2), 'Score saved when student submits.');
+        $this->assertEquals(number_format($points_1[0] + $points_2[0], 2), number_format($score[0], 2), 'Score saved when student submits.');
 
 
     }
@@ -287,7 +367,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->scoring_type = 'c';
         $this->assignment->save();
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
             ->where('assignment_id', $this->assignment->id)
@@ -299,7 +379,7 @@ class QuestionsViewTest extends TestCase
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
-            'submission' =>  $this->h5pSubmission['submission']])
+            'submission' => $this->h5pSubmission['submission']])
             ->assertJson(['type' => 'success']);
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
@@ -375,7 +455,7 @@ class QuestionsViewTest extends TestCase
     public function can_submit_response()
     {
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
 
     }
@@ -385,10 +465,10 @@ class QuestionsViewTest extends TestCase
     {
 
         ///to do ---- change the second one to see if the database actually updated!
-        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
 
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",   $this->h5pSubmission)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'success']);
 
     }
@@ -407,7 +487,7 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function cannot_submit_response_if_user_not_enrolled_in_course()
     {
-        $this->actingAs($this->student_user_2)->postJson("/api/submissions",   $this->h5pSubmission)
+        $this->actingAs($this->student_user_2)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since the assignment is not part of your course.']);
 
@@ -434,7 +514,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
 
     }
@@ -449,7 +529,7 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'extension' => '2020-01-01 09:00:00']);
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since your extension for this assignment has passed.']);
 
@@ -462,7 +542,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->save();
 
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions",  $this->h5pSubmission)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
                 'message' => 'No responses will be saved since this assignment is not yet available.']);
 
