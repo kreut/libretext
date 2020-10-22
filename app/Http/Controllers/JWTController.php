@@ -34,7 +34,7 @@ class JWTController extends Controller
         print_r($payload->toArray()); // current user info
         \JWTAuth::getJWTProvider()->setSecret('secret'); //change the secret
         $claims = ['foo' => 'bar'];//create the claims
-        $token = \JWTAuth::getJWTProvider()->encode(array_merge($claims,$payload->toArray())); //create the token
+        $token = \JWTAuth::getJWTProvider()->encode(array_merge($claims, $payload->toArray())); //create the token
 
 
         //set the same secret for encoding
@@ -50,7 +50,6 @@ class JWTController extends Controller
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
         $response['type'] = 'error';
         try {
-            \JWTAuth::getJWTProvider()->setSecret(file_get_contents(base_path() . '/JWE/webwork'));
             if (!auth()->setToken($content)->getPayload()) {
                 $response['message'] = 'User not found';
             } else {
@@ -66,7 +65,10 @@ class JWTController extends Controller
 
     public function processAnswerJWT(Request $request)
     {
-
+        $JWE = new JWE();
+        $technology = 'webwork';
+        $secret = $JWE->getSecret($technology);
+        \JWTAuth::getJWTProvider()->setSecret($secret);
         $content = $request->getContent();
         $response = $this->validateToken($content);
         if ($response['type'] === 'error') {
@@ -81,7 +83,7 @@ class JWTController extends Controller
             return json_encode(['type' => 'error', 'message' => $message]);
         }
         $jwe = new JWE();
-        $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT));
+        $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT, $technology));
 
         $missing_properties = !(
             isset($problemJWT->adapt) &&

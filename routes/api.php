@@ -13,9 +13,6 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-//$secret = str_replace("\r\n", "",file_get_contents(base_path() . '/JWE/webwork'));
-\JWTAuth::getJWTProvider()->setSecret('sdfdsfsdsdvdssdffsdfsd');
-
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
 Route::post('/contact-us', 'ContactUsController@contactUs');

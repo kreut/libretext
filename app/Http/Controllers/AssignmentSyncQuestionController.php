@@ -271,7 +271,7 @@ class AssignmentSyncQuestionController extends Controller
                     $student_response_arr = [];
                     $session_JWT = $this->getPayload($submission_object->sessionJWT);
                     //session_JWT will be null for bad submissions
-                    if ( is_object($session_JWT) && $session_JWT->answersSubmitted) {
+                    if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
                         $answer_template = (array)$session_JWT->answerTemplate;
                         foreach ($answer_template as $key => $value) {
                             if (is_numeric($key)) {
@@ -502,11 +502,14 @@ class AssignmentSyncQuestionController extends Controller
 
                         $payload = auth()->payload();
 
-                        $secret =  file_get_contents(base_path() . '/JWE/webwork');
-                        \JWTAuth::getJWTProvider()->setSecret( $secret); //change the secret
-                        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims,$payload->toArray())); //create the token
-                        $problemJWT =  $JWE->encrypt($token); //create the token
-                        \JWTAuth::getJWTProvider()->setSecret( 'sdfdsfsdsdvdssdffsdfsd');
+                        $secret = $JWE->getSecret('webwork');
+
+                        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
+
+                        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
+                        $problemJWT = $JWE->encrypt($token,'webwork'); //create the token
+                    //put back the original secret
+                        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
 
                         break;
                     case('imathas'):

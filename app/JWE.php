@@ -15,6 +15,9 @@ use Jose\Component\KeyManagement\JWKFactory;
 use App\Traits\JWT;
 use Illuminate\Support\Facades\Log;
 
+use App\Exceptions\Handler;
+use \Exception;
+
 class JWE extends Model
 
 {
@@ -32,15 +35,27 @@ class JWE extends Model
         $this->keyEncryptionAlgorithmManager = new AlgorithmManager([new PBES2HS512A256KW(),]);
         $this->contentEncryptionAlgorithmManager = new AlgorithmManager([new A256GCM(),]);
         $this->compressionMethodManager = new CompressionMethodManager([new Deflate(),]);
-
-        $this->jwk = JWKFactory::createFromSecret(
-           file_get_contents(base_path() . '/JWE/webwork')
-        );
         $this->serializer = new CompactSerializer(); // The serializer
     }
 
-    public function encrypt(string $jwt)
+    public function getSecret(string $technology){
+        switch($technology){
+            case('webwork'):
+                return file_get_contents(base_path() . '/JWE/webwork');
+                break;
+            default:
+                throw new Exception("$technology has no secret associated with it.");
+        }
+    }
+
+
+    public function encrypt(string $jwt, string $technology)
     {
+
+        $jwk = JWKFactory::createFromSecret(
+            $this->getSecret($technology)
+        );
+
         $jweBuilder = new JWEBuilder(
             $this->keyEncryptionAlgorithmManager,
             $this->contentEncryptionAlgorithmManager,
@@ -55,13 +70,13 @@ class JWE extends Model
             ->withSharedProtectedHeader(['alg' => 'PBES2-HS512+A256KW',        // Key Encryption Algorithm
                 'enc' => 'A256GCM', // Content Encryption Algorithm
                 'zip' => 'DEF'])            // We enable the compression (irrelevant as the payload is small, just for the example).])
-            ->addRecipient($this->jwk)    // We add a recipient (a shared key or public key).
+            ->addRecipient($jwk)    // We add a recipient (a shared key or public key).
             ->build();              // We build it
 
         return  $this->serializer->serialize($jwe, 0); // We serialize the recipient at index 0 (we only have one recipient).
     }
 
-    public function decrypt(string $token)
+    public function decrypt(string $token, string $technology)
     {
 
         $jweDecrypter = new JWEDecrypter(
@@ -69,8 +84,11 @@ class JWE extends Model
             $this->contentEncryptionAlgorithmManager,
             $this->compressionMethodManager
         );
+        $jwk = JWKFactory::createFromSecret(
+            $this->getSecret($technology)
+        );
         $jwe = $this->serializer->unserialize($token);
-        $success = $jweDecrypter->decryptUsingKey($jwe, $this->jwk, 0);
+        $success = $jweDecrypter->decryptUsingKey($jwe, $jwk, 0);
         return $success ? $jwe->getPayload() : false;
 
     }
