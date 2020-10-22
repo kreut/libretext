@@ -66,7 +66,9 @@ class JWTController extends Controller
     public function processAnswerJWT(Request $request)
     {
         $JWE = new JWE();
+        $referer = $request->headers->get('referer');//will use this to determine the technology
         $technology = 'webwork';
+
         $secret = $JWE->getSecret($technology);
         \JWTAuth::getJWTProvider()->setSecret($secret);
         $content = $request->getContent();
