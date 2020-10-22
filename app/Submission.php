@@ -129,7 +129,7 @@ class Submission extends Model
                     break;
             }
             $response['type'] = 'success';
-            $response['message'] = 'Your question submission was saved.';
+            $response['message'] = 'Question submission saved.';
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

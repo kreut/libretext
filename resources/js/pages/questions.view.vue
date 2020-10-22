@@ -310,9 +310,6 @@
                   </iframe>
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
-                <b-alert :variant="this.submissionDataType" :show="showSubmissionMessage">
-                  <span class="font-weight-bold">{{ this.submissionDataMessage }}</span></b-alert>
-
               </div>
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
@@ -350,6 +347,9 @@
                     questions[currentPage - 1].last_submitted
                   }}<br>
                   <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
+                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                    <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
+
                   <div v-if="(scoring_type === 'p') && solutionsReleased">
                     <!--<span class="font-weight-bold">Correct response:</span> {{
                       questions[currentPage - 1].correct_response
