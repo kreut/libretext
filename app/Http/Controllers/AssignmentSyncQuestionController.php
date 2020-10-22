@@ -481,9 +481,19 @@ class AssignmentSyncQuestionController extends Controller
                         $webwork_url = 'webwork.libretexts.org';
                         $custom_claims['webwork'] = [];
                         $custom_claims['webwork']['problemSeed'] = '1234567';
-                        $custom_claims['webwork']['courseID'] = 'daemon_course';
-                        $custom_claims['webwork']['userID'] = 'daemon';
-                        $custom_claims['webwork']['course_password'] = 'daemon';
+
+                        switch ($webwork_url) {
+                            case('demo.webwork.rochester.edu'):
+                                $custom_claims['webwork']['courseID'] = 'daemon_course';
+                                $custom_claims['webwork']['userID'] = 'daemon';
+                                $custom_claims['webwork']['course_password'] = 'daemon';
+                                break;
+                            case('webwork.libretexts.org'):
+                                $custom_claims['webwork']['courseID'] = 'anonymous';
+                                $custom_claims['webwork']['userID'] = 'anonymous';
+                                $custom_claims['webwork']['course_password'] = 'anonymous';
+                                break;
+                        }
                         $custom_claims['webwork']['showSummary'] = 1;
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
                         $custom_claims['webwork']['language'] = 'en';
@@ -498,7 +508,7 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['language'] = 'en';
                         $custom_claims['webwork']['showHints'] = 0;
                         $custom_claims['webwork']['showSolution'] = 0;
-                        $custom_claims['webwork']['showDebug'] = 1;
+                        $custom_claims['webwork']['showDebug'] = 0;
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
 
@@ -509,8 +519,8 @@ class AssignmentSyncQuestionController extends Controller
                         \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
 
                         $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-                        $problemJWT = $JWE->encrypt($token,'webwork'); //create the token
-                    //put back the original secret
+                        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
+                        //put back the original secret
                         \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
 
                         break;
