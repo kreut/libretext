@@ -3,36 +3,42 @@
     <PageTitle v-if="canViewScores" title="Gradebook"></PageTitle>
     <div v-if="hasAssignments">
       <div v-if="canViewScores">
-        <download-excel
-          class="float-right mb-2"
-          :data="downloadData"
-          :fetch="fetchData"
-          :fields="downloadFields"
-          worksheet="My Worksheet"
-          type="csv"
-          name="scores.csv">
-          <b-button variant="success">Download Scores</b-button>
-        </download-excel>
-      </div>
-      <b-table striped
-               hover
-               fixed
-               :items="items"
-               :fields="fields"
-               :sort-by.sync="sortBy"
-               primary-key="userId"
-               :sort-desc.sync="sortDesc"
-               sort-icon-left
-               responsive="sm"
-
-      >
-        <template v-slot:cell()="data"
-                  v-for="assignmentIndex in assignmentsArray">
+        <b-container>
+          <b-row align-h="end">
+            <download-excel
+              class="float-right mb-2"
+              :data="downloadData"
+              :fetch="fetchData"
+              :fields="downloadFields"
+              worksheet="My Worksheet"
+              type="csv"
+              name="scores.csv">
+              <b-button variant="success">Download Scores</b-button>
+            </download-excel>
+          </b-row>
+          <b-row>
+            <b-table striped
+                     hover
+                     responsive="true"
+                     sticky-header="600px"
+                     no-border-collapse="false"
+                     :items="items"
+                     :fields="fields"
+                     :sort-by.sync="sortBy"
+                     primary-key="userId"
+                     :sort-desc.sync="sortDesc"
+                     sort-icon-left
+            >
+              <template v-slot:cell()="data"
+                        v-for="assignmentIndex in assignmentsArray">
           <span v-html="data.value"
                 v-on:click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)"></span>
-        </template>
+              </template>
 
-      </b-table>
+            </b-table>
+          </b-row>
+        </b-container>
+      </div>
     </div>
     <div v-else>
       <b-alert show variant="warning"><a href="#" class="alert-link">Once you have students enrolled in the cousre.</a>
@@ -126,7 +132,6 @@ import axios from 'axios'
 import Form from "vform"
 
 
-
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
@@ -199,7 +204,7 @@ export default {
       }
       let success = true
       if (isUpdateScore) {
-        success  = await this.updateScore()
+        success = await this.updateScore()
       }
       if (success) {
         if (isUpdateExtension) {
@@ -320,6 +325,7 @@ export default {
         if (data.hasAssignments) {
           this.items = data.table.rows
           this.fields = data.table.fields  //Name
+          console.log(this.fields)
           this.downloadFields = data.download_fields
           this.downloadData = data.download_data
 
