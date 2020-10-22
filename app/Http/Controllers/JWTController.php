@@ -50,6 +50,7 @@ class JWTController extends Controller
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
         $response['type'] = 'error';
         try {
+            \JWTAuth::getJWTProvider()->setSecret(file_get_contents(base_path() . '/JWE/webwork'));
             if (!auth()->setToken($content)->getPayload()) {
                 $response['message'] = 'User not found';
             } else {

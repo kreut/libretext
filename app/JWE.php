@@ -34,7 +34,7 @@ class JWE extends Model
         $this->compressionMethodManager = new CompressionMethodManager([new Deflate(),]);
 
         $this->jwk = JWKFactory::createFromSecret(
-            \JWTAuth::getJWTProvider()->getSecret()
+           file_get_contents(base_path() . '/JWE/webwork')
         );
         $this->serializer = new CompactSerializer(); // The serializer
     }
