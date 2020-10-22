@@ -270,8 +270,8 @@ class AssignmentSyncQuestionController extends Controller
                     $student_response = 'N/A';
                     $student_response_arr = [];
                     $session_JWT = $this->getPayload($submission_object->sessionJWT);
-
-                    if ($session_JWT->answersSubmitted) {
+                    //session_JWT will be null for bad submissions
+                    if ( is_object($session_JWT) && $session_JWT->answersSubmitted) {
                         $answer_template = (array)$session_JWT->answerTemplate;
                         foreach ($answer_template as $key => $value) {
                             if (is_numeric($key)) {
@@ -494,8 +494,8 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
-                        $custom_claims['webwork']['showHints'] = 1;
-                        $custom_claims['webwork']['showSolution'] = 1;
+                        $custom_claims['webwork']['showHints'] = 0;
+                        $custom_claims['webwork']['showSolution'] = 0;
                         $custom_claims['webwork']['showDebug'] = 0;
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
