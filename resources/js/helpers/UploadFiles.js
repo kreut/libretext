@@ -29,7 +29,8 @@ export async function submitUploadFile(type, form, noty, nextTick, bvModal, uplo
           bvModal.hide(`modal-upload-file`)
         })
       }
-      if (type === 'question') {
+
+      if (type === 'submission') {
         //immediate feedback for them to see.
         //for assignments, they'll have to click on something else to get the information
         uploadFile.date_submitted = data.date_submitted

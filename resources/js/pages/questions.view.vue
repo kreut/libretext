@@ -674,7 +674,7 @@ export default {
     },
     async handleOk(bvModalEvt) {
 
-
+      this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.uploadLevel = this.uploadLevel
       // Prevent modal from closing
       bvModalEvt.preventDefault()
@@ -690,7 +690,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-
 
       if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
         await this.getCutups(this.assignmentId)
