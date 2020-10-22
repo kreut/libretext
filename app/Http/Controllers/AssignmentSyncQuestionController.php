@@ -477,6 +477,8 @@ class AssignmentSyncQuestionController extends Controller
                 $custom_claims["{$question->technology}"] = '';
                 switch ($question->technology) {
                     case('webwork'):
+                        //$webwork_url = 'demo.webwork.rochester.edu';
+                        $webwork_url = 'webwork.libretexts.org';
                         $custom_claims['webwork'] = [];
                         $custom_claims['webwork']['problemSeed'] = '1234567';
                         $custom_claims['webwork']['courseID'] = 'daemon_course';
@@ -491,14 +493,14 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($src, 'sourceFilePath');
                         $custom_claims['webwork']['answersSubmitted'] = '0';
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
-                        $custom_claims['webwork']['form_action_url'] = 'https://demo.webwork.rochester.edu/webwork2/html2xml';
+                        $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
                         $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                         $custom_claims['webwork']['language'] = 'en';
                         $custom_claims['webwork']['showHints'] = 0;
                         $custom_claims['webwork']['showSolution'] = 0;
-                        $custom_claims['webwork']['showDebug'] = 0;
+                        $custom_claims['webwork']['showDebug'] = 1;
 
-                        $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://demo.webwork.rochester.edu/webwork2/html2xml?" width="100%"></iframe>';
+                        $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
 
                         $payload = auth()->payload();
 
