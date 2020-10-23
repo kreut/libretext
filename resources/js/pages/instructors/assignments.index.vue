@@ -191,18 +191,27 @@
       </b-form>
     </b-modal>
     <b-modal
-      id="modal-release-solutions"
+      id="modal-release-solutions-show-scores"
       ref="modal"
-      title="Confirm Release Solutions"
-      @ok="handleReleaseSolutions"
+      title="Release Solutions - Show Scores"
+      @ok="handleReleaseSolutionsShowScores"
       @hidden="resetModalForms"
-      ok-title="Yes, release solutions!"
+      ok-title="Submit"
 
     >
-      <p>By releasing the solutions, students will be able to see the solutions to all of the questions in the
-        assignment.</p>
-      <p>In addition, students will be able to see their assignment score.</p>
-      <p><strong>Once the solutions become available, they cannot be hidden again!</strong></p>
+
+     <b-form-group label-cols-lg="4" label="Release Solutions">
+        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.solutions_released" >
+          <b-form-radio  name="solutions_released" value="1">Yes</b-form-radio>
+          <b-form-radio name="solutions_released" value="0">No</b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group label-cols-lg="4" label="Show Scores">
+        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.show_scores">
+          <b-form-radio name="show_scores" value="1">Yes</b-form-radio>
+          <b-form-radio name="show_scores" value="0">No</b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
     </b-modal>
     <b-modal
       id="modal-delete-assignment"
@@ -241,7 +250,7 @@
                   v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
             <span v-if="user.role === 2">
-            <span class="pr-1" v-on:click="releaseSolutions(data.item)">
+            <span class="pr-1" v-on:click="releaseSolutionsShowScores(data.item)">
               <b-icon :variant="solutionsReleasedColor(data.item)" icon="envelope-open"></b-icon>
             </span>
 
@@ -275,7 +284,8 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
-    solutionsReleased: false,
+    solutionsReleased: 0,
+    showScores: 0,
     assignmentId: false, //if there's a assignmentId it's an update
     assignments: [],
     completedOrCorrectOptions: [
@@ -305,6 +315,10 @@ export default {
       },
       'actions'
     ],
+    solutionsReleasedShowScoreForm: new Form({
+      solutions_released: 0,
+      show_scores: 0
+    }),
     form: new Form({
       name: '',
       available_from: '',
@@ -350,21 +364,19 @@ export default {
     solutionsReleasedColor(assignment) {
       return (assignment.solutions_released === 1) ? 'success' : 'secondary'
     },
-    releaseSolutions(assignment) {
+    releaseSolutionsShowScores(assignment) {
+      this.$bvModal.show('modal-release-solutions-show-scores')
       console.log(assignment)
-      if (assignment.solutions_released) {
-        this.$noty.info('The solutions to this assignment are already available to your students.')
-        return false
-      }
-      this.$bvModal.show('modal-release-solutions')
+      this.solutionsReleasedShowScoreForm.solutions_released = assignment.solutions_released
+      this.solutionsReleasedShowScoreForm.show_scores = assignment.show_scores
       this.assignmentId = assignment.id
     },
-    async handleReleaseSolutions(bvModalEvt) {
+    async handleReleaseSolutionsShowScores(bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
-        const {data} = await axios.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
+        const {data} = await this.solutionsReleasedShowScoreForm.patch(`/api/assignments/${this.assignmentId}/release-solutions-show-scores`)
         this.$noty[data.type](data.message)
-        this.resetAll('modal-release-solutions')
+        this.resetAll('modal-release-solutions-show-scores')
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -397,7 +409,7 @@ export default {
 
       if (Boolean(Number(assignment.has_submissions_or_file_submissions))) {
         this.$noty.info("Since students have already submitted responses to this assignment, you won't be able to add or remove questions.")
-      return false
+        return false
       }
       if (Boolean(Number(assignment.solutions_released))) {
         this.$noty.info("You have already released the solutions to this assignment, so you won't be able to add or remove questions.")
@@ -483,7 +495,7 @@ export default {
         console.log(data)
         if (data.available_after_due) {
           //had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date',data.message)
+          this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false
         }
@@ -505,7 +517,7 @@ export default {
         console.log(data)
         if (data.available_after_due) {
           //had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date',data.message)
+          this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false
         }

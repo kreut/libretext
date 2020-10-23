@@ -24,7 +24,7 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
-    public function releaseSolutions(Request $request, Assignment $assignment)
+    public function releaseSolutionsShowScores(Request $request, Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -36,9 +36,13 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment->update(['solutions_released' => 1]);
+            $assignment->update([
+                'solutions_released' => $request->solutions_released,
+                'show_scores' => $request->show_scores]);
             $response['type'] = 'success';
-            $response['message'] = "Your students can now view the solutions to <strong>{$assignment->name}</strong>.";
+            $view_solutions = $request->solutions_released ? 'can' : 'cannot';
+            $scores_released = $request->show_scores ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$view_solutions}</strong> view the solutions.<br><br> And, they <strong>{$scores_released}</strong> view their scores.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

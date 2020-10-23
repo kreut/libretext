@@ -14,7 +14,7 @@ class AddScoresReleasedToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->boolean('scores_released')
+            $table->boolean('show_scores')
                     ->default(0)->after('submission_files');
         });
     }
@@ -27,7 +27,7 @@ class AddScoresReleasedToAssignments extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->dropColumn('scores_released');
+            $table->dropColumn('show_scores');
         });
     }
 }
