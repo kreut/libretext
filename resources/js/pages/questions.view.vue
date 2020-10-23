@@ -45,6 +45,8 @@
             ></b-pagination>
           </div>
           <b-container class="mb-2">
+            ***Important: Currently we are associating one cutup per question (Multi-page option coming soon!). So, if you need more than one cutup, please use the option of
+            uploading an individual file for the question***
             <b-row align-h="center">
               <b-button size="sm" variant="outline-primary"
                         v-on:click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id, cutups[currentCutup-1].id)">
