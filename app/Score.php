@@ -116,10 +116,10 @@ class Score extends Model
 //initialize
         foreach ($assignments as $assignment) {
             $assignment_ids[] = $assignment->id;
-            $solutions_released[$assignment->id] = $assignment->solutions_released;
+            $solutions_released[$assignment->id] = $assignment->scores_released;
             $scoring_types[$assignment->id] = $assignment->scoring_type;
             if ($assignment->scoring_type === 'p') {
-                $scores_by_assignment[$assignment->id] = ($assignment->solutions_released)
+                $scores_by_assignment[$assignment->id] = ($assignment->scores_released)
                     ? 0 : 'Not yet released';
 
             } else {
@@ -133,7 +133,7 @@ class Score extends Model
             ->where('user_id', $user->id)
             ->get();
 
-//show the score for points only if the solutions have been released
+//show the score for points only if the scores have been released
 //otherwise show the score
         foreach ($scores as $key => $value) {
             if ($scoring_types[$value->assignment_id] === 'p') {
