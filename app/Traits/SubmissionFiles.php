@@ -28,7 +28,7 @@ trait SubmissionFiles
         $formatted_submission_file_info['file_feedback_exists'] = isset($submission_file['file_feedback']);
         $formatted_submission_file_info['file_feedback'] = $submission_file['file_feedback'] ?? null;
         $formatted_submission_file_info['text_feedback'] = $submission_file['text_feedback'] ?? 'N/A';
-        $formatted_submission_file_info['submission_file_score'] = $submission_file['score'] ?? 'N/A';
+        $formatted_submission_file_info['submission_file_score'] = $submission_file['file_submission_score'] ?? 'N/A';
         $formatted_submission_file_info['temporary_url'] = null;
         $formatted_submission_file_info['file_feedback_url'] = null;
             if ($submission_file) {

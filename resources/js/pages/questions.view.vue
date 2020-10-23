@@ -103,6 +103,8 @@
               <b-col>
                 <div v-if="source === 'a' && scoring_type === 'p'">
                   <h4>This assignment is worth {{ totalPoints }} points.</h4>
+                  <h5>This question is worth {{ questions[currentPage - 1].points }} points.</h5>
+
                 </div>
               </b-col>
             </b-row>
@@ -115,8 +117,18 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="timeLeft===0">
-                  The due date has passed.
+                <div class="font-italic font-weight-bold">
+                  <div v-if="(scoring_type === 'p')">
+                    <div v-if="showScores">
+                      <p>
+                            <span v-if="questions[currentPage-1].questionFiles">
+                You achieved a total score of
+                {{ questions[currentPage - 1].total_score }}
+                out of a possible
+                {{ questions[currentPage - 1].points }} points.</span>
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </b-col>
             </b-row>
@@ -313,54 +325,36 @@
               </div>
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
-              <div class="card mb-2">
-                <div class="card-body">
+              <b-row>
+                <b-card title="Question Submission Information">
+                  <b-card-text>
 
-                  <div class="font-italic font-weight-bold">
-                    <div v-if="(scoring_type === 'p')">
-                      <div v-if="solutionsReleased">
-                        <p>
-                <span v-if="!questions[currentPage-1].questionFiles">
-                 This question is worth {{ questions[currentPage - 1].points }} points.
-              </span>
-                          <span v-if="questions[currentPage-1].questionFiles">
-                You achieved a total score of
-                {{ questions[currentPage - 1].total_score }}
-                out of a possible
-                {{ questions[currentPage - 1].points }} points.</span>
-                        </p>
-                      </div>
-                      <div v-if="!solutionsReleased">
-                        <p>This question is worth {{ questions[currentPage - 1].points }} points.</p>
-                      </div>
-                    </div>
-                  </div>
-                  <span v-if="questions[currentPage-1].solution">
+                    <span v-if="questions[currentPage-1].solution">
                     <span class="font-weight-bold">Solution:</span>
                   <a href=""
                      v-on:click.prevent="downloadSolutionFile('q', assignmentId,questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))">
                     {{ standardizeFilename(questions[currentPage - 1].solution) }}
                   </a>
-                  </span>
                   <br>
-                  <span class="font-weight-bold">Last submitted:</span> {{
-                    questions[currentPage - 1].last_submitted
-                  }}<br>
-                  <span class="font-weight-bold">Last response:</span> {{ questions[currentPage - 1].student_response }}<br>
-                 <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                    <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
-
-                  <div v-if="(scoring_type === 'p') && solutionsReleased">
-                    <!--<span class="font-weight-bold">Correct response:</span> {{
-                      questions[currentPage - 1].correct_response
-                    }}<br>-->
-                    <span class="font-weight-bold">Question Score:</span> {{
-                      questions[currentPage - 1].submission_score
+                  </span>
+                    <span class="font-weight-bold">Last submitted:</span> {{
+                      questions[currentPage - 1].last_submitted
                     }}<br>
-                  </div>
-                </div>
-              </div>
-              <div class="mb-2" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+                    <span class="font-weight-bold">Last response:</span> {{
+                      questions[currentPage - 1].student_response
+                    }}<br>
+                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                      <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
+
+                    <div v-if="(scoring_type === 'p') && showScores">
+                      <span class="font-weight-bold">Question Score:</span> {{
+                        questions[currentPage - 1].submission_score
+                      }}<br>
+                    </div>
+                  </b-card-text>
+                </b-card>
+              </b-row>
+              <b-row class="mt-3" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
                 <b-card title="File Submission Information">
                   <b-card-text>
                     <strong> Uploaded file:</strong>
@@ -374,10 +368,12 @@
                         No files have been uploaded
                   </span><br>
                     <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
-                    <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                    <span v-if="showScores">
+                     <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                                        </span>
+                    <span v-if="solutionsReleased">
                     <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
                                       N/A
-                  </span>
                     <span v-if="questions[currentPage-1].file_feedback">
                      <a href=""
                         v-on:click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)">
@@ -386,7 +382,11 @@
                   </span>
                     <br>
                     <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+                             </span>
+                                  </span>
+                    <span v-if="showScores">
                     <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
+       </span>
                     <div class="mt-2">
                       <b-button variant="primary" class="float-right mr-2"
                                 v-on:click="openUploadFileModal(questions[currentPage-1].id)"
@@ -396,8 +396,7 @@
                   </b-card-text>
                 </b-card>
 
-
-              </div>
+              </b-row>
             </b-col>
           </b-row>
         </b-container>
@@ -461,6 +460,7 @@ export default {
     source: 'a',
     scoring_type: '',
     solutionsReleased: false,
+    showScores: false,
     has_submissions_or_file_submissions: false,
     submissionDataType: 'danger',
     submissionDataMessage: '',
@@ -828,6 +828,7 @@ export default {
         this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))
+        this.showScores = Boolean(Number(data.show_scores))
         this.scoring_type = data.scoring_type
       } catch (error) {
         this.$noty.error(error.message)
@@ -847,12 +848,12 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           //for instructor set the solution, for the student set an original_filename
-console.log(data)
+          console.log(data)
           if (this.user.role === 3) {
             this.questions[this.currentPage - 1].original_filename = data.cutup
-            this.questions[this.currentPage-1].submission_file_exists = true
+            this.questions[this.currentPage - 1].submission_file_exists = true
           }
-          if (this.user.role === 2){
+          if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
           }
           this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)

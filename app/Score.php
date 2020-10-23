@@ -108,7 +108,7 @@ class Score extends Model
 
         $assignments = $course->assignments;
         $assignment_ids = [];
-        $solutions_released = [];
+        $scores_released = [];
         $scoring_types = [];
         $scores_by_assignment = [];
 
@@ -116,10 +116,10 @@ class Score extends Model
 //initialize
         foreach ($assignments as $assignment) {
             $assignment_ids[] = $assignment->id;
-            $solutions_released[$assignment->id] = $assignment->scores_released;
+            $scores_released[$assignment->id] = $assignment->show_scores;
             $scoring_types[$assignment->id] = $assignment->scoring_type;
             if ($assignment->scoring_type === 'p') {
-                $scores_by_assignment[$assignment->id] = ($assignment->scores_released)
+                $scores_by_assignment[$assignment->id] = ($assignment->show_scores)
                     ? 0 : 'Not yet released';
 
             } else {
@@ -137,7 +137,7 @@ class Score extends Model
 //otherwise show the score
         foreach ($scores as $key => $value) {
             if ($scoring_types[$value->assignment_id] === 'p') {
-                if ($solutions_released[$value->assignment_id]) {
+                if ($scores_released[$value->assignment_id]) {
                     $scores_by_assignment[$value->assignment_id] = $value->score;
                 }
             } else {

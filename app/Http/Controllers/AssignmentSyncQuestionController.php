@@ -431,6 +431,9 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['student_response'] = $student_response;
                 if ($assignment->solutions_released) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
+                }
+
+                if ($assignment->show_scores){
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
 
@@ -450,11 +453,15 @@ class AssignmentSyncQuestionController extends Controller
 
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
                     $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
-                    $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
-                    $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
-                    $assignment->questions[$key]['file_feedback'] = $formatted_submission_file_info['file_feedback'];
-                    $assignment->questions[$key]['text_feedback'] = $formatted_submission_file_info['text_feedback'];
-                    $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
+                    if ($assignment->show_scores){
+                        $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
+                        $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
+                    }
+                    if ($assignment->solutions_released) {
+                        $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
+                        $assignment->questions[$key]['file_feedback'] = $formatted_submission_file_info['file_feedback'];
+                        $assignment->questions[$key]['text_feedback'] = $formatted_submission_file_info['text_feedback'];
+                    }
                     if (!$got_first_temporary_url) {
                         $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'];
                         $assignment->questions[$key]['file_feedback_url'] = $formatted_submission_file_info['file_feedback_url'];
@@ -462,7 +469,9 @@ class AssignmentSyncQuestionController extends Controller
                     }
                 }
                 $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
-                $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
+                if ($assignment->show_scores) {
+                    $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
+                }
 
                 $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]
                     ? $solutions_by_question_id[$question->id]
