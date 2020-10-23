@@ -78,10 +78,10 @@
           </div>
         </template>
         <template v-slot:cell(available_from)="data">
-          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
+          {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
         </template>
         <template v-slot:cell(due)="data">
-          {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm:ss A') }}
+          {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
           {{ data.item.due.is_extension ? '(Extension)' : '' }}
         </template>
 
