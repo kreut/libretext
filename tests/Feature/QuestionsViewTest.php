@@ -64,6 +64,39 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+
+    public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
+    {
+        $this->actingAs($this->student_user_2)->postJson('/api/email/send', [
+            'name' => 'Ima Student',
+            'email' => 'some@email.com',
+            'subject' => 'Grading issue',
+            'text' => 'some student complaint',
+            'type' => 'contact_grader',
+            'extraParams' => ['question_id' => $this->question->id, 'assignment_id' =>$this->assignment->id],
+            'to_user_id' => 100000,
+        ])
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to send that person an email.']);
+
+    }
+
+    /** @test */
+
+    public function students_can_email_users_if_the_user_graded_their_question()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function anyone_can_contact_us()
+    {
+
+
+    }
+
+    /** @test */
     public function can_get_assignment_questions_if_student_in_course()
     {
 
@@ -71,7 +104,7 @@ class QuestionsViewTest extends TestCase
         //https://laracasts.com/discuss/channels/testing/laravel-testcase-not-sending-authorization-headers
         $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
         $headers = [
-            'Accept'        => 'application/json',
+            'Accept' => 'application/json',
             'AUTHORIZATION' => 'Bearer ' . $token
         ];
         $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers)
@@ -594,7 +627,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'error',
                 'message' => 'You are not allowed to access this assignment.']);
     }
-
 
 
     /** @test */

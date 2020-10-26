@@ -1,94 +1,12 @@
 <template>
   <div>
-    <b-modal
-      id="modal-contact-us"
-      ref="modal"
-      title="Contact Us"
-      @ok="submitContactUs"
-      ok-title="Submit"
-      size="lg"
-    >
-      <b-form ref="form">
-        <b-form-group
-          id="name"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Name"
-          label-for="name"
-
-        >
-          <b-form-input
-            class="col-6"
-            id="name"
-            v-model="contactUsForm.name"
-            type="text"
-            :class="{ 'is-invalid': contactUsForm.errors.has('name') }"
-            @keydown="contactUsForm.errors.clear('name')"
-          >
-          </b-form-input>
-          <has-error :form="contactUsForm" field="name"></has-error>
-
-        </b-form-group>
-        <b-form-group
-          id="email"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Email"
-          label-for="email"
-        >
-          <b-form-input
-            class="col-6"
-            id="name"
-            v-model="contactUsForm.email"
-            type="text"
-            :class="{ 'is-invalid': contactUsForm.errors.has('email') }"
-            @keydown="contactUsForm.errors.clear('email')"
-          >
-          </b-form-input>
-          <has-error :form="contactUsForm" field="email"></has-error>
-        </b-form-group>
-        <b-form-group
-          id="subject"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Subject"
-          label-for="subject"
-        >
-          <b-form-input
-            id="subject"
-            class="col-6"
-            v-model="contactUsForm.subject"
-            type="text"
-            :class="{ 'is-invalid': contactUsForm.errors.has('subject') }"
-            @keydown="contactUsForm.errors.clear('subject')"
-          >
-          </b-form-input>
-          <has-error :form="contactUsForm" field="subject"></has-error>
-        </b-form-group>
-        <b-form-group
-          id="message"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Message"
-          label-for="message"
-        >
-          <b-form-textarea
-            id="text"
-            v-model="contactUsForm.text"
-            placeholder="Enter something..."
-            rows="6"
-            max-rows="6"
-            :class="{ 'is-invalid': contactUsForm.errors.has('text') }"
-            @keydown="contactUsForm.errors.clear('text')"
-          ></b-form-textarea>
-          <has-error :form="contactUsForm" field="text"></has-error>
-        </b-form-group>
-        <div v-if="sendingEmail" class="float-right">
-          <b-spinner small type="grow"></b-spinner>
-          Sending Email...
-        </div>
-      </b-form>
-    </b-modal>
+    <Email ref="email"
+           extraEmailModalText="Please use this form to contact us regarding general questions or issues.  If you have a course specific question, please contact your instructor using your own email client."
+           id="contact-us-modal"
+           v-bind:fromUser="user"
+           title="Contact Us"
+           type="contact_us"
+    ></Email>
 
     <b-navbar-brand href="/">
       <img src="/assets/img/libretexts_section_complete_adapt_header.png" class="d-inline-block align-top pl-3">
@@ -160,7 +78,7 @@
           </b-navbar-nav>
           <b-navbar-nav>
             <b-nav-item>
-          <span v-on:click="openContactUsModal" class="nav-link" active-class="active">
+          <span v-on:click="openSendEmailModal" class="nav-link" active-class="active">
             Contact Us
           </span>
             </b-nav-item>
@@ -179,68 +97,24 @@
 
 import {mapGetters} from 'vuex'
 import LocaleDropdown from './LocaleDropdown'
-import Form from "vform";
+import Email from './Email'
+
 
 export default {
   components: {
-    LocaleDropdown
+    LocaleDropdown,
+    Email
   },
 
   data: () => ({
-    appName: window.config.appName,
-    showContactUsModal: false,
-    contactUsForm: new Form({
-      name: '',
-      email: '',
-      subject: '',
-      text: ''
-    }),
-    sendingEmail: false
+    appName: window.config.appName
   }),
-
   computed: mapGetters({
     user: 'auth/user'
   }),
-
   methods: {
-    resetContactUsModal() {
-      this.contactUsForm.name = this.user ? this.user.first_name + ' ' + this.user.last_name : ''
-      this.contactUsForm.email = this.user ? this.user.email : ''
-      this.contactUsForm.subject = ''
-      this.contactUsForm.text = ''
-      this.contactUsForm.errors.clear()
-    },
-    openContactUsModal() {
-      this.showContactUsModal = true
-      this.resetContactUsModal()
-      this.$bvModal.show('modal-contact-us')
-    },
-    async submitContactUs(bvModalEvt) {
-      bvModalEvt.preventDefault()
-      if (this.sendingEmail) {
-        this.$noty.info('Please be patient while we send the email.')
-        return false
-      }
-      try {
-        this.sendingEmail = true
-        console.log(this.contactUsForm)
-        const {data} = await this.contactUsForm.post('/api/contact-us')
-        if (data.type === 'success') {
-          this.$bvModal.hide('modal-contact-us')
-        }
-        this.$noty[data.type](data.message)
-
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-      this.sendingEmail = false
-
-
-    },
-    resetModalForms() {
-
+    openSendEmailModal() {
+      this.$refs.email.openSendEmailModal()
     },
     async logout() {
       // Log out the user.

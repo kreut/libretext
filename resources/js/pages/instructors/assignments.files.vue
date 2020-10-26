@@ -95,17 +95,17 @@
                       <strong>Name:</strong>
                       {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
                       <strong>Date Submitted:</strong> {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
-                      1]['date_submitted']
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
+                        1]['date_submitted']
                       }}<br>
                       <strong>Date Graded:</strong> {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                       }}<br>
                       <strong>Question Submission Score:</strong> {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
                       }}<br>
                       <strong>File Submission Score:</strong> {{
-                      this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
+                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
                       }}
                       <br>
                       <br>
@@ -188,15 +188,15 @@
           <hr>
           <div class="container">
             <div class="row">
-                <b-button class="mr-2" variant="outline-primary"
-                          v-on:click="downloadSubmissionFile(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
-                  Download Submission File
-                </b-button>
+              <b-button class="mr-2" variant="outline-primary"
+                        v-on:click="downloadSubmissionFile(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
+                Download Submission File
+              </b-button>
               <b-button variant="outline-primary"
                         v-on:click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )">
                 Open Submission File
               </b-button>
-              </div>
+            </div>
           </div>
         </div>
         <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
@@ -332,7 +332,7 @@ export default {
     openUploadFileModal() {
       this.fileFeedbackForm.errors.clear('fileFeedback')
     },
-    async handleOk(bvModalEvt ) {
+    async handleOk(bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
         if (this.uploading) {
@@ -425,7 +425,6 @@ export default {
     },
     hasSubmissions(data, type) {
       let hasSubmissions
-      console.error(data.user_and_submission_file_info)
       switch (type) {
         case('question'):
           hasSubmissions = (data.user_and_submission_file_info.length > 0)
@@ -435,6 +434,20 @@ export default {
           break;
       }
       return hasSubmissions
+    },
+    setQuestionAndStudent(questionId, studentUserId) {
+      console.log(questionId, studentUserId)
+      for (let i = 0; i < this.submissionFiles.length; i++) {
+        for (let j = 0; j < this.submissionFiles[i].length; j++) {
+          console.log(this.submissionFiles[i][j]['question_id'],this.submissionFiles[i][j]['user_id'])
+          if (parseInt(questionId) === parseInt(this.submissionFiles[i][j]['question_id'])
+            && parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
+            this.currentQuestionPage = i+1
+            this.currentStudentPage = j+1
+            return
+          }
+        }
+      }
     },
     async getSubmissionFiles(gradeView) {
       try {
@@ -454,7 +467,16 @@ export default {
         console.log(this.submissionFiles)
         this.currentQuestionPage = 1
         this.currentStudentPage = 1
-        this.textFeedbackForm.textFeedback = this.submissionFiles[0]['text_feedback']
+
+
+        //loop through questions, inner loop through students, if match, then set question and student)
+        console.log( this.submissionFiles[0])
+        if (this.$route.params.questionId && this.$route.params.studentUserId) {
+          this.setQuestionAndStudent(this.$route.params.questionId, this.$route.params.studentUserId)
+          this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage-1][this.currentStudentPage-1]['text_feedback']
+        } else {
+          this.textFeedbackForm.textFeedback = this.submissionFiles[0][0]['text_feedback']
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

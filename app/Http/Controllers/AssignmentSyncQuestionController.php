@@ -461,9 +461,9 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
                 if ($has_question_files) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
+
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
                     $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
-
 
                     $formatted_submission_file_info = $this->getFormattedSubmissionFileInfo($submission_file, $assignment->id, $this);
 
@@ -472,6 +472,7 @@ class AssignmentSyncQuestionController extends Controller
                     if ($assignment->show_scores) {
                         $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
                         $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
+                        $assignment->questions[$key]['grader_id'] = $submission_files_by_question_id[$question->id]['grader_id'];
                     }
                     if ($assignment->solutions_released) {
                         $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];

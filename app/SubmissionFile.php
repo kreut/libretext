@@ -168,10 +168,14 @@ class SubmissionFile extends Model
                  * formatting of the date because it's done already.
                  * However, if it's for the class it has to be done.
                  * **/
-
+                $grader_id = null;//just for the individual level in case of complaints;
                 if (count($users) === 1) {
                     $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                     $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
+                   if (isset($questionFilesByUser[$question->question_id][$user->id])) {
+                       $grader_id = $questionFilesByUser[$question->question_id][$user->id]->grader_id;
+                   }
+
                 } else {
                     $date_submitted = isset($questionFilesByUser[$question->question_id][$user->id]->date_submitted)
                         ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_submitted, Auth::user()->time_zone)
@@ -184,6 +188,7 @@ class SubmissionFile extends Model
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
+                $all_info['grader_id'] = $grader_id;
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;
                 }
@@ -196,6 +201,7 @@ class SubmissionFile extends Model
                 $reKeyedUserAndSubmissionFileInfo[$question][$key]['points'] = $points[$info['question_id']][$info['user_id']];
             }
         }
+
 
         return $reKeyedUserAndSubmissionFileInfo;
 

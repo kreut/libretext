@@ -1,6 +1,13 @@
 <template>
   <div>
-
+    <Email ref="email"
+           extraEmailModalText="Before you contact your grader, please be sure to look at the solutions first, if they are available."
+           id="contact-grader-modal"
+           v-bind:fromUser="user"
+           title="Contact Grader"
+           type="contact_grader"
+           v-bind:subject="getSubject()"
+    ></Email>
 
     <b-modal
       id="modal-upload-file"
@@ -45,7 +52,8 @@
             ></b-pagination>
           </div>
           <b-container class="mb-2">
-            ***Important: Currently we are associating one cutup per question (Multi-page option coming soon!). So, if you need more than one cutup, please use the option of
+            ***Important: Currently we are associating one cutup per question (Multi-page option coming soon!). So, if
+            you need more than one cutup, please use the option of
             uploading an individual file for the question***
             <b-row align-h="center">
               <b-button size="sm" variant="outline-primary"
@@ -387,8 +395,13 @@
                              </span>
                                   </span>
                     <span v-if="showScores">
-                    <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}<br>
-       </span>
+                    <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                 <span v-if="questions[currentPage - 1].grader_id">
+                      <b-button size="sm" variant="outline-primary"
+                                v-on:click="openContactGraderModal( questions[currentPage - 1].grader_id)">Contact Grader</b-button>
+                      </span>
+       </span><br>
+                    <hr>
                     <div class="mt-2">
                       <b-button variant="primary" class="float-right mr-2"
                                 v-on:click="openUploadFileModal(questions[currentPage-1].id)"
@@ -440,6 +453,7 @@ import {h5pResizer} from "~/helpers/H5PResizer"
 import {submitUploadFile} from '~/helpers/UploadFiles'
 import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
+import Email from '~/components/Email'
 
 
 export default {
@@ -448,9 +462,12 @@ export default {
     user: 'auth/user'
   }),
   components: {
-    ToggleButton
+    ToggleButton,
+    Email
   },
   data: () => ({
+    graderEmailSubject: '',
+    to_user_id: false,
     showCutups: false,
     settingAsSolution: false,
     cutups: [],
@@ -504,6 +521,7 @@ export default {
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
+
   },
   async mounted() {
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
@@ -527,6 +545,16 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getSubject() {
+      return `${this.name}, Question #${this.currentPage}`
+    },
+    openContactGraderModal(graderId) {
+      this.$refs.email.setExtraParams({
+        'assignment_id': this.assignmentId,
+        'question_id': this.questions[this.currentPage - 1].id
+      })
+      this.$refs.email.openSendEmailModal(graderId)
+    },
     getModalUploadFileTitle() {
       return this.user.role === 3 ? 'Upload File Submission' : 'Upload Solutions'
     },
