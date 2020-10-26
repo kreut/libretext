@@ -70,6 +70,7 @@ class SubmissionFileController extends Controller
 
     public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
     {
+
         $response['type'] = 'error';
         $authorized = Gate::inspect('downloadAssignmentFile', [$assignmentFile, $submissionFile, $request->assignment_id, $request->submission]);
 

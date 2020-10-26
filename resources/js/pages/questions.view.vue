@@ -58,7 +58,7 @@
               </b-button>
             </b-row>
           </b-container>
-          <div v-if="showCutups && cutups.length">
+          <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
             <b-embed
               type="iframe"
               aspect="16by9"
@@ -852,6 +852,8 @@ export default {
           //for instructor set the solution, for the student set an original_filename
           console.log(data)
           if (this.user.role === 3) {
+            console.log(data)
+            this.questions[this.currentPage - 1].submission = data.submission
             this.questions[this.currentPage - 1].original_filename = data.cutup
             this.questions[this.currentPage - 1].submission_file_exists = true
           }

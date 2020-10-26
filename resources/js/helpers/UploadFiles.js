@@ -30,9 +30,10 @@ export async function submitUploadFile(type, form, noty, nextTick, bvModal, uplo
         })
       }
 
-      if (type === 'submission') {
+      if (form.uploadLevel === 'question' && type === 'submission') {
         //immediate feedback for them to see.
         //for assignments, they'll have to click on something else to get the information
+
         uploadFile.date_submitted = data.date_submitted
         uploadFile.original_filename = data.original_filename
         uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
