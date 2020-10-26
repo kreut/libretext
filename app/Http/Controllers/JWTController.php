@@ -65,8 +65,9 @@ class JWTController extends Controller
 
     public function processAnswerJWT(Request $request)
     {
+        Log::info('processing');
         $JWE = new JWE();
-        $referer = $request->headers->get('referer');//will use this to determine the technology
+        //$referer = $request->headers->get('referer');//will use this to determine the technology
         $technology = 'webwork';
 
         $secret = $JWE->getSecret($technology);
@@ -77,7 +78,6 @@ class JWTController extends Controller
             return json_encode($response);
         }
 
-        Log::info(auth()->user()->id);
         $answerJWT = $this->getPayload($content);
 //if the token isn't formed correctly return a message
         if (!isset($answerJWT->problemJWT)) {

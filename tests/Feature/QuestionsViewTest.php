@@ -63,6 +63,22 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    /** @test */
+    public function can_get_assignment_questions_if_student_in_course()
+    {
+
+        //needed because the token wasn't being passed through
+        //https://laracasts.com/discuss/channels/testing/laravel-testcase-not-sending-authorization-headers
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        $headers = [
+            'Accept'        => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers)
+            ->assertJson(['type' => 'success']);
+
+    }
+
     public function createSubmissionFile()
     {
         //set up this way since I wouldn't have been able to remove questions below if there was already a submission
@@ -579,13 +595,7 @@ class QuestionsViewTest extends TestCase
                 'message' => 'You are not allowed to access this assignment.']);
     }
 
-    /** @test */
-    public function can_get_assignment_questions_if_student_in_course()
-    {
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view")
-            ->assertJson(['type' => 'success']);
 
-    }
 
     /** @test */
     public function cannot_get_assignment_questions_if_not_student_in_course()
