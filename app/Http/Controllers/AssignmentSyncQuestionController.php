@@ -24,6 +24,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
 use App\Traits\JWT;
+use Carbon\Carbon;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -365,6 +366,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', Auth::user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->get();
+
             //  dd($question_ids);
             $submissions_by_question_id = [];
             if ($submissions) {
@@ -372,6 +374,20 @@ class AssignmentSyncQuestionController extends Controller
                     $submissions_by_question_id[$value->question_id] = $value;
                 }
             }
+
+            $seeds = DB::table('seeds')
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', Auth::user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->get();
+
+            $seeds_by_question_id = [];
+            if ($seeds) {
+                foreach ($seeds as $key => $value) {
+                    $seeds_by_question_id[$value->question_id] = $value->seed;
+                }
+            }
+            $questions_for_which_seeds_exist = array_keys($seeds_by_question_id);
 
             if ($assignment->solutions_released || Auth::user()->role === 2) {
 
@@ -433,7 +449,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
 
-                if ($assignment->show_scores){
+                if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
 
@@ -453,7 +469,7 @@ class AssignmentSyncQuestionController extends Controller
 
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
                     $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
-                    if ($assignment->show_scores){
+                    if ($assignment->show_scores) {
                         $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
                         $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
                     }
@@ -486,11 +502,25 @@ class AssignmentSyncQuestionController extends Controller
                 $custom_claims["{$question->technology}"] = '';
                 switch ($question->technology) {
                     case('webwork'):
-                        //$webwork_url = 'demo.webwork.rochester.edu';
-                        $webwork_url = 'webwork.libretexts.org';
-                        $custom_claims['webwork'] = [];
-                        $custom_claims['webwork']['problemSeed'] = '1234567';
 
+                        $webwork_url = 'webwork.libretexts.org';
+                        //$webwork_url = 'demo.webwork.rochester.edu';
+                        $custom_claims['webwork'] = [];
+                        if (in_array($question->id, $questions_for_which_seeds_exist)) {
+                            $seed = $seeds_by_question_id[$question->id];
+                        } else {
+                            $seed = env('WEBWORK_SEED');
+                            DB::table('seeds')->insert([
+                                'assignment_id' => $assignment->id,
+                                'question_id' => $question->id,
+                                'user_id' => Auth::user()->id,
+                                'seed' => $seed,
+                                'created_at' => Carbon::now(),
+                                'updated_at' => Carbon::now()
+                            ]);
+
+                        }
+                        $custom_claims['webwork']['problemSeed'] = $seed;
                         switch ($webwork_url) {
                             case('demo.webwork.rochester.edu'):
                                 $custom_claims['webwork']['courseID'] = 'daemon_course';
@@ -503,6 +533,7 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
+
                         $custom_claims['webwork']['showSummary'] = 1;
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
                         $custom_claims['webwork']['language'] = 'en';
