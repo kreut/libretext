@@ -200,9 +200,9 @@
 
     >
 
-     <b-form-group label-cols-lg="4" label="Release Solutions">
-        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.solutions_released" >
-          <b-form-radio  name="solutions_released" value="1">Yes</b-form-radio>
+      <b-form-group label-cols-lg="4" label="Release Solutions">
+        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.solutions_released">
+          <b-form-radio name="solutions_released" value="1">Yes</b-form-radio>
           <b-form-radio name="solutions_released" value="0">No</b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -249,14 +249,15 @@
             <span v-show="data.item.source === 'a'" class="pr-1"
                   v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
-            <span v-if="user.role === 2">
+            <span v-if="user.role === 2 || user.role === 4">
             <span class="pr-1" v-on:click="releaseSolutionsShowScores(data.item)">
               <b-icon :variant="solutionsReleasedColor(data.item)" icon="envelope-open"></b-icon>
             </span>
-
+        <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
               </span>
+            </span>
           </div>
         </template>
       </b-table>

@@ -78,6 +78,24 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to update this assignment.');
     }
 
+    public function releaseSolutionsShowScores(User $user, Assignment $assignment)
+    {
+        $has_access = false;
+        switch ($user->role) {
+            case(2):
+                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                break;
+            case(4):
+                $has_access = $assignment->course->isGrader();
+                break;
+        }
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed release solutions or show scores.');
+    }
+
+
     /**
      * Determine whether the user can delete the assignment.
      *

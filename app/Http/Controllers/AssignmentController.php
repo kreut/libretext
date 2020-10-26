@@ -28,7 +28,7 @@ class AssignmentController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('update', $assignment);
+        $authorized = Gate::inspect('releaseSolutionsShowScores', $assignment);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
