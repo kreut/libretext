@@ -496,13 +496,11 @@ class AssignmentSyncQuestionController extends Controller
 
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [
-                    'scheme_and_host' => $request->getSchemeAndHttpHost(),
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
                 $custom_claims["{$question->technology}"] = '';
                 $custom_claims['scheme_and_host'] =  $request->getSchemeAndHttpHost();
-                Log::info($custom_claims['scheme_and_host']);
                 switch ($question->technology) {
                     case('webwork'):
 
