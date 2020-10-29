@@ -487,7 +487,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
                 if ($assignment->show_scores) {
-                    $assignment->questions[$key]['total_score'] = min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score));
+                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)),2);
                 }
 
                 $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]
@@ -501,6 +501,8 @@ class AssignmentSyncQuestionController extends Controller
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
                 $custom_claims["{$question->technology}"] = '';
+                $custom_claims['scheme_and_host'] =  $request->getSchemeAndHttpHost();
+                Log::info($custom_claims['scheme_and_host']);
                 switch ($question->technology) {
                     case('webwork'):
 
