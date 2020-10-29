@@ -854,7 +854,7 @@ export default {
         this.name = data.name
         this.has_submissions_or_file_submissions = data.has_submissions_or_file_submissions
         this.timeLeft = data.time_left
-        this.totalPoints = data.total_points.replace(/\.00$/, '')
+        this.totalPoints = String(data.total_points).replace(/\.00$/, '')
         this.source = data.source
         this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
         this.solutionsReleased = Boolean(Number(data.solutions_released))
