@@ -99,7 +99,7 @@
 
         <template v-slot:cell(solution_key)="data">
           <div v-if="data.item.solution_key">
-            <b-button variant="outline-primary" v-on:click="downloadSolutionFile('a', data.item.id, null, data.item.solution_key)">Download</b-button>
+            <b-button variant="outline-primary" v-on:click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)">Download</b-button>
           </div>
           <div v-else>
             N/A

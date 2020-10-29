@@ -90,7 +90,7 @@ class SolutionController extends Controller
                     );
 
                     //add the cutups
-                    $this->cutUpPdf($file, "solutions/$user_id", $cutup, $assignment_id, $user_id);
+                    $cutup->cutUpPdf($file, "solutions/$user_id", $assignment_id, $user_id);
 
 
                     $response['type'] = 'success';

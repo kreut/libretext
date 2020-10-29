@@ -16,6 +16,7 @@
       @ok="handleOk"
       ok-title="Submit"
       size="lg"
+      :hide-footer="true"
     >
       <p> <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
         solution at a time. If you upload a full PDF, students will be able to both download a full solution key
@@ -39,11 +40,55 @@
           </b-form-radio>
         </b-form-group>
         <div v-if="uploadLevel === 'assignment' && showCutups">
+          <hr>
+          <p>Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
+            <span v-if="user.role !== 2">file submission for</span> this question or
+            <a href="#" v-on:click="showCutups = false">
+              upload a new PDF</a>.
+          </p>
+          <b-container class="mb-2">
+            <b-form-group
+              id="chosen_cutups"
+              label-cols-sm="2"
+              label-cols-lg="2"
+              label="Chosen cutups"
+              label-for="chosen_cutups"
+            >
+              <b-form-row lg="12">
+                <b-col lg="3">
+                  <b-form-input
+                    id="name"
+                    v-model="cutupsForm.chosen_cutups"
+                    lg="3"
+                    type="text"
+                    :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
+                    @keydown="cutupsForm.errors.clear('chosen_cutups')"
+                  >
+                  </b-form-input>
+                  <has-error :form="cutupsForm" field="chosen_cutups"></has-error>
+                </b-col>
+                <b-col lg="8" class="ml-3">
+                  <b-row>
+                    <b-button class="mt-1" size="sm" variant="outline-primary"
+                              v-on:click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)">
+                      Set As <span v-if="user.role === 2">Solution</span>
+                      <span v-if="user.role !== 2">Question File Submission</span>
+                    </b-button>
+                    <span v-show="settingAsSolution" class="ml-2">
+                    <b-spinner small type="grow"></b-spinner>
+                     Processing...
+                  </span>
+                  </b-row>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+
+          </b-container>
           <div class="overflow-auto">
             <b-pagination
               v-model="currentCutup"
               :total-rows="cutups.length"
-              :limit="10"
+              :limit="12"
               :per-page="perPage"
               first-number
               last-number
@@ -51,21 +96,6 @@
               align="center"
             ></b-pagination>
           </div>
-          <b-container class="mb-2">
-            ***Important: Currently we are associating one cutup per question (Multi-page option coming soon!). So, if
-            you need more than one cutup, please use the option of
-            uploading an individual file for the question***
-            <b-row align-h="center">
-              <b-button size="sm" variant="outline-primary"
-                        v-on:click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id, cutups[currentCutup-1].id)">
-                Set As <span v-if="user.role === 2">Solution</span>
-                <span v-if="user.role !== 2">Question File Submission</span>
-              </b-button>
-              <b-button class="ml-2" size="sm" variant="outline-secondary" v-on:click="showCutups = false">
-                Upload New PDF
-              </b-button>
-            </b-row>
-          </b-container>
           <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
             <b-embed
               type="iframe"
@@ -98,6 +128,13 @@
           <input type="hidden" class="form-control is-invalid">
           <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
           </div>
+          <b-container>
+            <hr>
+            <b-row align-h="end">
+              <b-button class="mr-2" v-on:click="handleCancel">Cancel</b-button>
+              <b-button variant="primary" v-on:click="handleOk">Submit</b-button>
+            </b-row>
+          </b-container>
         </div>
       </b-form>
 
@@ -490,6 +527,9 @@ export default {
       assignmentId: null,
       questionId: null
     }),
+    cutupsForm: new Form({
+      chosen_cutups: ''
+    }),
     uploadSolutionForm: new Form({
       questionId: null
     }),
@@ -701,6 +741,10 @@ export default {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
       this.uploadFileForm.assignmentId = this.assignmentId
+      this.cutupsForm.chosen_cutups = ''
+      this.cutupsForm.question_num = this.currentPage
+      this.currentCutup = 1
+
     },
     async handleOk(bvModalEvt) {
 
@@ -731,6 +775,9 @@ export default {
 
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
+    },
+    handleCancel() {
+      this.$bvModal.hide(`modal-upload-file`)
     },
     viewOriginalQuestion() {
       this.showQuestion = true
@@ -866,37 +913,43 @@ export default {
       }
       return true
     },
-    async setCutupAsSolutionOrSubmission(questionId, cutupId) {
+    async setCutupAsSolutionOrSubmission(questionId) {
       if (this.settingAsSolution) {
         this.$noty.info('Please be patient while your request is being processed.')
         return false
       }
       this.settingAsSolution = true
       try {
-        const {data} = await axios.post(`/api/cutups/${this.assignmentId}/${questionId}/${cutupId}/set-as-solution-or-submission`)
+        const {data} = await this.cutupsForm.post(`/api/cutups/${this.assignmentId}/${questionId}/set-as-solution-or-submission`)
         console.log(data)
-        this.$noty[data.type](data.message)
+        this.settingAsSolution = false
         if (data.type === 'success') {
+          this.$noty.success(data.message)
+          this.$bvModal.hide('modal-upload-file')
           //for instructor set the solution, for the student set an original_filename
           console.log(data)
           if (this.user.role === 3) {
             console.log(data)
             this.questions[this.currentPage - 1].submission = data.submission
             this.questions[this.currentPage - 1].original_filename = data.cutup
+            this.questions[this.currentPage - 1].date_graded = 'N/A'
+            this.questions[this.currentPage - 1].file_feedback = 'N/A'
             this.questions[this.currentPage - 1].submission_file_exists = true
           }
           if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
           }
-          this.cutups = this.cutups.filter(cutup => cutup.id !== cutupId)
-          this.showCutups = this.cutups.length
+          this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+        } else {
+          this.cutupsForm.errors.set('chosen_cutups', data.message)
         }
+
       } catch (error) {
         console.log(error)
         this.$noty.error('We could not set this cutup as your solution.  Please try again or contact us for assistance.')
       }
-      this.$bvModal.hide('modal-upload-file')
-      this.settingAsSolution = false
+
+
     },
     async getCutups(assignmentId) {
 

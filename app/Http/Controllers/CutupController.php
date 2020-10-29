@@ -68,47 +68,54 @@ class CutupController extends Controller
     public function setAsSolutionOrSubmission(Request $request, Assignment $assignment, Question $question, Cutup $cutup, Solution $solution, SubmissionFile $submissionFile, Extension $extension)
     {
 
+
         $type = (Auth::user()->role === 2) ? 'solution' : 'submission';
 
         $user_id = Auth::user()->id;
         $response['type'] = 'error';
-        $authorized = Gate::inspect('setAsSolutionOrSubmission',[ $cutup, $assignment, $question]);
+        $authorized = Gate::inspect('setAsSolutionOrSubmission', [$cutup, $assignment, $question]);
 
-         if (!$authorized->allowed()) {
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $chosen_cutups = str_replace(' ', '', $request->chosen_cutups);
+        $page_numbers_and_extension = $chosen_cutups . '.pdf';
+        $chosen_cutups = explode(',',$chosen_cutups);
+
         try {
-            DB::beginTransaction();
-            $page_number_and_extension = explode('_', $cutup->file)[1];
-            $original_filename = 'filename';
+            $cutup_file = $cutup->mergeCutUpPdfs($submissionFile, $solution, $type, $assignment->id, $user_id, $chosen_cutups, $page_numbers_and_extension);
+            DB::beginTransaction();;
             switch ($type) {
                 case('solution'):
                     //add the new full solution
+                    $sanitized_name = preg_replace( '/[^a-z0-9]+/', '_', strtolower($assignment->name ));
+                    $cutup_filename = $sanitized_name . "-q" . $request->question_num .".pdf";
                     $solution->updateOrCreate(
                         ['user_id' => $user_id,
                             'question_id' => $question->id,
                             'type' => 'q'],
-                        ['file' => $cutup->file, 'original_filename' => $original_filename]
+                        ['file' => $cutup_file, 'original_filename' => $cutup_filename]
                     );
                     $response['message'] = 'Your cutup has been set as the solution.';
-                    $response['cutup'] = "solution-cutup-pg-$page_number_and_extension";
+                    $response['cutup'] = $cutup_filename;
                     break;
                 case('submission'):
                     $original_filename = $submissionFile->where('assignment_id', $assignment->id)
-                                    ->where('user_id', Auth::user()->id)
-                                    ->where('type','a')
-                                    ->first()
-                                    ->original_filename;
+                        ->where('user_id', Auth::user()->id)
+                        ->where('type', 'a')
+                        ->first()
+                        ->original_filename;
 
                     if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
                         $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
                         return $response;
                     }
-                    $original_filename = basename($original_filename, '.pdf') . "-pg-$page_number_and_extension";
+                    $original_filename = basename($original_filename, '.pdf') . "-$page_numbers_and_extension";
                     $submission_file_data = ['type' => 'q',
-                        'submission' => $cutup->file,
-                        'original_filename' =>   $original_filename ,
+                        'submission' => $cutup_file,
+                        'original_filename' => $original_filename,
                         'file_feedback' => null,
                         'text_feedback' => null,
                         'date_graded' => null,
@@ -122,14 +129,13 @@ class CutupController extends Controller
                         $submission_file_data
                     );
 
-                    $response['submission'] = $cutup->file;
+                    $response['submission'] = $cutup_file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';
                     $response['cutup'] = $original_filename;
                     break;
 
             }
-            Cutup::where('id', $cutup->id)->delete();
 
             $response['type'] = 'success';
 
@@ -140,7 +146,7 @@ class CutupController extends Controller
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error setting this cutup as your solution.  Please try again or contact us for assistance.";
+            $response['message'] =  $e->getMessage();
         }
         return $response;
 

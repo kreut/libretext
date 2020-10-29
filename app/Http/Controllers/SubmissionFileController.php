@@ -342,7 +342,7 @@ class SubmissionFileController extends Controller
                         $submission_file_data
                     );
                     //add the cutups
-                    $this->cutUpPdf($submission, "assignments/$assignment_id", $cutup, $assignment_id, $user_id);
+                    $cutup->cutUpPdf($submission, "assignments/$assignment_id", $assignment_id, $user_id);
 
                     $response['message'] = 'Your PDF has been cutup into questions by page.';
                     $response['original_filename'] = $original_filename;
