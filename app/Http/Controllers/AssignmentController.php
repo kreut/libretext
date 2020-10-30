@@ -24,7 +24,7 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
-    public function releaseSolutionsShowScores(Request $request, Assignment $assignment)
+    public function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)
     {
 
         $response['type'] = 'error';
@@ -36,13 +36,35 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment->update([
-                'solutions_released' => $request->solutions_released,
-                'show_scores' => $request->show_scores]);
+            $assignment->update(['solutions_released' => !$solutionsReleased]);
             $response['type'] = 'success';
-            $view_solutions = $request->solutions_released ? 'can' : 'cannot';
-            $scores_released = $request->show_scores ? 'can' : 'cannot';
-            $response['message'] = "Your students <strong>{$view_solutions}</strong> view the solutions.<br><br> And, they <strong>{$scores_released}</strong> view their scores.";
+            $scores_released = !$solutionsReleased ? 'released' : 'concealed';
+            $response['message'] = "The solutions have been <strong>{$scores_released}</strong>.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    public function showScores(Request $request, Assignment $assignment, int $showScores)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('releaseSolutionsShowScores', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['show_scores' => !$showScores]);
+            $response['type'] = 'success';
+            $scores_released = !$showScores ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$scores_released}</strong> view their scores.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -103,6 +125,7 @@ class AssignmentController extends Controller
 
                     $assignments[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
+                    $assignments[$key]['status'] = $this->getStatus($available_from, $due);
                     $assignments[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
                     $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
                     $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
@@ -132,6 +155,18 @@ class AssignmentController extends Controller
             $default_points_per_question = ($data['scoring_type'] === 'p') ? $data['default_points_per_question'] : 0;
         }
         return $default_points_per_question;
+    }
+
+    public function getStatus(string $available_from, string $due)
+    {
+        if (Carbon::now() < Carbon::parse($available_from) ) {
+            return 'Upcoming';
+        }
+
+        if (Carbon::now() < Carbon::parse($due)) {
+            return 'Open';
+        }
+        return 'Closed';
     }
 
     public function checkDueDateAfterAvailableDate(StoreAssignment $request)
@@ -212,7 +247,7 @@ class AssignmentController extends Controller
         try {
             $assignment = Assignment::find($assignment->id);
             $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
-            $assignment->time_left  = $this->getTimeLeft($assignment);
+            $assignment->time_left = $this->getTimeLeft($assignment);
             $assignment->total_points = $this->getTotalPoints($assignment);
             return $assignment;
         } catch (Exception $e) {
@@ -223,20 +258,21 @@ class AssignmentController extends Controller
         }
     }
 
-    public function getTimeLeft(Assignment $assignment){
+    public function getTimeLeft(Assignment $assignment)
+    {
         $Extension = new Extension();
         $extensions_by_user = $Extension->getUserExtensionsByAssignment(Auth::user());
         $due = $extensions_by_user[$assignment->id] ?? $assignment->due;
         $now = Carbon::now();
-       return  max($now->diffInMilliseconds(Carbon::parse($due), false),0);
+        return max($now->diffInMilliseconds(Carbon::parse($due), false), 0);
 
     }
 
     public function getTotalPoints(Assignment $assignment)
     {
         return DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->sum('points');
+            ->where('assignment_id', $assignment->id)
+            ->sum('points');
 
     }
 

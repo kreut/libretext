@@ -39,7 +39,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignments/courses/{course}/', 'AssignmentController@index');
     Route::get('/assignments/{assignment}', 'AssignmentController@show');
     Route::post('/assignments', 'AssignmentController@store');
-    Route::patch('/assignments/{assignment}/release-solutions-show-scores', 'AssignmentController@releaseSolutionsShowScores');
+    Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
+    Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 

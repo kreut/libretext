@@ -17,6 +17,18 @@
       size="lg"
     >
       <b-form ref="form" @submit="createAssignment">
+        <div v-if="has_submissions_or_file_submissions">
+          <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
+            can't change the source of the questions, the scoring type, the default points per question, or the type
+            of file uploads. </strong>
+          </b-alert>
+        </div>
+        <div v-show="solutionsReleased">
+          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. At this
+            point, the only item that you can update is the assignment's name.</strong>
+          </b-alert>
+        </div>
+
         <b-form-group
           id="name"
           label-cols-sm="4"
@@ -24,6 +36,7 @@
           label="Name"
           label-for="name"
         >
+
           <b-form-row>
             <b-col lg="7">
               <b-form-input
@@ -39,7 +52,6 @@
             </b-col>
           </b-form-row>
         </b-form-group>
-        <div v-show="!solutionsReleased">
           <b-form-group
             id="available_from"
             label-cols-sm="4"
@@ -53,7 +65,8 @@
                   v-model="form.available_from_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                  v-on:shown="form.errors.clear('available_from_date')">
+                  v-on:shown="form.errors.clear('available_from_date')"
+                :disabled="Boolean(solutionsReleased)">
                 </b-form-datepicker>
                 <has-error :form="form" field="available_from_date"></has-error>
               </b-col>
@@ -61,7 +74,8 @@
                 <b-form-timepicker v-model="form.available_from_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                   v-on:shown="form.errors.clear('available_from_time')">
+                                   v-on:shown="form.errors.clear('available_from_time')"
+                                   :disabled="Boolean(solutionsReleased)">
 
                 </b-form-timepicker>
                 <has-error :form="form" field="available_from_time"></has-error>
@@ -82,7 +96,8 @@
                   v-model="form.due_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('due_date') }"
-                  v-on:shown="form.errors.clear('due_date')">
+                  v-on:shown="form.errors.clear('due_date')"
+                  :disabled="Boolean(solutionsReleased)">
                 </b-form-datepicker>
                 <has-error :form="form" field="due_date"></has-error>
               </b-col>
@@ -90,13 +105,13 @@
                 <b-form-timepicker v-model="form.due_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                   v-on:shown="form.errors.clear('due_time')">
+                                   v-on:shown="form.errors.clear('due_time')"
+                                  :disabled="Boolean(solutionsReleased)">
                 </b-form-timepicker>
                 <has-error :form="form" field="due_time"></has-error>
               </b-col>
             </b-form-row>
           </b-form-group>
-          <div v-if="!has_submissions_or_file_submissions">
             <b-form-group
               id="source"
               label-cols-sm="4"
@@ -105,7 +120,7 @@
               label-for="Source"
             >
 
-              <b-form-radio-group v-model="form.source" stacked>
+              <b-form-radio-group v-model="form.source" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="source" value="a">Adapt</b-form-radio>
@@ -113,9 +128,7 @@
                 <b-form-radio name="scoring_type" value="x">External</b-form-radio>
               </b-form-radio-group>
             </b-form-group>
-          </div>
 
-          <div v-if="!has_submissions_or_file_submissions">
             <b-form-group
               id="scoring_type"
               label-cols-sm="4"
@@ -124,7 +137,7 @@
               label-for="Scoring Type"
             >
 
-              <b-form-radio-group v-model="form.scoring_type" stacked>
+              <b-form-radio-group v-model="form.scoring_type" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
@@ -142,7 +155,7 @@
                 label-for="Submission Files"
               >
 
-                <b-form-radio-group v-model="form.submission_files" stacked>
+                <b-form-radio-group v-model="form.submission_files" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
                   <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
                   <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
                   <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
@@ -167,6 +180,7 @@
                       placeholder=""
                       :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
                       @keydown="form.errors.clear('default_points_per_question')"
+                      :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                     >
                     </b-form-input>
                     <has-error :form="form" field="default_points_per_question"></has-error>
@@ -175,43 +189,7 @@
 
               </b-form-group>
             </div>
-          </div>
-          <div v-if="has_submissions_or_file_submissions">
-            <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
-              can't change the source of the questions, the scoring type, the default points per question, or the type
-              of file uploads. </strong>
-            </b-alert>
-          </div>
-        </div>
-        <div v-show="solutionsReleased">
-          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. At this
-            point, the only item that you can update is the assignment's name.</strong>
-          </b-alert>
-        </div>
       </b-form>
-    </b-modal>
-    <b-modal
-      id="modal-release-solutions-show-scores"
-      ref="modal"
-      title="Release Solutions - Show Scores"
-      @ok="handleReleaseSolutionsShowScores"
-      @hidden="resetModalForms"
-      ok-title="Submit"
-
-    >
-
-      <b-form-group label-cols-lg="4" label="Release Solutions">
-        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.solutions_released">
-          <b-form-radio name="solutions_released" value="1">Yes</b-form-radio>
-          <b-form-radio name="solutions_released" value="0">No</b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
-      <b-form-group label-cols-lg="4" label="Show Scores">
-        <b-form-radio-group class="pt-2" v-model="solutionsReleasedShowScoreForm.show_scores">
-          <b-form-radio name="show_scores" value="1">Yes</b-form-radio>
-          <b-form-radio name="show_scores" value="0">No</b-form-radio>
-        </b-form-radio-group>
-      </b-form-group>
     </b-modal>
     <b-modal
       id="modal-delete-assignment"
@@ -239,7 +217,28 @@
         <template v-slot:cell(due)="data">
           {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
         </template>
-
+        <template v-slot:cell(show_scores)="data">
+          <toggle-button
+            :width="75"
+            :value="Boolean(data.item.show_scores)"
+            @change="submitShowScores(data.item)"
+            :sync="true"
+            :font-size="14"
+            :margin="4"
+            :color="{checked: '#28a745', unchecked: '#6c757d'}"
+            :labels="{checked: 'Hide', unchecked: 'Show'}"/>
+        </template>
+        <template v-slot:cell(solutions_released)="data">
+          <toggle-button
+            :width="90"
+            :value="Boolean(data.item.solutions_released)"
+            @change="submitSolutionsReleased(data.item)"
+            :sync="true"
+            :font-size="14"
+            :margin="4"
+            :color="{checked: '#28a745', unchecked: '#6c757d'}"
+            :labels="{checked: 'Conceal', unchecked: 'Release'}"/>
+        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
              <span v-if="user.role === 2">
@@ -249,15 +248,10 @@
             <span v-show="data.item.source === 'a'" class="pr-1"
                   v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
               icon="cloud-upload"></b-icon></span>
-            <span v-if="user.role === 2 || user.role === 4">
-            <span class="pr-1" v-on:click="releaseSolutionsShowScores(data.item)">
-              <b-icon :variant="solutionsReleasedColor(data.item)" icon="envelope-open"></b-icon>
-            </span>
-        <span v-if="user.role === 2">
+            <span v-if="user.role === 2">
             <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
             <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
               </span>
-            </span>
           </div>
         </template>
       </b-table>
@@ -277,6 +271,7 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
+import {ToggleButton} from 'vue-js-toggle-button'
 
 
 export default {
@@ -284,10 +279,12 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  components: {
+    ToggleButton
+  },
   data: () => ({
     solutionsReleased: 0,
-    showScores: 0,
-    assignmentId: false, //if there's a assignmentId it's an update
+    assignmentId: false, //if there's an assignmentId it's an update
     assignments: [],
     completedOrCorrectOptions: [
       {item: 'correct', name: 'correct'},
@@ -296,30 +293,19 @@ export default {
     courseId: false,
     fields: [
       'name',
+      'available_from',
+      'due',
+      'status',
       {
-        key: 'available_from'
+        key: 'show_scores',
+        label: 'Scores'
       },
       {
-        key: 'due'
-      },
-      {
-        key: 'scoring_type',
-        formatter: value => {
-          return (value === 'c') ? 'Complete/Incomplete' : 'Points'
-
-        }
-
-      },
-      {
-        key: 'number_of_questions',
-        tdClass: 'td-center'
+        key: 'solutions_released',
+        label: 'Solutions'
       },
       'actions'
     ],
-    solutionsReleasedShowScoreForm: new Form({
-      solutions_released: 0,
-      show_scores: 0
-    }),
     form: new Form({
       name: '',
       available_from: '',
@@ -362,20 +348,28 @@ export default {
 
 
     },
-    solutionsReleasedColor(assignment) {
-      return (assignment.solutions_released === 1) ? 'success' : 'secondary'
+    async submitShowScores(assignment) {
+      try {
+        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${assignment.show_scores}`)
+        await this.getAssignments()
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
-    releaseSolutionsShowScores(assignment) {
-      this.$bvModal.show('modal-release-solutions-show-scores')
-      console.log(assignment)
-      this.solutionsReleasedShowScoreForm.solutions_released = assignment.solutions_released
-      this.solutionsReleasedShowScoreForm.show_scores = assignment.show_scores
-      this.assignmentId = assignment.id
+    async submitSolutionsReleased(assignment) {
+      try {
+        const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${assignment.solutions_released}`)
+        await this.getAssignments()
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
-    async handleReleaseSolutionsShowScores(bvModalEvt) {
+    async handleReleaseSolutions(bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
-        const {data} = await this.solutionsReleasedShowScoreForm.patch(`/api/assignments/${this.assignmentId}/release-solutions-show-scores`)
+        const {data} = await this.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
         this.$noty[data.type](data.message)
         this.resetAll('modal-release-solutions-show-scores')
       } catch (error) {
@@ -392,6 +386,7 @@ export default {
       this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
+      this.number_of_questions = assignment.number_of_questions
       this.form.name = assignment.name
       this.form.available_from_date = assignment.available_from_date
       this.form.available_from_time = assignment.available_from_time
