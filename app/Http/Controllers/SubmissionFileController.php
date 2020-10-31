@@ -235,7 +235,7 @@ class SubmissionFileController extends Controller
 
 
         $response['type'] = 'error';
-        $max_number_of_uploads_allowed = 5;//number allowed per question/assignment
+        $max_number_of_uploads_allowed = 15;//number allowed per question/assignment
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $upload_level = $request->uploadLevel;
@@ -285,7 +285,7 @@ class SubmissionFileController extends Controller
                         ->where('type', 'q') //not needed but for completeness
                         ->where('assignment_id', $assignment_id)
                         ->where('question_id', $question_id)
-                        ->where('user_id',$user_id)
+                        ->where('user_id', $user_id)
                         ->select('upload_count')
                         ->first();
                     break;
@@ -360,7 +360,10 @@ class SubmissionFileController extends Controller
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     break;
             }
-            $response['message'] = "Your file submission has been saved.  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
+            $response['message'] = "Your file submission has been saved.";
+            if (($upload_count >= $max_number_of_uploads_allowed - 3)) {
+                $response['message'] .= "  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
+            }
             $response['type'] = 'success';
             DB::commit();
         } catch (Exception $e) {
