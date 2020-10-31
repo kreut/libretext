@@ -80,6 +80,13 @@ class CutupController extends Controller
             return $response;
         }
 
+        if ($type === 'submission') {
+            if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
+                $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
+                return $response;
+            }
+        }
+
         $chosen_cutups = str_replace(' ', '', $request->chosen_cutups);
         $page_numbers_and_extension = $chosen_cutups . '.pdf';
         $chosen_cutups = explode(',',$chosen_cutups);
@@ -108,10 +115,6 @@ class CutupController extends Controller
                         ->first()
                         ->original_filename;
 
-                    if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
-                        $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
-                        return $response;
-                    }
                     $original_filename = basename($original_filename, '.pdf') . "-$page_numbers_and_extension";
                     $submission_file_data = ['type' => 'q',
                         'submission' => $cutup_file,

@@ -49,12 +49,20 @@ class AssignmentsIndexTest extends TestCase
 
     /** @test */
 
-    public function a_course_grader_can_show_solutions_release_scores()
+    public function a_course_grader_can_show_scores()
     {
         $this->actingAs($this->grader_user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/release-solutions-show-scores",
-                ['solutions_released' => 1, 'show_scores' => 1])
-            ->assertJson(['message' => 'Your students <strong>can</strong> view the solutions.<br><br> And, they <strong>can</strong> view their scores.']);
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
+            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.']);
+    }
+
+    /** @test */
+
+    public function a_course_grader_can_release_solutions()
+    {
+        $this->actingAs($this->grader_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
+            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.']);
     }
 
 
@@ -63,22 +71,32 @@ class AssignmentsIndexTest extends TestCase
     public function non_owner_non_grader_cannot_show_solutions_release_scores()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/assignments/{$this->assignment->id}/release-solutions-show-scores",
-                ['solutions_released' => 1, 'show_scores' => 1])
-            ->assertJson(['message' => 'You are not allowed release solutions or show scores.']);
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
+            ->assertJson(['message' => 'You are not allowed to show/hide scores.']);
+
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
+            ->assertJson(['message' => 'You are not allowed to release/conceal solutions.']);
     }
 
 
     /** @test */
-    public function owner_can_show_solutions_release_scores()
+
+    public function a_course_owner_can_show_scores()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/release-solutions-show-scores",
-                ['solutions_released' => 1, 'show_scores' => 1])
-            ->assertJson(['message' => 'Your students <strong>can</strong> view the solutions.<br><br> And, they <strong>can</strong> view their scores.']);
-
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
+            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.']);
     }
 
+    /** @test */
+
+    public function a_course_owner_can_release_solutions()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
+            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.']);
+    }
 
     /** @test * */
     public function will_only_update_the_name_and_dates_if_there_is_already_a_submission()
