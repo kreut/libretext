@@ -569,12 +569,39 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['imathas'] = [];
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
-                        $custom_claims['imathas']['seed'] = 1234;
+
+                        if (in_array($question->id, $questions_for_which_seeds_exist)) {
+                            $seed = $seeds_by_question_id[$question->id];
+                        } else {
+                            $seed = env('WEBWORK_SEED');
+                            DB::table('seeds')->insert([
+                                'assignment_id' => $assignment->id,
+                                'question_id' => $question->id,
+                                'user_id' => Auth::user()->id,
+                                'seed' => $seed,
+                                'created_at' => Carbon::now(),
+                                'updated_at' => Carbon::now()
+                            ]);
+
+                        }
+
+
+                        $custom_claims['imathas']['seed'] = $seed;
+                        $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
                         $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                         $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        $payload = auth()->payload();
+
+                        $secret = $JWE->getSecret('webwork');
+
+                        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
+
+                        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
+                        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
+                        //put back the original secret
+                        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
 
                         break;
                     case('h5p'):

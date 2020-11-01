@@ -67,13 +67,7 @@ class Submission extends Model
                 break;
             case('imathas'):
                 $submission = $data['submission'];
-                $data['score'] = floatval($submission->score);
-
-                $tks = explode('.', $submission->state);
-                list($headb64, $bodyb64, $cryptob64) = $tks;
-                $state = json_decode(base64_decode($bodyb64));
-
-
+                $data['score'] = floatval($assignment_question->points) * floatval($submission->score);
                 $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
                 break;
             case('webwork'):
