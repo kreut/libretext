@@ -17,15 +17,14 @@
       size="lg"
     >
       <b-form ref="form" @submit="createAssignment">
-        <div v-if="has_submissions_or_file_submissions">
+        <div v-if="has_submissions_or_file_submissions && !solutionsReleased">
           <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
             can't change the source of the questions, the scoring type, the default points per question, or the type
             of file uploads. </strong>
           </b-alert>
         </div>
         <div v-show="solutionsReleased">
-          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. At this
-            point, the only item that you can update is the assignment's name.</strong>
+          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only item that you can update is the assignment's name.</strong>
           </b-alert>
         </div>
 
