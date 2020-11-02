@@ -3,10 +3,18 @@ import {Bar} from 'vue-chartjs'
 
 export default {
   extends: Bar,
-  props: ['data', 'options'],
+  props: {
+    chartdata: {
+      type: Object,
+      default: null
+    },
+    options: {
+      type: Object,
+      default:null
+    }
+  },
   mounted () {
-    // Overwriting base render method with actual data.
-    this.renderChart(this.data, this.options)
+    this.renderChart(this.chartdata, {maintainAspectRatio:false})
   }
 }
 </script>
