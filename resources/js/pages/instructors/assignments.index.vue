@@ -210,7 +210,7 @@
       <b-table striped hover :fields="fields" :items="assignments">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
-            <a href="" v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
+            <a href="" v-on:click.prevent="getAssignmentView(data.item)">{{ data.item.name }}</a>
           </div>
         </template>
 
@@ -450,12 +450,12 @@ export default {
       this.$router.push(`/assignments/${assignment.id}/questions/get`)
     }
     ,
-    getStudentView(assignment) {
+    getAssignmentView(assignment) {
       if (assignment.source === 'x') {
         this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
         return false
       }
-      this.$router.push(`/assignments/${assignment.id}/questions/view`)
+      this.$router.push(`/assignments/${assignment.id}/view`)
     }
     ,
     getSubmissionFileView(assignmentId, submissionFiles) {

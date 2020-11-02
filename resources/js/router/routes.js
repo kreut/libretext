@@ -12,7 +12,6 @@ let student_paths  = [
 let instructor_paths = [
   { path: '/questions/:questionId/view', name: 'question.view', component: page('instructors/question.view.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
-  { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/assignments/:assignmentId/:typeFiles/:questionId?/:studentUserId?', name: 'assignment.files.index', component: page('instructors/assignments.files.vue') },
   { path: '/instructors/assignment/:assignmentId/remediations/:questionId', name: 'remediation.index', component: page('instructors/remediations.vue') },
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
@@ -21,6 +20,8 @@ let instructor_paths = [
 ]
 
 let general_paths  = [
+  { path: '/assignments/:assignmentId/view', name: 'assignments.view', component: page('assignments.view.vue') },
+  { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
