@@ -235,7 +235,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function show(Assignment $assignment)
+    public function show(Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
@@ -249,6 +249,7 @@ class AssignmentController extends Controller
             $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
             $assignment->time_left = $this->getTimeLeft($assignment);
             $assignment->total_points = $this->getTotalPoints($assignment);
+           $assignment->scores = $score->where('assignment_id', $assignment->id)->get();
             return $assignment;
         } catch (Exception $e) {
             $h = new Handler(app());
