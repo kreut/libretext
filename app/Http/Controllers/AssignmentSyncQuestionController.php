@@ -507,20 +507,8 @@ class AssignmentSyncQuestionController extends Controller
                         $webwork_url = 'webwork.libretexts.org';
                         //$webwork_url = 'demo.webwork.rochester.edu';
                         $custom_claims['webwork'] = [];
-                        if (in_array($question->id, $questions_for_which_seeds_exist)) {
-                            $seed = $seeds_by_question_id[$question->id];
-                        } else {
-                            $seed = env('WEBWORK_SEED');
-                            DB::table('seeds')->insert([
-                                'assignment_id' => $assignment->id,
-                                'question_id' => $question->id,
-                                'user_id' => Auth::user()->id,
-                                'seed' => $seed,
-                                'created_at' => Carbon::now(),
-                                'updated_at' => Carbon::now()
-                            ]);
+                        $seed=$this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
-                        }
                         $custom_claims['webwork']['problemSeed'] = $seed;
                         switch ($webwork_url) {
                             case('demo.webwork.rochester.edu'):
@@ -553,16 +541,7 @@ class AssignmentSyncQuestionController extends Controller
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
 
-                        $payload = auth()->payload();
-
-                        $secret = $JWE->getSecret('webwork');
-
-                        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
-
-                        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-                        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
-                        //put back the original secret
-                        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
+                        $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
 
                         break;
                     case('imathas'):
@@ -570,38 +549,14 @@ class AssignmentSyncQuestionController extends Controller
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
 
-                        if (in_array($question->id, $questions_for_which_seeds_exist)) {
-                            $seed = $seeds_by_question_id[$question->id];
-                        } else {
-                            $seed = env('WEBWORK_SEED');
-                            DB::table('seeds')->insert([
-                                'assignment_id' => $assignment->id,
-                                'question_id' => $question->id,
-                                'user_id' => Auth::user()->id,
-                                'seed' => $seed,
-                                'created_at' => Carbon::now(),
-                                'updated_at' => Carbon::now()
-                            ]);
-
-                        }
-
-
+                        $seed=$this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'imathas');
                         $custom_claims['imathas']['seed'] = $seed;
                         $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
                         $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                         $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
  <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
-                        $payload = auth()->payload();
-
-                        $secret = $JWE->getSecret('webwork');
-
-                        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
-
-                        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-                        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
-                        //put back the original secret
-                        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
+                        $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
 
                         break;
                     case('h5p'):
@@ -645,5 +600,43 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         return $response;
+    }
+
+    public function createProblemJWT(JWE $JWE, array $custom_claims, string $technology){
+        $payload = auth()->payload();
+        $secret = $JWE->getSecret($technology);
+        \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
+        $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
+        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
+        //put back the original secret
+        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
+        return $problemJWT;
+
+    }
+    public function getAssignmentQuestionSeed(Assignment $assignment, Question $question, array $questions_for_which_seeds_exist, array $seeds_by_question_id, string $technology)
+    {
+
+        if (in_array($question->id, $questions_for_which_seeds_exist)) {
+            $seed = $seeds_by_question_id[$question->id];
+        } else {
+            switch($technology){
+                case('webwork'):
+                    $seed = env('WEBWORK_SEED');
+                    break;
+                case('imathas'):
+                    $seed = env('IMATHAS_SEED');
+                    break;
+            }
+            DB::table('seeds')->insert([
+                'assignment_id' => $assignment->id,
+                'question_id' => $question->id,
+                'user_id' => Auth::user()->id,
+                'seed' => $seed,
+                'created_at' => Carbon::now(),
+                'updated_at' => Carbon::now()
+            ]);
+
+        }
+        return $seed;
     }
 }
