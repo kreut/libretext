@@ -1,4 +1,4 @@
-<template>
+
   <div>
     {assignmentInfo }
     <h2>{{ assignmentInfo.name }}</h2>
@@ -15,7 +15,7 @@
 
     </div>
   </div>
-</template>
+
 
 
 <script>
@@ -23,9 +23,12 @@
 
 import {mapGetters} from "vuex"
 import axios from 'axios'
+import { Bar } from 'vue-chartjs'
+
 
 let stats = require("stats-lite")
 export default {
+  extends: Bar,
   middleware: 'auth',
   computed: mapGetters({
     user: 'auth/user'
@@ -43,6 +46,7 @@ export default {
   async mounted() {
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary(this.assignmentId)
+    this.renderChart(this.scores)
 
   },
   methods: {
