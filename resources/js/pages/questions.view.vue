@@ -1,5 +1,11 @@
 <template>
   <div>
+    <scores v-if="loaded"
+            :chartdata="chartdata"
+            :height="300"
+    />
+
+
     <Email ref="email"
            extraEmailModalText="Before you contact your grader, please be sure to look at the solutions first, if they are available."
            id="contact-grader-modal"
@@ -166,7 +172,7 @@
                 </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
-                    <div v-if="showScores">
+                    <div v-if="user.role === 3 && showScores">
                       <p>
                             <span v-if="questions[currentPage-1].questionFiles">
                 You achieved a total score of
@@ -491,6 +497,8 @@ import {submitUploadFile} from '~/helpers/UploadFiles'
 import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 import Email from '~/components/Email'
+import Scores from '~/components/Scores'
+import {getScoresSummary} from '~/helpers/Scores'
 
 
 export default {
@@ -499,10 +507,20 @@ export default {
     user: 'auth/user'
   }),
   components: {
+    Scores,
     ToggleButton,
     Email
   },
   data: () => ({
+    loaded: false,
+    chartdata: null,
+    assignmentInfo: {},
+    scores: {},
+    mean: 0,
+    stdev: 0,
+    max: 0,
+    min: 0,
+    range: 0,
     graderEmailSubject: '',
     to_user_id: false,
     showCutups: false,
@@ -564,6 +582,11 @@ export default {
 
   },
   async mounted() {
+    if (this.user.role === 2) {
+      this.loaded = false
+      this.getScoresSummary = getScoresSummary
+    }
+
     this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' //students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
@@ -578,6 +601,14 @@ export default {
       await this.getSelectedQuestions(this.assignmentId)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
+    }
+    try {
+      const scoresData = await this.getScoresSummary(this.assignmentId,`/api/assignments/${this.assignmentId}`)
+      console.log(scoresData)
+      this.chartdata = scoresData
+      this.loaded = true
+    } catch (error) {
+      alert(error.message)
     }
 
   },

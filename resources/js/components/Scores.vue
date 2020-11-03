@@ -1,6 +1,6 @@
 <script>
 import {Bar} from 'vue-chartjs'
-import axios from "axios";
+
 
 export default {
   extends: Bar,

@@ -2,6 +2,12 @@ import axios from 'axios'
 
 let stats = require("stats-lite")
 
+function round(num, precision) {
+  num = parseFloat(num)
+  if (!precision) return num
+  return (Math.round(num / precision) * precision)
+}
+
 export async function getScoresSummary(id, url) {
   const {data} = await axios.get(url)
   console.log(data)
@@ -24,7 +30,7 @@ export async function getScoresSummary(id, url) {
   let labels = []
   let counts = []
   for (let i = 0; i < this.scores.length; i++) {
-    let score = this.round(this.scores[i], precision)
+    let score = round(this.scores[i], precision)
     if (!labels.includes(score)) {
       labels.push(score)
       counts.push(0)
@@ -36,7 +42,7 @@ export async function getScoresSummary(id, url) {
   console.log(labels)
   for (let i = 0; i < this.scores.length; i++) {
     for (let j = 0; j < labels.length; j++) {
-      let score = this.round(this.scores[i], precision)
+      let score = round(this.scores[i], precision)
       if (parseFloat(score) === parseFloat(labels[j])) {
         counts[j]++
         break

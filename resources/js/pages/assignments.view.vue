@@ -24,7 +24,6 @@
               <scores v-if="loaded"
                       :chartdata="chartdata"
                       :height="300"
-                      ref="scores"
               />
             </b-col>
           </b-row>
@@ -47,7 +46,6 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
-
     loaded: false,
     chartdata: null,
     assignmentInfo: {},
@@ -64,7 +62,6 @@ export default {
     this.getScoresSummary = getScoresSummary
     this.assignmentId = this.$route.params.assignmentId
     try {
-
       const scoresData = await this.getScoresSummary(this.assignmentId,`/api/assignments/${this.assignmentId}`)
       console.log(scoresData)
       this.chartdata = scoresData
@@ -76,11 +73,6 @@ export default {
   methods: {
     getStudentView(assignmentId) {
       this.$router.push(`/assignments/${assignmentId}/questions/view`)
-    },
-    round(num, precision) {
-      num = parseFloat(num)
-      if (!precision) return num
-      return (Math.round(num / precision) * precision)
     },
     metaInfo() {
       return {title: this.$t('home')}
