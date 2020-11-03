@@ -1,19 +1,34 @@
 <template>
   <div>
-    <b-container>
       <PageTitle v-bind:title="assignmentInfo.name" v-if="loaded"></PageTitle>
       <div v-if="loaded">
-      This assignment is out of {{ assignmentInfo.total_points }} points.  For the {{ scores.length}} students
-      that submitted, we have a maximum score of {{ max }}, a minimum score of {{ min }}, a mean score of {{ mean }}, and
-      a standard deviation of {{stdev }}.
+        <b-container>
+          <b-row>
+            <b-col>
+            <b-card title="Summary Statistics">
+              <b-card-text>
+            <ul>
+            <li>This assignment is out of {{ assignmentInfo.total_points }} points.</li>
+              <li>{{ scores.length}} student submissions</li>
+              <li v-if="this.scores.length">Maximum score of {{ max }}</li>
+              <li v-if="this.scores.length">Minimum score of {{ min }}</li>
+              <li v-if="this.scores.length">Mean score of {{ mean }}</li>
+              <li v-if="this.scores.length">Standard deviation of {{stdev }}</li>
+            </ul>
+                <hr>
+                <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="getStudentView(assignmentId)">View Questions</b-button>
+              </b-card-text>
+            </b-card>
+            </b-col>
+            <b-col>
+              <scores v-if="loaded"
+                      :chartdata="chartdata"
+                      :height="300"
+              />
+            </b-col>
+          </b-row>
+        </b-container>
       </div>
-      <scores v-if="loaded"
-              :chartdata="chartdata"
-              :height="300"
-      />
-
-
-    </b-container>
   </div>
 </template>
 
@@ -57,6 +72,9 @@ export default {
     }
   },
   methods: {
+    getStudentView(assignmentId) {
+      this.$router.push(`/assignments/${assignmentId}/questions/view`)
+    },
     round(num, precision) {
       num = parseFloat(num)
       if (!precision) return num
@@ -110,7 +128,6 @@ export default {
         labels: labels,
         datasets: [
           {
-            label: 'Distribution of Scores',
             backgroundColor: 'green',
             data: counts
           }

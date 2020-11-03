@@ -10,11 +10,32 @@ export default {
     },
     options: {
       type: Object,
-      default:null
+      default: null
     }
   },
-  mounted () {
-    this.renderChart(this.chartdata, {maintainAspectRatio:false})
+  mounted() {
+    this.renderChart(this.chartdata, {
+      legend: {
+        display: false
+      },
+      maintainAspectRatio: false,
+      scales: {
+        xAxes: [{
+          display: true,
+          scaleLabel: {
+            display: true,
+            labelString: 'Score'
+          }
+        }],
+        yAxes: [{
+          display: true,
+          scaleLabel: {
+            display: true,
+            labelString: 'Number of Students'
+          }
+        }]
+      }
+    })
   }
 }
 </script>
