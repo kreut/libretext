@@ -24,7 +24,8 @@
           </b-alert>
         </div>
         <div v-show="solutionsReleased">
-          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only item that you can update is the assignment's name.</strong>
+          <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only item
+            that you can update is the assignment's name.</strong>
           </b-alert>
         </div>
 
@@ -51,143 +52,146 @@
             </b-col>
           </b-form-row>
         </b-form-group>
-          <b-form-group
-            id="available_from"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Available on"
-            label-for="Available on"
-          >
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  v-model="form.available_from_date"
-                  :min="min"
-                  :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                  v-on:shown="form.errors.clear('available_from_date')"
+        <b-form-group
+          id="available_from"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Available on"
+          label-for="Available on"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="form.available_from_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('available_from_date') }"
+                v-on:shown="form.errors.clear('available_from_date')"
                 :disabled="Boolean(solutionsReleased)">
-                </b-form-datepicker>
-                <has-error :form="form" field="available_from_date"></has-error>
-              </b-col>
-              <b-col>
-                <b-form-timepicker v-model="form.available_from_time"
-                                   locale="en"
-                                   :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                   v-on:shown="form.errors.clear('available_from_time')"
-                                   :disabled="Boolean(solutionsReleased)">
+              </b-form-datepicker>
+              <has-error :form="form" field="available_from_date"></has-error>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="form.available_from_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has('available_from_time') }"
+                                 v-on:shown="form.errors.clear('available_from_time')"
+                                 :disabled="Boolean(solutionsReleased)">
 
-                </b-form-timepicker>
-                <has-error :form="form" field="available_from_time"></has-error>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
+              </b-form-timepicker>
+              <has-error :form="form" field="available_from_time"></has-error>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
 
-          <b-form-group
-            id="due"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Due Date"
-            label-for="Due Date"
-          >
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  v-model="form.due_date"
-                  :min="min"
-                  :class="{ 'is-invalid': form.errors.has('due_date') }"
-                  v-on:shown="form.errors.clear('due_date')"
-                  :disabled="Boolean(solutionsReleased)">
-                </b-form-datepicker>
-                <has-error :form="form" field="due_date"></has-error>
-              </b-col>
-              <b-col>
-                <b-form-timepicker v-model="form.due_time"
-                                   locale="en"
-                                   :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                   v-on:shown="form.errors.clear('due_time')"
-                                  :disabled="Boolean(solutionsReleased)">
-                </b-form-timepicker>
-                <has-error :form="form" field="due_time"></has-error>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-            <b-form-group
-              id="source"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Source"
-              label-for="Source"
-            >
+        <b-form-group
+          id="due"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Due Date"
+          label-for="Due Date"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="form.due_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('due_date') }"
+                v-on:shown="form.errors.clear('due_date')"
+                :disabled="Boolean(solutionsReleased)">
+              </b-form-datepicker>
+              <has-error :form="form" field="due_date"></has-error>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="form.due_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has('due_time') }"
+                                 v-on:shown="form.errors.clear('due_time')"
+                                 :disabled="Boolean(solutionsReleased)">
+              </b-form-timepicker>
+              <has-error :form="form" field="due_time"></has-error>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="source"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Source"
+          label-for="Source"
+        >
 
-              <b-form-radio-group v-model="form.source" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
+          <b-form-radio-group v-model="form.source" stacked
+                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="source" value="a">Adapt</b-form-radio>
                 </span>
-                <b-form-radio name="scoring_type" value="x">External</b-form-radio>
-              </b-form-radio-group>
-            </b-form-group>
+            <b-form-radio name="scoring_type" value="x">External</b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
 
-            <b-form-group
-              id="scoring_type"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Scoring Type"
-              label-for="Scoring Type"
-            >
+        <b-form-group
+          id="scoring_type"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Scoring Type"
+          label-for="Scoring Type"
+        >
 
-              <b-form-radio-group v-model="form.scoring_type" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
+          <b-form-radio-group v-model="form.scoring_type" stacked
+                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
           <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
                 </span>
-                <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
-              </b-form-radio-group>
-            </b-form-group>
-            <div v-show="form.source === 'a'">
-              <b-form-group
-                v-if="form.scoring_type === 'p'"
-                id="submission_files"
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label="Submission Files"
-                label-for="Submission Files"
-              >
+            <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <div v-show="form.source === 'a'">
+          <b-form-group
+            v-if="form.scoring_type === 'p'"
+            id="submission_files"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Submission Files"
+            label-for="Submission Files"
+          >
 
-                <b-form-radio-group v-model="form.submission_files" stacked :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
-                  <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
-                  <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
-                  <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
-                </b-form-radio-group>
-              </b-form-group>
+            <b-form-radio-group v-model="form.submission_files" stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
+              <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
+              <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
+              <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
 
-              <b-form-group
-                v-if="form.scoring_type === 'p'"
-                id="default_points_per_question"
-                label-cols-sm="4"
-                label-cols-lg="3"
-                label="Default Points/Question"
-                label-for="default_points_per_question"
-              >
+          <b-form-group
+            v-if="form.scoring_type === 'p'"
+            id="default_points_per_question"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Default Points/Question"
+            label-for="default_points_per_question"
+          >
 
-                <b-form-row>
-                  <b-col lg="3">
-                    <b-form-input
-                      id="default_points_per_question"
-                      v-model="form.default_points_per_question"
-                      type="text"
-                      placeholder=""
-                      :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                      @keydown="form.errors.clear('default_points_per_question')"
-                      :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-                    >
-                    </b-form-input>
-                    <has-error :form="form" field="default_points_per_question"></has-error>
-                  </b-col>
-                </b-form-row>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="default_points_per_question"
+                  v-model="form.default_points_per_question"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
+                  @keydown="form.errors.clear('default_points_per_question')"
+                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                >
+                </b-form-input>
+                <has-error :form="form" field="default_points_per_question"></has-error>
+              </b-col>
+            </b-form-row>
 
-              </b-form-group>
-            </div>
+          </b-form-group>
+        </div>
       </b-form>
     </b-modal>
     <b-modal
@@ -241,15 +245,46 @@
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
              <span v-if="user.role === 2">
-            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)"><b-icon
-              :variant="hasSubmissionsColor(data.item)" icon="plus-circle"></b-icon></span>
+                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
+                           delay="500">
+                    Get Questions
+                  </b-tooltip>
+            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)">
+              <b-icon
+                :variant="hasSubmissionsColor(data.item)"
+                :id="getTooltipTarget('getQuestions',data.item.id)"
+                icon="plus-circle"></b-icon>
+            </span>
              </span>
+            <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+                       delay="500">
+              View File Submissions
+            </b-tooltip>
             <span v-show="data.item.source === 'a'" class="pr-1"
-                  v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)"> <b-icon
-              icon="cloud-upload"></b-icon></span>
+                  v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)">
+              <b-icon
+                icon="cloud-upload"
+                :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+              >
+              </b-icon>
+            </span>
             <span v-if="user.role === 2">
-            <span class="pr-1" v-on:click="editAssignment(data.item)"><b-icon icon="pencil"></b-icon></span>
-            <b-icon icon="trash" v-on:click="deleteAssignment(data.item.id)"></b-icon>
+               <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
+                          delay="500">
+              Edit Assignment
+            </b-tooltip>
+            <span class="pr-1" v-on:click="editAssignment(data.item)">
+              <b-icon icon="pencil"
+                      :id="getTooltipTarget('editAssignment',data.item.id)">
+                      </b-icon>
+            </span>
+               <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
+                          delay="500">
+              Delete Assignment
+            </b-tooltip>
+            <b-icon icon="trash"
+                    v-on:click="deleteAssignment(data.item.id)"
+                    :id="getTooltipTarget('deleteAssignment',data.item.id)"></b-icon>
               </span>
           </div>
         </template>
@@ -271,7 +306,8 @@ import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
-
+import {getTooltipTarget} from '../../helpers/tooptips'
+import {initTooltips} from "../../helpers/tooptips"
 
 export default {
   middleware: 'auth',
@@ -330,7 +366,8 @@ export default {
     this.courseId = this.$route.params.courseId
     this.getAssignments();
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
   },
   methods: {
     initAddAssignment() {
@@ -558,7 +595,8 @@ export default {
 }
 </script>
 <style>
-.td-center {
-  text-align: center;
+svg:focus, svg:active:focus {
+  outline: none !important;
 }
+
 </style>

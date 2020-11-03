@@ -152,20 +152,50 @@
           </div>
         </template>
         <template v-slot:cell(start_date)="data">
-         {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+          {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
         </template>
         <template v-slot:cell(end_date)="data">
           {{ $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
         </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <span class="pr-1" v-on:click="showScores(data.item.id)"><b-icon icon="file-spreadsheet"></b-icon></span>
+            <span class="pr-1" v-on:click="showScores(data.item.id)">
+                <b-tooltip :target="getTooltipTarget('gradebook',data.item.id)"
+                           delay="500">
+                    Gradebook
+                  </b-tooltip>
+              <b-icon :id="getTooltipTarget('gradebook',data.item.id)"  icon="file-spreadsheet"></b-icon></span>
             <span v-if="user.role === 2">
-              <span class="pr-1" v-on:click="editCourse(data.item)"><b-icon icon="pencil"></b-icon></span>
-              <span class="pr-1" v-on:click="inviteGrader(data.item.id)"><b-icon icon="people"></b-icon></span>
-              <span class="pr-1" v-on:click="updateAccessCode(data.item)"> <b-icon
-                icon="arrow-repeat"></b-icon></span>
-                <b-icon icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
+                  <b-tooltip ref="tooltip"
+                             :target="getTooltipTarget('pencil',data.item.id)"
+                             delay="500"
+                  >
+                    Edit Course
+                  </b-tooltip>
+                              <span class="pr-1" v-on:click="editCourse(data.item)">
+                  <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil"></b-icon>
+                </span>
+              <span class="pr-1" v-on:click="inviteGrader(data.item.id)">
+                       <b-tooltip :target="getTooltipTarget('inviteGrader',data.item.id)"
+                                  delay="500">
+                         Invite Grader
+                       </b-tooltip>
+                <b-icon :id="getTooltipTarget('inviteGrader',data.item.id)" icon="people">
+
+                </b-icon>
+              </span>
+              <span class="pr-1" v-on:click="updateAccessCode(data.item)">
+                  <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
+                             delay="500">
+                    Refresh Access Code
+                  </b-tooltip>
+                <b-icon :id="getTooltipTarget('refreshAccessCode',data.item.id)" icon="arrow-repeat"></b-icon>
+              </span>
+              <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
+                         delay="500">
+                    Delete Course
+                  </b-tooltip>
+                <b-icon :id="getTooltipTarget('deleteCourse',data.item.id)" icon="trash" v-on:click="deleteCourse(data.item.id)"></b-icon>
             </span>
           </div>
         </template>
@@ -186,6 +216,8 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
+import {getTooltipTarget} from '../../helpers/tooptips'
+import {initTooltips} from "../../helpers/tooptips"
 
 const now = new Date()
 export default {
@@ -227,10 +259,14 @@ export default {
       email: ''
     }),
     showNoCoursesAlert: false,
-    canViewCourses: false
+    canViewCourses: false,
+    modalHidden: false
   }),
   mounted() {
-    this.getCourses();
+    this.getCourses()
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
+
   },
   methods: {
     async deleteGrader(userId) {
@@ -329,6 +365,7 @@ export default {
     }
     ,
     editCourse(course) {
+      this.$refs.tooltip.$emit('close')
       this.courseId = course.id;
       this.form.name = course.name
       this.form.start_date = course.start_date
@@ -421,5 +458,7 @@ body, html {
   overflow: visible;
 
 }
-
+svg:focus, svg:active:focus {
+  outline: none !important;
+}
 </style>
