@@ -455,6 +455,11 @@ export default {
         this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
         return false
       }
+      if (assignment.scoring_type === 'c') {
+        this.$router.push(`/assignments/${assignment.id}/questions/view`)//no summary statistics
+        return false
+      }
+
       this.$router.push(`/assignments/${assignment.id}/view`)
     }
     ,

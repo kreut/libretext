@@ -279,7 +279,7 @@
 
         <b-container>
           <b-row>
-            <b-col cols="8">
+            <b-col :cols="questionCol">
               <div v-if="learningTreeAsList.length>0">
                 <b-alert show>
 
@@ -371,7 +371,7 @@
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
               </div>
             </b-col>
-            <b-col cols="4" v-if="(user.role === 2) && loaded">
+            <b-col cols="4" v-if="(scoring_type === 'p') && (user.role === 2) && loaded">
                 <b-card title="Summary Statistics" class="mb-2">
                   <b-card-text>
                     <ul>
@@ -523,6 +523,7 @@ export default {
     Email
   },
   data: () => ({
+    questionCol: 0,
     loaded: false,
     chartdata: null,
     assignmentInfo: {},
@@ -541,7 +542,6 @@ export default {
     timeLeft: 0,
     totalPoints: 0,
     uploadFileType: '',
-    questionCols: 1,
     source: 'a',
     scoring_type: '',
     solutionsReleased: false,
@@ -612,6 +612,8 @@ export default {
     if (!canView) {
       return false
     }
+
+    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId)
       await this.getCutups(this.assignmentId)
