@@ -372,17 +372,21 @@
               </div>
             </b-col>
             <b-col cols="4" v-if="(user.role === 2) &&  loaded">
-              <ul>
-              <li>{{ scores.length}} student submissions</li>
-              <li v-if="this.scores.length">Maximum score of {{ max }}</li>
-              <li v-if="this.scores.length">Minimum score of {{ min }}</li>
-              <li v-if="this.scores.length">Mean score of {{ mean }}</li>
-              <li v-if="this.scores.length">Standard deviation of {{stdev }}</li>
-              </ul>
-              <scores
-                      :chartdata="chartdata"
-                      :height="300"
-              />
+                <b-card title="Summary Statistics" class="mb-2">
+                  <b-card-text>
+                    <ul>
+                      <li>{{ scores.length }} student submissions</li>
+                      <li v-if="this.scores.length">Maximum score of {{ max }}</li>
+                      <li v-if="this.scores.length">Minimum score of {{ min }}</li>
+                      <li v-if="this.scores.length">Mean score of {{ mean }}</li>
+                      <li v-if="this.scores.length">Standard deviation of {{ stdev }}</li>
+                    </ul>
+                  </b-card-text>
+                </b-card>
+                  <scores class="border-1 border-info"
+                    :chartdata="chartdata"
+                    :height="300"
+                  />
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
               <b-row>
@@ -398,17 +402,17 @@
                   <br>
                   </span>
                     <span class="font-weight-bold">Last submitted:</span> {{
-                      questions[currentPage - 1].last_submitted
+                    questions[currentPage - 1].last_submitted
                     }}<br>
                     <span class="font-weight-bold">Last response:</span> {{
-                      questions[currentPage - 1].student_response
+                    questions[currentPage - 1].student_response
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
 
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
-                        questions[currentPage - 1].submission_score
+                      questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
                   </b-card-text>
@@ -579,6 +583,11 @@ export default {
     title: '',
     assignmentId: ''
   }),
+  watch: {
+    chartData: function () {
+      this.renderChart(this.chartData, this.options);
+    }
+  },
   created() {
     h5pResizer()
     this.toggleQuestionFiles = toggleQuestionFiles
@@ -609,7 +618,7 @@ export default {
       window.addEventListener('message', this.receiveMessage, false)
     }
     try {
-      const scoresData = await this.getScoresSummary(this.assignmentId,`/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
+      const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
       console.log(scoresData)
       this.chartdata = scoresData
       this.loaded = true
@@ -857,13 +866,16 @@ export default {
         iFrameResize({log: false}, `#${iframe_id}`)
         iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
       })
-      try {
-        const scoresData = await this.getScoresSummary(this.assignmentId,`/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage]['id']}`)
-        console.log(scoresData)
-        this.chartdata = scoresData
-        this.loaded = true
-      } catch (error) {
-        this.$noty.error(error.message)
+      if (this.user.role === 2) {
+        try {
+          this.loaded = false
+          const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1]['id']}`)
+          console.log(scoresData)
+          this.chartdata = scoresData
+          this.loaded = true
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
       }
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []

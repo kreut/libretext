@@ -18,7 +18,9 @@ export async function getScoresSummary(id, url) {
     if (!data.scores){
       return false
     }
+    console.log(data.scores)
     this.scores = data.scores.map(user => parseFloat(user.score))
+    this.scores =   this.scores.filter( value => !Number.isNaN(value) )//in case of nulls....
     console.log(this.scores)
     this.max = Math.max(...this.scores) //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
     this.min = Math.min(...this.scores)
@@ -37,7 +39,7 @@ export async function getScoresSummary(id, url) {
     let labels = []
     let counts = []
     for (let i = 0; i < this.scores.length; i++) {
-      let score = round(this.scores[i], precision)
+      let score = round(parseFloat(this.scores[i]), precision)
       if (!labels.includes(score)) {
         labels.push(score)
         counts.push(0)
@@ -49,7 +51,7 @@ export async function getScoresSummary(id, url) {
     console.log(labels)
     for (let i = 0; i < this.scores.length; i++) {
       for (let j = 0; j < labels.length; j++) {
-        let score = round(this.scores[i], precision)
+        let score = round(parseFloat(this.scores[i]), precision)
         if (parseFloat(score) === parseFloat(labels[j])) {
           counts[j]++
           break
