@@ -9,11 +9,13 @@
               <b-card-text>
             <ul>
             <li>This assignment is out of {{ totalPoints }} points.</li>
-              <li>{{ scores.length}} student submissions</li>
+
+              <li v-if="this.scores.length">{{ scores.length}} student submissions</li>
               <li v-if="this.scores.length">Maximum score of {{ max }}</li>
               <li v-if="this.scores.length">Minimum score of {{ min }}</li>
               <li v-if="this.scores.length">Mean score of {{ mean }}</li>
               <li v-if="this.scores.length">Standard deviation of {{stdev }}</li>
+              <li v-if="!this.scores.length">Nobody has submitted anything yet</li>
             </ul>
                 <hr>
                 <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="getStudentView(assignmentId)">View Questions</b-button>
@@ -21,7 +23,7 @@
             </b-card>
             </b-col>
             <b-col>
-              <scores v-if="loaded"
+              <scores v-if="loaded && chartdata"
                       :chartdata="chartdata"
                       :height="300"
               />
@@ -52,7 +54,7 @@ export default {
     totalPoints:'',
     chartdata: null,
     assignmentInfo: {},
-    scores: {},
+    scores: [],
     mean: 0,
     stdev: 0,
     max: 0,
@@ -68,7 +70,9 @@ export default {
     try {
       const scoresData = await this.getScoresSummary(this.assignmentId,`/api/assignments/${this.assignmentId}`)
       console.log(scoresData)
-      this.chartdata = scoresData
+      if (scoresData) {
+        this.chartdata = scoresData
+      }
       this.loaded = true
     } catch (error) {
       alert(error.message)

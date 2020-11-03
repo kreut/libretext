@@ -200,7 +200,6 @@ class ScoreController extends Controller
              return $response;
          }
 
-
         try {
             $scores = [];
 
@@ -219,10 +218,11 @@ class ScoreController extends Controller
 
             if ($submissions->isNotEmpty()) {
                 foreach ($submissions as $key => $submission) {
-                    $submission_file_score =  $scores[$submission_file->user_id]['score']  ?? 0;
+                    $submission_file_score =  $scores[$submission->user_id]['score']  ?? 0;
                     $scores[$submission->user_id]['score'] = $submission_file_score + $submission->score;
                 }
             }
+
             $response['type'] = 'success';
             $response['scores'] = array_values($scores);
             return $response;

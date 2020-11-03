@@ -371,19 +371,19 @@
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
               </div>
             </b-col>
-            <b-col cols="4" v-if="(user.role === 2) &&  loaded">
+            <b-col cols="4" v-if="(user.role === 2) && loaded">
                 <b-card title="Summary Statistics" class="mb-2">
                   <b-card-text>
                     <ul>
                       <li>{{ scores.length }} student submissions</li>
-                      <li v-if="this.scores.length">Maximum score of {{ max }}</li>
-                      <li v-if="this.scores.length">Minimum score of {{ min }}</li>
-                      <li v-if="this.scores.length">Mean score of {{ mean }}</li>
-                      <li v-if="this.scores.length">Standard deviation of {{ stdev }}</li>
+                      <li v-if="scores.length">Maximum score of {{ max }}</li>
+                      <li v-if="scores.length">Minimum score of {{ min }}</li>
+                      <li v-if="scores.length">Mean score of {{ mean }}</li>
+                      <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
                     </ul>
                   </b-card-text>
                 </b-card>
-                  <scores class="border-1 border-info"
+                  <scores v-if="scores.length" class="border-1 border-info"
                     :chartdata="chartdata"
                     :height="300"
                   />
@@ -526,7 +526,7 @@ export default {
     loaded: false,
     chartdata: null,
     assignmentInfo: {},
-    scores: {},
+    scores: [],
     mean: 0,
     stdev: 0,
     max: 0,
@@ -617,13 +617,15 @@ export default {
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
-    try {
-      const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
-      console.log(scoresData)
-      this.chartdata = scoresData
-      this.loaded = true
-    } catch (error) {
-      this.$noty.error(error.message)
+    if (this.user.role === 2) {
+      try {
+        const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
+        console.log(scoresData)
+        this.chartdata = scoresData
+        this.loaded = true
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     }
 
   },

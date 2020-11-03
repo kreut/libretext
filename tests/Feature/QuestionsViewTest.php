@@ -65,6 +65,49 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
+    public function student_cannot_get_scores_by_assignment_and_question()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to retrieve this summary.']);
+    }
+
+    /** @test */
+
+    public function owner_can_get_scores_by_assignment_and_question()
+    {
+        factory(SubmissionFile::class)->create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'type' => 'q',
+            'original_filename' => 'some original name.pdf',
+            'score' => 4]);
+
+       $this->h5pSubmission = [
+            'technology' => 'h5p',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}',
+            ];//gives them 10 points for the question since they got it correct
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $scores['scores'][0] = ['score' => 14];
+        $this->actingAs($this->user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson($scores);
+
+    }
+/** @test */
+    public function if_there_are_no_scores_it_returns_an_empty_array()
+    {
+
+        $this->actingAs($this->user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson([]);
+
+    }
+
+
+    /** @test */
+
     public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
     {
         $this->actingAs($this->student_user_2)->postJson('/api/email/send', [
@@ -73,7 +116,7 @@ class QuestionsViewTest extends TestCase
             'subject' => 'Grading issue',
             'text' => 'some student complaint',
             'type' => 'contact_grader',
-            'extraParams' => ['question_id' => $this->question->id, 'assignment_id' =>$this->assignment->id],
+            'extraParams' => ['question_id' => $this->question->id, 'assignment_id' => $this->assignment->id],
             'to_user_id' => 100000,
         ])
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to send that person an email.']);
@@ -140,7 +183,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->createSubmissionFile();
         $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission",
-        ['chosen_cutups' => '1:2,aaa'])
+            ['chosen_cutups' => '1:2,aaa'])
             ->assertJson(['message' => "Your cutups should be a comma separated list of pages chosen from your original PDF."]);
 
     }
@@ -172,11 +215,11 @@ class QuestionsViewTest extends TestCase
         //Need to mock out the uploaded file
 
         //$this->createSubmissionFile();
-       // $this->assignment->due = Carbon::yesterday();
-       // $this->assignment->save();
-       // factory(Extension::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
-       // $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
-       //     ->assertJson(['message' => "Your cutup has been saved as your file submission for this question."]);
+        // $this->assignment->due = Carbon::yesterday();
+        // $this->assignment->save();
+        // factory(Extension::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+        // $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
+        //     ->assertJson(['message' => "Your cutup has been saved as your file submission for this question."]);
 
     }
 
@@ -195,7 +238,7 @@ class QuestionsViewTest extends TestCase
     public function instructor_can_create_cutups_if_they_are_the_owner()
     {
         //need to mock out the file
-       // $this->actingAs($this->user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
+        // $this->actingAs($this->user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
         //    ->assertJson(['message' => "Your cutup has been set as the solution."]);
     }
 
