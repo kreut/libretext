@@ -1,11 +1,5 @@
 <template>
   <div>
-    <scores v-if="loaded"
-            :chartdata="chartdata"
-            :height="300"
-    />
-
-
     <Email ref="email"
            extraEmailModalText="Before you contact your grader, please be sure to look at the solutions first, if they are available."
            id="contact-grader-modal"
@@ -285,7 +279,7 @@
 
         <b-container>
           <b-row>
-            <b-col :cols="questionCols">
+            <b-col cols="8">
               <div v-if="learningTreeAsList.length>0">
                 <b-alert show>
 
@@ -376,6 +370,19 @@
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
               </div>
+            </b-col>
+            <b-col cols="4" v-if="(user.role === 2) &&  loaded">
+              <ul>
+              <li>{{ scores.length}} student submissions</li>
+              <li v-if="this.scores.length">Maximum score of {{ max }}</li>
+              <li v-if="this.scores.length">Minimum score of {{ min }}</li>
+              <li v-if="this.scores.length">Mean score of {{ mean }}</li>
+              <li v-if="this.scores.length">Standard deviation of {{stdev }}</li>
+              </ul>
+              <scores
+                      :chartdata="chartdata"
+                      :height="300"
+              />
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
               <b-row>
@@ -587,7 +594,6 @@ export default {
       this.getScoresSummary = getScoresSummary
     }
 
-    this.questionCols = (this.user.role === 2) ? '12' : '8' //instructors have less info to see so make their set of columns bigger
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' //students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
@@ -603,12 +609,12 @@ export default {
       window.addEventListener('message', this.receiveMessage, false)
     }
     try {
-      const scoresData = await this.getScoresSummary(this.assignmentId,`/api/assignments/${this.assignmentId}`)
+      const scoresData = await this.getScoresSummary(this.assignmentId,`/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
       console.log(scoresData)
       this.chartdata = scoresData
       this.loaded = true
     } catch (error) {
-      alert(error.message)
+      this.$noty.error(error.message)
     }
 
   },
@@ -851,6 +857,14 @@ export default {
         iFrameResize({log: false}, `#${iframe_id}`)
         iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
       })
+      try {
+        const scoresData = await this.getScoresSummary(this.assignmentId,`/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage]['id']}`)
+        console.log(scoresData)
+        this.chartdata = scoresData
+        this.loaded = true
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
       if (this.learningTree) {

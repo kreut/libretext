@@ -296,7 +296,10 @@ export default {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
-
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
         this.title = `Grade File Submissions For "${data.name}"`
 
       } catch (error) {

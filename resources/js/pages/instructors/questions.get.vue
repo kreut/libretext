@@ -228,6 +228,10 @@ export default {
     async getAssignmentInfo() {
       try {
         const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
         if (data.has_submissions) {
           this.isLoading = false
           this.$noty.error("You can't add or remove questions from the assignment since students have already submitted responses.")

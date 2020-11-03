@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Score;
 use App\Course;
+use App\SubmissionFile;
 use App\User;
 use App\Assignment;
-use App\Enrollment;
+use App\Submission;
+use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 
@@ -71,7 +73,7 @@ class ScoreController extends Controller
                     $score = ($score === 'c') ? 'Complete' : 'Incomplete';//easier to read
                 }
                 $columns[$assignment->id] = $score;
-                $download_row_data["{$assignment->id}"] = str_replace(' (E)','',$score);//get rid of the extension info
+                $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
             }
             $columns['name'] = $name;
             $columns['userId'] = $user_id;
@@ -181,6 +183,54 @@ class ScoreController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function getScoresByAssignmentAndQuestion(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
+    {
+
+        $response['type'] = 'error';
+         $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
+
+         if (!$authorized->allowed()) {
+             $response['type'] = 'error';
+             $response['message'] = $authorized->message();
+             return $response;
+         }
+
+
+        try {
+            $scores = [];
+
+            $submissionFiles = $submissionFile->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            if ($submissionFiles->isNotEmpty()) {
+                foreach ($submissionFiles as $key => $submission_file) {
+                    $scores[$submission_file->user_id]['score'] = $submission_file->score;
+                }
+            }
+
+            $submissions = $submission->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+
+            if ($submissions->isNotEmpty()) {
+                foreach ($submissions as $key => $submission) {
+                    $submission_file_score =  $scores[$submission_file->user_id]['score']  ?? 0;
+                    $scores[$submission->user_id]['score'] = $submission_file_score + $submission->score;
+                }
+            }
+            $response['type'] = 'success';
+            $response['scores'] = array_values($scores);
+            return $response;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the scores' summary.  Please try again or contact us for assistance.";
         }
         return $response;
 

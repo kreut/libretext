@@ -38,5 +38,14 @@ class ScorePolicy
 
     }
 
+    public function getScoreByAssignmentAndQuestion(User $user,  Score $score, Assignment $assignment)
+    {
+
+        return ($assignment->course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve this summary.');
+
+    }
+
 
 }
