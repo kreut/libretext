@@ -619,7 +619,7 @@ export default {
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
-    if (this.user.role === 2) {
+    if (this.questions.length && this.user.role === 2) {
       try {
         const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
         console.log(scoresData)
@@ -870,7 +870,7 @@ export default {
         iFrameResize({log: false}, `#${iframe_id}`)
         iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
       })
-      if (this.user.role === 2) {
+      if (this.questions && this.user.role === 2) {
         try {
           this.loaded = false
           const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1]['id']}`)
