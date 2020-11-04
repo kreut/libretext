@@ -18,10 +18,12 @@ if (mix.inProduction()) {
 } else {
   mix.sourceMaps()
 }
+const webpack = require('webpack');
 
 mix.webpackConfig({
   plugins: [
     // new BundleAnalyzerPlugin()
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/) //Locales were causing a css error in app.css
   ],
   resolve: {
     extensions: ['.js', '.json', '.vue'],
