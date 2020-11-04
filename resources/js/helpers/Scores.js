@@ -1,6 +1,5 @@
 import axios from 'axios'
-
-let stats = require("stats-lite")
+import stats from 'stats-lite'
 
 function round(num, precision) {
   num = parseFloat(num)
