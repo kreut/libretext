@@ -86,7 +86,7 @@ class JWTController extends Controller
         }
         $jwe = new JWE();
         $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT, $technology));
-
+Log::info(json_encode($problemJWT));
         $missing_properties = !(
             isset($problemJWT->adapt) &&
             isset($problemJWT->adapt->assignment_id) &&

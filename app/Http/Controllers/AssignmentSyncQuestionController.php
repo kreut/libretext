@@ -499,14 +499,22 @@ class AssignmentSyncQuestionController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
-                $custom_claims["{$question->technology}"] = '';
                 $custom_claims['scheme_and_host'] =  $request->getSchemeAndHttpHost();
+                //if I didn't initialize each, I was getting a weird webwork error
+                //in addition, the imathas problem JWT had the webwork info from the previous
+                //problem.  Not sure why!  Maybe it has something to do createProblemJWT
+                //TymonDesigns keeps the custom claims???
+                $custom_claims['imathas'] = [];
+                $custom_claims['webwork'] = [];
+                $custom_claims['h5p'] = [];
+                Log::info($question->technology);
                 switch ($question->technology) {
+
                     case('webwork'):
 
                         $webwork_url = 'webwork.libretexts.org';
                         //$webwork_url = 'demo.webwork.rochester.edu';
-                        $custom_claims['webwork'] = [];
+
                         $seed=$this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
                         $custom_claims['webwork']['problemSeed'] = $seed;
@@ -545,6 +553,8 @@ class AssignmentSyncQuestionController extends Controller
 
                         break;
                     case('imathas'):
+
+                        $custom_claims['webwork'] = [];
                         $custom_claims['imathas'] = [];
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
@@ -561,6 +571,7 @@ class AssignmentSyncQuestionController extends Controller
                         break;
                     case('h5p'):
                         //NOT USED FOR anything at the moment
+                        $custom_claims=[];
                         $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
                     case('text'):
@@ -572,6 +583,9 @@ class AssignmentSyncQuestionController extends Controller
                         exit;
 
                 }
+
+                Log::info(print_r($custom_claims,true));
+                Log::info(print_r(auth()->payload()->toArray(), true));
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
@@ -610,6 +624,9 @@ class AssignmentSyncQuestionController extends Controller
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
         \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
+        $payload = auth()->payload();
+        Log::info('payload2');
+        Log::info( print_r($payload->toArray(), true));
         return $problemJWT;
 
     }
