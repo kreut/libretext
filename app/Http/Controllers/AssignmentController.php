@@ -90,13 +90,17 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
-            $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
-            $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-            $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
-            $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
+            if (Auth::user()->role === 3) {
+                $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
+                $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
+                $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
+                $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
+            }
+
+
             $assignments = $course->assignments;
 
-            foreach ($course->assignments as $key => $assignment) {
+            foreach ($assignments as $key => $assignment) {
                 $assignments[$key]['number_of_questions'] = count($assignment->questions);
 
                 $available_from = $assignment['available_from'];
