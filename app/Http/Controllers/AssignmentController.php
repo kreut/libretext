@@ -99,9 +99,10 @@ class AssignmentController extends Controller
 
 
             $assignments = $course->assignments;
-
+            $assignments_info = [];
             foreach ($assignments as $key => $assignment) {
-                $assignments[$key]['number_of_questions'] = count($assignment->questions);
+                $assignments_info[$key] = $assignment->attributesToArray();
+                $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
 
                 $available_from = $assignment['available_from'];
                 if (Auth::user()->role === 3) {
@@ -109,36 +110,36 @@ class AssignmentController extends Controller
                     $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
                     $assignments[$key]['is_extension'] = isset($extensions_by_assignment[$assignment->id]);
 
-                    $assignments[$key]['due'] = [
+                    $assignments_info[$key]['due'] = [
                         'due_date' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone), //for viewing
                         'is_extension' => $is_extension
                     ];//for viewing
 
                     //for comparing I just want the UTC version
-                    $assignments[$key]['is_available'] = strtotime($available_from) < time();
-                    $assignments[$key]['past_due'] = $due < time();
+                    $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
+                    $assignments_info[$key]['past_due'] = $due < time();
                     if (isset($scores_by_assignment[$assignment->id])) {
-                        $assignments[$key]['score'] = $scores_by_assignment[$assignment->id];
+                        $assignments_info[$key]['score'] = $scores_by_assignment[$assignment->id];
                     } else {
-                        $assignments[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
+                        $assignments_info[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
                     }
                     $assignments[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
-                    $assignments[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
+                    $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {
                     $due = $assignment['due'];
 
-                    $assignments[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
+                    $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
-                    $assignments[$key]['status'] = $this->getStatus($available_from, $due);
-                    $assignments[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
-                    $assignments[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-                    $assignments[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
-                    $assignments[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                    $assignments[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
+                    $assignments_info[$key]['status'] = $this->getStatus($available_from, $due);
+                    $assignments_info[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                    $assignments_info[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                    $assignments_info[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                    $assignments_info[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
 
                 }
 //same regardless of whether you're a student
-                $assignments[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
+                $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
 
 
             }
@@ -149,7 +150,7 @@ class AssignmentController extends Controller
             return $response;
         }
 
-        return $assignments;
+        return $assignments_info;
     }
 
     function getDefaultPointsPerQuestion(array $data)
@@ -163,7 +164,7 @@ class AssignmentController extends Controller
 
     public function getStatus(string $available_from, string $due)
     {
-        if (Carbon::now() < Carbon::parse($available_from) ) {
+        if (Carbon::now() < Carbon::parse($available_from)) {
             return 'Upcoming';
         }
 
@@ -253,7 +254,7 @@ class AssignmentController extends Controller
             $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
             $assignment->time_left = $this->getTimeLeft($assignment);
             $assignment->total_points = $this->getTotalPoints($assignment);
-           $assignment->scores = $score->where('assignment_id', $assignment->id)->get();
+            $assignment->scores = $score->where('assignment_id', $assignment->id)->get();
             return $assignment;
         } catch (Exception $e) {
             $h = new Handler(app());
