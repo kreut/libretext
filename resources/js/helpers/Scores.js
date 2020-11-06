@@ -12,13 +12,11 @@ export async function getScoresSummary(id, url) {
     const {data} = await axios.get(url)
     if (data.type === 'error'){
       this.$noty.error(data.message)
-      return false
     }
     if (!data.scores){
       return false
     }
-    console.log(data.scores)
-    this.scores = data.scores.map(user => parseFloat(user.score))
+    this.scores = data.scores.map(score => parseFloat(score))
     this.scores =   this.scores.filter( value => !Number.isNaN(value) )//in case of nulls....
     console.log(this.scores)
     this.max = Math.max(...this.scores) //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max

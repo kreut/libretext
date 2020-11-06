@@ -19,7 +19,6 @@ export default {
       legend: {
         display: false
       },
-      maintainAspectRatio: false,
       scales: {
         xAxes: [{
           display: true,

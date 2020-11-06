@@ -507,7 +507,6 @@ class AssignmentSyncQuestionController extends Controller
                 $custom_claims['imathas'] = [];
                 $custom_claims['webwork'] = [];
                 $custom_claims['h5p'] = [];
-                Log::info($question->technology);
                 switch ($question->technology) {
 
                     case('webwork'):
@@ -584,8 +583,6 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
 
-                Log::info(print_r($custom_claims,true));
-                Log::info(print_r(auth()->payload()->toArray(), true));
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
@@ -625,8 +622,7 @@ class AssignmentSyncQuestionController extends Controller
         //put back the original secret
         \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
         $payload = auth()->payload();
-        Log::info('payload2');
-        Log::info( print_r($payload->toArray(), true));
+
         return $problemJWT;
 
     }

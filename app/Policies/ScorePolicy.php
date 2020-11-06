@@ -40,8 +40,16 @@ class ScorePolicy
 
     public function getScoreByAssignmentAndQuestion(User $user,  Score $score, Assignment $assignment)
     {
-
-        return ($assignment->course->user_id === $user->id)
+        $has_access = false;
+        switch ($user->role){
+            case(2):
+               $has_access =  $assignment->course->user_id === $user->id;
+                break;
+            case(3):
+                $has_access = $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
+                break;
+        }
+        return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve this summary.');
 

@@ -37,7 +37,12 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
     Route::get('assignments/courses/{course}/', 'AssignmentController@index');
-    Route::get('/assignments/{assignment}', 'AssignmentController@show');
+
+    Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
+    Route::get('/assignments/{assignment}/total-points-info', 'AssignmentController@totalPointsInfo');
+    Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
+    Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
+
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');

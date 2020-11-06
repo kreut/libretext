@@ -123,7 +123,7 @@ class AssignmentController extends Controller
                     } else {
                         $assignments_info[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
                     }
-                    $assignments[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
+                    $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {
                     $due = $assignment['due'];
@@ -219,6 +219,7 @@ class AssignmentController extends Controller
                     'source' => $data['source'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
+                    'students_can_view_assignment_statistics' => $data['students_can_view_assignment_statistics'],
                     'submission_files' => $data['submission_files'],
                     'course_id' => $course->id
                 ]
@@ -240,7 +241,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function show(Assignment $assignment, Score $score)
+    public function viewQuestionsInfo(Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
@@ -251,18 +252,129 @@ class AssignmentController extends Controller
         }
         try {
             $assignment = Assignment::find($assignment->id);
-            $assignment->has_submissions_or_file_submissions = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();
-            $assignment->time_left = $this->getTimeLeft($assignment);
-            $assignment->total_points = $this->getTotalPoints($assignment);
-            $assignment->scores = $score->where('assignment_id', $assignment->id)->get();
-            return $assignment;
+            $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
+            $response['assignment'] = [
+                'name' => $assignment->name,
+                'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
+                'time_left' => $this->getTimeLeft($assignment),
+                'total_points' => $this->getTotalPoints($assignment),
+                'source' => $assignment->source,
+                'submission_files' => $assignment->submission_files,
+                'solutions_released' => $assignment->solutions_released,
+                'show_scores' => $assignment->show_scores,
+                'scoring_type' => $assignment->scoring_type,
+                'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
+                'scores' => $can_view_assignment_statistics
+                    ? $score->where('assignment_id', $assignment->id)->get()->pluck('score')
+                    : []
+            ];
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
+     *
+     * Display the specified resource
+     *
+     * @param Assignment $assignment
+     * @return Assignment
+     */
+    public function getQuestionsInfo(Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getQuestionsInfo', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
             return $response;
         }
+        try {
+            $assignment = Assignment::find($assignment->id);
+            $response['assignment'] = [
+                'name' => $assignment->name,
+                'has_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
+                'submission_files' => $assignment->submission_files
+            ];
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
     }
+
+
+    /*
+    * Display the specified resource
+    *
+    * @param Assignment $assignment
+    * @return Assignment
+    */
+    public function scoresInfo(Assignment $assignment, Score $score)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('scoresInfo', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment = Assignment::find($assignment->id);
+            $response['scores'] = $score->where('assignment_id', $assignment->id)->get()->pluck('score');
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
+
+    /**
+     *
+     * Display the specified resource
+     *
+     * @param Assignment $assignment
+     * @return Assignment
+     */
+    public function totalPointsInfo(Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('totalPointsInfo', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $assignment = Assignment::find($assignment->id);
+            $response['assignment'] = [
+                'name' => $assignment->name,
+                'total_points' => $this->getTotalPoints($assignment),
+            ];
+
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
 
     public function getTimeLeft(Assignment $assignment)
     {

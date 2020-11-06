@@ -139,8 +139,6 @@
       </b-form>
 
     </b-modal>
-
-
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
       <div v-if="questions.length">
@@ -177,9 +175,43 @@
                     </div>
                   </div>
                 </div>
+                <div v-if="showAssignmentStatistics">
+                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">Show Statistics
+                  </b-button>
+                </div>
               </b-col>
             </b-row>
           </b-container>
+
+          <b-modal v-model="showAssignmentStatisticsModal" size="xl" title="Question Level Statistics">
+            <b-container>
+              <b-row v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 3">
+                <b-col>
+                  <b-card>
+                    <b-card-text>
+                      <strong>Summary</strong>
+                      <ul>
+                        <li>{{ scores.length }} student submissions</li>
+                        <li v-if="scores.length">Maximum score of {{ max }}</li>
+                        <li v-if="scores.length">Minimum score of {{ min }}</li>
+                        <li v-if="scores.length">Mean score of {{ mean }}</li>
+                        <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
+                      </ul>
+                    </b-card-text>
+                  </b-card>
+                </b-col>
+                <b-col>
+
+                  <scores v-if="scores.length" class="border-1 border-info"
+                          :chartdata="chartdata"
+                          :height="300" :width="300"></scores>
+
+                </b-col>
+              </b-row>
+            </b-container>
+          </b-modal>
+
+
         </div>
         <div class="overflow-auto">
           <b-pagination
@@ -372,22 +404,22 @@
                 <div v-html="questions[currentPage-1].technology_iframe"></div>
               </div>
             </b-col>
-            <b-col cols="4" v-if="(scoring_type === 'p') && (user.role === 2) && loaded">
-                <b-card title="Summary Statistics" class="mb-2">
-                  <b-card-text>
-                    <ul>
-                      <li>{{ scores.length }} student submissions</li>
-                      <li v-if="scores.length">Maximum score of {{ max }}</li>
-                      <li v-if="scores.length">Minimum score of {{ min }}</li>
-                      <li v-if="scores.length">Mean score of {{ mean }}</li>
-                      <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
-                    </ul>
-                  </b-card-text>
-                </b-card>
-                  <scores v-if="scores.length" class="border-1 border-info"
-                    :chartdata="chartdata"
-                    :height="300"
-                  />
+            <b-col cols="4" v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2">
+              <b-card title="Summary Statistics" class="mb-2">
+                <b-card-text>
+                  <ul>
+                    <li>{{ scores.length }} student submissions</li>
+                    <li v-if="scores.length">Maximum score of {{ max }}</li>
+                    <li v-if="scores.length">Minimum score of {{ min }}</li>
+                    <li v-if="scores.length">Mean score of {{ mean }}</li>
+                    <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
+                  </ul>
+                </b-card-text>
+              </b-card>
+              <scores v-if="scores.length" class="border-1 border-info"
+                      :chartdata="chartdata"
+                      :height="400"
+              />
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
               <b-row>
@@ -403,17 +435,17 @@
                   <br>
                   </span>
                     <span class="font-weight-bold">Last submitted:</span> {{
-                    questions[currentPage - 1].last_submitted
+                      questions[currentPage - 1].last_submitted
                     }}<br>
                     <span class="font-weight-bold">Last response:</span> {{
-                    questions[currentPage - 1].student_response
+                      questions[currentPage - 1].student_response
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
 
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
-                      questions[currentPage - 1].submission_score
+                        questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
                   </b-card-text>
@@ -524,6 +556,9 @@ export default {
     Email
   },
   data: () => ({
+    maintainAspectRatio: false,
+    showAssignmentStatisticsModal: false,
+    showAssignmentStatistics: false,
     questionCol: 0,
     loaded: false,
     chartdata: null,
@@ -548,6 +583,7 @@ export default {
     solutionsReleased: false,
     showScores: false,
     has_submissions_or_file_submissions: false,
+    students_can_view_assignment_statistics: false,
     submissionDataType: 'danger',
     submissionDataMessage: '',
     showSubmissionMessage: false,
@@ -586,7 +622,7 @@ export default {
   }),
   watch: {
     chartData: function () {
-      this.renderChart(this.chartData, this.options);
+      this.renderChart(this.chartData, this.options)
     }
   },
   created() {
@@ -599,11 +635,6 @@ export default {
 
   },
   async mounted() {
-    if (this.user.role === 2) {
-      this.loaded = false
-      this.getScoresSummary = getScoresSummary
-    }
-
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' //students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
@@ -620,7 +651,10 @@ export default {
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
-    if (this.questions.length && this.user.role === 2) {
+    this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
+    if (this.showAssignmentStatistics) {
+      this.loaded = false
+      this.getScoresSummary = getScoresSummary
       try {
         const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
         console.log(scoresData)
@@ -630,12 +664,14 @@ export default {
         this.$noty.error(error.message)
       }
     }
-
   },
   beforeDestroy() {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    openShowAssignmentStatisticsModal() {
+      this.showAssignmentStatisticsModal = true
+    },
     getSubject() {
       return `${this.name}, Question #${this.currentPage}`
     },
@@ -871,7 +907,7 @@ export default {
         iFrameResize({log: false}, `#${iframe_id}`)
         iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
       })
-      if (this.questions && this.user.role === 2) {
+      if (this.showAssignmentStatistics) {
         try {
           this.loaded = false
           const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1]['id']}`)
@@ -952,23 +988,24 @@ export default {
     },
     async getAssignmentInfo() {
       try {
-        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
         console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-
-        this.title = `${data.name} Assignment Questions`
-        this.name = data.name
-        this.has_submissions_or_file_submissions = data.has_submissions_or_file_submissions
-        this.timeLeft = data.time_left
-        this.totalPoints = String(data.total_points).replace(/\.00$/, '')
-        this.source = data.source
-        this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
-        this.solutionsReleased = Boolean(Number(data.solutions_released))
-        this.showScores = Boolean(Number(data.show_scores))
-        this.scoring_type = data.scoring_type
+        let assignment = data.assignment
+        this.title = `${assignment.name} Assignment Questions`
+        this.name = assignment.name
+        this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
+        this.timeLeft = assignment.time_left
+        this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
+        this.source = assignment.source
+        this.questionFilesAllowed = (assignment.submission_files === 'q')//can upload at the question level
+        this.solutionsReleased = Boolean(Number(assignment.solutions_released))
+        this.showScores = Boolean(Number(assignment.show_scores))
+        this.scoring_type = assignment.scoring_type
+        this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assignment Questions'

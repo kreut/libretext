@@ -20,7 +20,7 @@ let instructor_paths = [
 ]
 
 let general_paths  = [
-  { path: '/assignments/:assignmentId/view', name: 'assignments.view', component: page('assignments.view.vue') },
+  { path: '/assignments/:assignmentId/summary', name: 'assignments.summary', component: page('assignments.summary.vue') },
   { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
   { path: '/', name: 'welcome', component: page('welcome.vue') },

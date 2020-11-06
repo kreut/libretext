@@ -208,7 +208,7 @@ class ScoreController extends Controller
                 ->get();
             if ($submissionFiles->isNotEmpty()) {
                 foreach ($submissionFiles as $key => $submission_file) {
-                    $scores[$submission_file->user_id]['score'] = $submission_file->score;
+                    $scores[$submission_file->user_id] = $submission_file->score;
                 }
             }
 
@@ -218,8 +218,8 @@ class ScoreController extends Controller
 
             if ($submissions->isNotEmpty()) {
                 foreach ($submissions as $key => $submission) {
-                    $submission_file_score =  $scores[$submission->user_id]['score']  ?? 0;
-                    $scores[$submission->user_id]['score'] = $submission_file_score + $submission->score;
+                    $submission_file_score =  $scores[$submission->user_id]  ?? 0;
+                    $scores[$submission->user_id] = $submission_file_score + $submission->score;
                 }
             }
 
@@ -230,7 +230,7 @@ class ScoreController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the scores' summary.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting the scores summary.  Please try again or contact us for assistance.";
         }
         return $response;
 

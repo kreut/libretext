@@ -55,6 +55,27 @@ class QuestionsGetTest extends TestCase
 
     }
 
+
+    /** @test **/
+    public function non_owner_cannot_get_assignment_info_for_get_questions()
+    {
+
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/get-questions-info")
+            ->assertJson(['type' => 'error',
+                'message' => "You are not allowed to get questions for this assignment."]);
+
+    }
+
+    /** @test **/
+    public function owner_can_get_assignment_info_for_get_questions()
+    {
+
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/get-questions-info")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+
     /** @test **/
     public function cannot_add_a_question_if_students_have_already_made_a_submission()
     {

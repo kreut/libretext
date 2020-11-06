@@ -228,18 +228,20 @@ export default {
     },
     async getAssignmentInfo() {
       try {
-        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/questions-info`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        if (data.has_submissions) {
+        console.log(data)
+        let assignment = data.assignment
+        if (assignment.has_submissions) {
           this.isLoading = false
           this.$noty.error("You can't add or remove questions from the assignment since students have already submitted responses.")
           this.continueLoading = false
         }
-        this.title = `Add Questions to "${data.name}"`
-        this.questionFilesAllowed = (data.submission_files === 'q')//can upload at the question level
+        this.title = `Add Questions to "${assignment.name}"`
+        this.questionFilesAllowed = (assignment.submission_files === 'q')//can upload at the question level
 
       } catch (error) {
         console.log(error.message)

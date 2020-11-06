@@ -11,6 +11,7 @@ use App\User;
 use App\Question;
 use App\SubmissionFile;
 use Carbon\Carbon;
+use App\Score;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -64,6 +65,71 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function can_get_assignment_title_if_owner_course()
+    {
+        $response['assignment']['name'] = $this->assignment->name;
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson($response);
+    }
+
+    /** @test */
+    public function can_get_assignment_title_if_student_in_course()
+    {
+        $response['assignment']['name'] = $this->assignment->name;
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson($response);
+    }
+
+    /** @test */
+    public function cannot_get_assignment_title_if_not_student_in_course()
+    {
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson(['type' => 'error',
+                'message' => 'You are not allowed to access this assignment.']);
+    }
+
+
+    /** @test */
+
+    public function student_view_scores_info_if_enrolled_in_the_course()
+    {
+        $score = 10;
+        Score::create(['user_id' => $this->student_user->id,
+            'assignment_id'=> $this->assignment->id,
+            'score' => $score]);
+        $response['assignment']['scores'] = [$score];
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson($response);
+    }
+
+ /** @test */
+
+    public function student_can_view_questions_info()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+
+    public function student_cannot_view_questions_info_if_not_enrolled_in_the_course()
+    {
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access this assignment.']);
+    }
+
+    /** @test */
+
+    public function owner_can_view_questions_info_if_owner_of_the_course()
+    {
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson(['type' => 'success']);
+    }
+
+
+
+
+    /** @test */
 
     public function student_cannot_get_scores_by_assignment_and_question()
     {
@@ -91,9 +157,10 @@ class QuestionsViewTest extends TestCase
             ];//gives them 10 points for the question since they got it correct
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $scores['scores'][0] = ['score' => 14];
+
+$response['scores'] = ["14.00"];
         $this->actingAs($this->user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
-            ->assertJson($scores);
+        ->assertJson($response);
 
     }
 /** @test */
@@ -661,27 +728,6 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function can_get_assignment_title_if_owner_course()
-    {
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}")
-            ->assertJson(['name' => $this->assignment->name]);
-    }
-
-    /** @test */
-    public function can_get_assignment_title_if_student_in_course()
-    {
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}")
-            ->assertJson(['name' => $this->assignment->name]);
-    }
-
-    /** @test */
-    public function cannot_get_assignment_title_if_not_student_in_course()
-    {
-        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}")
-            ->assertJson(['type' => 'error',
-                'message' => 'You are not allowed to access this assignment.']);
-    }
 
 
     /** @test */

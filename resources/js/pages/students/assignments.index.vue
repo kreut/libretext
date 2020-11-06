@@ -70,7 +70,7 @@
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <div v-show="data.item.is_available">
-              <a href="" v-on:click.prevent="getStudentView(data.item)">{{ data.item.name }}</a>
+              <a href="" v-on:click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
             </div>
             <div v-show="!data.item.is_available">
               {{ data.item.name }}
@@ -99,7 +99,9 @@
 
         <template v-slot:cell(solution_key)="data">
           <div v-if="data.item.solution_key">
-            <b-button variant="outline-primary" v-on:click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)">Download</b-button>
+            <b-button variant="outline-primary"
+                      v-on:click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)">Download
+            </b-button>
           </div>
           <div v-else>
             N/A
@@ -236,11 +238,20 @@ export default {
       this.form.errors.clear('assignmentFile')
       this.form.assignmentId = assignmentId
     },
-    getStudentView(assignment) {
+    getAssignmentSummaryView(assignment) {
+      if (assignment.source === 'x') {
+        this.$noty.info("This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.")
+        return false
+      }
 
-      (assignment.source === 'a')
-        ? this.$router.push(`/assignments/${assignment.id}/questions/view`)
-        : this.$noty.info('This is an external assignment.  Please contact your instructor for more information.')
+
+      if (assignment.show_scores && assignment.students_can_view_assignment_statistics) {
+        this.$router.push(`/assignments/${assignment.id}/summary`)
+        return false
+      }
+
+      this.$router.push(`/assignments/${assignment.id}/questions/view`)
+
     },
     async getAssignments() {
       try {

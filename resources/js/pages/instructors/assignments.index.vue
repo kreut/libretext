@@ -35,7 +35,7 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name.</strong>
+              that you can update is the assignment's name and whether students can view the assignment statistics.</strong>
             </b-alert>
           </div>
 
@@ -154,10 +154,26 @@
 
           <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
                 </span>
-              <b-form-radio name="scoring_type" value="p">Points</b-form-radio>
+              <span v-on:click="form.students_can_view_assignment_statistics = 1">
+              <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
             </b-form-radio-group>
           </b-form-group>
           <div v-show="form.source === 'a'">
+            <b-form-group
+              v-if="form.scoring_type === 'p'"
+              id="score_summary"
+              label-cols-sm="4"
+              label-cols-lg="3"
+              label="Assignment Statistics"
+              label-for="Assignment Statistics"
+            >
+
+              <b-form-radio-group v-model="form.students_can_view_assignment_statistics" stacked>
+
+          <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view</b-form-radio>
+                <b-form-radio name="students_can_view_assignment_statistics" value="0">Students cannot view</b-form-radio>
+              </b-form-radio-group>
+            </b-form-group>
             <b-form-group
               v-if="form.scoring_type === 'p'"
               id="submission_files"
@@ -368,6 +384,7 @@ export default {
       type_of_submission: 'correct',
       source: 'a',
       scoring_type: 'c',
+      students_can_view_assignment_statistics: 0,
       num_submissions_needed: '2',
       default_points_per_question: '10'
     }),
@@ -432,9 +449,11 @@ export default {
       console.log('click')
       this.form.default_points_per_question = 10
       this.form.submission_files = 0
+      this.form.students_can_view_assignment_statistics = 0
     },
     editAssignment(assignment) {
       console.log(assignment)
+
       this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
@@ -450,6 +469,7 @@ export default {
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
+      this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
       this.$bvModal.show('modal-assignment-details')
     }
     ,
@@ -476,7 +496,7 @@ export default {
         return false
       }
 
-      this.$router.push(`/assignments/${assignment.id}/view`)
+      this.$router.push(`/assignments/${assignment.id}/summary`)
     }
     ,
     getSubmissionFileView(assignmentId, submissionFiles) {

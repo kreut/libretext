@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Assignment;
+use App\Score;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -13,17 +14,6 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-
-    /**
-     * Determine whether the user can view any assignments.
-     *
-     * @param \App\User $user
-     * @return mixed
-     */
-    public function viewAny(User $user)
-    {
-        //
-    }
 
     /**
      * Determine whether the user can view the assignment.
@@ -53,15 +43,19 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to access this assignment.');
     }
 
+
     /**
-     * Determine whether the user can create assignments.
+     * Determine whether the user can update the assignment.
      *
      * @param \App\User $user
+     * @param \App\Assignment $assignment
      * @return mixed
      */
-    public function create(User $user)
+    public function getQuestionsInfo(User $user, Assignment $assignment)
     {
-        //
+        return $user->id === (int)$assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to get questions for this assignment.');
     }
 
     /**
@@ -93,6 +87,38 @@ class AssignmentPolicy
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to release/conceal solutions.');
+    }
+
+
+    public function scoresAccess(User $user, Assignment $assignment) {
+        switch ($user->role) {
+            case(2):
+                $has_access = $assignment->course->user_id === $user->id;
+                break;
+            case(3):
+                $has_access = $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
+                break;
+            default:
+                $has_access = false;
+        }
+        return $has_access;
+    }
+    public function totalPointsInfo(User $user, Assignment $assignment)
+    {
+        return $this->scoresAccess($user, $assignment)
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve this summary.');
+
+    }
+
+
+    public function scoresInfo(User $user, Assignment $assignment)
+    {
+
+        return $this->scoresAccess($user, $assignment)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get these scores.');
+
     }
 
     public function showScores(User $user, Assignment $assignment)
@@ -128,27 +154,5 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to delete this assignment.');
     }
 
-    /**
-     * Determine whether the user can restore the assignment.
-     *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
-     * @return mixed
-     */
-    public function restore(User $user, Assignment $assignment)
-    {
-        //
-    }
 
-    /**
-     * Determine whether the user can permanently delete the assignment.
-     *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
-     * @return mixed
-     */
-    public function forceDelete(User $user, Assignment $assignment)
-    {
-        //
-    }
 }
