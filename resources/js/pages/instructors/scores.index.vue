@@ -1,6 +1,14 @@
 <template>
   <div>
     <PageTitle v-if="canViewScores" title="Gradebook"></PageTitle>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"></loading>
     <div v-if="hasAssignments">
       <div v-if="canViewScores">
         <b-container>
@@ -21,7 +29,7 @@
                      hover
                      responsive="true"
                      sticky-header="600px"
-                     no-border-collapse="false"
+                     :no-border-collapse="true"
                      :items="items"
                      :fields="fields"
                      :sort-by.sync="sortBy"
@@ -126,18 +134,25 @@
     </b-modal>
 
   </div>
+  </div>
 </template>
 <script>
 import axios from 'axios'
 import Form from "vform"
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
 export default {
+  components: {
+    Loading
+  },
   middleware: 'auth',
   data: () => ({
+    isLoading: false,
     min: '',
     form: new Form({
       extension_date: '',
@@ -168,6 +183,7 @@ export default {
     this.courseId = this.$route.params.courseId
     this.getAssignmentScoringTypes()
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+    this.isLoading = true
     this.getScores()
   },
   methods: {
@@ -316,6 +332,7 @@ export default {
 
       try {
         const {data} = await axios.get(`/api/scores/${this.courseId}`)
+        this.isLoading = false
         console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)

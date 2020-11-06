@@ -221,12 +221,13 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                  :labels="{checked: 'Disable Question File Upload', unchecked: 'Enable Question File Upload'}"/>
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Question File Upload Enabled', unchecked: 'Question File Upload Disabled'}"/>
                 <br>
               </div>
               <div>
                 <b-button class="mt-1 mb-2"
+                          variant="dark"
                           v-on:click="openUploadFileModal(questions[currentPage-1].id)"
                           v-b-modal.modal-upload-file>Upload Solution
                 </b-button>
