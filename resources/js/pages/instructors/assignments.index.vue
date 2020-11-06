@@ -1,6 +1,15 @@
 <template>
   <div>
     <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+      width="128"
+      height="128"
+      color="#007BFF"
+      background="#FFFFFF"></loading>
+
     <div v-if="user.role === 2">
       <div class="row mb-4 float-right" v-if="canViewAssignments">
         <b-button variant="primary" v-b-modal.modal-assignment-details v-on:click="initAddAssignment">Add Assignment
@@ -299,6 +308,7 @@
       </div>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
@@ -308,6 +318,8 @@ import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
 import {getTooltipTarget} from '../../helpers/tooptips'
 import {initTooltips} from "../../helpers/tooptips"
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
@@ -315,9 +327,11 @@ export default {
     user: 'auth/user'
   }),
   components: {
-    ToggleButton
+    ToggleButton,
+    Loading
   },
   data: () => ({
+    isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, //if there's an assignmentId it's an update
     assignments: [],
@@ -364,7 +378,8 @@ export default {
   }),
   mounted() {
     this.courseId = this.$route.params.courseId
-    this.getAssignments();
+    this.isLoading = true
+    this.getAssignments()
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
@@ -490,6 +505,7 @@ export default {
           return false
         }
         this.canViewAssignments = true
+        this.isLoading = false
         this.hasAssignments = data.length > 0
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data
