@@ -38,7 +38,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('assignments/courses/{course}/', 'AssignmentController@index');
 
-    Route::get('assignmentTypes/{course}', 'AssignmentTypeController@getAssignmentTypesByCourse');
+    Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/total-points-info', 'AssignmentController@totalPointsInfo');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');

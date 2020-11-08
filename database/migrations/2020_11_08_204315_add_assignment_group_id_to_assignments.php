@@ -5,7 +5,7 @@ use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
 
-class AddAssignmentTypeIdToAssignments extends Migration
+class AddAssignmentGroupIdToAssignments extends Migration
 {
     /**
      * Run the migrations.
@@ -15,7 +15,7 @@ class AddAssignmentTypeIdToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->unsignedBigInteger('assignment_type_id')->after('due');
+            $table->unsignedBigInteger('assignment_group_id')->after('due');
         });
     }
 
@@ -27,7 +27,7 @@ class AddAssignmentTypeIdToAssignments extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->dropColumn('assignment_type_id');
+            $table->dropColumn('assignment_group_id');
         });
     }
 }

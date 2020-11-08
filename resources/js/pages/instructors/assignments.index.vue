@@ -124,7 +124,7 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-          id="assignment_type"
+          id="assignment_group"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Assignment Type"
@@ -132,12 +132,12 @@
         >
             <b-form-row>
               <b-col lg="4">
-            <b-form-select v-model="form.assignment_type_id"
-                           :options="assignmentTypes"
-                           :class="{ 'is-invalid': form.errors.has('assignment_type_id') }"
-                           @change="form.errors.clear('assignment_type_id')"
+            <b-form-select v-model="form.assignment_group_id"
+                           :options="assignmentGroups"
+                           :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
+                           @change="form.errors.clear('assignment_group_id')"
             ></b-form-select>
-                <has-error :form="form" field="assignment_type_id"></has-error>
+                <has-error :form="form" field="assignment_group_id"></has-error>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -369,8 +369,8 @@ export default {
     Loading
   },
   data: () => ({
-    selectedAssignmentType: null,
-    assignmentTypes: [{value: null, text: 'Please choose one'}],
+    selectedassignmentGroup: null,
+    assignmentGroups: [{value: null, text: 'Please choose one'}],
     isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, //if there's an assignmentId it's an update
@@ -400,7 +400,7 @@ export default {
       available_from: '',
       due: '',
       available_from_date: '',
-      assignment_type_id: null,
+      assignment_group_id: null,
       available_from_time: '09:00:00',
       due_date: '',
       due_time: '09:00:00',
@@ -422,20 +422,20 @@ export default {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getAssignments()
-    this.getAssignmentTypes(this.courseId)
+    this.getAssignmentGroups(this.courseId)
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
   },
   methods: {
-    async getAssignmentTypes(courseId) {
+    async getAssignmentGroups(courseId) {
       try {
-        const {data} = await axios.get(`/api/assignmentTypes/${courseId}`)
-
-        for (let i = 0; i < data.assignment_types.length; i++) {
-          this.assignmentTypes.push({
-            value: data.assignment_types[i]['id'],
-            text: data.assignment_types[i]['assignment_type']
+        const {data} = await axios.get(`/api/assignmentGroups/${courseId}`)
+console.log(data)
+        for (let i = 0; i < data.assignment_groups.length; i++) {
+          this.assignmentGroups.push({
+            value: data.assignment_groups[i]['id'],
+            text: data.assignment_groups[i]['assignment_group']
           })
         }
       } catch (error) {
@@ -446,6 +446,7 @@ export default {
     initAddAssignment() {
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
+      this.form.assignment_group_id = null
       this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
@@ -503,7 +504,7 @@ export default {
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
       this.form.due_time = assignment.due_time
-      this.form.assignment_type_id = assignment.assignment_type_id
+      this.form.assignment_group_id = assignment.assignment_group_id
       this.form.source = assignment.source
       this.form.type_of_submission = assignment.type_of_submission
       this.form.submission_files = assignment.submission_files
