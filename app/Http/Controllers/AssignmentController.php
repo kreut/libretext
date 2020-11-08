@@ -212,11 +212,14 @@ class AssignmentController extends Controller
                 return $response;
             }
             $data = $request->validated();
+
+
             Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
+                    'assignment_type_id' => $data['assignment_type_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
                     'students_can_view_assignment_statistics' => $data['students_can_view_assignment_statistics'],

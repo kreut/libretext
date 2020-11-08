@@ -35,7 +35,8 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name and whether students can view the assignment statistics.</strong>
+              that you can update is the assignment's name and whether students can view the assignment
+              statistics.</strong>
             </b-alert>
           </div>
 
@@ -123,6 +124,25 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
+          id="assignment_type"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assignment Type"
+          label-for="Assignment Type"
+        >
+            <b-form-row>
+              <b-col lg="4">
+            <b-form-select v-model="form.assignment_type_id"
+                           :options="assignmentTypes"
+                           :class="{ 'is-invalid': form.errors.has('assignment_type_id') }"
+                           @change="form.errors.clear('assignment_type_id')"
+            ></b-form-select>
+                <has-error :form="form" field="assignment_type_id"></has-error>
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+
+          <b-form-group
             id="source"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -170,8 +190,9 @@
 
               <b-form-radio-group v-model="form.students_can_view_assignment_statistics" stacked>
 
-          <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view</b-form-radio>
-                <b-form-radio name="students_can_view_assignment_statistics" value="0">Students cannot view</b-form-radio>
+                <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view</b-form-radio>
+                <b-form-radio name="students_can_view_assignment_statistics" value="0">Students cannot view
+                </b-form-radio>
               </b-form-radio-group>
             </b-form-group>
             <b-form-group
@@ -348,6 +369,8 @@ export default {
     Loading
   },
   data: () => ({
+    selectedAssignmentType: null,
+    assignmentTypes: [{value: null, text: 'Please choose one'}],
     isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, //if there's an assignmentId it's an update
@@ -377,6 +400,7 @@ export default {
       available_from: '',
       due: '',
       available_from_date: '',
+      assignment_type_id: null,
       available_from_time: '09:00:00',
       due_date: '',
       due_time: '09:00:00',
@@ -398,11 +422,27 @@ export default {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getAssignments()
+    this.getAssignmentTypes(this.courseId)
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
   },
   methods: {
+    async getAssignmentTypes(courseId) {
+      try {
+        const {data} = await axios.get(`/api/assignmentTypes/${courseId}`)
+
+        for (let i = 0; i < data.assignment_types.length; i++) {
+          this.assignmentTypes.push({
+            value: data.assignment_types[i]['id'],
+            text: data.assignment_types[i]['assignment_type']
+          })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+    },
     initAddAssignment() {
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
@@ -463,6 +503,7 @@ export default {
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
       this.form.due_time = assignment.due_time
+      this.form.assignment_type_id = assignment.assignment_type_id
       this.form.source = assignment.source
       this.form.type_of_submission = assignment.type_of_submission
       this.form.submission_files = assignment.submission_files
