@@ -36,7 +36,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
-    Route::get('assignments/courses/{course}/', 'AssignmentController@index');
+    Route::get('/assignments/courses/{course}', 'AssignmentController@index');
+
+    Route::get('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@index');
+    Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
+
 
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');

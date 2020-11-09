@@ -11,11 +11,52 @@
                background="#FFFFFF"></loading>
 
       <div v-if="user.role === 2">
-        <div class="row mb-4 float-right" v-if="canViewAssignments">
-          <b-button variant="primary" v-b-modal.modal-assignment-details v-on:click="initAddAssignment">Add Assignment
-          </b-button>
-        </div>
+        <b-container v-if="canViewAssignments" class="mb-3">
+          <b-row>
+            <b-col>
+              <div v-if="hasAssignments">
+              <b-button variant="outline-secondary" v-b-modal.modal-assignment-group-weights
+                        v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
+              </b-button>
+              </div>
+            </b-col>
+            <b-col>
+              <div class="float-right">
+                <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
+                          v-on:click="initAddAssignment">Add Assignment
+                </b-button>
+              </div>
+            </b-col>
+          </b-row>
+        </b-container>
       </div>
+      <b-modal
+        id="modal-assignment-group-weights"
+        ref="modal"
+        title="Assignment Group Weights"
+        @ok="submitAssignmentGroupWeights"
+        ok-title="Submit"
+        size="lg"
+      >{{ assignmentGroupWeights }}
+        {{ assignmentGroupWeightsForm}}
+        <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
+          <template v-slot:cell(assignment_group_weight)="data">
+            {{data.item}}
+            <b-form-input
+              :id="`assignment_group_id_${data.item.id}}`"
+              v-model="assignmentGroupWeightsForm[data.item.id]"
+              type="text"
+              :class="{ 'is-invalid': assignmentGroupWeightsForm.errors.has(data.item.id) }"
+              @keydown="assignmentGroupWeightsForm.errors.clear(data.item.id)"
+            >
+            </b-form-input>
+            <has-error :form="form" field="name">sdfsdfdsfsdds</has-error>
+          </template>
+        </b-table>
+
+
+      </b-modal>
+
       <b-modal
         id="modal-assignment-details"
         ref="modal"
@@ -124,19 +165,19 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-          id="assignment_group"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Assignment Type"
-          label-for="Assignment Type"
-        >
+            id="assignment_group"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Assignment Type"
+            label-for="Assignment Type"
+          >
             <b-form-row>
               <b-col lg="4">
-            <b-form-select v-model="form.assignment_group_id"
-                           :options="assignmentGroups"
-                           :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
-                           @change="form.errors.clear('assignment_group_id')"
-            ></b-form-select>
+                <b-form-select v-model="form.assignment_group_id"
+                               :options="assignmentGroups"
+                               :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
+                               @change="form.errors.clear('assignment_group_id')"
+                ></b-form-select>
                 <has-error :form="form" field="assignment_group_id"></has-error>
               </b-col>
             </b-form-row>
@@ -369,7 +410,7 @@ export default {
     Loading
   },
   data: () => ({
-    selectedassignmentGroup: null,
+    assignmentGroupWeights: [],
     assignmentGroups: [{value: null, text: 'Please choose one'}],
     isLoading: false,
     solutionsReleased: 0,
@@ -380,6 +421,10 @@ export default {
       {item: 'completed', name: 'completed'}
     ],
     courseId: false,
+    assignmentGroupWeightsFields: [
+      'assignment_group',
+      'assignment_group_weight'
+    ],
     fields: [
       'name',
       'available_from',
@@ -395,6 +440,7 @@ export default {
       },
       'actions'
     ],
+    assignmentGroupWeightsForm: {},
     form: new Form({
       name: '',
       available_from: '',
@@ -428,10 +474,42 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async initAssignmentGroupWeights() {
+      try {
+        const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
+        if (data.error) {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignmentGroupWeights = data.assignment_group_weights
+        let formInputs = {}
+        for (let i=0; i<data.assignment_group_weights.length;i++){
+          formInputs[data.assignment_group_weights[i].id] =  data.assignment_group_weights[i].assignment_group_weight
+        }
+        console.log(formInputs)
+        this.assignmentGroupWeightsForm = new Form(formInputs)
+
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitAssignmentGroupWeights(bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const {data} = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getAssignmentGroups(courseId) {
       try {
         const {data} = await axios.get(`/api/assignmentGroups/${courseId}`)
-console.log(data)
+        if (data.error) {
+          this.$noty.error(data.message)
+          return false
+        }
         for (let i = 0; i < data.assignment_groups.length; i++) {
           this.assignmentGroups.push({
             value: data.assignment_groups[i]['id'],

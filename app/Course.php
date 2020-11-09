@@ -23,6 +23,7 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
+
     public function enrolledUsers()
     {
         return $this->hasManyThrough('App\User',
