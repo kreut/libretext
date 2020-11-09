@@ -39,6 +39,14 @@ class CoursePolicy
             : Response::deny('You are not allowed to view these scores.');
     }
 
+    public function updateStudentsCanViewWeightedAverage(User $user, Course $course)
+    {
+        return ($this->ownsCourseByUser($course, $user))
+            ? Response::allow()
+            : Response::deny('You are not allowed to update being able to view the weighted average.');
+    }
+
+
     /**
      * Determine whether the user can view the course.
      *
@@ -128,27 +136,4 @@ class CoursePolicy
 
 
 
-    /**
-     * Determine whether the user can restore the course.
-     *
-     * @param \App\User $user
-     * @param \App\Course $course
-     * @return mixed
-     */
-    public function restore(User $user, Course $course)
-    {
-        //
-    }
-
-    /**
-     * Determine whether the user can permanently delete the course.
-     *
-     * @param \App\User $user
-     * @param \App\Course $course
-     * @return mixed
-     */
-    public function forceDelete(User $user, Course $course)
-    {
-        //
-    }
 }

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Course;
 use App\User;
+use App\AssignmentGroupWeight;
 use App\CourseAccessCode;
 use App\Enrollment;
 use App\Http\Requests\StoreCourse;
@@ -11,6 +12,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Traits\DateFormatter;
 
+use \Illuminate\Http\Request;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -48,6 +50,62 @@ class CourseController extends Controller
         return $response;
 
     }
+
+    public function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateStudentsCanViewWeightedAverage', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            if ($assignmentGroupWeight->where('course_id', $course->id)
+                ->get()
+                ->isEmpty()) {
+                $response['message'] = "Please first set your assignment group weights.";
+                return $response;
+            }
+            $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
+            $course->save();
+
+            $verb = $request->students_can_view_weighted_average ? "cannot" : "can";
+            $response['message'] = "Students <strong>$verb</strong> view their weighted averages.";
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the ability for students to view their weighted averages.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public function show(Course $course)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $course);
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $response['course'] = ['name' => $course->name,
+                'students_can_view_weighted_average' => $course->students_can_view_weighted_average];
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
 
     public function getCourses($user)
     {

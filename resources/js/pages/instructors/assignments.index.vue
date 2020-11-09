@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" title="Assignments"></PageTitle>
+    <PageTitle v-if="canViewAssignments" :title="title"></PageTitle>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -13,14 +13,23 @@
       <div v-if="user.role === 2">
         <b-container v-if="canViewAssignments" class="mb-3">
           <b-row>
-            <b-col>
+            <b-col cols="9">
               <div v-if="hasAssignments">
-                <b-button variant="outline-secondary"
+                <b-button variant="outline-primary"
                           v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
                 </b-button>
+                <toggle-button
+                  :width="340"
+                  :value="studentsCanViewWeightedAverage"
+                  @change="submitShowWeightedAverage()"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Students can view their weighted average', unchecked: 'Students cannot view their weighted average'}"/>
               </div>
             </b-col>
-            <b-col>
+            <b-col cols="3">
               <div class="float-right">
                 <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
                           v-on:click="initAddAssignment">Add Assignment
@@ -413,6 +422,8 @@ export default {
     Loading
   },
   data: () => ({
+    title: '',
+    studentsCanViewWeightedAverage: false,
     assignmentGroupWeights: [],
     assignmentGroups: [{value: null, text: 'Please choose one'}],
     isLoading: false,
@@ -474,6 +485,7 @@ export default {
   mounted() {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
+    this.getCourseInfo()
     this.getAssignments()
     this.getAssignmentGroups(this.courseId)
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
@@ -481,6 +493,32 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async getCourseInfo() {
+      try {
+        const {data} = await axios.get(`/api/courses/${this.courseId}`)
+        this.title = `${data.course.name} Assignments`
+        this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
+        console.log(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+
+      }
+    },
+    async submitShowWeightedAverage() {
+
+      try {
+        const {data} = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
+          {'students_can_view_weighted_average': this.studentsCanViewWeightedAverage})
+        this.$noty[data.type](data.message)
+        if (data.error){
+          return false
+        }
+        this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage
+      } catch (error) {
+        this.$noty.error(error.message)
+
+      }
+    },
     async initAssignmentGroupWeights() {
       try {
         this.$bvModal.show('modal-assignment-group-weights')
@@ -549,19 +587,24 @@ export default {
 
     },
     async submitShowScores(assignment) {
+      console.log(assignment)
       try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${assignment.show_scores}`)
-        await this.getAssignments()
+        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
         this.$noty[data.type](data.message)
+        if (data.type === 'error'){
+          return false
+        }
+        assignment.show_scores = !assignment.show_scores
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
     async submitSolutionsReleased(assignment) {
       try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${assignment.solutions_released}`)
-        await this.getAssignments()
+        const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
         this.$noty[data.type](data.message)
+
+        assignment.solutions_released = !assignment.solutions_released
       } catch (error) {
         this.$noty.error(error.message)
       }

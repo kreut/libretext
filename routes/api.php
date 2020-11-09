@@ -32,7 +32,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/course-access-codes', 'CourseAccessCodeController@update');
 
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/{course}', 'CourseController@show');
+
     Route::post('/courses', 'CourseController@store');
+    Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
