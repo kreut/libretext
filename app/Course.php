@@ -23,7 +23,25 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
+public function assignmentGroups() {
+$course = $this;
+   return  AssignmentGroup::where(function ($q) use ($course) {
+       $q->where('user_id', 0)->orWhere(function ($q2) use ($course) {
+           $q2->where('user_id', Auth::user()->id)->where('course_id', $course->id);
+       });
+   })->get();
+}
 
+public function assignmentGroupWeights() {
+    return DB::table('assignments')
+        ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
+        ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
+        ->where('assignments.course_id', $this->id)
+        ->groupBy('assignment_groups.id','assignment_group_weights.assignment_group_weight')
+        ->select('assignment_groups.id','assignment_groups.assignment_group','assignment_group_weights.assignment_group_weight')
+        ->get();
+
+}
     public function enrolledUsers()
     {
         return $this->hasManyThrough('App\User',

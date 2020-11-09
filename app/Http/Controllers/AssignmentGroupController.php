@@ -18,11 +18,7 @@ class AssignmentGroupController extends Controller
     {
         $response['type'] = 'error';
         try {
-            $response['assignment_groups'] = $assignmentGroup->where(function ($q) use ($course) {
-                $q->where('user_id', 0)->orWhere(function($q2) use ($course) {
-                    $q2->where('user_id', Auth::user()->id)->where('course_id', $course->id);
-                });
-            })->get();
+            $response['assignment_groups'] = $course->assignmentGroups();
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

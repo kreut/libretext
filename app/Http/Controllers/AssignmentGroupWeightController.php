@@ -3,16 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentGroupWeight;
-use App\AssignmentGroup;
 use App\Course;
 
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Validator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 use App\Exceptions\Handler;
 use \Exception;
+
 
 class AssignmentGroupWeightController extends Controller
 {
@@ -27,16 +25,7 @@ class AssignmentGroupWeightController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $assignment_group_weights = DB::table('assignments')
-            ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
-            ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
-            ->where('assignments.course_id', $course->id)
-            ->groupBy('assignment_groups.id','assignment_group_weights.assignment_group_weight')
-            ->select('assignment_groups.id','assignment_groups.assignment_group','assignment_group_weights.assignment_group_weight')
-            ->get()
-        ;
-
-
+        $assignment_group_weights = $course->assignmentGroupWeights();
         try {
             $response['assignment_group_weights'] = $assignment_group_weights;
             $response['type'] = 'success';
@@ -55,7 +44,7 @@ class AssignmentGroupWeightController extends Controller
     public function update(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
 
-        dd($request->all());
+
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', [$assignmentGroupWeight, $course]);
 
@@ -63,34 +52,16 @@ class AssignmentGroupWeightController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
-
         try {
 
-$sum = 0;
-$rules = [];
-dd($request->all());
+            $this->validateAssignmentGroupWeights($request, $course);
 
-//make sure each is non-empty
-            //make sure each is between 0 and 100
-            //make sure they sum to 100
-
-
-            foreach ($request->all() as $id => $percent){
-                $validator = Validator::make($request->all(), );
-
-                if ($validator->fails()) {
-                    return redirect('post/create')
-                        ->withErrors($validator)
-                        ->withInput();
-                }
-
+            foreach ($request->all() as $id => $weight) {
+                AssignmentGroupWeight::updateOrCreate(
+                    ['course_id' => $course->id, 'assignment_group_id' => $id],
+                    ['assignment_group_weight' => $weight]
+                );
             }
-
-           $data = Validator::make($request->all(), [
-                'title' => 'required|unique:posts|max:255',
-                'body' => 'required',
-            ])->validate();
 
             $response['type'] = 'success';
             $response['message'] = "The assignment group weights have been updated.";
@@ -100,6 +71,39 @@ dd($request->all());
             $response['message'] = "There was an error updating the weights.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function validateAssignmentGroupWeights(Request $request, Course $course)
+    {
+        $sum = 0;
+        $response['form_error'] = true;
+        if (count($course->assignmentGroupWeights()) !== count($request->all())) {
+            $response['message'] = 'Every percentage weight should have a value.';
+            echo json_encode($response);
+            exit;
+
+        }
+        foreach ($request->all() as $key => $value) {
+
+            if (!is_numeric($value)) {
+                $response['message'] = 'Every percentage weight should be a number.';
+                echo json_encode($response);
+                exit;
+
+            }
+            if ($value < 0 || $value > 100) {
+                $response['message'] = 'Every percentage weight should be between 0 and 100.';
+                echo json_encode($response);
+                exit;
+
+            }
+            $sum += $value;
+        }
+        if ($sum !== 100) {
+            $response['message'] = 'The percentage weights should sum to 100.';
+            echo json_encode($response);
+            exit;
+        }
     }
 
 }

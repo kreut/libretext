@@ -15,9 +15,9 @@
           <b-row>
             <b-col>
               <div v-if="hasAssignments">
-              <b-button variant="outline-secondary" v-b-modal.modal-assignment-group-weights
-                        v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
-              </b-button>
+                <b-button variant="outline-secondary"
+                          v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
+                </b-button>
               </div>
             </b-col>
             <b-col>
@@ -36,25 +36,28 @@
         title="Assignment Group Weights"
         @ok="submitAssignmentGroupWeights"
         ok-title="Submit"
-        size="lg"
-      >{{ assignmentGroupWeights }}
-        {{ assignmentGroupWeightsForm}}
+      >
+        <p>Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
+          all scores.</p>
         <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
           <template v-slot:cell(assignment_group_weight)="data">
-            {{data.item}}
-            <b-form-input
-              :id="`assignment_group_id_${data.item.id}}`"
-              v-model="assignmentGroupWeightsForm[data.item.id]"
-              type="text"
-              :class="{ 'is-invalid': assignmentGroupWeightsForm.errors.has(data.item.id) }"
-              @keydown="assignmentGroupWeightsForm.errors.clear(data.item.id)"
-            >
-            </b-form-input>
-            <has-error :form="form" field="name">sdfsdfdsfsdds</has-error>
+            <b-col lg="5">
+              <b-form-input
+                :id="`assignment_group_id_${data.item.id}}`"
+                v-model="assignmentGroupWeightsForm[data.item.id]"
+                type="text"
+                :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
+                @keydown="assignmentGroupWeightsFormWeightError = ''"
+              >
+              </b-form-input>
+            </b-col>
           </template>
         </b-table>
-
-
+        <div class="ml-5">
+          <b-form-invalid-feedback :state="false">
+            {{ assignmentGroupWeightsFormWeightError }}
+          </b-form-invalid-feedback>
+        </div>
       </b-modal>
 
       <b-modal
@@ -423,7 +426,10 @@ export default {
     courseId: false,
     assignmentGroupWeightsFields: [
       'assignment_group',
-      'assignment_group_weight'
+      {
+        key: 'assignment_group_weight',
+        label: 'Weighting Percentage'
+      }
     ],
     fields: [
       'name',
@@ -440,6 +446,7 @@ export default {
       },
       'actions'
     ],
+    assignmentGroupWeightsFormWeightError: '',
     assignmentGroupWeightsForm: {},
     form: new Form({
       name: '',
@@ -476,6 +483,7 @@ export default {
   methods: {
     async initAssignmentGroupWeights() {
       try {
+        this.$bvModal.show('modal-assignment-group-weights')
         const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
         if (data.error) {
           this.$noty.error(data.message)
@@ -483,13 +491,11 @@ export default {
         }
         this.assignmentGroupWeights = data.assignment_group_weights
         let formInputs = {}
-        for (let i=0; i<data.assignment_group_weights.length;i++){
-          formInputs[data.assignment_group_weights[i].id] =  data.assignment_group_weights[i].assignment_group_weight
+        for (let i = 0; i < data.assignment_group_weights.length; i++) {
+          formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
         }
-        console.log(formInputs)
+        console.log(this.assignmentGroupWeights)
         this.assignmentGroupWeightsForm = new Form(formInputs)
-
-
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -498,10 +504,16 @@ export default {
       bvModalEvt.preventDefault()
       try {
         const {data} = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
+        if (data.form_error) {
+          this.assignmentGroupWeightsFormWeightError = data.message
+          return false
+        }
         this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-assignment-group-weights')
       } catch (error) {
         this.$noty.error(error.message)
       }
+
     },
     async getAssignmentGroups(courseId) {
       try {
