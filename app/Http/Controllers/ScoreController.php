@@ -11,6 +11,7 @@ use App\Submission;
 use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\DB;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -40,23 +41,80 @@ class ScoreController extends Controller
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
 
+
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
+        }
+        $assignment_ids = $assignments->map(function ($assignment) {
+            return collect($assignment->toArray())
+                ->all()['id'];
+        })->toArray();
+
+        $total_points_by_assignment_id = [];
+        $total_points = DB::table('assignment_question')
+            ->selectRaw('assignment_id, sum(points) as sum')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->groupBy('assignment_id')
+            ->get();
+        foreach ($total_points as $key => $value) {
+            $total_points_by_assignment_id[$value->assignment_id] = $value->sum;
         }
 
         $scores = $course->scores;
         $extensions = $course->extensions;
+
         foreach ($extensions as $value) {
             $extension[$value->user_id][$value->assignment_id] = 'Extension';
         }
 
+        $assignment_group_weights = DB::table('assignments')
+            ->join('assignment_group_weights', 'assignments.assignment_group_id', '=', 'assignment_group_weights.assignment_group_id')
+            ->where('assignments.course_id', $course->id)
+            ->select('assignments.id', 'assignments.assignment_group_id', 'assignment_group_weights.assignment_group_weight')
+            ->get();
+        $assignment_groups_by_assignment_id = [];
+        $assignment_group_weights_info = [];
+
+//create arrays for assignment_group_ids, weights, and counts
+        foreach ($assignment_group_weights as $key => $value) {
+            $assignment_groups_by_assignment_id[$value->id] = $value->assignment_group_id;
+            if (isset($assignment_group_weights_info[$value->assignment_group_id])) {
+                $assignment_group_weights_info[$value->assignment_group_id]['count']++;
+            } else {
+                $assignment_group_weights_info[$value->assignment_group_id]['weight'] = $value->assignment_group_weight;
+                $assignment_group_weights_info[$value->assignment_group_id]['count'] = 1;
+            }
+
+        }
 
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
+        $proportion_scores_by_user_and_assignment_group = [];
         foreach ($scores as $score) {
             $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
+            $group_id = $assignment_groups_by_assignment_id[$score->assignment_id];
+            //init if needed
+            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
+
+            $score_as_proportion = $score->score / $total_points_by_assignment_id[$score->assignment_id];
+            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $score_as_proportion;
+
         }
 
+        $final_weighted_scores = [];
+        foreach ($course->enrolledUsers as $key => $user) {
+            $final_weighted_scores[$user->id] = 0;
+            if (isset($proportion_scores_by_user_and_assignment_group[$user->id])){
+                foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id =>$group_score){
+                    $final_weighted_scores[$user->id] +=  $assignment_group_weights_info[$group_id]['weight'] * $group_score/$assignment_group_weights_info[$group_id]['count'];
+                }
+            }
+        }
+        foreach ($course->enrolledUsers as $key => $user) {
+                    $final_weighted_scores[$user->id] =  Round($final_weighted_scores[$user->id],2) . '%';
+                }
+
+        $final_assignment_id = max($assignment_ids)+1;
         //now fill in the actual scores
         $rows = [];
         $download_data = [];
@@ -75,6 +133,8 @@ class ScoreController extends Controller
                 $columns[$assignment->id] = $score;
                 $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
             }
+            $columns[$final_assignment_id] = $final_weighted_scores[$user_id];
+            $download_row_data[$final_assignment_id] =$final_weighted_scores[$user_id];
             $columns['name'] = $name;
             $columns['userId'] = $user_id;
             $download_data[] = $download_row_data;
@@ -92,7 +152,8 @@ class ScoreController extends Controller
             $download_fields->{$assignment->name} = $assignment->id;
             array_push($fields, $field);
         }
-
+        array_push($fields, ['key' => "$final_assignment_id", 'label' => 'Weighted Score']);
+        $download_fields->{"Weighted Score"} = $final_assignment_id;
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
@@ -192,13 +253,13 @@ class ScoreController extends Controller
     {
 
         $response['type'] = 'error';
-         $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
+        $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
 
-         if (!$authorized->allowed()) {
-             $response['type'] = 'error';
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
             $scores = [];
@@ -218,7 +279,7 @@ class ScoreController extends Controller
 
             if ($submissions->isNotEmpty()) {
                 foreach ($submissions as $key => $submission) {
-                    $submission_file_score =  $scores[$submission->user_id]  ?? 0;
+                    $submission_file_score = $scores[$submission->user_id] ?? 0;
                     $scores[$submission->user_id] = $submission_file_score + $submission->score;
                 }
             }

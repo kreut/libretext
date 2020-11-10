@@ -341,16 +341,18 @@ export default {
 
         if (data.hasAssignments) {
           this.items = data.table.rows
+          console.log(this.items)
           this.fields = data.table.fields  //Name
+          console.log(this.fields)
           console.log(this.fields)
           this.downloadFields = data.download_fields
           this.downloadData = data.download_data
 
-          console.log(this.downloadFields)
-          console.log(this.downloadData)
 
           //create an array 0 up through the top assignment number index
           this.assignmentsArray = [...Array(this.fields.length).keys()]
+          console.log(this.fields)
+          console.log(this.assignmentsArray)
           this.hasAssignments = true
           this.canViewScores = true
         }

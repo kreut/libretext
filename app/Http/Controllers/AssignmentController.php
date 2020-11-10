@@ -38,7 +38,7 @@ class AssignmentController extends Controller
         try {
             $assignment->update(['solutions_released' => !$solutionsReleased]);
             $response['type'] = 'success';
-            $scores_released = !$solutionsReleased ? 'released' : 'concealed';
+            $scores_released = !$solutionsReleased ? 'released' : 'hidden';
             $response['message'] = "The solutions have been <strong>{$scores_released}</strong>.";
         } catch (Exception $e) {
             $h = new Handler(app());
