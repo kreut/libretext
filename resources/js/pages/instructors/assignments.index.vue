@@ -180,18 +180,50 @@
             id="assignment_group"
             label-cols-sm="4"
             label-cols-lg="3"
-            label="Assignment Type"
-            label-for="Assignment Type"
+            label="Assignment Group"
+            label-for="Assignment Group"
           >
             <b-form-row>
               <b-col lg="4">
                 <b-form-select v-model="form.assignment_group_id"
                                :options="assignmentGroups"
                                :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
-                               @change="form.errors.clear('assignment_group_id')"
+                               @change="checkGroupId(form.assignment_group_id)"
                 ></b-form-select>
-                <has-error :form="form" field="assignment_group_id"></has-error>
               </b-col>
+              <b-modal
+                id="modal-create-assignment-group"
+                ref="modal"
+                title="Create Assignment Group"
+                @ok="handleCreateAssignmentGroup"
+                @hidden="resetAssignmentGroupForm"
+                ok-title="Submit"
+              >
+                <b-form-row>
+                  <b-form-group
+                    id="create_assignment_group"
+                    label-cols-sm="4"
+                    label-cols-lg="5"
+                    label="Assignment Group"
+                    label-for="Assignment Group"
+                  >
+
+                    <b-form-input
+                      id="assignment_group"
+                      v-model="assignmentGroupForm.assignment_group"
+                      type="text"
+                      placeholder=""
+                      :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
+                      @keydown="assignmentGroupForm.errors.clear('assignment_group')"
+                    >
+                    </b-form-input>
+                    <has-error :form="assignmentGroupForm" field="assignment_group"></has-error>
+
+                  </b-form-group>
+                </b-form-row>
+              </b-modal>
+
+
             </b-form-row>
           </b-form-group>
 
@@ -459,6 +491,9 @@ export default {
     ],
     assignmentGroupWeightsFormWeightError: '',
     assignmentGroupWeightsForm: {},
+    assignmentGroupForm: new Form({
+      assignment_group: ''
+    }),
     form: new Form({
       name: '',
       available_from: '',
@@ -493,6 +528,35 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async handleCreateAssignmentGroup(bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const {data} = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
+        console.log(data)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        let newAssignmentGroup = {
+          value: data.assignment_group_info.assignment_group_id,
+          text: data.assignment_group_info.assignment_group
+        }
+
+        this.assignmentGroups.splice(this.assignmentGroups.length-1, 0, newAssignmentGroup)
+        this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
+        this.$bvModal.hide('modal-create-assignment-group')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+
+      }
+    },
+    checkGroupId(groupId) {
+      if (groupId === -1) {
+        this.$bvModal.show('modal-create-assignment-group')
+      }
+    },
     async getCourseInfo() {
       try {
         const {data} = await axios.get(`/api/courses/${this.courseId}`)
@@ -510,7 +574,7 @@ export default {
         const {data} = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
           {'students_can_view_weighted_average': this.studentsCanViewWeightedAverage})
         this.$noty[data.type](data.message)
-        if (data.error){
+        if (data.error) {
           return false
         }
         this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage
@@ -566,6 +630,10 @@ export default {
             text: data.assignment_groups[i]['assignment_group']
           })
         }
+        this.assignmentGroups.push({
+          value: -1,
+          text: 'Create new group'
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -591,7 +659,7 @@ export default {
       try {
         const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
         this.$noty[data.type](data.message)
-        if (data.type === 'error'){
+        if (data.type === 'error') {
           return false
         }
         assignment.show_scores = !assignment.show_scores
@@ -787,8 +855,11 @@ export default {
       this.$nextTick(() => {
         this.$bvModal.hide(modalId)
       })
-    }
-    ,
+    },
+    resetAssignmentGroupForm() {
+      this.assignmentGroupForm.errors.clear()
+      this.assignmentGroupForm.assignment_group = ''
+    },
     resetModalForms() {
       this.form.name = ''
       this.form.available_from_date = ''

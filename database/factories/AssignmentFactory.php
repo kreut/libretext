@@ -12,5 +12,6 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'due' => '2027-06-12 09:00:00',
         'scoring_type' => 'p',
         'default_points_per_question' => 2,
-        'submission_files' => 'a'];
+        'submission_files' => 'a',
+    'assignment_group_id' => 1];
 });

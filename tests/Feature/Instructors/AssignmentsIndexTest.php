@@ -44,7 +44,8 @@ class AssignmentsIndexTest extends TestCase
             'source' => 'a',
             'default_points_per_question' => 2,
             'students_can_view_assignment_statistics' => 0,
-            'submission_files' => 'a'];
+            'submission_files' => 'a',
+            'assignment_group_id' => 1];
 
     }
 
