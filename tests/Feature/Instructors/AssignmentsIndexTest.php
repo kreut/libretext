@@ -49,6 +49,38 @@ class AssignmentsIndexTest extends TestCase
 
     }
 
+
+    /** @test  */
+    public function nonowner_cannot_create_new_assignment_group()
+    {
+
+        $this->actingAs($this->user_2)
+            ->postJson("/api/assignmentGroups/{$this->course->id}", ['assignment_group' => 'some group'])
+            ->assertJson(['message' => 'You are not allowed to create an assignment group for this course.']);
+    }
+
+    /** @test */
+
+    public function owner_can_create_new_assignment_group()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/assignmentGroups/{$this->course->id}", ['assignment_group' => 'some group'])
+            ->assertJson(['message' => '<strong>some group</strong> has been added as an assignment group.']);
+    }
+
+
+    /** @test */
+
+    public function assignment_group_must_not_be_empty()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/assignmentGroups/{$this->course->id}", ['assignment_group' => ''])
+            ->assertJsonValidationErrors(['assignment_group']);
+    }
+
+
+
+
     /** @test */
 
     public function a_course_grader_can_show_scores()

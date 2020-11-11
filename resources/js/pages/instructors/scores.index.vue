@@ -15,7 +15,7 @@
           <b-row align-h="end">
             <download-excel
               class="float-right mb-2"
-              :data="downloadData"
+              :data="downloadRows"
               :fetch="fetchData"
               :fields="downloadFields"
               worksheet="My Worksheet"
@@ -165,7 +165,7 @@ export default {
     courseId: '',
     fields: [],
     downloadFields: {},
-    downloadData: [],
+    downloadRows: [],
     scores: [],
     items: [],
     hasAssignments: true,
@@ -326,7 +326,7 @@ export default {
     async fetchData() {
       const {data} = await axios.get(`/api/scores/${this.courseId}`)
       console.log(data)
-      return data.download_data.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
+      return data.download_rows.sort((a, b) => (a.name > b.name) - (a.name < b.name))//sort in ascending order
     },
     async getScores() {
 
@@ -346,7 +346,7 @@ export default {
           console.log(this.fields)
           console.log(this.fields)
           this.downloadFields = data.download_fields
-          this.downloadData = data.download_data
+          this.downloadRows = data.download_rows
 
 
           //create an array 0 up through the top assignment number index

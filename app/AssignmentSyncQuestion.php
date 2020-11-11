@@ -8,6 +8,7 @@ use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
+
     public function getQuestionCountByAssignmentIds(Collection $assignment_ids)
     {
         $questions_count_by_assignment_id = [];

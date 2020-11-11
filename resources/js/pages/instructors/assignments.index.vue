@@ -244,7 +244,6 @@
               <b-form-radio name="scoring_type" value="x">External</b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-
           <b-form-group
             id="scoring_type"
             label-cols-sm="4"
@@ -262,6 +261,30 @@
               <span v-on:click="form.students_can_view_assignment_statistics = 1">
               <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
             </b-form-radio-group>
+          </b-form-group>
+
+          <b-form-group
+            v-if="form.source === 'x' && form.scoring_type === 'p'"
+            id="total_points"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Total Points"
+            label-for="Total Points"
+          >
+            <b-form-row>
+              <b-col lg="2">
+                <b-form-input
+                  id="total_points"
+                  v-model="form.total_points"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': form.errors.has('total_points') }"
+                  @keydown="form.errors.clear('total_points')"
+                >
+                </b-form-input>
+                <has-error :form="form" field="total_points"></has-error>
+              </b-col>
+            </b-form-row>
           </b-form-group>
           <div v-show="form.source === 'a'">
             <b-form-group

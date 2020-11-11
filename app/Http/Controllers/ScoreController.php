@@ -20,36 +20,8 @@ use Illuminate\Support\Facades\Validator;
 class ScoreController extends Controller
 {
 
-    public function index(Course $course)
+    public function getTotalPointsByAssignmentId(array $assignment_ids)
     {
-
-        $authorized = Gate::inspect('viewCourseScores', $course);
-
-        if (!$authorized->allowed()) {
-            $response['type'] = 'error';
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        //get all user_ids for the user enrolled in the course
-        foreach ($course->enrolledUsers as $key => $user) {
-            $enrolled_users[$user->id] = "$user->first_name $user->last_name";
-            $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
-        }
-
-        //get all assignments in the course
-        $assignments = $course->assignments->sortBy('due');
-
-
-        if ($assignments->isEmpty()) {
-            return ['hasAssignments' => false];
-        }
-        $assignment_ids = $assignments->map(function ($assignment) {
-            return collect($assignment->toArray())
-                ->all()['id'];
-        })->toArray();
-
         $total_points_by_assignment_id = [];
         $total_points = DB::table('assignment_question')
             ->selectRaw('assignment_id, sum(points) as sum')
@@ -59,21 +31,20 @@ class ScoreController extends Controller
         foreach ($total_points as $key => $value) {
             $total_points_by_assignment_id[$value->assignment_id] = $value->sum;
         }
+        return $total_points_by_assignment_id;
+    }
 
-        $scores = $course->scores;
-        $extensions = $course->extensions;
-
-        foreach ($extensions as $value) {
-            $extension[$value->user_id][$value->assignment_id] = 'Extension';
-        }
+    public function getAssignmentGroupWeights(int $course_id)
+    {
+        $assignment_groups_by_assignment_id = [];
+        $assignment_group_weights_info = [];
 
         $assignment_group_weights = DB::table('assignments')
             ->join('assignment_group_weights', 'assignments.assignment_group_id', '=', 'assignment_group_weights.assignment_group_id')
-            ->where('assignments.course_id', $course->id)
+            ->where('assignments.course_id', $course_id)
             ->select('assignments.id', 'assignments.assignment_group_id', 'assignment_group_weights.assignment_group_weight')
             ->get();
-        $assignment_groups_by_assignment_id = [];
-        $assignment_group_weights_info = [];
+
 
 //create arrays for assignment_group_ids, weights, and counts
         foreach ($assignment_group_weights as $key => $value) {
@@ -84,9 +55,12 @@ class ScoreController extends Controller
                 $assignment_group_weights_info[$value->assignment_group_id]['weight'] = $value->assignment_group_weight;
                 $assignment_group_weights_info[$value->assignment_group_id]['count'] = 1;
             }
-
         }
+        return [$assignment_group_weights_info, $assignment_groups_by_assignment_id];
+    }
 
+    public function getScoresByUserIdAndAssignment($scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id)
+    {
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
@@ -100,73 +74,140 @@ class ScoreController extends Controller
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $score_as_proportion;
 
         }
+        return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
+    }
 
+    public function getFinalWeightedScores(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info)
+    {
         $final_weighted_scores = [];
         foreach ($course->enrolledUsers as $key => $user) {
             $final_weighted_scores[$user->id] = 0;
-            if (isset($proportion_scores_by_user_and_assignment_group[$user->id])){
-                foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id =>$group_score){
-                    $final_weighted_scores[$user->id] +=  $assignment_group_weights_info[$group_id]['weight'] * $group_score/$assignment_group_weights_info[$group_id]['count'];
+            if (isset($proportion_scores_by_user_and_assignment_group[$user->id])) {
+                foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id => $group_score) {
+                    $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count'];
                 }
             }
         }
         foreach ($course->enrolledUsers as $key => $user) {
-                    $final_weighted_scores[$user->id] =  Round($final_weighted_scores[$user->id],2) . '%';
-                }
+            $final_weighted_scores[$user->id] = Round($final_weighted_scores[$user->id], 2) . '%';
+        }
+        return $final_weighted_scores;
+    }
 
-        $final_assignment_id = max($assignment_ids)+1;
-        //now fill in the actual scores
-        $rows = [];
-        $download_data = [];
-        foreach ($enrolled_users as $user_id => $name) {
-            $columns = [];
-            $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
-            foreach ($assignments as $assignment) {
-                $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
-                $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
-                if (isset($extension[$user_id][$assignment->id])) {
-                    $score .= ' (E)';
+    public function getAssignmentIds($assignments)
+    {
+        return $assignments->map(function ($assignment) {
+            return collect($assignment->toArray())
+                ->all()['id'];
+        })->toArray();
+    }
+
+
+    public function getFinalTableInfo(array $assignment_ids,
+                                      array $enrolled_users,
+                                      array $enrolled_users_last_first,
+                                      $assignments,
+                                      array $final_weighted_scores,
+                                    array $scores_by_user_and_assignment)
+    {
+        {
+            $final_assignment_id = max($assignment_ids) + 1;
+            //now fill in the actual scores
+            $rows = [];
+            $download_rows = [];
+            foreach ($enrolled_users as $user_id => $name) {
+                $columns = [];
+                $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
+                foreach ($assignments as $assignment) {
+                    $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
+                    $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
+                    if (isset($extension[$user_id][$assignment->id])) {
+                        $score .= ' (E)';
+                    }
+                    if ($assignment->scoring_type === 'c') {
+                        $score = ($score === 'c') ? 'Complete' : 'Incomplete';//easier to read
+                    }
+                    $columns[$assignment->id] = $score;
+                    $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
                 }
-                if ($assignment->scoring_type === 'c') {
-                    $score = ($score === 'c') ? 'Complete' : 'Incomplete';//easier to read
-                }
-                $columns[$assignment->id] = $score;
-                $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
+                $columns[$final_assignment_id] = $final_weighted_scores[$user_id];
+                $download_row_data[$final_assignment_id] = $final_weighted_scores[$user_id];
+                $columns['name'] = $name;
+                $columns['userId'] = $user_id;
+                $download_rows[] = $download_row_data;
+                $rows[] = $columns;
             }
-            $columns[$final_assignment_id] = $final_weighted_scores[$user_id];
-            $download_row_data[$final_assignment_id] =$final_weighted_scores[$user_id];
-            $columns['name'] = $name;
-            $columns['userId'] = $user_id;
-            $download_data[] = $download_row_data;
-            $rows[] = $columns;
+
+            $fields = [['key' => 'name',
+                'label' => 'Name',
+                'sortable' => true,
+                'stickyColumn' => true]];
+            $download_fields = new \stdClass();
+            $download_fields->LastFirst = 'name';
+            foreach ($assignments as $assignment) {
+                $field = ['key' => "$assignment->id", 'label' => $assignment->name];
+                $download_fields->{$assignment->name} = $assignment->id;
+                array_push($fields, $field);
+            }
+            array_push($fields, ['key' => "$final_assignment_id", 'label' => 'Weighted Score']);
+            $download_fields->{"Weighted Score"} = $final_assignment_id;
+            return [$rows, $fields, $download_rows, $download_fields];
+
+        }
+    }
+
+    public function index(Course $course)
+    {
+
+        $authorized = Gate::inspect('viewCourseScores', $course);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
         }
 
-        $fields = [['key' => 'name',
-            'label' => 'Name',
-            'sortable' => true,
-            'stickyColumn' => true]];
-        $download_fields = new \stdClass();
-        $download_fields->LastFirst = 'name';
-        foreach ($assignments as $assignment) {
-            $field = ['key' => "$assignment->id", 'label' => $assignment->name];
-            $download_fields->{$assignment->name} = $assignment->id;
-            array_push($fields, $field);
+
+        //get all user_ids for the user enrolled in the course
+        $enrolled_users = [];
+        foreach ($course->enrolledUsers as $key => $user) {
+            $enrolled_users[$user->id] = "$user->first_name $user->last_name";
+            $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
         }
-        array_push($fields, ['key' => "$final_assignment_id", 'label' => 'Weighted Score']);
-        $download_fields->{"Weighted Score"} = $final_assignment_id;
+
+        //get all assignments in the course
+        $assignments = $course->assignments->sortBy('due');
+
+
+        if ($assignments->isEmpty()) {
+            return ['hasAssignments' => false];
+        }
+
+        $assignment_ids = $this->getAssignmentIds($assignments);
+        $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+        $scores = $course->scores;
+        $extensions = $course->extensions;
+        foreach ($extensions as $value) {
+            $extension[$value->user_id][$value->assignment_id] = 'Extension';
+        }
+        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
+        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
+        $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
+        [$rows, $fields, $download_rows, $download_fields] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
+
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
-            'download_data' => $download_data];
-
+            'download_rows' => $download_rows];
     }
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\Score $score
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param User $user
+     * @param Score $score
+     * @return mixed
+     * @throws Exception
      */
     public
     function update(Request $request, Assignment $assignment, User $user, Score $score)
