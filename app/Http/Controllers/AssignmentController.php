@@ -9,6 +9,7 @@ use App\Solution;
 use App\Score;
 use App\Extension;
 use App\Submission;
+use App\AssignmentGroupWeight;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -174,6 +175,22 @@ class AssignmentController extends Controller
         return 'Closed';
     }
 
+    public function addAssignmentGroupWeight(Assignment $assignment, int $assignment_group_id, AssignmentGroupWeight $assignmentGroupWeight)
+    {
+        $assignment_group_weight_exists = AssignmentGroupWeight::where('course_id', $assignment->course->id)
+            ->where('assignment_group_id', $assignment->assignment_group_id)
+            ->get()
+            ->isNotEmpty();
+
+        if (!$assignment_group_weight_exists) {
+            $assignmentGroupWeight->assignment_group_id = $assignment_group_id;
+            $assignmentGroupWeight->course_id = $assignment->course->id;
+            $assignmentGroupWeight->assignment_group_weight = 0;
+            $assignmentGroupWeight->save();
+        }
+    }
+
+
     public function checkDueDateAfterAvailableDate(StoreAssignment $request)
     {
         $response = [];
@@ -186,15 +203,13 @@ class AssignmentController extends Controller
     }
 
     /**
-     *
-     * Store a newly created resource in storage.
      * @param StoreAssignment $request
-     * @param Course $course
-     * @param Assignment $assignment
-     * @return mixed
+     * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @return array
      * @throws Exception
      */
-    public function store(StoreAssignment $request)
+
+    public function store(StoreAssignment $request, Assignment $assignment, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -205,20 +220,21 @@ class AssignmentController extends Controller
             return $response;
         }
 
-        $response['type'] = 'error';
 
         try {
-            if ($response = $this->checkdueDateAfterAvailableDate($request)) {
-                return $response;
+            if ($due_date_response = $this->checkdueDateAfterAvailableDate($request)) {
+                return $due_date_response;
             }
+
             $data = $request->validated();
 
 
-            Assignment::create(
+            $assignment = Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
+                    'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
@@ -227,6 +243,10 @@ class AssignmentController extends Controller
                     'course_id' => $course->id
                 ]
             );
+
+            $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+
+
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$request->assignment</strong> has been created.";
         } catch (Exception $e) {
@@ -401,10 +421,11 @@ class AssignmentController extends Controller
     /**
      * @param StoreAssignment $request
      * @param Assignment $assignment
+     * @param AssignmentGroupWeight $assignmentGroupWeight
      * @return array
      * @throws Exception
      */
-    public function update(StoreAssignment $request, Assignment $assignment)
+    public function update(StoreAssignment $request, Assignment $assignment, AssignmentGroupWeight $assignmentGroupWeight)
     {
 
         $response['type'] = 'error';
@@ -417,9 +438,8 @@ class AssignmentController extends Controller
 
 
         try {
-            if ($response = $this->checkdueDateAfterAvailableDate($request)) {
-
-                return $response;
+            if ($due_date_response = $this->checkdueDateAfterAvailableDate($request)) {
+                return $due_date_response;
             }
             $data = $request->validated();
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
@@ -437,7 +457,11 @@ class AssignmentController extends Controller
                 unset($data['default_points_per_question']);
                 unset($data['submission_files']);
             }
+
             $assignment->update($data);
+
+            $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
         } catch (Exception $e) {

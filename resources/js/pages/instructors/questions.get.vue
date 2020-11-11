@@ -166,6 +166,7 @@ export default {
     user: 'auth/user'
   }),
   data: () => ({
+    questionFilesAllowed: false,
     uploading: false,
     continueLoading: true,
     isLoading: false,

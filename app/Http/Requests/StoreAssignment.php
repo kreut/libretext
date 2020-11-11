@@ -33,15 +33,24 @@ class StoreAssignment extends FormRequest
             'due_date' => 'required|date',
             'available_from_time' => 'required|date_format:H:i:00',
             'due_time' => 'required|date_format:H:i:00',
-            'source' => Rule::in(['a','x']),
-            'scoring_type' => Rule::in(['c','p']),
+            'source' => Rule::in(['a', 'x']),
+            'scoring_type' => Rule::in(['c', 'p']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
-            'students_can_view_assignment_statistics' => Rule::in([0,1]),
-            'submission_files' => Rule::in(['q','a',0]),
+            'students_can_view_assignment_statistics' => Rule::in([0, 1]),
+            'submission_files' => Rule::in(['q', 'a', 0]),
         ];
-      if ($this->source === 'a' && $this->scoring_type === 'p'){
-          $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
-      }
+        if ($this->scoring_type === 'p') {
+            switch ($this->source) {
+                case('a'):
+                    $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
+                    break;
+                case('x'):
+                    $rules['external_source_points'] = 'required|integer|min:0|max:200';
+                    break;
+            }
+        }
+
+
         return $rules;
     }
 

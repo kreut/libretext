@@ -23,14 +23,23 @@ class ScoreController extends Controller
     public function getTotalPointsByAssignmentId(array $assignment_ids)
     {
         $total_points_by_assignment_id = [];
-        $total_points = DB::table('assignment_question')
+        $adapt_total_points = DB::table('assignment_question')
             ->selectRaw('assignment_id, sum(points) as sum')
             ->whereIn('assignment_id', $assignment_ids)
             ->groupBy('assignment_id')
             ->get();
-        foreach ($total_points as $key => $value) {
+        $external_total_points = DB::table('assignments')
+                    ->whereIn('id', $assignment_ids)
+                    ->where('source','x')
+                    ->get();
+
+        foreach ($adapt_total_points as $key => $value) {
             $total_points_by_assignment_id[$value->assignment_id] = $value->sum;
         }
+        foreach ($external_total_points as $key => $value){
+            $total_points_by_assignment_id[$value->id] = $value->external_source_points;
+        }
+
         return $total_points_by_assignment_id;
     }
 
@@ -66,6 +75,8 @@ class ScoreController extends Controller
         $proportion_scores_by_user_and_assignment_group = [];
         foreach ($scores as $score) {
             $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
+
+
             $group_id = $assignment_groups_by_assignment_id[$score->assignment_id];
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;

@@ -19,6 +19,7 @@
                           v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
                 </b-button>
                 <toggle-button
+                  class="mt-2"
                   :width="340"
                   :value="studentsCanViewWeightedAverage"
                   @change="submitShowWeightedAverage()"
@@ -88,7 +89,7 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name and whether students can view the assignment
+              that you can update is the assignment's name, the assignment's group, and whether students can view the assignment
               statistics.</strong>
             </b-alert>
           </div>
@@ -184,12 +185,13 @@
             label-for="Assignment Group"
           >
             <b-form-row>
-              <b-col lg="4">
+              <b-col lg="5">
                 <b-form-select v-model="form.assignment_group_id"
                                :options="assignmentGroups"
                                :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                                @change="checkGroupId(form.assignment_group_id)"
                 ></b-form-select>
+                <has-error :form="form" field="assignment_group_id"></has-error>
               </b-col>
               <b-modal
                 id="modal-create-assignment-group"
@@ -272,17 +274,17 @@
             label-for="Total Points"
           >
             <b-form-row>
-              <b-col lg="2">
+              <b-col lg="3">
                 <b-form-input
-                  id="total_points"
-                  v-model="form.total_points"
+                  id="external_source_points"
+                  v-model="form.external_source_points"
                   type="text"
                   placeholder=""
-                  :class="{ 'is-invalid': form.errors.has('total_points') }"
-                  @keydown="form.errors.clear('total_points')"
+                  :class="{ 'is-invalid': form.errors.has('external_source_points') }"
+                  @keydown="form.errors.clear('external_source_points')"
                 >
                 </b-form-input>
-                <has-error :form="form" field="total_points"></has-error>
+                <has-error :form="form" field="external_source_points"></has-error>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -532,7 +534,8 @@ export default {
       scoring_type: 'c',
       students_can_view_assignment_statistics: 0,
       num_submissions_needed: '2',
-      default_points_per_question: '10'
+      default_points_per_question: '10',
+      external_source_points: 100
     }),
     hasAssignments: false,
     has_submissions_or_file_submissions: false,
@@ -669,7 +672,7 @@ export default {
       this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-
+      this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     hasSubmissionsColor(assignment) {
       //0, 1, 2 since has_submissions_or_file_submissions is additive
@@ -711,10 +714,13 @@ export default {
       }
     },
     resetSubmissionFilesAndPointsPerQuestion() {
-      console.log('click')
       this.form.default_points_per_question = 10
       this.form.submission_files = 0
       this.form.students_can_view_assignment_statistics = 0
+      this.form.external_source_points = 100
+      this.form.errors.clear('default_points_per_question')
+      this.form.errors.clear('external_source_points')
+
     },
     editAssignment(assignment) {
       console.log(assignment)
@@ -736,6 +742,9 @@ export default {
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
       this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
+      this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
+                                        ? assignment.external_source_points
+                                        : ''
       this.$bvModal.show('modal-assignment-details')
     }
     ,
