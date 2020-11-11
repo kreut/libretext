@@ -35,10 +35,13 @@ class ScoresIndexTest extends TestCase
         ]);
     }
 
-    function question(){
-        return $question = factory(Question::class)->create(['page_id' => rand(1,1000000000)]);
+    function question()
+    {
+        return $question = factory(Question::class)->create(['page_id' => rand(1, 1000000000)]);
     }
-    function createAssignmentGroupWeightsAndAssignments(){
+
+    function createAssignmentGroupWeightsAndAssignments()
+    {
 
 
         //2 groups of assignments
@@ -70,7 +73,7 @@ class ScoresIndexTest extends TestCase
         ]);
 
 
-     //assignment 1 has 3 questions
+        //assignment 1 has 3 questions
         $this->assignment_1 = factory(Assignment::class)->create([
             'course_id' => $this->course->id,
             'name' => 'Assignment_1',
@@ -142,7 +145,7 @@ class ScoresIndexTest extends TestCase
         ]);
 
 
-       DB::table('assignment_question')->insert([
+        DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'points' => 50
@@ -151,32 +154,40 @@ class ScoresIndexTest extends TestCase
         Score::create([
             'user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment_3->id,
-            'score' =>25
+            'score' => 25
         ]);
 
         //Assignment 3: 25/100
+        $this->assignment_4 = factory(Assignment::class)->create([
+            'course_id' => $this->course->id,
+            'name' => 'Assignment_4',
+            'assignment_group_id' => 2,
+            'source' => 'x',
+            'external_source_points' => 100
+        ]);
+
+        Score::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment_4->id,
+            'score' => 75
+        ]);
 
         //GROUP 1 scores: 5/30 and 2/3 weight of 10
         //GROUP 2 scores: 25/30 weight of 90
-        //10*((2/2 + 5/30 + 2/3)/3)+90*(25/100)
+        //10*((2/2 + 5/30 + 2/3)/3)+90*(.5*(25/100 + 75/100))=51.11%
 
 
     }
+
     /** @test */
 
     public function correctly_computes_the_final_scores()
     {
-//student user is enrolled in the course
-        //3 assignments with 3 different weights
-$this->createAssignmentGroupWeightsAndAssignments();
-$this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}")
-    ->dump();
 
-exit;
-//do completed/not completed
-        //do external
-
-
+        //4 assignments with 2 different weights
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}");
+        $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][6]);//see computation above
 
     }
 

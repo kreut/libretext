@@ -75,8 +75,6 @@ class ScoreController extends Controller
         $proportion_scores_by_user_and_assignment_group = [];
         foreach ($scores as $score) {
             $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
-
-
             $group_id = $assignment_groups_by_assignment_id[$score->assignment_id];
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
