@@ -172,14 +172,14 @@ class ScoreController extends Controller
 
 
         //student in course AND allowed to view the final average
-        /*$authorized = Gate::inspect('viewCourseScoresByUser', $course);
+        $authorized = Gate::inspect('viewCourseScoresByUser', $course);
 
 
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
             $response['message'] = $authorized->message();
             return $response;
-        } what if */
+        }
 
         $user = Auth::user();
         $enrolled_users[$user->id] = "$user->first_name $user->last_name";
