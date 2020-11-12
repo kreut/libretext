@@ -187,7 +187,8 @@ class ScoresIndexTest extends TestCase
         //4 assignments with 2 different weights
         $this->createAssignmentGroupWeightsAndAssignments();
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}");
-        $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][6]);//see computation above
+$weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
+        $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
     }
 

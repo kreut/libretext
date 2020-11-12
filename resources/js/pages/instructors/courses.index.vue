@@ -216,8 +216,8 @@
 import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
-import {getTooltipTarget} from '../../helpers/tooptips'
-import {initTooltips} from "../../helpers/tooptips"
+import {getTooltipTarget} from '../../helpers/Tooptips'
+import {initTooltips} from "../../helpers/Tooptips"
 
 const now = new Date()
 export default {

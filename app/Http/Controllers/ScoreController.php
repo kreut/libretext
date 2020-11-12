@@ -12,6 +12,7 @@ use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Auth;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -29,14 +30,14 @@ class ScoreController extends Controller
             ->groupBy('assignment_id')
             ->get();
         $external_total_points = DB::table('assignments')
-                    ->whereIn('id', $assignment_ids)
-                    ->where('source','x')
-                    ->get();
+            ->whereIn('id', $assignment_ids)
+            ->where('source', 'x')
+            ->get();
 
         foreach ($adapt_total_points as $key => $value) {
             $total_points_by_assignment_id[$value->assignment_id] = $value->sum;
         }
-        foreach ($external_total_points as $key => $value){
+        foreach ($external_total_points as $key => $value) {
             $total_points_by_assignment_id[$value->id] = $value->external_source_points;
         }
 
@@ -117,10 +118,10 @@ class ScoreController extends Controller
                                       array $enrolled_users_last_first,
                                       $assignments,
                                       array $final_weighted_scores,
-                                    array $scores_by_user_and_assignment)
+                                      array $scores_by_user_and_assignment)
     {
         {
-            $final_assignment_id = max($assignment_ids) + 1;
+            $weighted_score_assignment_id = max($assignment_ids) + 1;
             //now fill in the actual scores
             $rows = [];
             $download_rows = [];
@@ -139,8 +140,8 @@ class ScoreController extends Controller
                     $columns[$assignment->id] = $score;
                     $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
                 }
-                $columns[$final_assignment_id] = $final_weighted_scores[$user_id];
-                $download_row_data[$final_assignment_id] = $final_weighted_scores[$user_id];
+                $columns[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
+                $download_row_data[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
                 $columns['name'] = $name;
                 $columns['userId'] = $user_id;
                 $download_rows[] = $download_row_data;
@@ -158,11 +159,52 @@ class ScoreController extends Controller
                 $download_fields->{$assignment->name} = $assignment->id;
                 array_push($fields, $field);
             }
-            array_push($fields, ['key' => "$final_assignment_id", 'label' => 'Weighted Score']);
-            $download_fields->{"Weighted Score"} = $final_assignment_id;
-            return [$rows, $fields, $download_rows, $download_fields];
+            array_push($fields, ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score']);
+            $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
+            return [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id];
 
         }
+    }
+
+    public function getScoresByUser(Course $course)
+    {
+
+
+        //student in course AND allowed to view the final average
+        /*$authorized = Gate::inspect('viewCourseScoresByUser', $course);
+
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        } what if */
+
+        $user = Auth::user();
+        $enrolled_users[$user->id] = "$user->first_name $user->last_name";
+        $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
+
+        //get all assignments in the course
+        $assignments = $course->assignments->where('show_scores', 1)->sortBy('due');
+
+        if ($assignments->isEmpty()) {
+            return ['hasAssignments' => false];
+        }
+
+        $assignment_ids = $this->getAssignmentIds($assignments);
+        $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+        $scores = $course->scores->where('user_id', $user->id)->whereIN('assignment_id', $assignment_ids);
+
+
+        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
+        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
+        $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
+        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
+
+
+        $response['weighted_score'] = $rows[0][$weighted_score_assignment_id];
+        return $response;
+
     }
 
     public function index(Course $course)
@@ -176,9 +218,9 @@ class ScoreController extends Controller
             return $response;
         }
 
-
         //get all user_ids for the user enrolled in the course
         $enrolled_users = [];
+        $enrolled_users_last_first = [];
         foreach ($course->enrolledUsers as $key => $user) {
             $enrolled_users[$user->id] = "$user->first_name $user->last_name";
             $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
@@ -202,12 +244,13 @@ class ScoreController extends Controller
         [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
         [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
         $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
-        [$rows, $fields, $download_rows, $download_fields] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
+        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
 
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
-            'download_rows' => $download_rows];
+            'download_rows' => $download_rows,
+            'weighted_score_assignment_id' => $weighted_score_assignment_id];//needed for testing...
     }
 
     /**

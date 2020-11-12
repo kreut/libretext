@@ -464,8 +464,9 @@ import axios from 'axios'
 import Form from "vform"
 import {mapGetters} from "vuex"
 import {ToggleButton} from 'vue-js-toggle-button'
-import {getTooltipTarget} from '../../helpers/tooptips'
-import {initTooltips} from "../../helpers/tooptips"
+import {getTooltipTarget} from '../../helpers/Tooptips'
+import {initTooltips} from "../../helpers/Tooptips"
+import {getAssignments} from "../../helpers/Assignments"
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
@@ -543,6 +544,9 @@ export default {
     canViewAssignments: false,
     showNoAssignmentsAlert: false,
   }),
+  created() {
+    this.getAssignments = getAssignments
+  },
   mounted() {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
@@ -586,6 +590,7 @@ export default {
     async getCourseInfo() {
       try {
         const {data} = await axios.get(`/api/courses/${this.courseId}`)
+        console.log(data)
         this.title = `${data.course.name} Assignments`
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         console.log(data)
@@ -790,25 +795,6 @@ export default {
       }
 
       this.$router.push(`/assignments/${assignmentId}/${type}-files`)
-    }
-    ,
-    async getAssignments() {
-      try {
-        const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
-        console.log(data)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.canViewAssignments = true
-        this.isLoading = false
-        this.hasAssignments = data.length > 0
-        this.showNoAssignmentsAlert = !this.hasAssignments
-        this.assignments = data
-
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     }
     ,
     async handleDeleteAssignment() {

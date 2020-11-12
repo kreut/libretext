@@ -141,17 +141,17 @@ class AssignmentController extends Controller
                 }
 //same regardless of whether you're a student
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
-
+                $response['assignments'] = $assignments_info;
+                $response['type'] = 'success';
 
             }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error retrieving your assignments.  Please try again by refreshing the page or contact us for assistance.";
-            return $response;
-        }
 
-        return $assignments_info;
+        }
+        return $response;
     }
 
     function getDefaultPointsPerQuestion(array $data)
@@ -228,7 +228,7 @@ class AssignmentController extends Controller
 
             $data = $request->validated();
 
-
+            DB::beginTransaction();
             $assignment = Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
@@ -246,10 +246,11 @@ class AssignmentController extends Controller
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
 
-
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$request->assignment</strong> has been created.";
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";
@@ -458,13 +459,15 @@ class AssignmentController extends Controller
                 unset($data['submission_files']);
             }
 
+            DB::beginTransaction();
             $assignment->update($data);
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
         } catch (Exception $e) {
+            dB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
