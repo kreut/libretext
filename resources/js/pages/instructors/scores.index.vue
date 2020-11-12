@@ -152,6 +152,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    weightedAverageAssignmentId: 0,
     isLoading: false,
     min: '',
     form: new Form({
@@ -190,13 +191,14 @@ export default {
     async getAssignmentScoringTypes() {
       try {
         const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
-        console.log(data.length)
+
+
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        for (let i = 0; i < data.length; i++) {
-          this.assignmentScoringTypes[data[i].id] = data[i].scoring_type
+        for (let i = 0; i < data.assignments.length; i++) {
+          this.assignmentScoringTypes[data.assignments[i].id] = data.assignments[i].scoring_type
         }
 
       } catch (error) {
@@ -306,9 +308,11 @@ export default {
     },
     async openStudentAssignmentModal(value, studentUserId, assignmentId) {
       //name shouldn't be clickable
-      if (assignmentId === 'name') {
+
+      if (assignmentId === 'name' || parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
         return false
       }
+
       this.studentUserId = studentUserId
       this.assignmentId = assignmentId
       this.assignmentScoringType = this.assignmentScoringTypes[this.assignmentId]
@@ -355,6 +359,7 @@ export default {
           console.log(this.assignmentsArray)
           this.hasAssignments = true
           this.canViewScores = true
+          this.weightedAverageAssignmentId = data.weighted_score_assignment_id
         }
 
 

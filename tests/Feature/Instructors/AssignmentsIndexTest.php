@@ -50,7 +50,7 @@ class AssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test  */
+    /** @test */
     public function nonowner_cannot_create_new_assignment_group()
     {
 
@@ -77,8 +77,6 @@ class AssignmentsIndexTest extends TestCase
             ->postJson("/api/assignmentGroups/{$this->course->id}", ['assignment_group' => ''])
             ->assertJsonValidationErrors(['assignment_group']);
     }
-
-
 
 
     /** @test */
@@ -143,9 +141,9 @@ class AssignmentsIndexTest extends TestCase
     /** @test */
     public function can_get_your_assignments()
     {
-
+        $expected['assignments'][0]['name'] = 'First Assignment';
         $this->actingAs($this->user)->getJson("/api/assignments/courses/{$this->course->id}")
-            ->assertJson([['name' => 'First Assignment']]);
+            ->assertJson($expected);
 
     }
 

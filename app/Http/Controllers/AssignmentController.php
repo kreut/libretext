@@ -90,6 +90,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         try {
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);

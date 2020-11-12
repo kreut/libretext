@@ -117,6 +117,7 @@ class ScoreController extends Controller
                                       array $enrolled_users,
                                       array $enrolled_users_last_first,
                                       $assignments,
+                                      array $extensions,
                                       array $final_weighted_scores,
                                       array $scores_by_user_and_assignment)
     {
@@ -131,7 +132,7 @@ class ScoreController extends Controller
                 foreach ($assignments as $assignment) {
                     $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
-                    if (isset($extension[$user_id][$assignment->id])) {
+                    if (isset($extensions[$user_id][$assignment->id])) {
                         $score .= ' (E)';
                     }
                     if ($assignment->scoring_type === 'c') {
@@ -195,17 +196,23 @@ class ScoreController extends Controller
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
         $scores = $course->scores->where('user_id', $user->id)->whereIN('assignment_id', $assignment_ids);
 
-
-        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
-        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
-        $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
-        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
-
-
+        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
         $response['weighted_score'] = $rows[0][$weighted_score_assignment_id];
         return $response;
 
     }
+
+    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first,  $total_points_by_assignment_id){
+
+        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
+        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
+        $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
+        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $extensions, $final_weighted_scores, $scores_by_user_and_assignment);
+
+        return [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id];
+
+
+}
 
     public function index(Course $course)
     {
@@ -237,15 +244,12 @@ class ScoreController extends Controller
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
         $scores = $course->scores;
-        $extensions = $course->extensions;
-        foreach ($extensions as $value) {
-            $extension[$value->user_id][$value->assignment_id] = 'Extension';
-        }
-        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
-        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
-        $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
-        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $final_weighted_scores, $scores_by_user_and_assignment);
 
+        $extensions = [];
+        foreach ($course->extensions as $value) {
+            $extensions[$value->user_id][$value->assignment_id] = 'Extension';
+        }
+        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
