@@ -169,9 +169,8 @@
                       <has-error :form="questionPointsForm" field="points"></has-error>
                     </b-col>
                     <h5 class="mt-1">points.</h5>
-
                     <b-col>
-                      <div class="float-left">
+                      <div class="float-left" v-if="!(has_submissions_or_file_submissions || solutionsReleased)">
                       <b-button variant="primary" size="sm" class="m-1"
                                 @click="updatePoints((questions[currentPage-1].id))">Update Points
                       </b-button>
@@ -208,9 +207,9 @@
                   <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">Show Statistics
                   </b-button>
                 </div>
-                <div v-if="isInstructor()">
-                  <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
-                    Questions
+                <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
+                  <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">
+                    Add Questions
                   </b-button>
                 </div>
               </b-col>

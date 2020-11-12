@@ -229,6 +229,20 @@
             </b-form-row>
           </b-form-group>
 
+          <b-tooltip target="internal"
+                     delay="250">
+            Get questions from the Adapt database or from the Query library
+          </b-tooltip>
+
+          <b-tooltip target="external"
+                     delay="250">
+            Use questions outside of Adapt and manually input scores into the grade book
+          </b-tooltip>
+          <b-tooltip target="can_view_assignment_statistics"
+                     delay="250">
+            Allows students to see how the class performed at the assignment and question level.  Choose this option
+            and then Show Scores when you are ready for them to see the statistics.
+          </b-tooltip>
           <b-form-group
             id="source"
             label-cols-sm="4"
@@ -236,14 +250,13 @@
             label="Source"
             label-for="Source"
           >
-
             <b-form-radio-group v-model="form.source" stacked
                                 :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
-          <b-form-radio name="source" value="a">Adapt</b-form-radio>
+              <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
                 </span>
-              <b-form-radio name="scoring_type" value="x">External</b-form-radio>
+              <b-form-radio name="scoring_type" value="x">External <span id="external" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
@@ -300,7 +313,7 @@
 
               <b-form-radio-group v-model="form.students_can_view_assignment_statistics" stacked>
 
-                <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view</b-form-radio>
+                <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view <span id="can_view_assignment_statistics" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
                 <b-form-radio name="students_can_view_assignment_statistics" value="0">Students cannot view
                 </b-form-radio>
               </b-form-radio-group>
