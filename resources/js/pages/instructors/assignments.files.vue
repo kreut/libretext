@@ -68,7 +68,7 @@
         </div>
         <div v-if="type === 'question'" class="text-center">
           <h5 class="font-italic">This question is out of
-            {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] }} points.</h5>
+            {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }} points.</h5>
           <div class="mb-2">
             <b-button variant="outline-primary"
                       v-on:click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)">
@@ -105,9 +105,12 @@
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
                       }}<br>
                       <strong>File Submission Score:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
+                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
                       }}
                       <br>
+                      <strong>Total Score For this Question:</strong>
+                      {{ (this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
+                      + this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'])*1}} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
                       <br>
                       <hr>
                     </div>
@@ -281,7 +284,7 @@ export default {
   },
   mounted() {
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentInfo()
+    this.getAssignmentName()
     this.type = this.$route.params.typeFiles.replace('-files', '') //question or assignment
     this.getSubmissionFiles(this.gradeView)
   },
@@ -293,14 +296,15 @@ export default {
       console.log(url)
       window.open(url, "_blank");
     },
-    async getAssignmentInfo() {
+    async getAssignmentName() {
       try {
-        const {data} = await axios.get(`/api/assignments/${this.assignmentId}`)
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/get-name`)
+        console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.title = `Grade File Submissions For "${data.name}"`
+        this.title = `Grade File Submissions For "${data.assignment.name}"`
 
       } catch (error) {
         this.title = 'Grade File Submissions'

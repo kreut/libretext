@@ -13,25 +13,25 @@
       <div v-if="user.role === 2">
         <b-container v-if="canViewAssignments" class="mb-3">
           <b-row>
-            <b-col cols="9">
+            <b-col cols="6">
               <div v-if="hasAssignments">
+                <span class="font-italic">Students can view their weighted averages: </span><toggle-button
+                class="mt-2"
+                :width="55"
+                :value="studentsCanViewWeightedAverage"
+                @change="submitShowWeightedAverage()"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"/>
+              </div>
+            </b-col>
+            <b-col cols="6">
+              <div class="float-right">
                 <b-button variant="outline-primary"
                           v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
                 </b-button>
-                <toggle-button
-                  class="mt-2"
-                  :width="340"
-                  :value="studentsCanViewWeightedAverage"
-                  @change="submitShowWeightedAverage()"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Students can view their weighted average', unchecked: 'Students cannot view their weighted average'}"/>
-              </div>
-            </b-col>
-            <b-col cols="3">
-              <div class="float-right">
                 <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
                           v-on:click="initAddAssignment">Add Assignment
                 </b-button>

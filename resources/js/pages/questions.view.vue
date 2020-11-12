@@ -144,15 +144,44 @@
       <div v-if="questions.length">
         <div class="mb-3">
           <b-container>
-            <b-row class="text-center">
-              <b-col>
-                <div v-if="source === 'a' && scoring_type === 'p'">
-                  <h4>This assignment is worth {{ totalPoints }} points.</h4>
-                  <h5>This question is worth {{ questions[currentPage - 1].points }} points.</h5>
-
+            <b-col>
+              <div v-if="source === 'a' && scoring_type === 'p'">
+                <div class="text-center"><h4>This assignment is worth {{ totalPoints.toString() }} points.</h4></div>
+                <div class="text-center" v-if="!isInstructor()"><h5>This question is worth {{ 1*(questions[currentPage - 1].points) }}
+                  points. </h5>
                 </div>
-              </b-col>
-            </b-row>
+
+                <div class="text-center" v-if="isInstructor()">
+                  <b-form-row>
+                    <b-col></b-col>
+                    <h5 class="mt-1">This question is worth</h5>
+                    <b-col lg="1">
+                      <b-form-input
+                        id="points"
+                        v-model="questionPointsForm.points"
+                        :value="questions[currentPage-1].points"
+                        type="text"
+                        placeholder=""
+                        :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                        @keydown="questionPointsForm.errors.clear('points')"
+                      >
+                      </b-form-input>
+                      <has-error :form="questionPointsForm" field="points"></has-error>
+                    </b-col>
+                    <h5 class="mt-1">points.</h5>
+
+                    <b-col>
+                      <div class="float-left">
+                      <b-button variant="primary" size="sm" class="m-1"
+                                @click="updatePoints((questions[currentPage-1].id))">Update Points
+                      </b-button>
+                      </div>
+                    </b-col>
+                  </b-form-row>
+                </div>
+
+              </div>
+            </b-col>
             <b-row class="text-center">
               <b-col>
                 <div v-if="timeLeft>0">
@@ -168,15 +197,20 @@
                       <p>
                             <span v-if="questions[currentPage-1].questionFiles">
                 You achieved a total score of
-                {{ questions[currentPage - 1].total_score }}
+                {{ questions[currentPage - 1].total_score*1 }}
                 out of a possible
-                {{ questions[currentPage - 1].points }} points.</span>
+                {{ questions[currentPage - 1].points*1 }} points.</span>
                       </p>
                     </div>
                   </div>
                 </div>
-                <div v-if="showAssignmentStatistics">
+                <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
                   <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">Show Statistics
+                  </b-button>
+                </div>
+                <div v-if="isInstructor()">
+                  <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
+                    Questions
                   </b-button>
                 </div>
               </b-col>
@@ -224,9 +258,10 @@
             v-on:input="changePage(currentPage)"
           ></b-pagination>
         </div>
-        <div class="d-flex">
-          <b-card title="Question Actions" v-if="isInstructor()" class="mb-4">
-            <b-card-text>
+        <div v-if="isInstructor()">
+          <b-container>
+            <b-row>
+
               <div v-if="has_submissions_or_file_submissions || solutionsReleased">
                 <b-alert variant="info" show>
                   <strong>Either students have submitted responses to this assignment or the solutions have been
@@ -235,30 +270,28 @@
                     In addition, you can't update the number of points per question.</strong></b-alert>
               </div>
               <div v-if="!(has_submissions_or_file_submissions || solutionsReleased)">
-                <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">Add
-                  Questions
-                </b-button>
                 <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
                 </b-button>
-                <b-button class="mt-1 mb-2"
-                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                          variant="info">
-                  Create Learning Tree
-                </b-button>
-                <toggle-button
-                  v-if="questionFilesAllowed"
+                <span v-if="questionFilesAllowed">
+                  <span class="font-italic">Question File Upload Enabled: </span><toggle-button
                   @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                  :width="250"
+                  :width="60"
                   :value="Boolean(questions[currentPage-1].questionFiles)"
                   :sync="true"
                   :font-size="14"
                   :margin="4"
                   :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Question File Upload Enabled', unchecked: 'Question File Upload Disabled'}"/>
-                <br>
+                  :labels="{checked: 'Yes', unchecked: 'No'}"/>
+                </span>
+                <b-button class="mt-1 mb-2"
+                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
+                          variant="info">
+                  Create Learning Tree
+                </b-button>
               </div>
               <div>
-                <b-button class="mt-1 mb-2"
+
+                <b-button class="mt-1 mb-2 ml-1"
                           variant="dark"
                           v-on:click="openUploadFileModal(questions[currentPage-1].id)"
                           v-b-modal.modal-upload-file>Upload Solution
@@ -270,43 +303,12 @@
                     {{ questions[currentPage - 1].solution }}
                   </a>
                   </span>
-                <span v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
+                <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
               </div>
-              <b-form ref="form" v-if="!has_submissions_or_file_submissions && (isInstructor())">
 
-                <b-form-group
-                  v-if="(source === 'a') && (scoring_type === 'p')"
-                  id="points"
-                  label-cols-sm="4"
-                  label-cols-lg="3"
-                  label="Number of points for this question"
-                  label-for="points"
-                >
-                  <b-form-row>
-                    <b-col lg="2">
-                      <b-form-input
-                        id="points"
-                        v-model="questionPointsForm.points"
-                        :value="questions[currentPage-1].points"
-                        type="text"
-                        placeholder=""
-                        :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                        @keydown="questionPointsForm.errors.clear('points')"
-                      >
-                      </b-form-input>
-                      <has-error :form="questionPointsForm" field="points"></has-error>
-                    </b-col>
-                    <b-col>
-                      <b-button variant="primary" @click="updatePoints((questions[currentPage-1].id))">Update Points
-                      </b-button>
-                    </b-col>
-                  </b-form-row>
-
-                </b-form-group>
-
-              </b-form>
-            </b-card-text>
-          </b-card>
+            </b-row>
+            <hr>
+          </b-container>
         </div>
 
 
@@ -435,17 +437,17 @@
                   <br>
                   </span>
                     <span class="font-weight-bold">Last submitted:</span> {{
-                      questions[currentPage - 1].last_submitted
+                    questions[currentPage - 1].last_submitted
                     }}<br>
                     <span class="font-weight-bold">Last response:</span> {{
-                      questions[currentPage - 1].student_response
+                    questions[currentPage - 1].student_response
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
 
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
-                        questions[currentPage - 1].submission_score
+                      questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
                   </b-card-text>
@@ -514,7 +516,7 @@
       </div>
     </div>
     <div class="mt-4" v-if="!initializing && !questions.length">
-      <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
+      <div class="mb-0" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
         <b-button variant="success">Add Questions</b-button>
       </div>
 
@@ -543,6 +545,7 @@ import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
 import {getScoresSummary} from '~/helpers/Scores'
+
 
 
 export default {

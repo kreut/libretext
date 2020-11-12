@@ -1,11 +1,6 @@
 <template>
   <div>
-    <div v-if="isLoading" class="text-center">
-      <h3>
-        <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
-        Loading...
-      </h3>
-    </div>
+      <PageTitle :title="title"></PageTitle>
     <b-modal
       id="modal-upload-file"
       ref="solutionFileInput"
@@ -32,9 +27,14 @@
         </div>
       </b-form>
     </b-modal>
-
-    <div v-if="showPage">
-      <PageTitle :title="title"></PageTitle>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"></loading>
       <p>Use the search box you can find questions by tag.
         The tag can be a word associated with the question or can be the query library page id. To search
         by page id, please use the tag: id={id}. For example, id=112358.
@@ -82,13 +82,14 @@
         ></b-pagination>
       </div>
       <div v-if="showQuestions">
-        <div class="d-flex">
-          <b-button v-if="!questions[currentPage-1].inAssignment" class="mt-1 mb-2 mr-2"
-                    v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question
-          </b-button>
-          <b-card title="Question Actions" v-if="questions[currentPage-1].inAssignment" class="mb-4">
-            <b-card-text>
-
+        <b-container>
+          <b-row>
+              <span v-if="!questions[currentPage-1].inAssignment">
+              <b-button class="mt-1 mb-2 mr-2"
+                        v-on:click="addQuestion(questions[currentPage-1])" variant="primary">Add Question
+              </b-button>
+                </span>
+                <span v-if="questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
                         v-on:click="removeQuestion(questions[currentPage-1])" variant="danger">Remove Question
               </b-button>
@@ -98,7 +99,6 @@
                         v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
                         variant="info">Create Learning Tree
               </b-button>
-              <br>
 
               <toggle-button
                 v-if="questionFilesAllowed"
@@ -124,11 +124,11 @@
             </a>
             </span>
               <span
-                v-if="!questions[currentPage-1].solution">You currently have no solution uploaded for this question.</span>
+                v-if="!questions[currentPage-1].solution">No solution uploaded.</span>
+</span>
 
-            </b-card-text>
-          </b-card>
-        </div>
+          </b-row>
+        </b-container>
         <div>
           <iframe id="non-technology-iframe"
                   allowtransparency="true"
@@ -141,7 +141,9 @@
         <div v-html="questions[currentPage-1].technology_iframe"></div>
       </div>
     </div>
+
   </div>
+
 </template>
 
 <script>
@@ -155,11 +157,14 @@ import {submitUploadFile} from '~/helpers/UploadFiles'
 import {downloadSolutionFile} from '~/helpers/DownloadFiles'
 import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
 import Form from "vform";
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   components: {
     VueBootstrapTypeahead,
-    ToggleButton
+    ToggleButton,
+    Loading
   },
   middleware: 'auth',
   computed: mapGetters({
@@ -180,7 +185,6 @@ export default {
     question: {},
     showQuestions: false,
     gettingQuestions: false,
-    showPage: false,
     title: '',
     uploadFileForm: new Form({
       questionFile: null,
@@ -249,7 +253,7 @@ export default {
         this.title = 'Add Questions'
       }
       if (this.continueLoading) {//OK to load the rest of the page
-        this.tags = this.getTags()
+        this.getTags()
         h5pResizer()
       }
     },
@@ -285,13 +289,12 @@ export default {
     async getTags() {
       try {
         const {data} = await axios.get(`/api/tags`)
+        this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         } else {
           this.tags = data.tags
-          this.showPage = true
-          this.isLoading = false
         }
       } catch (error) {
         this.$noty.error(error.message)

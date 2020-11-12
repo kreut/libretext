@@ -365,6 +365,32 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    /**
+     *
+     * Display the specified resource
+     *
+     * @param Assignment $assignment
+     * @return Assignment
+     */
+    public function getAssignmentName(Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $assignment = Assignment::find($assignment->id);
+            $response['assignment'] = [
+                'name' => $assignment->name,
+            ];
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
 
     /**
      *

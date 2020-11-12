@@ -53,6 +53,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/total-points-info', 'AssignmentController@totalPointsInfo');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
     Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
+    Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentName');
 
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
