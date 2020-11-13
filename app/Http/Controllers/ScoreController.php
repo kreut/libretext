@@ -198,6 +198,7 @@ class ScoreController extends Controller
 
         [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
         $response['weighted_score'] = $rows[0][$weighted_score_assignment_id];
+        $response['type'] = 'success';
         return $response;
 
     }
@@ -234,7 +235,7 @@ class ScoreController extends Controller
         }
 
         //get all assignments in the course
-        $assignments = $course->assignments->sortBy('due');
+        $assignments = $course->assignments->where('show_scores', 1)->sortBy('due');
 
 
         if ($assignments->isEmpty()) {

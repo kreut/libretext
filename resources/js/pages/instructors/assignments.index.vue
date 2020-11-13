@@ -224,9 +224,22 @@
                   </b-form-group>
                 </b-form-row>
               </b-modal>
-
-
             </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="include_in_weighted_average"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Include In Final Score"
+            label-for="Include In Final Score"
+          >
+
+            <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
+
+              <b-form-radio name="include_in_weighted_average" value="1">Include the assignment in computing a final weighted score</b-form-radio>
+              <b-form-radio name="include_in_weighted_average" value="0">Do not include the assignment in computing a final weighted score
+              </b-form-radio>
+            </b-form-radio-group>
           </b-form-group>
 
           <b-tooltip target="internal"
@@ -318,6 +331,7 @@
                 </b-form-radio>
               </b-form-radio-group>
             </b-form-group>
+
             <b-form-group
               v-if="form.scoring_type === 'p'"
               id="submission_files"
@@ -547,6 +561,7 @@ export default {
       source: 'a',
       scoring_type: 'c',
       students_can_view_assignment_statistics: 0,
+      include_in_weighted_average: 1,
       num_submissions_needed: '2',
       default_points_per_question: '10',
       external_source_points: 100
@@ -753,6 +768,7 @@ export default {
       this.form.due_date = assignment.due_date
       this.form.due_time = assignment.due_time
       this.form.assignment_group_id = assignment.assignment_group_id
+      this.form.include_in_weighted_average = assignment.include_in_weighted_average
       this.form.source = assignment.source
       this.form.type_of_submission = assignment.type_of_submission
       this.form.submission_files = assignment.submission_files

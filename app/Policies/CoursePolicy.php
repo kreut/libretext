@@ -43,7 +43,7 @@ class CoursePolicy
     {
         return  $course->enrollments->contains('user_id', $user->id)
             ? Response::allow()
-            : Response::deny('You are not allowed to view these scores.');
+            : Response::deny('You are not allowed to view this score.');
     }
 
     public function updateStudentsCanViewWeightedAverage(User $user, Course $course)

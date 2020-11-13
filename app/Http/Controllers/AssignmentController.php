@@ -138,7 +138,7 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments_info[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
-
+                    $assignments_info[$key]['include_in_weighted_average'] = $assignment->include_in_weighted_average;
                 }
 //same regardless of whether you're a student
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
@@ -241,6 +241,7 @@ class AssignmentController extends Controller
                     'scoring_type' => $data['scoring_type'],
                     'students_can_view_assignment_statistics' => $data['students_can_view_assignment_statistics'],
                     'submission_files' => $data['submission_files'],
+                    'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
                 ]
             );

@@ -10,15 +10,17 @@ use App\Course;
 use App\Assignment;
 use App\Enrollment;
 use App\SubmissionFile;
+use App\Traits\Test;
 
 class StudentsAssignmentsIndexTest extends TestCase
 {
+    use Test;
     public function setup(): void
     {
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id'=> $this->course->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id'=> $this->course->id,  'show_scores' => 1]);
 
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
@@ -45,6 +47,47 @@ class StudentsAssignmentsIndexTest extends TestCase
                                             'user_id' => $this->student_user->id
                                         ]);
     }
+
+
+/** @test */
+    public function correctly_computes_the_final_score_for_the_student_if_not_all_assignments_show_scores()
+    {
+        //4 assignments with 2 different weights
+        $this->assignment->show_scores = false;
+        $this->assignment->save();
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
+            ->assertJson(['weighted_score' => '51.11%']);
+
+    }
+
+    /** @test */
+
+    public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
+    {
+        //4 assignments with 2 different weights
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
+            ->assertJson(['weighted_score' => '51.11%']);
+
+    }
+
+    /** @test */
+
+    public function must_be_enrolled_in_the_course_to_view_the_score()
+    {
+
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->student_user_3)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
+          ->assertJson(['You are not allowed to view this score.']);
+
+        dd('also make sure that allowed at the course level');
+
+    }
+
+
+
+
 
     /** @test */
     public function assignment_file_must_contain_a_file()
