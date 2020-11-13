@@ -49,6 +49,27 @@ class ScoresIndexTest extends TestCase
 
     }
 
+
+    /** @test */
+
+    public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()
+    {
+
+        //3 assignments with 2 different weights
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->assignment->include_in_weighted_average = false;
+        $this->assignment->save();
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}");
+        dd($response);
+        $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
+        $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
+
+    }
+
+
+
+
+
     /** @test */
     public function can_update_assignment_score_if_owner()
     {

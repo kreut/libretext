@@ -13,5 +13,7 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'scoring_type' => 'p',
         'default_points_per_question' => 2,
         'submission_files' => 'a',
-        'assignment_group_id' => 1];
+        'assignment_group_id' => 1,
+        'include_in_weighted_average' => 1
+        ];
 });

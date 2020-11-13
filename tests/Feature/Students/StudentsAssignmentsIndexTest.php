@@ -49,12 +49,12 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-/** @test */
-    public function correctly_computes_the_final_score_for_the_student_if_not_all_assignments_show_scores()
+
+    /** @test */
+
+    public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
     {
         //4 assignments with 2 different weights
-        $this->assignment->show_scores = false;
-        $this->assignment->save();
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
             ->assertJson(['weighted_score' => '51.11%']);
@@ -62,10 +62,11 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
     /** @test */
-
-    public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
+    public function correctly_computes_the_final_score_for_the_student_if_not_all_assignments_are_included()
     {
         //4 assignments with 2 different weights
+        $this->assignment->include_in_weighted_average = false;
+        $this->assignment->save();
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
             ->assertJson(['weighted_score' => '51.11%']);
