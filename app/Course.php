@@ -36,7 +36,7 @@ public function assignmentGroupWeights() {
     return DB::table('assignments')
         ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
         ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
-        ->where('assignments.course_id', $this->id)
+        ->where('assignment_group_weights.course_id', $this->id)
         ->groupBy('assignment_groups.id','assignment_group_weights.assignment_group_weight')
         ->select('assignment_groups.id','assignment_groups.assignment_group','assignment_group_weights.assignment_group_weight')
         ->get();

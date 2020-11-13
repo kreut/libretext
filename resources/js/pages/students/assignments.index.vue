@@ -74,7 +74,7 @@
 
       <div v-if="hasAssignments">
         <div class="text-center">
-        <p v-if="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average is {{ weightedAverage }}
+        <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average is {{ weightedAverage }}
         </p>
         </div>
         <b-table striped hover :fields="fields" :items="assignments">
@@ -197,24 +197,17 @@ export default {
         console.log(data)
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         if (this.studentsCanViewWeightedAverage) {
-          await this.getWeightedAverage()
+          const {data} = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
+          console.log(data)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          this.weightedAverage = data.weighted_score
         }
       } catch (error) {
         this.$noty.error(error.message)
 
-      }
-    },
-    async getWeightedAverage() {
-      try {
-        const {data} = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
-        console.log(data)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.weightedAverage = data.weighted_score
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     downloadSubmissionFile(assignmentId, submission, original_filename) {

@@ -26,6 +26,7 @@ class AssignmentGroupWeightController extends Controller
             return $response;
         }
         $assignment_group_weights = $course->assignmentGroupWeights();
+
         try {
             $response['assignment_group_weights'] = $assignment_group_weights;
             $response['type'] = 'success';
