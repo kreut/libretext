@@ -15,12 +15,13 @@ use App\Traits\Test;
 class StudentsAssignmentsIndexTest extends TestCase
 {
     use Test;
+
     public function setup(): void
     {
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id'=> $this->course->id,  'show_scores' => 1]);
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id, 'students_can_view_weighted_average' => 1]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1]);
 
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
@@ -41,13 +42,12 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
         $this->submission_file = factory(SubmissionFile::class)
-                                        ->create([
-                                            'assignment_id' => $this->assignment->id,
-                                            'type' => 'a',
-                                            'user_id' => $this->student_user->id
-                                        ]);
+            ->create([
+                'assignment_id' => $this->assignment->id,
+                'type' => 'a',
+                'user_id' => $this->student_user->id
+            ]);
     }
-
 
 
     /** @test */
@@ -65,8 +65,6 @@ class StudentsAssignmentsIndexTest extends TestCase
     public function correctly_computes_the_final_score_for_the_student_if_not_all_assignments_are_included()
     {
         //4 assignments with 2 different weights
-        $this->assignment->include_in_weighted_average = false;
-        $this->assignment->save();
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
             ->assertJson(['weighted_score' => '51.11%']);
@@ -80,14 +78,21 @@ class StudentsAssignmentsIndexTest extends TestCase
 
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user_3)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
-          ->assertJson(['You are not allowed to view this score.']);
-
-        dd('also make sure that allowed at the course level');
+            ->assertJson(['message' => 'You are not allowed to view this score.']);
 
     }
 
+    /** @test */
 
+    public function course_must_have_students_can_view_weighted_average_enabled_to_view_the_score()
+    {
+        $this->course->students_can_view_weighted_average = 0;
+        $this->course->save();
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-scores-by-user")
+            ->assertJson(['message' => 'You are not allowed to view this score.']);
 
+    }
 
 
     /** @test */
@@ -104,12 +109,13 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
     /** @test */
-    public function cannot_upload_if_past_due(){
+    public function cannot_upload_if_past_due()
+    {
         $assignment_due = $this->assignment->due;
         $this->assignment->due = '2020-06-12 09:00:00';
         $this->assignment->save();
 
-     $this->actingAs($this->student_user)->putJson("/api/submission-files", [
+        $this->actingAs($this->student_user)->putJson("/api/submission-files", [
             'assignmentFile' => 'abd.pdf',
             'assignmentId' => $this->assignment->id,
         ])
@@ -136,17 +142,15 @@ class StudentsAssignmentsIndexTest extends TestCase
     /** @test */
     public function cannot_download_assignment_file_if_not_owner()
     {
-   /*    need exception... $this->actingAs($this->student_user_2)->postJson("/api/submission-files/download",
-            [
-                'assignment_id' => $this->assignment->id,
-                'submission' => $this->submission_file->submission
-            ]
-        )
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);
-*/
+        /*    need exception... $this->actingAs($this->student_user_2)->postJson("/api/submission-files/download",
+                 [
+                     'assignment_id' => $this->assignment->id,
+                     'submission' => $this->submission_file->submission
+                 ]
+             )
+                 ->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);
+     */
     }
-
-
 
 
     /** @test */
@@ -162,9 +166,11 @@ class StudentsAssignmentsIndexTest extends TestCase
 
 
     }
+
     /** @test */
 
-    public function correctly_handles_different_timezones() {
+    public function correctly_handles_different_timezones()
+    {
 
     }
 

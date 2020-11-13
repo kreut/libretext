@@ -44,36 +44,52 @@ class ScoreController extends Controller
         return $total_points_by_assignment_id;
     }
 
-    public function getAssignmentGroupWeights(int $course_id)
+    /** get the counts and the weights for each group
+     *
+     * @param $assignments
+     * @param int $course_id
+     * @return array[]
+     */
+    public function getAssignmentGroupWeights($assignments, int $course_id)
     {
         $assignment_groups_by_assignment_id = [];
         $assignment_group_weights_info = [];
+        $include_in_weighted_average = [];
+        foreach ($assignments as $assignment) {
+            $include_in_weighted_average[$assignment->id] = $assignment->include_in_weighted_average;
+
+        }
 
         $assignment_group_weights = DB::table('assignments')
             ->join('assignment_group_weights', 'assignments.assignment_group_id', '=', 'assignment_group_weights.assignment_group_id')
+            ->where('assignment_group_weights.course_id', $course_id)
             ->where('assignments.course_id', $course_id)
             ->select('assignments.id', 'assignments.assignment_group_id', 'assignment_group_weights.assignment_group_weight')
             ->get();
-
-
 //create arrays for assignment_group_ids, weights, and counts
+//dd( $include_in_weighted_average);
+
         foreach ($assignment_group_weights as $key => $value) {
             $assignment_groups_by_assignment_id[$value->id] = $value->assignment_group_id;
             if (isset($assignment_group_weights_info[$value->assignment_group_id])) {
-                $assignment_group_weights_info[$value->assignment_group_id]['count']++;
+                $assignment_group_weights_info[$value->assignment_group_id]['count'] = $include_in_weighted_average[$value->id]
+                    ? $assignment_group_weights_info[$value->assignment_group_id]['count'] + 1
+                    : $assignment_group_weights_info[$value->assignment_group_id]['count'];
             } else {
                 $assignment_group_weights_info[$value->assignment_group_id]['weight'] = $value->assignment_group_weight;
-                $assignment_group_weights_info[$value->assignment_group_id]['count'] = 1;
+                $assignment_group_weights_info[$value->assignment_group_id]['count'] = $include_in_weighted_average[$value->id] ? 1 : 0;
             }
         }
         return [$assignment_group_weights_info, $assignment_groups_by_assignment_id];
     }
 
-    public function getScoresByUserIdAndAssignment($scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id)
+    public function getScoresByUserIdAndAssignment($assignments, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id)
     {
+
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
+
         foreach ($scores as $score) {
             $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
             $group_id = $assignment_groups_by_assignment_id[$score->assignment_id];
@@ -81,7 +97,11 @@ class ScoreController extends Controller
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
 
             $score_as_proportion = $score->score / $total_points_by_assignment_id[$score->assignment_id];
-            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $score_as_proportion;
+            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
+                ->first()
+                ->include_in_weighted_average
+            ? $score_as_proportion
+                : 0;
 
         }
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
@@ -94,7 +114,9 @@ class ScoreController extends Controller
             $final_weighted_scores[$user->id] = 0;
             if (isset($proportion_scores_by_user_and_assignment_group[$user->id])) {
                 foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id => $group_score) {
-                    $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count'];
+                    $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['count']
+                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count']
+                        : 0;
                 }
             }
         }
@@ -186,7 +208,7 @@ class ScoreController extends Controller
         $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
 
         //get all assignments in the course
-        $assignments = $course->assignments->where('show_scores', 1)->sortBy('due');
+        $assignments = $course->assignments->sortBy('due');
 
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
@@ -194,7 +216,7 @@ class ScoreController extends Controller
 
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
-        $scores = $course->scores->where('user_id', $user->id)->whereIN('assignment_id', $assignment_ids);
+        $scores = $course->scores->where('user_id', $user->id)->whereIn('assignment_id', $assignment_ids);
 
         [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
         $response['weighted_score'] = $rows[0][$weighted_score_assignment_id];
@@ -203,17 +225,34 @@ class ScoreController extends Controller
 
     }
 
-    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first,  $total_points_by_assignment_id){
+    /**
+     *
+     * The final average is computed using assignments that have "include_in_weighted_average" set to true.
+     * Two items are updated with this: the counts (getAssignmentGroupWeights)
+     * and whether to contribute the score: processAllScoreInfo
+     * @param $course
+     * @param $assignments
+     * @param $assignment_ids
+     * @param $scores
+     * @param $extensions
+     * @param $enrolled_users
+     * @param $enrolled_users_last_first
+     * @param $total_points_by_assignment_id
+     * @return array
+     */
+    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id)
+    {
 
-        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($course->id);
-        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
+        [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($assignments, $course->id);
+        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($assignments, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
         $final_weighted_scores = $this->getFinalWeightedScores($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
+
         [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id] = $this->getFinalTableInfo($assignment_ids, $enrolled_users, $enrolled_users_last_first, $assignments, $extensions, $final_weighted_scores, $scores_by_user_and_assignment);
 
         return [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id];
 
 
-}
+    }
 
     public function index(Course $course)
     {
@@ -235,7 +274,7 @@ class ScoreController extends Controller
         }
 
         //get all assignments in the course
-        $assignments = $course->assignments->where('show_scores', 1)->sortBy('due');
+        $assignments = $course->assignments->sortBy('due');
 
 
         if ($assignments->isEmpty()) {

@@ -73,8 +73,10 @@
       </b-modal>
 
       <div v-if="hasAssignments">
-        <p v-if="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average computing using the released scores, weighted by assignment category, is {{ weightedAverage }}
+        <div class="text-center">
+        <p v-if="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average is {{ weightedAverage }}
         </p>
+        </div>
         <b-table striped hover :fields="fields" :items="assignments">
           <template v-slot:cell(name)="data">
             <div class="mb-0">

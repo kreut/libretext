@@ -157,8 +157,8 @@ trait Test
         //GROUP 2 scores: 25/30 weight of 90
         //10*((2/2 + 5/30 + 2/3)/3)+90*(.5*(25/100 + 75/100))=51.11%
 
-        //Leaving out $this->assignment (testing when show_scores is false for a student
-        ////10*((0/2 + 5/30 + 2/3)/3)+90*(.5*(25/100 + 75/100))=51.11%
+        //Leaving out $this->assignment
+        ////10*(( 5/30 + 2/3)/2)+90*(.5*(25/100 + 75/100))=49.17%
     }
 
 
