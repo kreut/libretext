@@ -105,12 +105,12 @@
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
                       }}<br>
                       <strong>File Submission Score:</strong> {{
-                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score']
+                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
                       }}
                       <br>
                       <strong>Total Score For this Question:</strong>
                       {{ (this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
-                      + this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'])*1}} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
+                      + (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
                       <br>
                       <hr>
                     </div>
