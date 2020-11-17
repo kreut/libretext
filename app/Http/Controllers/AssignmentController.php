@@ -142,10 +142,9 @@ class AssignmentController extends Controller
                 }
 //same regardless of whether you're a student
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
-                $response['assignments'] = $assignments_info;
-                $response['type'] = 'success';
-
             }
+            $response['assignments'] = $assignments_info;
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
