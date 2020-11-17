@@ -204,7 +204,7 @@
                   </div>
                 </div>
                 <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
-                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">Show Statistics
+                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">View Question Statistics
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
@@ -406,7 +406,7 @@
               </div>
             </b-col>
             <b-col cols="4" v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2">
-              <b-card title="Summary Statistics" class="mb-2">
+              <b-card title="Question Statistics" class="mb-2">
                 <b-card-text>
                   <ul>
                     <li>{{ scores.length }} student submissions</li>
@@ -997,7 +997,7 @@ export default {
           return false
         }
         let assignment = data.assignment
-        this.title = `${assignment.name} Assignment Questions`
+        this.title = `${assignment.name} Questions`
         this.name = assignment.name
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         this.timeLeft = assignment.time_left

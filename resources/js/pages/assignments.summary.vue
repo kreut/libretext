@@ -5,7 +5,7 @@
       <b-container>
         <b-row>
           <b-col>
-            <b-card title="Summary Statistics">
+            <b-card title="Assignment Statistics">
               <b-card-text>
                 <ul>
                   <li>This assignment is out of {{ totalPoints }} points.</li>
@@ -15,7 +15,7 @@
                   <li v-if="this.scores.length">Minimum score of {{ min }}</li>
                   <li v-if="this.scores.length">Mean score of {{ mean }}</li>
                   <li v-if="this.scores.length">Standard deviation of {{ stdev }}</li>
-                  <li v-if="!this.scores.length">Nobody has submitted anything yet</li>
+                  <li v-if="!this.scores.length">Nothing has been scored yet.</li>
                 </ul>
                 <hr>
                 <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="getStudentView(assignmentId)">View
