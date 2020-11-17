@@ -28,18 +28,37 @@
     </b-modal>
     <PageTitle v-bind:title="this.title"></PageTitle>
     <div v-if="submissionFiles.length>0">
+<b-container>
+  <b-row>
+    <p class="font-italic">
+      <strong>Instructions:</strong> For each student, please enter a file submission score and optionally
+      add comments in the form of text or a file upload.  The total number of points that the student receives
+      will be the sum of the points that they received for submitting any automatically
+      graded responses (Question Submission Score)
+      plus the number of points that you give them for their file submission (File Submission Score).</p>
 
-      <b-card class="col-4">
-        <b-form-group id="grade-view" label="Current Grade View:" label-for="grade-view">
-          <b-form-select
-            id="grade-view"
-            v-model="gradeView"
-            v-on:change="getSubmissionFiles"
-            :options="gradeViews"
-          ></b-form-select>
-        </b-form-group>
-      </b-card>
+  </b-row>
+</b-container>
       <div v-if="!showNoFileSubmissionsExistAlert">
+        <b-form-group
+          id="assignment_group"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="File Submission Group"
+          label-for="File Submission Group"
+        >
+          <b-form-row>
+            <b-col lg="3">
+          <b-form-select
+          id="grade-view"
+          v-model="gradeView"
+          v-on:change="getSubmissionFiles"
+          :options="gradeViews"
+        ></b-form-select>
+            </b-col>
+          </b-form-row>
+          </b-form-group>
+        <hr>
         <div v-show="type === 'question'">
           <div class="text-center h5">Question</div>
           <div class="overflow-auto">
@@ -304,7 +323,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.title = `Grade File Submissions For "${data.assignment.name}"`
+        this.title = `Grade File Submissions For ${data.assignment.name}`
 
       } catch (error) {
         this.title = 'Grade File Submissions'
