@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Course;
 use App\User;
+use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
 use App\CourseAccessCode;
 use App\Enrollment;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Auth;
 use App\Traits\DateFormatter;
 
 use \Illuminate\Http\Request;
@@ -258,8 +260,9 @@ class CourseController extends Controller
                 $assignment->scores()->delete();
                 $assignment->seeds()->delete();
             }
-            dd($course->assignmentGroups()->where('user_id', Auth::user()->id));
             $course->assignments()->delete();
+            AssignmentGroupWeight::where('course_id', $course->id)->delete();
+            AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
             $course->graders()->delete();
             $course->delete();
