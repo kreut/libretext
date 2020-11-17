@@ -110,7 +110,7 @@ class SubmissionFileController extends Controller
     }
 
 
-    public function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
+    public function storeTextFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
@@ -132,13 +132,12 @@ class SubmissionFileController extends Controller
         }
 
         try {
-
-            $data = $request->validated();
-            $this->updateTextFeedbackOrScore($type, 'text_feedback', $data['textFeedback'], $student_user_id, $assignment_id, $question_id);
+           $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
+            $this->updateTextFeedbackOrScore($type, 'text_feedback', $text_feedback, $student_user_id, $assignment_id, $question_id);
 
 
             $response['type'] = 'success';
-            $response['message'] = 'Your comments have been saved.';
+            $response['message'] = $text_feedback ? 'Your comments have been saved.' : 'This student will not see any comments.';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

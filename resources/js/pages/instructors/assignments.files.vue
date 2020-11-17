@@ -39,7 +39,6 @@
 
   </b-row>
 </b-container>
-      <div v-if="!showNoFileSubmissionsExistAlert">
         <b-form-group
           id="assignment_group"
           label-cols-sm="3"
@@ -59,6 +58,7 @@
           </b-form-row>
           </b-form-group>
         <hr>
+      <div v-if="!showNoFileSubmissionsExistAlert">
         <div v-show="type === 'question'">
           <div class="text-center h5">Question</div>
           <div class="overflow-auto">
