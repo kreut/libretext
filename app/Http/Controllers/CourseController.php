@@ -251,21 +251,23 @@ class CourseController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($course) {
-                $course->accessCodes()->delete();
-                foreach ($course->assignments as $assignment) {
-                    $assignment->questions()->detach();
-                    $assignment->scores()->delete();
-                }
-                $course->assignments()->delete();
-                $course->enrollments()->delete();
-                $course->graders()->delete();
-                $course->delete();
-
-            });
+            DB::beginTransaction();
+            $course->accessCodes()->delete();
+            foreach ($course->assignments as $assignment) {
+                $assignment->questions()->detach();
+                $assignment->scores()->delete();
+                $assignment->seeds()->delete();
+            }
+            dd($course->assignmentGroups()->where('user_id', Auth::user()->id));
+            $course->assignments()->delete();
+            $course->enrollments()->delete();
+            $course->graders()->delete();
+            $course->delete();
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been deleted.";
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing <strong>$course->name</strong>.  Please try again or contact us for assistance.";
