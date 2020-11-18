@@ -52,6 +52,25 @@ class AssignmentsIndexTest extends TestCase
 
 
     /** @test */
+    public function nonowner_cannot_toggle_showing_assignment_statistics()
+    {
+
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment-statistics/1")
+            ->assertJson(['message' => 'You are not allowed to show/hide assignment statistics.']);
+    }
+
+    /** @test */
+    public function owner_can_toggle_showing_assignment_statistics()
+    {
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment-statistics/1")
+            ->assertJson(['message' => 'Your students <strong>cannot</strong> view the assignment statistics.']);
+    }
+
+
+    /** @test */
     public function nonowner_cannot_create_new_assignment_group()
     {
 
