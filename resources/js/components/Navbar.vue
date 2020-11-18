@@ -13,12 +13,12 @@
     </b-navbar-brand>
 
 
-    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between">
+    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between" style="padding-top:.em !important;padding-bottom:0 !important; margin-bottom:0 !important;">
 
-      <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em"></b-breadcrumb>
-      <b-navbar-nav class="ml-auto mt-0 mb-1">
+      <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"></b-breadcrumb>
+      <b-navbar-nav class="ml-auto mt-0 mb-0">
         <b-row>
-          <b-nav-item-dropdown right v-if="user">
+          <b-nav-item-dropdown right v-if="user" class="mr-2">
             <!-- Using 'button-content' slot -->
             <template v-slot:button-content>
               <em>Hi, {{ user.first_name }}!</em>
@@ -61,7 +61,7 @@
             </b-nav-item-dropdown>
           </b-navbar-nav>
           <b-navbar-nav class="ml-2 mr-2">
-            <b-nav-item>
+            <b-nav-item class="mr-2">
           <span v-on:click="openSendEmailModal" class="nav-link" active-class="active">
             Contact Us
           </span>
@@ -71,32 +71,29 @@
       </b-navbar-nav>
     </b-nav>
 
-
+<!--
     <b-navbar toggleable="lg" type="dark" variant="info">
 
-      <!--<b-navbar-brand href="#">
+      <b-navbar-brand href="#">
         <router-link :to="{ name: user ? 'home' : 'welcome' }" class="navbar-brand">
           {{ appName }}
         </router-link>
-      </b-navbar-brand>-->
+      </b-navbar-brand>--><!--
       <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
 
       <b-collapse id="nav-collapse" is-nav>
         <b-navbar-nav v-if="user">
-          <b-nav-item href="#" v-if="user">
-            <router-link :to="{ name: (user.role === 3) ? 'students.courses.index' : 'instructors.courses.index'}"
-                         class="nav-link">
-              My Courses
-            </router-link>
+          <b-nav-item>
+            <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em"></b-breadcrumb>
           </b-nav-item>
 
         </b-navbar-nav>
 
-        <!-- Right aligned nav items -->
-        <b-navbar-nav class="ml-auto">
+        Right aligned nav items -->
+        <!--<b-navbar-nav class="ml-auto">
           <b-nav-item-dropdown right v-if="user">
             <!-- Using 'button-content' slot -->
-            <template v-slot:button-content>
+          <!--  <template v-slot:button-content>
               <em>Hi, {{ user.first_name }}!</em>
             </template>
             <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
@@ -147,7 +144,7 @@
 
       </b-collapse>
     </b-navbar>
-
+-->
 
   </div>
 

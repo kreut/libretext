@@ -125,7 +125,6 @@ export default {
       this.sendEmailForm.to_user_id = toUserId
       this.sendEmailForm.subject = this.subject
       this.sendEmailForm.type = this.type
-      console.log(this.sendEmailForm.extraParams.questionId)
       this.$bvModal.show(this.id)
     },
     setExtraParams(extraParams){
