@@ -77,7 +77,7 @@
           </div>
           <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
                    <b-button variant="outline-primary"
-                             v-on:click.prevent="downloadSolutionFile(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
+                             v-on:click.prevent="downloadSolutionFile('q', assignmentId,  submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
               Download Solution
            </b-button>
           </span>
