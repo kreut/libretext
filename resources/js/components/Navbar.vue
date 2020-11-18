@@ -33,40 +33,36 @@
             </a>
           </b-nav-item-dropdown>
           <b-navbar-nav v-show="!user">
-
-            <b-navbar-nav>
               <b-nav-item href="/login">
-                <router-link :to="{ name: 'login' }" class="nav-link" active-class="active">
+                <router-link :to="{ name: 'login' }" class="nav-link" v-bind:style= "this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">
                   {{ $t('login') }}
                 </router-link>
               </b-nav-item>
             </b-navbar-nav>
-
-            <b-nav-item-dropdown text="Register" right>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-                  Student
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-                  Instructor
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-                  Grader
-                </router-link>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
-          </b-navbar-nav>
           <b-navbar-nav class="ml-2 mr-2">
-            <b-nav-item class="mr-2">
+            <b-nav-item>
           <span v-on:click="openSendEmailModal" class="nav-link" active-class="active">
             Contact Us
           </span>
             </b-nav-item>
           </b-navbar-nav>
+          <b-nav-item-dropdown text="Register" class="pr-2" v-show="!user" right>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
+                Student
+              </router-link>
+            </b-dropdown-item>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
+                Instructor
+              </router-link>
+            </b-dropdown-item>
+            <b-dropdown-item href="#">
+              <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
+                Grader
+              </router-link>
+            </b-dropdown-item>
+          </b-nav-item-dropdown>
         </b-row>
       </b-navbar-nav>
     </b-nav>
