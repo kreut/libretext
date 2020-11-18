@@ -27,8 +27,9 @@ class BreadcrumbController extends Controller
         $users = (Auth::user()->role === 3) ? 'students' :'instructors';
         $response['type'] = 'error';
         $breadcrumbs = [];
-        $breadcrumbs[0] = ['text' => 'My Courses', 'href'=>"/$users/courses"];
         try {
+        if (Auth::check()){
+        $breadcrumbs[0] = ['text' => 'My Courses', 'href'=>"/$users/courses"];
             switch ($name) {
                 case('settings.profile'):
                 case('settings.password'):
@@ -61,8 +62,8 @@ class BreadcrumbController extends Controller
                     $breadcrumbs[] = ['text' => $assignment->course->name,
                         'href' => "/$users/courses/{$assignment->course->id}/assignments"];
 
-                    if (Auth::user()->role === 3){
-                        if ($assignment->students_can_view_assignment_statistics){
+                    if (Auth::user()->role === 3) {
+                        if ($assignment->students_can_view_assignment_statistics) {
                             $breadcrumbs[] = ['text' => $assignment->name,
                                 'href' => "/assignments/{$assignment_id}/summary"];
                         }
@@ -101,8 +102,8 @@ class BreadcrumbController extends Controller
                         'href' => "#",
                         'active' => true];
                     break;
-
             }
+        }
             $response['type'] = 'success';
             $response['breadcrumbs'] = $breadcrumbs;
         } catch (Exception $e) {

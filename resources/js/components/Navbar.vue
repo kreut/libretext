@@ -13,7 +13,7 @@
     </b-navbar-brand>
 
 
-    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between" style="padding-top:.em !important;padding-bottom:0 !important; margin-bottom:0 !important;">
+    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between" style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;">
 
       <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"></b-breadcrumb>
       <b-navbar-nav class="ml-auto mt-0 mb-0">
@@ -32,7 +32,7 @@
               {{ $t('logout') }}
             </a>
           </b-nav-item-dropdown>
-          <b-navbar-nav v-if="!user">
+          <b-navbar-nav v-show="!user">
 
             <b-navbar-nav>
               <b-nav-item href="/login">
@@ -93,7 +93,7 @@ export default {
     appName: window.config.appName,
     breadcrumbs: [
       {
-        text: 'My Courses',
+        text: '',
         href: '#',
         active: true
       }
@@ -101,7 +101,11 @@ export default {
   }),
   watch: {
     '$route'(to, from) {
-      this.getBreadcrumbs(this.$router.history.current)
+      if (this.user) {
+        this.getBreadcrumbs(this.$router.history.current)
+      } else {
+        this.breadcrumbs = []
+      }
     }
   },
   computed: mapGetters({
