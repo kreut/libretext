@@ -12,6 +12,66 @@
       <img src="/assets/img/libretexts_section_complete_adapt_header.png" class="d-inline-block align-top pl-3">
     </b-navbar-brand>
 
+
+    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between">
+
+      <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em"></b-breadcrumb>
+      <b-navbar-nav class="ml-auto mt-0 mb-1">
+        <b-row>
+          <b-nav-item-dropdown right v-if="user">
+            <!-- Using 'button-content' slot -->
+            <template v-slot:button-content>
+              <em>Hi, {{ user.first_name }}!</em>
+            </template>
+            <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
+              <fa icon="cog" fixed-width/>
+              {{ $t('settings') }}
+            </router-link>
+            <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
+              <fa icon="sign-out-alt" fixed-width/>
+              {{ $t('logout') }}
+            </a>
+          </b-nav-item-dropdown>
+          <b-navbar-nav v-if="!user">
+
+            <b-navbar-nav>
+              <b-nav-item href="/login">
+                <router-link :to="{ name: 'login' }" class="nav-link" active-class="active">
+                  {{ $t('login') }}
+                </router-link>
+              </b-nav-item>
+            </b-navbar-nav>
+
+            <b-nav-item-dropdown text="Register" right>
+              <b-dropdown-item href="#">
+                <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
+                  Student
+                </router-link>
+              </b-dropdown-item>
+              <b-dropdown-item href="#">
+                <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
+                  Instructor
+                </router-link>
+              </b-dropdown-item>
+              <b-dropdown-item href="#">
+                <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
+                  Grader
+                </router-link>
+              </b-dropdown-item>
+            </b-nav-item-dropdown>
+          </b-navbar-nav>
+          <b-navbar-nav class="ml-2 mr-2">
+            <b-nav-item>
+          <span v-on:click="openSendEmailModal" class="nav-link" active-class="active">
+            Contact Us
+          </span>
+            </b-nav-item>
+          </b-navbar-nav>
+        </b-row>
+      </b-navbar-nav>
+    </b-nav>
+
+
     <b-navbar toggleable="lg" type="dark" variant="info">
 
       <!--<b-navbar-brand href="#">
@@ -95,6 +155,7 @@
 
 <script>
 
+import axios from 'axios'
 import {mapGetters} from 'vuex'
 import LocaleDropdown from './LocaleDropdown'
 import Email from './Email'
@@ -107,12 +168,33 @@ export default {
   },
 
   data: () => ({
-    appName: window.config.appName
+    appName: window.config.appName,
+    breadcrumbs: [
+      {
+        text: 'My Courses',
+        href: '#',
+        active: true
+      }
+    ]
   }),
+  watch: {
+    '$route'(to, from) {
+      this.getBreadcrumbs(this.$router.history.current)
+    }
+  },
   computed: mapGetters({
     user: 'auth/user'
   }),
   methods: {
+    async getBreadcrumbs(router) {
+      try {
+        console.log(router.name)
+        const {data} = await axios.post('/api/breadcrumbs', {'name': router.name, 'params': router.params})
+        this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
+      } catch (error) {
+        console.log(error.message)
+      }
+    },
     openSendEmailModal() {
       this.$refs.email.openSendEmailModal()
     },

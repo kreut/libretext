@@ -579,6 +579,11 @@ export default {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getCourseInfo()
+    if (![2,4].includes(this.user.role)){
+      this.isLoading = false
+      this.$noty.error('You are not allowed to access this page.')
+      return false
+    }
     this.getAssignments()
     this.getAssignmentGroups(this.courseId)
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')

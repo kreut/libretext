@@ -519,7 +519,8 @@
         <b-button variant="success">Add Questions</b-button>
       </div>
 
-      <b-alert show variant="warning"><a href="#" class="alert-link">
+      <b-alert show variant="warning" class="mt-3">
+        <a href="#" class="alert-link">
         <span v-show="source === 'a'">This assignment currently has no questions.</span>
         <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
       </a>
