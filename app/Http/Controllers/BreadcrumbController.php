@@ -30,6 +30,12 @@ class BreadcrumbController extends Controller
         $breadcrumbs[0] = ['text' => 'My Courses', 'href'=>"/$users/courses"];
         try {
             switch ($name) {
+                case('settings.profile'):
+                case('settings.password'):
+                    $breadcrumbs[] = ['text' => 'Settings',
+                        'href' => "#",
+                        'active' => true];
+                    break;
                 case('instructors.assignments.index'):
                     //My courses / the assignment's course
                     $breadcrumbs[] = ['text' => $course->name,
@@ -40,7 +46,6 @@ class BreadcrumbController extends Controller
                     $breadcrumbs[] = ['text' => $course->name,
                         'href' => "/students/courses/{$course->id}/assignments",
                         'active' => true];
-                    break;
                     break;
                 case('assignments.summary'):
                     //My courses / The assignment's course / that assignment;
@@ -56,7 +61,7 @@ class BreadcrumbController extends Controller
                     $breadcrumbs[] = ['text' => $assignment->course->name,
                         'href' => "/$users/courses/{$assignment->course->id}/assignments"];
 
-                    if (Auth::user()->role === '3'){
+                    if (Auth::user()->role === 3){
                         if ($assignment->students_can_view_assignment_statistics){
                             $breadcrumbs[] = ['text' => $assignment->name,
                                 'href' => "/assignments/{$assignment_id}/summary"];
