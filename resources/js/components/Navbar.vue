@@ -71,81 +71,6 @@
       </b-navbar-nav>
     </b-nav>
 
-<!--
-    <b-navbar toggleable="lg" type="dark" variant="info">
-
-      <b-navbar-brand href="#">
-        <router-link :to="{ name: user ? 'home' : 'welcome' }" class="navbar-brand">
-          {{ appName }}
-        </router-link>
-      </b-navbar-brand>--><!--
-      <b-navbar-toggle target="nav-collapse"></b-navbar-toggle>
-
-      <b-collapse id="nav-collapse" is-nav>
-        <b-navbar-nav v-if="user">
-          <b-nav-item>
-            <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em"></b-breadcrumb>
-          </b-nav-item>
-
-        </b-navbar-nav>
-
-        Right aligned nav items -->
-        <!--<b-navbar-nav class="ml-auto">
-          <b-nav-item-dropdown right v-if="user">
-            <!-- Using 'button-content' slot -->
-          <!--  <template v-slot:button-content>
-              <em>Hi, {{ user.first_name }}!</em>
-            </template>
-            <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-              <fa icon="cog" fixed-width/>
-              {{ $t('settings') }}
-            </router-link>
-            <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-              <fa icon="sign-out-alt" fixed-width/>
-              {{ $t('logout') }}
-            </a>
-          </b-nav-item-dropdown>
-          <b-navbar-nav v-if="!user">
-
-            <b-navbar-nav>
-              <b-nav-item href="/login">
-                <router-link :to="{ name: 'login' }" class="nav-link" active-class="active">
-                  {{ $t('login') }}
-                </router-link>
-              </b-nav-item>
-            </b-navbar-nav>
-
-            <b-nav-item-dropdown text="Register" right>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/student' }" class="dropdown-item pl-3">
-                  Student
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/instructor' }" class="dropdown-item pl-3">
-                  Instructor
-                </router-link>
-              </b-dropdown-item>
-              <b-dropdown-item href="#">
-                <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
-                  Grader
-                </router-link>
-              </b-dropdown-item>
-            </b-nav-item-dropdown>
-          </b-navbar-nav>
-          <b-navbar-nav>
-            <b-nav-item>
-          <span v-on:click="openSendEmailModal" class="nav-link" active-class="active">
-            Contact Us
-          </span>
-            </b-nav-item>
-          </b-navbar-nav>
-        </b-navbar-nav>
-
-      </b-collapse>
-    </b-navbar>
--->
-
   </div>
 
 </template>
@@ -211,7 +136,4 @@ export default {
   padding-top: .25em;
 }
 
-.bg-info {
-  background-color: #b4b4b4 !important;
-}
 </style>
