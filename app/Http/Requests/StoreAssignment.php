@@ -36,7 +36,6 @@ class StoreAssignment extends FormRequest
             'source' => Rule::in(['a', 'x']),
             'scoring_type' => Rule::in(['c', 'p']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
-            'students_can_view_assignment_statistics' => Rule::in([0, 1]),
             'include_in_weighted_average' => Rule::in([0,1]),
             'submission_files' => Rule::in(['q', 'a', 0]),
         ];

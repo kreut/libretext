@@ -74,6 +74,30 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function showAssignmentStatistics(Request $request, Assignment $assignment, int $showAssignmentStatistics)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showAssignmentStatistics', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['students_can_view_assignment_statistics' => !$showAssignmentStatistics]);
+            $response['type'] = 'success';
+            $scores_released = !$showAssignmentStatistics ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$scores_released}</strong> view the assignment statistics.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error showing/hiding the assignment statistics for <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     /**
      *
      * Display all assignments for the course
@@ -238,7 +262,6 @@ class AssignmentController extends Controller
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
-                    'students_can_view_assignment_statistics' => $data['students_can_view_assignment_statistics'],
                     'submission_files' => $data['submission_files'],
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id

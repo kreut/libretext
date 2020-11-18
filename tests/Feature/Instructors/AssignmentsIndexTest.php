@@ -109,7 +109,7 @@ class AssignmentsIndexTest extends TestCase
 
         $this->actingAs($this->user_2)
             ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'You are not allowed to release/conceal solutions.']);
+            ->assertJson(['message' => 'You are not allowed to show/hide solutions.']);
     }
 
 

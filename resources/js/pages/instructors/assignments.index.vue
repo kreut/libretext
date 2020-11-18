@@ -15,16 +15,17 @@
           <b-row>
             <b-col cols="6">
               <div v-if="hasAssignments">
-                <span class="font-italic">Students can view their weighted averages: </span><toggle-button
-                class="mt-2"
-                :width="55"
-                :value="studentsCanViewWeightedAverage"
-                @change="submitShowWeightedAverage()"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"/>
+                <span class="font-italic">Students can view their weighted averages: </span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="studentsCanViewWeightedAverage"
+                  @change="submitShowWeightedAverage()"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"/>
               </div>
             </b-col>
             <b-col cols="6">
@@ -89,7 +90,8 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name, the assignment's group, and whether students can view the assignment
+              that you can update is the assignment's name, the assignment's group, and whether students can view the
+              assignment
               statistics.</strong>
             </b-alert>
           </div>
@@ -236,8 +238,11 @@
 
             <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
 
-              <b-form-radio name="include_in_weighted_average" value="1">Include the assignment in computing a final weighted score</b-form-radio>
-              <b-form-radio name="include_in_weighted_average" value="0">Do not include the assignment in computing a final weighted score
+              <b-form-radio name="include_in_weighted_average" value="1">Include the assignment in computing a final
+                weighted score
+              </b-form-radio>
+              <b-form-radio name="include_in_weighted_average" value="0">Do not include the assignment in computing a
+                final weighted score
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
@@ -253,7 +258,7 @@
           </b-tooltip>
           <b-tooltip target="can_view_assignment_statistics"
                      delay="250">
-            Allows students to see how the class performed at the assignment and question level.  Choose this option
+            Allows students to see how the class performed at the assignment and question level. Choose this option
             and then Show Scores when you are ready for them to see the statistics.
           </b-tooltip>
           <b-form-group
@@ -267,9 +272,11 @@
                                 :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
             <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
 
-              <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
+              <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
+                icon="question-circle"></b-icon></span></b-form-radio>
                 </span>
-              <b-form-radio name="scoring_type" value="x">External <span id="external" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
+              <b-form-radio name="scoring_type" value="x">External <span id="external" class="text-muted"><b-icon
+                icon="question-circle"></b-icon></span></b-form-radio>
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
@@ -315,23 +322,6 @@
             </b-form-row>
           </b-form-group>
           <div v-show="form.source === 'a'">
-            <b-form-group
-              v-if="form.scoring_type === 'p'"
-              id="score_summary"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Assignment Statistics"
-              label-for="Assignment Statistics"
-            >
-
-              <b-form-radio-group v-model="form.students_can_view_assignment_statistics" stacked>
-
-                <b-form-radio name="students_can_view_assignment_statistics" value="1">Students can view <span id="can_view_assignment_statistics" class="text-muted"><b-icon icon="question-circle"></b-icon></span></b-form-radio>
-                <b-form-radio name="students_can_view_assignment_statistics" value="0">Students cannot view
-                </b-form-radio>
-              </b-form-radio-group>
-            </b-form-group>
-
             <b-form-group
               v-if="form.scoring_type === 'p'"
               id="submission_files"
@@ -420,6 +410,17 @@
               :width="80"
               :value="Boolean(data.item.solutions_released)"
               @change="submitSolutionsReleased(data.item)"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="{checked: '#28a745', unchecked: '#6c757d'}"
+              :labels="{checked: 'Shown', unchecked: 'Hidden'}"/>
+          </template>
+          <template v-slot:cell(students_can_view_assignment_statistics)="data">
+            <toggle-button
+              :width="80"
+              :value="Boolean(data.item.students_can_view_assignment_statistics)"
+              @change="submitShowAssignmentStatistics(data.item)"
               :sync="true"
               :font-size="14"
               :margin="4"
@@ -540,6 +541,11 @@ export default {
         key: 'solutions_released',
         label: 'Solutions'
       },
+      {
+        key: 'students_can_view_assignment_statistics',
+        label: 'Statistics'
+      },
+
       'actions'
     ],
     assignmentGroupWeightsFormWeightError: '',
@@ -560,7 +566,6 @@ export default {
       type_of_submission: 'correct',
       source: 'a',
       scoring_type: 'c',
-      students_can_view_assignment_statistics: 0,
       include_in_weighted_average: 1,
       num_submissions_needed: '2',
       default_points_per_question: '10',
@@ -579,7 +584,7 @@ export default {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getCourseInfo()
-    if (![2,4].includes(this.user.role)){
+    if (![2, 4].includes(this.user.role)) {
       this.isLoading = false
       this.$noty.error('You are not allowed to access this page.')
       return false
@@ -605,7 +610,7 @@ export default {
           text: data.assignment_group_info.assignment_group
         }
 
-        this.assignmentGroups.splice(this.assignmentGroups.length-1, 0, newAssignmentGroup)
+        this.assignmentGroups.splice(this.assignmentGroups.length - 1, 0, newAssignmentGroup)
         this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
         this.$bvModal.hide('modal-create-assignment-group')
       } catch (error) {
@@ -718,7 +723,29 @@ export default {
 
 
     },
+    async submitShowAssignmentStatistics(assignment) {
+      if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
+        this.$noty.info('If you would like students to view the assignment statistics, please first allow them to view the scores.')
+        return false
+      }
+
+      try {
+        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        assignment.students_can_view_assignment_statistics = !assignment.students_can_view_assignment_statistics
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+    },
     async submitShowScores(assignment) {
+      if (assignment.students_can_view_assignment_statistics && assignment.show_scores) {
+        this.$noty.info('If you would like students to view the scores, please first hide the assignment statistics.')
+        return false
+      }
       console.log(assignment)
       try {
         const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
@@ -782,8 +809,8 @@ export default {
       this.form.scoring_type = assignment.scoring_type
       this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
       this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
-                                        ? assignment.external_source_points
-                                        : ''
+        ? assignment.external_source_points
+        : ''
       this.$bvModal.show('modal-assignment-details')
     }
     ,
