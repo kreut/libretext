@@ -29,6 +29,9 @@ class AssignmentsSummaryTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
+        $this->student_user_2 = factory(User::class)->create();
+        $this->student_user_2->role = 3;
+
     }
 
     /** @test **/
@@ -52,21 +55,28 @@ $this->assignment->save();
     }
 
     /** @test **/
-    public function student_cannot_get_total_points_info_if_students_can_view_assignment_statistics_is_false()
+    public function user_cannot_get_summary_info_if_not_enrolled_in_course()
     {
 
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/total-points-info")
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson(['type' => 'error',
                 'message' => "You are not allowed to retrieve this summary."]);
 
     }
 
     /** @test **/
-    public function student_can_get_total_points_info_if_students_can_view_assignment_statistics_is_true()
+    public function user_can_get_summary_info_if_not_enrolled_in_course()
     {
-        $this->assignment->students_can_view_assignment_statistics = 1;
-        $this->assignment->save();
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/total-points-info")
+
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/summary")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test **/
+    public function owner_can_get_summary_info_if_not_enrolled_in_course()
+    {
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson(['type' => 'success']);
 
     }

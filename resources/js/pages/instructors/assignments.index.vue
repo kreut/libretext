@@ -90,7 +90,7 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name, the assignment's group, and whether students can view the
+              that you can update is the assignment's name, the assignment's group, the instructions, and whether students can view the
               assignment
               statistics.</strong>
             </b-alert>
@@ -278,6 +278,27 @@
               <b-form-radio name="scoring_type" value="x">External <span id="external" class="text-muted"><b-icon
                 icon="question-circle"></b-icon></span></b-form-radio>
             </b-form-radio-group>
+          </b-form-group>
+
+          <b-form-group
+            v-if="form.source === 'a'"
+            id="instructions"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Instructions"
+            label-for="instructions"
+          >
+            <b-form-row>
+              <b-form-textarea
+                id="instructions"
+                v-model="form.instructions"
+                type="text"
+                placeholder="(Optional)"
+                rows="3"
+              >
+              </b-form-textarea>
+            </b-form-row>
+
           </b-form-group>
           <b-form-group
             id="scoring_type"
@@ -569,7 +590,8 @@ export default {
       include_in_weighted_average: 1,
       num_submissions_needed: '2',
       default_points_per_question: '10',
-      external_source_points: 100
+      external_source_points: 100,
+      instructions: ''
     }),
     hasAssignments: false,
     has_submissions_or_file_submissions: false,
@@ -802,6 +824,7 @@ export default {
       this.form.assignment_group_id = assignment.assignment_group_id
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
       this.form.source = assignment.source
+      this.form.instructions = assignment.instructions
       this.form.type_of_submission = assignment.type_of_submission
       this.form.submission_files = assignment.submission_files
       this.form.num_submissions_needed = assignment.num_submissions_needed

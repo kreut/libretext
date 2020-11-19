@@ -24,7 +24,15 @@ class AssignmentPolicy
      */
     public function view(User $user, Assignment $assignment)
     {
+        $has_access = $this->canView($user, $assignment);
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to access this assignment.');
+    }
 
+    function canView(User $user, Assignment $assignment)
+    {
+        $has_access = false;
         switch ($user->role) {
             case(2):
                 $has_access = $this->ownsCourseByUser($assignment->course, $user);
@@ -35,14 +43,9 @@ class AssignmentPolicy
             case(4):
                 $has_access = $assignment->course->isGrader();
                 break;
-            default:
-                false;
         }
-        return $has_access
-            ? Response::allow()
-            : Response::deny('You are not allowed to access this assignment.');
+        return $has_access;
     }
-
 
     /**
      * Determine whether the user can update the assignment.
@@ -107,7 +110,8 @@ class AssignmentPolicy
     }
 
 
-    public function scoresAccess(User $user, Assignment $assignment) {
+    public function scoresAccess(User $user, Assignment $assignment)
+    {
         switch ($user->role) {
             case(2):
                 $has_access = $assignment->course->user_id === $user->id;
@@ -120,14 +124,15 @@ class AssignmentPolicy
         }
         return $has_access;
     }
-    public function totalPointsInfo(User $user, Assignment $assignment)
+
+    public function getAssignmentSummary(User $user, Assignment $assignment)
     {
-        return $this->scoresAccess($user, $assignment)
+        $has_access = $this->canView($user, $assignment);
+        return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve this summary.');
 
     }
-
 
     public function scoresInfo(User $user, Assignment $assignment)
     {

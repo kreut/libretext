@@ -108,7 +108,7 @@
           <div class="container">
             <div class="row">
               <div class="col-sm">
-                <b-card title="Student Submission Information" class="h-100">
+                <b-card header="default" header-html="<h5>Student Submission Information</h5>" class="h-100">
                   <b-card-text>
                     <div>
                       <strong>Name:</strong>
@@ -160,7 +160,7 @@
               </div>
 
               <div class="col-sm">
-                <b-card title="Optional Text Comments">
+                <b-card header="default" header-html="<h5>Optional Text Comments</h5>">
                   <b-card-text>
                     <b-form ref="form">
                       <b-form-textarea

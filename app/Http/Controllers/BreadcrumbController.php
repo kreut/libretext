@@ -63,12 +63,12 @@ class BreadcrumbController extends Controller
                         'href' => "/$users/courses/{$assignment->course->id}/assignments"];
 
                     if (Auth::user()->role === 3) {
-                        if ($assignment->students_can_view_assignment_statistics) {
-                            $breadcrumbs[] = ['text' => $assignment->name,
+                        if ($assignment->instructions || $assignment->students_can_view_assignment_statistics) {
+                            $breadcrumbs[] = ['text' => "{$assignment->name} Info",
                                 'href' => "/assignments/{$assignment_id}/summary"];
                         }
                     } else {
-                        $breadcrumbs[] = ['text' => $assignment->name,
+                        $breadcrumbs[] = ['text' => "{$assignment->name} Info",
                             'href' => "/assignments/{$assignment_id}/summary"];
                     }
                     $breadcrumbs[] = ['text' => "View Questions",

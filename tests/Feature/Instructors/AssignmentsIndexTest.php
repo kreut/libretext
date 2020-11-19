@@ -46,6 +46,7 @@ class AssignmentsIndexTest extends TestCase
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
             'submission_files' => 'a',
+            'instructions' => 'Some instructions',
             'assignment_group_id' => 1];
 
     }

@@ -3,13 +3,22 @@
     <PageTitle v-bind:title="name" v-if="loaded"></PageTitle>
     <div v-if="loaded">
       <b-container>
-        <b-row>
+        <div>
+        <b-button class="ml-3 mb-2 float-right" variant="success" v-on:click="getStudentView(assignmentId)">
+          View Questions
+        </b-button>
+        </div>
+        <div>
+        <b-card class="mb-2" v-if="instructions.length" header="default" header-html="<h5>Instructions</h5>">
+          {{ instructions }}
+        </b-card>
+        </div>
+        <b-row v-if="canViewAssignmentStatistics">
           <b-col>
-            <b-card title="Assignment Statistics">
+            <b-card header="default" header-html="<h5>Assignment Statistics</h5>">
               <b-card-text>
                 <ul>
                   <li>This assignment is out of {{ totalPoints }} points.</li>
-
                   <li v-if="this.scores.length">{{ scores.length }} student submissions</li>
                   <li v-if="this.scores.length">Maximum score of {{ max }}</li>
                   <li v-if="this.scores.length">Minimum score of {{ min }}</li>
@@ -17,10 +26,6 @@
                   <li v-if="this.scores.length">Standard deviation of {{ stdev }}</li>
                   <li v-if="!this.scores.length">Nothing has been scored yet.</li>
                 </ul>
-                <hr>
-                <b-button class="ml-3 mt-2 float-right" variant="primary" v-on:click="getStudentView(assignmentId)">View
-                  Questions
-                </b-button>
               </b-card-text>
             </b-card>
           </b-col>
@@ -53,7 +58,9 @@ export default {
   data: () => ({
     loaded: false,
     name: '',
+    instructions: '',
     totalPoints: '',
+    canViewAssignmentStatistics: false,
     chartdata: null,
     assignmentInfo: {},
     scores: [],
@@ -68,22 +75,25 @@ export default {
     this.loaded = false
     this.getScoresSummary = getScoresSummary
     this.assignmentId = this.$route.params.assignmentId
-    await this.getAssignmentInfo()
-    try {
-      const data = await this.getScoresSummary(this.assignmentId, `/api/assignments/${this.assignmentId}/scores-info`)
-     console.log(data)
-      if (data) {
-       this.chartdata = data
-     }
-    } catch (error) {
-      this.$noty.error(error.message)
+    await this.getAssignmentSummary()
+    if (this.canViewAssignmentStatistics) {
+      try {
+        const data = await this.getScoresSummary(this.assignmentId, `/api/assignments/${this.assignmentId}/scores-info`)
+        console.log(data)
+        if (data) {
+          this.chartdata = data
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     }
     this.loaded = true
   },
   methods: {
-    async getAssignmentInfo() {
+
+    async getAssignmentSummary() {
       try {
-        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/total-points-info`)
+        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
         console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -91,10 +101,12 @@ export default {
         }
         let assignment = data.assignment
         this.name = assignment.name
+        this.instructions = assignment.instructions
         this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
+        this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
       } catch (error) {
         this.$noty.error(error.message)
-        this.title = 'Assignment Questions'
+        this.title = 'Assignment Summary'
       }
     },
     getStudentView(assignmentId) {

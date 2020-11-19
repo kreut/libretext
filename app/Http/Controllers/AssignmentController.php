@@ -258,6 +258,7 @@ class AssignmentController extends Controller
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
+                    'instructions' => $request->instructions,
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
@@ -272,12 +273,12 @@ class AssignmentController extends Controller
 
             DB::commit();
             $response['type'] = 'success';
-            $response['message'] = "The assignment <strong>$request->assignment</strong> has been created.";
+            $response['message'] = "The assignment <strong>{$data['name']}</strong> has been created.";
         } catch (Exception $e) {
             DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
     }
@@ -422,20 +423,26 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function totalPointsInfo(Assignment $assignment)
+    public function getAssignmentSummary(Assignment $assignment)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('totalPointsInfo', $assignment);
+        $authorized = Gate::inspect('getAssignmentSummary', $assignment);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
+        $role = Auth::user()->role;
         try {
             $assignment = Assignment::find($assignment->id);
+            $can_view_assignment_statistics =in_array( $role,[2,4])
+                                    || ( $role === 3 && $assignment->students_can_view_assignment_statistics);
+
             $response['assignment'] = [
                 'name' => $assignment->name,
+                'instructions' => $assignment->instructions,
                 'total_points' => $this->getTotalPoints($assignment),
+                'can_view_assignment_statistics' =>  $can_view_assignment_statistics
             ];
 
 
@@ -493,6 +500,7 @@ class AssignmentController extends Controller
                 return $due_date_response;
             }
             $data = $request->validated();
+            $data['instructions'] = $request->instructions;
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
             $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);

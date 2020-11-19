@@ -220,9 +220,8 @@
             <b-container>
               <b-row v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 3">
                 <b-col>
-                  <b-card>
+                  <b-card header="default" header-html="<h5>Summary</h5>">
                     <b-card-text>
-                      <strong>Summary</strong>
                       <ul>
                         <li>{{ scores.length }} student submissions</li>
                         <li v-if="scores.length">Maximum score of {{ max }}</li>
@@ -406,7 +405,7 @@
               </div>
             </b-col>
             <b-col cols="4" v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2">
-              <b-card title="Question Statistics" class="mb-2">
+              <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
                 <b-card-text>
                   <ul>
                     <li>{{ scores.length }} student submissions</li>
@@ -424,7 +423,7 @@
             </b-col>
             <b-col cols="4" v-if="(user.role === 3)">
               <b-row>
-                <b-card title="Question Submission Information">
+                <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
 
                     <span v-if="questions[currentPage-1].solution">
@@ -452,8 +451,8 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row class="mt-3" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
-                <b-card title="File Submission Information">
+              <b-row class="mt-3 mb-3" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+                <b-card header="Default" header-html="<h5>File Submission Information</h5>">
                   <b-card-text>
                     <strong> Uploaded file:</strong>
                     <span v-if="questions[currentPage-1].submission_file_exists">
