@@ -12,6 +12,16 @@ use Illuminate\Support\Facades\Route;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+/*
+"oidc_initiation_url":"https://dev.adapt.libretexts.org/api/lti/oidc-initiation-url",
+   "target_link_uri":"https://dev.adapt.libretexts.org/api/lti/target-link-uri",
+
+Route:*/
+//http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
+//Must support both get and post according to the docs
+Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
+Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
+
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
