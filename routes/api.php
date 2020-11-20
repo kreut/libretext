@@ -23,6 +23,13 @@ Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 
 
+Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
+Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
+
+Route::get('/lti/target-link-uri', 'LTIController@finalTarget');
+Route::post('/lti/target-link-uri', 'LTIController@finalTarget');
+
+
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
 Route::post('/email/send', 'EmailController@send');
