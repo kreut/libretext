@@ -13,6 +13,7 @@ use App\AssignmentGroupWeight;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Log;
 use App\Http\Requests\StoreAssignment;
 use Carbon\Carbon;
 
@@ -235,6 +236,7 @@ class AssignmentController extends Controller
 
     public function store(StoreAssignment $request, Assignment $assignment, AssignmentGroupWeight $assignmentGroupWeight)
     {
+        //Log::info('can log');
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
         $authorized = Gate::inspect('createCourseAssignment', $course);
@@ -258,7 +260,7 @@ class AssignmentController extends Controller
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
-                    'instructions' => $request->instructions,
+                    'instructions' => $request->instructions ? $request->instructions  : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
@@ -500,7 +502,7 @@ class AssignmentController extends Controller
                 return $due_date_response;
             }
             $data = $request->validated();
-            $data['instructions'] = $request->instructions;
+            $data['instructions'] = $request->instructions ? $request->instructions  : '';
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
             $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
