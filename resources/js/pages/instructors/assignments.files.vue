@@ -33,7 +33,7 @@
     <p class="font-italic">
       <strong>Instructions:</strong> For each student, please enter a file submission score and optionally
       add comments in the form of text or a file upload.  The total number of points that the student receives
-      will be the sum of the points that they received for submitting any automatically
+      for this questions will be the sum of the points that they received for submitting any automatically
       graded responses (Question Submission Score)
       plus the number of points that you give them for their file submission (File Submission Score).</p>
 
@@ -121,15 +121,15 @@
                         this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                       }}<br>
                       <strong>Question Submission Score:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
+                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
                       }}<br>
                       <strong>File Submission Score:</strong> {{
                         1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
                       }}
                       <br>
                       <strong>Total Score For this Question:</strong>
-                      {{ (this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score']
-                      + (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
+                      {{ (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
+                      + (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
                       <br>
                       <hr>
                     </div>

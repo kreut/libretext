@@ -4,7 +4,7 @@
     <div v-if="loaded">
       <b-container>
         <div>
-        <b-button class="ml-3 mb-2 float-right" variant="success" v-on:click="getStudentView(assignmentId)">
+        <b-button class="ml-3 mb-2 float-right" variant="primary" v-on:click="getStudentView(assignmentId)">
           View Questions
         </b-button>
         </div>
