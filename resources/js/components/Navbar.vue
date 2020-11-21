@@ -14,8 +14,8 @@
 
 
     <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between" style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;">
-
-      <b-breadcrumb :items="breadcrumbs" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"></b-breadcrumb>
+      <span style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px" v-if="justShowMyCourses"><a :href="breadcrumbs[0]['href']">{{ breadcrumbs[0]['text']}}</a></span>
+      <b-breadcrumb v-if="!justShowMyCourses" :items="breadcrumbs" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"></b-breadcrumb>
       <b-navbar-nav class="ml-auto mt-0 mb-0">
         <b-row>
           <b-nav-item-dropdown right v-if="user" class="mr-2">
@@ -87,6 +87,7 @@ export default {
 
   data: () => ({
     appName: window.config.appName,
+    justShowMyCourses: false,
     breadcrumbs: [
       {
         text: '',
@@ -113,6 +114,7 @@ export default {
         console.log(router.name)
         const {data} = await axios.post('/api/breadcrumbs', {'name': router.name, 'params': router.params})
         this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
+        this.justShowMyCourses = this.breadcrumbs.length === 1 && router.name === 'welcome'
       } catch (error) {
         console.log(error.message)
       }
