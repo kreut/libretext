@@ -599,9 +599,8 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $question['non_technology'] ? Storage::disk('s3')->temporaryUrl("query/{$question['page_id']}.html", now()->addMinutes(360)) : '';
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getTemporaryUrlForNonTechnologyIframeSrc($question);
             }
-
 
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions;

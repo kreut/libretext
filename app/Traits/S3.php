@@ -21,6 +21,10 @@ trait S3
         return ['required', 'mimes:pdf,txt,png,jpeg,jpg', 'max:500000'];//update in UploadFiles.js
     }
 
+    public function getTemporaryUrlForNonTechnologyIframeSrc($question){
+        return  $question['non_technology'] ? Storage::disk('s3')->temporaryUrl("query/{$question['page_id']}.html", now()->addMinutes(360)) : '';
+    }
+
 
 
 

@@ -8,6 +8,7 @@ use Illuminate\Http\Request;
 use App\Solution;
 use App\Query;
 use App\Traits\IframeFormatter;
+use App\Traits\S3;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -21,6 +22,7 @@ use Illuminate\Support\Facades\Log;
 class QuestionController extends Controller
 {
     use IframeFormatter;
+    use S3;
 
     public function getQuestionsByTags(Request $request, Question $Question)
     {
@@ -58,7 +60,7 @@ class QuestionController extends Controller
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] = $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+            $questions[$key]['non_technology_iframe_src'] = $this->getTemporaryUrlForNonTechnologyIframeSrc($question);
             $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
             $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
@@ -86,7 +88,7 @@ class QuestionController extends Controller
         if ($question_info) {
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
-            $question['non_technology_iframe_src'] = $question_info['non_technology'] ? $request->root() . "/storage/{$question_info['page_id']}.html" : '';
+            $question['non_technology_iframe_src'] =$this->getTemporaryUrlForNonTechnologyIframeSrc($question);
             $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
             $response['type'] = 'success';
             $response['question'] = $question;
@@ -153,8 +155,8 @@ class QuestionController extends Controller
                         $non_technology = $Query->addExtras($request, $non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                                 'MathJax' => false]);
-                        Storage::disk('public')->put("{$page_id}.html", $non_technology);
-
+                        Storage::disk('local')->put("query/{$page_id}.html", $non_technology);
+                        Storage::disk('s3')->put("query/{$page_id}.html", $non_technology);
                     }
                 } else {
                     $technology_iframe = '';
@@ -164,7 +166,8 @@ class QuestionController extends Controller
                             'MathJax' => true
                         ]);
                     $technology = 'text';
-                    Storage::disk('public')->put("{$page_id}.html", $non_technology);
+                    Storage::disk('local')->put("query/{$page_id}.html", $non_technology);
+                    Storage::disk('s3')->put("query/{$page_id}.html", $non_technology);
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology,
