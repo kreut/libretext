@@ -309,7 +309,7 @@ export default {
   },
   methods: {
     viewQuestion(question_id) {
-      window.open(`/questions/${question_id}/view`)
+      window.open(`/assignments/${this.assignmentId}/questions/${question_id}/view`)
     },
     openInNewTab(url) {
       console.log(url)
