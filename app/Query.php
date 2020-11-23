@@ -10,6 +10,7 @@ use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Traits\MindTouchTokens;
+use App\Traits\S3;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -18,6 +19,7 @@ class Query extends Model
 {
 
     use MindTouchTokens;
+    use S3;
 
     protected $tags;
     protected $questionIds;
@@ -257,10 +259,12 @@ SCRIPTS;
 
     }
 
-    public function addMathJaxScript($app_url)
+    public function addMathJaxScript()
     {
+$app_url =  $this->getAppUrl();
+
         return <<<MATHJAX
-<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"></script>
+<script type="text/javascript" src="$app_url/assets/js/mathjax.js"></script>
 <script type="text/x-mathjax-config">
                     MathJax.Hub.Config({
   messageStyle: "none",

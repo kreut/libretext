@@ -4,9 +4,11 @@ namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\S3;
 
 class RefactorNonTechnology extends Command
 {
+    use S3;
     /**
      * The name and signature of the console command.
      *
@@ -49,7 +51,7 @@ class RefactorNonTechnology extends Command
         foreach ($files as $file) {
             $contents = Storage::disk('public')->get($file);
             if (strpos($file, '.html') !== false && strpos($contents, 'mathjax') !== false) {
-                $app_url = (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_ENV');
+                $app_url = $this->getAppUrl();
                 $contents = '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">' . $contents;
                 $contents = '<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"></script>' . $contents;
                 $contents .= '<script type="text/x-mathjax-config">
