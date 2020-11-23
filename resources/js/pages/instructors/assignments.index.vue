@@ -402,7 +402,13 @@
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
       </b-modal>
       <div v-if="hasAssignments">
-        <b-table striped hover :fields="fields" :items="assignments">
+        <hr>
+        <b-table class="header-high-z-index"
+                 striped
+                 hover
+                 sticky-header="600px"
+                 :fields="fields"
+                 :items="assignments">
           <template v-slot:cell(name)="data">
             <div class="mb-0">
               <a href="" v-on:click.prevent="getAssignmentView(data.item)">{{ data.item.name }}</a>
@@ -469,6 +475,7 @@
               <span v-show="data.item.source === 'a'" class="pr-1"
                     v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)">
               <b-icon
+                v-if="data.item.submission_files !== '0'"
                 icon="cloud-upload"
                 :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
               >
@@ -988,5 +995,8 @@ export default {
 svg:focus, svg:active:focus {
   outline: none !important;
 }
-
+.header-high-z-index table thead tr th{
+  z-index: 5 !important;
+  border-top: 1px !important; /*gets rid of the flickering issue at top when scrolling.*/
+}
 </style>
