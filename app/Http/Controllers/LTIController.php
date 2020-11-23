@@ -30,10 +30,10 @@ $client_id = '10000000000002';
         $redirect_uri = 'https://dev.adapt.libretexts.org/api/lti/redirect-uri';
         //header("Location: https://dev-canvas.libretexts.org/api/lti/authorize",true,302);exit;
         //$iss = "https://dev-canvas.libretexts.org";
-
-        header("Location: https://dev-canvas.libretexts.org/api/lti/authorize_redirect?prompt=none&response_mode=form_post&nonce=1234&response_type=id_token&authorize_redirect?scope=openid&redirect_uri=$redirect_uri&client_id=$client_id&iss=$iss&login_hint=$login_hint&target_link_uri=$target_link_uri&lti_message_hint=$lti_message_hint&state=$state", true, 302);
-        exit;
+$client = new Client();
+$client->request('GET',"https://dev-canvas.libretexts.org/api/lti/authorize?scope=openid&prompt=none&response_mode=form_post&nonce=1234&response_type=id_token&redirect_uri=$redirect_uri&client_id=$client_id&iss=$iss&login_hint=$login_hint&target_link_uri=$target_link_uri&lti_message_hint=$lti_message_hint&state=$state");
 exit;
+
 /*
         LTI\LTI_OIDC_Login::new(new LTIDatabase($request, $private_key))
             ->do_oidc_login_redirect($launch_url, $request->all())
