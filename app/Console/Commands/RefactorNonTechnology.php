@@ -49,8 +49,16 @@ class RefactorNonTechnology extends Command
         foreach ($files as $file) {
             $contents = Storage::disk('public')->get($file);
             if (strpos($file, '.html') !== false && strpos($contents, 'mathjax') !== false) {
-                $contents = '<link rel="stylesheet" href="' . env('APP_URL') . '/public/assets/css/query.css">' . $contents;
-                $contents = preg_replace('#<script type="text/x-mathjax-config">(.*?)</script>#is', '<script type="text/javascript" src="' . env('APP_URL') . '/public/assets/js/mathjax.js"', $contents);
+                $app_url = (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_ENV');
+                $contents = '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">' . $contents;
+                $contents = '<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"></script>' . $contents;
+                $contents .= '<script type="text/x-mathjax-config">
+                    MathJax.Hub.Config({
+  messageStyle: "none",
+  tex2jax: {preview: "none"}
+});
+</script>';
+                //$contents = preg_replace('#<script type="text/x-mathjax-config">(.*?)</script>#is', '<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"', $contents);
                 Storage::disk('s3')->put("query/$file", $contents, ['StorageClass' => 'STANDARD_IA']);
             }
         }

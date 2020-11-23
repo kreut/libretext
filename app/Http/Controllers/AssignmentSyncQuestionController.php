@@ -13,12 +13,14 @@ use App\Question;
 use App\Submission;
 use App\SubmissionFile;
 
+
 use App\Traits\IframeFormatter;
 use App\Traits\DateFormatter;
 use App\AssignmentSyncQuestion;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
@@ -597,7 +599,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $question['non_technology'] ? $request->root() . "/storage/{$question['page_id']}.html" : '';
+                $assignment->questions[$key]->non_technology_iframe_src = $question['non_technology'] ? Storage::disk('s3')->temporaryUrl("query/{$question['page_id']}.html", now()->addMinutes(360)) : '';
             }
 
 
