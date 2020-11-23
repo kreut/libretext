@@ -257,9 +257,16 @@ SCRIPTS;
 
     }
 
-    public function addMathJaxScript()
+    public function addMathJaxScript($app_url)
     {
         return <<<MATHJAX
+<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"></script>
+<script type="text/x-mathjax-config">
+                    MathJax.Hub.Config({
+  messageStyle: "none",
+  tex2jax: {preview: "none"}
+});
+</script>
 <script type="text/x-mathjax-config">/*<![CDATA[*/
   MathJax.Ajax.config.path["mhchem"] =
             "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
@@ -280,6 +287,8 @@ MATHJAX;
 
     public function addExtras($request, string $body, array $extras)
     {
+        $app_url =  $app_url = (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_ENV');
+        $css =  '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">';
         $scripts = '<script type="text/javascript" src="' . $request->root() . '/assets/js/hostIFrameResizer.js"></script>';
         if ($extras['glMol']) {
             $scripts .= $this->addGlMolScripts();
@@ -287,7 +296,7 @@ MATHJAX;
         if ($extras['MathJax']) {
             $scripts .= $this->addMathJaxScript();
         }
-        return $scripts . $body;
+        return $css. $scripts . $body;
 
 
     }
