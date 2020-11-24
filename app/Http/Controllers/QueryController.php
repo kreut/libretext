@@ -16,11 +16,17 @@ class QueryController extends Controller
         try {
             $authorized = Gate::inspect('viewByPageId', [$question, $pageId]);
             if (!$authorized->allowed()){
+                if (env('DB_DATABASE') === "test_libretext"){
+                    return ['message' => $authorized->message()];
+                }
                 echo $authorized->message();
-                exit;
+            } else {
+                if (env('DB_DATABASE') === "test_libretext"){
+                    return ['message' => 'authorized'];
+                }
+                $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
+                require_once("{$storage_path}query/{$pageId}.php");
             }
-            $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
-            require_once("{$storage_path}query/{$pageId}.php");
         } catch (Exception $e) {
             echo "We were not able to retrieve this page: $pageId.  Please contact us for assistance.";
             $h = new Handler(app());

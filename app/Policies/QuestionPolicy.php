@@ -24,7 +24,6 @@ class QuestionPolicy
 
     public function viewByPageId(User $user, Question $question, int $page_id)
     {
-        $has_access = false;
         switch ($user->role) {
             case(2):
                 $has_access = true;
@@ -44,7 +43,7 @@ class QuestionPolicy
             default:
                 $has_access = false;
         }
-        return ($user->role !== 3)
+        return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to view this non-technology question.');
 
