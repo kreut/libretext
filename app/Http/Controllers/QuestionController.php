@@ -143,7 +143,7 @@ class QuestionController extends Controller
             }
 
             try {
-
+           ;
                 if ($technology = $Query->getTechnologyFromBody($body)) {
                     $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
 
@@ -155,7 +155,7 @@ class QuestionController extends Controller
                         $non_technology = $Query->addExtras($non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                                 'MathJax' => false]);
-                        Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                        Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
                         Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                     }
                 } else {
@@ -166,7 +166,7 @@ class QuestionController extends Controller
                             'MathJax' => true
                         ]);
                     $technology = 'text';
-                    Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
                     Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                 }
                 $data = ['page_id' => $page_id,
