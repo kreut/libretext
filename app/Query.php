@@ -298,11 +298,10 @@ MATHJAX;
             $scripts .= $this->addGlMolScripts() ."\r\n";
         }
         if ($extras['MathJax']) {
-            $scripts .= '<?php require_once("../config/mathjax.html");?>' ."\r\n";
+            $scripts .= '<?php require_once(__DIR__ . "/../config/mathjax.html"); ?>' ."\r\n";
            // $scripts .= $this->addMathJaxScript();
         }
         return $css. $scripts . $body;
-
 
     }
 

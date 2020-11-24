@@ -8,6 +8,7 @@ trait QueryFiles
 {
 
     public function getQueryIframeSrc($request, $question){
+        return  $question['non_technology'] ?  "/api/get-query-iframe-src/{$question['page_id']}" : '';
         return  $question['non_technology'] ?  $request->root() . "/storage/query/{$question['page_id']}.php" : '';
     }
 

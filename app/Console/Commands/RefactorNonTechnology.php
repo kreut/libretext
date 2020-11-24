@@ -96,7 +96,7 @@ echo "page id $page_id";
                         $non_technology = $Query->addExtras($non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                                 'MathJax' => false]);
-                        Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                        Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
                         Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                     }
                 } else {
@@ -105,7 +105,7 @@ echo "page id $page_id";
                             'MathJax' => true
                         ]);
 
-                    Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
                     Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                 }
 
