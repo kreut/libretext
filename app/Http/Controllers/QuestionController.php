@@ -8,7 +8,7 @@ use Illuminate\Http\Request;
 use App\Solution;
 use App\Query;
 use App\Traits\IframeFormatter;
-use App\Traits\S3;
+use App\Traits\QueryFiles;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 class QuestionController extends Controller
 {
     use IframeFormatter;
-    use S3;
+    use QueryFiles;
 
     public function getQuestionsByTags(Request $request, Question $Question)
     {
@@ -60,7 +60,7 @@ class QuestionController extends Controller
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] = $this->getTemporaryUrlForNonTechnologyIframeSrc($question);
+            $questions[$key]['non_technology_iframe_src'] = $this->getQueryIframeSrc($request,$question);
             $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
             $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
@@ -88,7 +88,7 @@ class QuestionController extends Controller
         if ($question_info) {
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
-            $question['non_technology_iframe_src'] =$this->getTemporaryUrlForNonTechnologyIframeSrc($question);
+            $question['non_technology_iframe_src'] =$this->getQueryIframeSrc($request, $question);
             $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
             $response['type'] = 'success';
             $response['question'] = $question;
@@ -152,22 +152,22 @@ class QuestionController extends Controller
 
                     if ($has_non_technology) {
                         //Frankenstein type problem
-                        $non_technology = $Query->addExtras($request, $non_technology,
+                        $non_technology = $Query->addExtras($non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                                 'MathJax' => false]);
-                        Storage::disk('local')->put("query/{$page_id}.html", $non_technology);
-                        Storage::disk('s3')->put("query/{$page_id}.html", $non_technology);
+                        Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                        Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                     }
                 } else {
                     $technology_iframe = '';
                     $has_non_technology = true;
-                    $non_technology = $Query->addExtras($request, $body,
+                    $non_technology = $Query->addExtras($body,
                         ['glMol' => false,
                             'MathJax' => true
                         ]);
                     $technology = 'text';
-                    Storage::disk('local')->put("query/{$page_id}.html", $non_technology);
-                    Storage::disk('s3')->put("query/{$page_id}.html", $non_technology);
+                    Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                 }
                 $data = ['page_id' => $page_id,
                     'technology' => $technology,

@@ -271,7 +271,7 @@ $app_url =  $this->getAppUrl();
   tex2jax: {preview: "none"}
 });
 </script>
-<script type="text/x-mathjax-config">/*<![CDATA[*/
+<script type="text/x-mathjax-config">
   MathJax.Ajax.config.path["mhchem"] =
             "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
         MathJax.Hub.Config({ jax: ["input/TeX","input/MathML","output/SVG"],
@@ -282,23 +282,24 @@ $app_url =  $this->getAppUrl();
     "HTML-CSS": { linebreaks: { automatic: true , width: "90%"}, scale: 85, mtextFontInherit: false},
 menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
-/*]]>*/</script>
+</script>
 
 <script type="text/javascript" async="true" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 
 MATHJAX;
     }
 
-    public function addExtras($request, string $body, array $extras)
+    public function addExtras(string $body, array $extras)
     {
         $app_url =  $app_url = (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_ENV');
-        $css =  '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">';
-        $scripts = '<script type="text/javascript" src="' . $request->root() . '/assets/js/hostIFrameResizer.js"></script>';
+        $css =  '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">' ."\r\n";
+        $scripts = '<script type="text/javascript" src="' . $app_url . '/assets/js/hostIFrameResizer.js"></script>' ."\r\n";
         if ($extras['glMol']) {
-            $scripts .= $this->addGlMolScripts();
+            $scripts .= $this->addGlMolScripts() ."\r\n";
         }
         if ($extras['MathJax']) {
-            $scripts .= $this->addMathJaxScript();
+            $scripts .= '<?php require_once("../config/mathjax.html");?>' ."\r\n";
+           // $scripts .= $this->addMathJaxScript();
         }
         return $css. $scripts . $body;
 

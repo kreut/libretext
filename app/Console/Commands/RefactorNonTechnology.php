@@ -2,13 +2,17 @@
 
 namespace App\Console\Commands;
 
+use App\Query;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\S3;
+use App\Question;
+use App\Traits\QueryFiles;
 
 class RefactorNonTechnology extends Command
 {
-    use S3;
+
+    use QueryFiles;
+
     /**
      * The name and signature of the console command.
      *
@@ -40,29 +44,78 @@ class RefactorNonTechnology extends Command
      */
     public function handle()
     {
-        //get all nontechnology files
-        //Pull out mathjax
-        //add new mathjax config script
-        //add global css script
-        //add global js script
-        //send to query on S3
 
-        $files = Storage::disk('public')->allFiles();
-        foreach ($files as $file) {
-            $contents = Storage::disk('public')->get($file);
-            if (strpos($file, '.html') !== false && strpos($contents, 'mathjax') !== false) {
-                $app_url = $this->getAppUrl();
-                $contents = '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">' . $contents;
-                $contents = '<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"></script>' . $contents;
-                $contents .= '<script type="text/x-mathjax-config">
-                    MathJax.Hub.Config({
-  messageStyle: "none",
-  tex2jax: {preview: "none"}
-});
-</script>';
-                //$contents = preg_replace('#<script type="text/x-mathjax-config">(.*?)</script>#is', '<script type="text/javascript" src="' . $app_url . '/assets/js/mathjax.js"', $contents);
-                Storage::disk('s3')->put("query/$file", $contents, ['StorageClass' => 'STANDARD_IA']);
+
+        $Query = new Query();
+        $all_files = Storage::disk('public')->allFiles();
+        foreach ($all_files as $key => $file) {
+            if (strpos($file, '.') === 0 || strpos($file, 'config') !== false || strpos($file, 'query') !== false || strpos($file, 'img') !== false) {
+                unset($all_files[$key]);
             }
+        }
+        foreach ($all_files as $file) {
+            $page_id = str_replace('.html', '', $file);
+echo $page_id . "\r\n";
+            try {
+                // id=102629;  //Frankenstein test
+                //Public type questions
+echo "page id $page_id";
+                $contents = $Query->getContentsByPageId($page_id);
+                $body = $contents['body'][0];
+            } catch (Exception $e) {
+
+                if (strpos($e->getMessage(), '403 Forbidden') === false) {
+                    //some other error besides forbidden
+                    echo json_encode(['type' => 'error',
+                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                        'timeout' => 12000]);
+                    exit;
+                }
+
+                //private page so try again!
+                try {
+                    $body = $Query->getBodyFromPrivatePage($page_id);
+                } catch (Exception $e) {
+                    echo json_encode(['type' => 'error',
+                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                        'timeout' => 12000]);
+                    exit;
+                }
+            }
+
+            try {
+
+                if ($technology = $Query->getTechnologyFromBody($body)) {
+                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
+
+                    $non_technology = str_replace($technology_iframe, '', $body);
+                    $has_non_technology = trim($non_technology) !== '';
+
+                    if ($has_non_technology) {
+                        //Frankenstein type problem
+                        $non_technology = $Query->addExtras($non_technology,
+                            ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
+                                'MathJax' => false]);
+                        Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                        Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+                    }
+                } else {
+                    $non_technology = $Query->addExtras($body,
+                        ['glMol' => false,
+                            'MathJax' => true
+                        ]);
+
+                    Storage::disk('public')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+                }
+
+            } catch (Exception $e) {
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+            sleep(1);
         }
     }
 }

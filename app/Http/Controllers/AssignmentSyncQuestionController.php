@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\JWE;
+use App\Traits\QueryFiles;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -36,6 +37,7 @@ class AssignmentSyncQuestionController extends Controller
     use S3;
     use SubmissionFiles;
     use JWT;
+    use QueryFiles;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
@@ -599,7 +601,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getTemporaryUrlForNonTechnologyIframeSrc($question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getQueryIframeSrc($request, $question);
             }
 
             $response['type'] = 'success';
