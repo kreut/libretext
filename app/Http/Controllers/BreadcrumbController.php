@@ -100,7 +100,7 @@ class BreadcrumbController extends Controller
                     case('assignment.files.index'):
                         $breadcrumbs[] = ['text' => $assignment->course->name,
                             'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
-                        $breadcrumbs[] = ['text' => 'Grade File Submissions',
+                        $breadcrumbs[] = ['text' => 'Grading',
                             'href' => "#",
                             'active' => true];
                         break;
@@ -109,7 +109,7 @@ class BreadcrumbController extends Controller
                             'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
                         if (in_array($assignment->submission_files, ['q', 'a'])) {
                             $type = $assignment->submission_files === 'q' ? 'question' : 'assignment';
-                            $breadcrumbs[] = ['text' => 'Grade File Submissions',
+                            $breadcrumbs[] = ['text' => 'Grading',
                                 'href' => "/assignments/{$assignment->id}/$type-files"];
                         }
                         $breadcrumbs[] = ['text' => 'View Question',
