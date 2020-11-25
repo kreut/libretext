@@ -145,7 +145,9 @@
     </b-modal>
 
     <div v-if="hasCourses">
-      <b-table striped hover :fields="fields" :items="courses">
+      <b-table striped hover
+               :fields="fields"
+               :items="courses">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <a href="" v-on:click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
@@ -229,13 +231,16 @@ export default {
     fields: [
       {
         key: 'name',
-        label: 'Course'
+        label: 'Course',
+        sortable: true
       },
       {
-        key: 'start_date'
+        key: 'start_date',
+        sortable: true
       },
       {
-        key: 'end_date'
+        key: 'end_date',
+        sortable: true
       },
       {
         key: 'access_code',
