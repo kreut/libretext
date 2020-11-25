@@ -192,13 +192,13 @@
                           <b-col>
                             <toggle-button class="float-right"
                                            @change="toggleView(currentStudentPage)"
-                                           :width="180"
+                                           :width="140"
                                            :value="viewSubmission"
                                            :font-size="14"
                                            :margin="4"
                                            :sync="true"
-                                           :color="{checked: '#007BFF', unchecked: '#75C791'}"
-                                           :labels="{unchecked: 'View Submission File', checked: 'View Feedback File'}"/>
+                                           :color="{checked: '#75C791', unchecked: '#007BFF'}"
+                                           :labels="{unchecked: 'Feedback File', checked: 'Submission File'}"/>
                           </b-col>
                         </b-row>
 
