@@ -45,7 +45,13 @@ class Assignment extends Model
     }
     public function questionFileSubmissions()
     {
-        return $this->hasMany('App\SubmissionFile')->where('type', 'q');
+        $questionFileSubmissions = DB::table('submission_files')
+            ->leftJoin('users','grader_id','=','users.id')
+            ->where('type','q')
+            ->where('assignment_id',$this->id)
+            ->select('submission_files.*', DB::raw('CONCAT(users.first_name," ", users.last_name) AS grader_name'))
+            ->get();
+        return collect($questionFileSubmissions);
     }
 
     public function submissions()

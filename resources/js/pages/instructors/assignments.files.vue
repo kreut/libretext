@@ -114,24 +114,32 @@
                   <b-card-text>
                     <div>
                       <strong>Name:</strong>
-                      {{ this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
+                      {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
                       <strong>Date Submitted:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage -
+                        submissionFiles[currentQuestionPage - 1][currentStudentPage -
                         1]['date_submitted']
                       }}<br>
                       <strong>Date Graded:</strong> {{
-                        this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                        submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                        ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                        : 'Not yet graded.'
                       }}<br>
                       <strong>Question Submission Score:</strong> {{
-                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
+                        1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
                       }}<br>
                       <strong>File Submission Score:</strong> {{
-                        1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
+                        1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
                       }}
                       <br>
                       <strong>Total Score For this Question:</strong>
-                      {{ (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
-                      + (1*this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}<br>
+                      {{ (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
+                      + (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}
+                      <br>
+                      <strong>Graded by:</strong>
+                      {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
+                      ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
+                      : 'Not applicable.'}}
+                      <br>
                       <br>
                       <hr>
                     </div>
@@ -348,6 +356,7 @@ export default {
         if (data.type === 'success') {
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_submission_score'] = this.scoreForm.score
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['date_graded'] = data.date_graded
+          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['grader_name'] = data.grader_name
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {

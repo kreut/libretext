@@ -181,6 +181,7 @@ class SubmissionFileController extends Controller
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The score has been saved.';
+            $response['grader_name'] = Auth::user()->first_name . ' ' . Auth::user()->last_name;
             $response['date_graded'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
         } catch (Exception $e) {
 

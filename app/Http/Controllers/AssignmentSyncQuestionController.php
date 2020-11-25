@@ -601,7 +601,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc($request, $question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc( $question);
             }
 
             $response['type'] = 'success';

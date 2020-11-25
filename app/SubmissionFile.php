@@ -116,7 +116,7 @@ class SubmissionFile extends Model
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
-        foreach ($assignment->questionFileSubmissions as $key => $question_file) {
+        foreach ($assignment->questionFileSubmissions() as $key => $question_file) {
             $question_file->needs_grading = $question_file->date_graded ?
                 Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded)
                 : true;
@@ -151,7 +151,6 @@ class SubmissionFile extends Model
 
         $points = [];
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
-
             foreach ($users as $key => $user) {
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
@@ -169,6 +168,7 @@ class SubmissionFile extends Model
                  * However, if it's for the class it has to be done.
                  * **/
                 $grader_id = null;//just for the individual level in case of complaints;
+                $grader_name = null;
                 if (count($users) === 1) {
                     $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                     $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
@@ -183,12 +183,15 @@ class SubmissionFile extends Model
                     $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
                         ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
                         : null;
+                    $grader_name  = $questionFilesByUser[$question->question_id][$user->id]->grader_name ?? null;
                 }
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
+                $all_info['grader_name'] = $grader_name;
+               // $all_info['grader_name'] = $grader_name;
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;
                 }
