@@ -93,15 +93,17 @@
                       v-on:click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)">
               View Question
             </b-button>
-          </div>
-          <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
+          <span class="ml-2" v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
                    <b-button variant="outline-primary"
                              v-on:click.prevent="downloadSolutionFile('q', assignmentId,  submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])">
               Download Solution
            </b-button>
           </span>
-          <span
-            v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">You currently have no solution uploaded for this question.</span>
+          </div>
+          <span class="font-italic mt-2"
+            v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] ">
+            You currently have no solution uploaded for this question.
+          </span>
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
           <hr>
