@@ -11,7 +11,7 @@ use Illuminate\Support\Facades\Storage;
 
 class QueryController extends Controller
 {
-    public function getQueryIframeSrc(Request $request, int $pageId, Question $question) {
+    public function getLocallySavedQueryPageContents(int $pageId, Question $question) {
 
         try {
             $authorized = Gate::inspect('viewByPageId', [$question, $pageId]);

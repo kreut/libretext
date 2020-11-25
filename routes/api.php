@@ -43,7 +43,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/user', 'Auth\UserController@current');
 
-    Route::get('/get-query-iframe-src/{pageId}', 'QueryController@getQueryIframeSrc');
+    Route::get('/get-locally-saved-query-page-contents/{pageId}', 'QueryController@getLocallySavedQueryPageContents');
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
