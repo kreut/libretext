@@ -31,6 +31,9 @@
             <b-col cols="6">
               <div class="float-right">
                 <b-button variant="outline-primary"
+                          v-on:click="openLetterGradesModal">Set Letter Grades
+                </b-button>
+                <b-button variant="outline-primary"
                           v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
                 </b-button>
                 <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
@@ -70,6 +73,46 @@
           </b-form-invalid-feedback>
         </div>
       </b-modal>
+
+      <b-modal
+        id="modal-letter-grades-editor"
+        ref="modal"
+        title="Letter Grades"
+        @ok="submitLetterGrades"
+        ok-title="Submit"
+      >
+        <p>Use the text area below to customize your letter grades, in a comma separated list of
+          the form "Minimum grade for the group, Letter Grade". As an example, if the two letter grades that you offer are
+        Pass and Fail, and students need at least a 60 to pass for the course, you should enter 0,Fail,60,Pass</p>
+        <b-form-input
+          id="letter_grades"
+          v-model="letterGradesForm.letter_grades"
+          type="text"
+          placeholder=""
+          :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
+          @keydown="letterGradesForm.errors.clear('letter_grades')"
+        >
+        </b-form-input>
+        <has-error :form="form" field="letter_grades"></has-error>
+      </b-modal>
+
+      <b-modal
+        id="modal-letter-grades"
+        ref="modal"
+        title="Letter Grades"
+        ok-only
+      >
+        <p>Let Adapt know how you would like to convert your students' weighted scores into letter grades.
+          You can choose any type of text to represent each category.  Some examples might be "A+, A, A-,..." or "Excellent, Very Good, Good" or
+          just "P,F".  You can use the <button class="btn-link" v-on:click="openLetterGradesEditorModal">letter grade editor</button> to customize the letter grades or just use the default.</p>
+        <b-table striped
+                 hover
+                 :sticky-header="true"
+                 :fields="letterGradeFields" :items="letterGradeItems">
+
+        </b-table>
+      </b-modal>
+
 
       <b-modal
         id="modal-assignment-details"
@@ -536,6 +579,18 @@ export default {
     Loading
   },
   data: () => ({
+    letterGradeFields: [
+      'letter_grade',
+      'min',
+      'max'
+    ],
+    letterGradeItems:[
+      {'letter_grade' : 'A', 'min': 90, 'max': '-'},
+      {'letter_grade' : 'B', 'min': 80, 'max': 90},
+      {'letter_grade' : 'C', 'min': 70, 'max': 80},
+      {'letter_grade' : 'D', 'min': 60, 'max': 70},
+      {'letter_grade' : 'F', 'min':  0, 'max': 60}
+    ],
     title: '',
     studentsCanViewWeightedAverage: false,
     assignmentGroupWeights: [],
@@ -581,6 +636,9 @@ export default {
     assignmentGroupForm: new Form({
       assignment_group: ''
     }),
+    letterGradesForm: new Form({
+      letter_grades:'',
+    }),
     form: new Form({
       name: '',
       available_from: '',
@@ -625,6 +683,15 @@ export default {
     initTooltips(this)
   },
   methods: {
+    openLetterGradesEditorModal(){
+      this.$bvModal.show('modal-letter-grades-editor')
+      let formattedLetterGrades = ''
+      for (let i=0; i<this.letterGradeItems.length;i++){
+        formattedLetterGrades += this.letterGradeItems[i]['min'] + ',' + this.letterGradeItems[i]['letter_grade'] + ','
+      }
+
+      this.letterGradesForm.letter_grades = formattedLetterGrades
+    },
     async handleCreateAssignmentGroup(bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
@@ -680,6 +747,25 @@ export default {
         this.$noty.error(error.message)
 
       }
+    },
+    openLetterGradesModal(){
+      this.$bvModal.show('modal-letter-grades')
+    },
+    async submitLetterGrades(bvModalEvt){
+      bvModalEvt.preventDefault()
+
+      try {
+        const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
+        if (data.error) {
+          this.$noty.error(data.message)
+          return false
+        }
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+
     },
     async initAssignmentGroupWeights() {
       try {
