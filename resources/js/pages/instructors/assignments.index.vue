@@ -354,7 +354,7 @@
 
               <b-form-radio-group v-model="form.submission_files" stacked
                                   :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
-                <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>
+               <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
                 <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
                 <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
               </b-form-radio-group>

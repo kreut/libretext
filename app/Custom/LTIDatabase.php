@@ -10,10 +10,12 @@ class LTIDatabase implements LTI\Database
 {
     private $iss;
     private $private_key;
-    public function __construct($request, $private_key)
+    private $client_id;
+    public function __construct($request, $private_key, $client_id)
     {
         $this->iss = $request->iss;
 $this->private_key = $private_key;
+$this->client_id = $client_id;
         //dd('constructor');
        // $this->
        // $oidc_endpoint = 'https://canvas.instructure.com/api/lti/authorize_redirect';
@@ -36,7 +38,7 @@ $this->private_key = $private_key;
             ->set_auth_login_url('https://dev-canvas.libretexts.org/api/lti/authorize')//authorized worked on dev!!!
             ->set_auth_token_url('https://dev-canvas.libretexts.org/login/oauth2/auth')
             ->set_auth_server('https://dev-canvas.libretexts.org')
-            ->set_client_id('10000000000002')
+            ->set_client_id($this->client_id)
             ->set_key_set_url('https://dev-canvas.libretexts.org/api/lti/security/jwks')
             ->set_kid('kid')
             ->set_issuer('https://dev-canvas.libretexts.org')
@@ -45,10 +47,11 @@ $this->private_key = $private_key;
 
     public function find_deployment($iss, $deployment_id)
     {
-        dd('deploy');
-        if (!in_array($deployment_id, $_SESSION['iss'][$iss]['deployment'])) {
-            return false;
-        }
+       // dd( $deployment_id);
+      //  dd($_SESSION);
+        //if (!in_array($deployment_id, $_SESSION['iss'][$iss]['deployment'])) {
+          //  return false;
+       // }
         return LTI\LTI_Deployment::new()
             ->set_deployment_id($deployment_id);
     }

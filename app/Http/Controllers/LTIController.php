@@ -11,18 +11,20 @@ class LTIController extends Controller
 {
     public function initiateLoginRequest(Request $request)
     {
+
         $launch_url = "https://dev.adapt.libretexts.org/api/lti/redirect-uri";
-        $private_key = 'E6OFY4PGAZZuZVqcGnLA84SCHHYpxxa1MbpfwsnQGTyld0mjCNQ5FYzvHxFdbp9O';
-       /* LTI\LTI_OIDC_Login::new(new LTIDatabase($request, $private_key))
+        $private_key = 'yO5jnUcEjsvopAkASbW4POugHwTpIxTSs3UhKpn8Hx7dMz0g3RVprbPR7RbQKgzs';
+        $client_id = '10000000000009';
+        LTI\LTI_OIDC_Login::new(new LTIDatabase($request, $private_key, $client_id))
             ->do_oidc_login_redirect($launch_url, $request->all())
             ->do_redirect();
-        dd('sdfsfd');*/
+        /*
             $iss = $request->iss;
         $login_hint = $request->login_hint;
         $target_link_uri = $request->target_link_uri;
         $lti_message_hint = $request->lti_message_hint;
         $state = uniqid('nonce');
-$client_id = '10000000000002';
+
        // https://canvas.instructure.com/api/lti/authorize_redirect
       //  https://dev-canvas.libretexts.org/api/lti/authorize_redirect
 
@@ -41,7 +43,23 @@ exit;
     }
 
     public function authenticationResponse(Request $request){
-       dd($request->all());
+       //dd($request->all());
+        $private_key = 'yO5jnUcEjsvopAkASbW4POugHwTpIxTSs3UhKpn8Hx7dMz0g3RVprbPR7RbQKgzs';
+        $client_id = '10000000000009';
+        $launch = LTI\LTI_Message_Launch::new(new LTIDatabase($request, $private_key, $client_id))
+            ->validate();
+        //$launch = LTI\LTI_Message_Launch::from_cache($_REQUEST['launch_id'], new Example_Database());
+        dd($request->all());
+        dd($launch->is_resource_launch() . ' ' .$launch->is_deep_link_launch() . ' ' . $launch->is_submission_review_launch());
+        if (!$launch->is_deep_link_launch()) {
+            throw new \Exception("Must be a deep link!");
+        }
+        $resource = LTI\LTI_Deep_Link_Resource::new()
+            ->set_url('https://dev.adapt.libretexts.org/api/lti/final-target')
+            ->set_custom_params(['difficulty' => $_REQUEST['diff']])
+            ->set_title('Breakout ' . $_REQUEST['diff'] . ' mode!');
+        $launch->get_deep_link()
+            ->output_response_form([$resource]);
 
     }
 
