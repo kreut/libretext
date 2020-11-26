@@ -27,7 +27,7 @@ class IsValidInstructorAccessCode implements Rule
     public function passes($attribute, $value)
     {
 
-        return InstructorAccessCode::where('access_code', '=', $value)->exists() || ($value === 'LibreFest2020');
+        return InstructorAccessCode::where('access_code', '=', $value)->exists();
     }
 
     /**
