@@ -78,6 +78,11 @@ public function assignmentGroupWeights() {
         return $this->hasOne('App\CourseAccessCode');
     }
 
+    public function letterGrades()
+    {
+        return $this->hasOne('App\LetterGrade');
+    }
+
     public function graderNamesAndIds()
     {
         return $this->hasManyThrough('App\User', 'App\Grader', 'course_id', 'id', 'id', 'user_id');

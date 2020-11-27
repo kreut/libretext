@@ -93,7 +93,7 @@
           @keydown="letterGradesForm.errors.clear('letter_grades')"
         >
         </b-form-input>
-        <has-error :form="form" field="letter_grades"></has-error>
+        <has-error :form="letterGradesForm" field="letter_grades"></has-error>
       </b-modal>
 
       <b-modal
@@ -687,7 +687,10 @@ export default {
       this.$bvModal.show('modal-letter-grades-editor')
       let formattedLetterGrades = ''
       for (let i=0; i<this.letterGradeItems.length;i++){
-        formattedLetterGrades += this.letterGradeItems[i]['min'] + ',' + this.letterGradeItems[i]['letter_grade'] + ','
+        formattedLetterGrades += `${this.letterGradeItems[i]['min']},${this.letterGradeItems[i]['letter_grade']}`
+        if (i !== this.letterGradeItems.length-1){
+          formattedLetterGrades += ','
+        }
       }
 
       this.letterGradesForm.letter_grades = formattedLetterGrades
@@ -751,11 +754,51 @@ export default {
     openLetterGradesModal(){
       this.$bvModal.show('modal-letter-grades')
     },
+    isValidLetterGrades(){
+      let letterGradesArray = this.letterGradesForm.letter_grades.split(',')
+      if (letterGradesArray.length === 1) {
+        this.letterGradesForm.errors.set('letter_grades','Please enter your list of letter grades and associated minimum scores.')
+        return false
+      }
+      if (letterGradesArray.length % 2 !== 0){
+        this.letterGradesForm.errors.set('letter_grades','Not every letter grade has a minimum score associated with it.')
+        return false
+      }
+      let usedLetters = []
+      let usedCutoffs = []
+      for(let i=0;i<letterGradesArray.length/2; i++) {
+
+        if (isNaN(letterGradesArray[2*i])) {
+          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2*i]} is not a number.`)
+          return false
+        }
+        if (letterGradesArray[2*i]<0) {
+          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2*i]} should be a positive number.`)
+          return false
+        }
+        if (usedLetters.includes(letterGradesArray[2*i+1])) {
+          this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2*i+1]}" multiple times.`)
+          return false
+        } else {
+          usedLetters.push(letterGradesArray[2*i+1])
+        }
+
+        if (usedCutoffs.includes(letterGradesArray[2*i])) {
+          this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2*i]}" multiple times.`)
+          return false
+        } else {
+          usedCutoffs.push(letterGradesArray[2*i])
+        }
+      }
+     return true
+    },
     async submitLetterGrades(bvModalEvt){
       bvModalEvt.preventDefault()
-
+      if (!this.isValidLetterGrades()){
+        return false
+      }
       try {
-        const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
+        const {data} = await this.letterGradesForm.patch(`/api/letter-grades/${this.courseId}`)
         if (data.error) {
           this.$noty.error(data.message)
           return false
