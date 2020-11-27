@@ -37,18 +37,41 @@ public function __construct(){
 
             $response['type'] = 'success';
             $round_scores_message = ((int) $roundScores === 0) ? "will" : "will not";
-            $response['message'] = "Scores $round_scores_message be rounded up to the nearest integer.";
+            $response['message'] = "Scores <strong>$round_scores_message</strong> be rounded up to the nearest integer.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the round scores option.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
 
+    public function releaseLetterGrades(Request $request, Course $course, int $releaseLetterGrades, LetterGrade $LetterGrade)
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('releaseLetterGrades', [$LetterGrade, $course]);
 
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
+        try {
+            $LetterGrade->updateOrCreate(
+                ['course_id' => $course->id],
+                ['letter_grades_released' => !$releaseLetterGrades]
+            );
 
+            $response['type'] = 'success';
+            $release_grades_message = ((int) $releaseLetterGrades === 0) ? "are" : "are not";
+            $response['message'] = "The letter grades <strong>$release_grades_message</strong> released.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating whether the letter grades are released.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     public function getDefaultLetterGrades()

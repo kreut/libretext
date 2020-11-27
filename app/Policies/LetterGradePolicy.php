@@ -25,14 +25,21 @@ class LetterGradePolicy
     public function updateLetterGrades(User $user, LetterGrade $letterGrade, Course $course){
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
-            : Response::deny('You are not allowed do choose how scores are rounded.');
+            : Response::deny('You are not allowed do update letter grades.');
+
+    }
+
+    public function releaseLetterGrades(User $user, LetterGrade $letterGrade, Course $course){
+        return $this->ownsCourseByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed do update whether letter grades are released.');
 
     }
 
     public function getCourseLetterGrades(User $user, LetterGrade $letterGrade, Course $course){
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
-            : Response::deny('You are not allowed do choose how scores are rounded.');
+            : Response::deny('You are not allowed do get the course letter grades.');
 
     }
 }

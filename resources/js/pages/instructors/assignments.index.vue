@@ -12,10 +12,13 @@
 
       <div v-if="user.role === 2">
         <b-container v-if="canViewAssignments" class="mb-3">
-          <b-row>
+          <b-row class="mb-2">
             <b-col cols="6">
-              <div v-if="hasAssignments">
-                <span class="font-italic">Students can view their weighted averages: </span>
+              <b-button variant="outline-primary"
+                        v-on:click="initAssignmentGroupWeights">Set Assignment Weights
+              </b-button>
+              <span v-if="hasAssignments">
+                <span class="font-italic">Release weighted averages: </span>
                 <toggle-button
                   class="mt-2"
                   :width="55"
@@ -26,20 +29,32 @@
                   :margin="4"
                   :color="{checked: '#28a745', unchecked: '#6c757d'}"
                   :labels="{checked: 'Yes', unchecked: 'No'}"/>
-              </div>
+              </span>
             </b-col>
             <b-col cols="6">
               <div class="float-right">
-                <b-button variant="outline-primary"
-                          v-on:click="openLetterGradesModal">Set Letter Grades
-                </b-button>
-                <b-button variant="outline-primary"
-                          v-on:click="initAssignmentGroupWeights">Set Assignment Group Weights
-                </b-button>
                 <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
                           v-on:click="initAddAssignment">Add Assignment
                 </b-button>
               </div>
+            </b-col>
+          </b-row>
+          <b-row>
+            <b-col cols="6">
+            <b-button variant="outline-primary"
+                      v-on:click="openLetterGradesModal">Set Letter Grades
+            </b-button>
+            <span class="font-italic">Release letter grades: </span>
+            <toggle-button
+              class="mt-2"
+              :width="55"
+              :value="Boolean(letterGradesReleased)"
+              @change="submitReleaseLetterGrades()"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="{checked: '#28a745', unchecked: '#6c757d'}"
+              :labels="{checked: 'Yes', unchecked: 'No'}"/>
             </b-col>
           </b-row>
         </b-container>
@@ -47,7 +62,7 @@
       <b-modal
         id="modal-assignment-group-weights"
         ref="modal"
-        title="Assignment Group Weights"
+        title="Assignment Weights"
         @ok="submitAssignmentGroupWeights"
         ok-title="Submit"
       >
@@ -114,18 +129,16 @@
 
           to customize the letter grades.
         </p>
-        <p>When determining the letter grades, <toggle-button
+        <p><span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span> <toggle-button
           class="mt-2"
-          :width="110"
+          :width="55"
           :value="Boolean(this.roundScores)"
           @change="submitRoundScores()"
           :sync="true"
           :font-size="14"
           :margin="4"
           :color="{checked: '#28a745', unchecked: '#6c757d'}"
-          :labels="{checked: 'round', unchecked: 'don\'t round'}"/>
-
-the weighted scores to the nearest integer.
+          :labels="{checked: 'Yes', unchecked: 'No'}"/>
 
         </p>
         <b-table striped
@@ -614,6 +627,7 @@ export default {
         label: 'Maximum'
       }
     ],
+    letterGradesReleased: false,
     roundScores: false,
     letterGradeItems: [],
     title: '',
@@ -708,6 +722,19 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async submitReleaseLetterGrades(){
+      try {
+        const {data} = await axios.patch(`/api/letter-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
+
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.letterGradesReleased = !this.letterGradesReleased
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitRoundScores(){
         try {
           const {data} = await axios.patch(`/api/letter-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
@@ -719,7 +746,6 @@ export default {
         } catch (error) {
           this.$noty.error(error.message)
         }
-
     },
     async resetLetterGradesToDefault() {
       try {
