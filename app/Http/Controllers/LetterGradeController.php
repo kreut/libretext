@@ -13,6 +13,59 @@ use Illuminate\Support\Facades\Gate;
 
 class LetterGradeController extends Controller
 {
+    public function getDefaultLetterGrades()
+    {
+
+        $default_letter_grades = [
+                                ['letter_grade' => 'A', 'min' => '90%', 'max' => '-'],
+                                ['letter_grade' => 'B', 'min' => '80%', 'max' => '<90%'],
+                                ['letter_grade' => 'C', 'min' => '70%', 'max' => '<80%'],
+                                ['letter_grade' => 'D', 'min' => '60%', 'max' => '<70%'],
+                                ['letter_grade' => 'F', 'min' => '0%', 'max' => '<60%']
+                            ];
+
+        $response['default_letter_grades'] = $default_letter_grades;
+        return $response;
+    }
+
+    public function getLetterGradesAsArray($letter_grades)
+    {
+        $letter_grade_array = explode(',', $letter_grades);
+        $response = [];
+        for ($i = 0; $i < count($letter_grade_array) / 2; $i++) {
+            $response [] = [
+                'letter_grade' => $letter_grade_array[2 * $i + 1],
+                'min' => "{$letter_grade_array[2 * $i]}%",
+                'max' => ($i >= 1) ? "<{$letter_grade_array[2 * $i - 2]}%" : '-'
+            ];
+        }
+        return $response;
+    }
+
+    public function getCourseLetterGrades(Request $request, Course $course)
+    {
+
+        $response['type'] = 'error';
+        /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }*/
+        try {
+            $response['letter_grades'] = $course->letterGrades
+                ? $this->getLetterGradesAsArray($course->letterGrades->letter_grades)
+                : $this->getDefaultLetterGrades()['default_letter_grades'];
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the course letter grades.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function update(updateLetterGrade $request, Course $course, LetterGrade $LetterGrade)
     {
         $response['type'] = 'error';
@@ -23,20 +76,18 @@ class LetterGradeController extends Controller
             return $response;
         }*/
         $data = $request->validated();
-
+        $letter_grades = $this->orderLetterGradesFromHighToLowCutoffs($data);
+        $formatted_letter_grades  = '';
+        foreach ($letter_grades as $key=>$value){
+            $formatted_letter_grades .= "$key,$value,";
+        }
+        $formatted_letter_grades=rtrim($formatted_letter_grades,',');
         try {
             $LetterGrade->updateOrCreate(
                 ['course_id' => $course->id],
-                ['letter_grades' => $data['letter_grades']]
+                ['letter_grades' => $formatted_letter_grades]
             );
-            $letter_grades = $this->orderLetterGradesFromHighToLowCutoffs($data);
-            foreach ($letter_grades as $cutoff => $letter_grade){
-                $response['letter_grades'][] = ['letter_grade' =>  $letter_grade,
-                    'min' => $cutoff,
-                    'max' => $prev_cutoff ?? '-'];
-                $prev_cutoff= $cutoff;
-            }
-            $response['letter_grades'][count($response['letter_grades'])-1]['min'] = 0;
+            $response['letter_grades'] = $this->getLetterGradesAsArray($formatted_letter_grades);
             $response['type'] = 'success';
             $response['message'] = "Your letter grades have been updated.";
         } catch (Exception $e) {
@@ -48,7 +99,8 @@ class LetterGradeController extends Controller
     }
 
     public
-    function orderLetterGradesFromHighToLowCutoffs(array $data) {
+    function orderLetterGradesFromHighToLowCutoffs(array $data)
+    {
         $letter_grades_array = explode(',', $data['letter_grades']);
         $letter_grades = [];
         for ($i = 0; $i < count($letter_grades_array) / 2; $i++) {

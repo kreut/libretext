@@ -30,6 +30,7 @@ class IsValidLetterGrades implements Rule
         $used_letters = [];
         $used_cutoffs = [];
         //required and there should be an even number of them
+        $at_least_one_zero = false;
         $is_valid = $letter_grades_array && (count($letter_grades_array) % 2 === 0);
             if ($is_valid){
                 for ($i=0; $i< count($letter_grades_array)/2;$i++){
@@ -37,6 +38,9 @@ class IsValidLetterGrades implements Rule
                     if (!is_numeric($letter_grades_array[2*$i])) {
                         $is_valid = false;
                         break;
+                    }
+                    if ((int) $letter_grades_array[2*$i] === 0) {
+                        $at_least_one_zero  = true;
                     }
                     //should be positive
                     if ($letter_grades_array[2*$i]<0) {
@@ -59,6 +63,9 @@ class IsValidLetterGrades implements Rule
                     }
                 }
             }
+            if (!$at_least_one_zero) {
+                $is_valid = false;
+            }
             return $is_valid;
     }
 
@@ -69,6 +76,6 @@ class IsValidLetterGrades implements Rule
      */
     public function message()
     {
-        return 'This should be a comma separated list of numerical cutoffs with associated letters such as "90,A,80,B".  All cutoffs should be positive.  And, each letter grade and corresponding cutoff should be used only once.';
+        return 'This should be a comma separated list of numerical cutoffs with associated letters such as "90,A,80,B".  At least one cutoff should be 0; every other cutoff should be positive.  And, each letter grade and corresponding cutoff should be used only once.';
     }
 }

@@ -78,12 +78,11 @@
         id="modal-letter-grades-editor"
         ref="modal"
         title="Letter Grades"
-        @ok="submitLetterGrades"
-        ok-title="Submit"
       >
         <p>Use the text area below to customize your letter grades, in a comma separated list of
-          the form "Minimum grade for the group, Letter Grade". As an example, if the two letter grades that you offer are
-        Pass and Fail, and students need at least a 60 to pass for the course, you should enter 0,Fail,60,Pass</p>
+          the form "Minimum score for the group, Letter Grade". As an example, if the three letter grades that you offer
+          are
+          A, B, and C, and students need at least a 60% to pass for the course, you might enter 90,A,70,B,60,C,0,F.</p>
         <b-form-input
           id="letter_grades"
           v-model="letterGradesForm.letter_grades"
@@ -94,6 +93,12 @@
         >
         </b-form-input>
         <has-error :form="letterGradesForm" field="letter_grades"></has-error>
+        <div slot="modal-footer">
+          <b-btn v-on:click="$bvModal.hide('modal-letter-grades-editor')">Cancel</b-btn>
+          <b-btn variant="info" v-on:click="resetLetterGradesToDefault">Reset to Default</b-btn>
+          <b-btn variant="primary" v-on:click="submitLetterGrades">Submit</b-btn>
+        </div>
+
       </b-modal>
 
       <b-modal
@@ -103,8 +108,12 @@
         ok-only
       >
         <p>Let Adapt know how you would like to convert your students' weighted scores into letter grades.
-          You can choose any type of text to represent each category.  Some examples might be "A+, A, A-,..." or "Excellent, Very Good, Good" or
-          just "P,F".  You can use the <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link> to customize the letter grades or just use the default.</p>
+          You can choose any type of text to represent each category. Some examples might be "A+, A, A-,..." or
+          "Excellent, Good, Unsatisfactory" or
+          just "P,F". You can use the
+          <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link>
+          to customize the letter grades.
+        </p>
         <b-table striped
                  hover
                  :sticky-header="true"
@@ -133,7 +142,8 @@
           <div v-show="solutionsReleased">
             <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
               item
-              that you can update is the assignment's name, the assignment's group, the instructions, and whether students can view the
+              that you can update is the assignment's name, the assignment's group, the instructions, and whether
+              students can view the
               assignment
               statistics.</strong>
             </b-alert>
@@ -397,7 +407,7 @@
 
               <b-form-radio-group v-model="form.submission_files" stacked
                                   :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
-               <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+                <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
                 <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
                 <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
               </b-form-radio-group>
@@ -581,16 +591,16 @@ export default {
   data: () => ({
     letterGradeFields: [
       'letter_grade',
-      'min',
-      'max'
+      {
+        key: 'min',
+        label: 'Minimum'
+      },
+      {
+        key: 'max',
+        label: 'Maximum'
+      }
     ],
-    letterGradeItems:[
-      {'letter_grade' : 'A', 'min': 90, 'max': '-'},
-      {'letter_grade' : 'B', 'min': 80, 'max': 90},
-      {'letter_grade' : 'C', 'min': 70, 'max': 80},
-      {'letter_grade' : 'D', 'min': 60, 'max': 70},
-      {'letter_grade' : 'F', 'min':  0, 'max': 60}
-    ],
+    letterGradeItems: [],
     title: '',
     studentsCanViewWeightedAverage: false,
     assignmentGroupWeights: [],
@@ -637,7 +647,7 @@ export default {
       assignment_group: ''
     }),
     letterGradesForm: new Form({
-      letter_grades:'',
+      letter_grades: '',
     }),
     form: new Form({
       name: '',
@@ -683,17 +693,41 @@ export default {
     initTooltips(this)
   },
   methods: {
-    openLetterGradesEditorModal(){
-      this.$bvModal.show('modal-letter-grades-editor')
+    async resetLetterGradesToDefault() {
+      try {
+        const {data} = await axios.get(`/api/letter-grades/default`)
+        this.letterGradeItems = data.default_letter_grades
+        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems)
+        this.letterGradesForm.letter_grades.replace('%', '')
+        await this.submitLetterGrades()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    formatLetterGrades(letterGradeItems) {
       let formattedLetterGrades = ''
-      for (let i=0; i<this.letterGradeItems.length;i++){
-        formattedLetterGrades += `${this.letterGradeItems[i]['min']},${this.letterGradeItems[i]['letter_grade']}`
-        if (i !== this.letterGradeItems.length-1){
+      for (let i = 0; i < letterGradeItems.length; i++) {
+        formattedLetterGrades += `${letterGradeItems[i]['min']},${letterGradeItems[i]['letter_grade']}`
+        if (i !== letterGradeItems.length - 1) {
           formattedLetterGrades += ','
         }
       }
+      return formattedLetterGrades
+    },
+    async openLetterGradesEditorModal() {
+      try {
+        const {data} = await axios.get(`/api/letter-grades/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.letterGradeItems = data.letter_grades
+        this.$bvModal.show('modal-letter-grades-editor')
 
-      this.letterGradesForm.letter_grades = formattedLetterGrades
+        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems).replace(/%/g, '')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async handleCreateAssignmentGroup(bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -751,59 +785,77 @@ export default {
 
       }
     },
-    openLetterGradesModal(){
-      this.$bvModal.show('modal-letter-grades')
+    async openLetterGradesModal() {
+      try {
+        const {data} = await axios.get(`/api/letter-grades/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.letterGradeItems = data.letter_grades
+        this.$bvModal.show('modal-letter-grades')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
-    isValidLetterGrades(){
+    isValidLetterGrades() {
       let letterGradesArray = this.letterGradesForm.letter_grades.split(',')
       if (letterGradesArray.length === 1) {
-        this.letterGradesForm.errors.set('letter_grades','Please enter your list of letter grades and associated minimum scores.')
+        this.letterGradesForm.errors.set('letter_grades', 'Please enter your list of letter grades and associated minimum scores.')
         return false
       }
-      if (letterGradesArray.length % 2 !== 0){
-        this.letterGradesForm.errors.set('letter_grades','Not every letter grade has a minimum score associated with it.')
+      if (letterGradesArray.length % 2 !== 0) {
+        this.letterGradesForm.errors.set('letter_grades', 'Not every letter grade has a minimum score associated with it.')
         return false
       }
       let usedLetters = []
       let usedCutoffs = []
-      for(let i=0;i<letterGradesArray.length/2; i++) {
+      let atLeastOneZero = false
+      for (let i = 0; i < letterGradesArray.length / 2; i++) {
 
-        if (isNaN(letterGradesArray[2*i])) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2*i]} is not a number.`)
+        if (isNaN(letterGradesArray[2 * i])) {
+          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} is not a number.`)
           return false
         }
-        if (letterGradesArray[2*i]<0) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2*i]} should be a positive number.`)
+        if (parseInt(letterGradesArray[2 * i]) === 0) {
+          atLeastOneZero = true
+        }
+        if (letterGradesArray[2 * i] < 0) {
+          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} should be a positive number.`)
           return false
         }
-        if (usedLetters.includes(letterGradesArray[2*i+1])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2*i+1]}" multiple times.`)
+        if (usedLetters.includes(letterGradesArray[2 * i + 1])) {
+          this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2 * i + 1]}" multiple times.`)
           return false
         } else {
-          usedLetters.push(letterGradesArray[2*i+1])
+          usedLetters.push(letterGradesArray[2 * i + 1])
         }
 
-        if (usedCutoffs.includes(letterGradesArray[2*i])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2*i]}" multiple times.`)
+        if (usedCutoffs.includes(letterGradesArray[2 * i])) {
+          this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2 * i]}" multiple times.`)
           return false
         } else {
-          usedCutoffs.push(letterGradesArray[2*i])
+          usedCutoffs.push(letterGradesArray[2 * i])
         }
       }
-     return true
+      if (!atLeastOneZero){
+        this.letterGradesForm.errors.set('letter_grades', 'At least one of the letter grades should have a minimum score of 0.')
+        return false
+      }
+      return true
     },
-    async submitLetterGrades(bvModalEvt){
-      bvModalEvt.preventDefault()
-      if (!this.isValidLetterGrades()){
+    async submitLetterGrades() {
+      this.letterGradesForm.letter_grades = this.letterGradesForm.letter_grades.replace(/%/g, '')
+      if (!this.isValidLetterGrades()) {
         return false
       }
       try {
         const {data} = await this.letterGradesForm.patch(`/api/letter-grades/${this.courseId}`)
         console.log(data)
-          this.$noty[data.type](data.message)
-        if (data.type === 'success'){
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
           this.$bvModal.hide('modal-letter-grades-editor')
-          this.letterGradeItems  = data.letter_grades
+          this.letterGradeItems = data.letter_grades
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -1127,7 +1179,8 @@ export default {
 svg:focus, svg:active:focus {
   outline: none !important;
 }
-.header-high-z-index table thead tr th{
+
+.header-high-z-index table thead tr th {
   z-index: 5 !important;
   border-top: 1px !important; /*gets rid of the flickering issue at top when scrolling.*/
 }
