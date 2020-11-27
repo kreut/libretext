@@ -13,6 +13,43 @@ use Illuminate\Support\Facades\Gate;
 
 class LetterGradeController extends Controller
 {
+    private $default_letter_grades;
+public function __construct(){
+    $this->default_letter_grades = '90,A,80,B,70,C,60,D,0,F';
+
+}
+    public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade){
+
+        $response['type'] = 'error';
+        /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }*/
+
+        try {
+            $LetterGrade->updateOrCreate(
+                ['course_id' => $course->id],
+                ['round_scores' => !$roundScores]
+            );
+
+            $response['type'] = 'success';
+            $round_scores_message = ((int) $roundScores === 0) ? "will" : "will not";
+            $response['message'] = "Scores $round_scores_message be rounded up to the nearest integer.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the round scores option.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+
+
+
+    }
+
     public function getDefaultLetterGrades()
     {
 
@@ -24,7 +61,7 @@ class LetterGradeController extends Controller
                                 ['letter_grade' => 'F', 'min' => '0%', 'max' => '<60%']
                             ];
 
-        $response['default_letter_grades'] = $default_letter_grades;
+        $response['default_letter_grades'] = $this->getLetterGradesAsArray($this->default_letter_grades);
         return $response;
     }
 
@@ -53,7 +90,7 @@ class LetterGradeController extends Controller
             return $response;
         }*/
         try {
-            $response['letter_grades'] = $course->letterGrades
+            $response['letter_grades'] = $course->letterGrades && $course->letterGrades->letter_grades
                 ? $this->getLetterGradesAsArray($course->letterGrades->letter_grades)
                 : $this->getDefaultLetterGrades()['default_letter_grades'];
             $response['type'] = 'success';

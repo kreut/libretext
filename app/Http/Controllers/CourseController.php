@@ -265,6 +265,7 @@ class CourseController extends Controller
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
             $course->graders()->delete();
+            $course->letterGrades()->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'success';

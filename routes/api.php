@@ -53,6 +53,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/letter-grades/{course}', 'LetterGradeController@update');
     Route::get('/letter-grades/default', 'LetterGradeController@getDefaultLetterGrades');
     Route::get('/letter-grades/{course}', 'LetterGradeController@getCourseLetterGrades');
+    Route::patch('/letter-grades/{course}/round-scores/{roundScores}', 'LetterGradeController@roundScores');
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/{course}', 'CourseController@show');

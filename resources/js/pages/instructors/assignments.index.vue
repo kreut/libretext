@@ -107,12 +107,26 @@
         title="Letter Grades"
         ok-only
       >
-        <p>Let Adapt know how you would like to convert your students' weighted scores into letter grades.
-          You can choose any type of text to represent each category. Some examples might be "A+, A, A-,..." or
-          "Excellent, Good, Unsatisfactory" or
-          just "P,F". You can use the
+        <p>Let us know how you would like to convert your students' weighted scores into letter grades or grade categories.
+          Some examples might be "A+, A, A-,..." or
+          "Excellent, Good, Unsatisfactory". You can use the
           <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link>
+
           to customize the letter grades.
+        </p>
+        <p>When determining the letter grades, <toggle-button
+          class="mt-2"
+          :width="110"
+          :value="Boolean(this.roundScores)"
+          @change="submitRoundScores()"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'round', unchecked: 'don\'t round'}"/>
+
+the weighted scores to the nearest integer.
+
         </p>
         <b-table striped
                  hover
@@ -600,6 +614,7 @@ export default {
         label: 'Maximum'
       }
     ],
+    roundScores: false,
     letterGradeItems: [],
     title: '',
     studentsCanViewWeightedAverage: false,
@@ -693,6 +708,19 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async submitRoundScores(){
+        try {
+          const {data} = await axios.patch(`/api/letter-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
+          this.$noty[data.type](data.message)
+          if (data.type === 'error') {
+            return false
+          }
+          this.roundScores = !this.roundScores
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+
+    },
     async resetLetterGradesToDefault() {
       try {
         const {data} = await axios.get(`/api/letter-grades/default`)
