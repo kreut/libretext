@@ -11,6 +11,7 @@ use \Exception;
 use Illuminate\Support\Facades\Gate;
 
 
+
 class LetterGradeController extends Controller
 {
     private $default_letter_grades;
@@ -21,12 +22,12 @@ public function __construct(){
     public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade){
 
         $response['type'] = 'error';
-        /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
+        $authorized = Gate::inspect('roundScores', [$LetterGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }*/
+        }
 
         try {
             $LetterGrade->updateOrCreate(
@@ -79,16 +80,16 @@ public function __construct(){
         return $response;
     }
 
-    public function getCourseLetterGrades(Request $request, Course $course)
+    public function getCourseLetterGrades(Request $request, Course $course, LetterGrade $LetterGrade)
     {
 
         $response['type'] = 'error';
-        /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
+        $authorized = Gate::inspect('getCourseLetterGrades', [$LetterGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }*/
+        }
         try {
             $response['letter_grades'] = $course->letterGrades && $course->letterGrades->letter_grades
                 ? $this->getLetterGradesAsArray($course->letterGrades->letter_grades)
@@ -106,12 +107,12 @@ public function __construct(){
     public function update(updateLetterGrade $request, Course $course, LetterGrade $LetterGrade)
     {
         $response['type'] = 'error';
-        /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
+        $authorized = Gate::inspect('updateLetterGrades', [$LetterGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }*/
+        }
         $data = $request->validated();
         $letter_grades = $this->orderLetterGradesFromHighToLowCutoffs($data);
         $formatted_letter_grades  = '';
