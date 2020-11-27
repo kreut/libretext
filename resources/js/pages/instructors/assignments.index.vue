@@ -104,7 +104,7 @@
       >
         <p>Let Adapt know how you would like to convert your students' weighted scores into letter grades.
           You can choose any type of text to represent each category.  Some examples might be "A+, A, A-,..." or "Excellent, Very Good, Good" or
-          just "P,F".  You can use the <button class="btn-link" v-on:click="openLetterGradesEditorModal">letter grade editor</button> to customize the letter grades or just use the default.</p>
+          just "P,F".  You can use the <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link> to customize the letter grades or just use the default.</p>
         <b-table striped
                  hover
                  :sticky-header="true"
@@ -803,6 +803,7 @@ export default {
           this.$noty[data.type](data.message)
         if (data.type === 'success'){
           this.$bvModal.hide('modal-letter-grades-editor')
+          this.letterGradeItems  = data.letter_grades
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
