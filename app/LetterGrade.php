@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class LetterGrade extends Model
 {
-    //
+    protected $guarded = [];
 }

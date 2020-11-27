@@ -13,7 +13,7 @@ use Illuminate\Support\Facades\Gate;
 
 class LetterGradeController extends Controller
 {
-    public function update(updateLetterGrade $request, Course $course, LetterGrade $letterGrade)
+    public function update(updateLetterGrade $request, Course $course, LetterGrade $LetterGrade)
     {
         $response['type'] = 'error';
         /*$authorized = Gate::inspect('updateLetterGrades', [$letterGrade, $course]);
@@ -22,9 +22,13 @@ class LetterGradeController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }*/
+        $data = $request->validated();
 
         try {
-
+            $LetterGrade->updateOrCreate(
+                ['course_id' => $course->id],
+                ['letter_grades' => $data['letter_grades']]
+            );
             $response['type'] = 'success';
             $response['message'] = "Your letter grades have been updated.";
         } catch (Exception $e) {

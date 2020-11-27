@@ -518,7 +518,7 @@
               <span v-show="data.item.source === 'a'" class="pr-1"
                     v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)">
               <b-icon
-                v-if="data.item.submission_files !== '0'"
+                v-show="data.item.submission_files !== '0'"
                 icon="cloud-upload"
                 :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
               >
@@ -799,13 +799,15 @@ export default {
       }
       try {
         const {data} = await this.letterGradesForm.patch(`/api/letter-grades/${this.courseId}`)
-        if (data.error) {
-          this.$noty.error(data.message)
-          return false
+        console.log(data)
+          this.$noty[data.type](data.message)
+        if (data.type === 'success'){
+          this.$bvModal.hide('modal-letter-grades-editor')
         }
-
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
 
 
