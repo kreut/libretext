@@ -250,11 +250,7 @@ class Query extends Model
     public function addGlMolScripts()
     {
         return <<<SCRIPTS
- <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js" integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg==" crossorigin="anonymous"></script>
- <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
- <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
- <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
- <script type="text/javascript" src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
+
 SCRIPTS;
 
     }
@@ -291,17 +287,10 @@ MATHJAX;
 
     public function addExtras(string $body, array $extras)
     {
-        $app_url =  $app_url = (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_ENV');
-        $css =  '<link rel="stylesheet" href="' . $app_url . '/assets/css/query.css">' ."\r\n";
-        $scripts = '<script type="text/javascript" src="' . $app_url . '/assets/js/hostIFrameResizer.js"></script>' ."\r\n";
-        if ($extras['glMol']) {
-            $scripts .= $this->addGlMolScripts() ."\r\n";
-        }
-        if ($extras['MathJax']) {
-            $scripts .= '<?php require_once(__DIR__ . "/../config/mathjax.html"); ?>' ."\r\n";
-           // $scripts .= $this->addMathJaxScript();
-        }
-        return $css. $scripts . $body;
+        $scripts = "['glMol' => " .  ($extras['glMol'] ? 1 : 0) . ",'MathJax' => " . ($extras['MathJax'] ? 1 : 0). "]";
+        $php = '<?php $extras = ' . $scripts . '; ?>' . "\r\n";
+        $config = "<?php require_once(__DIR__ . '/../query.config.php'); ?>\r\n";
+        return $php. $config . $body;
 
     }
 
