@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\LetterGrade;
+use App\FinalGrade;
 use App\Score;
 use App\Course;
 use App\SubmissionFile;
@@ -110,7 +110,7 @@ class ScoreController extends Controller
 
     public function getFinalWeightedScoresAndLetterGrades(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info)
     {
-        $letter_grades = explode(',',$course->letterGrades->letter_grades);
+        $letter_grades = explode(',',$course->finalGrades->letter_grades);
         $letter_grades_array = [];
 
         for ($i=0;$i<count($letter_grades)/2;$i++){
@@ -133,7 +133,7 @@ class ScoreController extends Controller
         foreach ($course->enrolledUsers as $key => $user) {
             $score = Round($final_weighted_scores[$user->id], 2);
             $final_weighted_scores[$user->id] = $score . '%';
-            $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score,$letter_grades_array, $course->letterGrades->round_scores);
+            $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score,$letter_grades_array, $course->finalGrades->round_scores);
         }
         return ['final_weighted_scores' => $final_weighted_scores, 'letter_grades' => $letter_grades];
     }

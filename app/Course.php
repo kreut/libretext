@@ -78,9 +78,9 @@ public function assignmentGroupWeights() {
         return $this->hasOne('App\CourseAccessCode');
     }
 
-    public function letterGrades()
+    public function finalGrades()
     {
-        return $this->hasOne('App\LetterGrade');
+        return $this->hasOne('App\FinalGrade');
     }
 
     public function graderNamesAndIds()

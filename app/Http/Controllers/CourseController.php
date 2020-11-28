@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Course;
-use App\LetterGrade;
+use App\FinalGrade;
 use App\User;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
@@ -146,7 +146,7 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment, LetterGrade $letterGrade)
+    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment, FinalGrade $finalGrade)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -184,9 +184,9 @@ class CourseController extends Controller
                 //enroll the fake student
                 $enrollment->create(['user_id' => $fake_student->id,
                     'course_id' => $new_course->id]);
-                $letterGrade = new LetterGrade();
-                LetterGrade::create(['course_id'=>$new_course->id,
-                    'letter_grades' => $letterGrade->defaultLetterGrades() ]);
+                $finalGrade = new FinalGrade();
+                FinalGrade::create(['course_id'=>$new_course->id,
+                    'letter_grades' => $finalGrade->defaultLetterGrades() ]);
           DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
@@ -269,7 +269,7 @@ class CourseController extends Controller
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
             $course->graders()->delete();
-            $course->letterGrades()->delete();
+            $course->finalGrades()->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'success';

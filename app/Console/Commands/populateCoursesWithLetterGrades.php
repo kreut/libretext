@@ -2,7 +2,7 @@
 
 namespace App\Console\Commands;
 
-use App\LetterGrade;
+use App\FinalGrade;
 use Illuminate\Console\Command;
 use App\Course;
 
@@ -40,11 +40,11 @@ class populateCoursesWithLetterGrades extends Command
     public function handle()
     {
         $courses = Course::all();
-        $letterGrade = new LetterGrade();
+        $finalGrade = new FinalGrade();
         foreach ($courses as $course){
-            if (!$course->letterGrades()->exists()){
-                LetterGrade::create(['course_id'=>$course->id,
-                    'letter_grades' => $letterGrade->defaultLetterGrades() ]);
+            if (!$course->finalGrades()->exists()){
+                FinalGrade::create(['course_id'=>$course->id,
+                    'letter_grades' => $finalGrade->defaultLetterGrades() ]);
             }
         }
 

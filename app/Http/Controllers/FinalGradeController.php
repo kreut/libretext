@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\updateLetterGrade;
-use App\LetterGrade;
+use App\FinalGrade;
 use App\Course;
 use Illuminate\Http\Request;
 use App\Exceptions\Handler;
@@ -11,13 +11,13 @@ use \Exception;
 use Illuminate\Support\Facades\Gate;
 
 
-class LetterGradeController extends Controller
+class FinalGradeController extends Controller
 {
-    public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade)
+    public function roundScores(Request $request, Course $course, int $roundScores, FinalGrade $FinalGrade)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('roundScores', [$LetterGrade, $course]);
+        $authorized = Gate::inspect('roundScores', [$FinalGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -25,7 +25,7 @@ class LetterGradeController extends Controller
         }
 
         try {
-            $LetterGrade->updateOrCreate(
+            $FinalGrade->updateOrCreate(
                 ['course_id' => $course->id],
                 ['round_scores' => !$roundScores]
             );
@@ -41,11 +41,11 @@ class LetterGradeController extends Controller
         return $response;
     }
 
-    public function releaseLetterGrades(Request $request, Course $course, int $releaseLetterGrades, LetterGrade $LetterGrade)
+    public function releaseLetterGrades(Request $request, Course $course, int $releaseLetterGrades, FinalGrade $FinalGrade)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('releaseLetterGrades', [$LetterGrade, $course]);
+        $authorized = Gate::inspect('releaseLetterGrades', [$FinalGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -53,7 +53,7 @@ class LetterGradeController extends Controller
         }
 
         try {
-            $LetterGrade->updateOrCreate(
+            $FinalGrade->updateOrCreate(
                 ['course_id' => $course->id],
                 ['letter_grades_released' => !$releaseLetterGrades]
             );
@@ -69,25 +69,25 @@ class LetterGradeController extends Controller
         return $response;
     }
 
-    public function getDefaultLetterGrades(LetterGrade $letterGrade)
+    public function getDefaultLetterGrades(FinalGrade $finalGrade)
     {
-        $response['default_letter_grades'] = $letterGrade->getLetterGradesAsArray($letterGrade->defaultLetterGrades());
+        $response['default_letter_grades'] = $finalGrade->getLetterGradesAsArray($finalGrade->defaultLetterGrades());
         return $response;
     }
 
-    public function getCourseLetterGrades(Request $request, Course $course, LetterGrade $LetterGrade)
+    public function getCourseLetterGrades(Request $request, Course $course, FinalGrade $FinalGrade)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('getCourseLetterGrades', [$LetterGrade, $course]);
+        $authorized = Gate::inspect('getCourseLetterGrades', [$FinalGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
         try {
-            $response['letter_grades'] = $LetterGrade->getLetterGradesAsArray($course->letterGrades->letter_grades);
-            $response['round_scores'] = $course->letterGrades->round_scores;
+            $response['letter_grades'] = $FinalGrade->getLetterGradesAsArray($course->finalGrades->letter_grades);
+            $response['round_scores'] = $course->finalGrades->round_scores;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -98,10 +98,10 @@ class LetterGradeController extends Controller
 
     }
 
-    public function update(updateLetterGrade $request, Course $course, LetterGrade $LetterGrade)
+    public function update(updateLetterGrade $request, Course $course, FinalGrade $FinalGrade)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('updateLetterGrades', [$LetterGrade, $course]);
+        $authorized = Gate::inspect('updateLetterGrades', [$FinalGrade, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -115,11 +115,11 @@ class LetterGradeController extends Controller
         }
         $formatted_letter_grades = rtrim($formatted_letter_grades, ',');
         try {
-            $LetterGrade->updateOrCreate(
+            $FinalGrade->updateOrCreate(
                 ['course_id' => $course->id],
                 ['letter_grades' => $formatted_letter_grades]
             );
-            $response['letter_grades'] = $LetterGrade->getLetterGradesAsArray($formatted_letter_grades);
+            $response['letter_grades'] = $FinalGrade->getLetterGradesAsArray($formatted_letter_grades);
             $response['type'] = 'success';
             $response['message'] = "Your letter grades have been updated.";
         } catch (Exception $e) {

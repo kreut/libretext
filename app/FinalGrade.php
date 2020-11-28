@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class LetterGrade extends Model
+class FinalGrade extends Model
 {
     protected $guarded = [];
 
