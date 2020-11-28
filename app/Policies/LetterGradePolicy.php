@@ -39,7 +39,7 @@ class LetterGradePolicy
     public function getCourseLetterGrades(User $user, LetterGrade $letterGrade, Course $course){
         return $this->ownsCourseByUser($course, $user)
             ? Response::allow()
-            : Response::deny('You are not allowed do get the course letter grades.');
+            : Response::deny('You are not allowed to get the course letter grades.');
 
     }
 }

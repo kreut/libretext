@@ -11,15 +11,18 @@ use \Exception;
 use Illuminate\Support\Facades\Gate;
 
 
-
 class LetterGradeController extends Controller
 {
     private $default_letter_grades;
-public function __construct(){
-    $this->default_letter_grades = '90,A,80,B,70,C,60,D,0,F';
 
-}
-    public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade){
+    public function __construct()
+    {
+        $this->default_letter_grades = '90,A,80,B,70,C,60,D,0,F';
+
+    }
+
+    public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade)
+    {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('roundScores', [$LetterGrade, $course]);
@@ -36,7 +39,7 @@ public function __construct(){
             );
 
             $response['type'] = 'success';
-            $round_scores_message = ((int) $roundScores === 0) ? "will" : "will not";
+            $round_scores_message = ((int)$roundScores === 0) ? "will" : "will not";
             $response['message'] = "Scores <strong>$round_scores_message</strong> be rounded up to the nearest integer.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -64,7 +67,7 @@ public function __construct(){
             );
 
             $response['type'] = 'success';
-            $release_grades_message = ((int) $releaseLetterGrades === 0) ? "are" : "are not";
+            $release_grades_message = ((int)$releaseLetterGrades === 0) ? "are" : "are not";
             $response['message'] = "The letter grades <strong>$release_grades_message</strong> released.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -76,15 +79,6 @@ public function __construct(){
 
     public function getDefaultLetterGrades()
     {
-
-        $default_letter_grades = [
-                                ['letter_grade' => 'A', 'min' => '90%', 'max' => '-'],
-                                ['letter_grade' => 'B', 'min' => '80%', 'max' => '<90%'],
-                                ['letter_grade' => 'C', 'min' => '70%', 'max' => '<80%'],
-                                ['letter_grade' => 'D', 'min' => '60%', 'max' => '<70%'],
-                                ['letter_grade' => 'F', 'min' => '0%', 'max' => '<60%']
-                            ];
-
         $response['default_letter_grades'] = $this->getLetterGradesAsArray($this->default_letter_grades);
         return $response;
     }
@@ -138,11 +132,11 @@ public function __construct(){
         }
         $data = $request->validated();
         $letter_grades = $this->orderLetterGradesFromHighToLowCutoffs($data);
-        $formatted_letter_grades  = '';
-        foreach ($letter_grades as $key=>$value){
+        $formatted_letter_grades = '';
+        foreach ($letter_grades as $key => $value) {
             $formatted_letter_grades .= "$key,$value,";
         }
-        $formatted_letter_grades=rtrim($formatted_letter_grades,',');
+        $formatted_letter_grades = rtrim($formatted_letter_grades, ',');
         try {
             $LetterGrade->updateOrCreate(
                 ['course_id' => $course->id],
