@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Course;
+use App\LetterGrade;
 use App\User;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
@@ -145,7 +146,7 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment)
+    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment, LetterGrade $letterGrade)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -159,7 +160,7 @@ class CourseController extends Controller
 
 
         try {
-            DB::transaction(function () use ($request, $course, $course_access_code, $enrollment) {
+            DB::beginTransaction();
                 $data = $request->validated();
                 $data['user_id'] = auth()->user()->id;
 
@@ -183,11 +184,14 @@ class CourseController extends Controller
                 //enroll the fake student
                 $enrollment->create(['user_id' => $fake_student->id,
                     'course_id' => $new_course->id]);
-            });
-
+                $letterGrade = new LetterGrade();
+                LetterGrade::create(['course_id'=>$new_course->id,
+                    'letter_grades' => $letterGrade->defaultLetterGrades() ]);
+          DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";

@@ -15,11 +15,6 @@ class LetterGradeController extends Controller
 {
     private $default_letter_grades;
 
-    public function __construct()
-    {
-        $this->default_letter_grades = '90,A,80,B,70,C,60,D,0,F';
-
-    }
 
     public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade)
     {
@@ -77,9 +72,9 @@ class LetterGradeController extends Controller
         return $response;
     }
 
-    public function getDefaultLetterGrades()
+    public function getDefaultLetterGradesAsArray(LetterGrade $letterGrade)
     {
-        $response['default_letter_grades'] = $this->getLetterGradesAsArray($this->default_letter_grades);
+        $response['default_letter_grades'] = $this->getLetterGradesAsArray($letterGrade->defaultLetterGrades());
         return $response;
     }
 
@@ -108,9 +103,7 @@ class LetterGradeController extends Controller
             return $response;
         }
         try {
-            $response['letter_grades'] = $course->letterGrades && $course->letterGrades->letter_grades
-                ? $this->getLetterGradesAsArray($course->letterGrades->letter_grades)
-                : $this->getDefaultLetterGrades()['default_letter_grades'];
+            $response['letter_grades'] = $this->getLetterGradesAsArray($course->letterGrades->letter_grades);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
