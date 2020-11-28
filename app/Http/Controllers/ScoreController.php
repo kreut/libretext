@@ -245,9 +245,10 @@ class ScoreController extends Controller
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
         $scores = $course->scores->where('user_id', $user->id)->whereIn('assignment_id', $assignment_ids);
 
+
         [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
-        $response['weighted_score'] = $rows[0][$weighted_score_assignment_id];
-        $response['letter_grade'] = $rows[0][$letter_grade_assignment_id];
+        $response['weighted_score'] = $course->students_can_view_weighted_average ? $rows[0][$weighted_score_assignment_id] : false;
+        $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $rows[0][$letter_grade_assignment_id] : false;
         $response['type'] = 'success';
         return $response;
 

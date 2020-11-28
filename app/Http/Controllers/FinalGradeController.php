@@ -75,6 +75,11 @@ class FinalGradeController extends Controller
         return $response;
     }
 
+    public function letterGradesReleased(Request $request, Course $course){
+
+        $response['letter_grades_released'] = $course->finalGrades->letter_grades_released;
+        return $response;
+    }
     public function getCourseLetterGrades(Request $request, Course $course, FinalGrade $FinalGrade)
     {
 

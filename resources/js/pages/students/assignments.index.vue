@@ -74,8 +74,14 @@
 
       <div v-if="hasAssignments">
         <div class="text-center">
-        <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average is {{ weightedAverage }}
-        </p>
+          <div class="text-center">
+            <p v-show="letterGradesReleased" class="font-italic font-weight-bold">Your current letter grade is
+              "{{ letterGrade }}".
+            </p>
+          </div>
+          <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average
+            is {{ weightedAverage }}.
+          </p>
         </div>
         <b-table striped hover :fields="fields" :items="assignments">
           <template v-slot:cell(name)="data">
@@ -152,7 +158,9 @@ export default {
   data: () => ({
     isLoading: true,
     studentsCanViewWeightedAverage: false,
+    letterGradesReleased: false,
     weightedAverage: '',
+    letterGrade: '',
     title: '',
     form: new Form({
       assignmentFile: null,
@@ -196,7 +204,8 @@ export default {
         this.title = `${data.course.name} Assignments`
         console.log(data)
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
-        if (this.studentsCanViewWeightedAverage) {
+        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
+        if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
           const {data} = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
           console.log(data)
           if (data.type === 'error') {
@@ -204,7 +213,9 @@ export default {
             return false
           }
           this.weightedAverage = data.weighted_score
+          this.letterGrade = data.letter_grade
         }
+
       } catch (error) {
         this.$noty.error(error.message)
 

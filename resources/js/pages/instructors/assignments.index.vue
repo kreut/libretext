@@ -48,7 +48,7 @@
             <toggle-button
               class="mt-2"
               :width="55"
-              :value="Boolean(letterGradesReleased)"
+              :value="letterGradesReleased"
               @change="submitReleaseLetterGrades()"
               :sync="true"
               :font-size="14"
@@ -724,7 +724,7 @@ export default {
   methods: {
     async submitReleaseLetterGrades(){
       try {
-        const {data} = await axios.patch(`/api/final-grades/letter-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
+        const {data} = await axios.patch(`/api/final-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
 
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
@@ -737,7 +737,7 @@ export default {
     },
     async submitRoundScores(){
         try {
-          const {data} = await axios.patch(`/api/final-grades/letter-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
+          const {data} = await axios.patch(`/api/final-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
           this.$noty[data.type](data.message)
           if (data.type === 'error') {
             return false
@@ -815,9 +815,9 @@ export default {
     async getCourseInfo() {
       try {
         const {data} = await axios.get(`/api/courses/${this.courseId}`)
-        console.log(data)
         this.title = `${data.course.name} Assignments`
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
+        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

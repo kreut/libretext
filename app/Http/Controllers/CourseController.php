@@ -97,7 +97,8 @@ class CourseController extends Controller
         }
         try {
             $response['course'] = ['name' => $course->name,
-                'students_can_view_weighted_average' => $course->students_can_view_weighted_average];
+                'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
+                'letter_grades_released' => $course->finalGrades->letter_grades_released];
 
             $response['type'] = 'success';
         } catch (Exception $e) {

@@ -144,10 +144,10 @@ class AssignmentsIndexTest extends TestCase
     }
 
     /** @test */
-    public function nonowner_cannot_toggle_round_scores()
+    public function non_owner_cannot_toggle_round_scores()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/round-scores/1")
+            ->patchJson("/api/final-grades/{$this->course->id}/round-scores/1")
             ->assertJson(['message' => 'You are not allowed do choose how scores are rounded.']);
     }
 
@@ -156,16 +156,16 @@ class AssignmentsIndexTest extends TestCase
     public function owner_can_toggle_round_scores()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/round-scores/1")
+            ->patchJson("/api/final-grades/{$this->course->id}/round-scores/1")
             ->assertJson(['message' => 'Scores <strong>will not</strong> be rounded up to the nearest integer.']);
     }
 
     /** @test */
 
-    public function nonowner_cannot_release_letter_grades()
+    public function non_owner_cannot_release_letter_grades()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/release-letter-grades/1")
+            ->patchJson("/api/final-grades/{$this->course->id}/release-letter-grades/1")
             ->assertJson(['message' => 'You are not allowed do update whether letter grades are released.']);
     }
 
@@ -174,7 +174,7 @@ class AssignmentsIndexTest extends TestCase
     public function owner_can_release_letter_grades()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/release-letter-grades/1")
+            ->patchJson("/api/final-grades/{$this->course->id}/release-letter-grades/1")
             ->assertJson(['message' => 'The letter grades <strong>are not</strong> released.']);
     }
 
