@@ -847,6 +847,7 @@ export default {
           return false
         }
         this.letterGradeItems = data.letter_grades
+        this.roundScores = data.round_scores
         this.$bvModal.show('modal-letter-grades')
       } catch (error) {
         this.$noty.error(error.message)

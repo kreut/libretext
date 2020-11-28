@@ -101,16 +101,21 @@ class ScoreController extends Controller
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
                 ->first()
                 ->include_in_weighted_average
-            ? $score_as_proportion
+                ? $score_as_proportion
                 : 0;
 
         }
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
     }
 
-    public function getFinalWeightedScoresAndLetterGrades(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info, LetterGrade $letterGrade)
+    public function getFinalWeightedScoresAndLetterGrades(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info)
     {
+        $letter_grades = explode(',',$course->letterGrades->letter_grades);
+        $letter_grades_array = [];
 
+        for ($i=0;$i<count($letter_grades)/2;$i++){
+            $letter_grades_array[] = ['min_score' => $letter_grades[2*$i], 'letter_grade' =>$letter_grades[2*$i+1]];
+        }
 
         $final_weighted_scores = [];
         $letter_grades = [];
@@ -126,8 +131,9 @@ class ScoreController extends Controller
             }
         }
         foreach ($course->enrolledUsers as $key => $user) {
-            $final_weighted_scores[$user->id] = Round($final_weighted_scores[$user->id], 2) . '%';
-            $letter_grades[$user->id] = 'A';
+            $score = Round($final_weighted_scores[$user->id], 2);
+            $final_weighted_scores[$user->id] = $score . '%';
+            $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score,$letter_grades_array, $course->letterGrades->round_scores);
         }
         return ['final_weighted_scores' => $final_weighted_scores, 'letter_grades' => $letter_grades];
     }
@@ -139,7 +145,16 @@ class ScoreController extends Controller
                 ->all()['id'];
         })->toArray();
     }
-
+    public function getLetterGradeBasedOnScore($score, $letter_grades_array, $round_scores)
+    {
+        foreach ($letter_grades_array as $letter_grade_key => $letter_grade_value) {
+            $score = $round_scores ? Round($score, 0) : $score;
+            if ($score >= $letter_grade_value['min_score']) {
+                return $letter_grade_value['letter_grade'];
+            }
+        }
+        return 'Letter grade error';
+    }
 
     public function getFinalTableInfo(array $assignment_ids,
                                       array $enrolled_users,

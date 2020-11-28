@@ -13,9 +13,6 @@ use Illuminate\Support\Facades\Gate;
 
 class LetterGradeController extends Controller
 {
-    private $default_letter_grades;
-
-
     public function roundScores(Request $request, Course $course, int $roundScores, LetterGrade $LetterGrade)
     {
 
@@ -72,23 +69,9 @@ class LetterGradeController extends Controller
         return $response;
     }
 
-    public function getDefaultLetterGradesAsArray(LetterGrade $letterGrade)
+    public function getDefaultLetterGrades(LetterGrade $letterGrade)
     {
-        $response['default_letter_grades'] = $this->getLetterGradesAsArray($letterGrade->defaultLetterGrades());
-        return $response;
-    }
-
-    public function getLetterGradesAsArray($letter_grades)
-    {
-        $letter_grade_array = explode(',', $letter_grades);
-        $response = [];
-        for ($i = 0; $i < count($letter_grade_array) / 2; $i++) {
-            $response [] = [
-                'letter_grade' => $letter_grade_array[2 * $i + 1],
-                'min' => "{$letter_grade_array[2 * $i]}%",
-                'max' => ($i >= 1) ? "<{$letter_grade_array[2 * $i - 2]}%" : '-'
-            ];
-        }
+        $response['default_letter_grades'] = $letterGrade->getLetterGradesAsArray($letterGrade->defaultLetterGrades());
         return $response;
     }
 
@@ -103,7 +86,8 @@ class LetterGradeController extends Controller
             return $response;
         }
         try {
-            $response['letter_grades'] = $this->getLetterGradesAsArray($course->letterGrades->letter_grades);
+            $response['letter_grades'] = $LetterGrade->getLetterGradesAsArray($course->letterGrades->letter_grades);
+            $response['round_scores'] = $course->letterGrades->round_scores;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -135,7 +119,7 @@ class LetterGradeController extends Controller
                 ['course_id' => $course->id],
                 ['letter_grades' => $formatted_letter_grades]
             );
-            $response['letter_grades'] = $this->getLetterGradesAsArray($formatted_letter_grades);
+            $response['letter_grades'] = $LetterGrade->getLetterGradesAsArray($formatted_letter_grades);
             $response['type'] = 'success';
             $response['message'] = "Your letter grades have been updated.";
         } catch (Exception $e) {
