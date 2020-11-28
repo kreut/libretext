@@ -3,6 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 use App\Course;
+use App\FinalGrade;
 use App\Grader;
 use App\User;
 use App\Assignment;
@@ -30,6 +31,10 @@ class AssignmentsIndexTest extends TestCase
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
         Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
+        $finalGrade = new FinalGrade();
+
+        FinalGrade::create(['course_id' => $this->course->id,
+            'letter_grades' => $finalGrade->defaultLetterGrades()]);
 
 
         $this->assignment_info = ['course_id' => $this->course->id,
@@ -61,7 +66,7 @@ class AssignmentsIndexTest extends TestCase
     public function nonowner_cannot_update_letter_grades()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B',0,'F'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B',0,'F'"])
             ->assertJson(['message' => 'You are not allowed do update letter grades.']);
 
     }
@@ -70,7 +75,7 @@ class AssignmentsIndexTest extends TestCase
     public function owner_can_update_letter_grades()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B',0,'F'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B',0,'F'"])
             ->assertJson(['message' => 'Your letter grades have been updated.']);
 
     }
@@ -80,7 +85,7 @@ class AssignmentsIndexTest extends TestCase
     public function must_be_an_equal_number_of_letter_grades_and_cutoffs()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70"])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -89,7 +94,7 @@ class AssignmentsIndexTest extends TestCase
     public function letter_grades_and_cutoffs_are_required()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => ""])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => ""])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -98,7 +103,7 @@ class AssignmentsIndexTest extends TestCase
     public function cutoffs_must_be_numerical()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A','not a number','B'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A','not a number','B'"])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -107,7 +112,7 @@ class AssignmentsIndexTest extends TestCase
     public function there_should_be_at_least_one_zero_cutoff()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'B'"])
             ->assertJson($this->letter_grades_error_message());
     }
 
@@ -115,7 +120,7 @@ class AssignmentsIndexTest extends TestCase
     public function all_cutoff_should_be_positive()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',-3,'B',0,'C'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',-3,'B',0,'C'"])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -124,7 +129,7 @@ class AssignmentsIndexTest extends TestCase
     public function letter_grades_should_not_be_repeated()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'A',0,'C'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',70,'A',0,'C'"])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -133,7 +138,7 @@ class AssignmentsIndexTest extends TestCase
     public function cutoffs_should_not_be_repeated()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',90,'B',0,'C'"])
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}", ['letter_grades' => "90,'A',90,'B',0,'C'"])
             ->assertJson($this->letter_grades_error_message());
 
     }
@@ -142,7 +147,7 @@ class AssignmentsIndexTest extends TestCase
     public function nonowner_cannot_toggle_round_scores()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/letter-grades/{$this->course->id}/round-scores/1")
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/round-scores/1")
             ->assertJson(['message' => 'You are not allowed do choose how scores are rounded.']);
     }
 
@@ -151,7 +156,7 @@ class AssignmentsIndexTest extends TestCase
     public function owner_can_toggle_round_scores()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}/round-scores/1")
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/round-scores/1")
             ->assertJson(['message' => 'Scores <strong>will not</strong> be rounded up to the nearest integer.']);
     }
 
@@ -160,7 +165,7 @@ class AssignmentsIndexTest extends TestCase
     public function nonowner_cannot_release_letter_grades()
     {
         $this->actingAs($this->user_2)
-            ->patchJson("/api/letter-grades/{$this->course->id}/release-letter-grades/1")
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/release-letter-grades/1")
             ->assertJson(['message' => 'You are not allowed do update whether letter grades are released.']);
     }
 
@@ -169,7 +174,7 @@ class AssignmentsIndexTest extends TestCase
     public function owner_can_release_letter_grades()
     {
         $this->actingAs($this->user)
-            ->patchJson("/api/letter-grades/{$this->course->id}/release-letter-grades/1")
+            ->patchJson("/api/final-grades/letter-grades/{$this->course->id}/release-letter-grades/1")
             ->assertJson(['message' => 'The letter grades <strong>are not</strong> released.']);
     }
 
@@ -178,7 +183,7 @@ class AssignmentsIndexTest extends TestCase
     public function nonowner_cannot_get_course_letter_grades()
     {
         $this->actingAs($this->user_2)
-            ->getJson("/api/letter-grades/{$this->course->id}")
+            ->getJson("/api/final-grades/letter-grades/{$this->course->id}")
             ->assertJson(['message' => 'You are not allowed to get the course letter grades.']);
     }
 
@@ -188,7 +193,7 @@ class AssignmentsIndexTest extends TestCase
     {
         $response['letter_grades'][0] = ['letter_grade' => 'A', 'min' => '90%', 'max' => '-'];
         $this->actingAs($this->user)
-            ->getJson("/api/letter-grades/{$this->course->id}")
+            ->getJson("/api/final-grades/letter-grades/{$this->course->id}")
             ->assertJson($response);
     }
 

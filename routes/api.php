@@ -50,11 +50,11 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::patch('/course-access-codes', 'CourseAccessCodeController@update');
 
-    Route::patch('/letter-grades/{course}', 'FinalGradeController@update');
-    Route::get('/letter-grades/default', 'FinalGradeController@getDefaultLetterGrades');
-    Route::get('/letter-grades/{course}', 'FinalGradeController@getCourseLetterGrades');
-    Route::patch('/letter-grades/{course}/round-scores/{roundScores}', 'FinalGradeController@roundScores');
-    Route::patch('/letter-grades/{course}/release-letter-grades/{letterGradesReleased}', 'FinalGradeController@releaseLetterGrades');
+    Route::patch('/final-grades/letter-grades/{course}', 'FinalGradeController@update');
+    Route::get('/final-grades/letter-grades/default', 'FinalGradeController@getDefaultLetterGrades');
+    Route::get('/final-grades/letter-grades/{course}', 'FinalGradeController@getCourseLetterGrades');
+    Route::patch('/final-grades/letter-grades/{course}/round-scores/{roundScores}', 'FinalGradeController@roundScores');
+    Route::patch('/final-grades/letter-grades/{course}/release-letter-grades/{letterGradesReleased}', 'FinalGradeController@releaseLetterGrades');
 
 
     Route::get('/courses', 'CourseController@index');

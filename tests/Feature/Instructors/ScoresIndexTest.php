@@ -5,6 +5,7 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
+use App\FinalGrade;
 use App\User;
 use App\Question;
 use App\Extension;
@@ -34,6 +35,11 @@ class ScoresIndexTest extends TestCase
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
         ]);
+
+        $finalGrade = new FinalGrade();
+
+        FinalGrade::create(['course_id' => $this->course->id,
+            'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
     /** @test */

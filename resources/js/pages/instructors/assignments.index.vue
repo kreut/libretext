@@ -724,7 +724,7 @@ export default {
   methods: {
     async submitReleaseLetterGrades(){
       try {
-        const {data} = await axios.patch(`/api/letter-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
+        const {data} = await axios.patch(`/api/final-grades/letter-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
 
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
@@ -737,7 +737,7 @@ export default {
     },
     async submitRoundScores(){
         try {
-          const {data} = await axios.patch(`/api/letter-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
+          const {data} = await axios.patch(`/api/final-grades/letter-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
           this.$noty[data.type](data.message)
           if (data.type === 'error') {
             return false
@@ -749,7 +749,7 @@ export default {
     },
     async resetLetterGradesToDefault() {
       try {
-        const {data} = await axios.get(`/api/letter-grades/default`)
+        const {data} = await axios.get(`/api/final-grades/letter-grades/default`)
         this.letterGradeItems = data.default_letter_grades
         this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems)
         this.letterGradesForm.letter_grades.replace('%', '')
@@ -770,7 +770,7 @@ export default {
     },
     async openLetterGradesEditorModal() {
       try {
-        const {data} = await axios.get(`/api/letter-grades/${this.courseId}`)
+        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -841,7 +841,7 @@ export default {
     },
     async openLetterGradesModal() {
       try {
-        const {data} = await axios.get(`/api/letter-grades/${this.courseId}`)
+        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -905,7 +905,7 @@ export default {
         return false
       }
       try {
-        const {data} = await this.letterGradesForm.patch(`/api/letter-grades/${this.courseId}`)
+        const {data} = await this.letterGradesForm.patch(`/api/final-grades/letter-grades/${this.courseId}`)
         console.log(data)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {

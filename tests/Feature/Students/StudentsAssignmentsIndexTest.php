@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Students;
 
+use App\FinalGrade;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -47,6 +48,11 @@ class StudentsAssignmentsIndexTest extends TestCase
                 'type' => 'a',
                 'user_id' => $this->student_user->id
             ]);
+
+        $finalGrade = new FinalGrade();
+
+        FinalGrade::create(['course_id' => $this->course->id,
+            'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
 
