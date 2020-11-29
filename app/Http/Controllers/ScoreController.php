@@ -316,6 +316,17 @@ class ScoreController extends Controller
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
         }
+        $assignments = $assignments->sortBy( function($assignment) {
+            return [
+                $assignment->assignment_group_id,
+                $assignment->due
+            ];
+        });
+
+        $assignment_groups = [];
+        foreach ($assignments as $key => $value){
+            $assignment_groups[$value->assignment_group_id][] =  $value->id;
+        }
 
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
@@ -331,7 +342,8 @@ class ScoreController extends Controller
             'download_fields' => $download_fields,
             'download_rows' => $download_rows,
             'weighted_score_assignment_id' => $weighted_score_assignment_id,//needed for testing...
-            'letter_grade_assignmnet_id' => $letter_grade_assignment_id];//needed for testing...
+            'letter_grade_assignmnet_id' => $letter_grade_assignment_id,
+            'assignment_groups' => array_values($assignment_groups)];//needed for testing...
     }
 
     /**

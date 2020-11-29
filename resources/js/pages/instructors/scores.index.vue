@@ -354,18 +354,22 @@ export default {
 
         if (data.hasAssignments) {
           this.items = data.table.rows
-          console.log(this.items)
+          //console.log(this.items)
           this.fields = data.table.fields  //Name
-          console.log(this.fields)
-          console.log(this.fields)
+          // console.log(this.fields)
+          //map the group_ids to specific colors
+          //do the headers
+          let assignmentGroups = data.assignment_groups
+          for (let i = 1; i < this.fields.length - 2; i++) {
+            let key = this.fields[i]['key']
+            this.fields[i]['thStyle'] = this.getHeaderColor(key, assignmentGroups)
+          }
           this.downloadFields = data.download_fields
           this.downloadRows = data.download_rows
 
 
           //create an array 0 up through the top assignment number index
           this.assignmentsArray = [...Array(this.fields.length).keys()]
-          console.log(this.fields)
-          console.log(this.assignmentsArray)
           this.hasAssignments = true
           this.canViewScores = true
           this.weightedAverageAssignmentId = data.weighted_score_assignment_id
@@ -374,6 +378,17 @@ export default {
 
       } catch (error) {
         alert(error.message)
+      }
+    },
+    getHeaderColor(key, assignmentGroups)
+    {
+      let colors = ["powderblue", "steelblue", "lightsteelblue", "lightskyblue", "royalblue", "blue"]
+      let color
+      for (let j = 0; j < assignmentGroups.length; j++) {
+        if (assignmentGroups[j].includes(parseInt(key))) {
+          color = colors[j % 6]
+          return  {"background-color": color, "align": "center"}
+        }
       }
     }
 
