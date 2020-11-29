@@ -97,7 +97,9 @@ class ScoreController extends Controller
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
 
-            $score_as_proportion = $score->score / $total_points_by_assignment_id[$score->assignment_id];
+            $score_as_proportion = $total_points_by_assignment_id[$score->assignment_id]
+                                    ? $score->score / $total_points_by_assignment_id[$score->assignment_id]
+                                    : 0;
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
                 ->first()
                 ->include_in_weighted_average
@@ -110,11 +112,11 @@ class ScoreController extends Controller
 
     public function getFinalWeightedScoresAndLetterGrades(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info)
     {
-        $letter_grades = explode(',',$course->finalGrades->letter_grades);
+        $letter_grades = explode(',', $course->finalGrades->letter_grades);
         $letter_grades_array = [];
 
-        for ($i=0;$i<count($letter_grades)/2;$i++){
-            $letter_grades_array[] = ['min_score' => $letter_grades[2*$i], 'letter_grade' =>$letter_grades[2*$i+1]];
+        for ($i = 0; $i < count($letter_grades) / 2; $i++) {
+            $letter_grades_array[] = ['min_score' => $letter_grades[2 * $i], 'letter_grade' => $letter_grades[2 * $i + 1]];
         }
 
         $final_weighted_scores = [];
@@ -133,7 +135,7 @@ class ScoreController extends Controller
         foreach ($course->enrolledUsers as $key => $user) {
             $score = Round($final_weighted_scores[$user->id], 2);
             $final_weighted_scores[$user->id] = $score . '%';
-            $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score,$letter_grades_array, $course->finalGrades->round_scores);
+            $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score, $letter_grades_array, $course->finalGrades->round_scores);
         }
         return ['final_weighted_scores' => $final_weighted_scores, 'letter_grades' => $letter_grades];
     }
@@ -145,6 +147,7 @@ class ScoreController extends Controller
                 ->all()['id'];
         })->toArray();
     }
+
     public function getLetterGradeBasedOnScore($score, $letter_grades_array, $round_scores)
     {
         foreach ($letter_grades_array as $letter_grade_key => $letter_grade_value) {
@@ -316,7 +319,7 @@ class ScoreController extends Controller
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
         }
-        $assignments = $assignments->sortBy( function($assignment) {
+        $assignments = $assignments->sortBy(function ($assignment) {
             return [
                 $assignment->assignment_group_id,
                 $assignment->due
@@ -324,8 +327,8 @@ class ScoreController extends Controller
         });
 
         $assignment_groups = [];
-        foreach ($assignments as $key => $value){
-            $assignment_groups[$value->assignment_group_id][] =  $value->id;
+        foreach ($assignments as $key => $value) {
+            $assignment_groups[$value->assignment_group_id][] = $value->id;
         }
 
         $assignment_ids = $this->getAssignmentIds($assignments);

@@ -97,7 +97,7 @@
         <p>Use the text area below to customize your letter grades, in a comma separated list of
           the form "Minimum score for the group, Letter Grade". As an example, if the three letter grades that you offer
           are
-          A, B, and C, and students need at least a 60% to pass for the course, you might enter 90,A,70,B,60,C,0,F.</p>
+          A, B, and C, and students need at least a 60% to pass the course, you might enter 90,A,70,B,60,C,0,F.</p>
         <b-form-input
           id="letter_grades"
           v-model="letterGradesForm.letter_grades"
