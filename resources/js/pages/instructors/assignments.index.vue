@@ -491,7 +491,7 @@
                  :items="assignments">
           <template v-slot:cell(name)="data">
             <div class="mb-0">
-              <a href="" v-on:click.prevent="getAssignmentView(data.item)">{{ data.item.name }}</a>
+              <a href="" v-on:click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
             </div>
           </template>
 
@@ -1096,13 +1096,14 @@ export default {
       this.$router.push(`/assignments/${assignment.id}/questions/get`)
     }
     ,
-    getAssignmentView(assignment) {
+    getAssignmentView(role, assignment) {
+
       if (assignment.source === 'x') {
         this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
         return false
       }
-      if (assignment.scoring_type === 'c') {
-        this.$router.push(`/assignments/${assignment.id}/questions/view`)//no summary statistics
+      if (role === 4 || assignment.scoring_type === 'c') {//TA's won't want to see the summary statistics and meaningless if completed/not-completed
+        this.$router.push(`/assignments/${assignment.id}/questions/view`)
         return false
       }
 
