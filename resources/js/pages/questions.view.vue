@@ -143,10 +143,9 @@
     <div v-if="questions.length && !initializing">
       <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
         <b-alert variant="info" show>
-          <strong>Either students have submitted responses to this assignment or the solutions have been
-            released.
-            You can view the questions but you can't add or remove them.
-            In addition, you can't update the number of points per question.</strong></b-alert>
+          <strong>This problem is locked.
+            Either students have already submitted responses to this assignment or the solutions have been released. You can view the questions but you cannot add or remove them.
+            In addition, you cannot update the number of points per question.</strong></b-alert>
       </div>
 
       <div v-if="questions.length">

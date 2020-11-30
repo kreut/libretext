@@ -172,7 +172,7 @@
               </div>
 
               <div class="col-sm">
-                <b-card header="default" header-html="<h5>Optional Text Comments</h5>">
+                <b-card header="default" header-html="<h5>Optional Grader Feedback</h5>">
                   <b-card-text>
                     <b-form ref="form">
                       <b-form-textarea
@@ -222,10 +222,6 @@
           <hr>
           <div class="container">
             <div class="row">
-              <b-button class="mr-2" variant="outline-primary"
-                        v-on:click="downloadSubmissionFile(assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'], submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['original_filename'])">
-                Download Submission File
-              </b-button>
               <b-button variant="outline-primary"
                         v-on:click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )">
                 Open Submission File
