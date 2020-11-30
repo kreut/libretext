@@ -70,6 +70,7 @@
               align="center"
               first-number
               last-number
+              limit="10"
             ></b-pagination>
           </div>
         </div>
@@ -83,6 +84,7 @@
             align="center"
             first-number
             last-number
+            limit="10"
           ></b-pagination>
         </div>
         <div v-if="type === 'question'" class="text-center">
