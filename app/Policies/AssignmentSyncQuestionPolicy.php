@@ -54,12 +54,16 @@ class AssignmentSyncQuestionPolicy
     public function update(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
         $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = ($assignment->hasFileOrQuestionSubmissions())
-            ? "You can't update the question points since students have already submitted responses."
-            : 'You are not allowed to update the question points for this assignment.';
-
         return $authorized
             ? Response::allow()
-            : Response::deny($message);
+            : Response::deny("This cannot be updated since students have already submitted responses.");
+    }
+
+    public function toggleQuestionFiles(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    {
+
+        return $user->id === ((int)$assignment->course->user_id)
+            ? Response::allow()
+            : Response::deny("This cannot be updated since students have already submitted responses.");
     }
 }

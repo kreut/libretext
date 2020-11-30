@@ -105,7 +105,7 @@ class AssignmentSyncQuestionController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('toggleQuestionFiles', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
 

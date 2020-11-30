@@ -141,13 +141,22 @@
     </b-modal>
     <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
     <div v-if="questions.length && !initializing">
+      <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
+        <b-alert variant="info" show>
+          <strong>Either students have submitted responses to this assignment or the solutions have been
+            released.
+            You can view the questions but you can't add or remove them.
+            In addition, you can't update the number of points per question.</strong></b-alert>
+      </div>
+
       <div v-if="questions.length">
         <div class="mb-3">
           <b-container>
             <b-col>
               <div v-if="source === 'a' && scoring_type === 'p'">
                 <div class="text-center"><h4>This assignment is worth {{ totalPoints.toString() }} points.</h4></div>
-                <div class="text-center" v-if="!isInstructor()"><h5>This question is worth {{ 1*(questions[currentPage - 1].points) }}
+                <div class="text-center" v-if="!isInstructor()"><h5>This question is worth
+                  {{ 1 * (questions[currentPage - 1].points) }}
                   points. </h5>
                 </div>
 
@@ -170,10 +179,14 @@
                     </b-col>
                     <h5 class="mt-1">points.</h5>
                     <b-col>
-                      <div class="float-left" v-if="!(has_submissions_or_file_submissions || solutionsReleased)">
-                      <b-button variant="primary" size="sm" class="m-1"
-                                @click="updatePoints((questions[currentPage-1].id))">Update Points
-                      </b-button>
+                      <div class="float-left">
+                        <b-button variant="primary"
+                                  size="sm"
+                                  class="m-1"
+                                  @click="updatePoints((questions[currentPage-1].id))"
+                                  disabled="!(has_submissions_or_file_submissions || solutionsReleased)"
+                        >Update Points
+                        </b-button>
                       </div>
                     </b-col>
                   </b-form-row>
@@ -196,15 +209,16 @@
                       <p>
                             <span v-if="questions[currentPage-1].questionFiles">
                 You achieved a total score of
-                {{ questions[currentPage - 1].total_score*1 }}
+                {{ questions[currentPage - 1].total_score * 1 }}
                 out of a possible
-                {{ questions[currentPage - 1].points*1 }} points.</span>
+                {{ questions[currentPage - 1].points * 1 }} points.</span>
                       </p>
                     </div>
                   </div>
                 </div>
                 <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
-                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">View Question Statistics
+                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">View Question
+                    Statistics
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
@@ -259,16 +273,12 @@
         <div v-if="isInstructor()">
           <b-container>
             <b-row>
-
-              <div v-if="has_submissions_or_file_submissions || solutionsReleased">
-                <b-alert variant="info" show>
-                  <strong>Either students have submitted responses to this assignment or the solutions have been
-                    released.
-                    You can view the questions but you can't add or remove them.
-                    In addition, you can't update the number of points per question.</strong></b-alert>
-              </div>
-              <div v-if="!(has_submissions_or_file_submissions || solutionsReleased)">
-                <b-button class="mt-1 mb-2" v-on:click="removeQuestion(currentPage)" variant="danger">Remove Question
+              <div>
+                <b-button class="mt-1 mb-2"
+                          v-on:click="removeQuestion(currentPage)"
+                          variant="danger"
+                          disabled="!(has_submissions_or_file_submissions || solutionsReleased)"
+                >Remove Question
                 </b-button>
                 <span v-if="questionFilesAllowed">
                   <span class="font-italic">Question File Upload Enabled: </span><toggle-button
@@ -435,17 +445,17 @@
                   <br>
                   </span>
                     <span class="font-weight-bold">Last submitted:</span> {{
-                    questions[currentPage - 1].last_submitted
+                      questions[currentPage - 1].last_submitted
                     }}<br>
                     <span class="font-weight-bold">Last response:</span> {{
-                    questions[currentPage - 1].student_response
+                      questions[currentPage - 1].student_response
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
 
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
-                      questions[currentPage - 1].submission_score
+                        questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
                   </b-card-text>
@@ -520,9 +530,9 @@
 
       <b-alert show variant="warning" class="mt-3">
         <a href="#" class="alert-link">
-        <span v-show="source === 'a'">This assignment currently has no questions.</span>
-        <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
-      </a>
+          <span v-show="source === 'a'">This assignment currently has no questions.</span>
+          <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
+        </a>
       </b-alert>
 
     </div>
@@ -544,7 +554,6 @@ import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
 import {getScoresSummary} from '~/helpers/Scores'
-
 
 
 export default {
