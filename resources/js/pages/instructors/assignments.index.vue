@@ -550,7 +550,7 @@
              </span>
               <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
                          delay="500">
-                View File Submissions
+                Grading
               </b-tooltip>
               <span v-show="data.item.source === 'a'" class="pr-1"
                     v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)">
