@@ -26,6 +26,7 @@ class QuestionPolicy
     {
         switch ($user->role) {
             case(2):
+            case(4):
                 $has_access = true;
                 break;
             case(3):
