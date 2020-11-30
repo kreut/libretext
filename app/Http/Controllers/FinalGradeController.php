@@ -30,8 +30,8 @@ class FinalGradeController extends Controller
                 ['round_scores' => !$roundScores]
             );
 
-            $response['type'] = 'success';
             $round_scores_message = ((int)$roundScores === 0) ? "will" : "will not";
+            $response['type'] = ((int)$roundScores === 0) ? 'success' : 'info';
             $response['message'] = "Scores <strong>$round_scores_message</strong> be rounded up to the nearest integer.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -60,6 +60,7 @@ class FinalGradeController extends Controller
 
             $response['type'] = 'success';
             $release_grades_message = ((int)$releaseLetterGrades === 0) ? "are" : "are not";
+            $response['type'] = ((int)$releaseLetterGrades === 0) ? 'success' : 'info';
             $response['message'] = "The letter grades <strong>$release_grades_message</strong> released.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -75,11 +76,13 @@ class FinalGradeController extends Controller
         return $response;
     }
 
-    public function letterGradesReleased(Request $request, Course $course){
+    public function letterGradesReleased(Request $request, Course $course)
+    {
 
         $response['letter_grades_released'] = $course->finalGrades->letter_grades_released;
         return $response;
     }
+
     public function getCourseLetterGrades(Request $request, Course $course, FinalGrade $FinalGrade)
     {
 

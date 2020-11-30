@@ -72,9 +72,9 @@ class CourseController extends Controller
             $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
             $course->save();
 
-            $verb = $request->students_can_view_weighted_average ? "cannot" : "can";
+            $verb =  $course->students_can_view_weighted_average ? "can" : "cannot";
+            $response['type'] =  $course->students_can_view_weighted_average ? 'success' : 'info';
             $response['message'] = "Students <strong>$verb</strong> view their weighted averages.";
-            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
