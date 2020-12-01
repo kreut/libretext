@@ -183,7 +183,7 @@
                                   size="sm"
                                   class="m-1"
                                   @click="updatePoints((questions[currentPage-1].id))"
-                                  disabled="!(has_submissions_or_file_submissions || solutionsReleased)"
+                                  :disabled="has_submissions_or_file_submissions || solutionsReleased"
                         >Update Points
                         </b-button>
                       </div>
@@ -276,7 +276,7 @@
                 <b-button class="mt-1 mb-2"
                           v-on:click="removeQuestion(currentPage)"
                           variant="danger"
-                          disabled="!(has_submissions_or_file_submissions || solutionsReleased)"
+                          :disabled="has_submissions_or_file_submissions || solutionsReleased"
                 >Remove Question
                 </b-button>
                 <span v-if="questionFilesAllowed">
