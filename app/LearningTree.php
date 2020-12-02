@@ -6,5 +6,5 @@ use Illuminate\Database\Eloquent\Model;
 
 class LearningTree extends Model
 {
-    protected $guarded= [];
+    protected $guarded= ['user_id'];
 }

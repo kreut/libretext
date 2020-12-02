@@ -3,7 +3,7 @@
     <PageTitle v-if="canViewLearningTrees" title="My Learning Trees"></PageTitle>
     <div v-if="user.role === 2">
       <div class="row mb-4 float-right" v-if="canViewLearningTrees">
-        <b-button variant="primary" v-b-modal.modal-learning-tree-details>Add Learning Trees</b-button>
+        <b-button variant="primary" v-b-modal.modal-learning-tree-details>Add Learning Tree</b-button>
       </div>
     </div>
 
@@ -32,7 +32,7 @@
             @keydown="learningTreeForm.errors.clear('title')"
           >
           </b-form-input>
-          <has-error :form ="learningTreeForm" field="title"></has-error>
+          <has-error :form="learningTreeForm" field="title"></has-error>
         </b-form-group>
 
         <b-form-group
@@ -50,7 +50,7 @@
             @keydown="learningTreeForm.errors.clear('description')"
           >
           </b-form-textarea>
-          <has-error :form ="learningTreeForm" field="description"></has-error>
+          <has-error :form="learningTreeForm" field="description"></has-error>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -72,6 +72,9 @@
                :fields="fields"
                :items="learningTrees">
 
+        <template v-slot:cell(created_at)="data">
+          {{ $moment(data.item.created_at, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+        </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
             <b-tooltip ref="tooltip"
@@ -120,14 +123,24 @@ export default {
   }),
   data: () => ({
     fields: [
+      'id',
       {
         key: 'title',
-        label: 'Title'
+        sortable: true
       },
       {
-        key: 'description'
+        key: 'description',
+        sortable: true
       },
-      'actions'
+      {
+        key: 'created_at',
+        label: 'Date Created',
+        sortable: true
+      },
+      {
+        key: 'actions',
+        sortable: false
+      }
     ],
     learningTrees: [],
     learningTreeForm: new Form({
@@ -168,7 +181,7 @@ export default {
     },
     resetLearningTreeDetailsModal() {
       this.learningTreeForm.title = ''
-      this.learningTreeForm.description  = ''
+      this.learningTreeForm.description = ''
       this.learningTreeId = false
       this.learningTreeForm.errors.clear()
     }
@@ -191,7 +204,7 @@ export default {
     ,
     async createLearningTree() {
       try {
-        const {data} = await this.learningTreeForm.post('/api/courses')
+        const {data} = await this.learningTreeForm.post('/api/learning-trees/info')
         this.$noty[data.type](data.message)
         this.resetAll('modal-learning-tree-details')
 

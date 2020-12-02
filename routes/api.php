@@ -132,6 +132,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::delete('/learning-trees/{learningTree}','LearningTreeController@destroy');
     Route::post('/learning-trees','LearningTreeController@store');
+    Route::post('/learning-trees/info','LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}','LearningTreeController@updateLearningTreeInfo');
 
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}','LearningTreeController@validateRemediation');

@@ -94,12 +94,6 @@
                         v-on:click="removeQuestion(questions[currentPage-1])" variant="danger">Remove Question
               </b-button>
 
-
-              <b-button class="mt-1 mb-2"
-                        v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                        variant="info">Create Learning Tree
-              </b-button>
-
               <toggle-button
                 v-if="questionFilesAllowed"
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"

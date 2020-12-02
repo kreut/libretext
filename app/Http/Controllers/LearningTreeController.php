@@ -109,16 +109,45 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-
-            LearningTree::updateOrCreate(
-                ['id' => $learningTree->id],
-                ['title' => $data['title'],
-                    'description' => $data['description'],
-                    'user_id' => Auth::user()->id]
-            );
+            $learningTree->title  = $data['title'];
+            $learningTree->description = $data['description'];
+            $learningTree->save();
 
             $response['type'] = 'success';
-            $response['message'] = "The Learning Tree has been saved.";
+            $response['message'] = "The Learning Tree has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error udpating the learning tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function storeLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('store', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'error';
+
+
+        try {
+
+            $data = $request->validated();
+            $learningTree->title  = $data['title'];
+            $learningTree->description = $data['description'];
+            $learningTree->user_id = Auth::user()->id;
+            $learningTree->learning_tree = '';
+            $learningTree->save();
+
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree has been added.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -128,6 +157,7 @@ class LearningTreeController extends Controller
 
 
     }
+
 
     public function getLearningTreeByUserAndQuestionId($user_id, $question_id)
     {
