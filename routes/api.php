@@ -23,6 +23,18 @@ Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 
 
+Route::post('/lti/game', 'GameController@game');
+Route::get('/lti/game', 'GameController@game');
+
+Route::post('/lti/login', 'GameController@login');
+Route::get('/lti/login', 'GameController@login');
+
+Route::post('/lti/configure/{launchId}', 'GameController@configure');
+Route::get('/lti/configure/{launchId}', 'GameController@configure');
+
+
+
+
 Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
 Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
 
