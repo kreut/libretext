@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLearningTree;
+use App\Http\Requests\StoreLearningTreeInfo;
 use App\LearningTree;
 use App\Query;
 use App\Question;
@@ -16,6 +17,33 @@ use \Exception;
 
 class LearningTreeController extends Controller
 {
+
+
+    public function index(Request $request, LearningTree $learningTree)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('index', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $response['type'] = 'error';
+
+        try {
+            $response['learning_trees'] = $learningTree->where('user_id', Auth::user()->id)->get();
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your learning trees.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
 
     /**
      * Store a newly created resource in storage.
@@ -43,12 +71,54 @@ class LearningTreeController extends Controller
             $data = $request->validated();
 
             LearningTree::updateOrCreate(
-                    ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
-                    ['learning_tree' => $learning_tree_parsed]
-                );
+                ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
+                ['learning_tree' => $learning_tree_parsed]
+            );
 
             $response['type'] = 'success';
             $response['message'] = "The learning tree has been saved.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'error';
+
+
+        try {
+
+            $data = $request->validated();
+
+            LearningTree::updateOrCreate(
+                ['id' => $learningTree->id],
+                ['title' => $data['title'],
+                    'description' => $data['description'],
+                    'user_id' => Auth::user()->id]
+            );
+
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree has been saved.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -117,6 +187,32 @@ EOT;
 
     }
 
+
+    /**
+     * Display the specified resource.
+     *
+     * @param \App\LearningTree $learningTree
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Request $request, LearningTree $learningTree)
+    {
+        //anybody who is logged in can do this!
+        $response['type'] = 'error';
+        try {
+            $learningTree->delete();
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree has been deleted.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error deleting the learning Tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     public function validateRemediation(string $library, int $pageId)
     {
 
@@ -130,7 +226,7 @@ EOT;
             $h->report($e);
             $response['message'] = "We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.";
         }
-return $response;
+        return $response;
 
     }
 }
