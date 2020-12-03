@@ -28,7 +28,7 @@ class LearningTreePolicy
 
     public function update(User $user, LearningTree $learningTree)
     {
-
+        dd($user->learningTrees);
         return ((int) $learningTree->user_id === $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update this Learning Tree.');

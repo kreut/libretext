@@ -1,72 +1,6 @@
 <template>
   <div>
     <PageTitle v-if="canViewLearningTrees" title="My Learning Trees"></PageTitle>
-    <div v-if="user.role === 2">
-      <div class="row mb-4 float-right" v-if="canViewLearningTrees">
-        <b-button variant="primary" v-b-modal.modal-learning-tree-details>Add Learning Tree</b-button>
-      </div>
-    </div>
-
-    <b-modal
-      id="modal-learning-tree-details"
-      ref="modal"
-      title="Learning Tree Details"
-      @ok="submitLearningTreeInfo"
-      @hidden="resetLearningTreeDetailsModal"
-      ok-title="Submit"
-
-    >
-      <b-form ref="form">
-        <b-form-group
-          id="title"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Title"
-          label-for="title"
-        >
-          <b-form-input
-            id="title"
-            v-model="learningTreeForm.title"
-            type="text"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
-            @keydown="learningTreeForm.errors.clear('title')"
-          >
-          </b-form-input>
-          <has-error :form="learningTreeForm" field="title"></has-error>
-        </b-form-group>
-
-        <b-form-group
-          id="description"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Description"
-          label-for="description"
-        >
-          <b-form-textarea
-            id="description"
-            v-model="learningTreeForm.description"
-            type="text"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
-            @keydown="learningTreeForm.errors.clear('description')"
-          >
-          </b-form-textarea>
-          <has-error :form="learningTreeForm" field="description"></has-error>
-        </b-form-group>
-      </b-form>
-    </b-modal>
-
-    <b-modal
-      id="modal-delete-learning-tree"
-      ref="modal"
-      title="Confirm Delete Learning Tree"
-      @ok="handleDeleteLearningTree"
-      @hidden="resetLearningTreeDetailsModal"
-      ok-title="Yes, delete learning tree!"
-
-    >
-      <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
-    </b-modal>
-
     <div v-if="hasLearningTrees">
       <b-table striped hover
                :fields="fields"
@@ -143,10 +77,6 @@ export default {
       }
     ],
     learningTrees: [],
-    learningTreeForm: new Form({
-      title: '',
-      description: '',
-    }),
     canViewLearningTrees: false,
     hasLearningTrees: false,
     showNoLearningTreesAlert: false
@@ -158,78 +88,6 @@ export default {
 
   },
   methods: {
-    deleteLearningTree(learningTreeId) {
-      this.learningTreeId = learningTreeId
-      this.$bvModal.show('modal-delete-learning-tree')
-    },
-    async handleDeleteLearningTree() {
-      try {
-        const {data} = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-delete-learning-tree')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    }
-    ,
-    editLearningTree(learning_tree) {
-      this.$refs.tooltip.$emit('close')
-      this.learningTreeId = learning_tree.id;
-      this.learningTreeForm.title = learning_tree.title
-      this.learningTreeForm.description = learning_tree.description
-      this.$bvModal.show('modal-learning-tree-details')
-    },
-    resetLearningTreeDetailsModal() {
-      this.learningTreeForm.title = ''
-      this.learningTreeForm.description = ''
-      this.learningTreeId = false
-      this.learningTreeForm.errors.clear()
-    }
-    ,
-    resetAll(modalId) {
-      this.getLearningTrees()
-      this.resetLearningTreeDetailsModal()
-      // Hide the modal manually
-      this.$nextTick(() => {
-        this.$bvModal.hide(modalId)
-      })
-    }
-    ,
-    submitLearningTreeInfo(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      !this.learningTreeId ? this.createLearningTree() : this.updateLearningTree()
-    }
-    ,
-    async createLearningTree() {
-      try {
-        const {data} = await this.learningTreeForm.post('/api/learning-trees/info')
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-learning-tree-details')
-
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-
-    },
-    async updateLearningTree() {
-      try {
-        const {data} = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-learning-tree-details')
-
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-
-      }
-
-    }
-    ,
     async getLearningTrees() {
       try {
         const {data} = await axios.get('/api/learning-trees')

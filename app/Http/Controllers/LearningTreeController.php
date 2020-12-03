@@ -2,7 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreLearningTree;
+
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\LearningTree;
 use App\Query;
@@ -51,9 +51,8 @@ class LearningTreeController extends Controller
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreLearningTree $request, LearningTree $learningTree)
+    public function update(Request $request, LearningTree $learningTree)
     {
-
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -67,13 +66,8 @@ class LearningTreeController extends Controller
         $learning_tree_parsed = str_replace('\"', "'", $request->learning_tree);
 
         try {
-
-            $data = $request->validated();
-
-            LearningTree::updateOrCreate(
-                ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
-                ['learning_tree' => $learning_tree_parsed]
-            );
+            $learningTree->learning_tree = $learning_tree_parsed;
+            $learningTree->save();
 
             $response['type'] = 'success';
             $response['message'] = "The learning tree has been saved.";
@@ -148,6 +142,7 @@ class LearningTreeController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = "The Learning Tree has been added.";
+            $response['learning_tree_id'] = $learningTree->id;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

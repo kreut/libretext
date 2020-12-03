@@ -93,9 +93,15 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
     {
         return $this->belongsToMany('App\Course', 'enrollments')->withTimestamps();
     }
+
     public function extensions()
     {
         return $this->hasMany('App\Extension');
+    }
+
+    public function learningTrees()
+    {
+        return $this->hasMany('App\LearningTree');
     }
 
 }
