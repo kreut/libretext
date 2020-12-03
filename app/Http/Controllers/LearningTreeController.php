@@ -61,23 +61,31 @@ class LearningTreeController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         $response['type'] = 'error';
+        $learning_tree_old = json_decode($learningTree->learning_tree, true);
         $learning_tree_parsed = str_replace('\"', "'", $request->learning_tree);
+        $learning_tree_new = json_decode($learning_tree_parsed, true);
+        $no_change = $learning_tree_old === $learning_tree_new;
 
-        try {
-            $learningTree->learning_tree = $learning_tree_parsed;
-            $learningTree->save();
+        if ($no_change) {
+            $response['type'] = 'no_change';
 
-            $response['type'] = 'success';
-            $response['message'] = "The learning tree has been saved.";
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
+        } else {
+            try {
+                $learningTree->learning_tree = $learning_tree_parsed;
+
+                $learningTree->save();
+                $response['type'] = 'success';
+                $response['message'] = "The learning tree has been saved.";
+                $response['no_change'] = $no_change;
+
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
+            }
         }
         return $response;
-
 
     }
 
@@ -103,7 +111,7 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $learningTree->title  = $data['title'];
+            $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->save();
 
@@ -134,14 +142,14 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $learningTree->title  = $data['title'];
+            $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->user_id = Auth::user()->id;
             $learningTree->learning_tree = '';
             $learningTree->save();
 
             $response['type'] = 'success';
-            $response['message'] = "The Learning Tree has been added.";
+            $response['message'] = "The Learning Tree has been created.";
             $response['learning_tree_id'] = $learningTree->id;
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -170,6 +178,26 @@ class LearningTreeController extends Controller
             ->pluck('learning_tree');
     }
 
+
+    public function show(Request $request, LearningTree $learningTree)
+    {
+        //anybody who is logged in can do this!
+        $response['type'] = 'error';
+        try {
+
+            $response['type'] = 'success';
+            $response['learning_tree'] = $learningTree->learning_tree;
+            $response['title'] = $learningTree->title;
+            $response['description'] = $learningTree->description;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the learning tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public function getDefaultLearningTree()
     {
         return <<<EOT
@@ -184,7 +212,7 @@ EOT;
      * @param \App\LearningTree $learningTree
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, Question $question)
+    public function showByQuestion(Request $request, Question $question)
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -225,7 +253,7 @@ EOT;
         $response['type'] = 'error';
         try {
             $learningTree->delete();
-            $response['type'] = 'success';
+            $response['type'] = 'info';
             $response['message'] = "The Learning Tree has been deleted.";
 
         } catch (Exception $e) {

@@ -1,6 +1,21 @@
 <template>
   <div>
     <PageTitle v-if="canViewLearningTrees" title="My Learning Trees"></PageTitle>
+    <div class="float-right mb-2">
+      <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
+                v-on:click="createLearningTree">Create Learning Tree
+      </b-button>
+    </div>
+    <b-modal
+      id="modal-delete-learning-tree"
+      ref="modal"
+      title="Confirm Delete Learning Tree"
+      @ok="handleDeleteLearningTree"
+      ok-title="Yes, delete learning tree!"
+
+    >
+      <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
+    </b-modal>
     <div v-if="hasLearningTrees">
       <b-table striped hover
                :fields="fields"
@@ -11,24 +26,25 @@
         </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <b-tooltip ref="tooltip"
-                       :target="getTooltipTarget('pencil',data.item.id)"
-                       delay="500"
-            >
-              Edit Learning Tree
-            </b-tooltip>
-            <span class="pr-1" v-on:click="editLearningTree(data.item)">
-                  <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil"></b-icon>
-                </span>
-            <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
-                       delay="500">
-              Delete Learning Tree
-            </b-tooltip>
-            <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash"
-                    v-on:click="deleteLearningTree(data.item.id)"></b-icon>
 
+                  <b-tooltip ref="tooltip"
+                             :target="getTooltipTarget('editLearningTree',data.item.id)"
+                             delay="500"
+                  >
+                    Edit Learning Tree
+                  </b-tooltip>
+                              <span class="pr-1" v-on:click="editLearningTree(data.item.id)">
+                  <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil"></b-icon>
+                </span>
+
+              <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
+                         delay="500">
+                    Delete Learning Tree
+                  </b-tooltip>
+                <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash" v-on:click="deleteLearningTree(data.item.id)"></b-icon>
           </div>
         </template>
+
       </b-table>
     </div>
     <div v-else>
@@ -44,7 +60,6 @@
 
 <script>
 import axios from 'axios'
-import Form from "vform"
 import {mapGetters} from "vuex"
 import {getTooltipTarget} from '../../helpers/Tooptips'
 import {initTooltips} from "../../helpers/Tooptips"
@@ -71,10 +86,7 @@ export default {
         label: 'Date Created',
         sortable: true
       },
-      {
-        key: 'actions',
-        sortable: false
-      }
+      'actions'
     ],
     learningTrees: [],
     canViewLearningTrees: false,
@@ -88,6 +100,26 @@ export default {
 
   },
   methods: {
+    async handleDeleteLearningTree() {
+      try {
+        const {data} = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-delete-learning-tree')
+        this.getLearningTrees()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    deleteLearningTree(learningTreeId) {
+      this.learningTreeId = learningTreeId
+      this.$bvModal.show('modal-delete-learning-tree')
+    },
+    editLearningTree(learningTreeId){
+      this.$router.push(`/instructors/learning-trees/editor/${learningTreeId}`)
+    },
+    createLearningTree(){
+      this.$router.push(`/instructors/learning-trees/editor/0`)
+    },
     async getLearningTrees() {
       try {
         const {data} = await axios.get('/api/learning-trees')

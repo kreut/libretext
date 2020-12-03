@@ -11,14 +11,14 @@
     >
       <b-form ref="form">
         <b-form-group
-          id="title"
+          id="learning_tree_title"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Title"
           label-for="title"
         >
           <b-form-input
-            id="title"
+            id="learning_tree_title"
             v-model="learningTreeForm.title"
             type="text"
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
@@ -53,7 +53,6 @@
       ref="modal"
       title="Confirm Delete Learning Tree"
       @ok="handleDeleteLearningTree"
-      @hidden="resetLearningTreeDetailsModal"
       ok-title="Yes, delete learning tree!"
 
     >
@@ -62,19 +61,26 @@
 
     <div id="leftcard">
       <div id="actions">
-      <b-button variant="success" size="sm" v-b-modal.modal-learning-tree-details>Create New</b-button>
-      <b-button variant="primary" size="sm" v-on:click="saveLearningTree">Update Info</b-button>
-      <b-button variant="danger" size="sm" v-on:click="saveLearningTree">Delete</b-button>
-      <div id="search">
-        <div class="mb-2 mr-2">
-          <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
-        </div>
-        <div class="d-flex flex-row">
-          <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"></b-form-input>
-          <b-button class="ml-2" variant="secondary" id="add" v-on:click="addRemediation"> <b-spinner v-if="validatingRemediation" small label="Spinning"></b-spinner> Get Remediation</b-button>
-        </div>
+        <b-button variant="success" size="sm" v-b-modal.modal-learning-tree-details>Create New</b-button>
+        <b-button variant="primary" size="sm" v-on:click="editLearningTree" :disabled="this.learningTreeId === 0">Update Info</b-button>
+        <b-button variant="danger" size="sm" v-on:click="deleteLearningTree" :disabled="this.learningTreeId === 0">Delete</b-button>
+        <div id="search">
+          <div class="mb-2 mr-2">
+            <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
+          </div>
+          <div class="d-flex flex-row">
+            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"></b-form-input>
+            <b-button class="ml-2"
+                      variant="secondary"
+                      id="add"
+                      v-on:click="addRemediation"
+                      :disabled="this.learningTreeId === 0">
+              <b-spinner v-if="validatingRemediation" small label="Spinning"></b-spinner>
+              Get Remediation
+            </b-button>
+          </div>
 
-      </div>
+        </div>
       </div>
       <div id="blocklist">
       </div>
@@ -111,6 +117,7 @@ export default {
     title: window.config.appName,
     pageId: '',
     chosenId: '',
+    learningTreeId: 0,
     library: null,
     libraryColors: {
       'bio': '#00b224',
@@ -189,7 +196,7 @@ export default {
         `<div>Library: <span class="library" >${library}</span>, Page Id: <span class="pageId" >${pageId}</span><br>
 <span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase()+library.slice(1)}.svg"></span>${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase() + library.slice(1)}.svg"></span>${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
@@ -257,30 +264,38 @@ ${body}
     addEventListener("mouseup", doneTouch, false);
     addEventListenerMulti("touchstart", beginTouch, false, ".block");
 
-    //this.getLearningTreeByQuestionId(this.questionId)
-
-
+    this.learningTreeId = parseInt(this.$route.params.learningTreeId)
+    if (this.learningTreeId === 0) {
+      this.$bvModal.show('modal-learning-tree-details')
+    } else {
+      this.getLearningTreeLearningTreeId(this.learningTreeId)
+    }
   },
   methods: {
-    deleteLearningTree(learningTreeId) {
-      this.learningTreeId = learningTreeId
+    deleteLearningTree() {
       this.$bvModal.show('modal-delete-learning-tree')
     },
     async handleDeleteLearningTree() {
       try {
         const {data} = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
-        this.resetAll('modal-delete-learning-tree')
+        if (data.type === 'info'){
+          this.learningTreeId = 0
+          document.getElementById('canvas').innerHTML = ''
+          document.getElementById('blocklist').innerHTML = ''
+
+        }
+        this.$bvModal.hide('modal-delete-learning-tree')
+
       } catch (error) {
         this.$noty.error(error.message)
       }
     }
     ,
-    editLearningTree(learning_tree) {
-      this.$refs.tooltip.$emit('close')
-      this.learningTreeId = learning_tree.id
-      this.learningTreeForm.title = learning_tree.title
-      this.learningTreeForm.description = learning_tree.description
+    editLearningTree() {
+      this.learningTreeForm.title = this.title
+      this.learningTreeForm.description = this.description
+
       this.$bvModal.show('modal-learning-tree-details')
     },
     resetLearningTreeDetailsModal() {
@@ -310,9 +325,11 @@ ${body}
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.learningTreeId = data.learning_tree_id
+          this.title = this.learningTreeForm.title
+          this.description = this.learningTreeForm.description
+          this.$bvModal.hide('modal-learning-tree-details')
         }
         console.log(this.learningTreeId)
-        this.resetAll('modal-learning-tree-details')
 
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -325,6 +342,8 @@ ${body}
       try {
         const {data} = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
+        this.title = this.learningTreeForm.title
+        this.description  = this.learningTreeForm.description
         this.resetAll('modal-learning-tree-details')
 
       } catch (error) {
@@ -335,12 +354,14 @@ ${body}
       }
 
     },
-    async getLearningTreeByQuestionId(questionId) {
-      console.log('getting learning tree')
+    async getLearningTreeLearningTreeId(learningTreeId) {
       try {
-        const {data} = await axios.get(`/api/learning-trees/${questionId}`)
-        console.log(data.learning_tree)
-        flowy.import(JSON.parse(data.learning_tree))
+        const {data} = await axios.get(`/api/learning-trees/${learningTreeId}`)
+        this.title = data.title
+        this.description = data.description
+        if (data.learning_tree) {
+          flowy.import(JSON.parse(data.learning_tree))
+        }
 
       } catch (error) {
         this.$noty.error(error.message)
@@ -351,6 +372,10 @@ ${body}
         const {data} = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
           'learning_tree': JSON.stringify(flowy.output())
         })
+        console.log(data)
+        if (data.type === 'no_change') {
+          return false
+        }
         this.$noty[data.type](data.message)
       } catch (error) {
         this.$noty.error(error.message)
@@ -806,22 +831,23 @@ body, html {
   margin-top: 15px;
 }
 
-#get-more-assignment-questions{
+#get-more-assignment-questions {
   width: 300px;
-  text-align:center;
-  margin-left:-100px;
+  text-align: center;
+  margin-left: -100px;
   margin-top: -10px;
   margin-bottom: 5px;
 }
+
 #leftcard {
   width: 300px;
-background-color: #F8F8F8;
+  background-color: #F8F8F8;
   border: 1px solid #E8E8EF;
   box-sizing: border-box;
   padding-top: 15px;
   padding-left: 20px;
   height: 500px;
-margin-left:-100px;
+  margin-left: -100px;
   position: absolute;
   z-index: 2;
 }
@@ -875,7 +901,7 @@ margin-left:-100px;
   padding-top: 10px;
   margin-bottom: 5px;
   width: 242px;
-border: 1px solid transparent;
+  border: 1px solid transparent;
   transition-property: box-shadow, height;
   transition-duration: .2s;
   transition-timing-function: cubic-bezier(.05, .03, .35, 1);
@@ -1253,9 +1279,10 @@ border: 1px solid transparent;
   color: #007bff;
   text-decoration: none;
   background-color: transparent;
--webkit-text-decoration-skip: objects;
+  -webkit-text-decoration-skip: objects;
 }
-.open-student-learning-objective-modal:hover{
+
+.open-student-learning-objective-modal:hover {
   color: #0056b3;
   text-decoration: none;
 
