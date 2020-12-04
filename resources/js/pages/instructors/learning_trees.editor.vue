@@ -9,6 +9,10 @@
       ok-title="Submit"
 
     >
+      <p v-if="assessmentPageId" class="font-italic">The assessment question for the root node of this learning tree has a learning tree id of {{learningTreeId}}, a page id of {{assessmentPageId}} and comes from the
+        {{assessmentLibrary}} library.
+      </p>
+
       <b-form ref="form">
         <b-form-group
           id="learning_tree_title"
@@ -46,32 +50,40 @@
           <has-error :form="learningTreeForm" field="description"></has-error>
         </b-form-group>
         <b-form-group
+          v-if="!assessmentPageId"
           id="assessment_library"
           label-cols-sm="5"
           label-cols-lg="4"
           label="Assessment Library"
           label-for="assessment_library"
         >
-            <b-form-select v-model="assessmentLibrary" :options="libraryOptions"></b-form-select>
+
+          <b-form-select
+                         v-model="learningTreeForm.library"
+                         :options="libraryOptions"
+                         :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
+                         @keydown="learningTreeForm.errors.clear('library')"></b-form-select>
+          <has-error :form="learningTreeForm" field="library"></has-error>
         </b-form-group>
         <b-form-group>
           <b-form-group
+            v-if="!assessmentPageId"
             id="page_id"
             label-cols-sm="5"
             label-cols-lg="4"
             label="Page Id"
             label-for="page_id"
           >
-          <b-form-input
-            id="page_id"
-            v-model="assessmentPageId"
-            type="text"
-            style="width: 90px"
-            :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
-            @keydown="learningTreeForm.errors.clear('page_id')"
-          >
-          </b-form-input>
-          <has-error :form="learningTreeForm" field="page_id"></has-error>
+            <b-form-input
+              id="page_id"
+              v-model="learningTreeForm.page_id"
+              type="text"
+              style="width: 90px"
+              :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
+              @keydown="learningTreeForm.errors.clear('page_id')"
+            >
+            </b-form-input>
+            <has-error :form="learningTreeForm" field="page_id"></has-error>
           </b-form-group>
         </b-form-group>
       </b-form>
@@ -91,8 +103,12 @@
     <div id="leftcard">
       <div id="actions">
         <b-button variant="success" size="sm" v-b-modal.modal-learning-tree-details>Create New</b-button>
-        <b-button variant="primary" size="sm" v-on:click="editLearningTree" :disabled="this.learningTreeId === 0">Update Info</b-button>
-        <b-button variant="danger" size="sm" v-on:click="deleteLearningTree" :disabled="this.learningTreeId === 0">Delete</b-button>
+        <b-button variant="primary" size="sm" v-on:click="editLearningTree" :disabled="this.learningTreeId === 0">Update
+          Info
+        </b-button>
+        <b-button variant="danger" size="sm" v-on:click="deleteLearningTree" :disabled="this.learningTreeId === 0">
+          Delete
+        </b-button>
         <div id="search">
           <div class="mb-2 mr-2">
             <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
@@ -138,9 +154,11 @@ export default {
     learningTreeForm: new Form({
       title: '',
       description: '',
+      library: null,
+      page_id: ''
     }),
-    assessmentLibrary: null,
-    assessmentPageId: null,
+    assessmentLibrary: '',
+    assessmentPageId: '',
     touchingBlock: false,
     validatingRemediation: false,
     panelHidden: false,
@@ -219,12 +237,11 @@ export default {
 
       let title = isAssessmentNode ? 'Assessment' : 'Remediation'
 
+      let libraryText = vm.getLibraryText(blockin.querySelector(".library").innerHTML)
       let library = isAssessmentNode ? '' : blockin.querySelector(".library").innerHTML
       let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
-
-
       let body = isAssessmentNode ? "The original question" :
-        `<div>Library: <span class="library" >${library}</span>, Page Id: <span class="pageId" >${pageId}</span><br>
+        `<div>Library: <span class="library d-none">${library}</span>${libraryText}, Page Id: <span class="pageId" >${pageId}</span><br>
 <span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
       drag.innerHTML += `<div class='blockyleft'>
 <p class='blockyname'><img src="/assets/img/${library[0].toLowerCase() + library.slice(1)}.svg"></span>${title}</p></div>
@@ -310,11 +327,12 @@ ${body}
       try {
         const {data} = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
-        if (data.type === 'info'){
+        if (data.type === 'info') {
           this.learningTreeId = 0
           document.getElementById('canvas').innerHTML = ''
           document.getElementById('blocklist').innerHTML = ''
-
+          this.pageId = ''
+          this.library = null
         }
         this.$bvModal.hide('modal-delete-learning-tree')
 
@@ -350,14 +368,29 @@ ${body}
       !this.learningTreeId ? this.createLearningTree() : this.updateLearningTreeInfo()
     }
     ,
+    getLibraryText(library)
+    {
+      let text = ''
+      for (let i = 0; i < this.libraryOptions.length; i++) {
+        if (library === this.libraryOptions[i].value) {
+          text = this.libraryOptions[i].text
+        }
+      }
+      return text
+    },
     async createLearningTree() {
       try {
+        this.learningTreeForm.color = this.libraryColors[this.learningTreeForm.library]
+        this.learningTreeForm.text = this.getLibraryText(this.learningTreeForm.library )
         const {data} = await this.learningTreeForm.post('/api/learning-trees/info')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.learningTreeId = data.learning_tree_id
           this.title = this.learningTreeForm.title
           this.description = this.learningTreeForm.description
+          this.assessmentLibrary =  this.learningTreeForm.text
+          this.assessmentPageId = this.learningTreeForm.page_id
+          flowy.import(JSON.parse(data.learning_tree))
           this.$bvModal.hide('modal-learning-tree-details')
         }
         console.log(this.learningTreeId)
@@ -374,7 +407,7 @@ ${body}
         const {data} = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
         this.title = this.learningTreeForm.title
-        this.description  = this.learningTreeForm.description
+        this.description = this.learningTreeForm.description
         this.resetAll('modal-learning-tree-details')
 
       } catch (error) {
@@ -407,8 +440,10 @@ ${body}
         if (data.type === 'no_change') {
           return false
         }
-        if (data.type === 'success'){
+        if (data.type === 'success') {
           document.getElementById('blocklist').innerHTML = ''
+          this.pageId = ''
+          this.library = null
         }
         this.$noty[data.type](data.message)
       } catch (error) {
@@ -468,7 +503,7 @@ ${body}
       }
       this.validatingRemediation = false
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-
+      let libraryText = this.getLibraryText(this.library)
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <input type="hidden" name='page_id' value="${this.pageId}">
@@ -482,8 +517,7 @@ ${body}
           <div class='blockydiv'>
           </div>
           <div class="blockin-info">
-          <span class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
-      this.library.slice(1)}</span>,
+          <span class="blockdesc">Library: <span class="library d-none">${this.library}</span><span class="library-text">${libraryText}</span>,
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
           <span class="open-student-learning-objective-modal">Student Learning Objectives</span>
