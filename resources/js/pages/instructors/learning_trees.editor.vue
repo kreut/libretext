@@ -12,8 +12,8 @@
       <b-form ref="form">
         <b-form-group
           id="learning_tree_title"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="5"
+          label-cols-lg="4"
           label="Title"
           label-for="title"
         >
@@ -30,8 +30,8 @@
 
         <b-form-group
           id="description"
-          label-cols-sm="4"
-          label-cols-lg="3"
+          label-cols-sm="5"
+          label-cols-lg="4"
           label="Description"
           label-for="description"
         >
@@ -44,6 +44,35 @@
           >
           </b-form-textarea>
           <has-error :form="learningTreeForm" field="description"></has-error>
+        </b-form-group>
+        <b-form-group
+          id="assessment_library"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Assessment Library"
+          label-for="assessment_library"
+        >
+            <b-form-select v-model="assessmentLibrary" :options="libraryOptions"></b-form-select>
+        </b-form-group>
+        <b-form-group>
+          <b-form-group
+            id="page_id"
+            label-cols-sm="5"
+            label-cols-lg="4"
+            label="Page Id"
+            label-for="page_id"
+          >
+          <b-form-input
+            id="page_id"
+            v-model="assessmentPageId"
+            type="text"
+            style="width: 90px"
+            :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
+            @keydown="learningTreeForm.errors.clear('page_id')"
+          >
+          </b-form-input>
+          <has-error :form="learningTreeForm" field="page_id"></has-error>
+          </b-form-group>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -110,6 +139,8 @@ export default {
       title: '',
       description: '',
     }),
+    assessmentLibrary: null,
+    assessmentPageId: null,
     touchingBlock: false,
     validatingRemediation: false,
     panelHidden: false,
@@ -375,6 +406,9 @@ ${body}
         console.log(data)
         if (data.type === 'no_change') {
           return false
+        }
+        if (data.type === 'success'){
+          document.getElementById('blocklist').innerHTML = ''
         }
         this.$noty[data.type](data.message)
       } catch (error) {
