@@ -135,6 +135,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/learning-trees/info','LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}','LearningTreeController@updateLearningTreeInfo');
 
+    Route::post('/logs', 'LogController@store');
+
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}','LearningTreeController@validateRemediation');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');

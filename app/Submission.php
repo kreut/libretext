@@ -124,6 +124,16 @@ class Submission extends Model
             }
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
+            $log = new \App\Log();
+            $request->action = 'submit-question-response';
+            $request->data =  ['assignment_id' => $data['assignment_id'],
+                    'question_id' => $data['question_id']];
+            $log->store($request);
+            Submission::create(['user_id' => $data['user_id'],
+                'assignment_id' => $data['assignment_id'],
+                'question_id' => $data['question_id'],
+                'submission' => $data['submission'],
+                'score' => $data['score']]);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

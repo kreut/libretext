@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\CourseAccessCode;
 use App\Course;
 use App\Exceptions\Handler;
+use \Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;

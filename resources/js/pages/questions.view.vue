@@ -144,7 +144,8 @@
       <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
         <b-alert variant="info" show>
           <strong>This problem is locked.
-            Either students have already submitted responses to this assignment or the solutions have been released. You can view the questions but you cannot add or remove them.
+            Either students have already submitted responses to this assignment or the solutions have been released. You
+            can view the questions but you cannot add or remove them.
             In addition, you cannot update the number of points per question.</strong></b-alert>
       </div>
 
@@ -674,6 +675,7 @@ export default {
         this.$noty.error(error.message)
       }
     }
+    this.logVisitAssessment(this.assignmentId,this.questions[0].id)
   },
   beforeDestroy() {
     window.removeEventListener('message', this.receiveMessage)
@@ -788,7 +790,6 @@ export default {
       }
     },
     isInstructor() {
-      console.log(this.user.role)
       return (this.user.role === 2)
     },
     hideResponse() {
@@ -989,6 +990,7 @@ export default {
         this.loadedTitles = true
 
       }
+      this.logVisitAssessment(this.assignmentId,this.questions[this.currentPage-1].id)
     },
     explore(library, pageId) {
       this.showQuestion = false
@@ -1106,6 +1108,18 @@ export default {
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
       }
       this.iframeLoaded = true
+    },
+    logVisitAssessment(assignmentId, questionId) {
+      try {
+        if (this.user.role === 3) {
+          axios.post('/api/logs', {
+            'action': 'visit-assessment',
+            'data': {'assignment_id': assignmentId, 'question_id': questionId}
+          })
+        }
+      } catch (error) {
+        console.log(error.message)
+      }
     },
     getQuestionsForAssignment() {
       this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
