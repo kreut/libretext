@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://adapt.libretexts.org/assets/css/query.css?v1">
+<link rel="stylesheet" href="https://adapt.libretexts.org/assets/css/query.css?v=2">
 <script type="text/javascript" src="https://adapt.libretexts.org/assets/js/hostIFrameResizer.js"></script>
 <?php
 if (isset($extras['glMol'])  && $extras['glMol']) {
@@ -17,9 +17,6 @@ if (isset($extras['glMol'])  && $extras['glMol']) {
 <?php }
 if (isset($extras['MathJax'])  && $extras['MathJax']) {
     ?>
-    <script type="text/javascript">
-        MathJax.Hub.Config({});
-    </script>
     <script type="text/x-mathjax-config">/*<![CDATA[*/
   MathJax.Ajax.config.path["mhchem"] =
             "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
