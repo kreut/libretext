@@ -486,7 +486,7 @@
         <b-table class="header-high-z-index"
                  striped
                  hover
-                 sticky-header="600px"
+                 :sticky-header="false"
                  :fields="fields"
                  :items="assignments">
           <template v-slot:cell(name)="data">
