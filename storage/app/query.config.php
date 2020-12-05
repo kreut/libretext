@@ -7,13 +7,13 @@ if (isset($extras['glMol'])  && $extras['glMol']) {
             integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
             crossorigin="anonymous"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
 <?php }
 if (isset($extras['MathJax'])  && $extras['MathJax']) {
     ?>
