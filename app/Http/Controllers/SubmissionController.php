@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
+use App\LtiLaunch;
+use App\LtiGradePassback;
 use Carbon\Carbon;
 use Carbon\CarbonImmutable;
 use \Exception;
@@ -25,7 +27,7 @@ class SubmissionController extends Controller
     public function store(StoreSubmission $request, Assignment $Assignment, Score $score)
     {
         $Submission = new Submission();
-        return $Submission->store($request, new Submission(), $Assignment, $score);
+        return $Submission->store($request, new Submission(), $Assignment, $score, new LtiLaunch(), new LtiGradePassback());
 
     }
 

@@ -26,6 +26,46 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+    public function getCoursesAndAssignments(Request $request)
+    {
+
+        $response['type'] = 'error';
+        $courses = [];
+        $assignments = [];
+        try {
+            $results = DB::table('courses')
+                ->join('assignments', 'courses.id', '=', 'assignments.course_id')
+                ->where('courses.user_id', $request->user()->id)
+                ->select(DB::raw('courses.id AS course_id'),
+                    DB::raw('courses.name AS course_name'),
+                    DB::raw('assignments.id AS assignment_id'),
+                    DB::raw('assignments.name AS assignment_name'))
+                ->orderBy('courses.start_date', 'desc')
+                ->get();
+            $course_ids = [];
+            foreach ($results as $key => $value) {
+                $course_id = $value->course_id;
+                if (!in_array($course_id, $course_ids)) {
+                    $courses[] = ['value' => $course_id, 'text' => $value->course_name];
+                    $course_ids[] = $course_id;
+                }
+                $assignments[$course_id][] = ['value' => $value->assignment_id, 'text' => $value->assignment_name];
+            }
+
+            $response['type'] = 'success';
+            $response['courses'] = $courses;
+            $response['assignments'] = $assignments;
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get your courses and assignments.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     /**
      * @param Request $request
      * @param Course $course
@@ -180,9 +220,9 @@ class CourseController extends Controller
         }
         try {
             $response = $assignmentGroupWeight->validateCourseWeights($course);
-           if ($response['type'] === 'error'){
-               return $response;
-           }
+            if ($response['type'] === 'error') {
+                return $response;
+            }
             $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
             $course->save();
 

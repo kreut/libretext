@@ -48,10 +48,10 @@ class EnrollmentController extends Controller
 
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param StoreEnrollment $request
+     * @param Enrollment $enrollment
+     * @return array
+     * @throws Exception
      */
     public function store(StoreEnrollment $request, Enrollment $enrollment)
     {

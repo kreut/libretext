@@ -24,12 +24,19 @@ class AssignmentPolicy
 
     }
 
+    public function linkAssignmentToLMS(User $user, Assignment $assignment){
+        return (int) $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to link this assignment.');
+
+
+    }
     public function order(User $user, Assignment $assignment, Course $course)
     {
 
         return (int) $course->user_id === $user->id
             ? Response::allow()
-            : Response::deny('You are not allowed re-order the assignments in that course.');
+            : Response::deny('You are not allowed to re-order the assignments in that course.');
 
     }
 

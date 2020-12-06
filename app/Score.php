@@ -17,7 +17,11 @@ class Score extends Model
 
     protected $fillable = ['user_id', 'assignment_id', 'score'];
 
-    public function updateAssignmentScore(int $student_user_id, int $assignment_id, string $assessment_type)
+    public function updateAssignmentScore(int $student_user_id,
+                                          int $assignment_id,
+                                          string $assessment_type,
+                                          LtiLaunch $ltiLaunch,
+                                          LtiGradePassback $ltiGradePassback)
     {
 
         //files are for extra credit
@@ -25,8 +29,10 @@ class Score extends Model
         //loop through all of the submitted questions
         //loop through all of the submitted files
         //for each question add the submitted question score + submitted file score and max out at the score for the question
-
-        $assignment_questions = DB::table('assignment_question')->where('assignment_id', $assignment_id)->get();
+        $assignment = Assignment::find($assignment_id);
+        $assignment_questions = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->get();
 
         $assignment_score = 0;
         //initialize
@@ -77,6 +83,7 @@ class Score extends Model
             ->updateOrInsert(
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
                 ['score' => $assignment_score, 'updated_at' => Carbon::now()]);
+        $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $student_user_id, $assignment_score, $ltiLaunch);
 
     }
 

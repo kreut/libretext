@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\FinalGrade;
+use App\LtiGradePassback;
+use App\LtiLaunch;
 use App\Score;
 use App\Course;
 use App\SubmissionFile;
@@ -537,7 +538,12 @@ class ScoreController extends Controller
      * @throws Exception
      */
     public
-    function update(Request $request, Assignment $assignment, User $user, Score $score)
+    function update(Request $request,
+                    Assignment $assignment,
+                    User $user,
+                    Score $score,
+                    LtiLaunch $ltiLaunch,
+                    LtiGradePassback $ltiGradePassback)
     {
 
         $response['type'] = 'error';
@@ -550,28 +556,29 @@ class ScoreController extends Controller
         }
 
 
-                $validator = Validator::make($request->all(), [
-                    'score' => 'required|numeric|min:0|not_in:0'
-                ]);
+        $validator = Validator::make($request->all(), [
+            'score' => 'required|numeric|min:0|not_in:0'
+        ]);
 
-                if ($validator->fails()) {
-                    $response['message'] = $validator->errors()->first('score');
-                    return $response;
-                }
-
+        if ($validator->fails()) {
+            $response['message'] = $validator->errors()->first('score');
+            return $response;
+        }
 
 
         try {
-
+            DB::beginTransaction();
             Score::updateOrCreate(
                 ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['score' => $request->score]
             );
-
+            $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $user->id, $request->score, $ltiLaunch);
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The score has been updated.';
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";

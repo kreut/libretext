@@ -19,18 +19,27 @@ use Illuminate\Support\Facades\Route;
 Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
-Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
-Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
+
+Route::get('/lti/user','LTIController@getUser');
+Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
+Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
+Route::get('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
+
+Route::post('/lti/configure-2/{launchId}', 'LTIController@configure');
+Route::get('/lti/configure-2/{launchId}', 'LTIController@configure');
 
 
-Route::post('/lti/game', 'GameController@game');
-Route::get('/lti/game', 'GameController@game');
+Route::get('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
+Route::post('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
+
+Route::post('/lti/game', 'LTIController@authenticationResponse');
+Route::get('/lti/game', 'LTIController@authenticationResponse');
 
 Route::post('/lti/login', 'GameController@login');
 Route::get('/lti/login', 'GameController@login');
 
-Route::post('/lti/configure/{launchId}', 'GameController@configure');
-Route::get('/lti/configure/{launchId}', 'GameController@configure');
+Route::post('/lti/configure/{launchId}', 'LTIController@configure');
+Route::get('/lti/configure/{launchId}', 'LTIController@configure');
 
 
 Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
@@ -81,6 +90,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::post('/courses/import/{course}', 'CourseController@import');
 

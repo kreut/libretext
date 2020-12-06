@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Cutup;
+use App\LtiLaunch;
+use App\LtiGradePassback;
 use App\Score;
 use App\User;
 use App\AssignmentFile;
@@ -137,7 +139,13 @@ class SubmissionFileController extends Controller
 
     }
 
-    public function storeScore(StoreScore $request, AssignmentFile $assignmentFile, User $user, Assignment $Assignment, Score $score)
+    public function storeScore(StoreScore $request,
+                               AssignmentFile $assignmentFile,
+                               User $user,
+                               Assignment $Assignment,
+                               Score $score,
+                               LtiLaunch $ltiLaunch,
+                               LtiGradePassback $ltiGradePassback)
     {
 
 
@@ -179,8 +187,7 @@ class SubmissionFileController extends Controller
             DB::beginTransaction();
 
             $this->updateTextFeedbackOrScore('score', $data['score'], $student_user_id, $assignment_id, $question_id);
-            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type);
-
+            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type, $ltiLaunch, $ltiGradePassback);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The score has been saved.';

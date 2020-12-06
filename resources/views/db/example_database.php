@@ -14,7 +14,7 @@ foreach ($reg_configs as $key => $reg_config) {
 class Example_Database implements LTI\Database {
     public function find_registration_by_issuer($iss) {
         $iss = 'https://dev-canvas.libretexts.org';
-        $_SESSION['iss'][$iss]['auth_server'] = 'https://dev-canvas.libretext.org';
+        $_SESSION['iss'][$iss]['auth_server'] = 'https://dev-canvas.libretexts.org';
 
         $_SESSION['iss'][$iss]['kid'] = '58f36e10-c1c1-4df0-af8b-85c857d1634f';
         $_SESSION['iss'][$iss]['client_id'] = '10000000000017';

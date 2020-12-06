@@ -7,6 +7,8 @@ use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Libretext;
+use App\LtiLaunch;
+use App\LtiGradePassback;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
@@ -52,7 +54,8 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
-    public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question,AssignmentSyncQuestion $assignmentSyncQuestion){
+    public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
         $response['type'] = 'error';
         $authorized = Gate::inspect('storeOpenEndedSubmissionDefaultText', [$assignmentSyncQuestion, $assignment, $question]);
 
@@ -63,10 +66,10 @@ class AssignmentSyncQuestionController extends Controller
 
 
         try {
-           DB::table('assignment_question')
-               ->where('assignment_id', $assignment->id)
-               ->where('question_id', $question->id)
-               ->update(['open_ended_default_text'=> $request->open_ended_default_text]);
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['open_ended_default_text' => $request->open_ended_default_text]);
             $response['message'] = 'The default text has been updated.';
             $response['type'] = 'success';
 
@@ -76,7 +79,6 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = "There was an error saving the default open ended text.  Please try again or contact us for assistance.";
         }
         return $response;
-
 
 
     }
@@ -270,7 +272,7 @@ class AssignmentSyncQuestionController extends Controller
                     $columns['title'] = $contents['@title'] ?? 'Private title: contact us';
                     Question::where('id', $value->question_id)->update(['title' => $columns['title']]);
                 }
-                if ($value->open_ended_submission_type === 'text'){
+                if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
                 }
                 $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? ucwords($value->open_ended_submission_type) : 'N/A';
@@ -351,15 +353,15 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $data = $request->validated();
             $open_ended_text_editor = null;
-            if ((strpos($data['open_ended_submission_type'],'text') !== false)){
-                $open_ended_text_editor = str_replace(' text', '',$data['open_ended_submission_type']);
+            if ((strpos($data['open_ended_submission_type'], 'text') !== false)) {
+                $open_ended_text_editor = str_replace(' text', '', $data['open_ended_submission_type']);
                 $data['open_ended_submission_type'] = 'text';
 
             }
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update(['open_ended_submission_type' => $data['open_ended_submission_type'],
-                    'open_ended_text_editor'=> $open_ended_text_editor]);
+                    'open_ended_text_editor' => $open_ended_text_editor]);
             $response['type'] = 'success';
             $response['message'] = "The open-ended submission type has been updated.";
         } catch (Exception $e) {
@@ -422,7 +424,7 @@ class AssignmentSyncQuestionController extends Controller
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                     'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                    'open_ended_text_editor' =>  $assignment->default_open_ended_text_editor]);
+                    'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.  ';
@@ -442,7 +444,7 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function destroy(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function destroy(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
     {
 
 
@@ -457,7 +459,7 @@ class AssignmentSyncQuestionController extends Controller
 
         try {
             DB::beginTransaction();
-            $this->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
+            $this->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->first()
@@ -501,11 +503,15 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment, Question $question)
+    public function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment, Question $question, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
     {
 
         $scores = DB::table('scores')->where('assignment_id', $assignment->id)
             ->select('user_id', 'score')
+            ->get();
+
+        $lti_launches = DB::table('lti_launches')->where('assignment_id', $assignment->id)
+            ->select('user_id', 'launch_id')
             ->get();
 
         //just remove the one...
@@ -526,6 +532,10 @@ class AssignmentSyncQuestionController extends Controller
         foreach ($submission_files as $submission_file) {
             $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
         }
+        $lti_launches_by_user_id = [];
+        foreach ($lti_launches as $lti_launch) {
+            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch->launch_id;
+        }
         foreach ($scores as $score) {
             $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
             $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
@@ -533,6 +543,9 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('scores')->where('assignment_id', $assignment->id)
                 ->where('user_id', $score->user_id)
                 ->update(['score' => $new_score]);
+            if (isset($lti_launches_by_user_id[$score->user_id])) {
+                $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $score->user_id, $new_score, $ltiLaunch);
+            }
         }
 
     }

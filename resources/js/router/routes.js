@@ -11,6 +11,7 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/instructors/link-assignment-to-lms/:resourceLinkId', name: 'link_assignment_to_lms', component: page('instructors/link_assignment_to_lms.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
   { path: '/assignments/:assignmentId/learning-trees/get', name: 'learning_trees.get', component: page('instructors/learning_trees.get.vue') },
   { path: '/learning-trees/:learningTreeId/get', name: 'learning_tree.get', component: page('instructors/learning_tree.get.vue') },
@@ -27,6 +28,7 @@ let admin_paths = [
   { path: '/login-as', name: 'login.as', component: page('admin/login.as.vue') }
 ]
 let general_paths  = [
+  { path: '/init-lms-assignment/:assignmentId', name: 'init_lms_assignment', component: page('init_lms_assignment.vue') },
   { path: '/question-in-iframe', name: 'question_in_iframe', component: page('iframe_test.vue') },
   { path: '/assignments/:assignmentId/questions/view/:questionId?/:shownSections?', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },

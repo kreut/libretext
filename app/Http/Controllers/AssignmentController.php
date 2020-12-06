@@ -951,6 +951,7 @@ class AssignmentController extends Controller
             DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
+            DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
             $course = $assignment->course;
             $number_with_the_same_assignment_group_weight = DB::table('assignments')
                 ->where('course_id', $course->id)

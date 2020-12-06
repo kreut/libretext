@@ -24,7 +24,12 @@ class Submission extends Model
     protected $guarded = [];
 
 
-    public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
+    public function store(StoreSubmission $request,
+                          Submission $submission,
+                          Assignment $Assignment,
+                          Score $score,
+                          LtiLaunch $ltiLaunch,
+                          LtiGradePassback $ltiGradePassback)
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -32,8 +37,6 @@ class Submission extends Model
         // $data = $request->validated();//TODO: validate here!!!!!
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
         // Log::info(print_r($request->all(), true));
-
-
         $data = $request;
 
         $data['user_id'] = Auth::user()->id;
@@ -181,7 +184,9 @@ class Submission extends Model
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
-            $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type);
+
+            $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type, $ltiLaunch, $ltiGradePassback);
+
 
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
             if (env('DB_DATABASE') === "test_libretext") {

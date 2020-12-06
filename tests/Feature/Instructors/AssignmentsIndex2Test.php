@@ -86,7 +86,7 @@ class AssignmentsIndex2Test extends TestCase
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->course->id}/order", [
             'ordered_assignments' => [$this->assignment_2->id, $this->assignment->id]
-        ])->assertJson(['message' => 'You are not allowed re-order the assignments in that course.']);
+        ])->assertJson(['message' => 'You are not allowed to re-order the assignments in that course.']);
     }
 
     /** @test */

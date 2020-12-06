@@ -2,93 +2,188 @@
 
 namespace App\Http\Controllers;
 
+use App\Exceptions\Handler;
+use App\LtiLaunch;
+use App\User;
+use Exception;
+use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use \IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
-use GuzzleHttp\Client;
+use App\Assignment;
+
 
 class LTIController extends Controller
 {
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function getUser()
+    {
+        $response['type'] = 'error';
+        try {
+            $user = User::where('id', session()->get('lti_user_id'))->firstOrFail();
+            $response['token'] = \JWTAuth::fromUser($user);
+            $response['type'] = 'success';
+        } catch (ModelNotFoundException $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "It looks like your LTI user id was not valid.  Please try the process again or contact us for assistance.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not link up your LMS user account with Adapt.  Please try again or contact us for assistance.';
+
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function linkAssignmentToLMS(Request $request, Assignment $assignment)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('linkAssignmentToLMS', $assignment);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $resource_link_id = $request->resource_link_id;
+            DB::table('assignments')
+                ->where('id', $assignment->id)
+                ->update(['lms_resource_link_id' => $resource_link_id]);
+
+            $response['assignment_id'] = $assignment->id;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error logging you in via LTI.  Please try again by refreshing the page or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
     public function initiateLoginRequest(Request $request)
     {
 
-        $launch_url = "https://dev.adapt.libretexts.org/api/lti/redirect-uri";
-        $private_key = 'yO5jnUcEjsvopAkASbW4POugHwTpIxTSs3UhKpn8Hx7dMz0g3RVprbPR7RbQKgzs';
-        $client_id = '10000000000009';
-        LTI\LTI_OIDC_Login::new(new LTIDatabase($request, $private_key, $client_id))
-            ->do_oidc_login_redirect($launch_url, $request->all())
+        // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
+
+
+        LTI\LTI_OIDC_Login::new(new LTIDatabase())
+            ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-2", $request->all())
             ->do_redirect();
-        /*
-            $iss = $request->iss;
-        $login_hint = $request->login_hint;
-        $target_link_uri = $request->target_link_uri;
-        $lti_message_hint = $request->lti_message_hint;
-        $state = uniqid('nonce');
 
-       // https://canvas.instructure.com/api/lti/authorize_redirect
-      //  https://dev-canvas.libretexts.org/api/lti/authorize_redirect
-
-        $state = uniqid('nonce');
-        $redirect_uri = 'https://dev.adapt.libretexts.org/api/lti/redirect-uri';
-        //header("Location: https://dev-canvas.libretexts.org/api/lti/authorize",true,302);exit;
-        //$iss = "https://dev-canvas.libretexts.org";
-$client = new Client();
-$client->request('GET',"https://dev-canvas.libretexts.org/api/lti/authorize?scope=openid&prompt=none&response_mode=form_post&nonce=1234&response_type=id_token&redirect_uri=$redirect_uri&client_id=$client_id&iss=$iss&login_hint=$login_hint&target_link_uri=$target_link_uri&lti_message_hint=$lti_message_hint&state=$state");
-exit;
-
-/*
-        LTI\LTI_OIDC_Login::new(new LTIDatabase($request, $private_key))
-            ->do_oidc_login_redirect($launch_url, $request->all())
-            ->do_redirect();*/
     }
 
-    public function authenticationResponse(Request $request){
-       //dd($request->all());
-        $private_key = 'yO5jnUcEjsvopAkASbW4POugHwTpIxTSs3UhKpn8Hx7dMz0g3RVprbPR7RbQKgzs';
-        $client_id = '10000000000009';
-        $launch = LTI\LTI_Message_Launch::new(new LTIDatabase($request, $private_key, $client_id))
-            ->validate();
-        //$launch = LTI\LTI_Message_Launch::from_cache($_REQUEST['launch_id'], new Example_Database());
-        dd($request->all());
-        dd($launch->is_resource_launch() . ' ' .$launch->is_deep_link_launch() . ' ' . $launch->is_submission_review_launch());
-        if (!$launch->is_deep_link_launch()) {
-            throw new \Exception("Must be a deep link!");
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param User $user
+     * @param LtiLaunch $ltiLaunch
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @throws Exception
+     */
+    public function authenticationResponse(Request $request, Assignment $assignment, User $user, LtiLaunch $ltiLaunch)
+    {
+        try {
+            $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
+                ->validate();
+
+            $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
+            $launch_id = $launch->get_launch_id();
+
+
+
+            $email = $launch->get_launch_data()['email'];
+
+            $lti_user = $user->where('email', $email)->first();
+            if (!$lti_user) {
+                $lti_user = User::create([
+                    'first_name' => $launch->get_launch_data()['first_name'],
+                    'last_name' => $launch->get_launch_data()['given_name'],
+                    'email' => $email,
+                    'role' => 3,
+                    'time_zone' => 'America/Los_Angeles',
+                    'email_verified_at' => now(),
+                ]);
+            }
+
+            session()->put('lti_user_id', $lti_user->id);
+
+            //  file_put_contents(base_path() . '//lti_log.text', "Launch:" . print_r($launch->get_launch_data(), true) . "\r\n", FILE_APPEND);
+            //  file_put_contents(base_path() . '//lti_log.text', "Launch:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
+
+
+            $linked_assignment = $assignment->where('lms_resource_link_id', $resource_link_id)->first();
+
+            if ($linked_assignment) {
+                if ($lti_user->role === 3) {
+                    $lti_launch_by_user_and_assignment = $ltiLaunch
+                        ->where('user_id', $lti_user->id)
+                        ->where('assignment_id', $linked_assignment->id)
+                        ->first();
+
+                    if (!$lti_launch_by_user_and_assignment) {
+                        $lti_launch_by_user_and_assignment = new LtiLaunch();
+                        $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
+                        $lti_launch_by_user_and_assignment->assignment_id = $linked_assignment->id;
+                        $lti_launch_by_user_and_assignment->launch_id = $launch_id;
+                        $lti_launch_by_user_and_assignment->save();
+                    } else {
+                        $ltiLaunch
+                            ->where('user_id', $lti_user->id)
+                            ->where('assignment_id', $linked_assignment->id)
+                            ->update(['launch_id' => $launch_id]);
+                    }
+
+                    $course_id = $linked_assignment->course_id;
+                    //enroll them in the course
+                    $enrollments = $lti_user->enrollments->pluck('id')->toArray();
+                    if (!in_array($course_id, $enrollments)) {
+                        $lti_user->enrollments()->attach(['course_id' => $course_id]);
+                    }
+                }
+                return redirect("/init-lms-assignment/$linked_assignment->id");
+            } else {
+                return redirect("/instructors/link-assignment-to-lms/$resource_link_id");
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            echo "There was an error logging you in via LTI.  Please try again by refreshing the page or contact us for assistance.";
         }
+
+    }
+
+    public function configure($launch_id)
+    {
+
+        $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
+        if (!$launch->is_deep_link_launch()) {
+            echo "Not a deep link.";
+            exit;
+        }
+        file_put_contents(base_path() . '//lti_log.text', "Launch id: $launch_id", FILE_APPEND);
         $resource = LTI\LTI_Deep_Link_Resource::new()
-            ->set_url('https://dev.adapt.libretexts.org/api/lti/final-target')
-            ->set_custom_params(['difficulty' => $_REQUEST['diff']])
-            ->set_title('Breakout ' . $_REQUEST['diff'] . ' mode!');
+            ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-2")
+            ->set_title('Adapt');
+        file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
         $launch->get_deep_link()
             ->output_response_form([$resource]);
-
     }
 
-    public function finalTarget(Request $request){
-        dd($request->all());
-
-    }
-
-
-    /*
-    To complete authentication, tools are expected to send back an authentication request to an "OIDC Authorization end-point". This can be a GET or POST. For cloud-hosted Canvas, regardless of the domain used by the client, the endpoint is always:
-
-    https://canvas.instructure.com/api/lti/authorize_redirect (if launched from a production environment)
-    https://canvas.beta.instructure.com/api/lti/authorize_redirect (if launched from a beta environment)
-    https://canvas.test.instructure.com/api/lti/authorize_redirect (if launched from a test environment)
-    Among the required variables the request should include:
-
-    a redirect_uri, which must match at least one configured on the developer key.
-    a client_id that matches the developer key. This must be registered in the tool before the launch occurs.
-    the same login_hint that Canvas sent in Step 1.
-    a state parameter the tool will use to validate the request in Step 4.*/
-
-
-//'client_id' =>10000000000002
-    /**array:4 [▼
-     * "iss" => "https://canvas.instructure.com"
-     * "login_hint" => "f326d6a8a55f30f47b2480586f97991ab9e602bb"
-     * "target_link_uri" => "https://dev.adapt.libretexts.org/api/lti/target-link-uri"
-     * "lti_message_hint" => "eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ2ZXJpZmllciI6bnVsbCwiY2FudmFzX2RvbWFpbiI6ImxvY2FsaG9zdCIsImNvbnRleHRfdHlwZSI6IkNvdXJzZSIsImNvbnRleHRfaWQiOjEwMDAwMDAwMDAwMDAxLCJleHAiOjE2MDU4MTgyMjl9.Ln6VDW8sY23mYh_AexlEBon3YGfQ07kmv6SAu8pN1S8 ◀"
-     * ]*/
 
 }
