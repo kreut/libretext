@@ -98,13 +98,15 @@ class CourseController extends Controller
         try {
             $response['course'] = ['name' => $course->name,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
-                'letter_grades_released' => $course->finalGrades->letter_grades_released];
+                'letter_grades_released' => $course->finalGrades->letter_grades_released,
+                'graders' => $course->graders,
+                'access_code' => $course->accessCodes->access_code];
 
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error retrieving your courses.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error retrieving your course.  Please try again or contact us for assistance.";
         }
         return $response;
 

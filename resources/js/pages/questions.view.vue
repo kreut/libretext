@@ -1,33 +1,35 @@
 <template>
   <div>
-    <Email ref="email"
-           extraEmailModalText="Before you contact your grader, please be sure to look at the solutions first, if they are available."
-           id="contact-grader-modal"
-           v-bind:fromUser="user"
+    <Email id="contact-grader-modal"
+           ref="email"
+           extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
+           :from-user="user"
            title="Contact Grader"
            type="contact_grader"
-           v-bind:subject="getSubject()"
-    ></Email>
+           :subject="getSubject()"
+    />
 
     <b-modal
       id="modal-upload-file"
       ref="modal"
       :title="getModalUploadFileTitle()"
-      @ok="handleOk"
       ok-title="Submit"
       size="lg"
       :hide-footer="true"
+      @ok="handleOk"
     >
-      <p> <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
-        solution at a time. If you upload a full PDF, students will be able to both download a full solution key
+      <p>
+        <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
+          solution at a time. If you upload a full PDF, students will be able to both download a full solution key
           and download solutions on a per question basis.</span>
         <span v-if="user.role !==2">
-        Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
-        question file submission at a time, especially helpful if your submissions are in a non-PDF format.
-      </span></p>
+          Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
+          question file submission at a time, especially helpful if your submissions are in a non-PDF format.
+        </span>
+      </p>
       <b-form ref="form">
         <b-form-group>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" v-on:click="showCutups = true">
+          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" @click="showCutups = true">
             Upload
             <span v-if="user.role === 2">question solutions</span>
             <span v-if="user.role !== 2">your question file submissions</span>
@@ -41,9 +43,10 @@
         </b-form-group>
         <div v-if="uploadLevel === 'assignment' && showCutups">
           <hr>
-          <p>Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
+          <p>
+            Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
             <span v-if="user.role !== 2">file submission for</span> this question or
-            <a href="#" v-on:click="showCutups = false">
+            <a href="#" @click="showCutups = false">
               upload a new PDF</a>.
           </p>
           <b-container class="mb-2">
@@ -63,26 +66,25 @@
                     type="text"
                     :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
                     @keydown="cutupsForm.errors.clear('chosen_cutups')"
-                  >
-                  </b-form-input>
-                  <has-error :form="cutupsForm" field="chosen_cutups"></has-error>
+                  />
+                  <has-error :form="cutupsForm" field="chosen_cutups" />
                 </b-col>
                 <b-col lg="8" class="ml-3">
                   <b-row>
                     <b-button class="mt-1" size="sm" variant="outline-primary"
-                              v-on:click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)">
+                              @click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)"
+                    >
                       Set As <span v-if="user.role === 2">Solution</span>
                       <span v-if="user.role !== 2">Question File Submission</span>
                     </b-button>
                     <span v-show="settingAsSolution" class="ml-2">
-                    <b-spinner small type="grow"></b-spinner>
-                     Processing...
-                  </span>
+                      <b-spinner small type="grow" />
+                      Processing...
+                    </span>
                   </b-row>
                 </b-col>
               </b-form-row>
             </b-form-group>
-
           </b-container>
           <div class="overflow-auto">
             <b-pagination
@@ -94,20 +96,20 @@
               last-number
               size="sm"
               align="center"
-            ></b-pagination>
+            />
           </div>
           <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
             <b-embed
               type="iframe"
               aspect="16by9"
-              v-bind:src="cutups[currentCutup-1].temporary_url"
+              :src="cutups[currentCutup-1].temporary_url"
               allowfullscreen
-            ></b-embed>
+            />
           </div>
         </div>
         <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
           <b-row align-h="center">
-            <b-button class="ml-2" size="sm" variant="outline-primary" v-on:click="showCutups = true">
+            <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCutups = true">
               Use Current Cutups
             </b-button>
           </b-row>
@@ -120,33 +122,38 @@
             placeholder="Choose a file or drop it here..."
             drop-placeholder="Drop file here..."
             :accept="getSolutionUploadTypes()"
-          ></b-form-file>
+          />
           <div v-if="uploading">
-            <b-spinner small type="grow"></b-spinner>
+            <b-spinner small type="grow" />
             Uploading file...
           </div>
           <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">{{ uploadFileForm.errors.get(this.uploadFileType) }}
+          <div class="help-block invalid-feedback">
+            {{ uploadFileForm.errors.get(this.uploadFileType) }}
           </div>
           <b-container>
             <hr>
             <b-row align-h="end">
-              <b-button class="mr-2" v-on:click="handleCancel">Cancel</b-button>
-              <b-button variant="primary" v-on:click="handleOk">Submit</b-button>
+              <b-button class="mr-2" @click="handleCancel">
+                Cancel
+              </b-button>
+              <b-button variant="primary" @click="handleOk">
+                Submit
+              </b-button>
             </b-row>
           </b-container>
         </div>
       </b-form>
-
     </b-modal>
-    <PageTitle v-bind:title="this.title" v-if="questions !==['init']"></PageTitle>
+    <PageTitle v-if="questions !==['init']" :title="this.title" />
     <div v-if="questions.length && !initializing">
       <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
         <b-alert variant="info" show>
           <strong>This problem is locked.
             Either students have already submitted responses to this assignment or the solutions have been released. You
             can view the questions but you cannot add or remove them.
-            In addition, you cannot update the number of points per question.</strong></b-alert>
+            In addition, you cannot update the number of points per question.</strong>
+        </b-alert>
       </div>
 
       <div v-if="questions.length">
@@ -154,16 +161,23 @@
           <b-container>
             <b-col>
               <div v-if="source === 'a' && scoring_type === 'p'">
-                <div class="text-center"><h4>This assignment is worth {{ totalPoints.toString() }} points.</h4></div>
-                <div class="text-center" v-if="!isInstructor()"><h5>This question is worth
-                  {{ 1 * (questions[currentPage - 1].points) }}
-                  points. </h5>
+                <div class="text-center">
+                  <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
+                </div>
+                <div v-if="!isInstructor()" class="text-center">
+                  <h5>
+                    This question is worth
+                    {{ 1 * (questions[currentPage - 1].points) }}
+                    points.
+                  </h5>
                 </div>
 
-                <div class="text-center" v-if="isInstructor()">
+                <div v-if="isInstructor()" class="text-center">
                   <b-form-row>
-                    <b-col></b-col>
-                    <h5 class="mt-1">This question is worth</h5>
+                    <b-col />
+                    <h5 class="mt-1">
+                      This question is worth
+                    </h5>
                     <b-col lg="1">
                       <b-form-input
                         id="points"
@@ -173,32 +187,34 @@
                         placeholder=""
                         :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                         @keydown="questionPointsForm.errors.clear('points')"
-                      >
-                      </b-form-input>
-                      <has-error :form="questionPointsForm" field="points"></has-error>
+                      />
+                      <has-error :form="questionPointsForm" field="points" />
                     </b-col>
-                    <h5 class="mt-1">points.</h5>
+                    <h5 class="mt-1">
+                      points.
+                    </h5>
                     <b-col>
                       <div class="float-left">
                         <b-button variant="primary"
                                   size="sm"
                                   class="m-1"
-                                  @click="updatePoints((questions[currentPage-1].id))"
                                   :disabled="has_submissions_or_file_submissions || solutionsReleased"
-                        >Update Points
+                                  @click="updatePoints((questions[currentPage-1].id))"
+                        >
+                          Update Points
                         </b-button>
                       </div>
                     </b-col>
                   </b-form-row>
                 </div>
-
               </div>
             </b-col>
             <b-row class="text-center">
               <b-col>
                 <div v-if="timeLeft>0">
                   <countdown :time="timeLeft">
-                    <template slot-scope="props">Time Until due：{{ props.days }} days, {{ props.hours }} hours,
+                    <template slot-scope="props">
+                      Time Until due：{{ props.days }} days, {{ props.hours }} hours,
                       {{ props.minutes }} minutes, {{ props.seconds }} seconds.
                     </template>
                   </countdown>
@@ -207,22 +223,23 @@
                   <div v-if="(scoring_type === 'p')">
                     <div v-if="user.role === 3 && showScores">
                       <p>
-                            <span v-if="questions[currentPage-1].questionFiles">
-                You achieved a total score of
-                {{ questions[currentPage - 1].total_score * 1 }}
-                out of a possible
-                {{ questions[currentPage - 1].points * 1 }} points.</span>
+                        <span v-if="questions[currentPage-1].questionFiles">
+                          You achieved a total score of
+                          {{ questions[currentPage - 1].total_score * 1 }}
+                          out of a possible
+                          {{ questions[currentPage - 1].points * 1 }} points.</span>
                       </p>
                     </div>
                   </div>
                 </div>
                 <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
-                  <b-button variant="outline-primary" v-on:click="openShowAssignmentStatisticsModal()">View Question
+                  <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
+                    View Question
                     Statistics
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
-                  <b-button class="mt-1 mb-2 mr-2" v-on:click="getQuestionsForAssignment()" variant="success">
+                  <b-button class="mt-1 mb-2 mr-2" variant="success" @click="getQuestionsForAssignment()">
                     Add Questions
                   </b-button>
                 </div>
@@ -238,26 +255,31 @@
                     <b-card-text>
                       <ul>
                         <li>{{ scores.length }} student submissions</li>
-                        <li v-if="scores.length">Maximum score of {{ max }}</li>
-                        <li v-if="scores.length">Minimum score of {{ min }}</li>
-                        <li v-if="scores.length">Mean score of {{ mean }}</li>
-                        <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
+                        <li v-if="scores.length">
+                          Maximum score of {{ max }}
+                        </li>
+                        <li v-if="scores.length">
+                          Minimum score of {{ min }}
+                        </li>
+                        <li v-if="scores.length">
+                          Mean score of {{ mean }}
+                        </li>
+                        <li v-if="scores.length">
+                          Standard deviation of {{ stdev }}
+                        </li>
                       </ul>
                     </b-card-text>
                   </b-card>
                 </b-col>
                 <b-col>
-
                   <scores v-if="scores.length" class="border-1 border-info"
                           :chartdata="chartdata"
-                          :height="300" :width="300"></scores>
-
+                          :height="300" :width="300"
+                  />
                 </b-col>
               </b-row>
             </b-container>
           </b-modal>
-
-
         </div>
         <div class="overflow-auto">
           <b-pagination
@@ -267,63 +289,64 @@
             first-number
             last-number
             align="center"
-            v-on:input="changePage(currentPage)"
-          ></b-pagination>
+            @input="changePage(currentPage)"
+          />
         </div>
         <div v-if="isInstructor()">
           <b-container>
             <b-row>
               <div>
                 <b-button class="mt-1 mb-2"
-                          v-on:click="removeQuestion(currentPage)"
                           variant="danger"
                           :disabled="has_submissions_or_file_submissions || solutionsReleased"
-                >Remove Question
+                          @click="removeQuestion(currentPage)"
+                >
+                  Remove Question
                 </b-button>
                 <span v-if="questionFilesAllowed">
                   <span class="font-italic">Question File Upload Enabled: </span><toggle-button
-                  @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                  :width="60"
-                  :value="Boolean(questions[currentPage-1].questionFiles)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"/>
+                    :width="60"
+                    :value="Boolean(questions[currentPage-1].questionFiles)"
+                    :sync="true"
+                    :font-size="14"
+                    :margin="4"
+                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                    :labels="{checked: 'Yes', unchecked: 'No'}"
+                    @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
+                  />
                 </span>
               </div>
               <div>
-
-                <b-button class="mt-1 mb-2 ml-1"
+                <b-button v-b-modal.modal-upload-file
+                          class="mt-1 mb-2 ml-1"
                           variant="dark"
-                          v-on:click="openUploadFileModal(questions[currentPage-1].id)"
-                          v-b-modal.modal-upload-file>Upload Solution
+                          @click="openUploadFileModal(questions[currentPage-1].id)"
+                >
+                  Upload Solution
                 </b-button>
                 <span v-if="questions[currentPage-1].solution">
-                Uploaded solution:
+                  Uploaded solution:
                   <a href=""
-                     v-on:click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)">
+                     @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
+                  >
                     {{ questions[currentPage - 1].solution }}
                   </a>
-                  </span>
+                </span>
                 <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
               </div>
-
             </b-row>
             <hr>
           </b-container>
         </div>
-
 
         <b-container>
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="learningTreeAsList.length>0">
                 <b-alert show>
-
-                  <div class="text-center" v-if="!loadedTitles">
+                  <div v-if="!loadedTitles" class="text-center">
                     <h5>
-                      <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+                      <b-spinner variant="primary" type="grow" label="Spinning" />
                       Loading
                     </h5>
                   </div>
@@ -331,31 +354,36 @@
                     <div class="d-flex justify-content-between mb-2">
                       <h5>Need some help? Explore the topics below.</h5>
                       <b-button class="float-right" :disabled="showQuestion" variant="primary"
-                                v-on:click="viewOriginalQuestion">View Original
+                                @click="viewOriginalQuestion"
+                      >
+                        View Original
                         Question
                       </b-button>
-
                     </div>
                     <hr>
                     <b-container class="bv-example-row">
                       <b-row align-h="center">
                         <template v-for="remediationObject in this.learningTreeAsList">
-                          <b-col cols="4" v-for="(value, name) in remediationObject" v-bind:key="value.id"
-                                 v-if="(remediationObject.show) && (name === 'title')">
+                          <b-col v-for="(value, name) in remediationObject" v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
+                                 cols="4"
+                          >
                             <b-row align-h="center">
                               <b-col cols="4">
                                 <div class="h2 mb-0">
-                                  <b-icon variant="info" v-if="remediationObject.parent > 0"
-                                          v-on:click="back(remediationObject)" icon="arrow-up-square-fill">
-                                  </b-icon>
+                                  <b-icon v-if="remediationObject.parent > 0" variant="info"
+                                          icon="arrow-up-square-fill" @click="back(remediationObject)"
+                                  />
                                 </div>
                               </b-col>
                             </b-row>
                             <div class="border border-info mr-1 p-3 rounded">
                               <b-row align-h="center">
-                                <div class="mr-1 ml-2"><strong>{{ remediationObject.title }}</strong></div>
+                                <div class="mr-1 ml-2">
+                                  <strong>{{ remediationObject.title }}</strong>
+                                </div>
                                 <b-button size="sm" class="mr-2" variant="success"
-                                          v-on:click="explore(remediationObject.library, remediationObject.pageId)">
+                                          @click="explore(remediationObject.library, remediationObject.pageId)"
+                                >
                                   Go!
                                 </b-button>
                               </b-row>
@@ -365,9 +393,9 @@
                                 <b-col cols="4">
                                   <div class="h2 mb-0">
                                     <b-icon v-if="remediationObject.children.length"
-                                            v-on:click="more(remediationObject)" icon="arrow-down-square-fill"
-                                            variant="info">
-                                    </b-icon>
+                                            icon="arrow-down-square-fill" variant="info"
+                                            @click="more(remediationObject)"
+                                    />
                                   </div>
                                 </b-col>
                               </b-row>
@@ -382,42 +410,47 @@
 
               <div v-if="!iframeLoaded" class="text-center">
                 <h5>
-                  <b-spinner variant="primary" type="grow" label="Spinning"></b-spinner>
+                  <b-spinner variant="primary" type="grow" label="Spinning" />
                   Loading...
                 </h5>
               </div>
-              <iframe v-bind:id="remediationIframeId"
-                      allowtransparency="true" frameborder="0"
-                      v-bind:src="remediationSrc"
-                      style="width: 1px;min-width: 100%;"
-                      v-if="!showQuestion"
-                      v-on:load="showIframe(remediationIframeId)" v-show="iframeLoaded"
-              >
-              </iframe>
+              <iframe v-if="!showQuestion"
+                      v-show="iframeLoaded" :id="remediationIframeId"
+                      allowtransparency="true"
+                      frameborder="0"
+                      :src="remediationSrc"
+                      style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+              />
               <div v-if="showQuestion">
                 <div>
-                  <iframe :id="`non-technology-iframe-${currentPage}`"
+                  <iframe v-show="showQuestion && questions[currentPage-1].non_technology"
+                          :id="`non-technology-iframe-${currentPage}`"
                           allowtransparency="true"
                           frameborder="0"
-                          v-bind:src="questions[currentPage-1].non_technology_iframe_src"
+                          :src="questions[currentPage-1].non_technology_iframe_src"
                           style="width: 1px;min-width: 100%;"
-                          v-show="showQuestion && questions[currentPage-1].non_technology"
-                  >
-
-                  </iframe>
+                  />
                 </div>
-                <div v-html="questions[currentPage-1].technology_iframe"></div>
+                <div v-html="questions[currentPage-1].technology_iframe" />
               </div>
             </b-col>
-            <b-col cols="4" v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2">
+            <b-col v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
                 <b-card-text>
                   <ul>
                     <li>{{ scores.length }} student submissions</li>
-                    <li v-if="scores.length">Maximum score of {{ max }}</li>
-                    <li v-if="scores.length">Minimum score of {{ min }}</li>
-                    <li v-if="scores.length">Mean score of {{ mean }}</li>
-                    <li v-if="scores.length">Standard deviation of {{ stdev }}</li>
+                    <li v-if="scores.length">
+                      Maximum score of {{ max }}
+                    </li>
+                    <li v-if="scores.length">
+                      Minimum score of {{ min }}
+                    </li>
+                    <li v-if="scores.length">
+                      Mean score of {{ mean }}
+                    </li>
+                    <li v-if="scores.length">
+                      Standard deviation of {{ stdev }}
+                    </li>
                   </ul>
                 </b-card-text>
               </b-card>
@@ -426,19 +459,19 @@
                       :height="400"
               />
             </b-col>
-            <b-col cols="4" v-if="(user.role === 3)">
+            <b-col v-if="(user.role === 3)" cols="4">
               <b-row>
                 <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
-
                     <span v-if="questions[currentPage-1].solution">
-                    <span class="font-weight-bold">Solution:</span>
-                  <a href=""
-                     v-on:click.prevent="downloadSolutionFile('q', assignmentId,questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))">
-                    {{ standardizeFilename(questions[currentPage - 1].solution) }}
-                  </a>
-                  <br>
-                  </span>
+                      <span class="font-weight-bold">Solution:</span>
+                      <a href=""
+                         @click.prevent="downloadSolutionFile('q', assignmentId,questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))"
+                      >
+                        {{ standardizeFilename(questions[currentPage - 1].solution) }}
+                      </a>
+                      <br>
+                    </span>
                     <span class="font-weight-bold">Last submitted:</span> {{
                       questions[currentPage - 1].last_submitted
                     }}<br>
@@ -446,7 +479,8 @@
                       questions[currentPage - 1].student_response
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                      <span class="font-weight-bold">{{ submissionDataMessage }}</span></b-alert>
+                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                    </b-alert>
 
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
@@ -456,71 +490,77 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row class="mt-3 mb-3" v-if="questions[currentPage-1].questionFiles && (user.role === 3)">
+              <b-row v-if="questions[currentPage-1].questionFiles && (user.role === 3)" class="mt-3 mb-3">
                 <b-card header="Default" header-html="<h5>File Submission Information</h5>">
                   <b-card-text>
                     <strong> Uploaded file:</strong>
                     <span v-if="questions[currentPage-1].submission_file_exists">
-                  <a href=""
-                     v-on:click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)">
-                    {{ questions[currentPage - 1].original_filename }}
-                  </a>
-                  </span>
+                      <a href=""
+                         @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)"
+                      >
+                        {{ questions[currentPage - 1].original_filename }}
+                      </a>
+                    </span>
                     <span v-if="!questions[currentPage-1].submission_file_exists">
-                        No files have been uploaded
-                  </span><br>
+                      No files have been uploaded
+                    </span><br>
                     <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
                     <span v-if="showScores">
-                     <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
-                                        </span>
+                      <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                    </span>
                     <span v-if="solutionsReleased">
-                    <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
-                                      N/A
-                    <span v-if="questions[currentPage-1].file_feedback">
-                     <a href=""
-                        v-on:click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)">
-                    file_feedback
-                  </a>
-                  </span>
-                    <br>
-                    <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-                             </span>
-                                  </span>
-                    <span v-if="showScores">
-                    <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                 <span v-if="questions[currentPage - 1].grader_id">
-                      <b-button size="sm" variant="outline-primary"
-                                v-on:click="openContactGraderModal( questions[currentPage - 1].grader_id)">Contact Grader</b-button>
+                      <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
+                        N/A
+                        <span v-if="questions[currentPage-1].file_feedback">
+                          <a href=""
+                             @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)"
+                          >
+                            file_feedback
+                          </a>
+                        </span>
+                        <br>
+                        <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
                       </span>
-       </span><br>
+                    </span>
+                    <span v-if="showScores">
+                      <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      <span v-if="questions[currentPage - 1].grader_id">
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                        >Contact Grader</b-button>
+                      </span>
+                    </span><br>
                     <hr>
                     <div class="mt-2">
-                      <b-button variant="primary" class="float-right mr-2"
-                                v-on:click="openUploadFileModal(questions[currentPage-1].id)"
-                                v-b-modal.modal-upload-file>Upload New File
+                      <b-button v-b-modal.modal-upload-file variant="primary"
+                                class="float-right mr-2"
+                                @click="openUploadFileModal(questions[currentPage-1].id)"
+                      >
+                        Upload New File
                       </b-button>
                     </div>
                   </b-card-text>
                 </b-card>
-
               </b-row>
             </b-col>
           </b-row>
         </b-container>
-
-
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
-          <div class="mt-1 mb-2" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
-            <b-button variant="success">Get More Questions</b-button>
+          <div v-if="isInstructor()" class="mt-1 mb-2" @click="getQuestionsForAssignment()">
+            <b-button variant="success">
+              Get More Questions
+            </b-button>
           </div>
         </div>
       </div>
     </div>
-    <div class="mt-4" v-if="!initializing && !questions.length">
-      <div class="mb-0" v-on:click="getQuestionsForAssignment()" v-if="isInstructor()">
-        <b-button variant="success">Add Questions</b-button>
+    <div v-if="!initializing && !questions.length" class="mt-4">
+      <div v-if="isInstructor()" class="mb-0" @click="getQuestionsForAssignment()">
+        <b-button variant="success">
+          Add Questions
+        </b-button>
       </div>
 
       <b-alert show variant="warning" class="mt-3">
@@ -529,27 +569,24 @@
           <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
         </a>
       </b-alert>
-
     </div>
   </div>
 </template>
 
-
 <script>
 import axios from 'axios'
 import Form from 'vform'
-import {mapGetters} from "vuex"
-import {ToggleButton} from 'vue-js-toggle-button'
-import {toggleQuestionFiles} from '~/helpers/ToggleQuestionFiles'
-import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
-import {h5pResizer} from "~/helpers/H5PResizer"
-import {submitUploadFile} from '~/helpers/UploadFiles'
-import {downloadSolutionFile} from '~/helpers/DownloadFiles'
-import {downloadSubmissionFile} from '~/helpers/DownloadFiles'
+import { mapGetters } from 'vuex'
+import { ToggleButton } from 'vue-js-toggle-button'
+import { toggleQuestionFiles } from '~/helpers/ToggleQuestionFiles'
+import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
+import { h5pResizer } from '~/helpers/H5PResizer'
+
+import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
+
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
-import {getScoresSummary} from '~/helpers/Scores'
-
+import { getScoresSummary } from '~/helpers/Scores'
 
 export default {
   middleware: 'auth',
@@ -622,7 +659,7 @@ export default {
     currentPage: 1,
     currentCutup: 1,
     questions: [],
-    initializing: true, //use to show a blank screen until all is loaded
+    initializing: true, // use to show a blank screen until all is loaded
     title: '',
     assignmentId: ''
   }),
@@ -631,17 +668,16 @@ export default {
       this.renderChart(this.chartData, this.options)
     }
   },
-  created() {
+  created () {
     h5pResizer()
     this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
-
   },
-  async mounted() {
-    this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' //students upload question submissions and instructors upload solutions
+  async mounted () {
+    this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
     console.log(this.user.role)
@@ -670,47 +706,47 @@ export default {
         this.$noty.error(error.message)
       }
     }
-    this.logVisitAssessment(this.assignmentId,this.questions[0].id)
+    this.logVisitAssessment(this.assignmentId, this.questions[0].id)
   },
-  beforeDestroy() {
+  beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    openShowAssignmentStatisticsModal() {
+    openShowAssignmentStatisticsModal () {
       this.showAssignmentStatisticsModal = true
     },
-    getSubject() {
+    getSubject () {
       return `${this.name}, Question #${this.currentPage}`
     },
-    openContactGraderModal(graderId) {
+    openContactGraderModal (graderId) {
       this.$refs.email.setExtraParams({
         'assignment_id': this.assignmentId,
         'question_id': this.questions[this.currentPage - 1].id
       })
       this.$refs.email.openSendEmailModal(graderId)
     },
-    getModalUploadFileTitle() {
+    getModalUploadFileTitle () {
       return this.user.role === 3 ? 'Upload File Submission' : 'Upload Solutions'
     },
-    getSolutionUploadTypes() {
+    getSolutionUploadTypes () {
       return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
     },
-    standardizeFilename(filename) {
-      let ext = filename.slice((Math.max(0, filename.lastIndexOf(".")) || Infinity) + 1)
+    standardizeFilename (filename) {
+      let ext = filename.slice((Math.max(0, filename.lastIndexOf('.')) || Infinity) + 1)
       let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')
       return `${name}-${this.currentPage}.${ext}`
     },
-    async updateLastSubmittedAndLastResponse(assignmentId, questionId) {
+    async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
-        const {data} = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
+        const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         console.log(data)
       } catch (error) {
-        console.log(error);
+        console.log(error)
       }
     },
-    async receiveMessage(event) {
+    async receiveMessage (event) {
       console.log(event.data)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
@@ -719,20 +755,18 @@ export default {
         // console.log(event)
         if (technology === 'imathas') {
 
-
         }
         let clientSideSubmit
         let serverSideSubmit
         let iMathASResize
         try {
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
-
         } catch (error) {
           clientSideSubmit = false
         }
         try {
-          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result')
-            || (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
+          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
+            (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
         } catch (error) {
           serverSideSubmit = false
         }
@@ -746,8 +780,8 @@ export default {
         if (iMathASResize) {
           let embedWrap = document.getElementById('embed1wrap')
           embedWrap.setAttribute('height', JSON.parse(event.data).wrapheight)
-          let iframe = embedWrap.getElementsByTagName("iframe")[0]
-          iframe.setAttribute("height", JSON.parse(event.data).height);
+          let iframe = embedWrap.getElementsByTagName('iframe')[0]
+          iframe.setAttribute('height', JSON.parse(event.data).height)
         }
 
         console.log('server side submit' + serverSideSubmit)
@@ -766,10 +800,10 @@ export default {
           console.log('submitted')
           console.log(submission_data)
 
-          //if incorrect, show the learning tree stuff...
+          // if incorrect, show the learning tree stuff...
           try {
             this.hideResponse()
-            const {data} = await axios.post('/api/submissions', submission_data)
+            const { data } = await axios.post('/api/submissions', submission_data)
             console.log(data)
             if (!data.message) {
               data.type = error
@@ -784,25 +818,25 @@ export default {
         }
       }
     },
-    isInstructor() {
+    isInstructor () {
       return (this.user.role === 2)
     },
-    hideResponse() {
+    hideResponse () {
       this.showSubmissionMessage = false
     },
-    async showResponse(data) {
+    async showResponse (data) {
       console.log('showing response')
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false
-      }, 5000);
+      }, 5000)
       if (data.type === 'success') {
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
       }
     },
-    getTechnology(body) {
+    getTechnology (body) {
       let technology
       if (body.includes('h5p.libretexts.org')) {
         technology = 'h5p'
@@ -815,10 +849,9 @@ export default {
       }
       return technology
     },
-    async updatePoints(questionId) {
+    async updatePoints (questionId) {
       try {
-
-        const {data} = await this.questionPointsForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-points`)
+        const { data } = await this.questionPointsForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-points`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].points = this.questionPointsForm.points
@@ -828,19 +861,16 @@ export default {
           this.$noty.error(error.message)
         }
       }
-
     },
-    openUploadFileModal(questionId) {
+    openUploadFileModal (questionId) {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
       this.uploadFileForm.assignmentId = this.assignmentId
       this.cutupsForm.chosen_cutups = ''
       this.cutupsForm.question_num = this.currentPage
       this.currentCutup = 1
-
     },
-    async handleOk(bvModalEvt) {
-
+    async handleOk (bvModalEvt) {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.uploadLevel = this.uploadLevel
       // Prevent modal from closing
@@ -869,22 +899,21 @@ export default {
       this.uploading = false
       console.log(this.questions[this.currentPage - 1])
     },
-    handleCancel() {
+    handleCancel () {
       this.$bvModal.hide(`modal-upload-file`)
     },
-    viewOriginalQuestion() {
+    viewOriginalQuestion () {
       this.showQuestion = true
       this.$nextTick(() => {
         this.showIframe(this.questions[this.currentPage - 1].iframe_id)
       })
-
     },
-    showIframe(id) {
+    showIframe (id) {
       this.iframeLoaded = true
-      iFrameResize({log: false}, `#${id}`)
-      iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
+      iFrameResize({ log: false }, `#${id}`)
+      iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
     },
-    back(remediationObject) {
+    back (remediationObject) {
       let parentIdToShow = false
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         if (this.learningTreeAsList[i].id === remediationObject.parent) {
@@ -894,24 +923,22 @@ export default {
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
         this.learningTreeAsList[i].show = (this.learningTreeAsList[i].parent === parentIdToShow)
       }
-
     },
-    more(remediationObject) {
-
+    more (remediationObject) {
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        //console.log(this.learningTreeAsList[i].id)
+        // console.log(this.learningTreeAsList[i].id)
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
     },
-    async changePage(currentPage) {
+    async changePage (currentPage) {
       this.showQuestion = true
       this.showSubmissionMessage = false
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         console.log(this.questions[currentPage - 1])
         let iframe_id = this.questions[currentPage - 1].iframe_id
-        iFrameResize({log: false}, `#${iframe_id}`)
-        iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
+        iFrameResize({ log: false }, `#${iframe_id}`)
+        iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
       })
       if (this.showAssignmentStatistics) {
         try {
@@ -927,16 +954,16 @@ export default {
       this.learningTree = this.questions[currentPage - 1].learning_tree
       this.learningTreeAsList = []
       if (this.learningTree) {
-        //loop through and get all with parent = -1
+        // loop through and get all with parent = -1
         console.error(this.learningTree)
-        //loop through each with parent having this level
+        // loop through each with parent having this level
         let pageId
         let library
         // console.log('length ' + learningTree.length)
         for (let i = 0; i < this.learningTree.length; i++) {
           let remediation = this.learningTree[i]
-          //get the library and page ids
-          //go to the server and return with the student learning objectives
+          // get the library and page ids
+          // go to the server and return with the student learning objectives
           // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
 
           pageId = library = null
@@ -944,18 +971,18 @@ export default {
           let id = remediation.id
           for (let j = 0; j < remediation.data.length; j++) {
             switch (remediation.data[j].name) {
-              case('page_id'):
+              case ('page_id'):
                 pageId = remediation.data[j].value
                 break
               case ('library'):
                 library = remediation.data[j].value
                 break
-              case('id'):
+              case ('id'):
                 id = remediation.data[j].value
             }
           }
           if (pageId && library) {
-            const {data} = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
+            const { data } = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
             let remediation = {
               'library': library,
               'pageId': pageId,
@@ -970,32 +997,28 @@ export default {
             this.learningTreeAsList[i]['children'] = []
 
             for (let j = 0; j < this.learningTreeAsList.length; j++) {
-
               if (i !== j && (this.learningTreeAsList[j]['parent'] === this.learningTreeAsList[i]['id'])) {
                 this.learningTreeAsList[i]['children'].push(this.learningTreeAsList[j]['id'])
               }
             }
-
           }
         }
-
 
         console.log('done')
         console.log(this.learningTreeAsList)
         this.loadedTitles = true
-
       }
-      this.logVisitAssessment(this.assignmentId,this.questions[this.currentPage-1].id)
+      this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
     },
-    explore(library, pageId) {
+    explore (library, pageId) {
       this.showQuestion = false
       this.iframeLoaded = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
     },
-    async getAssignmentInfo() {
+    async getAssignmentInfo () {
       try {
-        const {data} = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
         console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -1008,7 +1031,7 @@ export default {
         this.timeLeft = assignment.time_left
         this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
         this.source = assignment.source
-        this.questionFilesAllowed = (assignment.submission_files === 'q')//can upload at the question level
+        this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
         this.showScores = Boolean(Number(assignment.show_scores))
         this.scoring_type = assignment.scoring_type
@@ -1019,20 +1042,20 @@ export default {
       }
       return true
     },
-    async setCutupAsSolutionOrSubmission(questionId) {
+    async setCutupAsSolutionOrSubmission (questionId) {
       if (this.settingAsSolution) {
         this.$noty.info('Please be patient while your request is being processed.')
         return false
       }
       this.settingAsSolution = true
       try {
-        const {data} = await this.cutupsForm.post(`/api/cutups/${this.assignmentId}/${questionId}/set-as-solution-or-submission`)
+        const { data } = await this.cutupsForm.post(`/api/cutups/${this.assignmentId}/${questionId}/set-as-solution-or-submission`)
         console.log(data)
         this.settingAsSolution = false
         if (data.type === 'success') {
           this.$noty.success(data.message)
           this.$bvModal.hide('modal-upload-file')
-          //for instructor set the solution, for the student set an original_filename
+          // for instructor set the solution, for the student set an original_filename
           console.log(data)
           if (this.user.role === 3) {
             console.log(data)
@@ -1049,18 +1072,14 @@ export default {
         } else {
           this.cutupsForm.errors.set('chosen_cutups', data.message)
         }
-
       } catch (error) {
         console.log(error)
         this.$noty.error('We could not set this cutup as your solution.  Please try again or contact us for assistance.')
       }
-
-
     },
-    async getCutups(assignmentId) {
-
+    async getCutups (assignmentId) {
       try {
-        const {data} = await axios.get(`/api/cutups/${assignmentId}`)
+        const { data } = await axios.get(`/api/cutups/${assignmentId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -1068,15 +1087,13 @@ export default {
         this.cutups = data.cutups
         this.showCutups = this.cutups.length
       } catch (error) {
-
         this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')
       }
     },
-    async getSelectedQuestions(assignmentId) {
+    async getSelectedQuestions (assignmentId) {
       try {
-        const {data} = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
+        const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
         console.log(JSON.parse(JSON.stringify(data)))
-
 
         if (data.type === 'error') {
           this.$noty.error(data.message)
@@ -1089,56 +1106,54 @@ export default {
           return false
         }
 
-        let iframe_id = this.questions[0].iframe_id;
+        let iframe_id = this.questions[0].iframe_id
         this.$nextTick(() => {
-          iFrameResize({log: false}, `#${iframe_id}`)
-          iFrameResize({log: false}, `#non-technology-iframe-${this.currentPage}`)
+          iFrameResize({ log: false }, `#${iframe_id}`)
+          iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
         })
 
         this.questionPointsForm.points = this.questions[0].points
 
         this.initializing = false
       } catch (error) {
-
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
       }
       this.iframeLoaded = true
     },
-    logVisitAssessment(assignmentId, questionId) {
+    logVisitAssessment (assignmentId, questionId) {
       try {
         if (this.user.role === 3) {
           axios.post('/api/logs', {
             'action': 'visit-assessment',
-            'data': {'assignment_id': assignmentId, 'question_id': questionId}
+            'data': { 'assignment_id': assignmentId, 'question_id': questionId }
           })
         }
       } catch (error) {
         console.log(error.message)
       }
     },
-    getQuestionsForAssignment() {
+    getQuestionsForAssignment () {
       this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
     },
-    async removeQuestion(currentPage) {
+    async removeQuestion (currentPage) {
       try {
-        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         this.$noty.info('The question has been removed from the assignment.')
-        this.questions.splice(currentPage - 1, 1);
+        this.questions.splice(currentPage - 1, 1)
         if (this.currentPage !== 1) {
-          this.currentPage = this.currentPage - 1;
+          this.currentPage = this.currentPage - 1
         }
-
       } catch (error) {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
   },
-  metaInfo() {
-    return {title: this.$t('home')}
+  metaInfo () {
+    return { title: this.$t('home') }
   }
 }
 </script>

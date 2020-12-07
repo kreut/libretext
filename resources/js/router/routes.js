@@ -16,6 +16,7 @@ let instructor_paths = [
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
   { path: '/assignments/:assignmentId/:typeFiles/:questionId?/:studentUserId?', name: 'assignment.files.index', component: page('instructors/assignments.files.vue') },
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
+  { path: '/instructors/courses/:courseId/properties', name: 'instructors.course.properties', component: page('instructors/course.properties.vue') },
   { path: '/courses/:courseId/scores', name: 'scores.index', component: page('instructors/scores.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
 ]
