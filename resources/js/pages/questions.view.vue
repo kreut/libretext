@@ -291,11 +291,6 @@
                   :color="{checked: '#28a745', unchecked: '#6c757d'}"
                   :labels="{checked: 'Yes', unchecked: 'No'}"/>
                 </span>
-                <b-button class="mt-1 mb-2"
-                          v-on:click="$router.push(`/instructors/assignment/${assignmentId}/remediations/${questions[currentPage-1].id}`)"
-                          variant="info">
-                  Create Learning Tree
-                </b-button>
               </div>
               <div>
 

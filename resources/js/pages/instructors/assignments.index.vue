@@ -41,20 +41,20 @@
           </b-row>
           <b-row>
             <b-col cols="6">
-            <b-button variant="outline-primary"
-                      v-on:click="openLetterGradesModal">Set Letter Grades
-            </b-button>
-            <span class="font-italic">Release letter grades: </span>
-            <toggle-button
-              class="mt-2"
-              :width="55"
-              :value="letterGradesReleased"
-              @change="submitReleaseLetterGrades()"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Yes', unchecked: 'No'}"/>
+              <b-button variant="outline-primary"
+                        v-on:click="openLetterGradesModal">Set Letter Grades
+              </b-button>
+              <span class="font-italic">Release letter grades: </span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="letterGradesReleased"
+                @change="submitReleaseLetterGrades()"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"/>
             </b-col>
           </b-row>
         </b-container>
@@ -122,23 +122,25 @@
         title="Letter Grades"
         ok-only
       >
-        <p>Let us know how you would like to convert your students' weighted scores into letter grades or grade categories.
+        <p>Let us know how you would like to convert your students' weighted scores into letter grades or grade
+          categories.
           Some examples might be "A+, A, A-,..." or
           "Excellent, Good, Unsatisfactory". You can use the
           <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link>
 
           to customize the letter grades.
         </p>
-        <p><span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span> <toggle-button
-          class="mt-2"
-          :width="55"
-          :value="Boolean(this.roundScores)"
-          @change="submitRoundScores()"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="{checked: '#28a745', unchecked: '#6c757d'}"
-          :labels="{checked: 'Yes', unchecked: 'No'}"/>
+        <p><span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
+          <toggle-button
+            class="mt-2"
+            :width="55"
+            :value="Boolean(this.roundScores)"
+            @change="submitRoundScores()"
+            :sync="true"
+            :font-size="14"
+            :margin="4"
+            :color="{checked: '#28a745', unchecked: '#6c757d'}"
+            :labels="{checked: 'Yes', unchecked: 'No'}"/>
 
         </p>
         <b-table striped
@@ -491,6 +493,18 @@
                  :items="assignments">
           <template v-slot:cell(name)="data">
             <div class="mb-0">
+              <span v-if="user.role === 2">
+                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
+                           delay="500">
+                    {{ getLockedQuestionsMessage(data.item) }}
+                  </b-tooltip>
+            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)">
+              <b-icon
+                v-show="data.item.has_submissions_or_file_submissions > 0"
+                :id="getTooltipTarget('getQuestions',data.item.id)"
+                icon="lock-fill"></b-icon>
+            </span>
+             </span>
               <a href="" v-on:click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
             </div>
           </template>
@@ -536,18 +550,6 @@
           </template>
           <template v-slot:cell(actions)="data">
             <div class="mb-0">
-             <span v-if="user.role === 2">
-                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
-                           delay="500">
-                    Get Questions
-                  </b-tooltip>
-            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)">
-              <b-icon
-                :variant="hasSubmissionsColor(data.item)"
-                :id="getTooltipTarget('getQuestions',data.item.id)"
-                icon="plus-circle"></b-icon>
-            </span>
-             </span>
               <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
                          delay="500">
                 Grading
@@ -722,513 +724,502 @@ export default {
     initTooltips(this)
   },
   methods: {
-    async submitReleaseLetterGrades(){
-      try {
-        const {data} = await axios.patch(`/api/final-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
-
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        this.letterGradesReleased = !this.letterGradesReleased
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async submitRoundScores(){
-        try {
-          const {data} = await axios.patch(`/api/final-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
-          this.$noty[data.type](data.message)
-          if (data.type === 'error') {
-            return false
-          }
-          this.roundScores = !this.roundScores
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-    },
-    async resetLetterGradesToDefault() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/default`)
-        this.letterGradeItems = data.default_letter_grades
-        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems)
-        this.letterGradesForm.letter_grades.replace('%', '')
-        await this.submitLetterGrades()
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    formatLetterGrades(letterGradeItems) {
-      let formattedLetterGrades = ''
-      for (let i = 0; i < letterGradeItems.length; i++) {
-        formattedLetterGrades += `${letterGradeItems[i]['min']},${letterGradeItems[i]['letter_grade']}`
-        if (i !== letterGradeItems.length - 1) {
-          formattedLetterGrades += ','
-        }
-      }
-      return formattedLetterGrades
-    },
-    async openLetterGradesEditorModal() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.letterGradeItems = data.letter_grades
-        this.$bvModal.show('modal-letter-grades-editor')
-
-        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems).replace(/%/g, '')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async handleCreateAssignmentGroup(bvModalEvt) {
-      bvModalEvt.preventDefault()
-      try {
-        const {data} = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
-        console.log(data)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        let newAssignmentGroup = {
-          value: data.assignment_group_info.assignment_group_id,
-          text: data.assignment_group_info.assignment_group
-        }
-
-        this.assignmentGroups.splice(this.assignmentGroups.length - 1, 0, newAssignmentGroup)
-        this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
-        this.$bvModal.hide('modal-create-assignment-group')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-
-      }
-    },
-    checkGroupId(groupId) {
-      if (groupId === -1) {
-        this.$bvModal.show('modal-create-assignment-group')
-      }
-    },
-    async getCourseInfo() {
-      try {
-        const {data} = await axios.get(`/api/courses/${this.courseId}`)
-        this.title = `${data.course.name} Assignments`
-        this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
-        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
-        console.log(data)
-      } catch (error) {
-        this.$noty.error(error.message)
-
-      }
-    },
-    async submitShowWeightedAverage() {
-
-      try {
-        const {data} = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
-          {'students_can_view_weighted_average': this.studentsCanViewWeightedAverage})
-        this.$noty[data.type](data.message)
-        if (data.error) {
-          return false
-        }
-        this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage
-      } catch (error) {
-        this.$noty.error(error.message)
-
-      }
-    },
-    async openLetterGradesModal() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.letterGradeItems = data.letter_grades
-        this.roundScores = data.round_scores
-        this.$bvModal.show('modal-letter-grades')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    isValidLetterGrades() {
-      let letterGradesArray = this.letterGradesForm.letter_grades.split(',')
-      if (letterGradesArray.length === 1) {
-        this.letterGradesForm.errors.set('letter_grades', 'Please enter your list of letter grades and associated minimum scores.')
-        return false
-      }
-      if (letterGradesArray.length % 2 !== 0) {
-        this.letterGradesForm.errors.set('letter_grades', 'Not every letter grade has a minimum score associated with it.')
-        return false
-      }
-      let usedLetters = []
-      let usedCutoffs = []
-      let atLeastOneZero = false
-      for (let i = 0; i < letterGradesArray.length / 2; i++) {
-
-        if (isNaN(letterGradesArray[2 * i])) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} is not a number.`)
-          return false
-        }
-        if (parseInt(letterGradesArray[2 * i]) === 0) {
-          atLeastOneZero = true
-        }
-        if (letterGradesArray[2 * i] < 0) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} should be a positive number.`)
-          return false
-        }
-        if (usedLetters.includes(letterGradesArray[2 * i + 1])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2 * i + 1]}" multiple times.`)
-          return false
-        } else {
-          usedLetters.push(letterGradesArray[2 * i + 1])
-        }
-
-        if (usedCutoffs.includes(letterGradesArray[2 * i])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2 * i]}" multiple times.`)
-          return false
-        } else {
-          usedCutoffs.push(letterGradesArray[2 * i])
-        }
-      }
-      if (!atLeastOneZero){
-        this.letterGradesForm.errors.set('letter_grades', 'At least one of the letter grades should have a minimum score of 0.')
-        return false
-      }
-      return true
-    },
-    async submitLetterGrades() {
-      this.letterGradesForm.letter_grades = this.letterGradesForm.letter_grades.replace(/%/g, '')
-      if (!this.isValidLetterGrades()) {
-        return false
-      }
-      try {
-        const {data} = await this.letterGradesForm.patch(`/api/final-grades/letter-grades/${this.courseId}`)
-        console.log(data)
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.$bvModal.hide('modal-letter-grades-editor')
-          this.letterGradeItems = data.letter_grades
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-
-
-    },
-    async initAssignmentGroupWeights() {
-      try {
-        this.$bvModal.show('modal-assignment-group-weights')
-        const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
-        if (data.error) {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.assignmentGroupWeights = data.assignment_group_weights
-        let formInputs = {}
-        for (let i = 0; i < data.assignment_group_weights.length; i++) {
-          formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
-        }
-        console.log(this.assignmentGroupWeights)
-        this.assignmentGroupWeightsForm = new Form(formInputs)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async submitAssignmentGroupWeights(bvModalEvt) {
-      bvModalEvt.preventDefault()
-      try {
-        const {data} = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
-        if (data.form_error) {
-          this.assignmentGroupWeightsFormWeightError = data.message
-          return false
-        }
-        this.$noty[data.type](data.message)
-        this.$bvModal.hide('modal-assignment-group-weights')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-
-    },
-    async getAssignmentGroups(courseId) {
-      try {
-        const {data} = await axios.get(`/api/assignmentGroups/${courseId}`)
-        if (data.error) {
-          this.$noty.error(data.message)
-          return false
-        }
-        for (let i = 0; i < data.assignment_groups.length; i++) {
-          this.assignmentGroups.push({
-            value: data.assignment_groups[i]['id'],
-            text: data.assignment_groups[i]['assignment_group']
-          })
-        }
-        this.assignmentGroups.push({
-          value: -1,
-          text: 'Create new group'
-        })
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-
-    },
-    initAddAssignment() {
-      this.has_submissions_or_file_submissions = 0
-      this.solutionsReleased = 0
-      this.form.assignment_group_id = null
-      this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-      this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-    },
-    hasSubmissionsColor(assignment) {
-      //0, 1, 2 since has_submissions_or_file_submissions is additive
-      return (assignment.has_submissions_or_file_submissions > 0) ? 'warning' : ''
-
-
-    },
-    async submitShowAssignmentStatistics(assignment) {
-      if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
-        this.$noty.info('If you would like students to view the assignment statistics, please first allow them to view the scores.')
-        return false
-      }
-
-      try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        assignment.students_can_view_assignment_statistics = !assignment.students_can_view_assignment_statistics
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-
-    },
-    async submitShowScores(assignment) {
-      if (assignment.students_can_view_assignment_statistics && assignment.show_scores) {
-        this.$noty.info('If you would like students to view the scores, please first hide the assignment statistics.')
-        return false
-      }
-      console.log(assignment)
-      try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        assignment.show_scores = !assignment.show_scores
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async submitSolutionsReleased(assignment) {
-      try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
-        this.$noty[data.type](data.message)
-
-        assignment.solutions_released = !assignment.solutions_released
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async handleReleaseSolutions(bvModalEvt) {
-      bvModalEvt.preventDefault()
-      try {
-        const {data} = await this.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-release-solutions-show-scores')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    resetSubmissionFilesAndPointsPerQuestion() {
-      this.form.default_points_per_question = 10
-      this.form.submission_files = 0
-      this.form.students_can_view_assignment_statistics = 0
-      this.form.external_source_points = 100
-      this.form.errors.clear('default_points_per_question')
-      this.form.errors.clear('external_source_points')
-
-    },
-    editAssignment(assignment) {
-      console.log(assignment)
-
-      this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
-      this.solutionsReleased = assignment.solutions_released
-      this.assignmentId = assignment.id
-      this.number_of_questions = assignment.number_of_questions
-      this.form.name = assignment.name
-      this.form.available_from_date = assignment.available_from_date
-      this.form.available_from_time = assignment.available_from_time
-      this.form.due_date = assignment.due_date
-      this.form.due_time = assignment.due_time
-      this.form.assignment_group_id = assignment.assignment_group_id
-      this.form.include_in_weighted_average = assignment.include_in_weighted_average
-      this.form.source = assignment.source
-      this.form.instructions = assignment.instructions
-      this.form.type_of_submission = assignment.type_of_submission
-      this.form.submission_files = assignment.submission_files
-      this.form.num_submissions_needed = assignment.num_submissions_needed
-      this.form.default_points_per_question = assignment.default_points_per_question
-      this.form.scoring_type = assignment.scoring_type
-      this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
-      this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
-        ? assignment.external_source_points
-        : ''
-      this.$bvModal.show('modal-assignment-details')
-    }
-    ,
-    getQuestions(assignment) {
-
+    getLockedQuestionsMessage(assignment) {
       if (Boolean(Number(assignment.has_submissions_or_file_submissions))) {
-        this.$noty.info("Since students have already submitted responses to this assignment, you won't be able to add or remove questions.")
-        return false
+        return "Since students have already submitted responses to this assignment, you won't be able to add or remove questions."
       }
       if (Boolean(Number(assignment.solutions_released))) {
-        this.$noty.info("You have already released the solutions to this assignment, so you won't be able to add or remove questions.")
-        return false
+        return "You have already released the solutions to this assignment, so you won't be able to add or remove questions."
       }
-      this.$router.push(`/assignments/${assignment.id}/questions/get`)
-    }
-    ,
-    getAssignmentView(role, assignment) {
+  },
+  async submitReleaseLetterGrades() {
+    try {
+      const {data} = await axios.patch(`/api/final-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
 
-      if (assignment.source === 'x') {
-        this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
+      this.$noty[data.type](data.message)
+      if (data.type === 'error') {
         return false
       }
-      if (role === 4 || assignment.scoring_type === 'c') {//TA's won't want to see the summary statistics and meaningless if completed/not-completed
-        this.$router.push(`/assignments/${assignment.id}/questions/view`)
+      this.letterGradesReleased = !this.letterGradesReleased
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  async submitRoundScores() {
+    try {
+      const {data} = await axios.patch(`/api/final-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
+      this.$noty[data.type](data.message)
+      if (data.type === 'error') {
         return false
+      }
+      this.roundScores = !this.roundScores
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  async resetLetterGradesToDefault() {
+    try {
+      const {data} = await axios.get(`/api/final-grades/letter-grades/default`)
+      this.letterGradeItems = data.default_letter_grades
+      this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems)
+      this.letterGradesForm.letter_grades.replace('%', '')
+      await this.submitLetterGrades()
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  formatLetterGrades(letterGradeItems) {
+    let formattedLetterGrades = ''
+    for (let i = 0; i < letterGradeItems.length; i++) {
+      formattedLetterGrades += `${letterGradeItems[i]['min']},${letterGradeItems[i]['letter_grade']}`
+      if (i !== letterGradeItems.length - 1) {
+        formattedLetterGrades += ','
+      }
+    }
+    return formattedLetterGrades
+  },
+  async openLetterGradesEditorModal() {
+    try {
+      const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      this.letterGradeItems = data.letter_grades
+      this.$bvModal.show('modal-letter-grades-editor')
+
+      this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems).replace(/%/g, '')
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  async handleCreateAssignmentGroup(bvModalEvt) {
+    bvModalEvt.preventDefault()
+    try {
+      const {data} = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
+      console.log(data)
+      this.$noty[data.type](data.message)
+      if (data.type === 'error') {
+        return false
+      }
+      let newAssignmentGroup = {
+        value: data.assignment_group_info.assignment_group_id,
+        text: data.assignment_group_info.assignment_group
       }
 
-      this.$router.push(`/assignments/${assignment.id}/summary`)
-    }
-    ,
-    getSubmissionFileView(assignmentId, submissionFiles) {
-      if (submissionFiles === 0) {
-        this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
-        return false
-      }
-      let type
-      switch (submissionFiles) {
-        case('q'):
-          type = 'question'
-          break
-        case('a'):
-          type = 'assignment'
-          break
+      this.assignmentGroups.splice(this.assignmentGroups.length - 1, 0, newAssignmentGroup)
+      this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
+      this.$bvModal.hide('modal-create-assignment-group')
+    } catch (error) {
+      if (!error.message.includes('status code 422')) {
+        this.$noty.error(error.message)
       }
 
-      this.$router.push(`/assignments/${assignmentId}/${type}-files`)
     }
-    ,
-    async handleDeleteAssignment() {
-      try {
-        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-delete-assignment')
-      } catch (error) {
+  },
+  checkGroupId(groupId) {
+    if (groupId === -1) {
+      this.$bvModal.show('modal-create-assignment-group')
+    }
+  },
+  async getCourseInfo() {
+    try {
+      const {data} = await axios.get(`/api/courses/${this.courseId}`)
+      this.title = `${data.course.name} Assignments`
+      this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
+      this.letterGradesReleased = Boolean(data.course.letter_grades_released)
+      console.log(data)
+    } catch (error) {
+      this.$noty.error(error.message)
+
+    }
+  },
+  async submitShowWeightedAverage() {
+
+    try {
+      const {data} = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
+        {'students_can_view_weighted_average': this.studentsCanViewWeightedAverage})
+      this.$noty[data.type](data.message)
+      if (data.error) {
+        return false
+      }
+      this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage
+    } catch (error) {
+      this.$noty.error(error.message)
+
+    }
+  },
+  async openLetterGradesModal() {
+    try {
+      const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      this.letterGradeItems = data.letter_grades
+      this.roundScores = data.round_scores
+      this.$bvModal.show('modal-letter-grades')
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  isValidLetterGrades() {
+    let letterGradesArray = this.letterGradesForm.letter_grades.split(',')
+    if (letterGradesArray.length === 1) {
+      this.letterGradesForm.errors.set('letter_grades', 'Please enter your list of letter grades and associated minimum scores.')
+      return false
+    }
+    if (letterGradesArray.length % 2 !== 0) {
+      this.letterGradesForm.errors.set('letter_grades', 'Not every letter grade has a minimum score associated with it.')
+      return false
+    }
+    let usedLetters = []
+    let usedCutoffs = []
+    let atLeastOneZero = false
+    for (let i = 0; i < letterGradesArray.length / 2; i++) {
+
+      if (isNaN(letterGradesArray[2 * i])) {
+        this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} is not a number.`)
+        return false
+      }
+      if (parseInt(letterGradesArray[2 * i]) === 0) {
+        atLeastOneZero = true
+      }
+      if (letterGradesArray[2 * i] < 0) {
+        this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} should be a positive number.`)
+        return false
+      }
+      if (usedLetters.includes(letterGradesArray[2 * i + 1])) {
+        this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2 * i + 1]}" multiple times.`)
+        return false
+      } else {
+        usedLetters.push(letterGradesArray[2 * i + 1])
+      }
+
+      if (usedCutoffs.includes(letterGradesArray[2 * i])) {
+        this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2 * i]}" multiple times.`)
+        return false
+      } else {
+        usedCutoffs.push(letterGradesArray[2 * i])
+      }
+    }
+    if (!atLeastOneZero) {
+      this.letterGradesForm.errors.set('letter_grades', 'At least one of the letter grades should have a minimum score of 0.')
+      return false
+    }
+    return true
+  },
+  async submitLetterGrades() {
+    this.letterGradesForm.letter_grades = this.letterGradesForm.letter_grades.replace(/%/g, '')
+    if (!this.isValidLetterGrades()) {
+      return false
+    }
+    try {
+      const {data} = await this.letterGradesForm.patch(`/api/final-grades/letter-grades/${this.courseId}`)
+      console.log(data)
+      this.$noty[data.type](data.message)
+      if (data.type === 'success') {
+        this.$bvModal.hide('modal-letter-grades-editor')
+        this.letterGradeItems = data.letter_grades
+      }
+    } catch (error) {
+      if (!error.message.includes('status code 422')) {
         this.$noty.error(error.message)
       }
     }
-    ,
-    submitAssignmentInfo(bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
-      this.form.due = this.form.due_date + ' ' + this.form.due_time
-      !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-    }
-    ,
-    deleteAssignment(assignmentId) {
-      this.assignmentId = assignmentId
-      this.$bvModal.show('modal-delete-assignment')
-    }
-    ,
-    async updateAssignment() {
 
-      try {
 
-        const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-
-        console.log(data)
-        if (data.available_after_due) {
-          //had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date', data.message)
-          console.log(this.form.errors)
-          return false
-        }
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-details')
-
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
+  },
+  async initAssignmentGroupWeights() {
+    try {
+      this.$bvModal.show('modal-assignment-group-weights')
+      const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
+      if (data.error) {
+        this.$noty.error(data.message)
+        return false
       }
-    }
-    ,
-    async createAssignment() {
-      try {
-        this.form.course_id = this.courseId
-        const {data} = await this.form.post(`/api/assignments`)
-
-        console.log(data)
-        if (data.available_after_due) {
-          //had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date', data.message)
-          console.log(this.form.errors)
-          return false
-        }
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-details')
-
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
+      this.assignmentGroupWeights = data.assignment_group_weights
+      let formInputs = {}
+      for (let i = 0; i < data.assignment_group_weights.length; i++) {
+        formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
       }
+      console.log(this.assignmentGroupWeights)
+      this.assignmentGroupWeightsForm = new Form(formInputs)
+    } catch (error) {
+      this.$noty.error(error.message)
     }
-    ,
-    resetAll(modalId) {
-      this.getAssignments()
-      this.resetModalForms()
-      // Hide the modal manually
-      this.$nextTick(() => {
-        this.$bvModal.hide(modalId)
+  },
+  async submitAssignmentGroupWeights(bvModalEvt) {
+    bvModalEvt.preventDefault()
+    try {
+      const {data} = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
+      if (data.form_error) {
+        this.assignmentGroupWeightsFormWeightError = data.message
+        return false
+      }
+      this.$noty[data.type](data.message)
+      this.$bvModal.hide('modal-assignment-group-weights')
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+
+  },
+  async getAssignmentGroups(courseId) {
+    try {
+      const {data} = await axios.get(`/api/assignmentGroups/${courseId}`)
+      if (data.error) {
+        this.$noty.error(data.message)
+        return false
+      }
+      for (let i = 0; i < data.assignment_groups.length; i++) {
+        this.assignmentGroups.push({
+          value: data.assignment_groups[i]['id'],
+          text: data.assignment_groups[i]['assignment_group']
+        })
+      }
+      this.assignmentGroups.push({
+        value: -1,
+        text: 'Create new group'
       })
-    },
-    resetAssignmentGroupForm() {
-      this.assignmentGroupForm.errors.clear()
-      this.assignmentGroupForm.assignment_group = ''
-    },
-    resetModalForms() {
-      this.form.name = ''
-      this.form.available_from_date = ''
-      this.form.available_from_time = '09:00:00'
-      this.form.due_date = ''
-      this.form.due_time = '09:00:00'
-      this.form.type_of_submission = 'correct'
-      this.form.num_submissions_needed = '2'
-      this.form.submission_files = '0'
-      this.form.default_points_per_question = '10'
-      this.form.scoring_type = 'c'
-
-      this.assignmentId = false
-      this.form.errors.clear()
+    } catch (error) {
+      this.$noty.error(error.message)
     }
-    ,
-    metaInfo() {
-      return {title: this.$t('home')}
+
+  },
+  initAddAssignment() {
+    this.has_submissions_or_file_submissions = 0
+    this.solutionsReleased = 0
+    this.form.assignment_group_id = null
+    this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+    this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+    this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+    this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+  },
+  async submitShowAssignmentStatistics(assignment) {
+    if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
+      this.$noty.info('If you would like students to view the assignment statistics, please first allow them to view the scores.')
+      return false
+    }
+
+    try {
+      const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
+      this.$noty[data.type](data.message)
+      if (data.type === 'error') {
+        return false
+      }
+      assignment.students_can_view_assignment_statistics = !assignment.students_can_view_assignment_statistics
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+
+  },
+  async submitShowScores(assignment) {
+    if (assignment.students_can_view_assignment_statistics && assignment.show_scores) {
+      this.$noty.info('If you would like students to view the scores, please first hide the assignment statistics.')
+      return false
+    }
+    console.log(assignment)
+    try {
+      const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
+      this.$noty[data.type](data.message)
+      if (data.type === 'error') {
+        return false
+      }
+      assignment.show_scores = !assignment.show_scores
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  async submitSolutionsReleased(assignment) {
+    try {
+      const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
+      this.$noty[data.type](data.message)
+
+      assignment.solutions_released = !assignment.solutions_released
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  async handleReleaseSolutions(bvModalEvt) {
+    bvModalEvt.preventDefault()
+    try {
+      const {data} = await this.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
+      this.$noty[data.type](data.message)
+      this.resetAll('modal-release-solutions-show-scores')
+    } catch (error) {
+      this.$noty.error(error.message)
+    }
+  },
+  resetSubmissionFilesAndPointsPerQuestion() {
+    this.form.default_points_per_question = 10
+    this.form.submission_files = 0
+    this.form.students_can_view_assignment_statistics = 0
+    this.form.external_source_points = 100
+    this.form.errors.clear('default_points_per_question')
+    this.form.errors.clear('external_source_points')
+
+  },
+  editAssignment(assignment) {
+    console.log(assignment)
+
+    this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
+    this.solutionsReleased = assignment.solutions_released
+    this.assignmentId = assignment.id
+    this.number_of_questions = assignment.number_of_questions
+    this.form.name = assignment.name
+    this.form.available_from_date = assignment.available_from_date
+    this.form.available_from_time = assignment.available_from_time
+    this.form.due_date = assignment.due_date
+    this.form.due_time = assignment.due_time
+    this.form.assignment_group_id = assignment.assignment_group_id
+    this.form.include_in_weighted_average = assignment.include_in_weighted_average
+    this.form.source = assignment.source
+    this.form.instructions = assignment.instructions
+    this.form.type_of_submission = assignment.type_of_submission
+    this.form.submission_files = assignment.submission_files
+    this.form.num_submissions_needed = assignment.num_submissions_needed
+    this.form.default_points_per_question = assignment.default_points_per_question
+    this.form.scoring_type = assignment.scoring_type
+    this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
+    this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
+      ? assignment.external_source_points
+      : ''
+    this.$bvModal.show('modal-assignment-details')
+  }
+  ,
+  getAssignmentView(role, assignment) {
+
+    if (assignment.source === 'x') {
+      this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
+      return false
+    }
+    if (role === 4 || assignment.scoring_type === 'c') {//TA's won't want to see the summary statistics and meaningless if completed/not-completed
+      this.$router.push(`/assignments/${assignment.id}/questions/view`)
+      return false
+    }
+
+    this.$router.push(`/assignments/${assignment.id}/summary`)
+  }
+  ,
+  getSubmissionFileView(assignmentId, submissionFiles) {
+    if (submissionFiles === 0) {
+      this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
+      return false
+    }
+    let type
+    switch (submissionFiles) {
+      case('q'):
+        type = 'question'
+        break
+      case('a'):
+        type = 'assignment'
+        break
+    }
+
+    this.$router.push(`/assignments/${assignmentId}/${type}-files`)
+  }
+  ,
+  async handleDeleteAssignment() {
+    try {
+      const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
+      this.$noty[data.type](data.message)
+      this.resetAll('modal-delete-assignment')
+    } catch (error) {
+      this.$noty.error(error.message)
     }
   }
+  ,
+  submitAssignmentInfo(bvModalEvt) {
+    // Prevent modal from closing
+    bvModalEvt.preventDefault()
+    // Trigger submit handler
+    this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
+    this.form.due = this.form.due_date + ' ' + this.form.due_time
+    !this.assignmentId ? this.createAssignment() : this.updateAssignment()
+  }
+  ,
+  deleteAssignment(assignmentId) {
+    this.assignmentId = assignmentId
+    this.$bvModal.show('modal-delete-assignment')
+  }
+  ,
+  async updateAssignment() {
+
+    try {
+
+      const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
+
+      console.log(data)
+      if (data.available_after_due) {
+        //had to create a custom process for checking available date past due date
+        this.form.errors.set('due_date', data.message)
+        console.log(this.form.errors)
+        return false
+      }
+      this.$noty[data.type](data.message)
+      this.resetAll('modal-assignment-details')
+
+    } catch (error) {
+      if (!error.message.includes('status code 422')) {
+        this.$noty.error(error.message)
+      }
+    }
+  }
+  ,
+  async createAssignment() {
+    try {
+      this.form.course_id = this.courseId
+      const {data} = await this.form.post(`/api/assignments`)
+
+      console.log(data)
+      if (data.available_after_due) {
+        //had to create a custom process for checking available date past due date
+        this.form.errors.set('due_date', data.message)
+        console.log(this.form.errors)
+        return false
+      }
+      this.$noty[data.type](data.message)
+      this.resetAll('modal-assignment-details')
+
+    } catch (error) {
+      if (!error.message.includes('status code 422')) {
+        this.$noty.error(error.message)
+      }
+    }
+  }
+  ,
+  resetAll(modalId) {
+    this.getAssignments()
+    this.resetModalForms()
+    // Hide the modal manually
+    this.$nextTick(() => {
+      this.$bvModal.hide(modalId)
+    })
+  },
+  resetAssignmentGroupForm() {
+    this.assignmentGroupForm.errors.clear()
+    this.assignmentGroupForm.assignment_group = ''
+  },
+  resetModalForms() {
+    this.form.name = ''
+    this.form.available_from_date = ''
+    this.form.available_from_time = '09:00:00'
+    this.form.due_date = ''
+    this.form.due_time = '09:00:00'
+    this.form.type_of_submission = 'correct'
+    this.form.num_submissions_needed = '2'
+    this.form.submission_files = '0'
+    this.form.default_points_per_question = '10'
+    this.form.scoring_type = 'c'
+
+    this.assignmentId = false
+    this.form.errors.clear()
+  }
+  ,
+  metaInfo() {
+    return {title: this.$t('home')}
+  }
+}
 }
 </script>
 <style>
