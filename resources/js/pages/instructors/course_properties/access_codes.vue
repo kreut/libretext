@@ -1,32 +1,51 @@
 <template>
   <div>
-    <b-card header="default" header-html="Course Access Codes">
-      <b-card-text>
-        <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
-        <p>Current Access code: {{ course.access_code }}</p>
-        <b-button class="float-right" variant="primary" @click="refreshAccessCode">
-          Refresh Access Code
-        </b-button>
-      </b-card-text>
-    </b-card>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
+      />
+      <div v-if="!isLoading">
+        <b-card header="default" header-html="Course Access Codes">
+          <b-card-text>
+            <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
+            <p>Current Access code: {{ course.access_code }}</p>
+            <b-button class="float-right" variant="primary" @click="refreshAccessCode">
+              Refresh Access Code
+            </b-button>
+          </b-card-text>
+        </b-card>
+      </div>
+    </div>
   </div>
 </template>
 
 <script>
 import axios from 'axios'
 import { mapGetters } from 'vuex'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
+  components: {
+    Loading
+  },
   data: () => ({
-    course: {}
+    course: {},
+    isLoading: true
   }),
   computed: mapGetters({
     user: 'auth/user'
   }),
-  mounted () {
+  async mounted () {
     this.courseId = this.$route.params.courseId
-    this.getCourse(this.courseId)
+    await this.getCourse(this.courseId)
+    this.isLoading = false
   },
   methods: {
     async getCourse (courseId) {

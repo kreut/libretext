@@ -147,6 +147,20 @@
                       {{ (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
                         + (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}
                       <br>
+                      <b-input-group prepend="File Submission Score:" class="mt-3">
+                        <b-form-input v-model="scoreForm.score"
+                                      type="text"
+                                      placeholder="Enter the score"
+                                      :class="{ 'is-invalid': scoreForm.errors.has('score') }"
+                                      @keydown="scoreForm.errors.clear('score')"
+                        />
+                        <b-input-group-append>
+                          <b-button variant="primary" @click="submitScoreForm">
+                            Save Score
+                          </b-button>
+                        </b-input-group-append>
+                        <has-error :form="scoreForm" field="score" />
+                      </b-input-group>
                       <strong>Graded by:</strong>
                       {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
                         ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
@@ -212,16 +226,9 @@
                             </b-button>
                           </b-col>
                           <b-col>
-                            <toggle-button class="float-right"
-                                           :width="140"
-                                           :value="viewSubmission"
-                                           :font-size="14"
-                                           :margin="4"
-                                           :sync="true"
-                                           :color="{checked: '#75C791', unchecked: '#007BFF'}"
-                                           :labels="{unchecked: 'Feedback File', checked: 'Submission File'}"
-                                           @change="toggleView(currentStudentPage)"
-                            />
+                            <b-button @click="toggleView(currentStudentPage)">
+                              View Feedback File
+                            </b-button>
                           </b-col>
                         </b-row>
                       </b-container>

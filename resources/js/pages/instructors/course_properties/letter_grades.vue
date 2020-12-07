@@ -1,97 +1,112 @@
 <template>
   <div>
-    <b-modal
-      id="modal-letter-grades-editor"
-      ref="modal"
-      title="Letter Grades"
-    >
-      <p>
-        Use the text area below to customize your letter grades, in a comma separated list of
-        the form "Minimum score for the group, Letter Grade". As an example, if the three letter grades that you offer
-        are
-        A, B, and C, and students need at least a 60% to pass the course, you might enter 90,A,70,B,60,C,0,F.
-      </p>
-
-      <b-form-input
-        id="letter_grades"
-        v-model="letterGradesForm.letter_grades"
-        type="text"
-        placeholder=""
-        :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
-        @keydown="letterGradesForm.errors.clear('letter_grades')"
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
       />
-      <has-error :form="letterGradesForm" field="letter_grades" />
-      <div slot="modal-footer">
-        <b-btn @click="$bvModal.hide('modal-letter-grades-editor')">
-          Cancel
-        </b-btn>
-        <b-btn variant="info" @click="resetLetterGradesToDefault">
-          Reset to Default
-        </b-btn>
-        <b-btn variant="primary" @click="submitLetterGrades">
-          Submit
-        </b-btn>
-      </div>
-    </b-modal>
-    <b-card>
-      <b-card-text>
-        <p>
-          Let us know how you would like to convert your students' weighted scores into letter grades or grade
-          categories.
-          Some examples might be "A+, A, A-,..." or
-          "Excellent, Good, Unsatisfactory". You can use the
-          <b-link @click="openLetterGradesEditorModal">
-            letter grade editor
-          </b-link>
+      <div v-if="!isLoading">
+        <b-modal
+          id="modal-letter-grades-editor"
+          ref="modal"
+          title="Letter Grades"
+        >
+          <p>
+            Use the text area below to customize your letter grades, in a comma separated list of
+            the form "Minimum score for the group, Letter Grade". As an example, if the three letter grades that you
+            offer
+            are
+            A, B, and C, and students need at least a 60% to pass the course, you might enter 90,A,70,B,60,C,0,F.
+          </p>
 
-          to customize the letter grades.
-        </p>
-        <p>
-          <span class="font-italic">Release letter grades: </span>
-          <toggle-button
-            class="mt-2"
-            :width="55"
-            :value="letterGradesReleased"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="{checked: '#28a745', unchecked: '#6c757d'}"
-            :labels="{checked: 'Yes', unchecked: 'No'}"
-            @change="submitReleaseLetterGrades()"
-          /><br>
-
-          <span class="font-italic">Release weighted averages: </span>
-          <toggle-button
-            class="mt-2"
-            :width="55"
-            :value="studentsCanViewWeightedAverage"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="{checked: '#28a745', unchecked: '#6c757d'}"
-            :labels="{checked: 'Yes', unchecked: 'No'}"
-            @change="submitShowWeightedAverage()"
-          /><br>
-          <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
-          <toggle-button
-            class="mt-2"
-            :width="55"
-            :value="Boolean(this.roundScores)"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="{checked: '#28a745', unchecked: '#6c757d'}"
-            :labels="{checked: 'Yes', unchecked: 'No'}"
-            @change="submitRoundScores()"
+          <b-form-input
+            id="letter_grades"
+            v-model="letterGradesForm.letter_grades"
+            type="text"
+            placeholder=""
+            :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
+            @keydown="letterGradesForm.errors.clear('letter_grades')"
           />
-        </p>
-        <b-table striped
-                 hover
-                 :sticky-header="true"
-                 :fields="letterGradeFields" :items="letterGradeItems"
-        />
-      </b-card-text>
-    </b-card>
+          <has-error :form="letterGradesForm" field="letter_grades" />
+          <div slot="modal-footer">
+            <b-btn @click="$bvModal.hide('modal-letter-grades-editor')">
+              Cancel
+            </b-btn>
+            <b-btn variant="info" @click="resetLetterGradesToDefault">
+              Reset to Default
+            </b-btn>
+            <b-btn variant="primary" @click="submitLetterGrades">
+              Submit
+            </b-btn>
+          </div>
+        </b-modal>
+        <b-card>
+          <b-card-text>
+            <p>
+              Let us know how you would like to convert your students' weighted scores into letter grades or grade
+              categories.
+              Some examples might be "A+, A, A-,..." or
+              "Excellent, Good, Unsatisfactory". You can use the
+              <b-link @click="openLetterGradesEditorModal">
+                letter grade editor
+              </b-link>
+
+              to customize the letter grades.
+            </p>
+            <p>
+              <span class="font-italic">Release letter grades: </span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="letterGradesReleased"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitReleaseLetterGrades()"
+              />
+              <br>
+
+              <span class="font-italic">Release weighted averages: </span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="studentsCanViewWeightedAverage"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowWeightedAverage()"
+              />
+              <br>
+              <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="Boolean(this.roundScores)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitRoundScores()"
+              />
+            </p>
+            <b-table striped
+                     hover
+                     :sticky-header="true"
+                     :fields="letterGradeFields" :items="letterGradeItems"
+            />
+          </b-card-text>
+        </b-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -100,13 +115,17 @@ import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
   components: {
-    ToggleButton
+    ToggleButton,
+    Loading
   },
   data: () => ({
+    isLoading: true,
     letterGradeFields: [
       'letter_grade',
       {
@@ -276,6 +295,7 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.isLoading = false
     },
     async openLetterGradesEditorModal () {
       try {

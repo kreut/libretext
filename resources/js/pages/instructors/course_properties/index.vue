@@ -5,7 +5,6 @@
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-              <fa :icon="tab.icon" fixed-width />
               {{ tab.name }}
             </router-link>
           </li>
@@ -29,18 +28,22 @@ export default {
     tabs () {
       return [
         {
+          icon: '',
           name: 'People',
           route: 'course_properties.graders'
         },
         {
+          icon: '',
           name: 'Letter Grades',
           route: 'course_properties.letter_grades'
         },
         {
+          icon: '',
           name: 'Refresh Access Code',
           route: 'course_properties.access_codes'
         },
         {
+          icon: '',
           name: 'Assignment Groups',
           route: 'course_properties.assignment_groups'
         }

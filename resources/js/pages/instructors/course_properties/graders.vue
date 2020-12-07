@@ -1,45 +1,57 @@
 <template>
   <div>
-    <b-card header="default" header-html="Graders">
-      <b-card-text>
-        <b-form ref="form">
-          <div v-if="course.graders.length">
-            Your current graders:<br>
-            <ol id="graders">
-              <li v-for="grader in course.graders" :key="grader.id">
-                {{ grader.first_name }} {{ grader.last_name }} {{ grader.email }}
-                <b-icon icon="trash" @click="deleteGrader(grader.id)" />
-              </li>
-            </ol>
-          </div>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
+      />
+      <div v-if="!isLoading">
+        <b-card header="default" header-html="Graders">
+          <b-card-text>
+            <b-form ref="form">
+              <div v-if="course.graders.length">
+                Your current graders:<br>
+                <ol id="graders">
+                  <li v-for="grader in course.graders" :key="grader.id">
+                    {{ grader.first_name }} {{ grader.last_name }} {{ grader.email }}
+                    <b-icon icon="trash" @click="deleteGrader(grader.id)" />
+                  </li>
+                </ol>
+              </div>
 
-          <b-form-group
-            id="email"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="New Grader"
-            label-for="email"
-          >
-            <b-form-input
-              id="email"
-              v-model="graderForm.email"
-              placeholder="Email Address"
-              type="text"
-              :class="{ 'is-invalid': graderForm.errors.has('email') }"
-              @keydown="graderForm.errors.clear('email')"
-            />
-            <has-error :form="graderForm" field="email" />
-          </b-form-group>
-          <b-button class="float-right" variant="primary" @click="submitInviteGrader">
-            Invite Grader
-          </b-button>
-          <div v-if="sendingEmail" class="float-left">
-            <b-spinner small type="grow" />
-            Sending Email..
-          </div>
-        </b-form>
-      </b-card-text>
-    </b-card>
+              <b-form-group
+                id="email"
+                label-cols-sm="3"
+                label-cols-lg="2"
+                label="New Grader"
+                label-for="email"
+              >
+                <b-form-input
+                  id="email"
+                  v-model="graderForm.email"
+                  placeholder="Email Address"
+                  type="text"
+                  :class="{ 'is-invalid': graderForm.errors.has('email') }"
+                  @keydown="graderForm.errors.clear('email')"
+                />
+                <has-error :form="graderForm" field="email" />
+              </b-form-group>
+              <b-button class="float-right" variant="primary" @click="submitInviteGrader">
+                Invite Grader
+              </b-button>
+              <div v-if="sendingEmail" class="float-left">
+                <b-spinner small type="grow" />
+                Sending Email..
+              </div>
+            </b-form>
+          </b-card-text>
+        </b-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -47,11 +59,17 @@
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
+  components: {
+    Loading
+  },
   data: () => ({
     sendingEmail: false,
+    isLoading: true,
     graders: {},
     course: { graders: {} },
     graderForm: new Form({
@@ -70,6 +88,7 @@ export default {
       const { data } = await axios.get(`/api/courses/${courseId}`)
       this.course = data.course
       this.graders = this.course.graders
+      this.isLoading = false
     },
     async inviteGrader (courseId) {
       this.courseId = courseId
@@ -81,7 +100,6 @@ export default {
           this.$noty.error('We were not able to retrieve your graders.')
           return false
         }
-        this.$bvModal.show('modal-manage-graders')
       } catch (error) {
         this.$noty.error(error.message)
       }

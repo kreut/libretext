@@ -128,7 +128,7 @@
                 >
                   Edit course properties
                 </b-tooltip>
-                <b-icon :id="getTooltipTarget(properties,data.item.id)" icon="gear" />
+                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
               </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"

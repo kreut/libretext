@@ -3,6 +3,7 @@
     <b-card>
       <b-card-text>
         <p>
+          <strong>Note: This page is incomplete --- I need to add how to add the assignment groups from this page.</strong>
           Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
           all scores.
         </p>
@@ -43,9 +44,6 @@ export default {
     letterGradesReleased: false,
     assignmentGroupWeightsFormWeightError: '',
     assignmentGroupWeightsForm: {},
-    assignmentGroupForm: new Form({
-      assignment_group: ''
-    }),
     assignmentGroupWeightsFields: [
       'assignment_group',
       {
