@@ -29,24 +29,20 @@ export default {
     tabs () {
       return [
         {
-          icon: 'user',
-          name: 'Assignment Groups',
-          route: 'course_properties.assignment_groups'
+          name: 'People',
+          route: 'course_properties.graders'
         },
         {
-          icon: 'lock',
           name: 'Letter Grades',
           route: 'course_properties.letter_grades'
         },
         {
-          icon: 'lock',
-          name: 'Access Codes',
+          name: 'Refresh Access Code',
           route: 'course_properties.access_codes'
         },
         {
-          icon: 'lock',
-          name: 'Graders',
-          route: 'course_properties.graders'
+          name: 'Assignment Groups',
+          route: 'course_properties.assignment_groups'
         }
       ]
     }

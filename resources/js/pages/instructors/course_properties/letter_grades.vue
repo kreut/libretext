@@ -139,7 +139,6 @@ export default {
     this.courseId = this.$route.params.courseId
     this.getCourse(this.courseId)
     this.getLetterGrades()
-    this.initAssignmentGroupWeights()
   },
   methods: {
     async submitReleaseLetterGrades () {
