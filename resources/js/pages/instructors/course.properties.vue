@@ -14,11 +14,11 @@
     <b-card header="default" header-html="Graders">
       <b-card-text>
         <b-form ref="form">
-          <div v-if="graders.length">
+          <div v-if="course.graders.length">
             Your current graders:<br>
             <ol id="graders">
-              <li v-for="grader in graders" :key="grader.id">
-                {{ grader.name }}
+              <li v-for="grader in course.graders" :key="grader.id">
+                {{ grader.first_name }} {{ grader.last_name }} {{ grader.email }}
                 <b-icon icon="trash" @click="deleteGrader(grader.id)" />
               </li>
             </ol>
@@ -112,14 +112,14 @@ export default {
     async deleteGrader (userId) {
       try {
         const { data } = await axios.delete(`/api/grader/${this.courseId}/${userId}`)
-        console.log(data)
+
         if (data.type === 'error') {
           this.$noty.error('We were not able to remove the grader from the course.  Please try again or contact us for assistance.')
           return false
         }
         this.$noty.success(data.message)
         // remove the grad
-        this.graders = this.graders.filter(grader => parseFloat(grader.id) !== parseFloat(userId))
+        this.course.graders = this.course.graders.filter(grader => parseFloat(grader.id) !== parseFloat(userId))
       } catch (error) {
         this.$noty.error(error.message)
       }

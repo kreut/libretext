@@ -99,7 +99,7 @@ class CourseController extends Controller
             $response['course'] = ['name' => $course->name,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
-                'graders' => $course->graders,
+                'graders' => $course->graderNamesAndIds,
                 'access_code' => $course->accessCodes->access_code];
 
             $response['type'] = 'success';

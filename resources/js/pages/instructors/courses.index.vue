@@ -122,14 +122,6 @@
               <span class="pr-1" @click="editCourse(data.item)">
                 <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil" />
               </span>
-              <span class="pr-1" @click="updateAccessCode(data.item)">
-                <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
-                           delay="500"
-                >
-                  Refresh Access Code
-                </b-tooltip>
-                <b-icon :id="getTooltipTarget('refreshAccessCode',data.item.id)" icon="arrow-repeat" />
-              </span>
               <span class="pr-1" @click="getProperties(data.item)">
                 <b-tooltip :target="getTooltipTarget('properties',data.item.id)"
                            delay="500"
