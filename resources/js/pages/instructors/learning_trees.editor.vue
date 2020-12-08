@@ -121,7 +121,7 @@
                       :disabled="this.learningTreeId === 0"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingRemediation" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
               Get Remediation
             </b-button>
           </div>
@@ -156,7 +156,7 @@ export default {
     assessmentLibrary: '',
     assessmentPageId: '',
     touchingBlock: false,
-    validatingRemediation: false,
+    validatingLibraryAndPageId: false,
     panelHidden: false,
     studentLearningObjectives: '',
     title: window.config.appName,
@@ -468,7 +468,19 @@ ${body}
 
       this.$bvModal.show('student-learning-objective-modal')
     },
-
+    async validateLibraryAndPageId (library, pageId) {
+      try {
+        const { data } = await axios.get(`/api/learning-trees/validate-remediation/${library}/${pageId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        return false
+      }
+      return true
+    },
     async addRemediation () {
       if (!this.library) {
         this.$noty.error('Please choose a library.')
@@ -478,18 +490,9 @@ ${body}
         this.$noty.error('Your Page Id should be a positive integer.')
         return false
       }
-      try {
-        this.validatingRemediation = true
-        const { data } = await axios.get(`/api/learning-trees/validate-remediation/${this.library}/${this.pageId}`)
-        this.validatingRemediation = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
+      if (!await this.validateLibraryAndPageId(this.library, this.pageId)) {
+        return false
       }
-      this.validatingRemediation = false
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
       let libraryText = this.getLibraryText(this.library)
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">

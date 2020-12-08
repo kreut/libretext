@@ -120,7 +120,7 @@ class LearningTreeController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating the learning tree.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error upating the learning tree.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -141,6 +141,11 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
+            $validated_remediation = $this->validateRemediation($data['library'], $data['page_id']);
+            if ($validated_remediation['type'] === 'error'){
+                $response['message'] = $validated_remediation['message'];
+                return $response;
+            }
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->user_id = Auth::user()->id;
@@ -276,12 +281,12 @@ EOT;
     public function validateRemediation(string $library, int $pageId)
     {
 
-        $Query = new Query(['library' => $library]);
         $response['type'] = 'error';
         try {
+            $Query = new Query(['library' => $library]);
             $Query->getContentsByPageId($pageId);
             $response['type'] = 'success';
-        } catch (\Exception $e) {
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.";
