@@ -120,7 +120,7 @@ class LearningTreeController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error udpating the learning tree.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating the learning tree.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -281,7 +281,7 @@ EOT;
         try {
             $Query->getContentsByPageId($pageId);
             $response['type'] = 'success';
-        } catch (Exception $e) {
+        } catch (\Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.";
