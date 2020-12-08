@@ -9,7 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading">
+      <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Course Access Codes">
           <b-card-text>
             <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
@@ -45,6 +45,7 @@ export default {
   async mounted () {
     this.courseId = this.$route.params.courseId
     await this.getCourse(this.courseId)
+
     this.isLoading = false
   },
   methods: {

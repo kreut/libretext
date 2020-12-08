@@ -9,7 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading">
+      <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Graders">
           <b-card-text>
             <b-form ref="form">

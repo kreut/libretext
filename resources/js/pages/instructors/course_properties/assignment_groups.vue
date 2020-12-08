@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-card>
+    <b-card v-if="user.role === 2">
       <b-card-text>
         <p>
           <strong>Note: This page is incomplete --- I need to add how to add the assignment groups from this page.</strong>

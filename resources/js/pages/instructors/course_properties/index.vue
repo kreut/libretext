@@ -1,6 +1,6 @@
 <template>
   <div class="row">
-    <div class="col-md-3">
+    <div v-if="user.role === 2" class="col-md-3">
       <card :title="$t('Properties')" class="properties-card">
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
@@ -21,10 +21,14 @@
 </template>
 
 <script>
+
+import { mapGetters } from 'vuex'
 export default {
   middleware: 'auth',
-
   computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
     tabs () {
       return [
         {
@@ -48,6 +52,11 @@ export default {
           route: 'course_properties.assignment_groups'
         }
       ]
+    }
+  },
+  mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You not have access to the course properties page.')
     }
   }
 }

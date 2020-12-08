@@ -9,7 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading">
+      <div v-if="!isLoading && user.role === 2">
         <b-modal
           id="modal-letter-grades-editor"
           ref="modal"
@@ -156,6 +156,10 @@ export default {
   }),
   mounted () {
     this.courseId = this.$route.params.courseId
+    if (this.user.role !== 2) {
+      this.isLoading = false
+      return false
+    }
     this.getCourse(this.courseId)
     this.getLetterGrades()
   },
