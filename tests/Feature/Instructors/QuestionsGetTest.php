@@ -55,7 +55,14 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /** @test */
 
+    public function cannot_update_points_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
+            ['points' => 10])
+            ->assertJson(['message' => 'You are not allowed to update the question points for this assignment.']);
+    }
     /** @test **/
     public function non_owner_cannot_get_assignment_info_for_get_questions()
     {
@@ -91,10 +98,11 @@ class QuestionsGetTest extends TestCase
     public function cannot_add_a_question_if_students_have_already_made_a_submission_file()
     {
 
-        SubmissionFile::create($this->submission_file);
+       SubmissionFile::create($this->submission_file);
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'error',
                 'message' => "You can't add a question to this assignment since students have already submitted responses."]);
+
 
     }
 
@@ -133,15 +141,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test */
 
-    public function cannot_update_points_if_not_owner()
-    {
-
-        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
-            ['points' => 10])
-            ->assertJson(['message' => 'You are not allowed to update the question points for this assignment.']);
-    }
 
     /** @test */
 

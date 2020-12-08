@@ -45,7 +45,6 @@ class AssignmentSyncQuestionPolicy
         $message = ($assignment->hasFileOrQuestionSubmissions())
             ? "You can't add a question to this assignment since students have already submitted responses."
             : 'You are not allowed to add a question to this assignment.';
-
         return $authorized
             ? Response::allow()
             : Response::deny($message);
@@ -54,9 +53,15 @@ class AssignmentSyncQuestionPolicy
     public function update(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
         $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
+        $message = '';
+        if (!$authorized){
+            $message= $assignment->hasFileOrQuestionSubmissions()
+                ? "This cannot be updated since students have already submitted responses."
+                : "You are not allowed to update that resource.";
+        }
         return $authorized
             ? Response::allow()
-            : Response::deny("This cannot be updated since students have already submitted responses.");
+            : Response::deny($message);
     }
 
     public function toggleQuestionFiles(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)

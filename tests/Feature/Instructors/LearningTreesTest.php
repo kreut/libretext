@@ -19,7 +19,7 @@ class LearningTreesTest extends TestCase
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->learning_tree_info = ['page_id' => 10,
+        $this->learning_tree_info = ['page_id' => 102685,
             'title' => 'some title',
             'description' => 'some_description',
             'library' => 'query',
@@ -29,13 +29,59 @@ class LearningTreesTest extends TestCase
 
 
     /** @test */
+    public function owner_can_update_a_tree_to_the_database()
+    {
+        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'message' => 'The learning tree has been saved.',
+            ]);
+
+    }
+
+
+    /** @test */
 
     public function must_be_a_valid_remediation()
     {
-        $this->learning_tree_info['page_id'] = 30;
+        $this->learning_tree_info['page_id'] = 30000000000;
         $this->learning_tree_info['library'] = 'chem';
         $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
-        ->assertJsonValidationErrors(['message' => 'That does not look like a valid page id for the library.']);
+            ->assertJson(['message' => 'We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.']);
+    }
+
+    /** @test */
+    public function must_have_a_description()
+    {
+        $this->learning_tree_info['description'] = '';
+        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
+            ->assertJsonValidationErrors(['description']);
+    }
+
+    /** @test */
+    public function must_have_a_title()
+    {
+        $this->learning_tree_info['title'] = '';
+        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
+            ->assertJsonValidationErrors(['title']);
+    }
+
+    /** @test */
+    public function must_have_a_valid_library()
+    {
+        $this->learning_tree_info['library'] = 'does not exist';
+        $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
+            ->assertJsonValidationErrors(['library']);
+    }
+
+    /** @test */
+    public function non_owner_cannot_save_a_tree_to_the_database()
+    {
+
+        $this->actingAs($this->student_user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'message' => 'You are not allowed to save Learning Trees.',
+            ]);
     }
 
 
@@ -88,38 +134,5 @@ class LearningTreesTest extends TestCase
             ->assertJsonValidationErrors(['page_id']);
     }
 
-
-    public function must_have_a_description()
-    {
-
-    }
-
-    public function must_have_a_title()
-    {
-
-    }
-
-    public function must_have_a_valid_library()
-    {
-
-    }
-
-    public function non_instructor_cannot_save_a_tree_to_the_database(){
-
-
-
-    }
-
-    public function non_owner_cannot_update_a_tree_to_the_database(){
-
-
-
-    }
-
-    public function owner_can_update_a_tree_to_the_database(){
-
-
-
-    }
 
 }
