@@ -97,9 +97,9 @@ class ScoreController extends Controller
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
 
-            $score_as_proportion = $total_points_by_assignment_id[$score->assignment_id]
-                                    ? $score->score / $total_points_by_assignment_id[$score->assignment_id]
-                                    : 0;
+            $score_as_proportion = (($total_points_by_assignment_id[$score->assignment_id]) <= 0)//total_points_by_assignment can be 0.00
+                                    ? 0
+                                    : $score->score / $total_points_by_assignment_id[$score->assignment_id];
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
                 ->first()
                 ->include_in_weighted_average
