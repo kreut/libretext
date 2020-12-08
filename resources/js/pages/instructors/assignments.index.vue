@@ -515,9 +515,23 @@ export default {
     ],
     courseId: false,
     fields: [
-      'name',
-      'available_from',
-      'due',
+      {
+        key: 'name',
+        sortable: true
+      },
+      {
+        key: 'assignment_group',
+        label: 'Group',
+        sortable: true
+      },
+      {
+        key: 'available_from',
+        sortable: true
+      },
+      {
+        key: 'due',
+        sortable: true
+      },
       'status',
       {
         key: 'show_scores',
@@ -586,10 +600,10 @@ export default {
     },
     getLockedQuestionsMessage (assignment) {
       if ((Number(assignment.has_submissions_or_file_submissions))) {
-        return "Since students have already submitted responses to this assignment, you won't be able to add or remove questions."
+        return 'Since students have already submitted responses to this assignment, you won\'t be able to add or remove questions.'
       }
       if ((Number(assignment.solutions_released))) {
-        return "You have already released the solutions to this assignment, so you won't be able to add or remove questions."
+        return 'You have already released the solutions to this assignment, so you won\'t be able to add or remove questions.'
       }
     },
 
@@ -788,7 +802,7 @@ export default {
       }
     },
     submitAssignmentInfo (bvModalEvt) {
-    // Prevent modal from closing
+      // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
       this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
@@ -805,7 +819,7 @@ export default {
 
         console.log(data)
         if (data.available_after_due) {
-        // had to create a custom process for checking available date past due date
+          // had to create a custom process for checking available date past due date
           this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false
@@ -825,7 +839,7 @@ export default {
 
         console.log(data)
         if (data.available_after_due) {
-        // had to create a custom process for checking available date past due date
+          // had to create a custom process for checking available date past due date
           this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false

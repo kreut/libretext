@@ -9,6 +9,7 @@ use App\Solution;
 use App\Score;
 use App\Extension;
 use App\Submission;
+use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -103,10 +104,14 @@ class AssignmentController extends Controller
      *
      * Display all assignments for the course
      * @param Course $course
-     * @param Assignment $assignment
+     * @param Extension $extension
+     * @param Score $Score
+     * @param Submission $Submission
+     * @param Solution $Solution
      * @return mixed
+     * @throws Exception
      */
-    public function index(Course $course, Extension $extension, Score $Score, Submission $Submission, Solution $Solution)
+    public function index(Course $course, Extension $extension, Score $Score, Submission $Submission, Solution $Solution, AssignmentGroup $AssignmentGroup)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -122,6 +127,9 @@ class AssignmentController extends Controller
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
                 $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
+
+            } else {
+                $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             }
 
 
@@ -153,8 +161,9 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {
-                    $due = $assignment['due'];
 
+                    $due = $assignment['due'];
+                    $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
                     $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
                     $assignments_info[$key]['status'] = $this->getStatus($available_from, $due);
@@ -260,7 +269,7 @@ class AssignmentController extends Controller
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
-                    'instructions' => $request->instructions ? $request->instructions  : '',
+                    'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
@@ -437,14 +446,14 @@ class AssignmentController extends Controller
         $role = Auth::user()->role;
         try {
             $assignment = Assignment::find($assignment->id);
-            $can_view_assignment_statistics =in_array( $role,[2,4])
-                                    || ( $role === 3 && $assignment->students_can_view_assignment_statistics);
+            $can_view_assignment_statistics = in_array($role, [2, 4])
+                || ($role === 3 && $assignment->students_can_view_assignment_statistics);
 
             $response['assignment'] = [
                 'name' => $assignment->name,
                 'instructions' => $assignment->instructions,
                 'total_points' => $this->getTotalPoints($assignment),
-                'can_view_assignment_statistics' =>  $can_view_assignment_statistics
+                'can_view_assignment_statistics' => $can_view_assignment_statistics
             ];
 
 
@@ -502,7 +511,7 @@ class AssignmentController extends Controller
                 return $due_date_response;
             }
             $data = $request->validated();
-            $data['instructions'] = $request->instructions ? $request->instructions  : '';
+            $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
 
             $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
