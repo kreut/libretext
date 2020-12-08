@@ -1,58 +1,62 @@
 <template>
   <div>
-    <PageTitle v-if="canViewLearningTrees" title="My Learning Trees"></PageTitle>
-    <div class="float-right mb-2">
-      <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
-                v-on:click="createLearningTree">Create Learning Tree
-      </b-button>
-    </div>
-    <b-modal
-      id="modal-delete-learning-tree"
-      ref="modal"
-      title="Confirm Delete Learning Tree"
-      @ok="handleDeleteLearningTree"
-      ok-title="Yes, delete learning tree!"
-
-    >
-      <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
-    </b-modal>
-    <div v-if="hasLearningTrees">
-      <b-table striped hover
-               :fields="fields"
-               :items="learningTrees">
-
-        <template v-slot:cell(created_at)="data">
-          {{ $moment(data.item.created_at, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
-        </template>
-        <template v-slot:cell(actions)="data">
-          <div class="mb-0">
-
-                  <b-tooltip ref="tooltip"
-                             :target="getTooltipTarget('editLearningTree',data.item.id)"
-                             delay="500"
-                  >
-                    Edit Learning Tree
-                  </b-tooltip>
-                              <span class="pr-1" v-on:click="editLearningTree(data.item.id)">
-                  <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil"></b-icon>
-                </span>
+    <div v-if="canViewLearningTrees">
+      <PageTitle title="My Learning Trees" />
+      <div class="float-right mb-2">
+        <b-button v-b-modal.modal-assignment-details class="mr-1" variant="primary"
+                  @click="createLearningTree"
+        >
+          Create Learning Tree
+        </b-button>
+      </div>
+      <b-modal
+        id="modal-delete-learning-tree"
+        ref="modal"
+        title="Confirm Delete Learning Tree"
+        ok-title="Yes, delete learning tree!"
+        @ok="handleDeleteLearningTree"
+      >
+        <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
+      </b-modal>
+      <div v-if="hasLearningTrees">
+        <b-table striped hover
+                 :fields="fields"
+                 :items="learningTrees"
+        >
+          <template v-slot:cell(created_at)="data">
+            {{ $moment(data.item.created_at, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+          </template>
+          <template v-slot:cell(actions)="data">
+            <div class="mb-0">
+              <b-tooltip ref="tooltip"
+                         :target="getTooltipTarget('editLearningTree',data.item.id)"
+                         delay="500"
+              >
+                Edit Learning Tree
+              </b-tooltip>
+              <span class="pr-1" @click="editLearningTree(data.item.id)">
+                <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil" />
+              </span>
 
               <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
-                         delay="500">
-                    Delete Learning Tree
-                  </b-tooltip>
-                <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash" v-on:click="deleteLearningTree(data.item.id)"></b-icon>
-          </div>
-        </template>
-
-      </b-table>
-    </div>
-    <div v-else>
-      <br>
-      <div class="mt-4">
-        <b-alert :show="showNoLearningTreesAlert" variant="warning"><a href="#" class="alert-link">You currently have no
-          Learning Trees.
-        </a></b-alert>
+                         delay="500"
+              >
+                Delete Learning Tree
+              </b-tooltip>
+              <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash" @click="deleteLearningTree(data.item.id)" />
+            </div>
+          </template>
+        </b-table>
+      </div>
+      <div v-else>
+        <br>
+        <div class="mt-4">
+          <b-alert :show="showNoLearningTreesAlert" variant="warning">
+            <a href="#" class="alert-link">You currently have no
+              Learning Trees.
+            </a>
+          </b-alert>
+        </div>
       </div>
     </div>
   </div>
@@ -60,16 +64,11 @@
 
 <script>
 import axios from 'axios'
-import {mapGetters} from "vuex"
-import {getTooltipTarget} from '../../helpers/Tooptips'
-import {initTooltips} from "../../helpers/Tooptips"
+import { mapGetters } from 'vuex'
+import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
 
-const now = new Date()
 export default {
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   data: () => ({
     fields: [
       'id',
@@ -93,16 +92,18 @@ export default {
     hasLearningTrees: false,
     showNoLearningTreesAlert: false
   }),
-  mounted() {
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  mounted () {
     this.getLearningTrees()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
-
   },
   methods: {
-    async handleDeleteLearningTree() {
+    async handleDeleteLearningTree () {
       try {
-        const {data} = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
+        const { data } = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
         this.$bvModal.hide('modal-delete-learning-tree')
         this.getLearningTrees()
@@ -110,19 +111,19 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    deleteLearningTree(learningTreeId) {
+    deleteLearningTree (learningTreeId) {
       this.learningTreeId = learningTreeId
       this.$bvModal.show('modal-delete-learning-tree')
     },
-    editLearningTree(learningTreeId){
+    editLearningTree (learningTreeId) {
       this.$router.push(`/instructors/learning-trees/editor/${learningTreeId}`)
     },
-    createLearningTree(){
+    createLearningTree () {
       this.$router.push(`/instructors/learning-trees/editor/0`)
     },
-    async getLearningTrees() {
+    async getLearningTrees () {
       try {
-        const {data} = await axios.get('/api/learning-trees')
+        const { data } = await axios.get('/api/learning-trees')
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
@@ -137,8 +138,8 @@ export default {
       }
     }
   },
-  metaInfo() {
-    return {title: this.$t('home')}
+  metaInfo () {
+    return { title: this.$t('home') }
   }
 }
 </script>

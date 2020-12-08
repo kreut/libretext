@@ -97,16 +97,16 @@
       <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
     </b-modal>
 
-    <div id="leftcard">
+    <div v-if="user.role === 2" id="leftcard">
       <div id="actions">
         <b-button variant="success" size="sm" @click="initCreateNew">
           Create New
         </b-button>
-        <b-button variant="primary" size="sm" :disabled="this.learningTreeId === 0" @click="editLearningTree">
+        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
           Update
           Info
         </b-button>
-        <b-button variant="danger" size="sm" :disabled="this.learningTreeId === 0" @click="deleteLearningTree">
+        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
           Delete
         </b-button>
         <div id="search">
@@ -140,6 +140,7 @@ import { flowy } from '~/helpers/Flowy'
 
 import axios from 'axios'
 import Form from 'vform'
+import { mapGetters } from 'vuex'
 
 export default {
 
@@ -202,8 +203,14 @@ export default {
       { value: 'workforce', text: 'Workforce' }
     ]
   }),
-
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You do not have access to the Learning Tree Editor.')
+      return false
+    }
     let tempblock
     let tempblock2
     console.log(document.getElementById('canvas'))

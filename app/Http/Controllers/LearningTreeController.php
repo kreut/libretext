@@ -263,6 +263,12 @@ EOT;
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
+        $authorized = Gate::inspect('destroy', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         try {
             $learningTree->delete();
             $response['type'] = 'info';

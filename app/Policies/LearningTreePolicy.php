@@ -34,10 +34,18 @@ class LearningTreePolicy
 
     }
 
+    public function destroy(User $user, LearningTree $learningTree)
+    {
+        return ((int) $learningTree->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to delete this Learning Tree.');
+
+    }
+
     public function index(User $user) {
         return ((int) $user->role === 2)
             ? Response::allow()
-            : Response::deny('You are not allowed to retrieve all of your Learning Trees.');
+            : Response::deny('You are not allowed to view the Learning Trees.');
 
     }
 }
