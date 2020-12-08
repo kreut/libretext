@@ -119,14 +119,12 @@
         </div>
         <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
           <hr>
-          <div class="container">
-            <div class="row">
-              <div class="col-sm">
-                <b-card header="default" header-html="<h5>Student Submission Information</h5>" class="h-100">
+          <b-container>
+            <b-row>
+              <b-col>
+                <b-card header="default" :header-html="getStudentSubmissionTitle()" class="h-100">
                   <b-card-text>
-                    <div>
-                      <strong>Name:</strong>
-                      {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }}<br>
+                    <b-form ref="form">
                       <strong>Date Submitted:</strong> {{
                         submissionFiles[currentQuestionPage - 1][currentStudentPage -
                           1]['date_submitted']
@@ -161,50 +159,39 @@
                         </b-input-group-append>
                         <has-error :form="scoreForm" field="score" />
                       </b-input-group>
-                      <strong>Graded by:</strong>
-                      {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
-                        ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].grader_name
-                        : 'Not applicable.' }}
-                      <br>
-                      <br>
                       <hr>
-                    </div>
-                    <div class="mt-3">
-                      <b-form-group
-                        id="fieldset-horizontal"
-                        label-cols-sm="6"
-                        label-cols-lg="5"
-                        label="File Submission Score:"
-                        label-for="input-horizontal"
-                      >
-                        <b-form-input id="input-horizontal"
-                                      v-model="scoreForm.score"
-                                      type="text"
-                                      placeholder="Enter the score"
-                                      :class="{ 'is-invalid': scoreForm.errors.has('score') }"
-                                      @keydown="scoreForm.errors.clear('score')"
-                        />
-                        <has-error :form="scoreForm" field="score" />
-                        <b-button class="ml-3 mt-2 float-right" variant="primary" @click="submitScoreForm">
-                          Save
-                          Score
-                        </b-button>
-                      </b-form-group>
-                    </div>
+                      <b-container>
+                        <b-row>
+                          <b-col>
+                            <b-button variant="outline-primary"
+                                      @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
+                            >
+                              Open Submission File
+                            </b-button>
+                          </b-col>
+                          <b-col>
+                            <b-button :disabled="viewSubmission" @click="toggleView(currentStudentPage)">
+                              View Submission File
+                            </b-button>
+                          </b-col>
+                        </b-row>
+                      </b-container>
+                    </b-form>
                   </b-card-text>
                 </b-card>
-              </div>
+              </b-col>
 
-              <div class="col-sm">
-                <b-card header="default" header-html="<h5>Grader Feedback</h5>">
+              <b-col>
+                <b-card header="default" :header-html="getGraderFeedbackTitle()" class="h-100">
                   <b-card-text>
                     <b-form ref="form">
                       <b-form-textarea
                         id="text_comments"
                         v-model="textFeedbackForm.textFeedback"
+                        style="margin-bottom: 23px"
                         placeholder="Enter something..."
-                        rows="6"
-                        max-rows="6"
+                        rows="4"
+                        max-rows="4"
                         :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
                         @keydown="textFeedbackForm.errors.clear('textFeedback')"
                       />
@@ -226,7 +213,7 @@
                             </b-button>
                           </b-col>
                           <b-col>
-                            <b-button @click="toggleView(currentStudentPage)">
+                            <b-button :disabled="!viewSubmission" @click="toggleView(currentStudentPage)">
                               View Feedback File
                             </b-button>
                           </b-col>
@@ -235,19 +222,10 @@
                     </b-form>
                   </b-card-text>
                 </b-card>
-              </div>
-            </div>
-          </div>
+              </b-col>
+            </b-row>
+          </b-container>
           <hr>
-          <div class="container">
-            <div class="row">
-              <b-button variant="outline-primary"
-                        @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
-              >
-                Open Submission File
-              </b-button>
-            </div>
-          </div>
         </div>
         <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
           <div v-show="viewSubmission">
@@ -290,15 +268,10 @@
 <script>
 import axios from 'axios'
 import Form from 'vform'
-import { ToggleButton } from 'vue-js-toggle-button'
 import { downloadSubmissionFile, downloadSolutionFile } from '~/helpers/DownloadFiles'
-
 import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 
 export default {
-  components: {
-    ToggleButton
-  },
   middleware: 'auth',
   data: () => ({
     gradeViews: [
@@ -340,8 +313,17 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
-    viewQuestion (question_id) {
-      window.open(`/assignments/${this.assignmentId}/questions/${question_id}/view`)
+    getGraderFeedbackTitle () {
+      let grader = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
+        ? 'by ' + this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
+        : ''
+      return `<h5>Grader Feedback ${grader}</h5>`
+    },
+    getStudentSubmissionTitle () {
+      return `<h5>Submission Information for  ${this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['name']}</h5>`
+    },
+    viewQuestion (questionId) {
+      window.open(`/assignments/${this.assignmentId}/questions/${questionId}/view`)
     },
     openInNewTab (url) {
       console.log(url)

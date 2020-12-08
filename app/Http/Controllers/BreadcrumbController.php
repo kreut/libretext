@@ -37,9 +37,12 @@ class BreadcrumbController extends Controller
                     case('course_properties.graders'):
                     case('course_properties.access_codes'):
                     case('course_properties.assignment_groups'):
-                        $breadcrumbs[] = ['text' => $course->name  . ' Properties',
-                            'href' => "#",
-                            'active' => true];
+                    $breadcrumbs[] = ['text' => $course->name,
+                        'href' => "/instructors/courses/{$course->id}/assignments"
+                    ];
+                    $breadcrumbs[] = ['text' => 'Properties' ,
+                        'href' => "#",
+                        'active' => true];
                         break;
                     case('instructors.learning_trees.index'):
                         $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/instructors/courses"];

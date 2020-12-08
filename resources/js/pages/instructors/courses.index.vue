@@ -113,22 +113,23 @@
               </b-tooltip>
               <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
             <span v-if="user.role === 2">
-              <b-tooltip ref="tooltip"
-                         :target="getTooltipTarget('pencil',data.item.id)"
-                         delay="500"
-              >
-                Edit Course
-              </b-tooltip>
-              <span class="pr-1" @click="editCourse(data.item)">
-                <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil" />
-              </span>
+
               <span class="pr-1" @click="getProperties(data.item)">
                 <b-tooltip :target="getTooltipTarget('properties',data.item.id)"
                            delay="500"
                 >
-                  Edit course properties
+                  Course Properties
                 </b-tooltip>
                 <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
+              </span>
+              <b-tooltip ref="tooltip"
+                         :target="getTooltipTarget('pencil',data.item.id)"
+                         delay="500"
+              >
+                Edit Course Info
+              </b-tooltip>
+              <span class="pr-1" @click="editCourse(data.item)">
+                <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil" />
               </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"
