@@ -141,11 +141,17 @@ class LearningTreeController extends Controller
         try {
 
             $data = $request->validated();
-            $validated_remediation = $this->validateRemediation($data['library'], $data['page_id']);
-            if ($validated_remediation['type'] === 'error'){
+           /* $validated_remediation = $this->validateRemediation($data['library'], $data['page_id']);
+            if ($validated_remediation['type'] === 'error') {
                 $response['message'] = $validated_remediation['message'];
                 return $response;
             }
+            if ($validated_remediation['body'] === '') {
+                $response['message'] = 'That page has no content in the body.';
+                return $response;
+            }
+            $response = [];
+            $response['type'] = 'error';*/
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->user_id = Auth::user()->id;
@@ -165,14 +171,15 @@ class LearningTreeController extends Controller
 
 
     }
-    public function getRootNode(string $library_value, string $library_text, string $library_color, int $page_id)
-{
 
-return <<<EOT
+    public function getRootNode(string $library_value, string $library_text, string $library_color, int $page_id)
+    {
+
+        return <<<EOT
 {"html":"<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: $library_color;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/{$library_value}.svg'>Assessment</p></div><div class='blockydiv'></div><div class='blockyinfo'>Library: $library_text, Page Id: $page_id</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: {$library_color};"}]}]}
 EOT;
 
-            }
+    }
 
     public function getLearningTreeByUserAndQuestionId($user_id, $question_id)
     {
@@ -212,8 +219,9 @@ EOT;
 
     public function getDefaultLearningTree()
     {
+        dd('sdfsdf');
         return <<<EOT
-{"html":"<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/adapt.svg'>Assessment</p></div><div class='blockydiv'></div><div class='blockyinfo'>The original question.</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"}]}]}
+{"html":"<div class='blockelem noselect block' style="left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"><input type="hidden" name="blockelemtype" class="blockelemtype" value="1"><input type="hidden" name="blockid" class="blockid" value="0"><div class="blockyleft"><p class="blockyname"><img src="/assets/img/adapt.svg">Assessment</p></div><div class="blockydiv"></div><div class="blockyinfo">The original question.</div></div><div class="indicator invisible" style="left: 154px; top: 119px;"></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"}]}]}
 EOT;
 
     }
@@ -290,7 +298,8 @@ EOT;
         $response['type'] = 'error';
         try {
             $Query = new Query(['library' => $library]);
-            $Query->getContentsByPageId($pageId);
+            $contents = $Query->getContentsByPageId($pageId);
+            $response['body'] = $contents['body'][0];
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

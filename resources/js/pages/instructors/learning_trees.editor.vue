@@ -244,7 +244,7 @@ export default {
       let pageId = isAssessmentNode ? '' : blockin.querySelector('.pageId').innerHTML
       let body = isAssessmentNode ? 'The original question'
         : `<div>Library: <span class="library d-none">${library}</span>${libraryText}, Page Id: <span class="pageId" >${pageId}</span><br>
-<span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
+<span class="extra"></span></div>`
       drag.innerHTML += `<div class='blockyleft'>
 <p class='blockyname'><img src="/assets/img/${library[0].toLowerCase() + library.slice(1)}.svg"></span>${title}</p></div>
 <div class='blockydiv'></div>
@@ -329,7 +329,7 @@ ${body}
       this.learningTreeForm.page_id = ''
     },
     initCreateNew () {
-      this.$router.go()
+      location.replace('/instructors/learning-trees/editor/0')
     },
     deleteLearningTree () {
       this.$bvModal.show('modal-delete-learning-tree')
@@ -393,6 +393,7 @@ ${body}
           this.assessmentPageId = this.learningTreeForm.page_id
           this.$bvModal.hide('modal-learning-tree-details')
           console.log(data.learning_tree)
+
           flowy.import(JSON.parse(data.learning_tree))
         }
         console.log(this.learningTreeId)
@@ -518,7 +519,7 @@ ${body}
           <span class="blockdesc">Library: <span class="library d-none">${this.library}</span><span class="library-text">${libraryText}</span>,
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-          <span class="open-student-learning-objective-modal">Student Learning Objectives</span>
+          <span class="extra"></span>
         </div>
         </div>
     </div>`
