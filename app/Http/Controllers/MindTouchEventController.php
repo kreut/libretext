@@ -1,13 +1,9 @@
 <?php
 
 namespace App\Http\Controllers;
-
-
-use App\Query;
+use App\Question;
 use Illuminate\Http\Request;
 
-use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\LOG;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -15,9 +11,15 @@ use \Exception;
 
 class MindTouchEventController extends Controller
 {
-    public function update(Request $request, Query $Query)
+    public function update(Request $request, Question $Question)
     {
-        LOG::info($request->all());
-        $Query->updatePageInfoByPageId($request->page_id);
+        try {
+            usleep(2000000);//delay in case of race condition
+            $Question->getQuestionIdsByPageId($request->page_id, true);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+
     }
 }

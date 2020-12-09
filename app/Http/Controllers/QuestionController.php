@@ -38,7 +38,7 @@ class QuestionController extends Controller
         $page_id = $this->validatePageId($request);
 
 
-        $question_ids = $page_id ? $this->getQuestionIdsByPageId($request, $page_id, $Question)
+        $question_ids = $page_id ? $Question->getQuestionIdsByPageId($page_id, false)
             : $this->getQuestionIdsByWordTags($request);
 
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
@@ -100,96 +100,7 @@ class QuestionController extends Controller
 
     }
 
-    public function getQuestionIdsByPageId(Request $request, int $page_id, Question $Question)
-    {
-        $question = $Question::where('page_id', $page_id)->first();
-        if (!$question) {
 
-            //maybe it was just created and doesnt' exist yet...
-            ///get it from query
-            ///enter it into the database if I can get it
-            ///
-            /// getPageInfoByPageId(int $page_id)
-            $Query = new Query();
-            $technology_and_tags['technology'] = false;
-            $technology_and_tags['tags'] = [];
-
-            try {
-                // id=102629;  //Frankenstein test
-                //Public type questions
-                $page_info = $Query->getPageInfoByPageId($page_id);
-                $technology_and_tags = $Query->getTechnologyAndTags($page_info);
-                $contents = $Query->getContentsByPageId($page_id);
-                $body = $contents['body'][0];
-            } catch (Exception $e) {
-
-                if (strpos($e->getMessage(), '403 Forbidden') === false) {
-                    //some other error besides forbidden
-                    echo json_encode(['type' => 'error',
-                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
-                        'timeout' => 12000]);
-                    exit;
-                }
-
-                //private page so try again!
-                try {
-                    $body = $Query->getBodyFromPrivatePage($page_id);
-                } catch (Exception $e) {
-                    echo json_encode(['type' => 'error',
-                        'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
-                        'timeout' => 12000]);
-                    exit;
-                }
-            }
-
-            try {
-           ;
-                if ($technology = $Query->getTechnologyFromBody($body)) {
-                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
-
-                    $non_technology = str_replace($technology_iframe, '', $body);
-                    $has_non_technology = trim($non_technology) !== '';
-
-                    if ($has_non_technology) {
-                        //Frankenstein type problem
-                        $non_technology = $Query->addExtras($non_technology,
-                            ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
-                                'MathJax' => false]);
-                        Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
-                        Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
-                    }
-                } else {
-                    $technology_iframe = '';
-                    $has_non_technology = true;
-                    $non_technology = $Query->addExtras($body,
-                        ['glMol' => false,
-                            'MathJax' => true
-                        ]);
-                    $technology = 'text';
-                    Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
-                    Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
-                }
-                $data = ['page_id' => $page_id,
-                    'technology' => $technology,
-                    'non_technology' => $has_non_technology,
-                    'technology_iframe' => $technology_iframe];
-
-                $question = Question::firstOrCreate($data);
-                if ($technology_and_tags['tags']) {
-                    $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
-                }
-
-
-            } catch (Exception $e) {
-                echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
-                    'timeout' => 12000]);
-                exit;
-            }
-
-        }
-        return [$question->id];
-    }
 
     public function getQuestionIdsByWordTags(Request $request)
     {

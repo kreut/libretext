@@ -8,6 +8,9 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use App\Traits\MindTouchTokens;
 
+use App\Exceptions\Handler;
+use \Exception;
+
 class MindTouchEvent extends Model
 {
     use MindTouchTokens;
@@ -70,13 +73,18 @@ Log::info('Finished curl');
         Log::info('Saved events to database');
         //now update the events....
         $events_to_update = DB::table('mind_touch_events')->where('status', null)->get();
-        $Query = new Query;
+        $Question = new Question();
         if ($events_to_update->isNotEmpty()) {
             Log::info('Updating questions by mind touch events.');
             foreach ($events_to_update as $key => $event) {
                 Log::info('updating ' . $event->page_id);
-                $updated = $Query->updatePageInfoByPageId($event->page_id, 500000);
-                Log::info('updatePageResult' . $updated);
+                try {
+                    $updated = $Question->getQuestionIdsByPageId($event->page_id, true);
+                } catch (Exception $e) {
+                    Log::info($event->page_id . ' ' . $e->getMessage());
+                }
+                usleep(50000);
+                Log::info('updatePageResult ' . $event->page_id);
                 if ($updated) {
                     $page_to_update = MindTouchEvent::where('id', $event->id)->first();
                     $page_to_update->status = 'updated';

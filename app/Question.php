@@ -3,12 +3,16 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
+use App\Exceptions\Handler;
+use \Exception;
 
 class Question extends Model
 {
 
-    protected $fillable = [ 'page_id', 'technology_iframe', 'non_technology', 'technology'];
+    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology'];
 
     public function __construct(array $attributes = [])
     {
@@ -182,6 +186,117 @@ class Question extends Model
     {
         $this->storeWebwork();
         $this->storeH5P();
+    }
+
+    /**
+     * @param int $page_id
+     * @param Question $Question
+     * @param $cache_busting
+     * @return array|false
+     * @throws Exception
+     */
+    public function getQuestionIdsByPageId(int $page_id, bool $cache_busting)
+    {
+        $question = $this->where('page_id', $page_id)->first();
+
+        if (!$question && $cache_busting) {
+            return false;//something from Query that we don't care about since it's not yet in the Adapt database
+        }
+
+        if ($question && !$cache_busting) {
+            return [$question->id]; ///just part of the search....
+        }
+
+
+        //maybe it was just created and doesn't exist yet...
+        ///get it from query
+        ///enter it into the database if I can get it
+        ///
+        /// getPageInfoByPageId(int $page_id)
+        $Query = new Query();
+        $technology_and_tags['technology'] = false;
+        $technology_and_tags['tags'] = [];
+
+        try {
+            // id=102629;  //Frankenstein test
+            //Public type questions
+            $page_info = $Query->getPageInfoByPageId($page_id);
+            $technology_and_tags = $Query->getTechnologyAndTags($page_info);
+            $contents = $Query->getContentsByPageId($page_id);
+            $body = $contents['body'][0];
+        } catch (Exception $e) {
+
+            if (strpos($e->getMessage(), '403 Forbidden') === false) {
+                //some other error besides forbidden
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+
+            //private page so try again!
+            try {
+                $body = $Query->getBodyFromPrivatePage($page_id);
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+        }
+
+        try {
+
+            if ($technology = $Query->getTechnologyFromBody($body)) {
+                $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
+
+                $non_technology = str_replace($technology_iframe, '', $body);
+                $has_non_technology = trim($non_technology) !== '';
+
+                if ($has_non_technology) {
+                    //Frankenstein type problem
+                    $non_technology = $Query->addExtras($non_technology,
+                        ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
+                            'MathJax' => false]);
+                    Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+                }
+            } else {
+                $technology_iframe = '';
+                $has_non_technology = true;
+                $non_technology = $Query->addExtras($body,
+                    ['glMol' => false,
+                        'MathJax' => true
+                    ]);
+                $technology = 'text';
+                Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
+                Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+            }
+
+            $question = Question::updateOrCreate(
+                ['page_id' => $page_id],
+                ['technology' => $technology,
+                    'non_technology' => $has_non_technology,
+                    'technology_iframe' => $technology_iframe
+                ]);
+
+            if ($technology_and_tags['tags']) {
+                $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
+            }
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            echo json_encode(['type' => 'error',
+                'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                'timeout' => 12000]);
+            exit;
+        }
+
+
     }
 
 }

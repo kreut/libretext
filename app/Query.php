@@ -257,7 +257,7 @@ SCRIPTS;
 
     public function addMathJaxScript()
     {
-$app_url =  $this->getAppUrl();
+        $app_url = $this->getAppUrl();
 
         return <<<MATHJAX
 <script type="text/javascript" src="$app_url/assets/js/mathjax.js"></script>
@@ -287,10 +287,10 @@ MATHJAX;
 
     public function addExtras(string $body, array $extras)
     {
-        $scripts = "['glMol' => " .  ($extras['glMol'] ? 1 : 0) . ",'MathJax' => " . ($extras['MathJax'] ? 1 : 0). "]";
+        $scripts = "['glMol' => " . ($extras['glMol'] ? 1 : 0) . ",'MathJax' => " . ($extras['MathJax'] ? 1 : 0) . "]";
         $php = '<?php $extras = ' . $scripts . '; ?>' . "\r\n";
         $config = "<?php require_once(__DIR__ . '/../query.config.php'); ?>\r\n";
-        return $php. $config . $body;
+        return $php . $config . $body;
 
     }
 
@@ -351,70 +351,6 @@ MATHJAX;
         return $page_info;
     }
 
-    public function updatePageInfoByPageId(int $page_id, $time_in_between = 2000000)
-    {
-        Log::info('updatePageInfoByPageId');
-        $staging = (env('APP_ENV') === 'staging');
-        if (!$page_id) {
-            Log::info('No page id');
-            return false;
-        }
-        if ($staging) {
-            $page_id = 1939; //for testing purposes
-            //Works if you update a tag or title is updated
-        }
-        //first save the latest updates
-        try {
-
-
-            //save the latest updates; this one should now be available.
-            usleep($time_in_between); //not the best!  but allow for race conditions; want MindTouch to do the update first
-            $page_info = $this->getPageInfoByPageId($page_id);
-            Log::info($page_info);
-            $question = Question::where('page_id', $page_id)->first();
-
-            $technology = $this->getTechnologyAndTags($page_info);
-
-
-            DB::beginTransaction();
-            if (!$question) {
-                Log::info('creating');
-                //get the info from query then add to the database
-                $question = Question::create(['page_id' => $page_id,
-                    'technology' => $technology,
-                    'location' => $page_info['uri.ui']]);
-            } else {
-                //the path may have changed so I need to update it
-                $question->location = $page_info['uri.ui'];
-                $question->save();
-                Log::info('updating');
-
-            }
-
-            //now get the tags from Query and update
-            $tag_info = $this->getTagsByPageId($page_id);
-            $tags = [];
-            Log::info('getting tags');
-            Log::info($tag_info);
-            if ($tag_info['@count'] > 0) {
-                foreach ($tag_info['tag'] as $key => $tag) {
-                    if (isset($tag['@value'])) {
-                        $tags[] = $tag['@value'];
-                    }
-                }
-                if ($tags) {
-                    $this->addTagsToQuestion($question, $tags);
-                }
-            }
-            DB::commit();
-            return true;
-        } catch (Exception $e) {
-            DB::rollback();
-            $h = new Handler(app());
-            $h->report($e);
-            return false;
-        }
-    }
 
     public
     function getSiteMaps()
