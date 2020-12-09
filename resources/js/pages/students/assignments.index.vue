@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" :title="title"></PageTitle>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -8,15 +8,15 @@
                :width="128"
                :height="128"
                color="#007BFF"
-               background="#FFFFFF"></loading>
+               background="#FFFFFF"
+      />
       <b-modal
         id="modal-upload-file"
         ref="modal"
         title="Upload File"
+        ok-title="Submit"
         @ok="handleOk"
         @hidden="resetModalForms"
-        ok-title="Submit"
-
       >
         <b-form ref="form">
           <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
@@ -26,15 +26,15 @@
             placeholder="Choose a file or drop it here..."
             drop-placeholder="Drop file here..."
             :accept="getAcceptedFileTypes()"
-          ></b-form-file>
+          />
           <div v-if="uploading">
-            <b-spinner small type="grow"></b-spinner>
+            <b-spinner small type="grow" />
             Uploading file...
           </div>
           <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">{{ form.errors.get('assignmentFile') }}
+          <div class="help-block invalid-feedback">
+            {{ form.errors.get('assignmentFile') }}
           </div>
-
         </b-form>
       </b-modal>
       <b-modal
@@ -42,18 +42,18 @@
         ref="modal"
         size="xl"
         title="Assignment Submission Feedback"
-        @ok="closeAssignmentSubmissionFeedbackModal"
         ok-only
         ok-variant="primary"
         ok-title="Close"
-
+        @ok="closeAssignmentSubmissionFeedbackModal"
       >
         <b-card title="Summary">
           <b-card-text>
             <p>
               Submitted File:
               <b-button variant="link" style="padding:0px; padding-bottom:3px"
-                        v-on:click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)">
+                        @click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)"
+              >
                 {{ this.assignmentFileInfo.original_filename }}
               </b-button>
               <br>
@@ -61,13 +61,12 @@
               Date submitted: {{ this.assignmentFileInfo.date_submitted }}<br>
               Date graded: {{ this.assignmentFileInfo.date_graded }}<br>
               Text feedback: {{ this.assignmentFileInfo.text_feedback }}<br>
-            <hr>
-
+            </p><hr>
           </b-card-text>
         </b-card>
         <div v-if="assignmentFileInfo.file_feedback_url">
           <div class="d-flex justify-content-center mt-5">
-            <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"></iframe>
+            <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
           </div>
         </div>
       </b-modal>
@@ -75,11 +74,13 @@
       <div v-if="hasAssignments">
         <div class="text-center">
           <div class="text-center">
-            <p v-show="letterGradesReleased" class="font-italic font-weight-bold">Your current letter grade is
+            <p v-show="letterGradesReleased" class="font-italic font-weight-bold">
+              Your current letter grade is
               "{{ letterGrade }}".
             </p>
           </div>
-          <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">Your current weighted average
+          <p v-show="studentsCanViewWeightedAverage" class="font-italic font-weight-bold">
+            Your current weighted average
             is {{ weightedAverage }}.
           </p>
         </div>
@@ -87,7 +88,7 @@
           <template v-slot:cell(name)="data">
             <div class="mb-0">
               <div v-show="data.item.is_available">
-                <a href="" v-on:click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
+                <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
               </div>
               <div v-show="!data.item.is_available">
                 {{ data.item.name }}
@@ -104,10 +105,10 @@
 
           <template v-slot:cell(files)="data">
             <div v-if="data.item.submission_files === 'a'">
-              <b-icon icon="cloud-upload" class="mr-2" v-on:click="openUploadAssignmentFileModal(data.item.id)"
-                      v-b-modal.modal-uploadmodal-upload-assignment-file-file></b-icon>
-              <b-icon icon="pencil-square" v-on:click="getAssignmentFileInfo(data.item.id)"
-              ></b-icon>
+              <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
+                      @click="openUploadAssignmentFileModal(data.item.id)"
+              />
+              <b-icon icon="pencil-square" @click="getAssignmentFileInfo(data.item.id)" />
             </div>
             <div v-else>
               N/A
@@ -117,22 +118,25 @@
           <template v-slot:cell(solution_key)="data">
             <div v-if="data.item.solution_key">
               <b-button variant="outline-primary"
-                        v-on:click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)">Download
+                        @click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)"
+              >
+                Download
               </b-button>
             </div>
             <div v-else>
               N/A
             </div>
           </template>
-
         </b-table>
       </div>
       <div v-else>
         <br>
         <div class="mt-4">
-          <b-alert :show="showNoAssignmentsAlert" variant="warning"><a href="#" class="alert-link">This course currently
-            has
-            no assignments.</a></b-alert>
+          <b-alert :show="showNoAssignmentsAlert" variant="warning">
+            <a href="#" class="alert-link">This course currently
+              has
+              no assignments.</a>
+          </b-alert>
         </div>
       </div>
     </div>
@@ -141,12 +145,11 @@
 
 <script>
 import axios from 'axios'
-import Form from "vform"
-import {downloadFile} from '~/helpers/DownloadFiles'
-import {submitUploadFile} from '~/helpers/UploadFiles'
-import {getAcceptedFileTypes} from '~/helpers/UploadFiles'
-import {downloadSolutionFile} from '~/helpers/DownloadFiles'
-import {getAssignments} from "../../helpers/Assignments"
+import Form from 'vform'
+import { downloadFile, downloadSolutionFile } from '~/helpers/DownloadFiles'
+import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
+
+import { getAssignments } from '../../helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
@@ -171,9 +174,12 @@ export default {
     assignments: [],
     courseId: false,
     fields: [
-      'name',
-      'available_from',
-      'due',
+      { key: 'name',
+        sortable: true },
+      { key: 'available_from',
+        sortable: true },
+      { key: 'due',
+        sortable: true },
       'number_submitted',
       'score',
       'files',
@@ -183,30 +189,28 @@ export default {
     showNoAssignmentsAlert: false,
     canViewAssignments: false
   }),
-  created() {
+  created () {
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadFile = downloadFile
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.getAssignments = getAssignments
-
-
   },
-  mounted() {
+  mounted () {
     this.courseId = this.$route.params.courseId
     this.getCourseInfo()
     this.getAssignments()
   },
   methods: {
-    async getCourseInfo() {
+    async getCourseInfo () {
       try {
-        const {data} = await axios.get(`/api/courses/${this.courseId}`)
+        const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
         console.log(data)
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         this.letterGradesReleased = Boolean(data.course.letter_grades_released)
         if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
-          const {data} = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
+          const { data } = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
           console.log(data)
           if (data.type === 'error') {
             this.$noty.error(data.message)
@@ -215,29 +219,27 @@ export default {
           this.weightedAverage = data.weighted_score
           this.letterGrade = data.letter_grade
         }
-
       } catch (error) {
         this.$noty.error(error.message)
-
       }
     },
-    downloadSubmissionFile(assignmentId, submission, original_filename) {
+    downloadSubmissionFile (assignmentId, submission, originalFilename) {
       let data =
         {
           'assignment_id': assignmentId,
           'submission': submission
         }
       let url = '/api/submission-files/download'
-      this.downloadFile(url, data, original_filename, this.$noty)
+      this.downloadFile(url, data, originalFilename, this.$noty)
     },
-    closeAssignmentSubmissionFeedbackModal() {
+    closeAssignmentSubmissionFeedbackModal () {
       this.$nextTick(() => {
         this.$bvModal.hide('modal-assignment-submission-feedback')
       })
     },
-    async getAssignmentFileInfo(assignmentId) {
+    async getAssignmentFileInfo (assignmentId) {
       try {
-        const {data} = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
+        const { data } = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
         this.assignmentFileInfo = data.assignment_file_info
         if (!this.assignmentFileInfo) {
           this.$noty.info("You can't have any feedback if you haven't submitted a file!")
@@ -245,7 +247,7 @@ export default {
         }
         console.log(this.assignmentFileInfo)
 
-        this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback');
+        this.$root.$emit('bv::show::modal', 'modal-assignment-submission-feedback')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.$nextTick(() => {
@@ -258,16 +260,13 @@ export default {
           error.message = 'The maximum size allowed is 10MB.'
         }
         this.$noty.error(error.message)
-
       }
-      //get the text comments
-      //get the score
-      //the the temporary url of the feedback
-      //get the download url of your current submission
-
-
+      // get the text comments
+      // get the score
+      // the the temporary url of the feedback
+      // get the download url of your current submission
     },
-    async handleOk(bvModalEvt) {
+    async handleOk (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
@@ -283,10 +282,10 @@ export default {
       this.uploading = false
     },
 
-    resetModalForms() {
+    resetModalForms () {
       // alert('reset modal')
     },
-    openUploadAssignmentFileModal(assignmentId) {
+    openUploadAssignmentFileModal (assignmentId) {
       console.log(this.assignmentFileInfo)
       return false
       console.log(assignment)
@@ -294,12 +293,11 @@ export default {
       this.form.errors.clear('assignmentFile')
       this.form.assignmentId = assignmentId
     },
-    getAssignmentSummaryView(assignment) {
+    getAssignmentSummaryView (assignment) {
       if (assignment.source === 'x') {
-        this.$noty.info("This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.")
+        this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
         return false
       }
-
 
       if (assignment.instructions || (assignment.show_scores && assignment.students_can_view_assignment_statistics)) {
         this.$router.push(`/assignments/${assignment.id}/summary`)
@@ -307,10 +305,9 @@ export default {
       }
 
       this.$router.push(`/assignments/${assignment.id}/questions/view`)
-
     },
-    metaInfo() {
-      return {title: this.$t('home')}
+    metaInfo () {
+      return { title: this.$t('home') }
     }
   }
 }
