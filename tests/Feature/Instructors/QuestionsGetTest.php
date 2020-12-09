@@ -61,7 +61,7 @@ class QuestionsGetTest extends TestCase
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
             ['points' => 10])
-            ->assertJson(['message' => 'You are not allowed to update the question points for this assignment.']);
+            ->assertJson(['message' => 'You are not allowed to update that resource.']);
     }
     /** @test **/
     public function non_owner_cannot_get_assignment_info_for_get_questions()
@@ -171,7 +171,7 @@ class QuestionsGetTest extends TestCase
         Submission::create($this->h5pSubmission);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
             ->assertJson(['type' => 'error',
-                'message' => "You can't update the question points since students have already submitted responses."]);
+                'message' => "This cannot be updated since students have already submitted responses."]);
 
     }
 
@@ -182,7 +182,7 @@ class QuestionsGetTest extends TestCase
         Submission::create($this->submission_file);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
             ->assertJson(['type' => 'error',
-                'message' => "You can't update the question points since students have already submitted responses."]);
+                'message' => "This cannot be updated since students have already submitted responses."]);
 
     }
 

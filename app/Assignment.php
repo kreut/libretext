@@ -41,7 +41,6 @@ class Assignment extends Model
     }
 
     public function hasFileOrQuestionSubmissions() {
-        dd($this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty());
        return  $this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty();
     }
     public function questionFileSubmissions()

@@ -11,7 +11,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
-class AssignmentsIndexTest extends TestCase
+class AssignmentsIndex1Test extends TestCase
 {
 
     /**Still must test the stuff with the correct/completed and number**/
@@ -370,125 +370,6 @@ class AssignmentsIndexTest extends TestCase
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment_2->id}")
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to delete this assignment.']);
 
-    }
-
-    /** @test */
-    public function can_update_an_assignment_if_you_are_the_owner()
-    {
-        $this->assignment_info['name'] = 'Some new name';
-        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}",
-            $this->assignment_info)
-            ->assertJson(['type' => 'success']);
-    }
-
-    /** @test */
-    public function cannot_update_an_assignment_if_you_are_not_the_owner()
-    {
-        $this->assignment_info['name'] = "some other name";
-        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}",
-            $this->assignment_info)->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this assignment.']);
-    }
-
-    /** @test */
-    public function can_create_an_assignment()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJson(['type' => 'success']);
-
-    }
-
-    /** @test */
-
-    public function must_be_of_a_valid_source()
-    {
-        $this->assignment_info['source'] = "";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['source']);
-
-
-    }
-
-    /** @test */
-    public function must_include_an_assignment_name()
-    {
-        $this->assignment_info['name'] = "";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['name']);
-
-    }
-
-    /** @test */
-    public function must_include_valid_available_on_date()
-    {
-
-        $this->assignment_info['available_from_date'] = "not a date";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['available_from_date']);
-
-    }
-
-    /** @test */
-    public function must_include_valid_due_date()
-    {
-        $this->assignment_info['due_date'] = "not a date";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due_date']);
-    }
-
-    /** @test */
-    public function must_include_valid_default_points_per_question()
-    {
-
-        $this->assignment_info['default_points_per_question'] = "";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['default_points_per_question']);
-
-        $this->assignment_info['default_points_per_question'] = "1.9";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['default_points_per_question']);
-
-        $this->assignment_info['default_points_per_question'] = "10000";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['default_points_per_question']);
-
-        $this->assignment_info['default_points_per_question'] = "-3";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['default_points_per_question']);
-    }
-
-
-    /** @test */
-    public function must_include_valid_due_time()
-    {
-        $this->assignment_info['due_time'] = "not a time";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due_time']);
-    }
-
-    /** @test */
-    public function due_date_must_be_after_available_date()
-    {
-        $this->assignment_info['due'] = "1982-06-06";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJson(['message' => 'Your assignment should become due after it becomes available.']);
-    }
-
-    /** @test */
-    public function must_include_valid_available_from_time()
-    {
-
-        $this->assignment_info['available_from_time'] = "not a time";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['available_from_time']);
-    }
-
-    /** @test */
-    public function must_include_whether_files_are_allowed()
-    {
-
-        $this->assignment_info['submission_files'] = "7";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['submission_files']);
     }
 
 

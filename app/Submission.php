@@ -103,6 +103,7 @@ class Submission extends Model
                     'submission' => $data['submission'],
                     'score' => $data['score']]);
 
+
             }
 
             //update the score if it's supposed to be updated
@@ -122,6 +123,7 @@ class Submission extends Model
                     $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
                     break;
             }
+
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
             $log = new \App\Log();
@@ -129,11 +131,6 @@ class Submission extends Model
             $request->data =  ['assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id']];
             $log->store($request);
-            Submission::create(['user_id' => $data['user_id'],
-                'assignment_id' => $data['assignment_id'],
-                'question_id' => $data['question_id'],
-                'submission' => $data['submission'],
-                'score' => $data['score']]);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
