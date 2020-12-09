@@ -147,7 +147,7 @@ class LearningTreeController extends Controller
                 return $response;
             }
             if ($validated_remediation['body'] === '') {
-                $response['message'] = 'That page has no content in the body.';
+                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
                 return $response;
             }
             $learningTree->title = $data['title'];
