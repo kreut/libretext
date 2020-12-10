@@ -19,9 +19,9 @@
           Add Assignment
         </b-button>
         <b-button class="mr-1"
-                  @click="getCourseScores()"
+                  @click="getGradeBook()"
         >
-          Course Scores
+          Gradebook
         </b-button>
       </div>
 
@@ -44,7 +44,7 @@
           </div>
           <div v-show="solutionsReleased">
             <b-alert variant="info" show>
-              <strong>You have already released the solutions to this assignment. The only
+              <strong>This assignment is locked. The only
                 item
                 that you can update is the assignment's name, the assignment's group, the instructions, and whether
                 students can view the
@@ -595,8 +595,8 @@ export default {
     initTooltips(this)
   },
   methods: {
-    getCourseScores () {
-      this.$router.push(`/courses/${this.courseId}/scores`)
+    getGradeBook () {
+      this.$router.push(`/courses/${this.courseId}/gradebook`)
     },
     getLockedQuestionsMessage (assignment) {
       if ((Number(assignment.has_submissions_or_file_submissions))) {

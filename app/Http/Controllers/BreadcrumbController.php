@@ -111,11 +111,11 @@ class BreadcrumbController extends Controller
                             'active' => true];
                         break;
 //My courses / The assignment's course / that assignment / questions get
-                    case('scores.index'):
+                    case('gradebook.index'):
                         //My courses / that course
                         $breadcrumbs[] = ['text' => $course->name,
                             'href' => "/instructors/courses/{$course->id}/assignments"];
-                        $breadcrumbs[] = ['text' => 'Scores',
+                        $breadcrumbs[] = ['text' => 'Gradebook',
                             'href' => "#",
                             'active' => true];
                         break;

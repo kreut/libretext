@@ -53,7 +53,7 @@
         </template>
         <template v-slot:cell(actions)="data">
           <div class="mb-0">
-            <span class="pr-1" @click="showScores(data.item.id)">
+            <span class="pr-1" @click="showGradebook(data.item.id)">
               <b-tooltip :target="getTooltipTarget('gradebook',data.item.id)"
                          delay="500"
               >
@@ -166,8 +166,8 @@ export default {
     showAssignments (courseId) {
       this.$router.push(`/instructors/courses/${courseId}/assignments`)
     },
-    showScores (courseId) {
-      this.$router.push(`/courses/${courseId}/scores`)
+    showGradebook (courseId) {
+      this.$router.push(`/courses/${courseId}/gradebook`)
     },
     deleteCourse (courseId) {
       this.courseId = courseId

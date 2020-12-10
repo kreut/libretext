@@ -14,7 +14,9 @@ class MindTouchEventController extends Controller
     public function update(Request $request, Question $Question)
     {
         try {
-            //Log::info(print_r($request->all(), true));
+            if ($request->action === 'saved'){
+                Log::info(print_r($request->all(), true));
+            }
             return false;
             usleep(2000000);//delay in case of race condition
             $question = Question::where('page_id', $request->page_id)->first();
