@@ -170,8 +170,30 @@ class SubmissionFileController extends Controller
             return $response;
         }
 
+        switch($type){
+            case('question'):
+                $max_points = DB::table('assignment_question')
+                                                ->where('question_id', $question_id)
+                                                ->where('assignment_id', $assignment_id)
+                                                ->first()
+                                                ->points;
+                $submission_points = DB::table('submissions')
+                                        ->where('question_id', $question_id)
+                                        ->where('assignment_id', $assignment_id)
+                                        ->first();
+                if (+$submission_points + $request->score > $max_points){
+                    $response['message'] = "The total of your Question Submission Score and File Submission score can't be greater than the total number of points for this question.";
+                    return $response;
+                }
+
+                break;
+            case('assignment'):
+                //todo
+                break;
+        }
+        $data = $request->validated();
         try {
-            $data = $request->validated();
+
 
             DB::beginTransaction();
 
