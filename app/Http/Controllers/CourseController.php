@@ -100,7 +100,9 @@ class CourseController extends Controller
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
                 'graders' => $course->graderNamesAndIds,
-                'access_code' => $course->accessCodes->access_code];
+                'access_code' => $course->accessCodes->access_code,
+                'start_date' => $course->start_date,
+                'end_date' => $course->end_date];
 
             $response['type'] = 'success';
         } catch (Exception $e) {

@@ -1,7 +1,7 @@
 <template>
   <div class="row">
     <div v-if="user.role === 2" class="col-md-3">
-      <card :title="$t('Properties')" class="properties-card">
+      <card title="Course Properties" class="properties-card">
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
@@ -31,6 +31,11 @@ export default {
     }),
     tabs () {
       return [
+        {
+          icon: '',
+          name: 'General Information',
+          route: 'course_properties.general_info'
+        },
         {
           icon: '',
           name: 'People',

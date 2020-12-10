@@ -17,60 +17,8 @@
       @ok="submitCourseInfo"
       @hidden="resetModalForms"
     >
-      <b-form ref="form">
-        <b-form-group
-          id="name"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Name"
-          label-for="name"
-        >
-          <b-form-input
-            id="name"
-            v-model="form.name"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('name') }"
-            @keydown="form.errors.clear('name')"
-          />
-          <has-error :form="form" field="name" />
-        </b-form-group>
-
-        <b-form-group
-          id="start_date"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Start Date"
-          label-for="Start Date"
-        >
-          <b-form-datepicker
-            v-model="form.start_date"
-            :min="min"
-            :class="{ 'is-invalid': form.errors.has('start_date') }"
-            @shown="form.errors.clear('start_date')"
-          />
-          <has-error :form="form" field="start_date" />
-        </b-form-group>
-
-        <b-form-group
-          id="end_date"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="End Date"
-          label-for="End Date"
-        >
-          <b-form-datepicker
-            v-model="form.end_date"
-            :min="min"
-            class="mb-2"
-            :class="{ 'is-invalid': form.errors.has('end_date') }"
-            @click="form.errors.clear('end_date')"
-            @shown="form.errors.clear('end_date')"
-          />
-          <has-error :form="form" field="end_date" />
-        </b-form-group>
-      </b-form>
+      <CourseForm :form="newCourseForm" />
     </b-modal>
-
     <b-modal
       id="modal-delete-course"
       ref="modal"
@@ -122,15 +70,6 @@
                 </b-tooltip>
                 <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
               </span>
-              <b-tooltip ref="tooltip"
-                         :target="getTooltipTarget('pencil',data.item.id)"
-                         delay="500"
-              >
-                Edit Course Info
-              </b-tooltip>
-              <span class="pr-1" @click="editCourse(data.item)">
-                <b-icon :id="getTooltipTarget('pencil',data.item.id)" icon="pencil" />
-              </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"
               >
@@ -159,16 +98,14 @@
 
 <script>
 import axios from 'axios'
-import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
+import CourseForm from '../../components/CourseForm'
+import Form from 'vform'
 
-const now = new Date()
 export default {
+  components: { CourseForm },
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   data: () => ({
     fields: [
       {
@@ -194,15 +131,17 @@ export default {
     course: null,
     hasCourses: false,
     courseId: false, // if there's a courseId if it's an update
-    min: new Date(now.getFullYear(), now.getMonth(), now.getDate()),
-    form: new Form({
+    showNoCoursesAlert: false,
+    canViewCourses: false,
+    modalHidden: false,
+    newCourseForm: new Form({
       name: '',
       start_date: '',
       end_date: ''
-    }),
-    showNoCoursesAlert: false,
-    canViewCourses: false,
-    modalHidden: false
+    })
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   mounted () {
     this.getCourses()
@@ -210,6 +149,17 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async createCourse () {
+      try {
+        const { data } = await this.newCourseForm.post('/api/courses')
+        this.$noty[data.type](data.message)
+        this.resetAll('modal-course-details')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     getProperties (course) {
       this.$router.push(`/instructors/courses/${course.id}/properties`)
     },
@@ -240,18 +190,12 @@ export default {
       this.form.end_date = course.end_date
       this.$bvModal.show('modal-course-details')
     },
-    updateAccessCode (course) {
-      this.courseId = course.id
-      this.course = course
-      this.$bvModal.show('modal-update-course-access-code')
-    },
     resetModalForms () {
-      this.form.name = ''
-      this.form.start_date = ''
-      this.form.end_date = ''
-      this.graderForm.email = ''
+      this.newCourseForm.name = ''
+      this.newCourseForm.start_date = ''
+      this.newCourseForm.end_date = ''
       this.courseId = false
-      this.form.errors.clear()
+      this.newCourseForm.errors.clear()
     },
     resetAll (modalId) {
       this.getCourses()
@@ -265,29 +209,7 @@ export default {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      !this.courseId ? this.createCourse() : this.updateCourse()
-    },
-    async createCourse () {
-      try {
-        const { data } = await this.form.post('/api/courses')
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-course-details')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-    },
-    async updateCourse () {
-      try {
-        const { data } = await this.form.patch(`/api/courses/${this.courseId}`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-course-details')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
+      this.createCourse()
     },
     async getCourses () {
       try {

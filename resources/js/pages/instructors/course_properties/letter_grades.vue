@@ -44,7 +44,7 @@
             </b-btn>
           </div>
         </b-modal>
-        <b-card>
+        <b-card header="default" header-html="Letter Grades">
           <b-card-text>
             <p>
               Let us know how you would like to convert your students' weighted scores into letter grades or grade

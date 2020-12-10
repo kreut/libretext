@@ -42,7 +42,8 @@ let general_paths  = [
   { path: '/instructors/courses/:courseId/properties',
     component: page('instructors/course_properties/index.vue'),
     children: [
-      { path: '', redirect: { name: 'course_properties.graders' } },
+      { path: '', redirect: { name: 'course_properties.general_info' } },
+      { path: 'details', name: 'course_properties.general_info', component: page('instructors/course_properties/general_info.vue') },
       { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
       { path: 'assignment-groups', name: 'course_properties.assignment_groups', component: page('instructors/course_properties/assignment_groups.vue') },
       { path: 'access-codes', name: 'course_properties.access_codes', component: page('instructors/course_properties/access_codes.vue') },
