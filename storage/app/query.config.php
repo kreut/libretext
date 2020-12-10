@@ -1,4 +1,4 @@
-<link rel="stylesheet" href="https://adapt.libretexts.org/assets/css/query.css">
+<link rel="stylesheet" href="https://adapt.libretexts.org/assets/css/query.css?v=2">
 <script type="text/javascript" src="https://adapt.libretexts.org/assets/js/hostIFrameResizer.js"></script>
 <?php
 if (isset($extras['glMol'])  && $extras['glMol']) {
@@ -7,19 +7,16 @@ if (isset($extras['glMol'])  && $extras['glMol']) {
             integrity="sha512-bLT0Qm9VnAYZDflyKcBaQ2gg0hSYNQrJ8RilYldYQ1FxQYoCLtUjuuRuZo+fjqhx/qtq/1itJ0C2ejDxltZVFg=="
             crossorigin="anonymous"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/Three49custom.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/GLmol/js/GLmol.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/JSmol/JSmol.full.nojq.js"></script>
     <script type="text/javascript"
-            src="https://files.libretexts.org/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
+            src="https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/Molecules/3Dmol/3Dmol-nojquery.js"></script>
 <?php }
 if (isset($extras['MathJax'])  && $extras['MathJax']) {
     ?>
-    <script type="text/javascript">
-        MathJax.Hub.Config({});
-    </script>
     <script type="text/x-mathjax-config">/*<![CDATA[*/
   MathJax.Ajax.config.path["mhchem"] =
             "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";

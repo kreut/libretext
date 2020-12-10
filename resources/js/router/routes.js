@@ -10,10 +10,11 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/instructors/learning-trees/editor/:learningTreeId', name: 'instructors.learning_trees.editor', component: page('instructors/learning_trees.editor.vue') },
+  { path: '/instructors/learning-trees', name: 'instructors.learning_trees.index', component: page('instructors/learning_trees.index.vue') },
   { path: '/assignments/:assignmentId/questions/:questionId/view', name: 'question.view', component: page('instructors/question.view.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
   { path: '/assignments/:assignmentId/:typeFiles/:questionId?/:studentUserId?', name: 'assignment.files.index', component: page('instructors/assignments.files.vue') },
-  { path: '/instructors/assignment/:assignmentId/remediations/:questionId', name: 'remediation.index', component: page('instructors/remediations.vue') },
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
   { path: '/courses/:courseId/scores', name: 'scores.index', component: page('instructors/scores.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
@@ -37,6 +38,15 @@ let general_paths  = [
       { path: '', redirect: { name: 'settings.profile' } },
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
       { path: 'password', name: 'settings.password', component: page('settings/password.vue') }
+    ] },
+  { path: '/instructors/courses/:courseId/properties',
+    component: page('instructors/course_properties/index.vue'),
+    children: [
+      { path: '', redirect: { name: 'course_properties.graders' } },
+      { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
+      { path: 'assignment-groups', name: 'course_properties.assignment_groups', component: page('instructors/course_properties/assignment_groups.vue') },
+      { path: 'access-codes', name: 'course_properties.access_codes', component: page('instructors/course_properties/access_codes.vue') },
+      { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') }
     ] },
   { path: '*', component: page('errors/404.vue') }
 ]

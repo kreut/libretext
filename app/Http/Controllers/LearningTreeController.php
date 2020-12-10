@@ -2,7 +2,8 @@
 
 namespace App\Http\Controllers;
 
-use App\Http\Requests\StoreLearningTree;
+
+use App\Http\Requests\StoreLearningTreeInfo;
 use App\LearningTree;
 use App\Query;
 use App\Question;
@@ -17,16 +18,116 @@ use \Exception;
 class LearningTreeController extends Controller
 {
 
+
+    public function index(Request $request, LearningTree $learningTree)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('index', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $response['type'] = 'error';
+
+        try {
+            $response['learning_trees'] = $learningTree->where('user_id', Auth::user()->id)->get();
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your learning trees.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     /**
      * Store a newly created resource in storage.
      *
      * @param \Illuminate\Http\Request $request
      * @return \Illuminate\Http\Response
      */
-    public function store(StoreLearningTree $request, LearningTree $learningTree)
+    public function update(Request $request, LearningTree $learningTree)
     {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('store', $learningTree);
 
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $response['type'] = 'error';
+        $learning_tree_old = json_decode($learningTree->learning_tree, true);
+        $learning_tree_parsed = str_replace('\"', "'", $request->learning_tree);
+        $learning_tree_new = json_decode($learning_tree_parsed, true);
+        $no_change = $learning_tree_old === $learning_tree_new;
+
+        if ($no_change) {
+            $response['type'] = 'no_change';
+
+        } else {
+            try {
+                $learningTree->learning_tree = $learning_tree_parsed;
+
+                $learningTree->save();
+                $response['type'] = 'success';
+                $response['message'] = "The learning tree has been saved.";
+                $response['no_change'] = $no_change;
+
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
+            }
+        }
+        return $response;
+
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param \Illuminate\Http\Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function updateLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        $response['type'] = 'error';
+
+
+        try {
+
+            $data = $request->validated();
+            $learningTree->title = $data['title'];
+            $learningTree->description = $data['description'];
+            $learningTree->save();
+
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree has been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error upating the learning tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function storeLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
 
@@ -36,19 +137,29 @@ class LearningTreeController extends Controller
         }
 
         $response['type'] = 'error';
-        $learning_tree_parsed = str_replace('\"', "'", $request->learning_tree);
 
         try {
 
             $data = $request->validated();
-
-            LearningTree::updateOrCreate(
-                    ['question_id' => $data['question_id'], 'user_id' => Auth::user()->id],
-                    ['learning_tree' => $learning_tree_parsed]
-                );
+           $validated_remediation = $this->validateRemediation($data['library'], $data['page_id']);
+            if ($validated_remediation['type'] === 'error') {
+                $response['message'] = $validated_remediation['message'];
+                return $response;
+            }
+            if ($validated_remediation['body'] === '') {
+                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
+                return $response;
+            }
+            $learningTree->title = $data['title'];
+            $learningTree->description = $data['description'];
+            $learningTree->user_id = Auth::user()->id;
+            $learningTree->learning_tree = $this->getRootNode($data['library'], $request->text, $request->color, $data['page_id']);
+            $learningTree->save();
 
             $response['type'] = 'success';
-            $response['message'] = "The learning tree has been saved.";
+            $response['learning_tree'] = $learningTree->learning_tree;
+            $response['message'] = "The Learning Tree has been created.";
+            $response['learning_tree_id'] = $learningTree->id;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -56,6 +167,15 @@ class LearningTreeController extends Controller
         }
         return $response;
 
+
+    }
+
+    public function getRootNode(string $library_value, string $library_text, string $library_color, int $page_id)
+    {
+
+        return <<<EOT
+{"html":"<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: $library_color;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/{$library_value}.svg'>Assessment</p></div><div class='blockydiv'></div><div class='blockyinfo'>Library: $library_text, Page Id: $page_id</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: {$library_color};"}]}]}
+EOT;
 
     }
 
@@ -75,10 +195,30 @@ class LearningTreeController extends Controller
             ->pluck('learning_tree');
     }
 
+
+    public function show(Request $request, LearningTree $learningTree)
+    {
+        //anybody who is logged in can do this!
+        $response['type'] = 'error';
+        try {
+
+            $response['type'] = 'success';
+            $response['learning_tree'] = $learningTree->learning_tree;
+            $response['title'] = $learningTree->title;
+            $response['description'] = $learningTree->description;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the learning tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public function getDefaultLearningTree()
     {
         return <<<EOT
-{"html":"<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/adapt.svg'>Assessment</p></div><div class='blockydiv'></div><div class='blockyinfo'>The original question.</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"}]}]}
+{"html":"<div class='blockelem noselect block' style="left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"><input type="hidden" name="blockelemtype" class="blockelemtype" value="1"><input type="hidden" name="blockid" class="blockid" value="0"><div class="blockyleft"><p class="blockyname"><img src="/assets/img/adapt.svg">Assessment</p></div><div class="blockydiv"></div><div class="blockyinfo">The original question.</div></div><div class="indicator invisible" style="left: 154px; top: 119px;"></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: rgb(18, 123, 196);"}]}]}
 EOT;
 
     }
@@ -89,7 +229,7 @@ EOT;
      * @param \App\LearningTree $learningTree
      * @return \Illuminate\Http\Response
      */
-    public function show(Request $request, Question $question)
+    public function showByQuestion(Request $request, Question $question)
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -117,20 +257,53 @@ EOT;
 
     }
 
+
+    /**
+     * Display the specified resource.
+     *
+     * @param \App\LearningTree $learningTree
+     * @return \Illuminate\Http\Response
+     */
+    public function destroy(Request $request, LearningTree $learningTree)
+    {
+        //anybody who is logged in can do this!
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('destroy', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $learningTree->delete();
+            $response['type'] = 'info';
+            $response['message'] = "The Learning Tree has been deleted.";
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error deleting the learning Tree.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     public function validateRemediation(string $library, int $pageId)
     {
 
-        $Query = new Query(['library' => $library]);
         $response['type'] = 'error';
         try {
-            $Query->getContentsByPageId($pageId);
+            $Query = new Query(['library' => $library]);
+            $contents = $Query->getContentsByPageId($pageId);
+            $response['body'] = $contents['body'][0];
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.";
         }
-return $response;
+        return $response;
 
     }
 }

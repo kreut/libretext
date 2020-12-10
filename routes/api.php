@@ -127,8 +127,16 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
 
 
-    Route::get('/learning-trees/{question}','LearningTreeController@show');
-    Route::post('/learning-trees','LearningTreeController@store');
+    Route::get('/learning-trees','LearningTreeController@index');
+    Route::get('/learning-trees/{learningTree}','LearningTreeController@show');
+
+    Route::delete('/learning-trees/{learningTree}','LearningTreeController@destroy');
+    Route::patch('/learning-trees/{learningTree}','LearningTreeController@update');
+    Route::post('/learning-trees/info','LearningTreeController@storeLearningTreeInfo');
+    Route::post('/learning-trees/info/{learningTree}','LearningTreeController@updateLearningTreeInfo');
+
+    Route::post('/logs', 'LogController@store');
+
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}','LearningTreeController@validateRemediation');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');

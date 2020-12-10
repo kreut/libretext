@@ -1,49 +1,169 @@
 <template>
   <div>
-    <div id="get-more-assignment-questions">
-      <b-button size="sm" variant="info" v-on:click="getMoreQuestions">Get More Questions</b-button>
-    </div>
-    <div id="leftcard">
-        <b-button variant="success" v-on:click="saveLearningTree">Save Learning Tree</b-button>
-      <div id="search">
-        <div class="mb-2 mr-2">
-          <b-form-select v-model="library" :options="libraryOptions" class="mt-3"></b-form-select>
+    <b-modal
+      id="modal-learning-tree-details"
+      ref="modal"
+      title="Learning Tree Details"
+      ok-title="Submit"
+      @ok="submitLearningTreeInfo"
+      @hidden="resetLearningTreeDetailsModal"
+    >
+      <p v-if="learningTreeId" class="font-italic">
+        The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }}, a page id of {{ assessmentPageId }} and comes from the
+        {{ assessmentLibrary }} library.
+      </p>
+
+      <b-form ref="form">
+        <b-form-group
+          id="learning_tree_title"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Title"
+          label-for="title"
+        >
+          <b-form-input
+            id="learning_tree_title"
+            v-model="learningTreeForm.title"
+            type="text"
+            :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
+            @keydown="learningTreeForm.errors.clear('title')"
+          />
+          <has-error :form="learningTreeForm" field="title" />
+        </b-form-group>
+
+        <b-form-group
+          id="description"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Description"
+          label-for="description"
+        >
+          <b-form-textarea
+            id="description"
+            v-model="learningTreeForm.description"
+            type="text"
+            :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
+            @keydown="learningTreeForm.errors.clear('description')"
+          />
+          <has-error :form="learningTreeForm" field="description" />
+        </b-form-group>
+        <b-form-group
+          v-if="!learningTreeId"
+          id="assessment_library"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Library"
+          label-for="library"
+        >
+          <b-input v-model="learningTreeForm.library" disabled />
+          <b-form-select v-show="false"
+                         v-model="learningTreeForm.library"
+                         :options="libraryOptions"
+                         :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
+                         @keydown="learningTreeForm.errors.clear('library')"
+          />
+          <has-error :form="learningTreeForm" field="library" />
+        </b-form-group>
+        <b-form-group>
+          <b-form-group
+            v-if="!learningTreeId"
+            id="page_id"
+            label-cols-sm="5"
+            label-cols-lg="4"
+            label="Page Id"
+            label-for="page_id"
+          >
+            <b-form-input
+              id="page_id"
+              v-model="learningTreeForm.page_id"
+              type="text"
+              style="width: 90px"
+              :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
+              @keydown="learningTreeForm.errors.clear('page_id')"
+            />
+            <has-error :form="learningTreeForm" field="page_id" />
+          </b-form-group>
+        </b-form-group>
+      </b-form>
+    </b-modal>
+
+    <b-modal
+      id="modal-delete-learning-tree"
+      ref="modal"
+      title="Confirm Delete Learning Tree"
+      ok-title="Yes, delete learning tree!"
+      @ok="handleDeleteLearningTree"
+    >
+      <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
+    </b-modal>
+
+    <div v-if="user.role === 2" id="leftcard">
+      <div id="actions">
+        <b-button variant="success" size="sm" @click="initCreateNew">
+          Create New
+        </b-button>
+        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
+          Update
+          Info
+        </b-button>
+        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
+          Delete
+        </b-button>
+        <div id="search">
+          <div class="mb-2 mr-2">
+            <b-form-select v-model="library" :options="libraryOptions" class="mt-3" />
+          </div>
+          <div class="d-flex flex-row">
+            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id" />
+            <b-button id="add"
+                      class="ml-2"
+                      variant="secondary"
+                      :disabled="this.learningTreeId === 0"
+                      @click="addRemediation"
+            >
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              Get Remediation
+            </b-button>
+          </div>
         </div>
-        <div class="d-flex flex-row">
-          <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"></b-form-input>
-          <b-button class="ml-2" variant="primary" id="add" v-on:click="addRemediation"> <b-spinner v-if="validatingRemediation"small label="Spinning"></b-spinner> Add Remediation</b-button>
-        </div>
-
       </div>
-      <div id="blocklist">
-      </div>
+      <div id="blocklist" />
     </div>
 
-    <div id="canvas">
-    </div>
-
+    <div id="canvas" />
   </div>
 </template>
 
 <script>
 
+import { flowy } from '~/helpers/Flowy'
 
-import {flowy} from '~/helpers/Flowy'
-
-import axios from "axios";
+import axios from 'axios'
+import Form from 'vform'
+import { mapGetters } from 'vuex'
 
 export default {
 
-  metaInfo() {
-    return {title: this.$t('home')}
+  metaInfo () {
+    return { title: this.$t('home') }
   },
   data: () => ({
-    validatingRemediation: false,
+    learningTreeForm: new Form({
+      title: '',
+      description: '',
+      library: null,
+      page_id: ''
+    }),
+    assessmentLibrary: '',
+    assessmentPageId: '',
+    touchingBlock: false,
+    validatingLibraryAndPageId: false,
     panelHidden: false,
     studentLearningObjectives: '',
     title: window.config.appName,
     pageId: '',
     chosenId: '',
+    learningTreeId: 0,
     library: null,
     libraryColors: {
       'bio': '#00b224',
@@ -64,178 +184,285 @@ export default {
       'workforce': '#bf4000'
     },
     libraryOptions: [
-      {value: null, text: 'Please select  the library'},
-      {value: 'bio', text: 'Biology'},
-      {value: 'biz', text: 'Business'},
-      {value: 'chem', text: 'Chemistry'},
-      {value: 'eng', text: 'Engineering'},
-      {value: 'espanol', text: 'Español'},
-      {value: 'geo', text: 'Geology'},
-      {value: 'human', text: 'Humanities'},
-      {value: 'k12', text: 'K12'},
-      {value: 'law', text: 'Law'},
-      {value: 'math', text: 'Mathematics'},
-      {value: 'med', text: 'Medicine'},
-      {value: 'phys', text: 'Physics'},
-      {value: 'query', text: 'Query'},
-      {value: 'socialsci', text: 'Social Science'},
-      {value: 'stats', text: 'Statistics'},
-      {value: 'workforce', text: 'Workforce'},
+      { value: null, text: 'Please select  the library' },
+      { value: 'bio', text: 'Biology' },
+      { value: 'biz', text: 'Business' },
+      { value: 'chem', text: 'Chemistry' },
+      { value: 'eng', text: 'Engineering' },
+      { value: 'espanol', text: 'Español' },
+      { value: 'geo', text: 'Geology' },
+      { value: 'human', text: 'Humanities' },
+      { value: 'k12', text: 'K12' },
+      { value: 'law', text: 'Law' },
+      { value: 'math', text: 'Mathematics' },
+      { value: 'med', text: 'Medicine' },
+      { value: 'phys', text: 'Physics' },
+      { value: 'query', text: 'Query' },
+      { value: 'socialsci', text: 'Social Science' },
+      { value: 'stats', text: 'Statistics' },
+      { value: 'workforce', text: 'Workforce' }
     ]
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You do not have access to the Learning Tree Editor.')
+      return false
+    }
+    let tempblock
+    let tempblock2
+    console.log(document.getElementById('canvas'))
 
-  mounted() {
+    flowy(document.getElementById('canvas'), drag, release, snapping, rearranging, 40, 50)
 
-    this.questionId = this.$route.params.questionId
-
-    let tempblock;
-    let tempblock2;
-    console.log(document.getElementById("canvas"))
-
-    flowy(document.getElementById("canvas"), drag, release, snapping, rearranging, 40, 50);
-
-    function addEventListenerMulti(type, listener, capture, selector) {
-      let nodes = document.querySelectorAll(selector);
+    function addEventListenerMulti (type, listener, capture, selector) {
+      let nodes = document.querySelectorAll(selector)
       for (let i = 0; i < nodes.length; i++) {
-        nodes[i].addEventListener(type, listener, capture);
+        nodes[i].addEventListener(type, listener, capture)
       }
     }
 
-    function rearranging(block, parent) {
+    function rearranging (block, parent) {
       // Needed so that I could redefine the y distance in flowy
     }
 
-    function snapping(drag, first) {
-      let grab = drag.querySelector(".grabme");
-      grab.parentNode.removeChild(grab);
+    function snapping (drag, first) {
+      let grab = drag.querySelector('.grabme')
+      grab.parentNode.removeChild(grab)
 
-      let blockin = drag.querySelector(".blockin");
+      let blockin = drag.querySelector('.blockin')
 
-      blockin.parentNode.removeChild(blockin);
-      let isAssessmentNode = (drag.querySelector(".blockelemtype").value === "1")
+      blockin.parentNode.removeChild(blockin)
+      let isAssessmentNode = (drag.querySelector('.blockelemtype').value === '1')
 
       let title = isAssessmentNode ? 'Assessment' : 'Remediation'
 
-      let library = isAssessmentNode ? '' : blockin.querySelector(".library").innerHTML
-      let pageId = isAssessmentNode ? '' : blockin.querySelector(".pageId").innerHTML
-
-
-      let body = isAssessmentNode ? "The original question" :
-        `<div>Library: <span class="library" >${library}</span>, Page Id: <span class="pageId" >${pageId}</span><br>
-<span class="open-student-learning-objective-modal">Student Learning Objectives</span></div>`
+      let libraryText = vm.getLibraryText(blockin.querySelector('.library').innerHTML)
+      let library = isAssessmentNode ? '' : blockin.querySelector('.library').innerHTML
+      let pageId = isAssessmentNode ? '' : blockin.querySelector('.pageId').innerHTML
+      let body = isAssessmentNode ? 'The original question'
+        : `<div>Library: <span class="library d-none">${library}</span>${libraryText}, Page Id: <span class="pageId" >${pageId}</span><br>
+<span class="extra"></span></div>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase()+library.slice(1)}.svg"></span>${title}</p></div>
+<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase() + library.slice(1)}.svg"></span>${title}</p></div>
 <div class='blockydiv'></div>
 <div class='blockyinfo'>
 ${body}
-</div>`;
-      return true;
+</div>`
+      return true
     }
 
-    function drag(block) {
-      block.classList.add("blockdisabled");
-      tempblock2 = block;
+    function drag (block) {
+      block.classList.add('blockdisabled')
+      tempblock2 = block
     }
 
-
-    function release() {
+    function release () {
       if (tempblock2) {
-        //if it's reloading a saved learning tree, this won't exist
-        tempblock2.classList.remove("blockdisabled");
+        // if it's reloading a saved learning tree, this won't exist
+        tempblock2.classList.remove('blockdisabled')
       }
     }
 
-    let aclick = false;
-    let noinfo = false;
+    let aclick = false
+    let noinfo = false
+
+    let vm = this
     let beginTouch = function (event) {
-      aclick = true;
-      noinfo = false;
-
-      if (event.target.closest(".create-flowy")) {
-
-        noinfo = true;
+      aclick = true
+      noinfo = false
+      vm.touchingBlock = event.target.closest('#canvas') || event.target.closest('#blocklist')
+      if (event.target.closest('.create-flowy')) {
+        noinfo = true
       }
     }
     let checkTouch = function (event) {
-      aclick = false;
+      aclick = false
     }
 
-
-    let vm = this
     let doneTouch = function (event) {
-
-      console.log(event.target.className)
+      // console.log(event.target.className)
+      // console.log(event.type)
+      if (vm.touchingBlock) {
+        vm.saveLearningTree()
+      }
       if (event.target.className === 'open-student-learning-objective-modal') {
         vm.pageId = event.target.parentNode.parentNode.querySelector('.pageId').innerHTML
         vm.library = event.target.parentNode.parentNode.querySelector('.library').innerHTML.toLowerCase()
         console.log(vm.pageId)
         console.log(vm.library)
         vm.openStudentLearningObjectiveModal()
-      } else if (event.type === "mouseup" && aclick && !noinfo) {
-
-        if (event.target.closest(".block") && !event.target.closest(".block").classList.contains("dragging")) {
-          console.log(event.target.closest(".block").classList.contains("dragging"));
-          tempblock = event.target.closest(".block");
-          document.getElementById("properties").classList.add("expanded");
-          tempblock.classList.add("selectedblock");
+      } else if (event.type === 'mouseup' && aclick && !noinfo) {
+        if (event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging')) {
+          alert(event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging'))
+          console.log(event.target.closest('.block').classList.contains('dragging'))
+          tempblock = event.target.closest('.block')
+          document.getElementById('properties').classList.add('expanded')
+          tempblock.classList.add('selectedblock')
         }
       }
     }
 
-    addEventListener("mousedown", beginTouch, false);
-    addEventListener("mousemove", checkTouch, false);
-    addEventListener("mouseup", doneTouch, false);
-    addEventListenerMulti("touchstart", beginTouch, false, ".block");
+    addEventListener('mousedown', beginTouch, false)
+    addEventListener('mousemove', checkTouch, false)
+    addEventListener('mouseup', doneTouch, false)
+    addEventListenerMulti('touchstart', beginTouch, false, '.block')
 
-    this.getLearningTreeByQuestionId(this.questionId)
-
-
+    this.learningTreeId = parseInt(this.$route.params.learningTreeId)
+    if (this.learningTreeId === 0) {
+      this.$bvModal.show('modal-learning-tree-details')
+      this.learningTreeForm.library = 'query'
+    } else {
+      this.getLearningTreeLearningTreeId(this.learningTreeId)
+    }
   },
   methods: {
-    getMoreQuestions(){
-      //I couldn't figure  out how to scope the CSS from Flowy: window.location
-      //performs a refresh which solved the problem.
-      window.location = `/assignments/${this.$route.params.assignmentId}/questions/get`
-
+    resetAll () {
+      this.learningTreeId = 0
+      document.getElementById('canvas').innerHTML = ''
+      document.getElementById('blocklist').innerHTML = ''
+      this.pageId = ''
+      this.library = null
+      this.learningTreeForm.library = 'query'
+      this.learningTreeForm.page_id = ''
     },
-    async getLearningTreeByQuestionId(questionId) {
-      console.log('getting learning tree')
+    initCreateNew () {
+      location.replace('/instructors/learning-trees/editor/0')
+    },
+    deleteLearningTree () {
+      this.$bvModal.show('modal-delete-learning-tree')
+    },
+    async handleDeleteLearningTree () {
       try {
-        const {data} = await axios.get(`/api/learning-trees/${questionId}`)
-        console.log(data.learning_tree)
-        flowy.import(JSON.parse(data.learning_tree))
-
+        const { data } = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'info') {
+          this.resetAll()
+        }
+        this.$bvModal.hide('modal-delete-learning-tree')
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async saveLearningTree() {
+    editLearningTree () {
+      this.learningTreeForm.title = this.title
+      this.learningTreeForm.description = this.description
+
+      this.$bvModal.show('modal-learning-tree-details')
+    },
+    resetLearningTreeDetailsModal () {
+      this.learningTreeForm.title = ''
+      this.learningTreeForm.description = ''
+      this.learningTreeForm.errors.clear()
+    },
+    resetLearningTreeModal (modalId) {
+      this.resetLearningTreeDetailsModal()
+      // Hide the modal manually
+      this.$nextTick(() => {
+        this.$bvModal.hide(modalId)
+      })
+    },
+    submitLearningTreeInfo (bvModalEvt) {
+      // Prevent modal from closing
+      bvModalEvt.preventDefault()
+      // Trigger submit handler
+      !this.learningTreeId ? this.createLearningTree() : this.updateLearningTreeInfo()
+    },
+    getLibraryText (library) {
+      let text = ''
+      for (let i = 0; i < this.libraryOptions.length; i++) {
+        if (library === this.libraryOptions[i].value) {
+          text = this.libraryOptions[i].text
+        }
+      }
+      return text
+    },
+    async createLearningTree () {
       try {
-        const {data} = await axios.post('/api/learning-trees', {
-          'question_id': this.questionId,
+        this.learningTreeForm.color = this.libraryColors[this.learningTreeForm.library]
+        this.learningTreeForm.text = this.getLibraryText(this.learningTreeForm.library)
+        const { data } = await this.learningTreeForm.post('/api/learning-trees/info')
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.learningTreeId = data.learning_tree_id
+          this.title = this.learningTreeForm.title
+          this.description = this.learningTreeForm.description
+          this.assessmentLibrary = this.learningTreeForm.text
+          this.assessmentPageId = this.learningTreeForm.page_id
+          this.$bvModal.hide('modal-learning-tree-details')
+          console.log(data.learning_tree)
+
+          flowy.import(JSON.parse(data.learning_tree))
+        }
+        console.log(this.learningTreeId)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async updateLearningTreeInfo () {
+      try {
+        const { data } = await this.learningTreeForm.post(`/api/learning-trees/info/${this.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        this.title = this.learningTreeForm.title
+        this.description = this.learningTreeForm.description
+        this.resetLearningTreeModal('modal-learning-tree-details')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async getLearningTreeLearningTreeId (learningTreeId) {
+      try {
+        const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)
+        this.title = data.title
+        this.description = data.description
+        if (data.learning_tree) {
+          flowy.import(JSON.parse(data.learning_tree))
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async saveLearningTree () {
+      try {
+        const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
           'learning_tree': JSON.stringify(flowy.output())
         })
+        console.log(data)
+        if (data.type === 'no_change') {
+          return false
+        }
+        if (data.type === 'success') {
+          document.getElementById('blocklist').innerHTML = ''
+          this.pageId = ''
+          this.library = null
+        }
         this.$noty[data.type](data.message)
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async openStudentLearningObjectiveModal() {
-      const {data} = await axios.get(`/libreverse/library/${this.library}/page/${this.pageId}/student-learning-objectives`)
-      let d = document.createElement('div');
+    async openStudentLearningObjectiveModal () {
+      const { data } = await axios.get(`/libreverse/library/${this.library}/page/${this.pageId}/student-learning-objectives`)
+      let d = document.createElement('div')
       d.innerHTML = data
 
       const h = this.$createElement
 
-      const titleVNode = h('div', {domProps: {innerHTML: 'Student Learning Objectives'}})
+      const titleVNode = h('div', { domProps: { innerHTML: 'Student Learning Objectives' } })
       let messageVNode
-      if (d.querySelector("ul")) {
+      if (d.querySelector('ul')) {
         messageVNode = h('ul', [])
-        for (const li of d.querySelector("ul").querySelectorAll('li')) {
+        for (const li of d.querySelector('ul').querySelectorAll('li')) {
           messageVNode.children.push(h('li', [li.textContent]))
         }
       } else {
-        messageVNode = h('p', {class: 'text-danger'}, ['There are no Student Learning Objectives available.'])
+        messageVNode = h('p', { class: 'text-danger' }, ['There are no Student Learning Objectives available.'])
       }
 
       console.log(messageVNode)
@@ -243,15 +470,26 @@ ${body}
       this.$bvModal.msgBoxOk([messageVNode], {
         title: [titleVNode],
         buttonSize: 'sm',
-        centered: true, size: 'lg'
+        centered: true,
+        size: 'lg'
       })
-
 
       this.$bvModal.show('student-learning-objective-modal')
     },
-
-    async addRemediation() {
-
+    async validateLibraryAndPageId (library, pageId) {
+      try {
+        const { data } = await axios.get(`/api/learning-trees/validate-remediation/${library}/${pageId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        return false
+      }
+      return true
+    },
+    async addRemediation () {
       if (!this.library) {
         this.$noty.error('Please choose a library.')
         return false
@@ -260,20 +498,11 @@ ${body}
         this.$noty.error('Your Page Id should be a positive integer.')
         return false
       }
-      try {
-        this.validatingRemediation = true
-        const {data} = await axios.get(`/api/learning-trees/validate-remediation/${this.library}/${this.pageId}`)
-        this.validatingRemediation = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
+      if (!await this.validateLibraryAndPageId(this.library, this.pageId)) {
+        return false
       }
-      this.validatingRemediation = false
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-
+      let libraryText = this.getLibraryText(this.library)
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <input type="hidden" name='page_id' value="${this.pageId}">
@@ -287,21 +516,19 @@ ${body}
           <div class='blockydiv'>
           </div>
           <div class="blockin-info">
-          <span class="blockdesc">Library: <span class="library">${this.library[0].toUpperCase() +
-      this.library.slice(1)}</span>,
+          <span class="blockdesc">Library: <span class="library d-none">${this.library}</span><span class="library-text">${libraryText}</span>,
           Page Id: <span class="pageId">${this.pageId}</span>
           <br>
-          <span class="open-student-learning-objective-modal">Student Learning Objectives</span>
+          <span class="extra"></span>
         </div>
         </div>
     </div>`
       if (blockElems.length > 0) {
         let lastBlockElem = blockElems[blockElems.length - 1]
-        lastBlockElem.insertAdjacentHTML('afterend', newBlockElem);
+        lastBlockElem.insertAdjacentHTML('afterend', newBlockElem)
       } else {
-        document.getElementById("blocklist").innerHTML += newBlockElem
+        document.getElementById('blocklist').innerHTML += newBlockElem
       }
-
     }
   }
 }
@@ -530,7 +757,6 @@ body, html {
   background-size: 30px 30px;
 }
 
-
 #navigation {
   height: 71px;
   background-color: #FFF;
@@ -670,26 +896,26 @@ body, html {
   margin-top: 15px;
 }
 
-#get-more-assignment-questions{
+#get-more-assignment-questions {
   width: 300px;
-  text-align:center;
-  margin-left:-100px;
+  text-align: center;
+  margin-left: -100px;
   margin-top: -10px;
   margin-bottom: 5px;
 }
+
 #leftcard {
   width: 300px;
-background-color: #F8F8F8;
+  background-color: #F8F8F8;
   border: 1px solid #E8E8EF;
   box-sizing: border-box;
   padding-top: 15px;
   padding-left: 20px;
   height: 500px;
-margin-left:-100px;
+  margin-left: -100px;
   position: absolute;
   z-index: 2;
 }
-
 
 ::-webkit-input-placeholder { /* Edge */
   color: #C9C9D5;
@@ -702,7 +928,6 @@ margin-left:-100px;
 ::placeholder {
   color: #C9C9D5;
 }
-
 
 #header {
   font-size: 20px;
@@ -739,7 +964,7 @@ margin-left:-100px;
   padding-top: 10px;
   margin-bottom: 5px;
   width: 242px;
-border: 1px solid transparent;
+  border: 1px solid transparent;
   transition-property: box-shadow, height;
   transition-duration: .2s;
   transition-timing-function: cubic-bezier(.05, .03, .35, 1);
@@ -756,7 +981,6 @@ border: 1px solid transparent;
   cursor: pointer;
 }
 
-
 #blocklist {
   height: calc(100% - 220px);
   overflow-y: auto;
@@ -768,7 +992,6 @@ border: 1px solid transparent;
   margin-top: -30px;
   padding-top: 30px;
 }
-
 
 .blocktext {
   display: inline-block;
@@ -802,7 +1025,6 @@ border: 1px solid transparent;
   opacity: .5;
 }
 
-
 #canvas {
   position: absolute;
   width: calc(100% - 361px);
@@ -812,7 +1034,6 @@ border: 1px solid transparent;
   z-index: 0;
   overflow: auto;
 }
-
 
 #properties {
   position: absolute;
@@ -846,7 +1067,6 @@ border: 1px solid transparent;
   color: #393C44;
   margin-top: 101px;
 }
-
 
 #propswitch {
   border-bottom: 1px solid #E8E8EF;
@@ -998,7 +1218,6 @@ border: 1px solid transparent;
   font-size: 16px;
 }
 
-
 .blockyright {
   display: inline-block;
   float: right;
@@ -1033,7 +1252,6 @@ border: 1px solid transparent;
   height: 1px;
   background-color: #E9E9EF;
 }
-
 
 .block {
   background-color: #FFF;
@@ -1110,20 +1328,19 @@ border: 1px solid transparent;
 
 .open-student-learning-objective-modal {
 
-
 }
 
 .open-student-learning-objective-modal {
   color: #007bff;
   text-decoration: none;
   background-color: transparent;
--webkit-text-decoration-skip: objects;
+  -webkit-text-decoration-skip: objects;
 }
-.open-student-learning-objective-modal:hover{
+
+.open-student-learning-objective-modal:hover {
   color: #0056b3;
   text-decoration: none;
 
 }
-
 
 </style>

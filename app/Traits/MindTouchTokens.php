@@ -12,7 +12,7 @@ trait MindTouchTokens
     public function getTokens()
     {
         $client = new Client();
-        $response = $client->get('https://files.libretexts.org/authenBrowser.json');
+        $response = $client->get('https://cdn.libretexts.net/authenBrowser.json');
         return json_decode($response->getBody());
 
 

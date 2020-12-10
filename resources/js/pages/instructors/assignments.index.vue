@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" :title="title"></PageTitle>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -8,171 +8,48 @@
                :width="128"
                :height="128"
                color="#007BFF"
-               background="#FFFFFF"></loading>
-
-      <div v-if="user.role === 2">
-        <b-container v-if="canViewAssignments" class="mb-3">
-          <b-row class="mb-2">
-            <b-col cols="6">
-              <b-button variant="outline-primary"
-                        v-on:click="initAssignmentGroupWeights">Set Assignment Weights
-              </b-button>
-              <span v-if="hasAssignments">
-                <span class="font-italic">Release weighted averages: </span>
-                <toggle-button
-                  class="mt-2"
-                  :width="55"
-                  :value="studentsCanViewWeightedAverage"
-                  @change="submitShowWeightedAverage()"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"/>
-              </span>
-            </b-col>
-            <b-col cols="6">
-              <div class="float-right">
-                <b-button class="mr-1" variant="primary" v-b-modal.modal-assignment-details
-                          v-on:click="initAddAssignment">Add Assignment
-                </b-button>
-              </div>
-            </b-col>
-          </b-row>
-          <b-row>
-            <b-col cols="6">
-            <b-button variant="outline-primary"
-                      v-on:click="openLetterGradesModal">Set Letter Grades
-            </b-button>
-            <span class="font-italic">Release letter grades: </span>
-            <toggle-button
-              class="mt-2"
-              :width="55"
-              :value="letterGradesReleased"
-              @change="submitReleaseLetterGrades()"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Yes', unchecked: 'No'}"/>
-            </b-col>
-          </b-row>
-        </b-container>
-      </div>
-      <b-modal
-        id="modal-assignment-group-weights"
-        ref="modal"
-        title="Assignment Weights"
-        @ok="submitAssignmentGroupWeights"
-        ok-title="Submit"
-      >
-        <p>Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
-          all scores.</p>
-        <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
-          <template v-slot:cell(assignment_group_weight)="data">
-            <b-col lg="5">
-              <b-form-input
-                :id="`assignment_group_id_${data.item.id}}`"
-                v-model="assignmentGroupWeightsForm[data.item.id]"
-                type="text"
-                :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
-                @keydown="assignmentGroupWeightsFormWeightError = ''"
-              >
-              </b-form-input>
-            </b-col>
-          </template>
-        </b-table>
-        <div class="ml-5">
-          <b-form-invalid-feedback :state="false">
-            {{ assignmentGroupWeightsFormWeightError }}
-          </b-form-invalid-feedback>
-        </div>
-      </b-modal>
-
-      <b-modal
-        id="modal-letter-grades-editor"
-        ref="modal"
-        title="Letter Grades"
-      >
-        <p>Use the text area below to customize your letter grades, in a comma separated list of
-          the form "Minimum score for the group, Letter Grade". As an example, if the three letter grades that you offer
-          are
-          A, B, and C, and students need at least a 60% to pass the course, you might enter 90,A,70,B,60,C,0,F.</p>
-        <b-form-input
-          id="letter_grades"
-          v-model="letterGradesForm.letter_grades"
-          type="text"
-          placeholder=""
-          :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
-          @keydown="letterGradesForm.errors.clear('letter_grades')"
+               background="#FFFFFF"
+      />
+      <div v-if="canViewAssignments" class="row mb-4 float-right">
+        <b-button v-if="(user.role === 2)"
+                  v-b-modal.modal-assignment-details
+                  class="mr-1" variant="primary"
+                  @click="initAddAssignment"
         >
-        </b-form-input>
-        <has-error :form="letterGradesForm" field="letter_grades"></has-error>
-        <div slot="modal-footer">
-          <b-btn v-on:click="$bvModal.hide('modal-letter-grades-editor')">Cancel</b-btn>
-          <b-btn variant="info" v-on:click="resetLetterGradesToDefault">Reset to Default</b-btn>
-          <b-btn variant="primary" v-on:click="submitLetterGrades">Submit</b-btn>
-        </div>
-
-      </b-modal>
-
-      <b-modal
-        id="modal-letter-grades"
-        ref="modal"
-        title="Letter Grades"
-        ok-only
-      >
-        <p>Let us know how you would like to convert your students' weighted scores into letter grades or grade categories.
-          Some examples might be "A+, A, A-,..." or
-          "Excellent, Good, Unsatisfactory". You can use the
-          <b-link v-on:click="openLetterGradesEditorModal">letter grade editor</b-link>
-
-          to customize the letter grades.
-        </p>
-        <p><span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span> <toggle-button
-          class="mt-2"
-          :width="55"
-          :value="Boolean(this.roundScores)"
-          @change="submitRoundScores()"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="{checked: '#28a745', unchecked: '#6c757d'}"
-          :labels="{checked: 'Yes', unchecked: 'No'}"/>
-
-        </p>
-        <b-table striped
-                 hover
-                 :sticky-header="true"
-                 :fields="letterGradeFields" :items="letterGradeItems">
-
-        </b-table>
-      </b-modal>
-
+          Add Assignment
+        </b-button>
+        <b-button class="mr-1"
+                  @click="getCourseScores()"
+        >
+          Course Scores
+        </b-button>
+      </div>
 
       <b-modal
         id="modal-assignment-details"
         ref="modal"
         title="Assignment Details"
-        @ok="submitAssignmentInfo"
-        @hidden="resetModalForms"
         ok-title="Submit"
         size="lg"
+        @ok="submitAssignmentInfo"
+        @hidden="resetModalForms"
       >
         <b-form ref="form" @submit="createAssignment">
           <div v-if="has_submissions_or_file_submissions && !solutionsReleased">
-            <b-alert variant="info" show><strong>Students have submitted responses to questions in the assignment so you
-              can't change the source of the questions, the scoring type, the default points per question, or the type
-              of file uploads. </strong>
+            <b-alert variant="info" show>
+              <strong>Students have submitted responses to questions in the assignment so you
+                can't change the source of the questions, the scoring type, the default points per question, or the type
+                of file uploads. </strong>
             </b-alert>
           </div>
           <div v-show="solutionsReleased">
-            <b-alert variant="info" show><strong>You have already released the solutions to this assignment. The only
-              item
-              that you can update is the assignment's name, the assignment's group, the instructions, and whether
-              students can view the
-              assignment
-              statistics.</strong>
+            <b-alert variant="info" show>
+              <strong>You have already released the solutions to this assignment. The only
+                item
+                that you can update is the assignment's name, the assignment's group, the instructions, and whether
+                students can view the
+                assignment
+                statistics.</strong>
             </b-alert>
           </div>
 
@@ -183,7 +60,6 @@
             label="Name"
             label-for="name"
           >
-
             <b-form-row>
               <b-col lg="7">
                 <b-form-input
@@ -193,9 +69,8 @@
                   type="text"
                   :class="{ 'is-invalid': form.errors.has('name') }"
                   @keydown="form.errors.clear('name')"
-                >
-                </b-form-input>
-                <has-error :form="form" field="name"></has-error>
+                />
+                <has-error :form="form" field="name" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -212,20 +87,19 @@
                   v-model="form.available_from_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                  v-on:shown="form.errors.clear('available_from_date')"
-                  :disabled="Boolean(solutionsReleased)">
-                </b-form-datepicker>
-                <has-error :form="form" field="available_from_date"></has-error>
+                  :disabled="Boolean(solutionsReleased)"
+                  @shown="form.errors.clear('available_from_date')"
+                />
+                <has-error :form="form" field="available_from_date" />
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.available_from_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                   v-on:shown="form.errors.clear('available_from_time')"
-                                   :disabled="Boolean(solutionsReleased)">
-
-                </b-form-timepicker>
-                <has-error :form="form" field="available_from_time"></has-error>
+                                   :disabled="Boolean(solutionsReleased)"
+                                   @shown="form.errors.clear('available_from_time')"
+                />
+                <has-error :form="form" field="available_from_time" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -243,19 +117,19 @@
                   v-model="form.due_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('due_date') }"
-                  v-on:shown="form.errors.clear('due_date')"
-                  :disabled="Boolean(solutionsReleased)">
-                </b-form-datepicker>
-                <has-error :form="form" field="due_date"></has-error>
+                  :disabled="Boolean(solutionsReleased)"
+                  @shown="form.errors.clear('due_date')"
+                />
+                <has-error :form="form" field="due_date" />
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.due_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                   v-on:shown="form.errors.clear('due_time')"
-                                   :disabled="Boolean(solutionsReleased)">
-                </b-form-timepicker>
-                <has-error :form="form" field="due_time"></has-error>
+                                   :disabled="Boolean(solutionsReleased)"
+                                   @shown="form.errors.clear('due_time')"
+                />
+                <has-error :form="form" field="due_time" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -272,16 +146,16 @@
                                :options="assignmentGroups"
                                :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                                @change="checkGroupId(form.assignment_group_id)"
-                ></b-form-select>
-                <has-error :form="form" field="assignment_group_id"></has-error>
+                />
+                <has-error :form="form" field="assignment_group_id" />
               </b-col>
               <b-modal
                 id="modal-create-assignment-group"
                 ref="modal"
                 title="Create Assignment Group"
+                ok-title="Submit"
                 @ok="handleCreateAssignmentGroup"
                 @hidden="resetAssignmentGroupForm"
-                ok-title="Submit"
               >
                 <b-form-row>
                   <b-form-group
@@ -291,7 +165,6 @@
                     label="Assignment Group"
                     label-for="Assignment Group"
                   >
-
                     <b-form-input
                       id="assignment_group"
                       v-model="assignmentGroupForm.assignment_group"
@@ -299,10 +172,8 @@
                       placeholder=""
                       :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
                       @keydown="assignmentGroupForm.errors.clear('assignment_group')"
-                    >
-                    </b-form-input>
-                    <has-error :form="assignmentGroupForm" field="assignment_group"></has-error>
-
+                    />
+                    <has-error :form="assignmentGroupForm" field="assignment_group" />
                   </b-form-group>
                 </b-form-row>
               </b-modal>
@@ -315,29 +186,32 @@
             label="Include In Final Score"
             label-for="Include In Final Score"
           >
-
             <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
-
-              <b-form-radio name="include_in_weighted_average" value="1">Include the assignment in computing a final
+              <b-form-radio name="include_in_weighted_average" value="1">
+                Include the assignment in computing a final
                 weighted score
               </b-form-radio>
-              <b-form-radio name="include_in_weighted_average" value="0">Do not include the assignment in computing a
+              <b-form-radio name="include_in_weighted_average" value="0">
+                Do not include the assignment in computing a
                 final weighted score
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
 
           <b-tooltip target="internal"
-                     delay="250">
+                     delay="250"
+          >
             Get questions from the Adapt database or from the Query library
           </b-tooltip>
 
           <b-tooltip target="external"
-                     delay="250">
+                     delay="250"
+          >
             Use questions outside of Adapt and manually input scores into the grade book
           </b-tooltip>
           <b-tooltip target="can_view_assignment_statistics"
-                     delay="250">
+                     delay="250"
+          >
             Allows students to see how the class performed at the assignment and question level. Choose this option
             and then Show Scores when you are ready for them to see the statistics.
           </b-tooltip>
@@ -349,14 +223,19 @@
             label-for="Source"
           >
             <b-form-radio-group v-model="form.source" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
-            <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <span @click="resetSubmissionFilesAndPointsPerQuestion">
 
-              <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
-                icon="question-circle"></b-icon></span></b-form-radio>
-                </span>
-              <b-form-radio name="scoring_type" value="x">External <span id="external" class="text-muted"><b-icon
-                icon="question-circle"></b-icon></span></b-form-radio>
+                <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span></b-form-radio>
+              </span>
+              <b-form-radio name="scoring_type" value="x">
+                External <span id="external" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span>
+              </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
 
@@ -375,10 +254,8 @@
                 type="text"
                 placeholder="(Optional)"
                 rows="3"
-              >
-              </b-form-textarea>
+              />
             </b-form-row>
-
           </b-form-group>
           <b-form-group
             id="scoring_type"
@@ -387,15 +264,15 @@
             label="Scoring Type"
             label-for="Scoring Type"
           >
-
             <b-form-radio-group v-model="form.scoring_type" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
-            <span v-on:click="resetSubmissionFilesAndPointsPerQuestion">
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <span @click="resetSubmissionFilesAndPointsPerQuestion">
 
-          <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
-                </span>
-              <span v-on:click="form.students_can_view_assignment_statistics = 1">
-              <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
+                <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
+              </span>
+              <span @click="form.students_can_view_assignment_statistics = 1">
+                <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
             </b-form-radio-group>
           </b-form-group>
 
@@ -416,9 +293,8 @@
                   placeholder=""
                   :class="{ 'is-invalid': form.errors.has('external_source_points') }"
                   @keydown="form.errors.clear('external_source_points')"
-                >
-                </b-form-input>
-                <has-error :form="form" field="external_source_points"></has-error>
+                />
+                <has-error :form="form" field="external_source_points" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -431,12 +307,16 @@
               label="Submission Files"
               label-for="Submission Files"
             >
-
               <b-form-radio-group v-model="form.submission_files" stacked
-                                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)">
+                                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+              >
                 <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-                <b-form-radio name="submission_files" value="q">At the question level</b-form-radio>
-                <b-form-radio name="submission_files" value="0">Students cannot upload files</b-form-radio>
+                <b-form-radio name="submission_files" value="q">
+                  At the question level
+                </b-form-radio>
+                <b-form-radio name="submission_files" value="0">
+                  Students cannot upload files
+                </b-form-radio>
               </b-form-radio-group>
             </b-form-group>
 
@@ -448,7 +328,6 @@
               label="Default Points/Question"
               label-for="default_points_per_question"
             >
-
               <b-form-row>
                 <b-col lg="3">
                   <b-form-input
@@ -457,14 +336,12 @@
                     type="text"
                     placeholder=""
                     :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                    @keydown="form.errors.clear('default_points_per_question')"
                     :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-                  >
-                  </b-form-input>
-                  <has-error :form="form" field="default_points_per_question"></has-error>
+                    @keydown="form.errors.clear('default_points_per_question')"
+                  />
+                  <has-error :form="form" field="default_points_per_question" />
                 </b-col>
               </b-form-row>
-
             </b-form-group>
           </div>
         </b-form>
@@ -473,25 +350,38 @@
         id="modal-delete-assignment"
         ref="modal"
         title="Confirm Delete Assignment"
+        ok-title="Yes, delete assignment!"
         @ok="handleDeleteAssignment"
         @hidden="resetModalForms"
-        ok-title="Yes, delete assignment!"
-
       >
         <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
       </b-modal>
       <div v-if="hasAssignments">
-        <hr>
         <b-table class="header-high-z-index"
                  striped
                  hover
-                 sticky-header="600px"
+                 :sticky-header="false"
                  :fields="fields"
-                 :items="assignments">
+                 :items="assignments"
+        >
           <template v-slot:cell(name)="data">
             <div class="mb-0">
-              <a href="" v-on:click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
+              <span v-if="user.role === 2">
+                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
+                           delay="500"
+                >
+                  {{ getLockedQuestionsMessage(data.item) }}
+                </b-tooltip>
+                <span v-show="data.item.source === 'a'" class="pr-1" @click="getQuestions(data.item)">
+                  <b-icon
+                    v-show="data.item.has_submissions_or_file_submissions > 0"
+                    :id="getTooltipTarget('getQuestions',data.item.id)"
+                    icon="lock-fill"
+                  />
+                </span>
+              </span>
+              <a href="" @click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
             </div>
           </template>
 
@@ -505,79 +395,74 @@
             <toggle-button
               :width="80"
               :value="Boolean(data.item.show_scores)"
-              @change="submitShowScores(data.item)"
               :sync="true"
               :font-size="14"
               :margin="4"
               :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"/>
+              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+              @change="submitShowScores(data.item)"
+            />
           </template>
           <template v-slot:cell(solutions_released)="data">
             <toggle-button
               :width="80"
               :value="Boolean(data.item.solutions_released)"
-              @change="submitSolutionsReleased(data.item)"
               :sync="true"
               :font-size="14"
               :margin="4"
               :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"/>
+              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+              @change="submitSolutionsReleased(data.item)"
+            />
           </template>
           <template v-slot:cell(students_can_view_assignment_statistics)="data">
             <toggle-button
               :width="80"
               :value="Boolean(data.item.students_can_view_assignment_statistics)"
-              @change="submitShowAssignmentStatistics(data.item)"
               :sync="true"
               :font-size="14"
               :margin="4"
               :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"/>
+              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+              @change="submitShowAssignmentStatistics(data.item)"
+            />
           </template>
           <template v-slot:cell(actions)="data">
             <div class="mb-0">
-             <span v-if="user.role === 2">
-                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
-                           delay="500">
-                    Get Questions
-                  </b-tooltip>
-            <span v-show="data.item.source === 'a'" class="pr-1" v-on:click="getQuestions(data.item)">
-              <b-icon
-                :variant="hasSubmissionsColor(data.item)"
-                :id="getTooltipTarget('getQuestions',data.item.id)"
-                icon="plus-circle"></b-icon>
-            </span>
-             </span>
               <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
-                         delay="500">
+                         delay="500"
+              >
                 Grading
               </b-tooltip>
               <span v-show="data.item.source === 'a'" class="pr-1"
-                    v-on:click="getSubmissionFileView(data.item.id, data.item.submission_files)">
-              <b-icon
-                v-show="data.item.submission_files !== '0'"
-                icon="cloud-upload"
-                :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+                    @click="getSubmissionFileView(data.item.id, data.item.submission_files)"
               >
-              </b-icon>
-            </span>
+                <b-icon
+                  v-show="data.item.submission_files !== '0'"
+                  :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+                  icon="check2"
+                />
+              </span>
               <span v-if="user.role === 2">
-               <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
-                          delay="500">
-              Edit Assignment
-            </b-tooltip>
-            <span class="pr-1" v-on:click="editAssignment(data.item)">
-              <b-icon icon="pencil"
-                      :id="getTooltipTarget('editAssignment',data.item.id)">
-                      </b-icon>
-            </span>
-               <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
-                          delay="500">
-              Delete Assignment
-            </b-tooltip>
-            <b-icon icon="trash"
-                    v-on:click="deleteAssignment(data.item.id)"
-                    :id="getTooltipTarget('deleteAssignment',data.item.id)"></b-icon>
+                <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
+                           delay="500"
+                >
+                  Edit Assignment
+                </b-tooltip>
+                <span class="pr-1" @click="editAssignment(data.item)">
+                  <b-icon :id="getTooltipTarget('editAssignment',data.item.id)"
+                          icon="pencil"
+                  />
+                </span>
+                <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
+                           delay="500"
+                >
+                  Delete Assignment
+                </b-tooltip>
+                <b-icon :id="getTooltipTarget('deleteAssignment',data.item.id)"
+                        icon="trash"
+                        @click="deleteAssignment(data.item.id)"
+                />
               </span>
             </div>
           </template>
@@ -586,9 +471,11 @@
       <div v-else>
         <br>
         <div class="mt-4">
-          <b-alert :show="showNoAssignmentsAlert" variant="warning"><a href="#" class="alert-link">This course currently
-            has
-            no assignments.</a></b-alert>
+          <b-alert :show="showNoAssignmentsAlert" variant="warning">
+            <a href="#" class="alert-link">This course currently
+              has
+              no assignments.</a>
+          </b-alert>
         </div>
       </div>
     </div>
@@ -597,63 +484,54 @@
 
 <script>
 import axios from 'axios'
-import Form from "vform"
-import {mapGetters} from "vuex"
-import {ToggleButton} from 'vue-js-toggle-button'
-import {getTooltipTarget} from '../../helpers/Tooptips'
-import {initTooltips} from "../../helpers/Tooptips"
-import {getAssignments} from "../../helpers/Assignments"
+import Form from 'vform'
+import { mapGetters } from 'vuex'
+import { ToggleButton } from 'vue-js-toggle-button'
+import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
+
+import { getAssignments } from '../../helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   components: {
     ToggleButton,
     Loading
   },
   data: () => ({
-    letterGradeFields: [
-      'letter_grade',
-      {
-        key: 'min',
-        label: 'Minimum'
-      },
-      {
-        key: 'max',
-        label: 'Maximum'
-      }
-    ],
-    letterGradesReleased: false,
-    roundScores: false,
-    letterGradeItems: [],
+    assignmentGroupForm: new Form({
+      assignment_group: ''
+    }),
     title: '',
-    studentsCanViewWeightedAverage: false,
-    assignmentGroupWeights: [],
-    assignmentGroups: [{value: null, text: 'Please choose one'}],
+    assignmentGroups: [{ value: null, text: 'Please choose one' }],
     isLoading: false,
     solutionsReleased: 0,
-    assignmentId: false, //if there's an assignmentId it's an update
+    assignmentId: false, // if there's an assignmentId it's an update
     assignments: [],
     completedOrCorrectOptions: [
-      {item: 'correct', name: 'correct'},
-      {item: 'completed', name: 'completed'}
+      { item: 'correct', name: 'correct' },
+      { item: 'completed', name: 'completed' }
     ],
     courseId: false,
-    assignmentGroupWeightsFields: [
-      'assignment_group',
-      {
-        key: 'assignment_group_weight',
-        label: 'Weighting Percentage'
-      }
-    ],
     fields: [
-      'name',
-      'available_from',
-      'due',
+      {
+        key: 'name',
+        sortable: true
+      },
+      {
+        key: 'assignment_group',
+        label: 'Group',
+        sortable: true
+      },
+      {
+        key: 'available_from',
+        sortable: true
+      },
+      {
+        key: 'due',
+        sortable: true
+      },
       'status',
       {
         key: 'show_scores',
@@ -670,14 +548,6 @@ export default {
 
       'actions'
     ],
-    assignmentGroupWeightsFormWeightError: '',
-    assignmentGroupWeightsForm: {},
-    assignmentGroupForm: new Form({
-      assignment_group: ''
-    }),
-    letterGradesForm: new Form({
-      letter_grades: '',
-    }),
     form: new Form({
       name: '',
       available_from: '',
@@ -701,12 +571,15 @@ export default {
     has_submissions_or_file_submissions: false,
     min: '',
     canViewAssignments: false,
-    showNoAssignmentsAlert: false,
+    showNoAssignmentsAlert: false
   }),
-  created() {
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  created () {
     this.getAssignments = getAssignments
   },
-  mounted() {
+  mounted () {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getCourseInfo()
@@ -722,71 +595,22 @@ export default {
     initTooltips(this)
   },
   methods: {
-    async submitReleaseLetterGrades(){
-      try {
-        const {data} = await axios.patch(`/api/final-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
+    getCourseScores () {
+      this.$router.push(`/courses/${this.courseId}/scores`)
+    },
+    getLockedQuestionsMessage (assignment) {
+      if ((Number(assignment.has_submissions_or_file_submissions))) {
+        return 'Since students have already submitted responses to this assignment, you won\'t be able to add or remove questions.'
+      }
+      if ((Number(assignment.solutions_released))) {
+        return 'You have already released the solutions to this assignment, so you won\'t be able to add or remove questions.'
+      }
+    },
 
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        this.letterGradesReleased = !this.letterGradesReleased
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async submitRoundScores(){
-        try {
-          const {data} = await axios.patch(`/api/final-grades/${this.courseId}/round-scores/${Number(this.roundScores)}`)
-          this.$noty[data.type](data.message)
-          if (data.type === 'error') {
-            return false
-          }
-          this.roundScores = !this.roundScores
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-    },
-    async resetLetterGradesToDefault() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/default`)
-        this.letterGradeItems = data.default_letter_grades
-        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems)
-        this.letterGradesForm.letter_grades.replace('%', '')
-        await this.submitLetterGrades()
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    formatLetterGrades(letterGradeItems) {
-      let formattedLetterGrades = ''
-      for (let i = 0; i < letterGradeItems.length; i++) {
-        formattedLetterGrades += `${letterGradeItems[i]['min']},${letterGradeItems[i]['letter_grade']}`
-        if (i !== letterGradeItems.length - 1) {
-          formattedLetterGrades += ','
-        }
-      }
-      return formattedLetterGrades
-    },
-    async openLetterGradesEditorModal() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.letterGradeItems = data.letter_grades
-        this.$bvModal.show('modal-letter-grades-editor')
-
-        this.letterGradesForm.letter_grades = this.formatLetterGrades(this.letterGradeItems).replace(/%/g, '')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async handleCreateAssignmentGroup(bvModalEvt) {
+    async handleCreateAssignmentGroup (bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
-        const {data} = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
+        const { data } = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
         console.log(data)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
@@ -804,159 +628,25 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
-
       }
     },
-    checkGroupId(groupId) {
+    checkGroupId (groupId) {
       if (groupId === -1) {
         this.$bvModal.show('modal-create-assignment-group')
       }
     },
-    async getCourseInfo() {
+    async getCourseInfo () {
       try {
-        const {data} = await axios.get(`/api/courses/${this.courseId}`)
+        const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
-        this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
-        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)
-
       }
     },
-    async submitShowWeightedAverage() {
-
+    async getAssignmentGroups (courseId) {
       try {
-        const {data} = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
-          {'students_can_view_weighted_average': this.studentsCanViewWeightedAverage})
-        this.$noty[data.type](data.message)
-        if (data.error) {
-          return false
-        }
-        this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage
-      } catch (error) {
-        this.$noty.error(error.message)
-
-      }
-    },
-    async openLetterGradesModal() {
-      try {
-        const {data} = await axios.get(`/api/final-grades/letter-grades/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.letterGradeItems = data.letter_grades
-        this.roundScores = data.round_scores
-        this.$bvModal.show('modal-letter-grades')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    isValidLetterGrades() {
-      let letterGradesArray = this.letterGradesForm.letter_grades.split(',')
-      if (letterGradesArray.length === 1) {
-        this.letterGradesForm.errors.set('letter_grades', 'Please enter your list of letter grades and associated minimum scores.')
-        return false
-      }
-      if (letterGradesArray.length % 2 !== 0) {
-        this.letterGradesForm.errors.set('letter_grades', 'Not every letter grade has a minimum score associated with it.')
-        return false
-      }
-      let usedLetters = []
-      let usedCutoffs = []
-      let atLeastOneZero = false
-      for (let i = 0; i < letterGradesArray.length / 2; i++) {
-
-        if (isNaN(letterGradesArray[2 * i])) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} is not a number.`)
-          return false
-        }
-        if (parseInt(letterGradesArray[2 * i]) === 0) {
-          atLeastOneZero = true
-        }
-        if (letterGradesArray[2 * i] < 0) {
-          this.letterGradesForm.errors.set('letter_grades', `${letterGradesArray[2 * i]} should be a positive number.`)
-          return false
-        }
-        if (usedLetters.includes(letterGradesArray[2 * i + 1])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the letter grade "${letterGradesArray[2 * i + 1]}" multiple times.`)
-          return false
-        } else {
-          usedLetters.push(letterGradesArray[2 * i + 1])
-        }
-
-        if (usedCutoffs.includes(letterGradesArray[2 * i])) {
-          this.letterGradesForm.errors.set('letter_grades', `You used the grade cutoff "${letterGradesArray[2 * i]}" multiple times.`)
-          return false
-        } else {
-          usedCutoffs.push(letterGradesArray[2 * i])
-        }
-      }
-      if (!atLeastOneZero){
-        this.letterGradesForm.errors.set('letter_grades', 'At least one of the letter grades should have a minimum score of 0.')
-        return false
-      }
-      return true
-    },
-    async submitLetterGrades() {
-      this.letterGradesForm.letter_grades = this.letterGradesForm.letter_grades.replace(/%/g, '')
-      if (!this.isValidLetterGrades()) {
-        return false
-      }
-      try {
-        const {data} = await this.letterGradesForm.patch(`/api/final-grades/letter-grades/${this.courseId}`)
-        console.log(data)
-        this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.$bvModal.hide('modal-letter-grades-editor')
-          this.letterGradeItems = data.letter_grades
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-
-
-    },
-    async initAssignmentGroupWeights() {
-      try {
-        this.$bvModal.show('modal-assignment-group-weights')
-        const {data} = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
-        if (data.error) {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.assignmentGroupWeights = data.assignment_group_weights
-        let formInputs = {}
-        for (let i = 0; i < data.assignment_group_weights.length; i++) {
-          formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
-        }
-        console.log(this.assignmentGroupWeights)
-        this.assignmentGroupWeightsForm = new Form(formInputs)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async submitAssignmentGroupWeights(bvModalEvt) {
-      bvModalEvt.preventDefault()
-      try {
-        const {data} = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
-        if (data.form_error) {
-          this.assignmentGroupWeightsFormWeightError = data.message
-          return false
-        }
-        this.$noty[data.type](data.message)
-        this.$bvModal.hide('modal-assignment-group-weights')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-
-    },
-    async getAssignmentGroups(courseId) {
-      try {
-        const {data} = await axios.get(`/api/assignmentGroups/${courseId}`)
+        const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
         if (data.error) {
           this.$noty.error(data.message)
           return false
@@ -974,9 +664,8 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-
     },
-    initAddAssignment() {
+    initAddAssignment () {
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
       this.form.assignment_group_id = null
@@ -985,20 +674,14 @@ export default {
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
-    hasSubmissionsColor(assignment) {
-      //0, 1, 2 since has_submissions_or_file_submissions is additive
-      return (assignment.has_submissions_or_file_submissions > 0) ? 'warning' : ''
-
-
-    },
-    async submitShowAssignmentStatistics(assignment) {
+    async submitShowAssignmentStatistics (assignment) {
       if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
         this.$noty.info('If you would like students to view the assignment statistics, please first allow them to view the scores.')
         return false
       }
 
       try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
+        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
@@ -1007,16 +690,15 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-
     },
-    async submitShowScores(assignment) {
+    async submitShowScores (assignment) {
       if (assignment.students_can_view_assignment_statistics && assignment.show_scores) {
         this.$noty.info('If you would like students to view the scores, please first hide the assignment statistics.')
         return false
       }
       console.log(assignment)
       try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
+        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
@@ -1026,9 +708,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async submitSolutionsReleased(assignment) {
+    async submitSolutionsReleased (assignment) {
       try {
-        const {data} = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
+        const { data } = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
         this.$noty[data.type](data.message)
 
         assignment.solutions_released = !assignment.solutions_released
@@ -1036,26 +718,25 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async handleReleaseSolutions(bvModalEvt) {
+    async handleReleaseSolutions (bvModalEvt) {
       bvModalEvt.preventDefault()
       try {
-        const {data} = await this.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
+        const { data } = await this.patch(`/api/assignments/${this.assignmentId}/release-solutions`)
         this.$noty[data.type](data.message)
         this.resetAll('modal-release-solutions-show-scores')
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    resetSubmissionFilesAndPointsPerQuestion() {
+    resetSubmissionFilesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
       this.form.submission_files = 0
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
       this.form.errors.clear('default_points_per_question')
       this.form.errors.clear('external_source_points')
-
     },
-    editAssignment(assignment) {
+    editAssignment (assignment) {
       console.log(assignment)
 
       this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
@@ -1081,123 +762,97 @@ export default {
         ? assignment.external_source_points
         : ''
       this.$bvModal.show('modal-assignment-details')
-    }
-    ,
-    getQuestions(assignment) {
-
-      if (Boolean(Number(assignment.has_submissions_or_file_submissions))) {
-        this.$noty.info("Since students have already submitted responses to this assignment, you won't be able to add or remove questions.")
-        return false
-      }
-      if (Boolean(Number(assignment.solutions_released))) {
-        this.$noty.info("You have already released the solutions to this assignment, so you won't be able to add or remove questions.")
-        return false
-      }
-      this.$router.push(`/assignments/${assignment.id}/questions/get`)
-    }
-    ,
-    getAssignmentView(role, assignment) {
-
+    },
+    getAssignmentView (role, assignment) {
       if (assignment.source === 'x') {
-        this.$noty.info("This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.")
+        this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.')
         return false
       }
-      if (role === 4 || assignment.scoring_type === 'c') {//TA's won't want to see the summary statistics and meaningless if completed/not-completed
+      if (role === 4 || assignment.scoring_type === 'c') { // TA's won't want to see the summary statistics and meaningless if completed/not-completed
         this.$router.push(`/assignments/${assignment.id}/questions/view`)
         return false
       }
 
       this.$router.push(`/assignments/${assignment.id}/summary`)
-    }
-    ,
-    getSubmissionFileView(assignmentId, submissionFiles) {
+    },
+    getSubmissionFileView (assignmentId, submissionFiles) {
       if (submissionFiles === 0) {
         this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
         return false
       }
       let type
       switch (submissionFiles) {
-        case('q'):
+        case ('q'):
           type = 'question'
           break
-        case('a'):
+        case ('a'):
           type = 'assignment'
           break
       }
 
       this.$router.push(`/assignments/${assignmentId}/${type}-files`)
-    }
-    ,
-    async handleDeleteAssignment() {
+    },
+    async handleDeleteAssignment () {
       try {
-        const {data} = await axios.delete(`/api/assignments/${this.assignmentId}`)
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}`)
         this.$noty[data.type](data.message)
         this.resetAll('modal-delete-assignment')
       } catch (error) {
         this.$noty.error(error.message)
       }
-    }
-    ,
-    submitAssignmentInfo(bvModalEvt) {
+    },
+    submitAssignmentInfo (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
       this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
       this.form.due = this.form.due_date + ' ' + this.form.due_time
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-    }
-    ,
-    deleteAssignment(assignmentId) {
+    },
+    deleteAssignment (assignmentId) {
       this.assignmentId = assignmentId
       this.$bvModal.show('modal-delete-assignment')
-    }
-    ,
-    async updateAssignment() {
-
+    },
+    async updateAssignment () {
       try {
-
-        const {data} = await this.form.patch(`/api/assignments/${this.assignmentId}`)
+        const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
 
         console.log(data)
         if (data.available_after_due) {
-          //had to create a custom process for checking available date past due date
+          // had to create a custom process for checking available date past due date
           this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false
         }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-details')
-
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
       }
-    }
-    ,
-    async createAssignment() {
+    },
+    async createAssignment () {
       try {
         this.form.course_id = this.courseId
-        const {data} = await this.form.post(`/api/assignments`)
+        const { data } = await this.form.post(`/api/assignments`)
 
         console.log(data)
         if (data.available_after_due) {
-          //had to create a custom process for checking available date past due date
+          // had to create a custom process for checking available date past due date
           this.form.errors.set('due_date', data.message)
           console.log(this.form.errors)
           return false
         }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-details')
-
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
       }
-    }
-    ,
-    resetAll(modalId) {
+    },
+    resetAll (modalId) {
       this.getAssignments()
       this.resetModalForms()
       // Hide the modal manually
@@ -1205,11 +860,11 @@ export default {
         this.$bvModal.hide(modalId)
       })
     },
-    resetAssignmentGroupForm() {
+    resetAssignmentGroupForm () {
       this.assignmentGroupForm.errors.clear()
       this.assignmentGroupForm.assignment_group = ''
     },
-    resetModalForms() {
+    resetModalForms () {
       this.form.name = ''
       this.form.available_from_date = ''
       this.form.available_from_time = '09:00:00'
@@ -1223,10 +878,9 @@ export default {
 
       this.assignmentId = false
       this.form.errors.clear()
-    }
-    ,
-    metaInfo() {
-      return {title: this.$t('home')}
+    },
+    metaInfo () {
+      return { title: this.$t('home') }
     }
   }
 }

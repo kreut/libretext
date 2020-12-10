@@ -408,7 +408,9 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $instructor_user_id = $assignment->course->user_id;
-            $instructor_learning_trees = DB::table('learning_trees')
+            $learning_trees = [];
+            $instructor_learning_trees = $other_instructor_learning_trees = $instructor_learning_trees_by_question_id = [];
+         /*  $instructor_learning_trees = DB::table('learning_trees')
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', $instructor_user_id)
                 ->get();
@@ -430,7 +432,8 @@ class AssignmentSyncQuestionController extends Controller
                 foreach ($other_instructor_learning_trees as $key => $value) {
                     $other_instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
                 }
-            }
+            }*/
+
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
             $got_first_temporary_url = false;

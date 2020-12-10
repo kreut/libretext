@@ -3,8 +3,9 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
-class StoreLearningTree extends FormRequest
+class StoreLearningTreeInfo extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +25,12 @@ class StoreLearningTree extends FormRequest
     public function rules()
     {
         $rules = [
-            'question_id' => 'exists:questions,id'
+            'title' => 'required',
+            'description' => 'required',
+            'page_id' => 'required|integer|min:0',
+            'library' => ['required', Rule::in(['bio','biz','chem','eng','espanol','geo','human','k12','law','math','med','phys','query','socialsci','stats','workforce'])]
         ];
         return $rules;
     }
 }
+

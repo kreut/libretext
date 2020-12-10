@@ -33,7 +33,28 @@ class BreadcrumbController extends Controller
             if (Auth::check()) {
                 $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/$users/courses"];
                 switch ($name) {
-                    case('settings.profile'):
+                    case('course_properties.letter_grades'):
+                    case('course_properties.graders'):
+                    case('course_properties.access_codes'):
+                    case('course_properties.assignment_groups'):
+                    $breadcrumbs[] = ['text' => $course->name,
+                        'href' => "/instructors/courses/{$course->id}/assignments"
+                    ];
+                    $breadcrumbs[] = ['text' => 'Properties' ,
+                        'href' => "#",
+                        'active' => true];
+                        break;
+                    case('instructors.learning_trees.index'):
+                        $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/instructors/courses"];
+                        break;
+                    case('instructors.courses.index'):
+                        $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
+                        break;
+                    case('instructors.learning_trees.editor'):
+                        $breadcrumbs[0] =  ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
+                        $breadcrumbs[1] =  ['text' => 'Editor', 'href' => "#", 'active' => true];
+                    break;
+                        case('settings.profile'):
                     case('settings.password'):
                         $breadcrumbs[] = ['text' => 'Settings',
                             'href' => "#",
