@@ -486,7 +486,6 @@
         </b-row>
       </b-container>
       <div v-if="!hasAssignments">
-        <br>
         <div class="mt-4">
           <b-alert :show="showNoAssignmentsAlert" variant="warning">
             <a href="#" class="alert-link">This course currently

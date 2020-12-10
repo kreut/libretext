@@ -130,14 +130,11 @@
         </b-table>
       </div>
       <div v-else>
-        <br>
-        <div class="mt-4">
-          <b-alert :show="showNoAssignmentsAlert" variant="warning">
-            <a href="#" class="alert-link">This course currently
-              has
-              no assignments.</a>
-          </b-alert>
-        </div>
+        <b-alert :show="showNoAssignmentsAlert" variant="warning">
+          <a href="#" class="alert-link">This course currently
+            has
+            no assignments.</a>
+        </b-alert>
       </div>
     </div>
   </div>

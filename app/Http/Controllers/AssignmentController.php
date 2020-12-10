@@ -167,7 +167,6 @@ class AssignmentController extends Controller
             $assignments_info = [];
             foreach ($assignments as $key => $assignment) {
                 $assignments_info[$key] = $assignment->attributesToArray();
-                $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $available_from = $assignment['available_from'];
                 if (Auth::user()->role === 3) {
@@ -205,9 +204,13 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['include_in_weighted_average'] = $assignment->include_in_weighted_average;
                 }
 //same regardless of whether you're a student
+                $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
+                if (Auth::user()->role === 3 && !$assignments_info[$key]['shown']){
+                   unset($assignments_info[$key]);
+                }
             }
-            $response['assignments'] = $assignments_info;
+            $response['assignments'] = array_values($assignments_info);//fix the unset
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
