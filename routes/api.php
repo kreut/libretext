@@ -95,10 +95,15 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
     Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentName');
 
+
+
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
+    Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
+
+
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 

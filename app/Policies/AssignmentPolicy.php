@@ -75,6 +75,20 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to update this assignment.');
     }
 
+    /**
+     * Determine whether the user can update the assignment.
+     *
+     * @param \App\User $user
+     * @param \App\Assignment $assignment
+     * @return mixed
+     */
+    public function showAssignment(User $user, Assignment $assignment)
+    {
+        return $user->id === (int)$assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to toggle whether students can view an assignment.');
+    }
+
     public function releaseSolutions(User $user, Assignment $assignment)
     {
         $has_access = false;

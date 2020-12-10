@@ -55,6 +55,24 @@ class AssignmentsIndex1Test extends TestCase
             'assignment_group_id' => 1];
 
     }
+    /** @test */
+    public function non_owner_cannot_toggle_showing_assignments()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
+            ->assertJson(['message' => 'You are not allowed to toggle whether students can view an assignment.']);
+    }
+
+    /** @test */
+
+    public function owner_can_toggle_showing_assignments()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
+            ->assertJson(['message' => 'Your students <strong>cannot</strong> see this assignment.']);
+    }
+
+
 
     public function letter_grades_error_message()
     {

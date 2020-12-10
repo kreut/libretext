@@ -202,7 +202,8 @@ class ScoreController extends Controller
             $fields = [['key' => 'name',
                 'label' => 'Name',
                 'sortable' => true,
-                'stickyColumn' => true]];
+                'stickyColumn' => true,
+                'isRowHeader' => true]];
             $download_fields = new \stdClass();
             $download_fields->LastFirst = 'name';
             foreach ($assignments as $assignment) {

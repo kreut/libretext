@@ -51,6 +51,36 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function showAssignment(Request $request, Assignment $assignment, int $shown)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showAssignment', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['shown' => !$shown]);
+            $response['type'] =  !$shown ? 'success' : 'info';
+            $shown = !$shown ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$shown}</strong> see this assignment.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating whether your students can see <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+
+
+
+
+
 
     public function showScores(Request $request, Assignment $assignment, int $showScores)
     {
@@ -65,7 +95,7 @@ class AssignmentController extends Controller
 
         try {
             $assignment->update(['show_scores' => !$showScores]);
-            $response['type'] = 'success';
+            $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$scores_released}</strong> view their scores.";
         } catch (Exception $e) {
@@ -89,7 +119,7 @@ class AssignmentController extends Controller
 
         try {
             $assignment->update(['students_can_view_assignment_statistics' => !$showAssignmentStatistics]);
-            $response['type'] = 'success';
+            $response['type'] = !$showAssignmentStatistics ? 'success' : 'info';
             $scores_released = !$showAssignmentStatistics ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$scores_released}</strong> view the assignment statistics.";
         } catch (Exception $e) {
@@ -138,7 +168,7 @@ class AssignmentController extends Controller
             foreach ($assignments as $key => $assignment) {
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
-
+                $assignments_info[$key]['shown'] = $assignment->shown;
                 $available_from = $assignment['available_from'];
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);

@@ -10,21 +10,6 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="canViewAssignments" class="row mb-4 float-right">
-        <b-button v-if="(user.role === 2)"
-                  v-b-modal.modal-assignment-properties
-                  class="mr-1" variant="primary"
-                  @click="initAddAssignment"
-        >
-          Add Assignment
-        </b-button>
-        <b-button class="mr-1"
-                  @click="getGradeBook()"
-        >
-          Gradebook
-        </b-button>
-      </div>
-
       <b-modal
         id="modal-assignment-properties"
         ref="modal"
@@ -357,118 +342,150 @@
         <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
       </b-modal>
-      <div v-if="hasAssignments">
-        <b-table class="header-high-z-index"
-                 striped
-                 hover
-                 :sticky-header="false"
-                 :fields="fields"
-                 :items="assignments"
-        >
-          <template v-slot:cell(name)="data">
-            <div class="mb-0">
-              <span v-if="user.role === 2">
-                <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
-                           delay="500"
-                >
-                  {{ getLockedQuestionsMessage(data.item) }}
-                </b-tooltip>
-                <span v-show="data.item.source === 'a'" class="pr-1" @click="getQuestions(data.item)">
-                  <b-icon
-                    v-show="data.item.has_submissions_or_file_submissions > 0"
-                    :id="getTooltipTarget('getQuestions',data.item.id)"
-                    icon="lock-fill"
-                  />
-                </span>
-              </span>
-              <a href="" @click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
-            </div>
-          </template>
+      <b-container>
+        <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
+          <b-button v-if="(user.role === 2)"
+                    v-b-modal.modal-assignment-properties
+                    class="mr-1" variant="primary"
+                    @click="initAddAssignment"
+          >
+            Add Assignment
+          </b-button>
+          <b-button class="mr-1"
+                    @click="getGradeBook()"
+          >
+            Gradebook
+          </b-button>
+        </b-row>
+        <b-row v-if="hasAssignments">
+          <div class="row">
+            <b-table class="header-high-z-index"
+                     striped
+                     hover
+                     responsive="true"
+                     sticky-header="600px"
+                     :no-border-collapse="true"
+                     :fields="fields"
+                     :items="assignments"
+            >
+              <template v-slot:cell(name)="data">
+                <div class="mb-0">
+                  <span v-if="user.role === 2">
+                    <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
+                               delay="500"
+                    >
+                      {{ getLockedQuestionsMessage(data.item) }}
+                    </b-tooltip>
+                    <span v-show="data.item.source === 'a'" class="pr-1" @click="getQuestions(data.item)">
+                      <b-icon
+                        v-show="data.item.has_submissions_or_file_submissions > 0"
+                        :id="getTooltipTarget('getQuestions',data.item.id)"
+                        icon="lock-fill"
+                      />
+                    </span>
+                  </span>
+                  <a href="" @click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
+                </div>
+              </template>
+              <template v-slot:cell(shown)="data">
+                <toggle-button
+                  :width="57"
+                  :value="Boolean(data.item.shown)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitShowAssignment(data.item)"
+                />
+              </template>
 
-          <template v-slot:cell(available_from)="data">
-            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
-          </template>
-          <template v-slot:cell(due)="data">
-            {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
-          </template>
-          <template v-slot:cell(show_scores)="data">
-            <toggle-button
-              :width="80"
-              :value="Boolean(data.item.show_scores)"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-              @change="submitShowScores(data.item)"
-            />
-          </template>
-          <template v-slot:cell(solutions_released)="data">
-            <toggle-button
-              :width="80"
-              :value="Boolean(data.item.solutions_released)"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-              @change="submitSolutionsReleased(data.item)"
-            />
-          </template>
-          <template v-slot:cell(students_can_view_assignment_statistics)="data">
-            <toggle-button
-              :width="80"
-              :value="Boolean(data.item.students_can_view_assignment_statistics)"
-              :sync="true"
-              :font-size="14"
-              :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
-              :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-              @change="submitShowAssignmentStatistics(data.item)"
-            />
-          </template>
-          <template v-slot:cell(actions)="data">
-            <div class="mb-0">
-              <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
-                         delay="500"
-              >
-                Grading
-              </b-tooltip>
-              <span v-show="data.item.source === 'a'" class="pr-1"
-                    @click="getSubmissionFileView(data.item.id, data.item.submission_files)"
-              >
-                <b-icon
-                  v-show="data.item.submission_files !== '0'"
-                  :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
-                  icon="check2"
+              <template v-slot:cell(available_from)="data">
+                {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
+              </template>
+              <template v-slot:cell(due)="data">
+                {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
+              </template>
+              <template v-slot:cell(show_scores)="data">
+                <toggle-button
+                  :width="80"
+                  :value="Boolean(data.item.show_scores)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                  @change="submitShowScores(data.item)"
                 />
-              </span>
-              <span v-if="user.role === 2">
-                <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
-                           delay="500"
-                >
-                  Assignment Properties
-                </b-tooltip>
-                <span class="pr-1" @click="editAssignment(data.item)">
-                  <b-icon :id="getTooltipTarget('editAssignment',data.item.id)"
-                          icon="gear"
-                  />
-                </span>
-                <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
-                           delay="500"
-                >
-                  Delete Assignment
-                </b-tooltip>
-                <b-icon :id="getTooltipTarget('deleteAssignment',data.item.id)"
-                        icon="trash"
-                        @click="deleteAssignment(data.item.id)"
+              </template>
+              <template v-slot:cell(solutions_released)="data">
+                <toggle-button
+                  :width="80"
+                  :value="Boolean(data.item.solutions_released)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                  @change="submitSolutionsReleased(data.item)"
                 />
-              </span>
-            </div>
-          </template>
-        </b-table>
-      </div>
-      <div v-else>
+              </template>
+              <template v-slot:cell(students_can_view_assignment_statistics)="data">
+                <toggle-button
+                  :width="80"
+                  :value="Boolean(data.item.students_can_view_assignment_statistics)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                  @change="submitShowAssignmentStatistics(data.item)"
+                />
+              </template>
+              <template v-slot:cell(actions)="data">
+                <div class="mb-0">
+                  <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+                             delay="500"
+                  >
+                    Grading
+                  </b-tooltip>
+                  <span v-show="data.item.source === 'a'" class="pr-1"
+                        @click="getSubmissionFileView(data.item.id, data.item.submission_files)"
+                  >
+                    <b-icon
+                      v-show="data.item.submission_files !== '0'"
+                      :id="getTooltipTarget('viewSubmissionFiles',data.item.id)"
+                      icon="check2"
+                    />
+                  </span>
+                  <span v-if="user.role === 2">
+                    <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
+                               delay="500"
+                    >
+                      Assignment Properties
+                    </b-tooltip>
+                    <span class="pr-1" @click="editAssignment(data.item)">
+                      <b-icon :id="getTooltipTarget('editAssignment',data.item.id)"
+                              icon="gear"
+                      />
+                    </span>
+                    <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
+                               delay="500"
+                    >
+                      Delete Assignment
+                    </b-tooltip>
+                    <b-icon :id="getTooltipTarget('deleteAssignment',data.item.id)"
+                            icon="trash"
+                            @click="deleteAssignment(data.item.id)"
+                    />
+                  </span>
+                </div>
+              </template>
+            </b-table>
+          </div>
+        </b-row>
+      </b-container>
+      <div v-if="!hasAssignments">
         <br>
         <div class="mt-4">
           <b-alert :show="showNoAssignmentsAlert" variant="warning">
@@ -517,8 +534,10 @@ export default {
     fields: [
       {
         key: 'name',
-        sortable: true
+        sortable: true,
+        thStyle: { minWidth: '175px' }
       },
+      'shown',
       {
         key: 'assignment_group',
         label: 'Group',
@@ -526,11 +545,13 @@ export default {
       },
       {
         key: 'available_from',
-        sortable: true
+        sortable: true,
+        thStyle: { minWidth: '175px' }
       },
       {
         key: 'due',
-        sortable: true
+        sortable: true,
+        thStyle: { minWidth: '175px' }
       },
       'status',
       {
@@ -545,8 +566,10 @@ export default {
         key: 'students_can_view_assignment_statistics',
         label: 'Statistics'
       },
-
-      'actions'
+      {
+        key: 'actions',
+        thStyle: { minWidth: '100px' }
+      }
     ],
     form: new Form({
       name: '',
@@ -673,6 +696,18 @@ export default {
       this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+    },
+    async     submitShowAssignment (assignment) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-assignment/${Number(assignment.shown)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        assignment.shown = !assignment.shown
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async submitShowAssignmentStatistics (assignment) {
       if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
