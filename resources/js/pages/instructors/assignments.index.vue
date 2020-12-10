@@ -12,7 +12,7 @@
       />
       <div v-if="canViewAssignments" class="row mb-4 float-right">
         <b-button v-if="(user.role === 2)"
-                  v-b-modal.modal-assignment-details
+                  v-b-modal.modal-assignment-properties
                   class="mr-1" variant="primary"
                   @click="initAddAssignment"
         >
@@ -26,9 +26,9 @@
       </div>
 
       <b-modal
-        id="modal-assignment-details"
+        id="modal-assignment-properties"
         ref="modal"
-        title="Assignment Details"
+        title="Assignment Properties"
         ok-title="Submit"
         size="lg"
         @ok="submitAssignmentInfo"
@@ -447,11 +447,11 @@
                 <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
                            delay="500"
                 >
-                  Edit Assignment
+                  Assignment Properties
                 </b-tooltip>
                 <span class="pr-1" @click="editAssignment(data.item)">
                   <b-icon :id="getTooltipTarget('editAssignment',data.item.id)"
-                          icon="pencil"
+                          icon="gear"
                   />
                 </span>
                 <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
@@ -761,7 +761,7 @@ export default {
       this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
         ? assignment.external_source_points
         : ''
-      this.$bvModal.show('modal-assignment-details')
+      this.$bvModal.show('modal-assignment-properties')
     },
     getAssignmentView (role, assignment) {
       if (assignment.source === 'x') {
@@ -825,7 +825,7 @@ export default {
           return false
         }
         this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-details')
+        this.resetAll('modal-assignment-properties')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -845,7 +845,7 @@ export default {
           return false
         }
         this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-details')
+        this.resetAll('modal-assignment-properties')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
