@@ -5,6 +5,7 @@ namespace App;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use App\Exceptions\Handler;
 use \Exception;
@@ -197,16 +198,13 @@ class Question extends Model
      */
     public function getQuestionIdsByPageId(int $page_id, bool $cache_busting)
     {
-        $question = $this->where('page_id', $page_id)->first();
-
-        if (!$question && $cache_busting) {
-            return false;//something from Query that we don't care about since it's not yet in the Adapt database
-        }
+        $question = Question::where('page_id', $page_id)->first();
 
         if ($question && !$cache_busting) {
             return [$question->id]; ///just part of the search....
         }
 
+        //either it's not a question or it is a question and we want to bust the cache
 
         //maybe it was just created and doesn't exist yet...
         ///get it from query
@@ -285,8 +283,7 @@ class Question extends Model
             if ($technology_and_tags['tags']) {
                 $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
             }
-
-
+            return [$question->id];
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
