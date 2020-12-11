@@ -64,7 +64,48 @@ class AssignmentFileTest extends TestCase
         $question_score = 5;
 
         $file_submission_score = 2.0;
-        $assignment_question = DB::table('assignment_question')
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'submission' => 'some other submission',
+            'score' => $question_score]);
+
+
+        //Now submit a question_file score
+        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' =>  $file_submission_score])
+            ->assertJson(['type'=> 'success']);
+
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+
+
+
+        $this->assertEquals( (float) $score->score,$question_score + $file_submission_score);
+    }
+
+
+
+
+    /** @test */
+    public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_cannot_submit_a_score_greater_than_the_total_number_of_points_in_the_question()
+    {
+
+        $this->assignment->submission_files = 'q';///question level
+        $this->assignment->save();
+        $question_score = 5;
+
+        $file_submission_score = 30;
+         DB::table('assignment_question')
             ->where('question_id', $this->question->id)
             ->where('assignment_id', $this->assignment->id)
             ->first();
@@ -84,31 +125,7 @@ class AssignmentFileTest extends TestCase
             'question_id' => $this->question->id,
             'user_id' => $this->student_user->id,
             'score' =>  $file_submission_score])
-        ->assertJson(['type'=> 'success']);
-
-
-       $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-
-        $this->assertEquals( $score->score, min((float) $assignment_question->points, (float) ($question_score + $file_submission_score)), 'Sum is smaller than the number of points');
-        //Now submit a question_file score
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
-            'type' => 'question',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' =>  100*$file_submission_score])
-            ->assertJson(['type'=> 'success']);
-
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-
-        $this->assertEquals( (float) $score->score, (float) min($assignment_question->points, $question_score + 100*$file_submission_score), 'Sum is larger than the number of points');
+        ->assertJson(['message'=>  'The total of your Question Submission Score and File Submission score can\'t be greater than the total number of points for this question.']);
     }
 
 

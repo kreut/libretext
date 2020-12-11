@@ -64,7 +64,7 @@ class Score extends Model
                 foreach ($assignment_question_scores_info as $score) {
                     $question_points = $score['question'];
                     $file_points = $score['file'];
-                    $assignment_score = $assignment_score + min($score['points'], $question_points + $file_points);
+                    $assignment_score = $assignment_score + $question_points + $file_points;
                 }
                 break;
             case('a'):
