@@ -237,19 +237,20 @@ export default {
       blockin.parentNode.removeChild(blockin)
       let isAssessmentNode = (drag.querySelector('.blockelemtype').value === '1')
 
-      let title = isAssessmentNode ? 'Assessment' : 'Remediation'
+      // let title = isAssessmentNode ? 'Assessment' : 'Remediation'
 
-      let libraryText = vm.getLibraryText(blockin.querySelector('.library').innerHTML)
-      let library = isAssessmentNode ? '' : blockin.querySelector('.library').innerHTML
-      let pageId = isAssessmentNode ? '' : blockin.querySelector('.pageId').innerHTML
+      // let libraryText = vm.getLibraryText(blockin.querySelector('.library').innerHTML)
+      // let library = isAssessmentNode ? '' : blockin.querySelector('.library').innerHTML
+      //  let pageId = isAssessmentNode ? '' : blockin.querySelector('.pageId').innerHTML
+      let title = blockin.querySelector('.title').innerHTML
+      let blockynameContents = blockin.querySelector('.blockyname').innerHTML
       let body = isAssessmentNode ? 'The original question'
-        : `<div>Library: <span class="library d-none">${library}</span>${libraryText}, Page Id: <span class="pageId" >${pageId}</span><br>
+        : `${blockynameContents}
 <span class="extra"></span></div>`
       drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname'><img src="/assets/img/${library[0].toLowerCase() + library.slice(1)}.svg"></span>${title}</p></div>
+<p class='blockyname' style="margin-bottom:0;">${body}</p></div>
 <div class='blockydiv'></div>
-<div class='blockyinfo'>
-${body}
+<div class='blockyinfo'>${title}
 </div>`
       return true
     }
@@ -483,11 +484,11 @@ ${body}
           this.$noty.error(data.message)
           return false
         }
+        return data.title
       } catch (error) {
         this.$noty.error(error.message)
         return false
       }
-      return true
     },
     async addRemediation () {
       if (!this.library) {
@@ -498,7 +499,8 @@ ${body}
         this.$noty.error('Your Page Id should be a positive integer.')
         return false
       }
-      if (!await this.validateLibraryAndPageId(this.library, this.pageId)) {
+      let title = await this.validateLibraryAndPageId(this.library, this.pageId)
+      if (!title) {
         return false
       }
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
@@ -511,14 +513,12 @@ ${body}
 </div>
       <div class="blockin">
         <div class="blockyleft">
-          <p class="blockyname"> <img src="/assets/img/${this.library}.svg" style="${this.libraryColors[this.library]}">Remediation</p>
+          <p class="blockyname"> <img src="/assets/img/${this.library}.svg" style="${this.libraryColors[this.library]}"><span class="library">${libraryText}</span> - <span class="page_id">${this.pageId}</span></p>
         </div>
           <div class='blockydiv'>
           </div>
           <div class="blockin-info">
-          <span class="blockdesc">Library: <span class="library d-none">${this.library}</span><span class="library-text">${libraryText}</span>,
-          Page Id: <span class="pageId">${this.pageId}</span>
-          <br>
+          <span class="blockdesc"><span class="title">${title}</span>
           <span class="extra"></span>
         </div>
         </div>

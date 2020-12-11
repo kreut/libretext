@@ -172,7 +172,7 @@ class LearningTreeController extends Controller
 
     public function getRootNode(string $title, string $library_value, string $library_text, string $library_color, int $page_id)
     {
-        $html = "<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: $library_color;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/{$library_value}.svg'><span data-library='$library_value'>{$library_text} - <span data-page_id='$page_id'>$page_id</span></p></div><div class='blockydiv'></div><div class='blockyinfo'>$title</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>";
+        $html = "<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: $library_color;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/{$library_value}.svg'><span class='library'>{$library_text}</span> - <span class='page_id'>$page_id</span></p></div><div class='blockydiv'></div><div class='blockyinfo'>$title</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>";
         return <<<EOT
  {"html":"$html","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: {$library_color};"}]}]}
 EOT;
@@ -305,7 +305,7 @@ EOT;
                 //some other error besides forbidden
                 $h = new Handler(app());
                 $h->report($e);
-                $response['message'] = "We were not able to validate this Learning Tree node: {$e->getMessage()}.  Please double check your library and page id or contact us for assistance.";
+                $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
             } else {
                 try {
                     $contents = $Query->getBodyFromPrivatePage($pageId);
@@ -315,7 +315,7 @@ EOT;
                 } catch (Exception $e) {
                     $h = new Handler(app());
                     $h->report($e);
-                    $response['message'] = "We were not able to validate this Learning Tree node: {$e->getMessage()}.  Please double check your library and page id or contact us for assistance.";
+                    $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
                 }
             }
         }

@@ -42,12 +42,12 @@ class LearningTreesTest extends TestCase
 
     /** @test */
 
-    public function must_be_a_valid_remediation()
+    public function must_be_a_valid_node()
     {
         $this->learning_tree_info['page_id'] = 30000000000;
         $this->learning_tree_info['library'] = 'chem';
         $this->actingAs($this->user)->postJson("api/learning-trees/info", $this->learning_tree_info)
-            ->assertJson(['message' => 'We were not able to validate this remediation.  Please double check your library and page id or contact us for assistance.']);
+            ->assertJson(['message' => 'We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.']);
     }
 
     /** @test */
