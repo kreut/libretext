@@ -19,6 +19,16 @@ class LearningTreeController extends Controller
 {
 
 
+    public function learningTreeExists(Request $request)
+    {
+        $response['type'] = 'success';
+        if (!LearningTree::where('id', $request->learning_tree_id)->exists()) {
+            $response['type'] = 'error';
+            $response['message'] = "We were not able to locate that Learning Tree.";
+        }
+        return $response;
+    }
+
     public function index(Request $request, LearningTree $learningTree)
     {
 
@@ -298,7 +308,7 @@ EOT;
             $Query = new Query(['library' => $library]);
             $contents = $Query->getContentsByPageId($pageId);
             $response['body'] = $contents['body'];
-            $response['title'] =$contents['@title'] ?? 'Title';
+            $response['title'] = $contents['@title'] ?? 'Title';
             $response['type'] = 'success';
         } catch (Exception $e) {
             if (strpos($e->getMessage(), '403 Forbidden') === false) {

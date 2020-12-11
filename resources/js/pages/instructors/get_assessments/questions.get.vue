@@ -1,6 +1,5 @@
 <template>
   <div>
-    <PageTitle :title="title" />
     <b-modal
       id="modal-upload-file"
       ref="solutionFileInput"
@@ -37,34 +36,36 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <p>
-        Use the search box you can find questions by tag.
-        The tag can be a word associated with the question or can be the query library page id. To search
-        by page id, please use the tag: id={id}. For example, id=112358.
-        Note that adding multiple tags will result in a search result which matches all of the conditions.
-      </p>
-      <div class="col-5 p-0">
-        <vue-bootstrap-typeahead
-          ref="queryTypeahead"
-          v-model="query"
-          :data="tags"
-          placeholder="Enter a tag or page id"
-        />
-      </div>
-      <div class="mt-3 d-flex flex-row">
-        <b-button variant="primary" class="mr-2" @click="addTag()">
-          Add Tag
-        </b-button>
-        <b-button variant="success" class="mr-2" @click="getQuestionsByTags()">
-          <b-spinner v-if="gettingQuestions" small type="grow" />
-          Get Questions
-        </b-button>
-        <b-button variant="dark" @click="getStudentView(assignmentId)">
-          View as Student
-        </b-button>
-      </div>
-      <hr>
-      <div>
+      <div v-if="!isLoading && !this.hasSubmissions">
+        <PageTitle :title="title" />
+        <p>
+          Using the search box you can find questions by tag.
+          The tag can be a word associated with the question or can be the query library page id. To search
+          by page id, please use the tag: id={id}. For example, id=112358.
+          Note that adding multiple tags will result in a search result which matches all of the conditions.
+        </p>
+        <div class="col-5 p-0">
+          <vue-bootstrap-typeahead
+            ref="queryTypeahead"
+            v-model="query"
+            :data="tags"
+            placeholder="Enter a tag or page id"
+          />
+        </div>
+        <div class="mt-3 d-flex flex-row">
+          <b-button variant="primary" class="mr-2" @click="addTag()">
+            Add Tag
+          </b-button>
+          <b-button variant="success" class="mr-2" @click="getQuestionsByTags()">
+            <b-spinner v-if="gettingQuestions" small type="grow" />
+            Get Questions
+          </b-button>
+          <b-button variant="dark" @click="getStudentView(assignmentId)">
+            View as Student
+          </b-button>
+        </div>
+        <hr>
+        <div />
         <h5>Chosen Tags:</h5>
         <div v-if="chosenTags.length>0">
           <ol>
@@ -172,14 +173,11 @@ export default {
     Loading
   },
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   data: () => ({
     questionFilesAllowed: false,
     uploading: false,
     continueLoading: true,
-    isLoading: false,
+    isLoading: true,
     iframeLoaded: false,
     perPage: 1,
     currentPage: 1,
@@ -189,6 +187,7 @@ export default {
     chosenTags: [],
     question: {},
     showQuestions: false,
+    hasSubmissions: false,
     gettingQuestions: false,
     title: '',
     uploadFileForm: new Form({
@@ -196,6 +195,9 @@ export default {
       assignmentId: null,
       questionId: null
     })
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   created () {
     this.toggleQuestionFiles = toggleQuestionFiles
@@ -208,7 +210,6 @@ export default {
       this.$noty.error('You do not have access to this page.')
       return false
     }
-    this.isLoading = true
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
   },
@@ -237,16 +238,15 @@ export default {
     },
     async getAssignmentInfo () {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions-info`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/get-questions-info`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        console.log(data)
         let assignment = data.assignment
-        if (assignment.has_submissions) {
-          this.isLoading = false
-          this.$noty.error("You can't add or remove questions from the assignment since students have already submitted responses.")
+        this.hasSubmissions = assignment.hasSubmissions
+        if (this.hasSubmissions) {
+          this.$noty.error("This assignment is locked.  You can't add or remove questions from the assignment since students have already submitted responses.")
           this.continueLoading = false
         }
         this.title = `Add Questions to "${assignment.name}"`
@@ -259,11 +259,12 @@ export default {
         this.getTags()
         h5pResizer()
       }
+      this.isLoading = false
     },
     changePage (currentPage) {
       this.$nextTick(() => {
-        let iframe_id = this.questions[currentPage - 1].iframe_id
-        iFrameResize({ log: false }, `#${iframe_id}`)
+        let iframeId = this.questions[currentPage - 1].iframe_id
+        iFrameResize({ log: false }, `#${iframeId}`)
         iFrameResize({ log: false }, '#non-technology-iframe')
       })
     },
@@ -359,15 +360,15 @@ export default {
             }
 
             this.questions = questionsByTags.questions
-            let iframe_id = this.questions[0].iframe_id
+            let iframeId = this.questions[0].iframe_id
             this.$nextTick(() => {
-              iFrameResize({ log: false }, `#${iframe_id}`)
+              iFrameResize({ log: false }, `#${iframeId}`)
               iFrameResize({ log: false }, '#non-technology-iframe')
             })
             // console.log(this.questions)
             this.showQuestions = true
           } else {
-            this.$noty.error(questionIds.message)
+            this.$noty.error(questionInfo.message)
           }
         } else {
           let timeout = questionsByTags.timeout ? questionsByTags.timeout : 6000
