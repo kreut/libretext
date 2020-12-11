@@ -172,10 +172,11 @@ class LearningTreeController extends Controller
 
     public function getRootNode(string $title, string $library_value, string $library_text, string $library_color, int $page_id)
     {
-
+        $html = "<div class='blockelem noselect block' style='left: 363px; top: 215px; border: 2px solid; color: $library_color;'><input type='hidden' name='blockelemtype' class='blockelemtype' value='1'><input type='hidden' name='blockid' class='blockid' value='0'><div class='blockyleft'><p class='blockyname'><img src='/assets/img/{$library_value}.svg'><span data-library='$library_value'>{$library_text} - <span data-page_id='$page_id'>$page_id</span></p></div><div class='blockydiv'></div><div class='blockyinfo'>$title</div></div><div class='indicator invisible' style='left: 154px; top: 119px;'></div>";
         return <<<EOT
-{"html":"<div class="blockelem noselect block" style="left: 363px; top: 215px; border: 2px solid; color: $library_color;"><input type="hidden" name="blockelemtype" class="blockelemtype" value="1"><input type="hidden" name="blockid" class="blockid" value="0"><div class="blockyleft"><p class="blockyname"><img src="/assets/img/{$library_value}.svg">$title</p></div><div class="blockydiv"></div><div class="blockyinfo">Library: $library_text, Page Id: $page_id</div></div><div class="indicator invisible" style="left: 154px; top: 119px;"></div>","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: {$library_color};"}]}]}
+ {"html":"$html","blockarr":[{"childwidth":318,"parent":-1,"id":0,"x":825,"y":274,"width":318,"height":109}],"blocks":[{"id":0,"parent":-1,"data":[{"name":"blockelemtype","value":"1"},{"name":"blockid","value":"0"}],"attr":[{"class":"blockelem noselect block"},{"style":"left: 363px; top: 215px; border: 2px solid; color: {$library_color};"}]}]}
 EOT;
+
 
     }
 
@@ -296,8 +297,8 @@ EOT;
         try {
             $Query = new Query(['library' => $library]);
             $contents = $Query->getContentsByPageId($pageId);
-            $response['body'] = $contents['@title'] ?? 'Title';
-            $response['title'] = $contents;
+            $response['body'] = $contents['body'];
+            $response['title'] =$contents['@title'] ?? 'Title';
             $response['type'] = 'success';
         } catch (Exception $e) {
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
