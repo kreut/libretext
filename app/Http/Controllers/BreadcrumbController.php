@@ -33,6 +33,17 @@ class BreadcrumbController extends Controller
             if (Auth::check()) {
                 $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/$users/courses"];
                 switch ($name) {
+                    case('questions.get'):
+                    case('learning_trees.get'):
+                    $breadcrumbs[] = ['text' => $assignment->course->name,
+                        'href' => "/$users/courses/{$assignment->course->id}/assignments"];
+                    $breadcrumbs[] = ['text' => "$assignment->name Summary",
+                        'href' => "/assignments/{$assignment->id}/summary",
+                        ];
+                    $breadcrumbs[] = ['text' => 'Get Assessments',
+                        'href' => "#",
+                        'active' => true];
+                    break;
                     case('course_properties.general_info'):
                     case('course_properties.letter_grades'):
                     case('course_properties.graders'):
@@ -95,7 +106,7 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[] = ['text' => "{$assignment->name}",
                                 'href' => "/assignments/{$assignment_id}/summary"];
                         }
-                        $breadcrumbs[] = ['text' => "View Questions",
+                        $breadcrumbs[] = ['text' => "View Assessments",
                             'href' => "#",
                             'active' => true];
 
@@ -134,7 +145,7 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[] = ['text' => 'Grading',
                                 'href' => "/assignments/{$assignment->id}/$type-files"];
                         }
-                        $breadcrumbs[] = ['text' => 'View Question',
+                        $breadcrumbs[] = ['text' => 'View Assessments',
                             'href' => "#",
                             'active' => true];
                 }

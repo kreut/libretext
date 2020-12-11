@@ -1025,7 +1025,7 @@ export default {
           return false
         }
         let assignment = data.assignment
-        this.title = `${assignment.name} Questions`
+        this.title = `${assignment.name} Assessments`
         this.name = assignment.name
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         this.timeLeft = assignment.time_left
@@ -1038,7 +1038,7 @@ export default {
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
       } catch (error) {
         this.$noty.error(error.message)
-        this.title = 'Assignment Questions'
+        this.title = 'Assessments'
       }
       return true
     },
