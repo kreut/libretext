@@ -12,52 +12,52 @@
       />
       <b-container>
         <b-row>
-          <div v-if="user.role === 2" class="col-md-3">
-            <card title="Get Assessments" class="properties-card">
-              <ul class="nav flex-column nav-pills">
-                <li v-for="tab in tabs" :key="tab.route" class="nav-item">
-                  <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-                    {{ tab.name }}
-                  </router-link>
-                </li>
-              </ul>
-            </card>
-          </div>
-          <p>
-            Using the search box you can find Learning Trees by id.
-          </p>
-          <b-form-group
-            id="learning_tree_id"
-            label-cols-sm="3"
-            label-cols-lg="2"
-            label="Learning Tree Id"
-            label-for="Learning Tree Id"
-          >
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="learning_tree_id"
-                  v-model="learningTreeForm.learning_tree_id"
-                  type="text"
-                  placeholder=""
-                  :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
-                  @keydown="learningTreeForm.errors.clear('learning_tree_id')"
-                />
-                <has-error :form="learningTreeForm" field="learning_tree_id" />
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <div class="mt-3 d-flex flex-row">
-            <b-button variant="success" class="mr-2" @click="getLearningTreeById()">
-              <b-spinner v-if="gettingLearningTree" small type="grow" />
-              Get Learning Tree
-            </b-button>
-          </div>
+          <b-col class="col-md-3">
+            <div v-if="user.role === 2">
+              <card title="Get Assessments" class="properties-card">
+                <ul class="nav flex-column nav-pills">
+                  <li v-for="tab in tabs" :key="tab.route" class="nav-item">
+                    <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
+                      {{ tab.name }}
+                    </router-link>
+                  </li>
+                </ul>
+              </card>
+            </div>
+          </b-col>
+          <b-col class="col-md-9">
+            <b-card header="Get Learning Trees">
+              <b-card-text>
+                <p>
+                  Using the search box you can find Learning Trees by its corresponding Id.  You can then add the Learning Tree to your assignment.
+                </p>
+                <b-form-row>
+                  <b-col lg="3">
+                    <b-form-input
+                      id="learning_tree_id"
+                      v-model="learningTreeForm.learning_tree_id"
+                      type="text"
+                      placeholder="Learning Tree Id"
+                      :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
+                      @keydown="learningTreeForm.errors.clear('learning_tree_id')"
+                    />
+                    <has-error :form="learningTreeForm" field="learning_tree_id" />
+                  </b-col>
+                </b-form-row>
+
+                <div class="mt-3 d-flex flex-row">
+                  <b-button variant="success" class="mr-2" @click="getLearningTreeById()">
+                    <b-spinner v-if="gettingLearningTree" small type="grow" />
+                    Get Learning Tree
+                  </b-button>
+                </div>
+              </b-card-text>
+            </b-card>
+          </b-col>
         </b-row>
       </b-container>
       <hr>
     </div>
-
     <iframe v-if="learningTreeSrc.length > 0"
             allowtransparency="true"
             frameborder="0"
@@ -82,6 +82,8 @@ export default {
     gettingLearningTree: false,
     learningTreeExists: false,
     isLoading: true,
+    learningTreeTitle: '',
+    learningTreeDescription: '',
     learningTreeSrc: '',
     title: '',
     learningTreeForm: new Form({
@@ -124,15 +126,17 @@ export default {
         }
         this.gettingLearningTree = true
         const { data } = await axios.post('/api/learning-trees/learning-tree-exists', { 'learning_tree_id': this.learningTreeForm.learning_tree_id })
-        this.gettingLearningTree = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         this.learningTreeSrc = `/learning-trees/${this.learningTreeForm.learning_tree_id}/get`
+        this.learningTreeTitle = data.title
+        this.learningTreeDescription = data.description
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.gettingLearningTree = false
     },
     async getAssignmentInfo () {
       try {

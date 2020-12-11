@@ -1,5 +1,15 @@
 <template>
   <div>
+    <div class="font-italic">
+      <b-row>
+        <b-col class="col-md-3" />
+        <h5>Title: {{ title }}</h5>
+      </b-row>
+      <b-row>
+        <b-col class="col-md-3" />
+        <h5>Description: {{ description }}</h5>
+      </b-row>
+    </div>
     <div id="canvas" />
   </div>
 </template>
@@ -18,7 +28,9 @@ export default {
     return { title: this.$t('home') }
   },
   data: () => ({
-    learningTreeId: 0
+    learningTreeId: 0,
+    title: '',
+    description: ''
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -30,10 +42,10 @@ export default {
     }
     flowy(document.getElementById('canvas'))
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
-    this.getLearningTreeLearningTreeId(this.learningTreeId)
+    this.getLearningTreeLearningByTreeId(this.learningTreeId)
   },
   methods: {
-    async getLearningTreeLearningTreeId (learningTreeId) {
+    async getLearningTreeLearningByTreeId (learningTreeId) {
       try {
         const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)
         this.title = data.title
