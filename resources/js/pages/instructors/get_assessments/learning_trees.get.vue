@@ -10,43 +10,59 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <p>
-        Using the search box you can find Learning Trees by id.
-      </p>
-      <b-form-group
-        id="learning_tree_id"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label="Learning Tree Id"
-        label-for="Learning Tree Id"
-      >
-        <b-form-row>
-          <b-col lg="3">
-            <b-form-input
-              id="learning_tree_id"
-              v-model="learningTreeForm.learning_tree_id"
-              type="text"
-              placeholder=""
-              :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
-              @keydown="learningTreeForm.errors.clear('learning_tree_id')"
-            />
-            <has-error :form="learningTreeForm" field="learning_tree_id" />
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <div class="mt-3 d-flex flex-row">
-        <b-button variant="success" class="mr-2" @click="getLearningTreeById()">
-          <b-spinner v-if="gettingLearningTree" small type="grow" />
-          Get Learning Tree
-        </b-button>
-      </div>
+      <b-container>
+        <b-row>
+          <div v-if="user.role === 2" class="col-md-3">
+            <card title="Get Assessments" class="properties-card">
+              <ul class="nav flex-column nav-pills">
+                <li v-for="tab in tabs" :key="tab.route" class="nav-item">
+                  <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
+                    {{ tab.name }}
+                  </router-link>
+                </li>
+              </ul>
+            </card>
+          </div>
+          <p>
+            Using the search box you can find Learning Trees by id.
+          </p>
+          <b-form-group
+            id="learning_tree_id"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Learning Tree Id"
+            label-for="Learning Tree Id"
+          >
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="learning_tree_id"
+                  v-model="learningTreeForm.learning_tree_id"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
+                  @keydown="learningTreeForm.errors.clear('learning_tree_id')"
+                />
+                <has-error :form="learningTreeForm" field="learning_tree_id" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <div class="mt-3 d-flex flex-row">
+            <b-button variant="success" class="mr-2" @click="getLearningTreeById()">
+              <b-spinner v-if="gettingLearningTree" small type="grow" />
+              Get Learning Tree
+            </b-button>
+          </div>
+        </b-row>
+      </b-container>
       <hr>
     </div>
+
     <iframe v-if="learningTreeSrc.length > 0"
             allowtransparency="true"
             frameborder="0"
             :src="learningTreeSrc"
-            style="width: 300px;min-width: 100%;height:800px"
+            style="width: 800px;min-width: 100%;height:800px"
     />
   </div>
 </template>
@@ -72,9 +88,25 @@ export default {
       learning_tree_id: ''
     })
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    tabs () {
+      return [
+        {
+          icon: '',
+          name: 'Questions',
+          route: 'questions.get'
+        },
+        {
+          icon: '',
+          name: 'Learning Trees',
+          route: 'learning_trees.get'
+        }
+      ]
+    }
+  },
   mounted () {
     if (this.user.role !== 2) {
       this.$noty.error('You do not have access to this page.')
@@ -97,7 +129,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.learningTreeSrc = `/instructors/learning-trees/editor/${this.learningTreeForm.learning_tree_id}`
+        this.learningTreeSrc = `/learning-trees/${this.learningTreeForm.learning_tree_id}/get`
       } catch (error) {
         this.$noty.error(error.message)
       }
