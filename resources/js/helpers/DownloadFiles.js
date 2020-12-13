@@ -1,5 +1,5 @@
 import axios from 'axios'
-export function  downloadSolutionFile(level, assignmentId, questionId, original_filename){
+export function downloadSolutionFile (level, assignmentId, questionId, originalFilename) {
   let data =
     {
       'level': level,
@@ -7,22 +7,21 @@ export function  downloadSolutionFile(level, assignmentId, questionId, original_
       'assignment_id': assignmentId
     }
   let url = '/api/solution-files/download'
-  downloadFile(url, data, original_filename, this.$noty)
+  downloadFile(url, data, originalFilename, this.$noty)
 }
-export function   downloadSubmissionFile(assignmentId, submission, original_filename) {
+export function downloadSubmissionFile (assignmentId, submission, originalFilename) {
   let data =
     {
       'assignment_id': assignmentId,
       'submission': submission
     }
   let url = '/api/submission-files/download'
-  downloadFile(url, data, original_filename, this.$noty)
+  downloadFile(url, data, originalFilename, this.$noty)
 }
 
-export async function downloadFile(url, fileData, originalFilename, noty) {
-
+export async function downloadFile (url, fileData, originalFilename, noty) {
   try {
-    const {data} = await axios({
+    const { data } = await axios({
       method: 'post',
       url: url,
       responseType: 'arraybuffer',
@@ -30,15 +29,14 @@ export async function downloadFile(url, fileData, originalFilename, noty) {
     })
     console.log(data)
     if (data.byteLength) {
-      noty.success("The file is being downloaded.")
-      let blob = new Blob([data], {type: 'application/pdf'})
+      noty.success('The file is being downloaded.')
+      let blob = new Blob([data], { type: 'application/pdf' })
       let link = document.createElement('a')
       link.href = window.URL.createObjectURL(blob)
       link.download = originalFilename
       link.click()
     } else {
-
-      noty.error("We were not able to retrieve your file.  Please try again or contact us for assistance.")
+      noty.error('We were not able to retrieve your file.  Please try again or contact us for assistance.')
     }
   } catch (error) {
     noty.error(error.message)

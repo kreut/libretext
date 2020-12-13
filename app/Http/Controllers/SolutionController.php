@@ -62,6 +62,7 @@ class SolutionController extends Controller
             DB::beginTransaction();
             switch ($request->uploadLevel) {
                 case('question'):
+                    $assignment_name = Assignment::find($assignment_id)->name;
                     $Solution->updateOrCreate(
                         [
                             'user_id' => $user_id,
@@ -70,12 +71,28 @@ class SolutionController extends Controller
                         ],
                         $file_data
                     );
+                    //now recompile with the new file
+                    $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment_id, $user_id, $Solution);
+                    if ($compiled_filename) {
+                        $compiled_file_data = [
+                            'file' => $compiled_filename,
+                            'original_filename' => str_replace(' ', '', $assignment_name . '.pdf'),
+                            'updated_at' => Carbon::now()];
+                        $Solution->updateOrCreate(
+                            [
+                                'user_id' => $user_id,
+                                'type' => 'a',
+                                'assignment_id' => $assignment_id,
+                                'question_id' => null
+                            ],
+                            $compiled_file_data
+                        );
+                    }
                     $response['type'] = 'success';
-                    $response['message'] = 'Your solution has been saved.';
+                    $response['message'] = 'Your solution has been saved and the full answer key has been re-compiled.';
                     $response['original_filename'] = $original_filename;
                     break;
                 case('assignment'):
-
                     //get rid of the current ones
                     Cutup::where('user_id', $user_id)
                         ->where('assignment_id', $assignment_id)
@@ -122,17 +139,17 @@ class SolutionController extends Controller
         $assignment = Assignment::find($request->assignment_id);
         $level = $request->level;
         try {
-         $authorized = Gate::inspect('downloadSolutionFile', [$solution, $level,  $assignment, $request->question_id]);
-         if (!$authorized->allowed()) {
-             //I don't actually return a message to the user if they're not authorized, I just log it
-             //for testing purposes I want to know why they weren't authorized
-             if (env('DB_DATABASE') === "test_libretext"){
-                 return ['message' => $authorized->message()];
-             }
-             throw new Exception($authorized->message());
-         }
+            $authorized = Gate::inspect('downloadSolutionFile', [$solution, $level, $assignment, $request->question_id]);
+            if (!$authorized->allowed()) {
+                //I don't actually return a message to the user if they're not authorized, I just log it
+                //for testing purposes I want to know why they weren't authorized
+                if (env('DB_DATABASE') === "test_libretext") {
+                    return ['message' => $authorized->message()];
+                }
+                throw new Exception($authorized->message());
+            }
 
-        $file_creator_user_id = $assignment->course->user_id;
+            $file_creator_user_id = $assignment->course->user_id;
 
             $solution_file = ($level === 'q')
                 ? $solution->where('user_id', $file_creator_user_id)

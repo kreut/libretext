@@ -93,7 +93,7 @@ class CutupController extends Controller
 
         try {
             $cutup_file = $cutup->mergeCutUpPdfs($submissionFile, $solution, $type, $assignment->id, $user_id, $chosen_cutups, $page_numbers_and_extension);
-            DB::beginTransaction();;
+            DB::beginTransaction();
             switch ($type) {
                 case('solution'):
                     //add the new full solution
@@ -105,6 +105,23 @@ class CutupController extends Controller
                             'type' => 'q'],
                         ['file' => $cutup_file, 'original_filename' => $cutup_filename]
                     );
+                    //now recompile with the new file
+                    $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $user_id, $solution);
+                   if ($compiled_filename) {
+                       $compiled_file_data = [
+                           'file' => $compiled_filename,
+                           'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
+                           'updated_at' => Carbon::now()];
+                       $solution->updateOrCreate(
+                           [
+                               'user_id' => $user_id,
+                               'type' => 'a',
+                               'assignment_id' => $assignment->id,
+                               'question_id' => null
+                           ],
+                           $compiled_file_data
+                       );
+                   }
                     $response['message'] = 'Your cutup has been set as the solution.';
                     $response['cutup'] = $cutup_filename;
                     break;
@@ -147,8 +164,10 @@ class CutupController extends Controller
 
         } catch (Exception $e) {
             DB::rollBack();
-            $h = new Handler(app());
-            $h->report($e);
+            if (strpos($e->getMessage(), 'Your cutups should be a comma') === false) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
             $response['message'] =  $e->getMessage();
         }
         return $response;
