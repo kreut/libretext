@@ -54,21 +54,24 @@
           The remediation nodes provide the student with supplementary material to help them answer the initial
           question.
         </b-tooltip>
-        <b-tooltip target="minimum_time_needed_in_learning_tree_tooltip"
+        <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
                    delay="250"
         >
-          The minimum time (in seconds) a student must be in a Learning Tree before they can earn a percent of the original question points.
+          The minimum time a student must be in a Learning Tree before they can earn a percent of the
+          original question points.
         </b-tooltip>
         <b-tooltip target="percent_earned_for_entering_learning_tree_tooltip"
                    delay="250"
         >
-          The percent of the question points that a student earns for entering the Learning Tree for at least the minimum time as described above.
+          The percent of the question points that a student earns for entering the Learning Tree for at least the
+          minimum time as described above.
         </b-tooltip>
 
         <b-tooltip target="percent_decay_tooltip"
                    delay="250"
         >
-          For each new attempt after their first free attempt, students will be rewarded the total number of new attempts multiplied by the percent decay in addition to the percent awarded for entering the Learning Tree.
+          For each new attempt after their first free attempt, students will be awarded the total number of new
+          attempts multiplied by the percent decay in addition to the percent awarded for entering the Learning Tree.
         </b-tooltip>
 
         <b-form ref="form" @submit="createAssignment">
@@ -251,113 +254,119 @@
                                 stacked
                                 :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
             >
-              <b-form-radio name="assessment_type" value="r">
-                Real time <span id="real_time" class="text-muted"><b-icon
-                  icon="question-circle"
-                />
-                </span>
-              </b-form-radio>
+              <span @click="resetLearningTreeToNull">
+                <b-form-radio name="assessment_type" value="r">
+                  Real time <span id="real_time" class="text-muted"><b-icon
+                    icon="question-circle"
+                  />
+                  </span>
+                </b-form-radio>
+                <b-form-radio name="assessment_type" value="d">
+                  Delayed <span id="delayed" class="text-muted"><b-icon
+                    icon="question-circle"
+                  />
+                  </span>
+                </b-form-radio>
+              </span>
               <b-form-radio name="assessment_type" value="l">
                 Learning Tree <span id="learning_tree" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span>
               </b-form-radio>
-              <b-form-radio name="assessment_type" value="d">
-                Delayed <span id="delayed" class="text-muted"><b-icon
-                  icon="question-circle"
-                />
-                </span>
-              </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-
-          <b-form-group
-            id="minimum_time_needed_in_learning_tree"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="minimum_time_needed_in_learning_tree"
-          >
-            <template slot="label">
-              <b-icon
-                icon="tree" variant="success"
-              />
-              Minimum Time Spent In Learning Tree <span id="minimum_time_needed_in_learning_tree_tooltip" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
-            </template>
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="minimum_time_needed_in_learning_tree"
-                  v-model="form.minimum_time_needed_in_learning_tree"
-                  lg="2"
-                  type="text"
-                  :class="{ 'is-invalid': form.errors.has('minimum_time_needed_in_learning_tree') }"
-                  @keydown="form.errors.clear('minimum_time_needed_in_learning_tree')"
+          <div v-show="form.assessment_type === 'l'">
+            <b-form-group
+              id="min_time_needed_in_learning_tree"
+              label-cols-sm="7"
+              label-cols-lg="6"
+              label-for="min_time_needed_in_learning_tree"
+            >
+              <template slot="label">
+                <b-icon
+                  icon="tree" variant="success"
                 />
-                <has-error :form="form" field="minimum_time_needed_in_learning_tree" />
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            id="percent_earned_for_entering_learning_tree"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Percent Earned For Entering Learning Tree"
-            label-for="percent_earned_for_entering_learning_tree"
-          >
-            <template slot="label">
-              <b-icon
-                icon="tree" variant="success"
-              />
-              Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
-            </template>
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="percent_earned_for_entering_learning_tree"
-                  v-model="form.percent_earned_for_entering_learning_tree"
-                  lg="2"
-                  type="text"
-                  :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
-                  @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
+                Minimum Time Spent In Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
+                                                          class="text-muted"
+                ><b-icon
+                  icon="question-circle"
+                /></span>
+              </template>
+              <b-form-row>
+                <b-col lg="5">
+                  <b-form-input
+                    id="min_time_needed_in_learning_tree"
+                    v-model="form.min_time_needed_in_learning_tree"
+                    type="text"
+                    placeholder="In Minutes"
+                    :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
+                    @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
+                  />
+                  <has-error :form="form" field="min_time_needed_in_learning_tree" />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              id="percent_earned_for_entering_learning_tree"
+              label-cols-sm="7"
+              label-cols-lg="6"
+              label="Percent Earned For Entering Learning Tree"
+              label-for="percent_earned_for_entering_learning_tree"
+            >
+              <template slot="label">
+                <b-icon
+                  icon="tree" variant="success"
                 />
-                <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            id="percent_decay"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label-for="percent_decay"
-          >
-            <template slot="label">
-              <b-icon
-                icon="tree" variant="success"
-              />
-              Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
-            </template>
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="decay_percent"
-                  v-model="form.percent_decay"
-                  lg="2"
-                  type="text"
-                  :class="{ 'is-invalid': form.errors.has('percent_decay') }"
-                  @keydown="form.errors.clear('percent_decay')"
+                Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip"
+                                                                class="text-muted"
+                ><b-icon
+                  icon="question-circle"
+                /></span>
+              </template>
+              <b-form-row>
+                <b-col lg="5">
+                  <b-form-input
+                    id="percent_earned_for_entering_learning_tree"
+                    v-model="form.percent_earned_for_entering_learning_tree"
+                    type="text"
+                    placeholder="Out of 100"
+                    :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
+                    @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
+                  />
+                  <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              id="percent_decay"
+              label-cols-sm="7"
+              label-cols-lg="6"
+              label-for="percent_decay"
+            >
+              <template slot="label">
+                <b-icon
+                  icon="tree" variant="success"
                 />
-                <has-error :form="form" field="percent_decay" />
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-
+                Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span>
+              </template>
+              <b-form-row>
+                <b-col lg="5">
+                  <b-form-input
+                    id="decay_percent"
+                    v-model="form.percent_decay"
+                    type="text"
+                    placeholder="Out of 100"
+                    :class="{ 'is-invalid': form.errors.has('percent_decay') }"
+                    @keydown="form.errors.clear('percent_decay')"
+                  />
+                  <has-error :form="form" field="percent_decay" />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+          </div>
           <b-form-group
             v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
             id="submission_files"
@@ -414,25 +423,6 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
-            v-show="form.source === 'a'"
-            id="instructions"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Instructions"
-            label-for="instructions"
-          >
-            <b-form-row>
-              <b-form-textarea
-                id="instructions"
-                v-model="form.instructions"
-                type="text"
-                placeholder="(Optional)"
-                rows="3"
-              />
-            </b-form-row>
-          </b-form-group>
-
-          <b-form-group
             v-show="form.source === 'x' && form.scoring_type === 'p'"
             id="total_points"
             label-cols-sm="4"
@@ -480,6 +470,24 @@
             </b-form-group>
           </div>
         </b-form>
+        <b-form-group
+          v-show="form.source === 'a'"
+          id="instructions"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Instructions"
+          label-for="instructions"
+        >
+          <b-form-row>
+            <b-form-textarea
+              id="instructions"
+              v-model="form.instructions"
+              type="text"
+              placeholder="(Optional)"
+              rows="3"
+            />
+          </b-form-row>
+        </b-form-group>
       </b-modal>
       <b-modal
         id="modal-delete-assignment"
@@ -725,6 +733,9 @@ export default {
       available_from: '',
       due: '',
       assessment_type: 'r',
+      min_time_needed_in_learning_tree: null,
+      percent_earned_for_entering_learning_tree: null,
+      percent_decay: null,
       available_from_date: '',
       assignment_group_id: null,
       available_from_time: '09:00:00',
@@ -768,6 +779,11 @@ export default {
     initTooltips(this)
   },
   methods: {
+    resetLearningTreeToNull () {
+      this.form.min_time_needed_in_learning_tree = null
+      this.form.percent_earned_for_entering_learning_tree = null
+      this.form.percent_decay = null
+    },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)
     },

@@ -296,7 +296,6 @@ class AssignmentController extends Controller
             }
 
             $data = $request->validated();
-
             DB::beginTransaction();
             $assignment = Assignment::create(
                 ['name' => $data['name'],
@@ -304,6 +303,9 @@ class AssignmentController extends Controller
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
+                    'min_time_needed_in_learning_tree' => $data['min_time_needed_in_learning_tree'],
+                    'percent_earned_for_entering_learning_tree' => $data['percent_earned_for_entering_learning_tree'],
+                    'percent_decay' => $data['percent_decay'],
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
