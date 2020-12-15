@@ -198,6 +198,7 @@ export default {
       this.newCourseForm.errors.clear()
     },
     resetAll (modalId) {
+      this.courseId = ''
       this.getCourses()
       this.resetModalForms()
       // Hide the modal manually
