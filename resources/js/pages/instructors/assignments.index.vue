@@ -165,6 +165,98 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
+            id="source"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Source"
+            label-for="Source"
+          >
+            <b-form-radio-group v-model="form.source" stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <span @click="resetSubmissionFilesAndPointsPerQuestion">
+
+                <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span></b-form-radio>
+              </span>
+              <b-form-radio name="source" value="x">
+                External <span id="external" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span>
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+
+          <b-tooltip target="delayed"
+                     delay="250"
+          >
+            Scores and solutions are not automatically released. This type of assessment works well
+            for open-ended questions.
+          </b-tooltip>
+
+          <b-tooltip target="real_time"
+                     delay="250"
+          >
+            Scores and solutions are released in real time, providing students with immediate feedback.
+          </b-tooltip>
+          <b-tooltip target="learning_tree"
+                     delay="250"
+          >
+            Students are provided with Learning Trees which consist of a root question node and remediation nodes.
+            The remediation nodes provide the student with supplementary material to help them answer the initial
+            question.
+          </b-tooltip>
+          <b-form-group
+            v-show="form.source === 'a'"
+            id="assessment_type"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Assessment Type"
+            label-for="Assessment Type"
+          >
+            <b-form-radio-group v-model="form.assessment_type"
+                                stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <b-form-radio name="assessment_type" value="r">
+                Real time <span id="real_time" class="text-muted"><b-icon
+                  icon="question-circle"
+                />
+                </span>
+              </b-form-radio>
+              <b-form-radio name="assessment_type" value="l">
+                Learning Tree <span id="learning_tree" class="text-muted"><b-icon
+                  icon="question-circle"
+                />
+                </span>
+              </b-form-radio>
+              <b-form-radio name="assessment_type" value="d">
+                Delayed <span id="delayed" class="text-muted"><b-icon
+                  icon="question-circle"
+                />
+                </span>
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
+            id="scoring_type"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Scoring Type"
+            label-for="Scoring Type"
+          >
+            <b-form-radio-group v-model="form.scoring_type" stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <span @click="form.students_can_view_assignment_statistics = 1">
+                <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
+              <span @click="resetSubmissionFilesAndPointsPerQuestion">
+                <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
+              </span>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
             id="include_in_weighted_average"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -194,38 +286,9 @@
           >
             Use questions outside of Adapt and manually input scores into the grade book
           </b-tooltip>
-          <b-tooltip target="can_view_assignment_statistics"
-                     delay="250"
-          >
-            Allows students to see how the class performed at the assignment and question level. Choose this option
-            and then Show Scores when you are ready for them to see the statistics.
-          </b-tooltip>
-          <b-form-group
-            id="source"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Source"
-            label-for="Source"
-          >
-            <b-form-radio-group v-model="form.source" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-            >
-              <span @click="resetSubmissionFilesAndPointsPerQuestion">
-
-                <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
-                  icon="question-circle"
-                /></span></b-form-radio>
-              </span>
-              <b-form-radio name="scoring_type" value="x">
-                External <span id="external" class="text-muted"><b-icon
-                  icon="question-circle"
-                /></span>
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
 
           <b-form-group
-            v-if="form.source === 'a'"
+            v-show="form.source === 'a'"
             id="instructions"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -242,27 +305,9 @@
               />
             </b-form-row>
           </b-form-group>
-          <b-form-group
-            id="scoring_type"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Scoring Type"
-            label-for="Scoring Type"
-          >
-            <b-form-radio-group v-model="form.scoring_type" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-            >
-              <span @click="resetSubmissionFilesAndPointsPerQuestion">
-
-                <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
-              </span>
-              <span @click="form.students_can_view_assignment_statistics = 1">
-                <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
-            </b-form-radio-group>
-          </b-form-group>
 
           <b-form-group
-            v-if="form.source === 'x' && form.scoring_type === 'p'"
+            v-show="form.source === 'x' && form.scoring_type === 'p'"
             id="total_points"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -285,7 +330,7 @@
           </b-form-group>
           <div v-show="form.source === 'a'">
             <b-form-group
-              v-if="form.scoring_type === 'p'"
+              v-show="form.scoring_type === 'p'"
               id="submission_files"
               label-cols-sm="4"
               label-cols-lg="3"
@@ -306,7 +351,7 @@
             </b-form-group>
 
             <b-form-group
-              v-if="form.scoring_type === 'p'"
+              v-show="form.scoring_type === 'p'"
               id="default_points_per_question"
               label-cols-sm="4"
               label-cols-lg="3"
@@ -574,6 +619,7 @@ export default {
       name: '',
       available_from: '',
       due: '',
+      assessment_type: 'r',
       available_from_date: '',
       assignment_group_id: null,
       available_from_time: '09:00:00',
@@ -582,7 +628,7 @@ export default {
       submission_files: '0',
       type_of_submission: 'correct',
       source: 'a',
-      scoring_type: 'c',
+      scoring_type: 'p',
       include_in_weighted_average: 1,
       num_submissions_needed: '2',
       default_points_per_question: '10',
@@ -696,7 +742,7 @@ export default {
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
-    async     submitShowAssignment (assignment) {
+    async submitShowAssignment (assignment) {
       try {
         const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-assignment/${Number(assignment.shown)}`)
         this.$noty[data.type](data.message)
@@ -778,6 +824,7 @@ export default {
       this.assignmentId = assignment.id
       this.number_of_questions = assignment.number_of_questions
       this.form.name = assignment.name
+      this.form.assessment_type = assignment.assessment_type
       this.form.available_from_date = assignment.available_from_date
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
