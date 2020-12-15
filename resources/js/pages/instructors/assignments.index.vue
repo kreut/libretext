@@ -2,14 +2,6 @@
   <div>
     <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
-      <loading :active.sync="isLoading"
-               :can-cancel="true"
-               :is-full-page="true"
-               :width="128"
-               :height="128"
-               color="#007BFF"
-               background="#FFFFFF"
-      />
       <b-modal
         id="modal-assignment-properties"
         ref="modal"
@@ -19,6 +11,66 @@
         @ok="submitAssignmentInfo"
         @hidden="resetModalForms"
       >
+        <loading :active.sync="isLoading"
+                 :can-cancel="true"
+                 :is-full-page="true"
+                 :width="128"
+                 :height="128"
+                 color="#007BFF"
+                 background="#FFFFFF"
+        />
+        <b-tooltip target="internal"
+                   delay="250"
+        >
+          Get questions from the Adapt database or from the Query library
+        </b-tooltip>
+        <b-tooltip target="internal"
+                   delay="250"
+        >
+          Get questions from the Adapt database or from the Query library
+        </b-tooltip>
+
+        <b-tooltip target="external"
+                   delay="250"
+        >
+          Use questions outside of Adapt and manually input scores into the grade book
+        </b-tooltip>
+        <b-tooltip target="delayed"
+                   delay="250"
+        >
+          Scores and solutions are not automatically released. This type of assessment works well
+          for open-ended questions.
+        </b-tooltip>
+
+        <b-tooltip target="real_time"
+                   delay="250"
+        >
+          Scores and solutions are released in real time, providing students with immediate feedback.
+        </b-tooltip>
+        <b-tooltip target="learning_tree"
+                   delay="250"
+        >
+          Students are provided with Learning Trees which consist of a root question node and remediation nodes.
+          The remediation nodes provide the student with supplementary material to help them answer the initial
+          question.
+        </b-tooltip>
+        <b-tooltip target="minimum_time_needed_in_learning_tree_tooltip"
+                   delay="250"
+        >
+          The minimum time (in seconds) a student must be in a Learning Tree before they can earn a percent of the original question points.
+        </b-tooltip>
+        <b-tooltip target="percent_earned_for_entering_learning_tree_tooltip"
+                   delay="250"
+        >
+          The percent of the question points that a student earns for entering the Learning Tree for at least the minimum time as described above.
+        </b-tooltip>
+
+        <b-tooltip target="percent_decay_tooltip"
+                   delay="250"
+        >
+          For each new attempt after their first free attempt, students will be rewarded the total number of new attempts multiplied by the percent decay in addition to the percent awarded for entering the Learning Tree.
+        </b-tooltip>
+
         <b-form ref="form" @submit="createAssignment">
           <div v-if="has_submissions_or_file_submissions && !solutionsReleased">
             <b-alert variant="info" show>
@@ -187,26 +239,6 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-
-          <b-tooltip target="delayed"
-                     delay="250"
-          >
-            Scores and solutions are not automatically released. This type of assessment works well
-            for open-ended questions.
-          </b-tooltip>
-
-          <b-tooltip target="real_time"
-                     delay="250"
-          >
-            Scores and solutions are released in real time, providing students with immediate feedback.
-          </b-tooltip>
-          <b-tooltip target="learning_tree"
-                     delay="250"
-          >
-            Students are provided with Learning Trees which consist of a root question node and remediation nodes.
-            The remediation nodes provide the student with supplementary material to help them answer the initial
-            question.
-          </b-tooltip>
           <b-form-group
             v-show="form.source === 'a'"
             id="assessment_type"
@@ -239,6 +271,93 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
+
+          <b-form-group
+            id="minimum_time_needed_in_learning_tree"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="minimum_time_needed_in_learning_tree"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Minimum Time Spent In Learning Tree <span id="minimum_time_needed_in_learning_tree_tooltip" class="text-muted"><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="minimum_time_needed_in_learning_tree"
+                  v-model="form.minimum_time_needed_in_learning_tree"
+                  lg="2"
+                  type="text"
+                  :class="{ 'is-invalid': form.errors.has('minimum_time_needed_in_learning_tree') }"
+                  @keydown="form.errors.clear('minimum_time_needed_in_learning_tree')"
+                />
+                <has-error :form="form" field="minimum_time_needed_in_learning_tree" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="percent_earned_for_entering_learning_tree"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Percent Earned For Entering Learning Tree"
+            label-for="percent_earned_for_entering_learning_tree"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip" class="text-muted"><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="percent_earned_for_entering_learning_tree"
+                  v-model="form.percent_earned_for_entering_learning_tree"
+                  lg="2"
+                  type="text"
+                  :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
+                  @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
+                />
+                <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="percent_decay"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="percent_decay"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="decay_percent"
+                  v-model="form.percent_decay"
+                  lg="2"
+                  type="text"
+                  :class="{ 'is-invalid': form.errors.has('percent_decay') }"
+                  @keydown="form.errors.clear('percent_decay')"
+                />
+                <has-error :form="form" field="percent_decay" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+
           <b-form-group
             v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
             id="submission_files"
@@ -294,19 +413,6 @@
               </b-form-radio>
             </b-form-radio-group>
           </b-form-group>
-
-          <b-tooltip target="internal"
-                     delay="250"
-          >
-            Get questions from the Adapt database or from the Query library
-          </b-tooltip>
-
-          <b-tooltip target="external"
-                     delay="250"
-          >
-            Use questions outside of Adapt and manually input scores into the grade book
-          </b-tooltip>
-
           <b-form-group
             v-show="form.source === 'a'"
             id="instructions"
