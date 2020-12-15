@@ -240,6 +240,26 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
+            v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
+            id="submission_files"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Submission Files"
+            label-for="Submission Files"
+          >
+            <b-form-radio-group v-model="form.submission_files" stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+              <b-form-radio name="submission_files" value="0">
+                Students cannot upload files
+              </b-form-radio>
+              <b-form-radio name="submission_files" value="q">
+                At the question level
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+          <b-form-group
             id="scoring_type"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -329,27 +349,6 @@
             </b-form-row>
           </b-form-group>
           <div v-show="form.source === 'a'">
-            <b-form-group
-              v-show="form.scoring_type === 'p'"
-              id="submission_files"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Submission Files"
-              label-for="Submission Files"
-            >
-              <b-form-radio-group v-model="form.submission_files" stacked
-                                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-              >
-                <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-                <b-form-radio name="submission_files" value="q">
-                  At the question level
-                </b-form-radio>
-                <b-form-radio name="submission_files" value="0">
-                  Students cannot upload files
-                </b-form-radio>
-              </b-form-radio-group>
-            </b-form-group>
-
             <b-form-group
               v-show="form.scoring_type === 'p'"
               id="default_points_per_question"
@@ -811,6 +810,7 @@ export default {
     resetSubmissionFilesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
       this.form.submission_files = 0
+      this.form.assessment_type = 'r'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
       this.form.errors.clear('default_points_per_question')

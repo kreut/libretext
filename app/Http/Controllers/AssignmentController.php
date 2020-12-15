@@ -303,12 +303,13 @@ class AssignmentController extends Controller
                     'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
+                    'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
-                    'submission_files' => $data['submission_files'],
+                    'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'd') ? $data['submission_files'] : 0,
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
                 ]
@@ -545,9 +546,10 @@ class AssignmentController extends Controller
                 return $due_date_response;
             }
             $data = $request->validated();
+            $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
-
+            $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'd') ? $data['submission_files'] : 0;
             $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
             //remove what's not needed
             foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
@@ -560,6 +562,7 @@ class AssignmentController extends Controller
                 unset($data['scoring_type']);
                 unset($data['default_points_per_question']);
                 unset($data['submission_files']);
+                unset($data['assessment_type']);
             }
 
             DB::beginTransaction();
