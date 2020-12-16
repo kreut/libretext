@@ -40,7 +40,7 @@
     </div>
     <hr>
     <div class="mt-2 mb-1">
-      <b-button v-if="learningTreeSrc" variant="primary">
+      <b-button v-if="learningTreeSrc" variant="primary" @click="addLearningTree()">
         Add Learning Tree
       </b-button>
     </div>
@@ -104,6 +104,34 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
+    async addLearningTree () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/learning-trees/${this.learningTreeForm.learningTreeId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          // need to add to the array of selected ones
+        //  this.questions[this.currentPage - 1].inAssignment = true
+        }
+      } catch (error) {
+        console.log(error)
+        this.$noty.error('We could not add the Learning Tree to the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+    async removeLearningTree () {
+      // need some sort of current id
+      // need to remove from the questions table as well as the learning tree
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
+        if (data.type === 'success') {
+          this.$noty.info(data.message)
+          question.inAssignment = false
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+    },
     getStudentView (assignmentId) {
       this.$router.push(`/assignments/${assignmentId}/questions/view`)
     },
