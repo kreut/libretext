@@ -160,6 +160,7 @@ class LearningTreeController extends Controller
                 $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
                 return $response;
             }
+            $learningTree->root_node_page_id = $data['page_id'];
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->user_id = Auth::user()->id;

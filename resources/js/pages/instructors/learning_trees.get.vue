@@ -106,11 +106,13 @@ export default {
   methods: {
     async addLearningTree () {
       try {
-        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/learning-trees/${this.learningTreeForm.learningTreeId}`)
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/learning-trees/${this.learningTreeForm.learning_tree_id}`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           // need to add to the array of selected ones
         //  this.questions[this.currentPage - 1].inAssignment = true
+          this.learningTreeSrc = ''
+          this.learningTreeForm.learning_tree_id = ''
         }
       } catch (error) {
         console.log(error)
