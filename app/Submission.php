@@ -73,14 +73,15 @@ class Submission extends Model
             case('webwork'):
                 // Log::info('case webwork');
                 $submission = $data['submission'];
-                $data['score'] =  floatval($assignment_question->points) * floatval($submission->score->score);
-                Log::info('Score: ' .  $data['score'] );
+                $data['score'] = floatval($assignment_question->points) * floatval($submission->score->score);
+                Log::info('Score: ' . $data['score']);
                 $data['submission'] = json_encode($data['submission']);
                 break;
             default:
                 $response['message'] = 'That is not a valid technology.';
                 return $response;
         }
+        $data['all_correct'] = $data['score'] >= floatval($assignment_question->points);//>= so I don't worry about decimals
 
         try {
             DB::beginTransaction();
@@ -104,9 +105,14 @@ class Submission extends Model
                     'submission' => $data['submission'],
                     'score' => $data['score'],
                     'submission_count' => 1]);
-
-
             }
+            $learning_tree = DB::table('assignment_question')
+                ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
+                ->select('learning_tree')
+                ->get();
 
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {
@@ -128,10 +134,11 @@ class Submission extends Model
 
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
+            $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $log = new \App\Log();
             $request->action = 'submit-question-response';
-            $request->data =  ['assignment_id' => $data['assignment_id'],
-                    'question_id' => $data['question_id']];
+            $request->data = ['assignment_id' => $data['assignment_id'],
+                'question_id' => $data['question_id']];
             $log->store($request);
             DB::commit();
         } catch (Exception $e) {
@@ -188,7 +195,7 @@ class Submission extends Model
 
         $submissions_count_by_assignment_id = [];
         foreach ($assignments as $assignment) {
-            $question_submissions= [];
+            $question_submissions = [];
             $file_submissions = [];
             if (isset($assignment_question_submissions[$assignment->id])) {
                 foreach ($assignment_question_submissions[$assignment->id] as $question_id) {

@@ -19,6 +19,20 @@ class LearningTreeController extends Controller
 {
 
 
+    public function getLearningTreeByAssignmentQuestion() {
+///after submitting, check if there's a learning tree
+/// if there is
+
+
+    }
+
+
+
+
+
+
+
+
     public function learningTreeExists(Request $request)
     {
         $response['type'] = 'success';

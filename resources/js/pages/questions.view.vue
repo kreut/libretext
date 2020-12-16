@@ -806,7 +806,7 @@ export default {
             const { data } = await axios.post('/api/submissions', submission_data)
             console.log(data)
             if (!data.message) {
-              data.type = error
+              data.type = 'error'
               data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
             await this.showResponse(data)
@@ -826,6 +826,9 @@ export default {
     },
     async showResponse (data) {
       console.log('showing response')
+      if (data.learning_tree) {
+        await this.showLearningTree(data.learning_tree)
+      }
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
       this.showSubmissionMessage = true
@@ -1010,6 +1013,61 @@ export default {
       }
       this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
     },
+    async showLearningTree (learningTree) {
+      // loop through and get all with parent = -1
+      this.learningTree = learningTree
+      // loop through each with parent having this level
+      let pageId
+      let library
+      // console.log('length ' + learningTree.length)
+      for (let i = 0; i < this.learningTree.length; i++) {
+        let remediation = this.learningTree[i]
+        // get the library and page ids
+        // go to the server and return with the student learning objectives
+        // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
+
+        pageId = library = null
+        let parent = remediation.parent
+        let id = remediation.id
+        for (let j = 0; j < remediation.data.length; j++) {
+          switch (remediation.data[j].name) {
+            case ('page_id'):
+              pageId = remediation.data[j].value
+              break
+            case ('library'):
+              library = remediation.data[j].value
+              break
+            case ('id'):
+              id = remediation.data[j].value
+          }
+        }
+        if (pageId && library) {
+          const { data } = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
+          let remediation = {
+            'library': library,
+            'pageId': pageId,
+            'title': data,
+            'parent': parent,
+            'id': id,
+            'show': (parent === 0)
+          }
+          this.learningTreeAsList.push(remediation)
+        }
+        for (let i = 0; i < this.learningTreeAsList.length; i++) {
+          this.learningTreeAsList[i]['children'] = []
+
+          for (let j = 0; j < this.learningTreeAsList.length; j++) {
+            if (i !== j && (this.learningTreeAsList[j]['parent'] === this.learningTreeAsList[i]['id'])) {
+              this.learningTreeAsList[i]['children'].push(this.learningTreeAsList[j]['id'])
+            }
+          }
+        }
+      }
+
+      console.log('done')
+      console.log(this.learningTreeAsList)
+      this.loadedTitles = true
+    },
     explore (library, pageId) {
       this.showQuestion = false
       this.iframeLoaded = false
@@ -1113,7 +1171,10 @@ export default {
         })
 
         this.questionPointsForm.points = this.questions[0].points
+        this.learningTree = this.questions[0].learning_tree
 
+        console.log(this.learningTree)
+        this.showLearningTree()
         this.initializing = false
       } catch (error) {
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')

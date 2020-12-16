@@ -407,32 +407,6 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
 
-            $instructor_user_id = $assignment->course->user_id;
-            $learning_trees = [];
-            $instructor_learning_trees = $other_instructor_learning_trees = $instructor_learning_trees_by_question_id = [];
-         /*  $instructor_learning_trees = DB::table('learning_trees')
-                ->whereIn('question_id', $question_ids)
-                ->where('user_id', $instructor_user_id)
-                ->get();
-            $instructor_learning_trees_by_question_id = [];
-            $other_instructor_learning_trees_by_question_id = [];
-
-            if ($instructor_learning_trees) {
-                foreach ($instructor_learning_trees as $key => $value) {
-                    $instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
-                }
-            }
-            $other_instructor_learning_trees = DB::table('learning_trees')
-                ->whereIn('question_id', $question_ids)
-                ->where('user_id', '<>', Auth::user()->id)
-                ->get();
-            //just get the first one created
-
-            if ($other_instructor_learning_trees) {
-                foreach ($other_instructor_learning_trees as $key => $value) {
-                    $other_instructor_learning_trees_by_question_id[$value->question_id] = json_decode($value->learning_tree)->blocks;
-                }
-            }*/
 
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
@@ -594,17 +568,12 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
                 }
-                if (isset($instructor_learning_trees_by_question_id[$question->id])) {
-                    $assignment->questions[$key]->learning_tree = $instructor_learning_trees_by_question_id[$question->id];
-                } elseif (isset($other_instrutor_learning_trees_by_question_id[$question->id])) {
-                    $assignment->questions[$key]->learning_tree = $other_instructor_learning_trees_by_question_id[$question->id];
-                } else {
-                    $assignment->questions[$key]->learning_tree = '';
-                }
+
 
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc( $question);
+
             }
 
             $response['type'] = 'success';
