@@ -18,7 +18,7 @@ class Submission extends Model
 
     use DateFormatter;
 
-    protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score'];
+    protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score', 'submission_count'];
 
 
     public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
@@ -94,6 +94,7 @@ class Submission extends Model
 
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
+                $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
             } else {
@@ -101,7 +102,8 @@ class Submission extends Model
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
-                    'score' => $data['score']]);
+                    'score' => $data['score'],
+                    'submission_count' => 1]);
 
 
             }
