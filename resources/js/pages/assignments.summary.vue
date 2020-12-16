@@ -66,10 +66,8 @@ import axios from 'axios'
 export default {
   components: { Scores },
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   data: () => ({
+    assessmentUrlType: '',
     loaded: false,
     name: '',
     instructions: '',
@@ -83,6 +81,9 @@ export default {
     max: 0,
     min: 0,
     range: 0
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
 
   async mounted () {
@@ -105,7 +106,7 @@ export default {
   },
   methods: {
     getAssessmentsForAssignment (assignmentId) {
-      this.$router.push(`/assignments/${assignmentId}/questions/get`)
+      this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
     },
     async getAssignmentSummary () {
       try {
@@ -120,6 +121,7 @@ export default {
         this.instructions = assignment.instructions
         this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
+        this.assessmentUrlType = assignment.assessment_type === 'l' ? 'learning-trees' : 'questions'
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assignment Summary'

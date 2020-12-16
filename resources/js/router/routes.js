@@ -10,6 +10,9 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
+  { path: '/assignments/:assignmentId/learning-trees/get', name: 'learnint_trees.get', component: page('instructors/learning_trees.get.vue') },
+  { path: '/learning-trees/:learningTreeId/get', name: 'learning_tree.get', component: page('instructors/learning_tree.get.vue') },
   { path: '/instructors/learning-trees/editor/:learningTreeId', name: 'instructors.learning_trees.editor', component: page('instructors/learning_trees.editor.vue') },
   { path: '/instructors/learning-trees', name: 'instructors.learning_trees.index', component: page('instructors/learning_trees.index.vue') },
   { path: '/assignments/:assignmentId/questions/:questionId/view', name: 'question.view', component: page('instructors/question.view.vue') },
@@ -20,7 +23,6 @@ let instructor_paths = [
 ]
 
 let general_paths  = [
-  { path: '/learning-trees/:learningTreeId/get', name: 'learning_tree.get', component: page('instructors/learning_tree.get.vue') },
   { path: '/assignments/:assignmentId/summary', name: 'assignments.summary', component: page('assignments.summary.vue') },
   { path: '/assignments/:assignmentId/questions/view', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
@@ -32,19 +34,12 @@ let general_paths  = [
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
   { path: '/home', name: 'home', component: page('instructors/courses.index.vue') },
-  { path: '/assignments/:assignmentId/learning-trees/get', name: 'learning_trees.get', component: page('instructors/get_assessments/learning_trees.get.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [
       { path: '', redirect: { name: 'settings.profile' } },
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
       { path: 'password', name: 'settings.password', component: page('settings/password.vue') }
-    ] },
-  { path: '/instructors/get-assessments',
-    component: page('instructors/get_assessments/index.vue'),
-    children: [
-      { path: '', redirect: { name: 'questions.get' } },
-      { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/get_assessments/questions.get.vue') },
     ] },
   { path: '/instructors/courses/:courseId/properties',
     component: page('instructors/course_properties/index.vue'),

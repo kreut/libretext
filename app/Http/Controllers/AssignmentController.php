@@ -490,7 +490,8 @@ class AssignmentController extends Controller
                 'name' => $assignment->name,
                 'instructions' => $assignment->instructions,
                 'total_points' => $this->getTotalPoints($assignment),
-                'can_view_assignment_statistics' => $can_view_assignment_statistics
+                'can_view_assignment_statistics' => $can_view_assignment_statistics,
+                'assessment_type' => $assignment->assessment_type
             ];
 
 
