@@ -219,6 +219,16 @@
                     </template>
                   </countdown>
                 </div>
+                <div v-if="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
+                  <countdown :time="timeLeftToGetLearningTreePoints" @end="awardPointsForVisitingLearningTree">
+                    <template slot-scope="props">
+                      Time Left Until Learning Tree Points：{{ props.days }} days, {{ props.hours }} hours,
+                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
+                    </template>
+                  </countdown>
+                </div>
+                <div v-if="!timerSetToGetLearningTreePoints && showLearningTreePointsMessage" />
+                You have been awarded  {{ 1 * (questions[currentPage - 1].points) }}  points for exploring the Learning Tree.
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
                     <div v-if="user.role === 3 && showScores">
@@ -599,6 +609,8 @@ export default {
     Email
   },
   data: () => ({
+    timerSetToGetLearningTreePoints: false,
+    timeLeftToGetLearningTreePoints: 0,
     maintainAspectRatio: false,
     showAssignmentStatisticsModal: false,
     showAssignmentStatistics: false,
@@ -645,6 +657,7 @@ export default {
     questionPointsForm: new Form({
       points: null
     }),
+    showLearningTreePointsMessage: false,
     remediationIframeId: '',
     iframeLoaded: false,
     showedInvalidTechnologyMessage: false,
@@ -712,6 +725,18 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async awardPointsForVisitingLearningTree () {
+      alert('Start here!!')
+      return false
+      try {
+        const { data } = await axios.post(`/api/submissions/${this.assignmentId}/${this.questions[this.page_id - 1].id}/award-points-for-visiting-learning-tree`)
+        console.log(data)
+        this.showLearningTreePointsMessage = true
+        this.timerSetToGetLearningTreePoints = false
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     openShowAssignmentStatisticsModal () {
       this.showAssignmentStatisticsModal = true
     },
@@ -1073,6 +1098,13 @@ export default {
       this.iframeLoaded = false
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
+      if (!this.timerSetToGetLearningTreePoints) {
+        this.setTimerToGetLearningTreePoints()
+      }
+    },
+    setTimerToGetLearningTreePoints () {
+      this.timerSetToGetLearningTreePoints = true
+      this.timeLeftToGetLearningTreePoints = 5000
     },
     async getAssignmentInfo () {
       try {

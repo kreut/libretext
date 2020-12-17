@@ -33,8 +33,6 @@ Route::post('/lti/configure/{launchId}', 'GameController@configure');
 Route::get('/lti/configure/{launchId}', 'GameController@configure');
 
 
-
-
 Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
 Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
 
@@ -96,7 +94,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentName');
 
 
-
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
@@ -132,18 +129,18 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
 
 
-    Route::get('/learning-trees','LearningTreeController@index');
-    Route::get('/learning-trees/{learningTree}','LearningTreeController@show');
+    Route::get('/learning-trees', 'LearningTreeController@index');
+    Route::get('/learning-trees/{learningTree}', 'LearningTreeController@show');
 
-    Route::post('/learning-trees/learning-tree-exists','LearningTreeController@learningTreeExists');
-    Route::delete('/learning-trees/{learningTree}','LearningTreeController@destroy');
-    Route::patch('/learning-trees/{learningTree}','LearningTreeController@update');
-    Route::post('/learning-trees/info','LearningTreeController@storeLearningTreeInfo');
-    Route::post('/learning-trees/info/{learningTree}','LearningTreeController@updateLearningTreeInfo');
+    Route::post('/learning-trees/learning-tree-exists', 'LearningTreeController@learningTreeExists');
+    Route::delete('/learning-trees/{learningTree}', 'LearningTreeController@destroy');
+    Route::patch('/learning-trees/{learningTree}', 'LearningTreeController@update');
+    Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
+    Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
 
     Route::post('/logs', 'LogController@store');
 
-    Route::get('/learning-trees/validate-remediation/{library}/{pageId}','LearningTreeController@validateLearningTreeNode');
+    Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateLearningTreeNode');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
@@ -161,6 +158,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/enrollments', 'EnrollmentController@store');
 
     Route::post('/submissions', 'SubmissionController@store');
+    Route::post('/submissions/{assignmentId}/{questionId}/award-points-for-visiting-learning-tree');
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{type}/{assignment}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment')->where('type', '(question|assignment)');
@@ -180,7 +178,6 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/grader/{course}', 'GraderController@getGradersByCourse');
     Route::delete('/grader/{course}/{user}', 'GraderController@removeGraderFromCourse');
-
 
 
 });
