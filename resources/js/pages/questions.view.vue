@@ -695,7 +695,9 @@ export default {
     questions: [],
     initializing: true, // use to show a blank screen until all is loaded
     title: '',
-    assignmentId: ''
+    assignmentId: '',
+    name: '',
+    questionId: false
   }),
   computed: mapGetters({
     user: 'auth/user'

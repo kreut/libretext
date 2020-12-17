@@ -57,7 +57,6 @@ import Form from 'vform'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
 
-
 export default {
   middleware: 'guest',
 
