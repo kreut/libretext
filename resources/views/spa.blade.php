@@ -4,6 +4,7 @@ $config = [
     'locale' => $locale = app()->getLocale(),
     'locales' => config('app.locales'),
     'githubAuth' => config('services.github.client_id'),
+    'libretextsAuth' => config('services.libretexts.client_id'),
 ];
 @endphp
 <!DOCTYPE html>
