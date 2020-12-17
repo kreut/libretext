@@ -70,7 +70,8 @@ class AssignmentFileTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
-            'score' => $question_score]);
+            'score' => $question_score,
+            'submission_count' => 1]);
 
 
         //Now submit a question_file score
@@ -115,7 +116,8 @@ class AssignmentFileTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
-            'score' => $question_score]);
+            'score' => $question_score,
+            'submission_count' => 1]);
 
 
         //Now submit a question_file score
@@ -154,7 +156,8 @@ class AssignmentFileTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
-            'score' => $question_score]);
+            'score' => $question_score,
+            'submission_count' => 1]);
 
 
         //Now submit a question_file score

@@ -97,6 +97,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
+    Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');
     Route::patch('/assignments/{assignment}/solutions-released/{solutionsReleased}', 'AssignmentController@solutionsReleased');
     Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
 

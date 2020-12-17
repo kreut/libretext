@@ -106,6 +106,31 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function showPointsPerQuestion(Request $request, Assignment $assignment, int $showPointsPerQuestion)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showPointsPerQuestion', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['show_points_per_question' => !$showPointsPerQuestion]);
+            $response['type'] = !$showPointsPerQuestion ? 'success' : 'info';
+            $points_per_question = !$showPointsPerQuestion ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$points_per_question}</strong> view the points per question.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
     public function showAssignmentStatistics(Request $request, Assignment $assignment, int $showAssignmentStatistics)
     {
 
@@ -204,6 +229,7 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['include_in_weighted_average'] = $assignment->include_in_weighted_average;
                 }
 //same regardless of whether you're a student
+                $assignments_info[$key]['show_points_per_question'] =$assignment->show_points_per_question;
                 $assignments_info[$key]['assessment_type'] = $assignment->assessment_type;
                 $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
@@ -296,6 +322,7 @@ class AssignmentController extends Controller
             }
 
             $data = $request->validated();
+            $learning_tree_assessment = $request->assessment_type === 'l';
             DB::beginTransaction();
             $assignment = Assignment::create(
                 ['name' => $data['name'],
@@ -303,9 +330,9 @@ class AssignmentController extends Controller
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
-                    'min_time_needed_in_learning_tree' => $data['min_time_needed_in_learning_tree'],
-                    'percent_earned_for_entering_learning_tree' => $data['percent_earned_for_entering_learning_tree'],
-                    'percent_decay' => $data['percent_decay'],
+                    'min_time_needed_in_learning_tree' => $learning_tree_assessment ?  $data['min_time_needed_in_learning_tree'] : null,
+                    'percent_earned_for_entering_learning_tree' =>  $learning_tree_assessment ? $data['percent_earned_for_entering_learning_tree'] : null,
+                    'percent_decay' =>  $learning_tree_assessment ? $data['percent_decay'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
@@ -357,6 +384,7 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'submission_files' => $assignment->submission_files,
+                'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
                 'scoring_type' => $assignment->scoring_type,

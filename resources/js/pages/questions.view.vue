@@ -171,7 +171,7 @@
                 <div class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
-                <div v-if="!isInstructor()" class="text-center">
+                <div v-if="!isInstructor() && showPointsPerQuestion" class="text-center">
                   <h5>
                     This question is worth
                     {{ 1 * (questions[currentPage - 1].points) }}
@@ -629,6 +629,7 @@ export default {
     Email
   },
   data: () => ({
+    showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
     timerSetToGetLearningTreePoints: false,
     timeLeftToGetLearningTreePoints: 0,
@@ -1101,6 +1102,7 @@ export default {
         this.showScores = Boolean(Number(assignment.show_scores))
         this.scoring_type = assignment.scoring_type
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
+        this.showPointsPerQuestion = assignment.show_points_per_question
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assessments'

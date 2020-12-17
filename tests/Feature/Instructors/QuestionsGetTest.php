@@ -49,6 +49,7 @@ class QuestionsGetTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'score' => '0.00',
+            'submission_count' => 1,
             'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
         ];
 
@@ -179,7 +180,7 @@ class QuestionsGetTest extends TestCase
 
     public function cannot_update_points_if_student_made_a_file_submission()
     {
-        Submission::create($this->submission_file);
+        SubmissionFile::create($this->submission_file);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
             ->assertJson(['type' => 'error',
                 'message' => "This cannot be updated since students have already submitted responses."]);
@@ -281,7 +282,7 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function cannot_remove_a_question_from_an_assignment_if_there_is_already_a_file_submission()
     {
-        Submission::create($this->submission_file);
+        SubmissionFile::create($this->submission_file);
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['message' => "You can't remove a question from this assignment since students have already submitted responses."]);
     }

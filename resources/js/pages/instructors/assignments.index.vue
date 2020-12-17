@@ -515,7 +515,7 @@
             Gradebook
           </b-button>
         </b-row>
-        <b-row v-if="hasAssignments">
+        <b-row v-show="hasAssignments">
           <div class="row">
             <b-table class="header-high-z-index"
                      striped
@@ -526,6 +526,11 @@
                      :fields="fields"
                      :items="assignments"
             >
+              <template v-slot:head(show_points_per_question)="data">
+                Points Per Question <span v-b-tooltip="showPointsPerQuestionTooltip"><b-icon class="text-muted"
+                                                                                             icon="question-circle"
+                /></span>
+              </template>
               <template v-slot:cell(name)="data">
                 <div class="mb-0">
                   <span v-if="user.role === 2">
@@ -563,6 +568,18 @@
               </template>
               <template v-slot:cell(due)="data">
                 {{ $moment(data.item.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
+              </template>
+              <template v-slot:cell(show_points_per_question)="data">
+                <toggle-button
+                  :width="80"
+                  :value="Boolean(data.item.show_points_per_question)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                  @change="submitShowPointsPerQuestion(data.item)"
+                />
               </template>
               <template v-slot:cell(show_scores)="data">
                 <toggle-button
@@ -683,6 +700,11 @@ export default {
     solutionsReleased: 0,
     assignmentId: false, // if there's an assignmentId it's an update
     assignments: [],
+    showPointsPerQuestionTooltip: {
+      fallbackPlacement: ['right'],
+      placement: 'right',
+      title: "In case you only grade a random subset of questions, you can hide the number of points per question so that your students won't know which questions you'll be grading."
+    },
     completedOrCorrectOptions: [
       { item: 'correct', name: 'correct' },
       { item: 'completed', name: 'completed' }
@@ -711,6 +733,9 @@ export default {
         thStyle: { minWidth: '175px' }
       },
       'status',
+      { key: 'show_points_per_question',
+        thStyle: { minWidth: '120px' }
+      },
       {
         key: 'show_scores',
         label: 'Scores'
@@ -888,6 +913,18 @@ export default {
           return false
         }
         assignment.students_can_view_assignment_statistics = !assignment.students_can_view_assignment_statistics
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitShowPointsPerQuestion (assignment) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-points-per-question/${Number(assignment.show_points_per_question)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        assignment.show_points_per_question = !assignment.show_points_per_question
       } catch (error) {
         this.$noty.error(error.message)
       }

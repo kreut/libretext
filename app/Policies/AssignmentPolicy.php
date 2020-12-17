@@ -174,6 +174,23 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to show/hide scores.');
     }
 
+    public function showPointsPerQuestion(User $user, Assignment $assignment)
+    {
+        $has_access = false;
+        switch ($user->role) {
+            case(2):
+                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                break;
+            case(4):
+                $has_access = $assignment->course->isGrader();
+                break;
+        }
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to show/hide the points per question.');
+    }
+
 
     /**
      * Determine whether the user can delete the assignment.
