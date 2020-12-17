@@ -971,10 +971,6 @@ export default {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.')
         return false
       }
-      if (role === 4 || assignment.scoring_type === 'c') { // TA's won't want to see the summary statistics and meaningless if completed/not-completed
-        this.$router.push(`/assignments/${assignment.id}/questions/view`)
-        return false
-      }
 
       this.$router.push(`/assignments/${assignment.id}/summary`)
     },
