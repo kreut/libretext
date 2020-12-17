@@ -48,4 +48,9 @@ return [
         'client_id' => env('GITHUB_CLIENT_ID'),
         'client_secret' => env('GITHUB_CLIENT_SECRET'),
     ],
+
+    'libretexts' => [
+        'client_id' => env('LIBRETEXTS_CLIENT_ID'),
+        'client_secret' => env('LIBRETEXTS_CLIENT_SECRET'),
+    ],
 ];
