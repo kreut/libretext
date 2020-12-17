@@ -198,7 +198,7 @@
                         <b-button variant="primary"
                                   size="sm"
                                   class="m-1"
-                                  :disabled="has_submissions_or_file_submissions || solutionsReleased"
+                                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                                   @click="updatePoints((questions[currentPage-1].id))"
                         >
                           Update Points
@@ -219,6 +219,9 @@
                     </template>
                   </countdown>
                 </div>
+                <div v-if="user.role === 2">
+                  Link to Question: {{ getCurrentPage() }}
+                </div>
                 <div v-if="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
                   <countdown :time="timeLeftToGetLearningTreePoints" @end="awardPointsForVisitingLearningTree">
                     <template slot-scope="props">
@@ -227,8 +230,10 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="!timerSetToGetLearningTreePoints && showLearningTreePointsMessage" />
-                You have been awarded  {{ 1 * (questions[currentPage - 1].points) }}  points for exploring the Learning Tree.
+                <div v-if="(!timerSetToGetLearningTreePoints) && showLearningTreePointsMessage && (user.role === 3)">
+                  You have been awarded {{ 1 * (questions[currentPage - 1].points) }} points for exploring the Learning
+                  Tree.
+                </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
                     <div v-if="user.role === 3 && showScores">
@@ -308,7 +313,7 @@
               <div>
                 <b-button class="mt-1 mb-2"
                           variant="danger"
-                          :disabled="has_submissions_or_file_submissions || solutionsReleased"
+                          :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                           @click="removeQuestion(currentPage)"
                 >
                   Remove Question
@@ -363,7 +368,7 @@
                   <div v-else>
                     <div class="d-flex justify-content-between mb-2">
                       <h5>Need some help? Explore the topics below.</h5>
-                      <b-button class="float-right" :disabled="showQuestion" variant="primary"
+                      <b-button class="float-right" :disabled="Boolean(showQuestion)" variant="primary"
                                 @click="viewOriginalQuestion"
                       >
                         View Original
@@ -374,7 +379,8 @@
                     <b-container class="bv-example-row">
                       <b-row align-h="center">
                         <template v-for="remediationObject in this.learningTreeAsList">
-                          <b-col v-for="(value, name) in remediationObject" v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
+                          <b-col v-for="(value, name) in remediationObject"
+                                 v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
                                  cols="4"
                           >
                             <b-row align-h="center">
@@ -580,6 +586,15 @@
         </a>
       </b-alert>
     </div>
+    <div v-if="showQuestionDoesNotExistMessage">
+      <b-alert show variant="warning" class="mt-3">
+        We could not find any questions associated with this assignment linked to:
+        <p class="text-center m-2">
+          <strong>{{ getWindowLocation() }}</strong>
+        </p>
+        Please ask your instructor to update this link so that it matches a question in the assignment.
+      </b-alert>
+    </div>
   </div>
 </template>
 
@@ -600,15 +615,13 @@ import { getScoresSummary } from '~/helpers/Scores'
 
 export default {
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   components: {
     Scores,
     ToggleButton,
     Email
   },
   data: () => ({
+    showQuestionDoesNotExistMessage: false,
     timerSetToGetLearningTreePoints: false,
     timeLeftToGetLearningTreePoints: 0,
     maintainAspectRatio: false,
@@ -676,6 +689,9 @@ export default {
     title: '',
     assignmentId: ''
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   watch: {
     chartData: function () {
       this.renderChart(this.chartData, this.options)
@@ -693,8 +709,8 @@ export default {
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
-    console.log(this.user.role)
     this.assignmentId = this.$route.params.assignmentId
+    this.questionId = this.$route.params.questionId
     let canView = await this.getAssignmentInfo()
     if (!canView) {
       return false
@@ -702,7 +718,7 @@ export default {
 
     this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
     if (this.source === 'a') {
-      await this.getSelectedQuestions(this.assignmentId)
+      await this.getSelectedQuestions(this.assignmentId, this.questionId)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
@@ -712,7 +728,6 @@ export default {
       this.getScoresSummary = getScoresSummary
       try {
         const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
-        console.log(scoresData)
         this.chartdata = scoresData
         this.loaded = true
       } catch (error) {
@@ -725,6 +740,12 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getWindowLocation () {
+      return window.location
+    },
+    getCurrentPage () {
+      return `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
+    },
     async awardPointsForVisitingLearningTree () {
       alert('Start here!!')
       return false
@@ -766,7 +787,6 @@ export default {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
-        console.log(data)
       } catch (error) {
         console.log(error)
       }
@@ -925,7 +945,6 @@ export default {
       }
 
       this.uploading = false
-      console.log(this.questions[this.currentPage - 1])
     },
     handleCancel () {
       this.$bvModal.hide(`modal-upload-file`)
@@ -963,9 +982,8 @@ export default {
       this.showSubmissionMessage = false
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
-        console.log(this.questions[currentPage - 1])
-        let iframe_id = this.questions[currentPage - 1].iframe_id
-        iFrameResize({ log: false }, `#${iframe_id}`)
+        let iframeId = this.questions[currentPage - 1].iframe_id
+        iFrameResize({ log: false }, `#${iframeId}`)
         iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
       })
       if (this.showAssignmentStatistics) {
@@ -979,68 +997,15 @@ export default {
           this.$noty.error(error.message)
         }
       }
-      this.learningTree = this.questions[currentPage - 1].learning_tree
-      this.learningTreeAsList = []
-      if (this.learningTree) {
-        // loop through and get all with parent = -1
-        console.error(this.learningTree)
-        // loop through each with parent having this level
-        let pageId
-        let library
-        // console.log('length ' + learningTree.length)
-        for (let i = 0; i < this.learningTree.length; i++) {
-          let remediation = this.learningTree[i]
-          // get the library and page ids
-          // go to the server and return with the student learning objectives
-          // "parent": 0, "data": [ { "name": "blockelemtype", "value": "2" },{ "name": "page_id", "value": "21691" }, { "name": "library", "value": "chem" }, { "name": "blockid", "value": "1" } ], "at}
 
-          pageId = library = null
-          let parent = remediation.parent
-          let id = remediation.id
-          for (let j = 0; j < remediation.data.length; j++) {
-            switch (remediation.data[j].name) {
-              case ('page_id'):
-                pageId = remediation.data[j].value
-                break
-              case ('library'):
-                library = remediation.data[j].value
-                break
-              case ('id'):
-                id = remediation.data[j].value
-            }
-          }
-          if (pageId && library) {
-            const { data } = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
-            let remediation = {
-              'library': library,
-              'pageId': pageId,
-              'title': data,
-              'parent': parent,
-              'id': id,
-              'show': (parent === 0)
-            }
-            this.learningTreeAsList.push(remediation)
-          }
-          for (let i = 0; i < this.learningTreeAsList.length; i++) {
-            this.learningTreeAsList[i]['children'] = []
-
-            for (let j = 0; j < this.learningTreeAsList.length; j++) {
-              if (i !== j && (this.learningTreeAsList[j]['parent'] === this.learningTreeAsList[i]['id'])) {
-                this.learningTreeAsList[i]['children'].push(this.learningTreeAsList[j]['id'])
-              }
-            }
-          }
-        }
-
-        console.log('done')
-        console.log(this.learningTreeAsList)
-        this.loadedTitles = true
-      }
       this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
     },
     async showLearningTree (learningTree) {
       // loop through and get all with parent = -1
       this.learningTree = learningTree
+      if (!this.learningTree) {
+        return false
+      }
       // loop through each with parent having this level
       let pageId
       let library
@@ -1180,7 +1145,7 @@ export default {
         this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')
       }
     },
-    async getSelectedQuestions (assignmentId) {
+    async getSelectedQuestions (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
         console.log(JSON.parse(JSON.stringify(data)))
@@ -1196,22 +1161,39 @@ export default {
           return false
         }
 
-        let iframe_id = this.questions[0].iframe_id
+        if (this.questionId) {
+          if (!this.initCurrentPage(this.questionId)) {
+            this.showQuestionDoesNotExistMessage = true
+            return false
+          }
+        }
+        let iframeId = this.questions[this.currentPage - 1].iframe_id
         this.$nextTick(() => {
-          iFrameResize({ log: false }, `#${iframe_id}`)
+          iFrameResize({ log: false }, `#${iframeId}`)
           iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
         })
 
-        this.questionPointsForm.points = this.questions[0].points
-        this.learningTree = this.questions[0].learning_tree
+        this.questionPointsForm.points = this.questions[this.currentPage - 1].points
+        this.learningTree = this.questions[this.currentPage - 1].learning_tree
 
         console.log(this.learningTree)
         this.showLearningTree()
+
         this.initializing = false
       } catch (error) {
         this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
       }
       this.iframeLoaded = true
+    },
+    initCurrentPage (questionId) {
+      let questionExistsInAssignment = false
+      for (let i = 0; i <= this.questions.length - 1; i++) {
+        if (parseInt(this.questions[i].id) === parseInt(this.questionId)) {
+          this.currentPage = i + 1
+          questionExistsInAssignment = true
+        }
+      }
+      return questionExistsInAssignment
     },
     logVisitAssessment (assignmentId, questionId) {
       try {
