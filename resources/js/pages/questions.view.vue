@@ -145,7 +145,14 @@
         </div>
       </b-form>
     </b-modal>
-    <PageTitle v-if="questions !==['init']" :title="this.title" />
+    <div v-if="questionId" class="text-center">
+      <h5 v-if="questions !==['init']">
+        {{ name }}: Assessment {{ currentPage }} of {{ questions.length }}
+      </h5>
+    </div>
+    <div v-else>
+      <PageTitle v-if="questions !==['init']" :title="title" />
+    </div>
     <div v-if="questions.length && !initializing">
       <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
         <b-alert variant="info" show>
@@ -160,7 +167,7 @@
         <div class="mb-3">
           <b-container>
             <b-col>
-              <div v-if="source === 'a' && scoring_type === 'p'">
+              <div v-if="source === 'a' && scoring_type === 'p' && !questionId">
                 <div class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
@@ -298,6 +305,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
+            v-if="!questionId"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
