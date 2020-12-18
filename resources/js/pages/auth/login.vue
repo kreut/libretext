@@ -43,7 +43,7 @@
               </v-button>
 
               <!-- GitHub Login Button -->
-              <login-with-github />
+              <login-with-libretexts />
             </div>
           </div>
         </form>
