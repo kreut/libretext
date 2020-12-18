@@ -425,7 +425,7 @@
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-            <span @click="form.late_policy = 0">
+            <span @click="form.late_policy = 'not accepted'">
               <b-form-radio name="submission_files" value="q">
                 At the question level
               </b-form-radio>
@@ -450,10 +450,10 @@
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-            <b-form-radio value="0">
+            <b-form-radio value="not accepted">
               Do not accept late
             </b-form-radio>
-            <b-form-radio value="mark">
+            <b-form-radio value="marked late">
               Accept but mark late
             </b-form-radio>
             <b-form-radio value="deduction">
@@ -859,7 +859,7 @@ export default {
       due_date: '',
       due_time: '09:00:00',
       submission_files: '0',
-      late_policy: '0',
+      late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
       late_deduction_application_period: '',
