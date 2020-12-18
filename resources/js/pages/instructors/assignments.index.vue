@@ -24,12 +24,13 @@
         >
           Get questions from the Adapt database or from the Query library
         </b-tooltip>
-        <b-tooltip target="internal"
+        <b-tooltip target="late_deduction_application_period_tooltip"
                    delay="250"
         >
-          Get questions from the Adapt database or from the Query library
+          Enter a timeframe such as 5 minutes, 3 hours, or 1 day.  As a concrete example, if the Late Deduction percent is 20%
+          and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the percent is applied twice
+          and they'll have a 40% deduction when computing the score.
         </b-tooltip>
-
         <b-tooltip target="external"
                    delay="250"
         >
@@ -243,151 +244,6 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
-            v-show="form.source === 'a'"
-            id="assessment_type"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Assessment Type"
-            label-for="Assessment Type"
-          >
-            <b-form-radio-group v-model="form.assessment_type"
-                                stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-            >
-              <span @click="resetLearningTreeToNull">
-                <b-form-radio name="assessment_type" value="r">
-                  Real time <span id="real_time" class="text-muted"><b-icon
-                    icon="question-circle"
-                  />
-                  </span>
-                </b-form-radio>
-                <b-form-radio name="assessment_type" value="d">
-                  Delayed <span id="delayed" class="text-muted"><b-icon
-                    icon="question-circle"
-                  />
-                  </span>
-                </b-form-radio>
-              </span>
-              <b-form-radio name="assessment_type" value="l">
-                Learning Tree <span id="learning_tree" class="text-muted"><b-icon
-                  icon="question-circle"
-                />
-                </span>
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <div v-show="form.assessment_type === 'l'">
-            <b-form-group
-              id="min_time_needed_in_learning_tree"
-              label-cols-sm="7"
-              label-cols-lg="6"
-              label-for="min_time_needed_in_learning_tree"
-            >
-              <template slot="label">
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Minimum Time Spent In Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
-                                                          class="text-muted"
-                ><b-icon
-                  icon="question-circle"
-                /></span>
-              </template>
-              <b-form-row>
-                <b-col lg="5">
-                  <b-form-input
-                    id="min_time_needed_in_learning_tree"
-                    v-model="form.min_time_needed_in_learning_tree"
-                    type="text"
-                    placeholder="In Minutes"
-                    :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
-                    @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
-                  />
-                  <has-error :form="form" field="min_time_needed_in_learning_tree" />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-            <b-form-group
-              id="percent_earned_for_entering_learning_tree"
-              label-cols-sm="7"
-              label-cols-lg="6"
-              label="Percent Earned For Entering Learning Tree"
-              label-for="percent_earned_for_entering_learning_tree"
-            >
-              <template slot="label">
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip"
-                                                                class="text-muted"
-                ><b-icon
-                  icon="question-circle"
-                /></span>
-              </template>
-              <b-form-row>
-                <b-col lg="5">
-                  <b-form-input
-                    id="percent_earned_for_entering_learning_tree"
-                    v-model="form.percent_earned_for_entering_learning_tree"
-                    type="text"
-                    placeholder="Out of 100"
-                    :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
-                    @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
-                  />
-                  <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-            <b-form-group
-              id="percent_decay"
-              label-cols-sm="7"
-              label-cols-lg="6"
-              label-for="percent_decay"
-            >
-              <template slot="label">
-                <b-icon
-                  icon="tree" variant="success"
-                />
-                Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
-                  icon="question-circle"
-                /></span>
-              </template>
-              <b-form-row>
-                <b-col lg="5">
-                  <b-form-input
-                    id="decay_percent"
-                    v-model="form.percent_decay"
-                    type="text"
-                    placeholder="Out of 100"
-                    :class="{ 'is-invalid': form.errors.has('percent_decay') }"
-                    @keydown="form.errors.clear('percent_decay')"
-                  />
-                  <has-error :form="form" field="percent_decay" />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </div>
-          <b-form-group
-            v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
-            id="submission_files"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Submission Files"
-            label-for="Submission Files"
-          >
-            <b-form-radio-group v-model="form.submission_files" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
-            >
-              <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-              <b-form-radio name="submission_files" value="0">
-                Students cannot upload files
-              </b-form-radio>
-              <b-form-radio name="submission_files" value="q">
-                At the question level
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <b-form-group
             id="scoring_type"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -403,46 +259,6 @@
                 <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
               </span>
             </b-form-radio-group>
-          </b-form-group>
-          <b-form-group
-            id="include_in_weighted_average"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Include In Final Score"
-            label-for="Include In Final Score"
-          >
-            <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
-              <b-form-radio name="include_in_weighted_average" value="1">
-                Include the assignment in computing a final
-                weighted score
-              </b-form-radio>
-              <b-form-radio name="include_in_weighted_average" value="0">
-                Do not include the assignment in computing a
-                final weighted score
-              </b-form-radio>
-            </b-form-radio-group>
-          </b-form-group>
-          <b-form-group
-            v-show="form.source === 'x' && form.scoring_type === 'p'"
-            id="total_points"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Total Points"
-            label-for="Total Points"
-          >
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="external_source_points"
-                  v-model="form.external_source_points"
-                  type="text"
-                  placeholder=""
-                  :class="{ 'is-invalid': form.errors.has('external_source_points') }"
-                  @keydown="form.errors.clear('external_source_points')"
-                />
-                <has-error :form="form" field="external_source_points" />
-              </b-col>
-            </b-form-row>
           </b-form-group>
           <div v-show="form.source === 'a'">
             <b-form-group
@@ -470,6 +286,282 @@
             </b-form-group>
           </div>
         </b-form>
+
+        <b-form-group
+          v-show="form.source === 'a'"
+          id="assessment_type"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assessment Type"
+          label-for="Assessment Type"
+        >
+          <b-form-radio-group v-model="form.assessment_type"
+                              stacked
+                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+          >
+            <span @click="resetLearningTreeToNull">
+              <b-form-radio name="assessment_type" value="r">
+                Real time <span id="real_time" class="text-muted"><b-icon
+                  icon="question-circle"
+                />
+                </span>
+              </b-form-radio>
+              <span @click="form.submission_files = 'q'">
+                <b-form-radio name="assessment_type" value="d">
+                  Delayed <span id="delayed" class="text-muted"><b-icon
+                    icon="question-circle"
+                  /></span>
+                </b-form-radio>
+              </span>
+            </span>
+            <b-form-radio name="assessment_type" value="l">
+              Learning Tree <span id="learning_tree" class="text-muted"><b-icon
+                icon="question-circle"
+              />
+              </span>
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <div v-show="form.assessment_type === 'l'">
+          <b-form-group
+            id="min_time_needed_in_learning_tree"
+            label-cols-sm="7"
+            label-cols-lg="6"
+            label-for="min_time_needed_in_learning_tree"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Minimum Time Spent In Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
+                                                        class="text-muted"
+              ><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="5">
+                <b-form-input
+                  id="min_time_needed_in_learning_tree"
+                  v-model="form.min_time_needed_in_learning_tree"
+                  type="text"
+                  placeholder="In Minutes"
+                  :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
+                  @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
+                />
+                <has-error :form="form" field="min_time_needed_in_learning_tree" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="percent_earned_for_entering_learning_tree"
+            label-cols-sm="7"
+            label-cols-lg="6"
+            label="Percent Earned For Entering Learning Tree"
+            label-for="percent_earned_for_entering_learning_tree"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip"
+                                                              class="text-muted"
+              ><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="4">
+                <b-form-input
+                  id="percent_earned_for_entering_learning_tree"
+                  v-model="form.percent_earned_for_entering_learning_tree"
+                  type="text"
+                  placeholder="Out of 100"
+                  :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
+                  @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
+                />
+                <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="percent_decay"
+            label-cols-sm="7"
+            label-cols-lg="6"
+            label-for="percent_decay"
+          >
+            <template slot="label">
+              <b-icon
+                icon="tree" variant="success"
+              />
+              Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
+                icon="question-circle"
+              /></span>
+            </template>
+            <b-form-row>
+              <b-col lg="4">
+                <b-form-input
+                  id="decay_percent"
+                  v-model="form.percent_decay"
+                  type="text"
+                  placeholder="Out of 100"
+                  :class="{ 'is-invalid': form.errors.has('percent_decay') }"
+                  @keydown="form.errors.clear('percent_decay')"
+                />
+                <has-error :form="form" field="percent_decay" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+        </div>
+        <b-form-group
+          v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
+          id="submission_files"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Submission Files"
+          label-for="Submission Files"
+        >
+          <b-form-radio-group v-model="form.submission_files" stacked
+                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+          >
+            <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+            <span @click="form.late_policy = 0">
+              <b-form-radio name="submission_files" value="q">
+                At the question level
+              </b-form-radio>
+            </span>
+            <b-form-radio name="submission_files" value="0">
+              Students cannot upload files
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="form.submission_files !=='0' &&
+            form.scoring_type === 'p' &&
+            form.assessment_type === 'd' &&
+            form.source === 'a' && form.submission_files !=='0'"
+          id="late_policy"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Late Policy"
+          label-for="Late Policy"
+        >
+          <b-form-radio-group v-model="form.late_policy" stacked
+                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+          >
+            <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+            <b-form-radio value="0">
+              Do not accept late
+            </b-form-radio>
+            <b-form-radio value="mark">
+              Accept but mark late
+            </b-form-radio>
+            <b-form-radio value="deduction">
+              Accept late with a deduction
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <div v-if="form.late_policy === 'deduction' && form.submission_files !== '0'">
+          <b-form-group
+            id="late_deduction_percent"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Late Deduction Percent"
+            label-for="late_deduction_percent"
+          >
+            <b-form-row>
+              <b-col lg="4">
+                <b-form-input
+                  id="late_deduction_percent"
+                  v-model="form.late_deduction_percent"
+                  type="text"
+                  placeholder="Out of 100"
+                  :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
+                  @keydown="form.errors.clear('late_deduction_percent')"
+                />
+                <has-error :form="form" field="late_deduction_percent" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+
+          <b-form-group
+            id="late_deduction_application_period"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Late Deduction Applied"
+            label-for="late_deduction_application_period"
+          >
+            <b-form-radio-group v-model="form.late_deduction_applied_once"
+                                stacked
+                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+            >
+              <b-form-radio value="1">
+                Just Once
+              </b-form-radio>
+              <b-form-radio class="mt-2" value="0">
+                <b-row>
+                  <b-col sm="2" class="mt-1">
+                    Every
+                  </b-col>
+                  <b-col sm="6">
+                    <b-form-input
+                      id="late_deduction_application_period"
+                      v-model="form.late_deduction_application_period"
+                      :disabled="parseInt(form.late_deduction_applied_once) === 1"
+                      type="text"
+                      placeholder="1 hour"
+                      :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
+                      @keydown="form.errors.clear('late_deduction_application_period')"
+                    />
+                    <has-error :form="form" field="late_deduction_application_period" />
+                  </b-col><span id="late_deduction_application_period_tooltip">
+                    <b-icon class="text-muted" icon="question-circle" /></span>
+                </b-row>
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-group>
+        </div>
+        <b-form-group
+          id="include_in_weighted_average"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Include In Final Score"
+          label-for="Include In Final Score"
+        >
+          <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
+            <b-form-radio name="include_in_weighted_average" value="1">
+              Include the assignment in computing a final
+              weighted score
+            </b-form-radio>
+            <b-form-radio name="include_in_weighted_average" value="0">
+              Do not include the assignment in computing a
+              final weighted score
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+        <b-form-group
+          v-show="form.source === 'x' && form.scoring_type === 'p'"
+          id="total_points"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Total Points"
+          label-for="Total Points"
+        >
+          <b-form-row>
+            <b-col lg="3">
+              <b-form-input
+                id="external_source_points"
+                v-model="form.external_source_points"
+                type="text"
+                placeholder=""
+                :class="{ 'is-invalid': form.errors.has('external_source_points') }"
+                @keydown="form.errors.clear('external_source_points')"
+              />
+              <has-error :form="form" field="external_source_points" />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
         <b-form-group
           v-show="form.source === 'a'"
           id="instructions"
@@ -767,6 +859,10 @@ export default {
       due_date: '',
       due_time: '09:00:00',
       submission_files: '0',
+      late_policy: '0',
+      late_deduction_percent: null,
+      late_deduction_applied_once: 1,
+      late_deduction_application_period: '',
       type_of_submission: 'correct',
       source: 'a',
       scoring_type: 'p',
@@ -1108,7 +1204,7 @@ export default {
       this.form.due_time = '09:00:00'
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
-      this.form.submission_files = '0'
+      this.form.submission_files = 'q'
       this.form.default_points_per_question = '10'
       this.form.scoring_type = 'c'
 
