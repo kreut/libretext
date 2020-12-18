@@ -68,11 +68,11 @@
           minimum time as described above.
         </b-tooltip>
 
-        <b-tooltip target="percent_decay_tooltip"
+        <b-tooltip target="percent_decrease_tooltip"
                    delay="250"
         >
           For each new attempt after their first free attempt, students will be awarded the total number of new
-          attempts multiplied by the percent decay in addition to the percent awarded for entering the Learning Tree.
+          attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering the Learning Tree.
         </b-tooltip>
 
         <b-form ref="form" @submit="createAssignment">
@@ -386,16 +386,16 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="percent_decay"
+            id="percent_decrease"
             label-cols-sm="7"
             label-cols-lg="6"
-            label-for="percent_decay"
+            label-for="percent_decrease"
           >
             <template slot="label">
               <b-icon
                 icon="tree" variant="success"
               />
-              Percent Decay By Number Of Attempts <span id="percent_decay_tooltip" class="text-muted"><b-icon
+              Percent Decrease Factor <span id="percent_decrease_tooltip" class="text-muted"><b-icon
                 icon="question-circle"
               /></span>
             </template>
@@ -403,13 +403,13 @@
               <b-col lg="4">
                 <b-form-input
                   id="decay_percent"
-                  v-model="form.percent_decay"
+                  v-model="form.percent_decrease"
                   type="text"
                   placeholder="Out of 100"
-                  :class="{ 'is-invalid': form.errors.has('percent_decay') }"
-                  @keydown="form.errors.clear('percent_decay')"
+                  :class="{ 'is-invalid': form.errors.has('percent_decrease') }"
+                  @keydown="form.errors.clear('percent_decrease')"
                 />
-                <has-error :form="form" field="percent_decay" />
+                <has-error :form="form" field="percent_decrease" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -850,7 +850,7 @@ export default {
       assessment_type: 'r',
       min_time_needed_in_learning_tree: null,
       percent_earned_for_entering_learning_tree: null,
-      percent_decay: null,
+      percent_decrease: null,
       available_from_date: '',
       assignment_group_id: null,
       available_from_time: '09:00:00',
@@ -907,12 +907,12 @@ export default {
       this.form.submission_files = 'q'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_entering_learning_tree = null
-      this.form.percent_decay = null
+      this.form.percent_decrease = null
     },
     showRealTimeOptions () {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_entering_learning_tree = null
-      this.form.percent_decay = null
+      this.form.percent_decrease = null
     },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)
