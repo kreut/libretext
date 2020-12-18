@@ -300,21 +300,21 @@
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
             <span @click="showRealTimeOptions">
-              <b-form-radio name="assessment_type" value="r">
+              <b-form-radio name="assessment_type" value="real time">
                 Real time <span id="real_time" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span></b-form-radio>
             </span>
             <span @click="showDelayedOptions">
-              <b-form-radio name="assessment_type" value="d">
+              <b-form-radio name="assessment_type" value="delayed">
                 Delayed <span id="delayed" class="text-muted"><b-icon
                   icon="question-circle"
                 /></span>
               </b-form-radio>
             </span>
             <span>
-              <b-form-radio name="assessment_type" value="l">
+              <b-form-radio name="assessment_type" value="learning tree">
                 Learning Tree <span id="learning_tree" class="text-muted"><b-icon
                   icon="question-circle"
                 />
@@ -323,7 +323,7 @@
             </span>
           </b-form-radio-group>
         </b-form-group>
-        <div v-show="form.assessment_type === 'l'">
+        <div v-show="form.assessment_type === 'learning tree'">
           <b-form-group
             id="min_time_needed_in_learning_tree"
             label-cols-sm="7"
@@ -415,7 +415,7 @@
           </b-form-group>
         </div>
         <b-form-group
-          v-show="form.scoring_type === 'p' && form.assessment_type === 'd' && form.source === 'a'"
+          v-show="form.scoring_type === 'p' && form.assessment_type === 'delayed' && form.source === 'a'"
           id="submission_files"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -847,7 +847,7 @@ export default {
       name: '',
       available_from: '',
       due: '',
-      assessment_type: 'r',
+      assessment_type: 'real time',
       min_time_needed_in_learning_tree: null,
       percent_earned_for_entering_learning_tree: null,
       percent_decrease: null,
@@ -1074,7 +1074,7 @@ export default {
     resetSubmissionFilesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
       this.form.submission_files = 0
-      this.form.assessment_type = 'r'
+      this.form.assessment_type = 'real time'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
       this.form.errors.clear('default_points_per_question')

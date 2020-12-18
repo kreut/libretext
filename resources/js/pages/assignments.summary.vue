@@ -121,7 +121,7 @@ export default {
         this.instructions = assignment.instructions
         this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
-        this.assessmentUrlType = assignment.assessment_type === 'l' ? 'learning-trees' : 'questions'
+        this.assessmentUrlType = assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
       } catch (error) {
         this.$noty.error(error.message)
         this.title = 'Assignment Summary'

@@ -322,7 +322,7 @@ class AssignmentController extends Controller
             }
             $data = $request->validated();
 
-            $learning_tree_assessment = $request->assessment_type === 'l';
+            $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
             $assignment = Assignment::create(
                 ['name' => $data['name'],
@@ -338,7 +338,7 @@ class AssignmentController extends Controller
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
-                    'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'd') ? $data['submission_files'] : 0,
+                    'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0,
                     'late_policy' => $data['late_policy'],
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
                     'late_deduction_application_period' => $data['late_deduction_application_period'] ?? null,
@@ -583,7 +583,7 @@ class AssignmentController extends Controller
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
-            $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'd') ? $data['submission_files'] : 0;
+            $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0;
             $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
             //remove what's not needed
             foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
