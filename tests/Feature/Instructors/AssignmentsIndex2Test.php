@@ -53,8 +53,28 @@ class AssignmentsIndex2Test extends TestCase
             'submission_files' => 'a',
             'instructions' => 'Some instructions',
             'assignment_group_id' => 1];
+    }
+
+    /** @test */
+
+    public function a_valid_late_policy_is_submitted()
+    {
 
     }
+
+    /** @test */
+    public function a_valid_late_percent_is_submitted()
+    {
+    }
+
+    /** @test */
+    public function a_valid_late_deduction_application_period_is_submitted()
+    {
+        //test once as well as with a time
+
+    }
+
+
     /** @test */
     public function non_owner_cannot_toggle_show_points_per_question()
     {

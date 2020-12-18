@@ -2,6 +2,8 @@
 
 namespace App\Http\Requests;
 
+
+use App\Rules\IsValidPeriodOfTime;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -35,6 +37,7 @@ class StoreAssignment extends FormRequest
             'due_time' => 'required|date_format:H:i:00',
             'source' => Rule::in(['a', 'x']),
             'scoring_type' => Rule::in(['c', 'p']),
+            'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
             'submission_files' => Rule::in(['q', 'a', 0]),
@@ -55,6 +58,12 @@ class StoreAssignment extends FormRequest
             $rules['percent_decay'] = 'required|integer|min:0|max:100';
         }
 
+        if ($this->late_policy === 'deduction'){
+            $rules['late_deduction_percent'] = 'required|integer|min:1|max:99';
+        }
+        if (!$this->late_deduction_applied_once) {
+            $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
+        }
 
         return $rules;
     }

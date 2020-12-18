@@ -320,8 +320,8 @@ class AssignmentController extends Controller
             if ($due_date_response = $this->checkdueDateAfterAvailableDate($request)) {
                 return $due_date_response;
             }
-
             $data = $request->validated();
+
             $learning_tree_assessment = $request->assessment_type === 'l';
             DB::beginTransaction();
             $assignment = Assignment::create(
@@ -339,6 +339,9 @@ class AssignmentController extends Controller
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
                     'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'd') ? $data['submission_files'] : 0,
+                    'late_policy' => $data['late_policy'],
+                    'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
+                    'late_deduction_application_period' => $data['late_deduction_application_period'] ?? null,
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
                 ]

@@ -426,11 +426,9 @@
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-            <span @click="form.late_policy = 'not accepted'">
-              <b-form-radio name="submission_files" value="q">
-                At the question level
-              </b-form-radio>
-            </span>
+            <b-form-radio name="submission_files" value="q">
+              At the question level
+            </b-form-radio>
             <b-form-radio name="submission_files" value="0">
               Students cannot upload files
             </b-form-radio>
@@ -448,18 +446,20 @@
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-            <b-form-radio value="not accepted">
-              Do not accept late
-            </b-form-radio>
-            <b-form-radio value="marked late">
-              Accept but mark late
-            </b-form-radio>
+            <span @click="resetDeduction">
+              <b-form-radio value="not accepted">
+                Do not accept late
+              </b-form-radio>
+              <b-form-radio value="marked late">
+                Accept but mark late
+              </b-form-radio>
+            </span>
             <b-form-radio value="deduction">
               Accept late with a deduction
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <div v-if="form.late_policy === 'deduction'">
+        <div v-show="form.late_policy === 'deduction'">
           <b-form-group
             id="late_deduction_percent"
             label-cols-sm="4"
@@ -494,25 +494,25 @@
                                 :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
             >
               <b-form-radio value="1">
-                Just Once
+                Just once
               </b-form-radio>
               <b-form-radio class="mt-2" value="0">
                 <b-row>
-                  <b-col sm="2" class="mt-1">
+                  <b-col lg="2" class="mt-1">
                     Every
                   </b-col>
-                  <b-col sm="6">
+                  <b-col lg="6">
                     <b-form-input
                       id="late_deduction_application_period"
                       v-model="form.late_deduction_application_period"
                       :disabled="parseInt(form.late_deduction_applied_once) === 1"
                       type="text"
-                      placeholder="1 hour"
                       :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
                       @keydown="form.errors.clear('late_deduction_application_period')"
                     />
                     <has-error :form="form" field="late_deduction_application_period" />
-                  </b-col><span id="late_deduction_application_period_tooltip">
+                  </b-col>
+                  <span id="late_deduction_application_period_tooltip">
                     <b-icon class="text-muted" icon="question-circle" /></span>
                 </b-row>
               </b-form-radio>
@@ -860,7 +860,7 @@ export default {
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
-      late_deduction_application_period: '',
+      late_deduction_application_period: null,
       type_of_submission: 'correct',
       source: 'a',
       scoring_type: 'p',
@@ -898,6 +898,11 @@ export default {
     initTooltips(this)
   },
   methods: {
+    resetDeduction () {
+      this.form.late_deduction_percent = null
+      this.form.late_deduction_applied_once = 1
+      this.form.late_deduction_application_period = null
+    },
     showDelayedOptions () {
       this.form.submission_files = 'q'
       this.form.min_time_needed_in_learning_tree = null
