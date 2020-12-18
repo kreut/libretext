@@ -249,9 +249,12 @@ class AssignmentSyncQuestionController extends Controller
         $question_technologies[$question->id] = Question::find($question->id)->technology;
         $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
 
-        return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'], Auth::user()->time_zone),
-            'student_response' => $response_info['student_response']
+        return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
+            Auth::user()->time_zone),
+            'student_response' => $response_info['student_response'],
+            'submission_count' => $response_info['submission_count']
         ];
+
     }
 
     public function getResponseInfo($submissions_by_question_id, $question_technologies, $question_id)
@@ -260,12 +263,13 @@ class AssignmentSyncQuestionController extends Controller
         $correct_response = null;
         $submission_score = 0;
         $last_submitted = 'N/A';
-
+        $submission_count = 0;
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
             $submission_object = json_decode($submission->submission);
             $submission_score = $submission->score;
+            $submission_count = $submission->submission_count;
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response;
@@ -302,7 +306,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count');
 
     }
 
@@ -423,6 +427,8 @@ class AssignmentSyncQuestionController extends Controller
                 $correct_response = $response_info['correct_response'];
                 $submission_score = $response_info['submission_score'];
                 $last_submitted = $response_info['last_submitted'];
+                $submission_count = $response_info['submission_count'];
+
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
@@ -437,6 +443,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone)
                     : $last_submitted;
+                $assignment->questions[$key]['submission_count'] = $submission_count;
                 $has_question_files = $question_files[$question->id];
 
                 $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue

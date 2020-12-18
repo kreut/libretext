@@ -11,7 +11,7 @@ let student_paths  = [
 
 let instructor_paths = [
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
-  { path: '/assignments/:assignmentId/learning-trees/get', name: 'learnint_trees.get', component: page('instructors/learning_trees.get.vue') },
+  { path: '/assignments/:assignmentId/learning-trees/get', name: 'learning_trees.get', component: page('instructors/learning_trees.get.vue') },
   { path: '/learning-trees/:learningTreeId/get', name: 'learning_tree.get', component: page('instructors/learning_tree.get.vue') },
   { path: '/instructors/learning-trees/editor/:learningTreeId', name: 'instructors.learning_trees.editor', component: page('instructors/learning_trees.editor.vue') },
   { path: '/instructors/learning-trees', name: 'instructors.learning_trees.index', component: page('instructors/learning_trees.index.vue') },

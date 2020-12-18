@@ -64,7 +64,7 @@ class AssignmentController extends Controller
 
         try {
             $assignment->update(['shown' => !$shown]);
-            $response['type'] =  !$shown ? 'success' : 'info';
+            $response['type'] = !$shown ? 'success' : 'info';
             $shown = !$shown ? 'can' : 'cannot';
             $response['message'] = "Your students <strong>{$shown}</strong> see this assignment.";
         } catch (Exception $e) {
@@ -74,12 +74,6 @@ class AssignmentController extends Controller
         }
         return $response;
     }
-
-
-
-
-
-
 
 
     public function showScores(Request $request, Assignment $assignment, int $showScores)
@@ -229,12 +223,12 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['include_in_weighted_average'] = $assignment->include_in_weighted_average;
                 }
 //same regardless of whether you're a student
-                $assignments_info[$key]['show_points_per_question'] =$assignment->show_points_per_question;
+                $assignments_info[$key]['show_points_per_question'] = $assignment->show_points_per_question;
                 $assignments_info[$key]['assessment_type'] = $assignment->assessment_type;
                 $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
                 $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
-                if (Auth::user()->role === 3 && !$assignments_info[$key]['shown']){
-                   unset($assignments_info[$key]);
+                if (Auth::user()->role === 3 && !$assignments_info[$key]['shown']) {
+                    unset($assignments_info[$key]);
                 }
             }
             $response['assignments'] = array_values($assignments_info);//fix the unset
@@ -330,9 +324,9 @@ class AssignmentController extends Controller
                     'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
-                    'min_time_needed_in_learning_tree' => $learning_tree_assessment ?  $data['min_time_needed_in_learning_tree'] : null,
-                    'percent_earned_for_entering_learning_tree' =>  $learning_tree_assessment ? $data['percent_earned_for_entering_learning_tree'] : null,
-                    'percent_decrease' =>  $learning_tree_assessment ? $data['percent_decrease'] : null,
+                    'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
+                    'percent_earned_for_entering_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_entering_learning_tree'] : null,
+                    'percent_decrease' => $learning_tree_assessment ? $data['percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
@@ -382,10 +376,12 @@ class AssignmentController extends Controller
             $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
                 'name' => $assignment->name,
+                'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => $this->getTimeLeft($assignment),
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
+                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning_tree') ? $assignment->min_time_needed_in_learning_tree * 60 : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,

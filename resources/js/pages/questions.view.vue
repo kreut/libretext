@@ -496,12 +496,17 @@
                       </a>
                       <br>
                     </span>
+                    <span class="font-weight-bold">Number of attempts: </span> {{
+                      questions[currentPage - 1].submission_count
+                    }}<br>
                     <span class="font-weight-bold">Last submitted:</span> {{
                       questions[currentPage - 1].last_submitted
                     }}<br>
+
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
+
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
@@ -572,24 +577,24 @@
       </div>
       <div v-else>
         <div v-if="questions !== ['init']">
-          <div v-if="isInstructor()" class="mt-1 mb-2" @click="getQuestionsForAssignment()">
+          <div v-if="isInstructor()" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
             <b-button variant="success">
-              Get More Questions
+              Get More {{ capitalFormattedAssessmentType }}
             </b-button>
           </div>
         </div>
       </div>
     </div>
     <div v-if="!initializing && !questions.length" class="mt-4">
-      <div v-if="isInstructor()" class="mb-0" @click="getQuestionsForAssignment()">
+      <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
         <b-button variant="success">
-          Add Questions
+          Add {{ capitalFormattedAssessmentType }}
         </b-button>
       </div>
 
       <b-alert show variant="warning" class="mt-3">
         <a href="#" class="alert-link">
-          <span v-show="source === 'a'">This assignment currently has no questions.</span>
+          <span v-show="source === 'a'">This assignment currently has no assessments.</span>
           <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
         </a>
       </b-alert>
@@ -629,6 +634,7 @@ export default {
     Email
   },
   data: () => ({
+    capitalFormattedAssessmentType: '',
     showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
     timerSetToGetLearningTreePoints: false,
@@ -798,6 +804,7 @@ export default {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
+        this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
       } catch (error) {
         console.log(error)
       }
@@ -1080,6 +1087,7 @@ export default {
     },
     setTimerToGetLearningTreePoints () {
       this.timerSetToGetLearningTreePoints = true
+      this.timeLeftToGetLearningTreePoints = this.minTimeNeededInLearningTree
       this.timeLeftToGetLearningTreePoints = 5000
     },
     async getAssignmentInfo () {
@@ -1093,8 +1101,11 @@ export default {
         let assignment = data.assignment
         this.title = `${assignment.name} Assessments`
         this.name = assignment.name
+        this.assessmentType = assignment.assessment_type
+        this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         this.timeLeft = assignment.time_left
+        this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
         this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
         this.source = assignment.source
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
@@ -1219,8 +1230,10 @@ export default {
         console.log(error.message)
       }
     },
-    getQuestionsForAssignment () {
-      this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
+    getAssessmentsForAssignment () {
+      this.assessmentType === 'learning tree'
+        ? this.$router.push(`/assignments/${this.assignmentId}/learning-trees/get`)
+        : this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
     },
     async removeQuestion (currentPage) {
       try {

@@ -99,21 +99,23 @@ class Submission extends Model
                 $submission->save();
 
             } else {
-                Submission::create(['user_id' => $data['user_id'],
+               $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
                     'score' => $data['score'],
                     'submission_count' => 1]);
             }
-            $learning_tree = DB::table('assignment_question')
-                ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-                ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
-                ->where('assignment_id', $data['assignment_id'])
-                ->where('question_id', $data['question_id'])
-                ->select('learning_tree')
-                ->get();
-
+            $learning_tree = collect();
+            if ($submission->submission_count >=2) {
+                $learning_tree = DB::table('assignment_question')
+                    ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                    ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
+                    ->where('assignment_id', $data['assignment_id'])
+                    ->where('question_id', $data['question_id'])
+                    ->select('learning_tree')
+                    ->get();
+            }
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {
                 case 'c':
