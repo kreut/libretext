@@ -18,6 +18,17 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->runningUnitTests()) {
             Schema::defaultStringLength(191);
         }
+        private function bootLibretextsSocialite()
+        {
+            $socialite = $this->app->make('Laravel\Socialite\Contracts\Factory');
+            $socialite->extend(
+                'libretexts',
+                function ($app) use ($socialite) {
+                    $config = $app['config']['services.libretexts'];
+                    return $socialite->buildProvider(LibretextsProvider::class, $config);
+                }
+            );
+        }
         /* \DB::listen(function ($query) {
             \Log::debug($query->sql);
             \Log::debug($query->bindings);
