@@ -10,7 +10,7 @@ export default {
   name: 'LoginWithLibreTexts',
 
   computed: {
-    githubAuth: () => window.config.libretextsAuth,
+    libretextsAuth: () => window.config.libretextsAuth,
     url: () => `/api/oauth/libretexts`
   },
 
