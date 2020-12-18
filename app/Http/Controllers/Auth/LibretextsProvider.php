@@ -79,8 +79,8 @@ class LibretextsProvider extends AbstractProvider implements ProviderInterface
         $avatarUrl = Arr::get($user, 'picture');
 
         return (new User)->setRaw($user)->map([
-            'firstName' => Arr::get($user, 'given_name'),
-            'lastName' => Arr::get($user, 'family_name'),
+            'first_name' => Arr::get($user, 'given_name'),
+            'last_name' => Arr::get($user, 'family_name'),
             'email' => Arr::get($user, 'principalID'),
         ]);
     }
