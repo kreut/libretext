@@ -76,7 +76,7 @@ class LibretextsProvider extends AbstractProvider implements ProviderInterface
      */
     protected function mapUserToObject(array $user)
     {
-        $avatarUrl = Arr::get($user, 'picture');
+        //$avatarUrl = Arr::get($user, 'picture');
 
         return (new User)->setRaw($user)->map([
             'first_name' => Arr::get($user, 'given_name'),
