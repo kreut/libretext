@@ -230,7 +230,7 @@
                   Link to Question: {{ getCurrentPage() }}
                 </div>
                 <div v-if="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
-                  <countdown :time="timeLeftToGetLearningTreePoints" @end="awardPointsForVisitingLearningTree">
+                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                     <template slot-scope="props">
                       Time Left Until Learning Tree Points：{{ props.days }} days, {{ props.hours }} hours,
                       {{ props.minutes }} minutes, {{ props.seconds }} seconds.
@@ -506,7 +506,9 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-
+                    <span class="font-weight-bold">Points for visiting learning tree:</span> {{
+                      questions[currentPage - 1].learning_tree_points
+                    }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
@@ -763,11 +765,9 @@ export default {
     getCurrentPage () {
       return `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
     },
-    async awardPointsForVisitingLearningTree () {
-      alert('Start here!!')
-      return false
+    async updateExploredLearningTree () {
       try {
-        const { data } = await axios.post(`/api/submissions/${this.assignmentId}/${this.questions[this.page_id - 1].id}/award-points-for-visiting-learning-tree`)
+        const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
         console.log(data)
         this.showLearningTreePointsMessage = true
         this.timerSetToGetLearningTreePoints = false
@@ -805,6 +805,7 @@ export default {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
+        this.questions[this.currentPage - 1]['learning_tree_points'] = data.learning_tree_points
       } catch (error) {
         console.log(error)
       }

@@ -3,6 +3,8 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use \Exception;
+
 use App\Http\Requests\StoreSubmission;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Auth;
@@ -18,7 +20,7 @@ class Submission extends Model
 
     use DateFormatter;
 
-    protected $fillable = ['user_id', 'submission', 'assignment_id', 'question_id', 'score', 'submission_count'];
+    protected $guarded = [];
 
 
     public function store(StoreSubmission $request, Submission $submission, Assignment $Assignment, Score $score)
@@ -107,7 +109,8 @@ class Submission extends Model
                     'submission_count' => 1]);
             }
             $learning_tree = collect();
-            if ($submission->submission_count >=2) {
+            $learning_tree_points = null;
+            if ($submission->submission_count >  2) {
                 $learning_tree = DB::table('assignment_question')
                     ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                     ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
@@ -115,6 +118,9 @@ class Submission extends Model
                     ->where('question_id', $data['question_id'])
                     ->select('learning_tree')
                     ->get();
+                if ($submission->explored_learning_tree) {
+                    $learning_tree_points = (floatval($assignment->learning_tree_points) / 100) * floatval($assignment_question->points);
+                    }
             }
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {
@@ -137,6 +143,7 @@ class Submission extends Model
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
+            $response['learning_tree_points'] = $learning_tree_points;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
             $request->data = ['assignment_id' => $data['assignment_id'],

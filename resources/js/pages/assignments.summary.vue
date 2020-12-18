@@ -1,4 +1,4 @@
-<template>
+n<template>
   <div>
     <PageTitle v-if="loaded" :title="name" />
     <div v-if="loaded">

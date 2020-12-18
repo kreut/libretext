@@ -158,8 +158,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::post('/enrollments', 'EnrollmentController@store');
 
+    Route::patch('/submissions/{assignment}/{question}/explored-learning-tree', 'SubmissionController@exploredLearningTree');
     Route::post('/submissions', 'SubmissionController@store');
-    Route::post('/submissions/{assignmentId}/{questionId}/award-points-for-visiting-learning-tree');
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{type}/{assignment}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment')->where('type', '(question|assignment)');

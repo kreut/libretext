@@ -61,7 +61,7 @@
           The minimum time a student must be in a Learning Tree before they can earn a percent of the
           original question points.
         </b-tooltip>
-        <b-tooltip target="percent_earned_for_entering_learning_tree_tooltip"
+        <b-tooltip target="percent_earned_for_exploring_learning_tree_tooltip"
                    delay="250"
         >
           The percent of the question points that a student earns for entering the Learning Tree for at least the
@@ -355,18 +355,18 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="percent_earned_for_entering_learning_tree"
+            id="percent_earned_for_exploring_learning_tree"
             label-cols-sm="7"
             label-cols-lg="6"
-            label="Percent Earned For Entering Learning Tree"
-            label-for="percent_earned_for_entering_learning_tree"
+            label="Percent Earned For Exploring Learning Tree"
+            label-for="percent_earned_for_exploring_learning_tree"
           >
             <template slot="label">
               <b-icon
                 icon="tree" variant="success"
               />
-              Percent Earned For Entering Learning Tree <span id="percent_earned_for_entering_learning_tree_tooltip"
-                                                              class="text-muted"
+              Percent Earned For Exploring Learning Tree <span id="percent_earned_for_exploring_learning_tree_tooltip"
+                                                               class="text-muted"
               ><b-icon
                 icon="question-circle"
               /></span>
@@ -374,14 +374,14 @@
             <b-form-row>
               <b-col lg="4">
                 <b-form-input
-                  id="percent_earned_for_entering_learning_tree"
-                  v-model="form.percent_earned_for_entering_learning_tree"
+                  id="percent_earned_for_exploring_learning_tree"
+                  v-model="form.percent_earned_for_exploring_learning_tree"
                   type="text"
                   placeholder="Out of 100"
-                  :class="{ 'is-invalid': form.errors.has('percent_earned_for_entering_learning_tree') }"
-                  @keydown="form.errors.clear('percent_earned_for_entering_learning_tree')"
+                  :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
+                  @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
                 />
-                <has-error :form="form" field="percent_earned_for_entering_learning_tree" />
+                <has-error :form="form" field="percent_earned_for_exploring_learning_tree" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -849,7 +849,7 @@ export default {
       due: '',
       assessment_type: 'real time',
       min_time_needed_in_learning_tree: null,
-      percent_earned_for_entering_learning_tree: null,
+      percent_earned_for_exploring_learning_tree: null,
       percent_decrease: null,
       available_from_date: '',
       assignment_group_id: null,
@@ -906,12 +906,12 @@ export default {
     showDelayedOptions () {
       this.form.submission_files = 'q'
       this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_entering_learning_tree = null
+      this.form.percent_earned_for_exploring_learning_tree = null
       this.form.percent_decrease = null
     },
     showRealTimeOptions () {
       this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_entering_learning_tree = null
+      this.form.percent_earned_for_exploring_learning_tree = null
       this.form.percent_decrease = null
     },
     getGradeBook () {
