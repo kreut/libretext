@@ -299,27 +299,28 @@
                               stacked
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
-            <span @click="resetLearningTreeToNull">
+            <span @click="showRealTimeOptions">
               <b-form-radio name="assessment_type" value="r">
                 Real time <span id="real_time" class="text-muted"><b-icon
                   icon="question-circle"
                 />
+                </span></b-form-radio>
+            </span>
+            <span @click="showDelayedOptions">
+              <b-form-radio name="assessment_type" value="d">
+                Delayed <span id="delayed" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span>
+              </b-form-radio>
+            </span>
+            <span>
+              <b-form-radio name="assessment_type" value="l">
+                Learning Tree <span id="learning_tree" class="text-muted"><b-icon
+                  icon="question-circle"
+                />
                 </span>
               </b-form-radio>
-              <span @click="form.submission_files = 'q'">
-                <b-form-radio name="assessment_type" value="d">
-                  Delayed <span id="delayed" class="text-muted"><b-icon
-                    icon="question-circle"
-                  /></span>
-                </b-form-radio>
-              </span>
             </span>
-            <b-form-radio name="assessment_type" value="l">
-              Learning Tree <span id="learning_tree" class="text-muted"><b-icon
-                icon="question-circle"
-              />
-              </span>
-            </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
         <div v-show="form.assessment_type === 'l'">
@@ -436,10 +437,7 @@
           </b-form-radio-group>
         </b-form-group>
         <b-form-group
-          v-show="form.submission_files !=='0' &&
-            form.scoring_type === 'p' &&
-            form.assessment_type === 'd' &&
-            form.source === 'a' && form.submission_files !=='0'"
+          v-show="form.source === 'a'"
           id="late_policy"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -461,7 +459,7 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
-        <div v-if="form.late_policy === 'deduction' && form.submission_files !== '0'">
+        <div v-if="form.late_policy === 'deduction'">
           <b-form-group
             id="late_deduction_percent"
             label-cols-sm="4"
@@ -900,7 +898,13 @@ export default {
     initTooltips(this)
   },
   methods: {
-    resetLearningTreeToNull () {
+    showDelayedOptions () {
+      this.form.submission_files = 'q'
+      this.form.min_time_needed_in_learning_tree = null
+      this.form.percent_earned_for_entering_learning_tree = null
+      this.form.percent_decay = null
+    },
+    showRealTimeOptions () {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_entering_learning_tree = null
       this.form.percent_decay = null
