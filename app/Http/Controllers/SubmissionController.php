@@ -29,7 +29,7 @@ class SubmissionController extends Controller
     public function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('store', $assignment);
+        $authorized = Gate::inspect('store', [$submission ,$assignment, $assignment->id, $question->id]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -37,7 +37,7 @@ class SubmissionController extends Controller
         }
 
         try {
-//$assignment->min_time_needed_in_learning_tree
+
         $submission->where('assignment_id', $assignment->id)
             ->where('question_id', $question->id)
             ->where('user_id', Auth::user()->id)
@@ -47,7 +47,7 @@ class SubmissionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating that you explored the Learning Tree.  Please try again or contact us for assistance.";
         }
         return $response;
     }

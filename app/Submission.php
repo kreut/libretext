@@ -93,34 +93,30 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->first();
 
+            $learning_tree_points = 0;
+            $learning_tree = DB::table('assignment_question')
+                ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
+                ->where('assignment_id', $data['assignment_id'])
+                ->where('question_id', $data['question_id'])
+                ->select('learning_tree')
+                ->get();
             if ($submission) {
-
+                if ($submission->explored_learning_tree) {
+                    $submission->learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
+                }
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
             } else {
-               $submission = Submission::create(['user_id' => $data['user_id'],
+                Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
                     'score' => $data['score'],
                     'submission_count' => 1]);
-            }
-            $learning_tree = collect();
-            $learning_tree_points = null;
-            if ($submission->submission_count >  1) {
-                $learning_tree = DB::table('assignment_question')
-                    ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
-                    ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
-                    ->where('assignment_id', $data['assignment_id'])
-                    ->where('question_id', $data['question_id'])
-                    ->select('learning_tree')
-                    ->get();
-                if ($submission->explored_learning_tree) {
-                    $learning_tree_points = (floatval($assignment->learning_tree_points) / 100) * floatval($assignment_question->points);
-                    }
             }
             //update the score if it's supposed to be updated
             switch ($assignment->scoring_type) {

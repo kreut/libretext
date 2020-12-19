@@ -238,9 +238,9 @@
                   </countdown>
                 </div>
                 <div v-if="(!timerSetToGetLearningTreePoints) && showLearningTreePointsMessage && (user.role === 3)">
-                  <strong>Upon your next attempt at this assessment, you will receive
+                  <span class="font-weight-bold">Upon your next attempt at this assessment, you will receive
                     {{ (percentEarnedForExploringLearningTree/100) * (questions[currentPage - 1].points) }} points for exploring the Learning
-                    Tree.</strong>
+                    Tree.</span>
                 </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
@@ -770,6 +770,10 @@ export default {
       try {
         const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
         console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
         this.showLearningTreePointsMessage = true
         this.timerSetToGetLearningTreePoints = false
       } catch (error) {
@@ -803,12 +807,13 @@ export default {
     async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
+        console.log(data)
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
         this.questions[this.currentPage - 1]['learning_tree_points'] = data.learning_tree_points
       } catch (error) {
-        console.log(error)
+        this.$noty.error(error.message)
       }
     },
     async receiveMessage (event) {
