@@ -110,7 +110,7 @@ class Submission extends Model
             }
             $learning_tree = collect();
             $learning_tree_points = null;
-            if ($submission->submission_count >  2) {
+            if ($submission->submission_count >  1) {
                 $learning_tree = DB::table('assignment_question')
                     ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                     ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')

@@ -232,14 +232,15 @@
                 <div v-if="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
                   <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                     <template slot-scope="props">
-                      Time Left Until Learning Tree Points：{{ props.days }} days, {{ props.hours }} hours,
+                      Time Needed To Explore The Learning Tree:
                       {{ props.minutes }} minutes, {{ props.seconds }} seconds.
                     </template>
                   </countdown>
                 </div>
                 <div v-if="(!timerSetToGetLearningTreePoints) && showLearningTreePointsMessage && (user.role === 3)">
-                  You have been awarded {{ 1 * (questions[currentPage - 1].points) }} points for exploring the Learning
-                  Tree.
+                  <strong>Upon your next attempt at this assessment, you will receive
+                    {{ (percentEarnedForExploringLearningTree/100) * (questions[currentPage - 1].points) }} points for exploring the Learning
+                    Tree.</strong>
                 </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
@@ -506,7 +507,7 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-                    <span class="font-weight-bold">Points for visiting learning tree:</span> {{
+                    <span class="font-weight-bold">Points for Exploring the Learning Tree:</span> {{
                       questions[currentPage - 1].learning_tree_points
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -1107,7 +1108,8 @@ export default {
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         this.timeLeft = assignment.time_left
         this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
-        this.totalPoints = String(assignment.total_points).replace(/\.00$/, '')
+        this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)
+        this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))

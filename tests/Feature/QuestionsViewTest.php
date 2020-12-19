@@ -63,6 +63,14 @@ class QuestionsViewTest extends TestCase
 
 
     }
+
+    public function student_in_course_can_update_explored_learning_tree(){
+        patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
+    }
+
+    public function non_student_in_course_cannot_update_explored_learning_tree(){
+        patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
+    }
     /** @test */
     public function can_submit_response()
     {
