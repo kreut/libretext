@@ -237,7 +237,7 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="(!timerSetToGetLearningTreePoints) && showLearningTreePointsMessage && (user.role === 3)">
+                <div v-if="!(Number(questions[currentPage - 1].learning_tree_points) > 0 ) && !timerSetToGetLearningTreePoints && showLearningTreePointsMessage && (user.role === 3)">
                   <span class="font-weight-bold">Upon your next attempt at this assessment, you will receive
                     {{ (percentEarnedForExploringLearningTree/100) * (questions[currentPage - 1].points) }} points for exploring the Learning
                     Tree.</span>
@@ -896,7 +896,7 @@ export default {
     },
     async showResponse (data) {
       console.log('showing response')
-      if (data.learning_tree) {
+      if (data.learning_tree && !this.learningTree) {
         await this.showLearningTree(data.learning_tree)
       }
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'

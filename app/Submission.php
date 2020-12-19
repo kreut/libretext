@@ -102,8 +102,9 @@ class Submission extends Model
                 ->select('learning_tree')
                 ->get();
             if ($submission) {
-                if ($submission->explored_learning_tree) {
-                    $submission->learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
+                if (($assignment->assessment_type === 'learning tree') && $submission->explored_learning_tree) {
+                    $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
+                    $submission->learning_tree_points = $learning_tree_points;
                 }
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];

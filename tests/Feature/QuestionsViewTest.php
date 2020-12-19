@@ -64,6 +64,9 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    public function gets_learning_tree_points_after_submission_if_they_have_explored_the_learning_tree(){
+        TODO
+    }
     public function student_in_course_can_update_explored_learning_tree(){
         patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
     }
