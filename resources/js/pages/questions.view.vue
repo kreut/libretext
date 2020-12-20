@@ -520,9 +520,9 @@
                       }}<br>
                     </div>
                     <div v-if="(assessmentType === 'learning tree')">
-                      <span class="font-weight-bold">Question Score Deduction:</span> {{
-                        TODO
-                      }}<br>
+                      <span class="font-weight-bold">Question Score Deduction:</span>
+                      TODO
+                      }<br>
                     </div>
                     <div v-if="(assessmentType === 'learning tree')">
                       <span class="font-weight-bold">Total Score:</span> {{
@@ -823,6 +823,10 @@ export default {
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
         this.questions[this.currentPage - 1]['learning_tree_exploration_points'] = data.learning_tree_exploration_points
+        // show initially if you made no attempts OR you've already visited the learning tree
+        // if you made an attempt, hide the question until you visit the learning tree
+        // only get additional points and with a penalty IF they get it all correct
+        // this.showQuestion = parseFloat(data.learning_tree_exploration_points) !== 0 // Show if not 0
       } catch (error) {
         this.$noty.error(error.message)
       }

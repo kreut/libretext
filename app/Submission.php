@@ -106,15 +106,17 @@ class Submission extends Model
                 ->get();
             $percent_penalty = 0;
             $potential_question_points = $assignment_question->points;
+            $explored_learning_tree = 0;
             if ($submission) {
                 if (($assignment->assessment_type === 'learning tree')) {
+                   $explored_learning_tree =  $submission->explored_learning_tree;
                     $current_score = $submission->score;
                     $learning_tree_exploration_points = 0;
                     //1 submission, get 100%
                     //submission penalty is 10%
                     //2 submissions, get 1-(1*10/100) = 90%
                     $percent_penalty = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                    if ($submission->explored_learning_tree) {
+                    if ( $explored_learning_tree) {
                         $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         $potential_question_points =  floatval($assignment_question->points) - $learning_tree_exploration_points;
                         $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
@@ -161,10 +163,9 @@ class Submission extends Model
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['learning_tree_exploration_points'] = $learning_tree_exploration_points;
             $response['potential_question_points'] = $potential_question_points;
             $response['percent_penalty'] = $percent_penalty;
-            $response['explored_learning_tree'] = $submission->explored_learning_tree;
+            $response['explored_learning_tree'] = $explored_learning_tree;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
             $request->data = ['assignment_id' => $data['assignment_id'],
