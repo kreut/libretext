@@ -65,17 +65,20 @@ class Submission extends Model
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
-                $data['score'] = floatval($assignment_question->points) * (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
                 break;
             case('imathas'):
                 $submission = $data['submission'];
-                $data['score'] = floatval($assignment_question->points) * floatval($submission->score);
+                $proportion_correct = floatval($submission->score);
+                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
                 $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
                 break;
             case('webwork'):
                 // Log::info('case webwork');
                 $submission = $data['submission'];
-                $data['score'] = floatval($assignment_question->points) * floatval($submission->score->score);
+                $proportion_correct = floatval($submission->score->score);
+                $data['score'] = floatval($assignment_question->points) * $proportion_correct ;
                 Log::info('Score: ' . $data['score']);
                 $data['submission'] = json_encode($data['submission']);
                 break;
@@ -101,10 +104,28 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->select('learning_tree')
                 ->get();
+            $percent_penalty = 0;
+            $potential_question_points = $assignment_question->points;
             if ($submission) {
-                if (($assignment->assessment_type === 'learning tree') && $submission->explored_learning_tree) {
-                    $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
-                    $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
+                if (($assignment->assessment_type === 'learning tree')) {
+                    $current_score = $submission->score;
+                    $learning_tree_exploration_points = 0;
+                    //1 submission, get 100%
+                    //submission penalty is 10%
+                    //2 submissions, get 1-(1*10/100) = 90%
+                    $percent_penalty = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
+                    if ($submission->explored_learning_tree) {
+                        $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
+                        $potential_question_points =  floatval($assignment_question->points) - $learning_tree_exploration_points;
+                        $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
+                        $proportion_correct =  (int) $proportion_correct >= 1;
+                        $new_score =  $learning_tree_exploration_points +  $percent_penalty*$proportion_correct*$potential_question_points;
+                        //shouldn't do any worse if they try the tree
+                        $data['score'] = max($current_score, $new_score);
+                    } else {
+                        //didn't explore the learning tree so just apply the penalty
+                        $data['score'] =  $percent_penalty * $data['score'];
+                    }
                 }
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
@@ -141,6 +162,9 @@ class Submission extends Model
             $response['message'] = 'Question submission saved.';
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $response['learning_tree_exploration_points'] = $learning_tree_exploration_points;
+            $response['potential_question_points'] = $potential_question_points;
+            $response['percent_penalty'] = $percent_penalty;
+            $response['explored_learning_tree'] = $submission->explored_learning_tree;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
             $request->data = ['assignment_id' => $data['assignment_id'],
