@@ -96,7 +96,6 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->first();
 
-            $learning_tree_exploration_points = 0;
             $learning_tree = DB::table('assignment_question')
                 ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                 ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
@@ -105,7 +104,6 @@ class Submission extends Model
                 ->select('learning_tree')
                 ->get();
             $percent_penalty = 0;
-            $potential_question_points = $assignment_question->points;
             $explored_learning_tree = 0;
             $message = 'Question submission saved. Your scored was updated';
 
@@ -118,27 +116,18 @@ class Submission extends Model
                         return $response;
                     }
 
-                    $current_score = $submission->score;
-                    $learning_tree_exploration_points = 0;
                     //1 submission, get 100%
                     //submission penalty is 10%
                     //2 submissions, get 1-(1*10/100) = 90%
-                    $percent_penalty = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
+                    $percent_penalty = max(1 - (($submission->submission_count) * $assignment->submission_count_percent_decrease / 100), 0);
                     if ($explored_learning_tree) {
-                        $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
-                        $potential_question_points = floatval($assignment_question->points) - $learning_tree_exploration_points;
-                        $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
-                        $message = '';
-                        if (!$submission->explored_learning_tree) {
-                            $message = "Your question submission was saved and you received points for exploring the Learning Tree.";
-                        }
+                        $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
-                            $new_score = $learning_tree_exploration_points + $percent_penalty * $potential_question_points;
-                            //shouldn't do any worse if they try the tree
-                            $data['score'] = max($current_score, $new_score);
-                            $message .= "  In addition, your total score was updated.";
+                            $data['score'] =max(floatval($assignment_question->points) * $percent_penalty, $learning_tree_points);
+                            $message .= "Your question submission was saved and you received points for exploring the Learning Tree.  In addition, your total score was updated.";
                         } else {
-                            $message = "You submission was not correct so your score was not updated.";
+                            $data['score'] =$learning_tree_points;
+                            $message = "You submission was not correct but you're still receiving $submission->score for exploring the Learning Tree.";
                         }
                     } else {
                         if (!$data['all_correct']) {
@@ -186,8 +175,7 @@ class Submission extends Model
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['potential_question_points'] = $potential_question_points;
-            $response['percent_penalty'] = $percent_penalty;
+            $response['percent_penalty'] = $percent_penalty*100 . '%';
             $response['explored_learning_tree'] = $explored_learning_tree;
             $log = new \App\Log();
             $request->action = 'submit-question-response';

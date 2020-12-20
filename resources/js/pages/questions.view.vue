@@ -507,22 +507,19 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-                    <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Exploration Points:</span> {{
-                      questions[currentPage - 1].learning_tree_exploration_points
-                    }}<br>
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
                         questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
                     <div v-if="(assessmentType === 'learning tree')">
-                      <span class="font-weight-bold">Question Score Deduction:</span>
-                      TODO
-                      }<br>
+                      <span class="font-weight-bold">Percent Penalty:</span>
+                      {{ percentPenalty }}
+                      <br>
                     </div>
                     <div v-if="(assessmentType === 'learning tree')">
                       <span class="font-weight-bold">Total Score:</span> {{
-                        parseInt(questions[currentPage - 1].submission_score) + parseInt(questions[currentPage - 1].learning_tree_exploration_points)
+                        parseInt(questions[currentPage - 1].submission_score)
                       }}<br>
                     </div>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -646,6 +643,7 @@ export default {
     Email
   },
   data: () => ({
+    percentPenalty: 0,
     capitalFormattedAssessmentType: '',
     assessmentType: '',
     showPointsPerQuestion: false,
@@ -821,11 +819,9 @@ export default {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
-        this.questions[this.currentPage - 1]['learning_tree_exploration_points'] = data.learning_tree_exploration_points
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
-        // this.showQuestion = parseFloat(data.learning_tree_exploration_points) !== 0 // Show if not 0
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -915,6 +911,7 @@ export default {
       }
       this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
+      this.percentPenalty = data.percent_penalty
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false
