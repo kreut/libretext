@@ -507,7 +507,7 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-                    <span class="font-weight-bold">Points for Exploring the Learning Tree:</span> {{
+                    <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Points:</span> {{
                       questions[currentPage - 1].learning_tree_points
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -517,6 +517,16 @@
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
                         questions[currentPage - 1].submission_score
+                      }}<br>
+                    </div>
+                    <div v-if="(assessmentType === 'learning tree')">
+                      <span class="font-weight-bold">Question Score Deduction:</span> {{
+                        TODO
+                      }}<br>
+                    </div>
+                    <div v-if="(assessmentType === 'learning tree')">
+                      <span class="font-weight-bold">Total Score:</span> {{
+                        parseInt(questions[currentPage - 1].submission_score) + parseInt(questions[currentPage - 1].learning_tree_points)
                       }}<br>
                     </div>
                   </b-card-text>
@@ -638,6 +648,7 @@ export default {
   },
   data: () => ({
     capitalFormattedAssessmentType: '',
+    assessmentType: '',
     showPointsPerQuestion: false,
     showQuestionDoesNotExistMessage: false,
     timerSetToGetLearningTreePoints: false,

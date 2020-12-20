@@ -250,7 +250,7 @@ class AssignmentSyncQuestionController extends Controller
         $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
 
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
-            Auth::user()->time_zone),
+            Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
             'learning_tree_points' => $response_info['learning_tree_points']
@@ -447,7 +447,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['learning_tree_points'] = $learning_tree_points;
                 }
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
-                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone)
+                    ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'M d, Y g:i:s a')
                     : $last_submitted;
                 $assignment->questions[$key]['submission_count'] = $submission_count;
                 $has_question_files = $question_files[$question->id];

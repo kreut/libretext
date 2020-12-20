@@ -56,21 +56,35 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
+public function can_only_toggle_show_scores_for_a_delayed_assignment(){
+TODO
+
+}
+
+    /** @test */
+    public function can_only_toggle_show_points_per_question_for_a_delayed_assignment(){
+TODO
+
+    }
+    /** @test */
 
     public function a_valid_late_policy_is_submitted()
     {
-
+TODO
     }
 
     /** @test */
     public function a_valid_late_percent_is_submitted()
     {
+
+        TODO
     }
 
     /** @test */
     public function a_valid_late_deduction_application_period_is_submitted()
     {
         //test once as well as with a time
+        TODO
 
     }
 

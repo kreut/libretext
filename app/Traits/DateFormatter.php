@@ -52,13 +52,13 @@ trait DateFormatter
         return $dt->format('Y-m-d H:i:s');
     }
 
-    public function convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(string $datetime, string $to_time_zone)
+    public function convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(string $datetime, string $to_time_zone, string $format = 'F d, Y g:i:sa')
     {
 
         $dt = new \DateTime($datetime, new \DateTimeZone('UTC'));
         $dt->setTimeZone(new \DateTimeZone($to_time_zone));
 
-        return $dt->format('F d, Y g:i:sa');
+        return $dt->format($format);
     }
 
 

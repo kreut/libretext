@@ -169,9 +169,18 @@ class AssignmentPolicy
                 break;
         }
 
+        if (!$has_access) {
+            $message = 'You are not allowed to show/hide scores.';
+        } else {
+            $has_access = $assignment->assessment_type === 'delayed';
+            if (!$has_access) {
+                $message = "Since this assignment is not a <strong>delayed</strong> assessment type, scores will be shown immediately to the students.";
+            }
+        }
+
         return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to show/hide scores.');
+            : Response::deny($message);
     }
 
     public function showPointsPerQuestion(User $user, Assignment $assignment)
@@ -185,10 +194,18 @@ class AssignmentPolicy
                 $has_access = $assignment->course->isGrader();
                 break;
         }
+        if (!$has_access) {
+            $message = 'You are not allowed to show/hide the points per question.';
+        } else {
+            $has_access = $assignment->assessment_type === 'delayed';
+            if (!$has_access) {
+                $message = "Since this assignment is not a <strong>delayed</strong> assessment type, students should be shown how many points each question is worth.";
+            }
+        }
 
         return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to show/hide the points per question.');
+            : Response::deny($message);
     }
 
 
