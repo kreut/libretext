@@ -1,6 +1,9 @@
 <?php
 
-namespace Laravel\Socialite\Two;
+namespace App\Providers;
+use Laravel\Socialite\Two\AbstractProvider;
+use Laravel\Socialite\Two\ProviderInterface;
+use Laravel\Socialite\Two\User;
 
 use Illuminate\Support\Arr;
 
@@ -48,9 +51,24 @@ class LibretextsProvider extends AbstractProvider implements ProviderInterface
      */
     protected function getTokenFields($code)
     {
-        return array_add(
+        return Arr::add(
             parent::getTokenFields($code), 'grant_type', 'authorization_code'
         );
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getAccessTokenResponse($code)
+    {
+        $postKey = 'query';
+
+        $response = $this->getHttpClient()->post($this->getTokenUrl(), [
+            'headers' => ['Accept' => 'application/json'],
+            $postKey => $this->getTokenFields($code),
+        ]);
+
+        return json_decode($response->getBody(), true);
     }
 
     /**

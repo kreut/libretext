@@ -82,7 +82,7 @@
               </v-button>
 
               <!-- GitHub Register Button -->
-              <login-with-github/>
+              <login-with-libretexts/>
             </div>
           </div>
         </form>
@@ -93,7 +93,7 @@
 
 <script>
 import Form from 'vform'
-import LoginWithGithub from '~/components/LoginWithGithub'
+import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import {redirectOnLogin} from '~/helpers/LoginRedirect'
 import {getTimeZones} from "@vvo/tzdb"
 import {populateTimeZoneSelect} from "~/helpers/TimeZones"
@@ -102,7 +102,7 @@ export default {
   middleware: 'guest',
 
   components: {
-    LoginWithGithub
+    LoginWithLibretexts
   },
 
   metaInfo() {

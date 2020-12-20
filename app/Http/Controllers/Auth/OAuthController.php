@@ -66,7 +66,7 @@ class OAuthController extends Controller
      * @param  \Laravel\Socialite\Contracts\User $sUser
      * @return \App\User|false
      */
-    protected function findOrCreateUser($provider, $user)
+    protected function findOrCreateUser($provider, $user) //TODO: Make it so this function works!
     {
         $oauthProvider = OAuthProvider::where('provider', $provider)
             ->where('provider_user_id', $user->getId())
@@ -80,7 +80,6 @@ class OAuthController extends Controller
 
             return $oauthProvider->user;
         }
-
         if (User::where('email', $user->getEmail())->exists()) {
             throw new EmailTakenException;
         }

@@ -54,7 +54,6 @@
 
 <script>
 import Form from 'vform'
-import LoginWithGithub from '~/components/LoginWithGithub'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
 
@@ -63,7 +62,6 @@ export default {
   middleware: 'guest',
 
   components: {
-    LoginWithGithub,
     LoginWithLibretexts
   },
 

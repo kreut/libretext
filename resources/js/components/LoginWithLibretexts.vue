@@ -1,7 +1,7 @@
 <template>
   <button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
-    {{ $t('login_with') }}
-    <fa :icon="['fab', 'github']" />
+    Login with
+    <img src='/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg' height="50px">
   </button>
 </template>
 
