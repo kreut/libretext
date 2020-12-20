@@ -93,7 +93,7 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->first();
 
-            $learning_tree_points = 0;
+            $learning_tree_exploration_points = 0;
             $learning_tree = DB::table('assignment_question')
                 ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                 ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
@@ -103,8 +103,8 @@ class Submission extends Model
                 ->get();
             if ($submission) {
                 if (($assignment->assessment_type === 'learning tree') && $submission->explored_learning_tree) {
-                    $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
-                    $submission->learning_tree_points = $learning_tree_points;
+                    $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
+                    $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
                 }
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
@@ -140,7 +140,7 @@ class Submission extends Model
             $response['type'] = 'success';
             $response['message'] = 'Question submission saved.';
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['learning_tree_points'] = $learning_tree_points;
+            $response['learning_tree_exploration_points'] = $learning_tree_exploration_points;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
             $request->data = ['assignment_id' => $data['assignment_id'],

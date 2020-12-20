@@ -4,7 +4,7 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-class UpdatePercentDecreaseToAssignmentsTable extends Migration
+class UpdateLearningTreePointsToSubmissionsTable extends Migration
 {
     /**
      * Run the migrations.
@@ -13,11 +13,9 @@ class UpdatePercentDecreaseToAssignmentsTable extends Migration
      */
     public function up()
     {
-
-            Schema::table('assignments', function (Blueprint $table) {
-                $table->renameColumn( 'percent_decrease', 'learning_tree_percent_decrease');
-            });
-
+        Schema::table('submissions', function (Blueprint $table) {
+           $table->renameColumn('learning_tree_points','learning_tree_exploration_points');
+        });
     }
 
     /**
@@ -27,7 +25,7 @@ class UpdatePercentDecreaseToAssignmentsTable extends Migration
      */
     public function down()
     {
-        Schema::table('assignments', function (Blueprint $table) {
+        Schema::table('submissions', function (Blueprint $table) {
             //
         });
     }

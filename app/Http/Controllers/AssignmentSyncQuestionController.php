@@ -253,7 +253,7 @@ class AssignmentSyncQuestionController extends Controller
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'learning_tree_points' => $response_info['learning_tree_points']
+            'learning_tree_exploration_points' => $response_info['learning_tree_exploration_points']
         ];
 
     }
@@ -262,7 +262,7 @@ class AssignmentSyncQuestionController extends Controller
     {
         $student_response = 'N/A';
         $correct_response = null;
-        $learning_tree_points = null;
+        $learning_tree_exploration_points = null;
         $submission_score = 0;
         $last_submitted = 'N/A';
         $submission_count = 0;
@@ -272,7 +272,7 @@ class AssignmentSyncQuestionController extends Controller
             $submission_object = json_decode($submission->submission);
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
-            $learning_tree_points = $submission->learning_tree_points;
+            $learning_tree_exploration_points = $submission->learning_tree_exploration_points;
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response;
@@ -309,7 +309,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'learning_tree_points');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'learning_tree_exploration_points');
 
     }
 
@@ -430,7 +430,7 @@ class AssignmentSyncQuestionController extends Controller
                 $correct_response = $response_info['correct_response'];
                 $submission_score = $response_info['submission_score'];
                 $last_submitted = $response_info['last_submitted'];
-                $learning_tree_points = $response_info['learning_tree_points'];
+                $learning_tree_exploration_points = $response_info['learning_tree_exploration_points'];
                 $submission_count = $response_info['submission_count'];
 
 
@@ -444,7 +444,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
                 if ($assignment->assessment_type === 'learning tree'){
-                    $assignment->questions[$key]['learning_tree_points'] = $learning_tree_points;
+                    $assignment->questions[$key]['learning_tree_exploration_points'] = $learning_tree_exploration_points;
                 }
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'M d, Y g:i:s a')

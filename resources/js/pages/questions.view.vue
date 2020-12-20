@@ -237,7 +237,7 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="!(Number(questions[currentPage - 1].learning_tree_points) > 0 ) && !timerSetToGetLearningTreePoints && showLearningTreePointsMessage && (user.role === 3)">
+                <div v-if="!(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) && !timerSetToGetLearningTreePoints && showLearningTreePointsMessage && (user.role === 3)">
                   <span class="font-weight-bold">Upon your next attempt at this assessment, you will receive
                     {{ (percentEarnedForExploringLearningTree/100) * (questions[currentPage - 1].points) }} points for exploring the Learning
                     Tree.</span>
@@ -508,7 +508,7 @@
                       questions[currentPage - 1].student_response
                     }}<br>
                     <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Exploration Points:</span> {{
-                      questions[currentPage - 1].learning_tree_points
+                      questions[currentPage - 1].learning_tree_exploration_points
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
@@ -526,7 +526,7 @@
                     </div>
                     <div v-if="(assessmentType === 'learning tree')">
                       <span class="font-weight-bold">Total Score:</span> {{
-                        parseInt(questions[currentPage - 1].submission_score) + parseInt(questions[currentPage - 1].learning_tree_points)
+                        parseInt(questions[currentPage - 1].submission_score) + parseInt(questions[currentPage - 1].learning_tree_exploration_points)
                       }}<br>
                     </div>
                   </b-card-text>
@@ -822,7 +822,7 @@ export default {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
-        this.questions[this.currentPage - 1]['learning_tree_points'] = data.learning_tree_points
+        this.questions[this.currentPage - 1]['learning_tree_exploration_points'] = data.learning_tree_exploration_points
       } catch (error) {
         this.$noty.error(error.message)
       }
