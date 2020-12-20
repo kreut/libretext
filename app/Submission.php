@@ -78,7 +78,7 @@ class Submission extends Model
                 // Log::info('case webwork');
                 $submission = $data['submission'];
                 $proportion_correct = floatval($submission->score->score);
-                $data['score'] = floatval($assignment_question->points) * $proportion_correct ;
+                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
                 Log::info('Score: ' . $data['score']);
                 $data['submission'] = json_encode($data['submission']);
                 break;
@@ -107,26 +107,43 @@ class Submission extends Model
             $percent_penalty = 0;
             $potential_question_points = $assignment_question->points;
             $explored_learning_tree = 0;
+            $message = 'Question submission saved. Your scored was updated';
+
             if ($submission) {
                 if (($assignment->assessment_type === 'learning tree')) {
-                   $explored_learning_tree =  $submission->explored_learning_tree;
+                    $explored_learning_tree = $submission->explored_learning_tree;
+                    if (!$explored_learning_tree && (int)$submission->submission_count === 1) {
+                        $response['type'] = 'info';
+                        $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
+                        return $response;
+                    }
+
                     $current_score = $submission->score;
                     $learning_tree_exploration_points = 0;
                     //1 submission, get 100%
                     //submission penalty is 10%
                     //2 submissions, get 1-(1*10/100) = 90%
                     $percent_penalty = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                    if ( $explored_learning_tree) {
+                    if ($explored_learning_tree) {
                         $learning_tree_exploration_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
-                        $potential_question_points =  floatval($assignment_question->points) - $learning_tree_exploration_points;
+                        $potential_question_points = floatval($assignment_question->points) - $learning_tree_exploration_points;
                         $submission->learning_tree_exploration_points = $learning_tree_exploration_points;
-                        $proportion_correct =  (int) $proportion_correct >= 1;
-                        $new_score =  $learning_tree_exploration_points +  $percent_penalty*$proportion_correct*$potential_question_points;
-                        //shouldn't do any worse if they try the tree
-                        $data['score'] = max($current_score, $new_score);
+                        $message = '';
+                        if (!$submission->explored_learning_tree) {
+                            $message = "Your question submission was saved and you received points for exploring the Learning Tree.";
+                        }
+                        if ($data['all_correct']) {
+                            $new_score = $learning_tree_exploration_points + $percent_penalty * $potential_question_points;
+                            //shouldn't do any worse if they try the tree
+                            $data['score'] = max($current_score, $new_score);
+                            $message .= "  In addition, your total score was updated.";
+                        } else {
+                            $message = "You submission was not correct so your score was not updated.";
+                        }
                     } else {
-                        //didn't explore the learning tree so just apply the penalty
-                        $data['score'] =  $percent_penalty * $data['score'];
+                        if (!$data['all_correct']) {
+                            $message = "You submission was not correct so your score was not updated.";
+                        }
                     }
                 }
                 $submission->submission = $data['submission'];
@@ -135,6 +152,12 @@ class Submission extends Model
                 $submission->save();
 
             } else {
+                if (($assignment->assessment_type === 'learning tree')) {
+                    if (!$data['all_correct']){
+                        $data['score'] = 0;
+                        $message = "Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!";
+                    }
+                }
                 Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
@@ -159,9 +182,9 @@ class Submission extends Model
                     $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
                     break;
             }
-
-            $response['type'] = 'success';
-            $response['message'] = 'Question submission saved.';
+            $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
+            $response['type'] = $score_not_updated ? 'info' : 'success';
+            $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $response['potential_question_points'] = $potential_question_points;
             $response['percent_penalty'] = $percent_penalty;
@@ -183,7 +206,8 @@ class Submission extends Model
 
     }
 
-    public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
+    public
+    function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
     {
         $last_submitted_by_user = [];
         $submissions = DB::table('submissions')
@@ -199,7 +223,8 @@ class Submission extends Model
         return $last_submitted_by_user;
     }
 
-    public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
+    public
+    function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
     {
 
         $assignment_question_submissions = [];
@@ -253,7 +278,8 @@ class Submission extends Model
     }
 
 
-    public function getNumberOfUserSubmissionsByCourse($course, $user)
+    public
+    function getNumberOfUserSubmissionsByCourse($course, $user)
     {
         $AssignmentSyncQuestion = new AssignmentSyncQuestion();
         $num_sumbissions_per_assignment = [];

@@ -353,6 +353,7 @@ class AssignmentSyncQuestionController extends Controller
                 $submission_files_by_question_id[$submission_file['question_id']] = $submission_file;
             }
 
+            $learning_trees_by_question_id = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
@@ -385,6 +386,17 @@ class AssignmentSyncQuestionController extends Controller
                     $submissions_by_question_id[$value->question_id] = $value;
                 }
             }
+
+            //if they've already explored the learning tree, then we can let them view it right at the start
+            if ($assignment->assessment_type === 'learning tree') {
+                foreach ($assignment->learningTrees() as $value) {
+                    $learning_trees_by_question_id[$value->question_id] =
+                       isset($submissions_by_question_id[$value->question_id]) &&  $submissions_by_question_id[$value->question_id]->submission_count >=1
+                            ? json_decode($value->learning_tree)->blocks
+                            : null;
+                }
+            }
+
 
             $seeds = DB::table('seeds')
                 ->whereIn('question_id', $question_ids)
@@ -434,7 +446,6 @@ class AssignmentSyncQuestionController extends Controller
                 $submission_count = $response_info['submission_count'];
 
 
-
                 $assignment->questions[$key]['student_response'] = $student_response;
                 if ($assignment->solutions_released) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
@@ -443,9 +454,12 @@ class AssignmentSyncQuestionController extends Controller
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
-                if ($assignment->assessment_type === 'learning tree'){
+                if ($assignment->assessment_type === 'learning tree') {
                     $assignment->questions[$key]['learning_tree_exploration_points'] = $learning_tree_exploration_points;
+                    $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
                 }
+
+
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'M d, Y g:i:s a')
                     : $last_submitted;
@@ -481,7 +495,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
                 if ($assignment->show_scores) {
-                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)),2);
+                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
 
                 $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]
@@ -493,7 +507,7 @@ class AssignmentSyncQuestionController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'technology' => $question->technology]];
-                $custom_claims['scheme_and_host'] =  $request->getSchemeAndHttpHost();
+                $custom_claims['scheme_and_host'] = $request->getSchemeAndHttpHost();
                 //if I didn't initialize each, I was getting a weird webwork error
                 //in addition, the imathas problem JWT had the webwork info from the previous
                 //problem.  Not sure why!  Maybe it has something to do createProblemJWT
@@ -508,7 +522,7 @@ class AssignmentSyncQuestionController extends Controller
                         $webwork_url = 'webwork.libretexts.org';
                         //$webwork_url = 'demo.webwork.rochester.edu';
 
-                        $seed=$this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
+                        $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
                         $custom_claims['webwork']['problemSeed'] = $seed;
                         switch ($webwork_url) {
@@ -552,19 +566,19 @@ class AssignmentSyncQuestionController extends Controller
                         $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
 
-                        $seed=$this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'imathas');
+                        $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'imathas');
                         $custom_claims['imathas']['seed'] = $seed;
                         $custom_claims['imathas']['allowregen'] = false;//don't let them try similar problems
-                        $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
+                        $question['technology_iframe'] = '<iframe class="imathas_problem" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?" height="1500" width="100%"></iframe>';
                         $question['technology_iframe'] = '<div id="embed1wrap" style="overflow:visible;position:relative">
- <iframe id="embed1" style="position:absolute;z-index:1" frameborder=0 src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
+ <iframe id="embed1" style="position:absolute;z-index:1" frameborder="0" src="https://imathas.libretexts.org/imathas/adapt/embedq2.php?frame_id=embed1"></iframe>
 </div>';
                         $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');//need to create secret key for imathas as well
 
                         break;
                     case('h5p'):
                         //NOT USED FOR anything at the moment
-                        $custom_claims=[];
+                        $custom_claims = [];
                         $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
                         break;
                     case('text'):
@@ -585,7 +599,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc( $question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc($question);
 
             }
 
@@ -601,7 +615,9 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
-    public function createProblemJWT(JWE $JWE, array $custom_claims, string $technology){
+    public
+    function createProblemJWT(JWE $JWE, array $custom_claims, string $technology)
+    {
         $payload = auth()->payload();
         $secret = $JWE->getSecret($technology);
         \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
@@ -614,13 +630,15 @@ class AssignmentSyncQuestionController extends Controller
         return $problemJWT;
 
     }
-    public function getAssignmentQuestionSeed(Assignment $assignment, Question $question, array $questions_for_which_seeds_exist, array $seeds_by_question_id, string $technology)
+
+    public
+    function getAssignmentQuestionSeed(Assignment $assignment, Question $question, array $questions_for_which_seeds_exist, array $seeds_by_question_id, string $technology)
     {
 
         if (in_array($question->id, $questions_for_which_seeds_exist)) {
             $seed = $seeds_by_question_id[$question->id];
         } else {
-            switch($technology){
+            switch ($technology) {
                 case('webwork'):
                     $seed = env('WEBWORK_SEED');
                     break;

@@ -54,6 +54,17 @@ class Assignment extends Model
         return collect($questionFileSubmissions);
     }
 
+    public function learningTrees()  {
+        $learningTrees = DB::table('assignment_question')
+            ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+            ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
+            ->where('assignment_id', $this->id)
+            ->select('learning_tree', 'question_id')
+            ->get();
+        return collect($learningTrees);
+    }
+
+
     public function submissions()
     {
 

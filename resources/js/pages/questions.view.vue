@@ -510,10 +510,6 @@
                     <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Exploration Points:</span> {{
                       questions[currentPage - 1].learning_tree_exploration_points
                     }}<br>
-                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
-                    </b-alert>
-
                     <div v-if="(scoring_type === 'p') && showScores">
                       <span class="font-weight-bold">Question Score:</span> {{
                         questions[currentPage - 1].submission_score
@@ -529,6 +525,9 @@
                         parseInt(questions[currentPage - 1].submission_score) + parseInt(questions[currentPage - 1].learning_tree_exploration_points)
                       }}<br>
                     </div>
+                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                    </b-alert>
                   </b-card-text>
                 </b-card>
               </b-row>
@@ -1046,6 +1045,7 @@ export default {
       if (!this.learningTree) {
         return false
       }
+
       // loop through each with parent having this level
       let pageId
       let library
@@ -1110,7 +1110,7 @@ export default {
     setTimerToGetLearningTreePoints () {
       this.timerSetToGetLearningTreePoints = true
       this.timeLeftToGetLearningTreePoints = this.minTimeNeededInLearningTree
-      this.timeLeftToGetLearningTreePoints = 5000
+      this.timeLeftToGetLearningTreePoints = 10000
     },
     async getAssignmentInfo () {
       try {
@@ -1221,9 +1221,7 @@ export default {
 
         this.questionPointsForm.points = this.questions[this.currentPage - 1].points
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
-
-        console.log(this.learningTree)
-        this.showLearningTree()
+        this.showLearningTree(this.learningTree)
 
         this.initializing = false
       } catch (error) {
