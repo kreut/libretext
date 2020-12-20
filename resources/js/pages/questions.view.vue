@@ -507,7 +507,7 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-                    <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Points:</span> {{
+                    <span v-if="assessmentType === 'learning tree'" class="font-weight-bold">Learning Tree Exploration Points:</span> {{
                       questions[currentPage - 1].learning_tree_points
                     }}<br>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">

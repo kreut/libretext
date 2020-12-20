@@ -68,7 +68,7 @@
           minimum time as described above.
         </b-tooltip>
 
-        <b-tooltip target="percent_decrease_tooltip"
+        <b-tooltip target="learning_tree_percent_decrease_tooltip"
                    delay="250"
         >
           For each new attempt after their first free attempt, students will be awarded the total number of new
@@ -386,16 +386,16 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="percent_decrease"
+            id="learning_tree_percent_decrease"
             label-cols-sm="7"
             label-cols-lg="6"
-            label-for="percent_decrease"
+            label-for="learning_tree_percent_decrease"
           >
             <template slot="label">
               <b-icon
                 icon="tree" variant="success"
               />
-              Percent Decrease Factor <span id="percent_decrease_tooltip" class="text-muted"><b-icon
+              Learning Tree Percent Decrease <span id="learning_tree_percent_decrease_tooltip" class="text-muted"><b-icon
                 icon="question-circle"
               /></span>
             </template>
@@ -403,13 +403,13 @@
               <b-col lg="4">
                 <b-form-input
                   id="decay_percent"
-                  v-model="form.percent_decrease"
+                  v-model="form.learing_tree_percent_decrease"
                   type="text"
                   placeholder="Out of 100"
-                  :class="{ 'is-invalid': form.errors.has('percent_decrease') }"
-                  @keydown="form.errors.clear('percent_decrease')"
+                  :class="{ 'is-invalid': form.errors.has('learning_tree_percent_decrease') }"
+                  @keydown="form.errors.clear('learning_tree_percent_decrease')"
                 />
-                <has-error :form="form" field="percent_decrease" />
+                <has-error :form="form" field="learning_treepercent_decrease" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -850,7 +850,7 @@ export default {
       assessment_type: 'real time',
       min_time_needed_in_learning_tree: null,
       percent_earned_for_exploring_learning_tree: null,
-      percent_decrease: null,
+      learning_tree_percent_decrease: null,
       available_from_date: '',
       assignment_group_id: null,
       available_from_time: '09:00:00',
@@ -907,12 +907,12 @@ export default {
       this.form.submission_files = 'q'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.percent_decrease = null
+      this.form.learning_tree_percent_decrease = null
     },
     showRealTimeOptions () {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.percent_decrease = null
+      this.form.learning_treepercent_decrease = null
     },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)

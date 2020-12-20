@@ -326,7 +326,7 @@ class AssignmentController extends Controller
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
-                    'percent_decrease' => $learning_tree_assessment ? $data['percent_decrease'] : null,
+                    'learning_tree_percent_decrease' => $learning_tree_assessment ? $data['learning_tree_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],

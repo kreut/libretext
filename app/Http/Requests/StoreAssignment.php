@@ -55,7 +55,7 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'learning tree') {
             $rules['min_time_needed_in_learning_tree'] = 'required|integer|min:0|max:20';
             $rules['percent_earned_for_exploring_learning_tree'] = 'required|integer|min:0|max:100';
-            $rules['percent_decrease'] = 'required|integer|min:0|max:100';
+            $rules['learning_tree_percent_decrease'] = 'required|integer|min:0|max:100';
         }
 
         if ($this->late_policy === 'deduction'){
