@@ -81,7 +81,7 @@ class QuestionsViewLearningTreesTest extends TestCase
     {
 
         $this->actingAs($this->student_user_2)->patchJson("api/submissions/{$this->assignment->id}/{$this->question->id}/explored-learning-tree")
-            ->assertJson(['explored_learning_tree' => 'No responses will be saved since the assignment is not part of your course.']);
+            ->assertJson(['message' => 'No responses will be saved since the assignment is not part of your course.']);
     }
 
     /** @test */
@@ -139,8 +139,8 @@ class QuestionsViewLearningTreesTest extends TestCase
     public function students_can_resubmit_only_after_visiting_learning_tree_at_least_once()
     {
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmissionCorrect);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmissionCorrect)
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission)
             ->assertJson(['message' => 'You can resubmit after spending time exploring the Learning Tree.']);
 
     }
@@ -150,12 +150,12 @@ class QuestionsViewLearningTreesTest extends TestCase
     {
 
         //submit correct submission;
-         $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmissionCorrect)->original['submission_id'];
+         $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission)->original['submission_id'];
          $submission = Submission::find($submission_id);
         $submission->explored_learning_tree = 1;
          $submission->save();
 
-         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmissionCorrect)
+         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission)
            ->assertJson(['message' => 'Your score was not updated since you already answered this question correctly.']);
 
     }

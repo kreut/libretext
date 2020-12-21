@@ -50,6 +50,8 @@ class AssignmentsIndex2Test extends TestCase
             'default_points_per_question' => 2,
             'students_can_view_assignment_statistics' => 0,
             'include_in_weighted_average' => 1,
+            'late_policy' => 'not accepted',
+            'assessment_type' => 'delayed',
             'submission_files' => 'a',
             'instructions' => 'Some instructions',
             'assignment_group_id' => 1];

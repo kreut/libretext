@@ -115,7 +115,7 @@ class Submission extends Model
                         return $response;
                     }
 
-                    if ($submission->answered_correctly) {
+                    if ($submission->answered_correctly_at_least_once) {
                         $data['score'] = $submission->submission_score;
                         $response['type'] = 'info';
                         $response['message'] = "Your score was not updated since you already answered this question correctly.";
@@ -133,7 +133,7 @@ class Submission extends Model
                     if ($explored_learning_tree) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
-                            $submission->answered_correctly = 1;//first time getting it right!
+                            $submission->answered_correctly_at_least_once = 1;//first time getting it right!
 
                             $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received , $learning_tree_points);
                             $message = "Your total score was updated with a penalty of $percent_penalty% applied.";
@@ -166,7 +166,7 @@ class Submission extends Model
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
                     'score' => $data['score'],
-                    'answered_correctly' => $data['all_correct'],
+                    'answered_correctly_at_least_once' => $data['all_correct'],
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated

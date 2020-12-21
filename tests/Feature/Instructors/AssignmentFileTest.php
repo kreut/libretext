@@ -71,6 +71,7 @@ class AssignmentFileTest extends TestCase
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
             'score' => $question_score,
+            'answered_correctly_at_least_once' => 0,
             'submission_count' => 1]);
 
 
@@ -117,6 +118,7 @@ class AssignmentFileTest extends TestCase
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
             'score' => $question_score,
+            'answered_correctly_at_least_once' => 0,
             'submission_count' => 1]);
 
 
@@ -157,6 +159,7 @@ class AssignmentFileTest extends TestCase
             'question_id'=> $this->question->id,
             'submission' => 'some other submission',
             'score' => $question_score,
+            'answered_correctly_at_least_once' => 0,
             'submission_count' => 1]);
 
 
