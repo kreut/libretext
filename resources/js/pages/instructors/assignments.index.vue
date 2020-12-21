@@ -27,8 +27,10 @@
         <b-tooltip target="late_deduction_application_period_tooltip"
                    delay="250"
         >
-          Enter a timeframe such as 5 minutes, 3 hours, or 1 day.  As a concrete example, if the Late Deduction percent is 20%
-          and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the percent is applied twice
+          Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction percent
+          is 20%
+          and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the percent
+          is applied twice
           and they'll have a 40% deduction when computing the score.
         </b-tooltip>
         <b-tooltip target="external"
@@ -72,7 +74,8 @@
                    delay="250"
         >
           For each new attempt after their first free attempt, students will be awarded the total number of new
-          attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering the Learning Tree.
+          attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering
+          the Learning Tree.
         </b-tooltip>
 
         <b-form ref="form" @submit="createAssignment">
@@ -299,14 +302,14 @@
                               stacked
                               :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
           >
-            <span @click="showRealTimeOptions">
+            <span @click="!!Boolean(has_submissions_or_file_submissions || solutionsReleased) && showRealTimeOptions">
               <b-form-radio name="assessment_type" value="real time">
                 Real time <span id="real_time" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span></b-form-radio>
             </span>
-            <span @click="showDelayedOptions">
+            <span @click="!!Boolean(has_submissions_or_file_submissions || solutionsReleased) && showDelayedOptions">
               <b-form-radio name="assessment_type" value="delayed">
                 Delayed <span id="delayed" class="text-muted"><b-icon
                   icon="question-circle"
@@ -347,6 +350,7 @@
                   v-model="form.min_time_needed_in_learning_tree"
                   type="text"
                   placeholder="In Minutes"
+                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                   :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
                   @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
                 />
@@ -378,6 +382,7 @@
                   v-model="form.percent_earned_for_exploring_learning_tree"
                   type="text"
                   placeholder="Out of 100"
+                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                   :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
                   @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
                 />
@@ -406,6 +411,7 @@
                   v-model="form.submission_count_percent_decrease"
                   type="text"
                   placeholder="Out of 100"
+                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
                   :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
                   @keydown="form.errors.clear('submission_count_percent_decrease')"
                 />
@@ -793,7 +799,7 @@ export default {
     showPointsPerQuestionTooltip: {
       fallbackPlacement: ['right'],
       placement: 'right',
-      title: "In case you only grade a random subset of questions, you can hide the number of points per question so that your students won't know which questions you'll be grading."
+      title: 'In case you only grade a random subset of questions, you can hide the number of points per question so that your students won\'t know which questions you\'ll be grading.'
     },
     completedOrCorrectOptions: [
       { item: 'correct', name: 'correct' },
@@ -823,7 +829,8 @@ export default {
         thStyle: { minWidth: '175px' }
       },
       'status',
-      { key: 'show_points_per_question',
+      {
+        key: 'show_points_per_question',
         thStyle: { minWidth: '120px' }
       },
       {
@@ -992,6 +999,17 @@ export default {
       this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
       this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
       this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+      this.form.late_policy = 'not accepted'
+      this.form.late_deduction_percent = null
+      this.form.late_deduction_applied_once = 1
+      this.form.late_deduction_application_period = null
+      this.form.source = 'a'
+      this.form.default_points_per_question = '10'
+      this.form.instructions = ''
+      this.form.assessment_type = 'real time'
+      this.form.min_time_needed_in_learning_tree = null
+      this.form.percent_earned_for_exploring_learning_tree = null
+      this.form.submission_count_percent_decrease = null
     },
     async submitShowAssignment (assignment) {
       try {
