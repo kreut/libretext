@@ -89,7 +89,6 @@ class Submission extends Model
         $data['all_correct'] = $data['score'] >= floatval($assignment_question->points);//>= so I don't worry about decimals
 
         try {
-            DB::beginTransaction();
             //do the extension stuff also
             $submission = Submission::where('user_id', $data['user_id'])
                 ->where('assignment_id', $data['assignment_id'])
@@ -105,22 +104,24 @@ class Submission extends Model
                 ->get();
             $percent_penalty = 0;
             $explored_learning_tree = 0;
-            $message = 'Question submission saved. Your scored was updated';
+            $message = 'Question submission saved. Your scored was updated.';
 
             if ($submission) {
                 if (($assignment->assessment_type === 'learning tree')) {
                     $explored_learning_tree = $submission->explored_learning_tree;
+                    if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {
+                        $response['type'] = 'info';
+                        $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
+                        return $response;
+                    }
+
                     if ($submission->answered_correctly) {
                         $data['score'] = $submission->submission_score;
                         $response['type'] = 'info';
                         $response['message'] = "Your score was not updated since you already answered this question correctly.";
                         return $response;
                     }
-                    if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {
-                        $response['type'] = 'info';
-                        $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
-                        return $response;
-                    }
+
 
                     //1 submission, get 100%
                     //submission penalty is 10%
@@ -128,11 +129,12 @@ class Submission extends Model
 
 
                     $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                    $percent_penalty = 100*(1-$proportion_of_score_received);
+                  $percent_penalty = 100*(1-$proportion_of_score_received);
                     if ($explored_learning_tree) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
                             $submission->answered_correctly = 1;//first time getting it right!
+
                             $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received , $learning_tree_points);
                             $message = "Your total score was updated with a penalty of $percent_penalty% applied.";
                         } else {
@@ -141,10 +143,11 @@ class Submission extends Model
                         }
                     } else {
                         if (!$data['all_correct']) {
-                            $message = "You submission was not correct so your score was not updated.";
+                            $message = "Your submission was not correct so your score was not updated.";
                         }
                     }
                 }
+                DB::beginTransaction();
                 $submission->submission = $data['submission'];
                 $submission->score = $data['score'];
                 $submission->submission_count = $submission->submission_count + 1;
@@ -157,7 +160,8 @@ class Submission extends Model
                         $message = "Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!";
                     }
                 }
-                Submission::create(['user_id' => $data['user_id'],
+                DB::beginTransaction();
+                $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
@@ -183,6 +187,9 @@ class Submission extends Model
                     break;
             }
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
+            if (env('DB_DATABASE') === "test_libretext"){
+                $response['submission_id']= $submission->id;
+            }
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';

@@ -12,6 +12,7 @@ use App\Question;
 use App\SubmissionFile;
 use Carbon\Carbon;
 use App\Score;
+use App\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -60,20 +61,10 @@ class QuestionsViewTest extends TestCase
             'question_id' => $this->question->id,
             'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
         ];
-
-
     }
 
-    public function gets_learning_tree_points_after_submission_if_they_have_explored_the_learning_tree(){
-        TODO
-    }
-    public function student_in_course_can_update_explored_learning_tree(){
-        patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
-    }
 
-    public function non_student_in_course_cannot_update_explored_learning_tree(){
-        patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
-    }
+
     /** @test */
     public function can_submit_response()
     {
@@ -114,25 +105,27 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments(){
-       $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-query-page-contents/10")
+    public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-query-page-contents/10")
             ->assertJson(['message' => 'You are not allowed to view this non-technology question.']);
     }
 
     /** @test */
 
-    public function user_can_get_query_page_if_page_id_is_in_one_of_their_assignments(){
+    public function user_can_get_query_page_if_page_id_is_in_one_of_their_assignments()
+    {
         $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-query-page-contents/1")
             ->assertJson(['message' => 'authorized']);
     }
 
     /** @test */
 
-    public function instructor_can_get_query_page_by_page_id(){
+    public function instructor_can_get_query_page_by_page_id()
+    {
         $this->actingAs($this->user)->getJson("/api/get-locally-saved-query-page-contents/1")
             ->assertJson(['message' => 'authorized']);
     }
-
 
 
     /** @test */
@@ -166,14 +159,14 @@ class QuestionsViewTest extends TestCase
     {
         $score = 10;
         Score::create(['user_id' => $this->student_user->id,
-            'assignment_id'=> $this->assignment->id,
+            'assignment_id' => $this->assignment->id,
             'score' => $score]);
         $response['assignment']['scores'] = [$score];
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
             ->assertJson($response);
     }
 
- /** @test */
+    /** @test */
 
     public function student_can_view_questions_info()
     {
@@ -198,8 +191,6 @@ class QuestionsViewTest extends TestCase
     }
 
 
-
-
     /** @test */
 
     public function student_cannot_get_scores_by_assignment_and_question()
@@ -220,21 +211,22 @@ class QuestionsViewTest extends TestCase
             'original_filename' => 'some original name.pdf',
             'score' => 4]);
 
-       $this->h5pSubmission = [
+        $this->h5pSubmission = [
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}',
-            ];//gives them 10 points for the question since they got it correct
+        ];//gives them 10 points for the question since they got it correct
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
 
-$response['scores'] = ["14.00"];
+        $response['scores'] = ["14.00"];
         $this->actingAs($this->user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
-        ->assertJson($response);
+            ->assertJson($response);
 
     }
-/** @test */
+
+    /** @test */
     public function if_there_are_no_scores_it_returns_an_empty_array()
     {
 
@@ -605,8 +597,6 @@ $response['scores'] = ["14.00"];
     /** @test */
 
 
-
-
     /** @test */
     public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()
     {
@@ -666,7 +656,6 @@ $response['scores'] = ["14.00"];
 
 
     }
-
 
 
     /** @test */
@@ -765,7 +754,6 @@ $response['scores'] = ["14.00"];
 
 
     }
-
 
 
     /** @test */

@@ -14,6 +14,8 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'default_points_per_question' => 2,
         'submission_files' => 'a',
         'assignment_group_id' => 1,
+        'assessment_type' => 'delayed',
+        'late_policy' => 'not accepted',
         'include_in_weighted_average' => 1
         ];
 });
