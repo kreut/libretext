@@ -58,16 +58,52 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-public function can_only_toggle_show_scores_for_a_delayed_assignment(){
-//todo
 
-}
+    public function min_time_needed_in_learning_tree_must_be_valid()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->assignment_info['percent_earned_for_exploring_learning_tree'] = 150;
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('percent_earned_for_exploring_learning_tree');
+    }
 
     /** @test */
-    public function can_only_toggle_show_points_per_question_for_a_delayed_assignment(){
+
+    public function percent_earned_for_exploring_learning_tree_must_be_valid()
+    {
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        //$this->assignment_info['min_time_needed_in_learning_tree'] = 10;
+        $this->assignment_info['percent_earned_for_exploring_learning_tree'] = 50;
+        $this->assignment_info['submission_count_percent_decrease'] = 60;
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('submission_count_percent_decrease');
+
+    }
+
+
+    /** @test */
+
+    public function submission_count_percent_decrease_must_be_valid()
+    {
+
+
+    }
+
+
+    /** @test */
+    public function can_only_toggle_show_scores_for_a_delayed_assignment()
+    {
 //todo
 
     }
+
+    /** @test */
+    public function can_only_toggle_show_points_per_question_for_a_delayed_assignment()
+    {
+//todo
+
+    }
+
     /** @test */
 
     public function a_valid_late_policy_is_submitted()
