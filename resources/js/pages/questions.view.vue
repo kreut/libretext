@@ -235,19 +235,6 @@
                 <div v-if="user.role === 2">
                   Link to Question: {{ getCurrentPage() }}
                 </div>
-                <div v-if="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
-                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
-                    <template slot-scope="props">
-                      Time Needed To Explore The Learning Tree:
-                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
-                    </template>
-                  </countdown>
-                </div>
-                <div v-if="!(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) && !timerSetToGetLearningTreePoints && showLearningTreePointsMessage && (user.role === 3)">
-                  <span class="font-weight-bold">Upon your next attempt at this assessment, you will receive
-                    {{ (percentEarnedForExploringLearningTree/100) * (questions[currentPage - 1].points) }} points for exploring the Learning
-                    Tree.</span>
-                </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
                     <div v-if="user.role === 3 && showScores">
@@ -518,6 +505,25 @@
                         questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
+                    <b-alert :variant="info" :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
+                      <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                        <template slot-scope="props">
+                          <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
+                            props.seconds
+                          }} seconds, you'll be able to re-submit.
+                          </span>
+                        </template>
+                      </countdown>
+                    </b-alert>
+                    <b-alert :variant="info" :show="!showSubmissionMessage &&
+                      !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
+                      !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
+                      && (user.role === 3)"
+                    >
+                      <span class="font-weight-bold"> Upon your next attempt at this assessment, you will receive
+                        {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
+                        Tree.</span>
+                    </b-alert>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
@@ -816,6 +822,7 @@ export default {
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
+        this.questions[this.currentPage - 1]['submission_score'] = data.submission_score
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
@@ -906,14 +913,15 @@ export default {
       if (data.learning_tree && !this.learningTree) {
         await this.showLearningTree(data.learning_tree)
       }
-      this.submissionDataType = (data.type === 'success') ? 'success' : 'danger'
+      this.submissionDataType = ['success', 'info'].includes(data.type) ? data.type : 'danger'
+
       this.submissionDataMessage = data.message
       this.percentPenalty = data.percent_penalty
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false
-      }, 5000)
-      if (data.type === 'success') {
+      }, 8000)
+      if (data.type !== 'danger') {
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
       }
     },

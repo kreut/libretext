@@ -253,7 +253,7 @@ class AssignmentSyncQuestionController extends Controller
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'score' => $response_info['submission_score']
+            'submission_score' => $response_info['submission_score']
         ];
 
     }
@@ -274,7 +274,7 @@ class AssignmentSyncQuestionController extends Controller
             $submission_count = $submission->submission_count;
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
-                    $student_response = $submission_object->result->response;
+                    $student_response = $submission_object->result->response ? $submission_object->result->response : 'N/A';
                     //$correct_response = $submission_object->object->definition->correctResponsesPattern;
                     break;
                 case('webwork'):
