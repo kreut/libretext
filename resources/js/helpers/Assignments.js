@@ -1,8 +1,8 @@
-import axios from "axios";
+import axios from 'axios'
 
-export async function getAssignments() {
+export async function getAssignments () {
   try {
-    const {data} = await axios.get(`/api/assignments/courses/${this.courseId}`)
+    const { data } = await axios.get(`/api/assignments/courses/${this.courseId}`)
     this.isLoading = false
     if (data.type === 'error') {
       this.$noty.error(data.message)
@@ -14,7 +14,5 @@ export async function getAssignments() {
     this.assignments = data.assignments
   } catch (error) {
     this.$noty.error(error.message)
-
   }
 }
-

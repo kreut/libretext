@@ -326,16 +326,16 @@
         <div v-show="form.assessment_type === 'learning tree'">
           <b-form-group
             id="min_time_needed_in_learning_tree"
-            label-cols-sm="7"
-            label-cols-lg="6"
+            label-cols-sm="8"
+            label-cols-lg="7"
             label-for="min_time_needed_in_learning_tree"
           >
             <template slot="label">
               <b-icon
                 icon="tree" variant="success"
               />
-              Minimum Time Spent In Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
-                                                        class="text-muted"
+              Minimum Number of Minutes Exploring Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
+                                                                      class="text-muted"
               ><b-icon
                 icon="question-circle"
               /></span>
@@ -372,7 +372,7 @@
               /></span>
             </template>
             <b-form-row>
-              <b-col lg="4">
+              <b-col lg="5">
                 <b-form-input
                   id="percent_earned_for_exploring_learning_tree"
                   v-model="form.percent_earned_for_exploring_learning_tree"
@@ -395,21 +395,21 @@
               <b-icon
                 icon="tree" variant="success"
               />
-              Learning Tree Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
+              Submission Count Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
                 icon="question-circle"
               /></span>
             </template>
             <b-form-row>
-              <b-col lg="4">
+              <b-col lg="5">
                 <b-form-input
-                  id="decay_percent"
-                  v-model="form.learing_tree_percent_decrease"
+                  id="submission_count_percent_decrease"
+                  v-model="form.submission_count_percent_decrease"
                   type="text"
                   placeholder="Out of 100"
                   :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
                   @keydown="form.errors.clear('submission_count_percent_decrease')"
                 />
-                <has-error :form="form" field="learning_treepercent_decrease" />
+                <has-error :form="form" field="submission_count_percent_decrease" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -912,7 +912,7 @@ export default {
     showRealTimeOptions () {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.learning_treepercent_decrease = null
+      this.form.submission_count_percent_decrease = null
     },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)
@@ -1087,11 +1087,15 @@ export default {
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
       this.number_of_questions = assignment.number_of_questions
+
       this.form.name = assignment.name
       this.form.assessment_type = assignment.assessment_type
       this.form.available_from_date = assignment.available_from_date
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
+      this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
+      this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
+      this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
       this.form.due_time = assignment.due_time
       this.form.assignment_group_id = assignment.assignment_group_id
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
