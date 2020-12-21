@@ -178,6 +178,12 @@
                     points.
                   </h5>
                 </div>
+                <div v-if="!isInstructor() && showPointsPerQuestion" class="text-center">
+                  <span class="text-bold">
+                    A penalty of
+                    {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
+                  </span>
+                </div>
 
                 <div v-if="isInstructor()" class="text-center">
                   <b-form-row>
@@ -512,16 +518,6 @@
                         questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
-                    <div v-if="(assessmentType === 'learning tree')">
-                      <span class="font-weight-bold">Percent Penalty:</span>
-                      {{ percentPenalty }}
-                      <br>
-                    </div>
-                    <div v-if="(assessmentType === 'learning tree')">
-                      <span class="font-weight-bold">Total Score:</span> {{
-                        parseInt(questions[currentPage - 1].submission_score)
-                      }}<br>
-                    </div>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
@@ -644,6 +640,7 @@ export default {
   },
   data: () => ({
     percentPenalty: 0,
+    submissionCountPercentDecrease: 0,
     capitalFormattedAssessmentType: '',
     assessmentType: '',
     showPointsPerQuestion: false,
@@ -1126,6 +1123,7 @@ export default {
         this.timeLeft = assignment.time_left
         this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
         this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)
+        this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level

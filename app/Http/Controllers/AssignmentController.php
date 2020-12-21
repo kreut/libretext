@@ -389,6 +389,7 @@ class AssignmentController extends Controller
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
+                'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics
@@ -521,6 +522,7 @@ class AssignmentController extends Controller
                 'instructions' => $assignment->instructions,
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
+                'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'assessment_type' => $assignment->assessment_type
             ];
 

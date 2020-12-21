@@ -353,6 +353,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $learning_trees_by_question_id = [];
+            $learning_tree_penalties_by_question_id = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
@@ -389,10 +390,16 @@ class AssignmentSyncQuestionController extends Controller
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
                 foreach ($assignment->learningTrees() as $value) {
+                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]) &&  $submissions_by_question_id[$value->question_id]->submission_count >=1;
                     $learning_trees_by_question_id[$value->question_id] =
-                       isset($submissions_by_question_id[$value->question_id]) &&  $submissions_by_question_id[$value->question_id]->submission_count >=1
+                        $submission_exists_by_question_id
                             ? json_decode($value->learning_tree)->blocks
                             : null;
+                    $learning_tree_penalties_by_question_id[$value->question_id] =  $submission_exists_by_question_id
+                        ? min( (($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
+                        : '0%';
+
+
                 }
             }
 
@@ -453,6 +460,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
                 if ($assignment->assessment_type === 'learning tree') {
+                    $assignment->questions[$key]['percent_penalty']  = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
                 }
 

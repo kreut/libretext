@@ -110,7 +110,13 @@ class Submission extends Model
             if ($submission) {
                 if (($assignment->assessment_type === 'learning tree')) {
                     $explored_learning_tree = $submission->explored_learning_tree;
-                    if (!$explored_learning_tree && (int)$submission->submission_count === 1) {
+                    if ($submission->answered_correctly) {
+                        $data['score'] = $submission->submission_score;
+                        $response['type'] = 'info';
+                        $response['message'] = "Your score was not updated since you already answered this question correctly.";
+                        return $response;
+                    }
+                    if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {
                         $response['type'] = 'info';
                         $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
                         return $response;
@@ -119,15 +125,19 @@ class Submission extends Model
                     //1 submission, get 100%
                     //submission penalty is 10%
                     //2 submissions, get 1-(1*10/100) = 90%
-                    $percent_penalty = max(1 - (($submission->submission_count) * $assignment->submission_count_percent_decrease / 100), 0);
+
+
+                    $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
+                    $percent_penalty = 100*(1-$proportion_of_score_received);
                     if ($explored_learning_tree) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
-                            $data['score'] =max(floatval($assignment_question->points) * $percent_penalty, $learning_tree_points);
-                            $message .= "Your question submission was saved and you received points for exploring the Learning Tree.  In addition, your total score was updated.";
+                            $submission->answered_correctly = 1;//first time getting it right!
+                            $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received , $learning_tree_points);
+                            $message = "Your total score was updated with a penalty of $percent_penalty% applied.";
                         } else {
-                            $data['score'] =$learning_tree_points;
-                            $message = "You submission was not correct but you're still receiving $submission->score for exploring the Learning Tree.";
+                            $data['score'] = $learning_tree_points;
+                            $message = "You submission was not correct but you're still receiving $learning_tree_points points for exploring the Learning Tree.";
                         }
                     } else {
                         if (!$data['all_correct']) {
@@ -142,7 +152,7 @@ class Submission extends Model
 
             } else {
                 if (($assignment->assessment_type === 'learning tree')) {
-                    if (!$data['all_correct']){
+                    if (!$data['all_correct']) {
                         $data['score'] = 0;
                         $message = "Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!";
                     }
@@ -152,6 +162,7 @@ class Submission extends Model
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
                     'score' => $data['score'],
+                    'answered_correctly' => $data['all_correct'],
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
@@ -175,7 +186,7 @@ class Submission extends Model
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['percent_penalty'] = $percent_penalty*100 . '%';
+            $response['percent_penalty'] = "$percent_penalty%";
             $response['explored_learning_tree'] = $explored_learning_tree;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
