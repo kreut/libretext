@@ -34,7 +34,7 @@ class SubmissionFileController extends Controller
     use DateFormatter;
     use LatePolicy;
 
-    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile)
+    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
     {
 
         $response['type'] = 'error';
@@ -388,7 +388,7 @@ class SubmissionFileController extends Controller
             }
             $response['message'] = "Your file submission has been saved.";
 
-            $response['late_file_submission']= $this->isLateSubmission($extension, $assignment);
+            $response['late_file_submission']= $this->isLateSubmission($extension, $assignment, Carbon::now());
 
 
             if (($upload_count >= $max_number_of_uploads_allowed - 3)) {

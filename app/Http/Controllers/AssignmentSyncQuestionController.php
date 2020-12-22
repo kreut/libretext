@@ -279,8 +279,8 @@ class AssignmentSyncQuestionController extends Controller
             $submission_object = json_decode($submission->submission);
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
-            $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($submission->updated_at));
-            $late_question_submission = $this->isLateSubmission($Extension, $assignment);
+            $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted));
+            $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
 
 
             switch ($question_technologies[$question_id]) {
@@ -361,7 +361,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
             $user_as_collection = collect([Auth::user()]);
-            $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
+            $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment,'allStudents', $user_as_collection);
             $submission_files = [];
 
             //want to just pull out the single user which will be returned for each question

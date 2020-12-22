@@ -154,7 +154,7 @@ class CutupController extends Controller
                         $submission_file_data
                     );
 
-                    $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment);
+                    $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
                     $response['submission'] = $cutup_file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';

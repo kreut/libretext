@@ -67,9 +67,12 @@ class Assignment extends Model
 
     public function submissions()
     {
-
         return $this->hasMany('App\Submission');
+    }
 
+    public function extensions()
+    {
+        return $this->hasMany('App\Extension');
     }
 
 }

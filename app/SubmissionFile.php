@@ -6,6 +6,8 @@ use App\Exceptions\Handler;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Traits\S3;
+use App\Traits\LatePolicy;
+
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
@@ -14,6 +16,7 @@ class SubmissionFile extends Model
 {
     use S3;
     use DateFormatter;
+    use LatePolicy;
 
     protected $guarded = [];
 
@@ -121,6 +124,10 @@ class SubmissionFile extends Model
 
 
         ///what if null?
+         $extensions = [];
+        foreach ($assignment->extensions as $extension){
+            $extensions[$extension->user_id] = $extension->extension;
+        }
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
@@ -167,6 +174,10 @@ class SubmissionFile extends Model
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
+               /* $late_file_submission = $submission $this->isLateSubmission($Extension, )?
+                                        : false*/
+
+
                 $solution = $solutions_by_question_id[$question->question_id] ?? false;
 
 
