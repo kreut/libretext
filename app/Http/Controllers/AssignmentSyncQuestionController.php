@@ -234,7 +234,7 @@ class AssignmentSyncQuestionController extends Controller
         return $output[$query_param];
     }
 
-    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question)
+    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission)
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -247,22 +247,24 @@ class AssignmentSyncQuestionController extends Controller
 
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
-        $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+        $response_info = $this->getResponseInfo($assignment, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'submission_score' => $response_info['submission_score']
+            'submission_score' => $response_info['submission_score'],
+            'late_penalty_percent' => $response_info['late_penalty_percent']
         ];
 
     }
 
-    public function getResponseInfo($submissions_by_question_id, $question_technologies, $question_id)
+    public function getResponseInfo(Assignment $assignment, Submission $Submission, $submissions_by_question_id, $question_technologies, $question_id)
     {
         $student_response = 'N/A';
         $correct_response = null;
         $score = null;
+        $late_penalty_percent = 0;
         $submission_score = 0;
         $last_submitted = 'N/A';
         $submission_count = 0;
@@ -272,6 +274,7 @@ class AssignmentSyncQuestionController extends Controller
             $submission_object = json_decode($submission->submission);
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
+            $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($submission->updated_at));
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response ? $submission_object->result->response : 'N/A';
@@ -308,7 +311,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent');
 
     }
 
@@ -390,13 +393,13 @@ class AssignmentSyncQuestionController extends Controller
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
                 foreach ($assignment->learningTrees() as $value) {
-                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]) &&  $submissions_by_question_id[$value->question_id]->submission_count >=1;
+                    $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]) && $submissions_by_question_id[$value->question_id]->submission_count >= 1;
                     $learning_trees_by_question_id[$value->question_id] =
                         $submission_exists_by_question_id
                             ? json_decode($value->learning_tree)->blocks
                             : null;
-                    $learning_tree_penalties_by_question_id[$value->question_id] =  $submission_exists_by_question_id
-                        ? min( (($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
+                    $learning_tree_penalties_by_question_id[$value->question_id] = $submission_exists_by_question_id
+                        ? min((($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
                         : '0%';
 
 
@@ -442,7 +445,7 @@ class AssignmentSyncQuestionController extends Controller
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                $response_info = $this->getResponseInfo($submissions_by_question_id, $question_technologies, $question->id);
+                $response_info = $this->getResponseInfo($assignment, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
@@ -460,14 +463,18 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                 }
                 if ($assignment->assessment_type === 'learning tree') {
-                    $assignment->questions[$key]['percent_penalty']  = $learning_tree_penalties_by_question_id[$question->id];
+                    $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
                 }
-
 
                 $assignment->questions[$key]['last_submitted'] = ($last_submitted !== 'N/A')
                     ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($last_submitted, Auth::user()->time_zone, 'M d, Y g:i:s a')
                     : $last_submitted;
+
+                $assignment->questions[$key]['late_penalty_percent'] = ($last_submitted !== 'N/A')
+                    ? $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted))
+                    : 0;
+
                 $assignment->questions[$key]['submission_count'] = $submission_count;
                 $has_question_files = $question_files[$question->id];
 

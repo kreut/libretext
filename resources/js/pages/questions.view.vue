@@ -178,7 +178,7 @@
                     points.
                   </h5>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion" class="text-center">
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree'" class="text-center">
                   <span class="text-bold">
                     A penalty of
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
@@ -505,6 +505,11 @@
                         questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
+                    <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                      <span class="font-weight-bold">Late Penalty:</span> {{
+                        questions[currentPage - 1].late_penalty_percent
+                      }}%<br>
+                    </div>
                     <b-alert variant="info" :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
                       <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                         <template slot-scope="props">
@@ -758,8 +763,7 @@ export default {
       this.loaded = false
       this.getScoresSummary = getScoresSummary
       try {
-        const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
-        this.chartdata = scoresData
+        this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
         this.loaded = true
       } catch (error) {
         this.$noty.error(error.message)
@@ -823,6 +827,7 @@ export default {
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
         this.questions[this.currentPage - 1]['submission_score'] = data.submission_score
+        this.questions[this.currentPage - 1]['late_penalty_percent'] = data.late_penalty_percent
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
@@ -831,7 +836,7 @@ export default {
       }
     },
     async receiveMessage (event) {
-      console.log(event.data)
+      // console.log(event.data)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
         // console.log(technology)

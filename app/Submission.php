@@ -163,11 +163,12 @@ class Submission extends Model
                 }
                 DB::beginTransaction();
                 Log::info("Score before going in: {$data['score']}");
+                $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
                 $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
-                    'score' => $this->setScoreBasedOnLatePolicy($assignment, $data['score']),
+                    'score' => Round($data['score'] * (100 -  $late_penalty_percent  ) / 100, 2),
                     'answered_correctly_at_least_once' => $data['all_correct'],
                     'submission_count' => 1]);
             }
@@ -215,8 +216,9 @@ class Submission extends Model
     }
 
 
-    public function setScoreBasedOnLatePolicy(Assignment $assignment, $score)
+    public function latePenaltyPercent(Assignment $assignment, Carbon $now)
     {
+        $late_deduction_percent = 0;
         if ($assignment->late_policy === 'deduction') {
             $late_deduction_percent = $assignment->late_deduction_percent;
             $late_deduction_application_period = $assignment->late_deduction_application_period;
@@ -224,23 +226,19 @@ class Submission extends Model
                 $max_num_iterations = (int) floor(100 / $late_deduction_percent );
                 //Ex 100/52 = 1.92....use 1.  Makes sense since you won't deduct more than 100%
                 //Ex 100/50 = 2.
-                $due_copy = Carbon::parse($assignment->due);
-                $now = Carbon::now('UTC');
+                $due = Carbon::parse($assignment->due);
                 for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
-                    Log::info("$now  now - due copy  $due_copy");
-                    if ($due_copy > $now) {
+                    Log::info("$now  now - due   $due");
+                    if ($due > $now) {
                         break;
                     }
-                    $due_copy->add($late_deduction_application_period);
+                    $due->add($late_deduction_application_period);
                 }
                 $late_deduction_percent = $late_deduction_percent * $num_late_periods;
             }
-            //just once so do it once!
-            Log::info("score: $score");
-            Log::info("late deduction percent: $late_deduction_percent");
-            $score = Round($score * (100 - $late_deduction_percent) / 100, 2);
+           return $late_deduction_percent;
         }
-        return $score;
+        return $late_deduction_percent;
     }
 
     public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
