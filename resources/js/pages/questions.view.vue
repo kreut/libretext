@@ -178,7 +178,9 @@
                     points.
                   </h5>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree'" class="text-center">
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree'"
+                     class="text-center"
+                >
                   <span class="text-bold">
                     A penalty of
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
@@ -490,6 +492,13 @@
                       </a>
                       <br>
                     </span>
+                    <span
+                      v-show="parseInt(questions[currentPage - 1].submission_count) === 0 && latePolicy === 'marked late' && timeLeft === 0"
+                    >
+                      <b-alert variant="info" show>
+                        <span class="font-weight-bold">Your question submission will be marked late.</span>
+                      </b-alert>
+                    </span>
                     <span class="font-weight-bold">Number of attempts: </span> {{
                       questions[currentPage - 1].submission_count
                     }}<br>
@@ -538,6 +547,13 @@
               <b-row v-if="questions[currentPage-1].questionFiles && (user.role === 3)" class="mt-3 mb-3">
                 <b-card header="Default" header-html="<h5>File Submission Information</h5>">
                   <b-card-text>
+                    <span
+                      v-show="!questions[currentPage-1].submission_file_exists && latePolicy === 'marked late' && timeLeft === 0"
+                    >
+                      <b-alert variant="info" show>
+                        <span class="font-weight-bold">Your file submission will be marked late.</span>
+                      </b-alert>
+                    </span>
                     <strong> Uploaded file:</strong>
                     <span v-if="questions[currentPage-1].submission_file_exists">
                       <a href=""
@@ -650,6 +666,7 @@ export default {
     Email
   },
   data: () => ({
+    latePolicy: '',
     percentPenalty: 0,
     submissionCountPercentDecrease: 0,
     capitalFormattedAssessmentType: '',
@@ -1141,6 +1158,7 @@ export default {
         this.source = assignment.source
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
+        this.latePolicy = assignment.late_policy
         this.showScores = Boolean(Number(assignment.show_scores))
         this.scoring_type = assignment.scoring_type
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics

@@ -64,6 +64,13 @@ class QuestionsViewTest extends TestCase
     }
 
 
+    /** @test  */
+
+public function score_is_correctly_computed_for_a_deduction_late_policy(){
+    //todo
+    //do not late, do late but not past 100%, do 100%
+
+}
     /** @test */
     public function student_can_make_a_new_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
     {

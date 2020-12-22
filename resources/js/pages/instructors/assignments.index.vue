@@ -81,14 +81,17 @@
         <b-form ref="form" @submit="createAssignment">
           <div v-if="has_submissions_or_file_submissions && !solutionsReleased">
             <b-alert variant="info" show>
-              <strong>Students have submitted responses to questions in the assignment so you
-                can't change the source of the questions, the scoring type, the default points per question, or the type
-                of file uploads. </strong>
+              <strong>This assignment is locked.  Since students have submitted responses , the only
+                item
+                that you can update is the assignment's name, the assignment's group, the instructions, and whether
+                students can view the
+                assignment
+                statistics. </strong>
             </b-alert>
           </div>
           <div v-show="solutionsReleased">
             <b-alert variant="info" show>
-              <strong>This assignment is locked. The only
+              <strong>This assignment is locked. Since you have released the solutions, the only
                 item
                 that you can update is the assignment's name, the assignment's group, the instructions, and whether
                 students can view the
@@ -873,7 +876,7 @@ export default {
       scoring_type: 'p',
       include_in_weighted_average: 1,
       num_submissions_needed: '2',
-      default_points_per_question: '10',
+      default_points_per_question: 10,
       external_source_points: 100,
       instructions: ''
     }),
@@ -1004,7 +1007,7 @@ export default {
       this.form.late_deduction_applied_once = 1
       this.form.late_deduction_application_period = null
       this.form.source = 'a'
-      this.form.default_points_per_question = '10'
+      this.form.default_points_per_question = 10
       this.form.instructions = ''
       this.form.assessment_type = 'real time'
       this.form.min_time_needed_in_learning_tree = null

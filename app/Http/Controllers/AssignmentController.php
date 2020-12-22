@@ -381,6 +381,7 @@ class AssignmentController extends Controller
                 'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => $this->getTimeLeft($assignment),
+                'late_policy' => $assignment->late_policy,
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree  : 0,

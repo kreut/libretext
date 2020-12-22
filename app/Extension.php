@@ -3,7 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class Extension extends Model
 {
@@ -21,5 +21,16 @@ class Extension extends Model
         }
 
         return $extensions_by_assignment;
+    }
+
+    public function getAssignmentExtensionByUser(Assignment $assignment, User $user)
+    {
+        $extension = DB::table('extensions')->where('user_id', $user->id)
+            ->where('assignment_id', $assignment->id)
+            ->first();
+        if ($extension){
+            return $extension->extension;
+        }
+        return false;
     }
 }

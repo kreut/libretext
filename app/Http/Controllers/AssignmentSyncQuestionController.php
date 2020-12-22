@@ -13,6 +13,7 @@ use App\Assignment;
 use App\Question;
 use App\Submission;
 use App\SubmissionFile;
+use App\Extension;
 
 
 use App\Traits\IframeFormatter;
@@ -316,7 +317,7 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile)
+    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension)
     {
 
         $response['type'] = 'error';
@@ -327,6 +328,24 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+            $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
+            $due_date_considering_extension =$assignment->due;
+            if ($extension) {
+                $carbon_extension = Carbon::parse($extension);
+                $carbon_due =  Carbon::parse($assignment->due);
+                if ($carbon_extension->greaterThan( $carbon_due ) ){
+                    $due_date_considering_extension = $extension;
+                }
+            }
+
+            For each question -- loop through to see if it was submitted late
+
+
+
+
+
+
+
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];
@@ -401,8 +420,6 @@ class AssignmentSyncQuestionController extends Controller
                     $learning_tree_penalties_by_question_id[$value->question_id] = $submission_exists_by_question_id
                         ? min((($submissions_by_question_id[$value->question_id]->submission_count - 1) * $assignment->submission_count_percent_decrease), 100) . '%'
                         : '0%';
-
-
                 }
             }
 
