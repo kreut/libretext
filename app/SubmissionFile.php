@@ -122,7 +122,6 @@ class SubmissionFile extends Model
     function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
     {
 
-
         ///what if null?
          $extensions = [];
         foreach ($assignment->extensions as $extension){
@@ -174,9 +173,10 @@ class SubmissionFile extends Model
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
-               /* $late_file_submission = $submission $this->isLateSubmission($Extension, )?
-                                        : false*/
-
+                $extension = isset($extensions[$user->user_id] ) ? $extensions[$user->user_id] : null;
+                if ($submission && $assignment->late_policy === 'marked late'){
+                    $late_file_submission =  $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension,  $assignment->due,  $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
+                }
 
                 $solution = $solutions_by_question_id[$question->question_id] ?? false;
 
@@ -210,6 +210,7 @@ class SubmissionFile extends Model
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
                 $all_info['grader_name'] = $grader_name;
+                $all_info['late_file_submission'] = $late_file_submission ?? false;
                 // $all_info['grader_name'] = $grader_name;
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;

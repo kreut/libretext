@@ -495,8 +495,9 @@
                     <span
                       v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
-                      <b-alert variant="info" show>
-                        <span class="font-weight-bold">Your question submission will be marked late.</span>
+                      <b-alert variant="warning" show>
+                        <a href="#" class="alert-link">
+                          Your question submission will be marked late.</a>
                       </b-alert>
                     </span>
                     <span class="font-weight-bold">Number of attempts: </span> {{
@@ -550,8 +551,8 @@
                     <span
                       v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
-                      <b-alert variant="info" show>
-                        <span class="font-weight-bold">Your file submission will be marked late.</span>
+                      <b-alert variant="warning" show>
+                        <a href="#" class="alert-link">Your file submission will be marked late.</a>
                       </b-alert>
                     </span>
                     <strong> Uploaded file:</strong>

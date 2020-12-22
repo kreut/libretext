@@ -135,10 +135,14 @@
                     <b-card header="default" :header-html="getStudentSubmissionTitle()" class="h-100">
                       <b-card-text>
                         <b-form ref="form">
+                          <b-alert :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission']" variant="warning">
+                            <a href="#" class="alert-link">
+                              The file submission was late.</a>
+                          </b-alert>
                           <strong>Date Submitted:</strong> {{
                             submissionFiles[currentQuestionPage - 1][currentStudentPage -
                               1]['date_submitted']
-                          }}<br>
+                          }} <br>
                           <strong>Date Graded:</strong> {{
                             submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
                               ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
