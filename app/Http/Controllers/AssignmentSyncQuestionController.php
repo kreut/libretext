@@ -27,6 +27,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
+use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
 
@@ -35,6 +36,7 @@ class AssignmentSyncQuestionController extends Controller
 
     use IframeFormatter;
     use DateFormatter;
+    use LatePolicy;
     use S3;
     use SubmissionFiles;
     use JWT;
@@ -235,7 +237,7 @@ class AssignmentSyncQuestionController extends Controller
         return $output[$query_param];
     }
 
-    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission)
+    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission, Extension $Extension)
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -248,19 +250,20 @@ class AssignmentSyncQuestionController extends Controller
 
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
-        $response_info = $this->getResponseInfo($assignment, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
+        $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
             'submission_score' => $response_info['submission_score'],
-            'late_penalty_percent' => $response_info['late_penalty_percent']
+            'late_penalty_percent' => $response_info['late_penalty_percent'],
+            'late_question_submission' => $response_info['late_question_submission']
         ];
 
     }
 
-    public function getResponseInfo(Assignment $assignment, Submission $Submission, $submissions_by_question_id, $question_technologies, $question_id)
+    public function getResponseInfo(Assignment $assignment, Extension $Extension, Submission $Submission, $submissions_by_question_id, $question_technologies, $question_id)
     {
         $student_response = 'N/A';
         $correct_response = null;
@@ -269,6 +272,7 @@ class AssignmentSyncQuestionController extends Controller
         $submission_score = 0;
         $last_submitted = 'N/A';
         $submission_count = 0;
+        $late_question_submission = false;
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
@@ -276,6 +280,9 @@ class AssignmentSyncQuestionController extends Controller
             $submission_score = $submission->score;
             $submission_count = $submission->submission_count;
             $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($submission->updated_at));
+            $late_question_submission = $this->isLateSubmission($Extension, $assignment);
+
+
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
                     $student_response = $submission_object->result->response ? $submission_object->result->response : 'N/A';
@@ -312,7 +319,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent', 'late_question_submission');
 
     }
 
@@ -328,22 +335,16 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+
+            //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
-            $due_date_considering_extension =$assignment->due;
+            $due_date_considering_extension = $assignment->due;
+
             if ($extension) {
-                $carbon_extension = Carbon::parse($extension);
-                $carbon_due =  Carbon::parse($assignment->due);
-                if ($carbon_extension->greaterThan( $carbon_due ) ){
+                if (Carbon::parse($extension)>Carbon::parse($assignment->due)) {
                     $due_date_considering_extension = $extension;
                 }
             }
-
-            For each question -- loop through to see if it was submitted late
-
-
-
-
-
 
 
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
@@ -462,13 +463,14 @@ class AssignmentSyncQuestionController extends Controller
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
-                $response_info = $this->getResponseInfo($assignment, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
+                $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
                 $submission_score = $response_info['submission_score'];
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
+                $late_question_submission = $response_info['late_question_submission'];
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
@@ -492,6 +494,11 @@ class AssignmentSyncQuestionController extends Controller
                     ? $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted))
                     : 0;
 
+                $assignment->questions[$key]['late_question_submission'] = ($last_submitted !== 'N/A')
+                    ?
+                    $late_question_submission
+                    : false;
+
                 $assignment->questions[$key]['submission_count'] = $submission_count;
                 $has_question_files = $question_files[$question->id];
 
@@ -506,6 +513,12 @@ class AssignmentSyncQuestionController extends Controller
 
                     $assignment->questions[$key]['original_filename'] = $formatted_submission_file_info['original_filename'];
                     $assignment->questions[$key]['date_submitted'] = $formatted_submission_file_info['date_submitted'];
+
+                    $assignment->questions[$key]['late_file_submission'] = ($formatted_submission_file_info['date_submitted'] !== 'N/A')
+                        ?
+                        Carbon::parse($submission_file['date_submitted'] )->greaterThan(Carbon::parse($due_date_considering_extension))
+                        : false;
+
                     if ($assignment->show_scores) {
                         $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
                         $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];

@@ -57,6 +57,19 @@ class StudentsAssignmentsIndexTest extends TestCase
 
 
     /** @test */
+    public function assignment_file_must_contain_a_file()
+    {
+
+        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
+            'submissionFile' => '',
+            'assignmentId' => $this->assignment->id,
+            'uploadLevel' => 'assignment'
+        ])->assertJson(['type' => 'error', 'message' => 'The submission file field is required.']);
+
+    }
+
+
+    /** @test */
 
     public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
     {
@@ -100,20 +113,6 @@ class StudentsAssignmentsIndexTest extends TestCase
 
     }
 
-
-    /** @test */
-    public function assignment_file_must_contain_a_file()
-    {
-
-        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'submissionFile' => '',
-            'assignmentId' => $this->assignment->id,
-            'uploadLevel' => 'assignment'
-        ])
-            ->assertJson(['type' => 'error', 'message' => 'The submission file field is required.']);
-
-    }
-
     /** @test */
     public function cannot_upload_if_past_due()
     {
@@ -126,7 +125,7 @@ class StudentsAssignmentsIndexTest extends TestCase
             'assignmentId' => $this->assignment->id,
         ])
             ->assertJson(['type' => 'error',
-                'message' => 'You cannot upload a file since this assignment is past due.']);
+                'message' => 'No late file submissions are accepted.']);
 
     }
 

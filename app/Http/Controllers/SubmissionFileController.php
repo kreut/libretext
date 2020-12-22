@@ -12,7 +12,7 @@ use App\Assignment;
 use App\Extension;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
-use App\Http\Requests\StoreTextFeedback;
+use App\Traits\LatePolicy;
 use App\Http\Requests\StoreScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,6 +32,7 @@ class SubmissionFileController extends Controller
 
     use S3;
     use DateFormatter;
+    use LatePolicy;
 
     public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile)
     {
@@ -274,9 +275,11 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
-                $response['message'] = 'You cannot upload a file since this assignment is past due.';
-                return $response;
+            if ($can_upload_response = $submissionFile->canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased($extension, $assignment)) {
+                if ($can_upload_response['type'] === 'error') {
+                    $response['message'] =$can_upload_response['message'];
+                    return $response;
+                }
             }
 
             if (!in_array($upload_level, ['question', 'assignment'])) {
@@ -384,6 +387,10 @@ class SubmissionFileController extends Controller
                     break;
             }
             $response['message'] = "Your file submission has been saved.";
+
+            $response['late_file_submission']= $this->isLateSubmission($extension, $assignment);
+
+
             if (($upload_count >= $max_number_of_uploads_allowed - 3)) {
                 $response['message'] .= "  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             }

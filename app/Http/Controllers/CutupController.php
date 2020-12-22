@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
+use App\Traits\LatePolicy;
 
 
 class CutupController extends Controller
@@ -25,6 +26,7 @@ class CutupController extends Controller
 
     use S3;
     use DateFormatter;
+    use LatePolicy;
 
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
@@ -81,9 +83,12 @@ class CutupController extends Controller
         }
 
         if ($type === 'submission') {
-            if ($submissionFile->isPastSubmissionFileGracePeriod($extension, $assignment)) {
-                $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
-                return $response;
+            if ($can_upload_response = $submissionFile->canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased($extension, $assignment)) {
+            if ($can_upload_response['type'] === 'error') {
+                    $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
+                    return $response;
+                }
+
             }
         }
 
@@ -149,6 +154,7 @@ class CutupController extends Controller
                         $submission_file_data
                     );
 
+                    $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment);
                     $response['submission'] = $cutup_file;
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';

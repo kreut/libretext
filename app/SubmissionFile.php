@@ -17,17 +17,22 @@ class SubmissionFile extends Model
 
     protected $guarded = [];
 
-    public function isPastSubmissionFileGracePeriod(Extension $extension, Assignment $assignment){
-
-        $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-
-        $is_extension = isset($extensions_by_assignment[$assignment->id]);
-        $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment->due;
-
-        $carbon_due = Carbon::parse($due);
-        return  $carbon_due->diffInMinutes(Carbon::now(), false) > 20;
+    public function canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased(Extension $extension, Assignment $assignment)
+    {
+        $extension = $extension->getAssignmentExtensionByUser($assignment, Auth::user());
+        $due = $extension ? $extension : $assignment->due;
+        $response['type'] = 'error';
+        $response['message'] = '';
+        if ($assignment->late_policy === 'not accepted' && Carbon::parse($due) < Carbon::parse(now())) {
+            $response['message'] = "No late file submissions are accepted.";
+        } else {
+            $response['type'] = 'success';
+        }
+        return $response;
     }
-    public function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
+
+    public
+    function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
     {
         return ['user_id' => $user->id,
             'name' => $user->first_name . ' ' . $user->last_name,
@@ -46,7 +51,8 @@ class SubmissionFile extends Model
 
     }
 
-    public function getUserAndAssignmentFileInfo(Assignment $assignment, string $grade_view)
+    public
+    function getUserAndAssignmentFileInfo(Assignment $assignment, string $grade_view)
     {
 
         foreach ($assignment->assignmentFileSubmissions as $key => $assignment_file) {
@@ -85,7 +91,8 @@ class SubmissionFile extends Model
         return [$user_and_submission_file_info];//create array so that it works like questions below
     }
 
-    public function inGradeView($file, $grade_view)
+    public
+    function inGradeView($file, $grade_view)
     {
         $in_grade_view = false;
         switch ($grade_view) {
@@ -108,7 +115,8 @@ class SubmissionFile extends Model
 
     }
 
-    public function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
+    public
+    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
     {
 
 
@@ -139,7 +147,7 @@ class SubmissionFile extends Model
 
         $solutions = DB::table('solutions')
             ->whereIn('question_id', $question_ids)
-            ->where('user_id',  $assignment->course->user_id)
+            ->where('user_id', $assignment->course->user_id)
             ->get();
 
         $solutions_by_question_id = [];
@@ -172,9 +180,9 @@ class SubmissionFile extends Model
                 if (count($users) === 1) {
                     $date_submitted = $questionFilesByUser[$question->question_id][$user->id]->date_submitted ?? null;
                     $date_graded = $questionFilesByUser[$question->question_id][$user->id]->date_graded ?? null;
-                   if (isset($questionFilesByUser[$question->question_id][$user->id])) {
-                       $grader_id = $questionFilesByUser[$question->question_id][$user->id]->grader_id;
-                   }
+                    if (isset($questionFilesByUser[$question->question_id][$user->id])) {
+                        $grader_id = $questionFilesByUser[$question->question_id][$user->id]->grader_id;
+                    }
 
                 } else {
                     $date_submitted = isset($questionFilesByUser[$question->question_id][$user->id]->date_submitted)
@@ -183,7 +191,7 @@ class SubmissionFile extends Model
                     $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
                         ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
                         : null;
-                    $grader_name  = $questionFilesByUser[$question->question_id][$user->id]->grader_name ?? null;
+                    $grader_name = $questionFilesByUser[$question->question_id][$user->id]->grader_name ?? null;
                 }
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
@@ -191,7 +199,7 @@ class SubmissionFile extends Model
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
                 $all_info['grader_name'] = $grader_name;
-               // $all_info['grader_name'] = $grader_name;
+                // $all_info['grader_name'] = $grader_name;
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;
                 }
@@ -211,7 +219,8 @@ class SubmissionFile extends Model
 
     }
 
-    public function reKeyUserAndSubmissionFileInfo(array $user_and_submission_file_info)
+    public
+    function reKeyUserAndSubmissionFileInfo(array $user_and_submission_file_info)
     {
         $re_keyed_by_question_and_user_info = [];
         if ($user_and_submission_file_info) {

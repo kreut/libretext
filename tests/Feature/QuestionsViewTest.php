@@ -62,6 +62,46 @@ class QuestionsViewTest extends TestCase
             'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
         ];
     }
+    /** @test */
+
+    public function student_cannot_create_cutups_if_the_assignment_is_past_due()
+    {
+        $this->createSubmissionFile();
+        $this->assignment->due = Carbon::yesterday();
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
+            ->assertJson(['message' => "You cannot set this cutup as a solution since this assignment is past due."]);
+
+    }
+
+    /** @test */
+
+public function late_question_submission_marked_late_for_that_late_policy(){
+
+
+}
+
+    /** @test */
+
+    public function late_file_submission_marked_late_for_that_late_policy(){
+
+
+    }
+
+    /** @test */
+
+    public function if_scores_released_or_solutions_released_cannot_submit_question(){
+
+
+    }
+
+    /** @test */
+
+    public function if_scores_released_or_solutions_released_cannot_submit_file(){
+
+
+    }
+
 
 
     /** @test  */
@@ -353,17 +393,7 @@ public function score_is_correctly_computed_for_a_deduction_late_policy(){
 
     }
 
-    /** @test */
 
-    public function student_cannot_create_cutups_if_the_assignment_is_past_due()
-    {
-        $this->createSubmissionFile();
-        $this->assignment->due = Carbon::yesterday();
-        $this->assignment->save();
-        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
-            ->assertJson(['message' => "You cannot set this cutup as a solution since this assignment is past due."]);
-
-    }
 
     /** @test */
 

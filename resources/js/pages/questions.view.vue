@@ -493,7 +493,7 @@
                       <br>
                     </span>
                     <span
-                      v-show="parseInt(questions[currentPage - 1].submission_count) === 0 && latePolicy === 'marked late' && timeLeft === 0"
+                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
                       <b-alert variant="info" show>
                         <span class="font-weight-bold">Your question submission will be marked late.</span>
@@ -548,7 +548,7 @@
                 <b-card header="Default" header-html="<h5>File Submission Information</h5>">
                   <b-card-text>
                     <span
-                      v-show="!questions[currentPage-1].submission_file_exists && latePolicy === 'marked late' && timeLeft === 0"
+                      v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
                       <b-alert variant="info" show>
                         <span class="font-weight-bold">Your file submission will be marked late.</span>
@@ -845,6 +845,7 @@ export default {
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
         this.questions[this.currentPage - 1]['submission_score'] = data.submission_score
         this.questions[this.currentPage - 1]['late_penalty_percent'] = data.late_penalty_percent
+        this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
@@ -1191,6 +1192,7 @@ export default {
             this.questions[this.currentPage - 1].date_graded = 'N/A'
             this.questions[this.currentPage - 1].file_feedback = 'N/A'
             this.questions[this.currentPage - 1].submission_file_exists = true
+            this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
           }
           if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
