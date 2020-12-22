@@ -13,6 +13,7 @@ use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 
+use Carbon\Carbon;
 use App\Traits\DateFormatter;
 
 class Submission extends Model
@@ -129,13 +130,13 @@ class Submission extends Model
 
 
                     $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                  $percent_penalty = 100*(1-$proportion_of_score_received);
+                    $percent_penalty = 100 * (1 - $proportion_of_score_received);
                     if ($explored_learning_tree) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
                             $submission->answered_correctly_at_least_once = 1;//first time getting it right!
 
-                            $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received , $learning_tree_points);
+                            $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received, $learning_tree_points);
                             $message = "Your total score was updated with a penalty of $percent_penalty% applied.";
                         } else {
                             $data['score'] = $learning_tree_points;
@@ -149,7 +150,7 @@ class Submission extends Model
                 }
                 DB::beginTransaction();
                 $submission->submission = $data['submission'];
-                $submission->score = $data['score'];
+                $submission->score =  $data['score'];
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
@@ -161,11 +162,12 @@ class Submission extends Model
                     }
                 }
                 DB::beginTransaction();
+                Log::info("Score before going in: {$data['score']}");
                 $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
-                    'score' => $data['score'],
+                    'score' => $this->setScoreBasedOnLatePolicy($assignment, $data['score']),
                     'answered_correctly_at_least_once' => $data['all_correct'],
                     'submission_count' => 1]);
             }
@@ -187,8 +189,8 @@ class Submission extends Model
                     break;
             }
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
-            if (env('DB_DATABASE') === "test_libretext"){
-                $response['submission_id']= $submission->id;
+            if (env('DB_DATABASE') === "test_libretext") {
+                $response['submission_id'] = $submission->id;
             }
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['message'] = $message;
@@ -212,8 +214,36 @@ class Submission extends Model
 
     }
 
-    public
-    function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
+
+    public function setScoreBasedOnLatePolicy(Assignment $assignment, $score)
+    {
+        if ($assignment->late_policy === 'deduction') {
+            $late_deduction_percent = $assignment->late_deduction_percent;
+            $late_deduction_application_period = $assignment->late_deduction_application_period;
+            if ($assignment->late_deduction_application_period !== 'once') {
+                $max_num_iterations = (int) floor(100 / $late_deduction_percent );
+                //Ex 100/52 = 1.92....use 1.  Makes sense since you won't deduct more than 100%
+                //Ex 100/50 = 2.
+                $due_copy = Carbon::parse($assignment->due);
+                $now = Carbon::now('UTC');
+                for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
+                    Log::info("$now  now - due copy  $due_copy");
+                    if ($due_copy > $now) {
+                        break;
+                    }
+                    $due_copy->add($late_deduction_application_period);
+                }
+                $late_deduction_percent = $late_deduction_percent * $num_late_periods;
+            }
+            //just once so do it once!
+            Log::info("score: $score");
+            Log::info("late deduction percent: $late_deduction_percent");
+            $score = Round($score * (100 - $late_deduction_percent) / 100, 2);
+        }
+        return $score;
+    }
+
+    public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
     {
         $last_submitted_by_user = [];
         $submissions = DB::table('submissions')
@@ -229,8 +259,7 @@ class Submission extends Model
         return $last_submitted_by_user;
     }
 
-    public
-    function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
+    public function getSubmissionsCountByAssignmentIdsAndUser(Collection $assignments, Collection $assignment_ids, User $user)
     {
 
         $assignment_question_submissions = [];
@@ -284,8 +313,7 @@ class Submission extends Model
     }
 
 
-    public
-    function getNumberOfUserSubmissionsByCourse($course, $user)
+    public function getNumberOfUserSubmissionsByCourse($course, $user)
     {
         $AssignmentSyncQuestion = new AssignmentSyncQuestion();
         $num_sumbissions_per_assignment = [];

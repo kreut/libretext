@@ -64,6 +64,27 @@ class QuestionsViewTest extends TestCase
     }
 
 
+    /** @test */
+    public function student_can_make_a_new_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
+    {
+
+//todo
+    }
+
+    /** @test */
+    public function student_cannot_update_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
+    {
+//todo
+
+    }
+
+    /** @test */
+    public function a_late_policy_with_marked_late_accepts_late_submissions_no_matter_how_late()
+    {
+//todo
+
+    }
+
 
     /** @test */
     public function can_submit_response()
@@ -692,7 +713,7 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function can_submit_response_if_assignment_past_due_has_extension()
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension()
     {
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();
@@ -707,7 +728,7 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function cannot_submit_response_if_assignment_past_due_and_no_extension()
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_no_extension()
     {
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();
@@ -718,7 +739,7 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function cannot_submit_response_if_assignment_past_due_and_past_extension()
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_past_extension()
     {
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();

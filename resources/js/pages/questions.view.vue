@@ -505,7 +505,7 @@
                         questions[currentPage - 1].submission_score
                       }}<br>
                     </div>
-                    <b-alert :variant="info" :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
+                    <b-alert variant="info" :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
                       <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                         <template slot-scope="props">
                           <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
@@ -515,7 +515,7 @@
                         </template>
                       </countdown>
                     </b-alert>
-                    <b-alert :variant="info" :show="!showSubmissionMessage &&
+                    <b-alert variant="info" :show="!showSubmissionMessage &&
                       !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
                       !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
                       && (user.role === 3)"
@@ -1198,7 +1198,6 @@ export default {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
         console.log(JSON.parse(JSON.stringify(data)))
-
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -1224,7 +1223,7 @@ export default {
 
         this.questionPointsForm.points = this.questions[this.currentPage - 1].points
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
-        this.showLearningTree(this.learningTree)
+        await this.showLearningTree(this.learningTree)
 
         this.initializing = false
       } catch (error) {

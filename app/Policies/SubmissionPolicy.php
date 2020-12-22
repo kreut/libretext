@@ -41,16 +41,36 @@ class SubmissionPolicy
                 ->where('assignment_id', $assignment_id)
                 ->where('user_id', $user->id)
                 ->first('extension');
-            if ($extension) {
-                if ($extension->extension < time()) {
-                    return Response::deny('No responses will be saved since your extension for this assignment has passed.');
+            if ($assignment->late_policy === 'not accepted') {
+                //maybe there's still hope with the extension....
+                if ($extension) {
+                    if ($extension->extension < time()) {
+                        return Response::deny('No responses will be saved since your extension for this assignment has passed.');
+                    }
+                } else {
+                    return Response::deny('No responses will be saved since the due date for this assignment has passed.');
                 }
+            } elseif ($assignment->late_policy === 'deduction'){
+                $submission = Submission::where('user_id', $user->id)
+                    ->where('assignment_id', $assignment_id)
+                    ->where('question_id', $question_id)
+                    ->first();
+                if ($submission){
+                    if ($extension) {
+                        if ($extension->extension < time()) {
+                            return Response::deny('No responses will be saved since your extension for this assignment has passed and you have already submitted a response.');
+                        }
+                    } else {
+                        return Response::deny('No responses will be saved since the due date for this assignment has passed and you have already submitted a response.');
+                    }
+
+                }
+
             } else {
-                return Response::deny('No responses will be saved since the due date for this assignment has passed.');
+                ///just mark late....
+                return Response::allow();
             }
-
         }
-
 
         return Response::allow();
     }
