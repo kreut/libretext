@@ -62,6 +62,7 @@ class QuestionsViewTest extends TestCase
             'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
         ];
     }
+
     /** @test */
 
     public function student_cannot_create_cutups_if_the_assignment_is_past_due()
@@ -75,56 +76,70 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function real_time_solutions_can_only_be_downloaded_after_submission(){
-
+    public function real_time_solutions_can_only_be_downloaded_after_submission()
+    {
 
 
     }
 
 
     /** @test */
-public function can_only_submit_once_for_real_time_assessments(){
-
-
-
-}
-    /** @test */
-
-public function late_question_submission_marked_late_for_that_late_policy(){
-
-
-}
-
-    /** @test */
-
-    public function late_file_submission_marked_late_for_that_late_policy(){
+    public function can_only_submit_once_for_real_time_assessments()
+    {
 
 
     }
 
     /** @test */
 
-    public function if_scores_released_or_solutions_released_cannot_submit_question(){
+    public function late_question_submission_marked_late_for_that_late_policy()
+    {
 
 
     }
 
     /** @test */
 
-    public function if_scores_released_or_solutions_released_cannot_submit_file(){
+    public function late_file_submission_marked_late_for_that_late_policy()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function if_not_real_time_and_scores_released_or_solutions_released_cannot_submit_question_for_marked_late_or_deduction()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function if_not_real_time_and__scores_released_or_solutions_released_cannot_submit_file_for_marked_late_or_deduction()
+    {
+
+
+    }
+
+    /** @test */
+
+    public function if_not_real_time_and__scores_released_or_solutions_released_cannot_create_cutup()
+    {
 
 
     }
 
 
+    /** @test */
 
-    /** @test  */
+    public function score_is_correctly_computed_for_a_deduction_late_policy()
+    {
+        //todo
+        //do not late, do late but not past 100%, do 100%
 
-public function score_is_correctly_computed_for_a_deduction_late_policy(){
-    //todo
-    //do not late, do late but not past 100%, do 100%
+    }
 
-}
     /** @test */
     public function student_can_make_a_new_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
     {
@@ -139,12 +154,6 @@ public function score_is_correctly_computed_for_a_deduction_late_policy(){
 
     }
 
-    /** @test */
-    public function a_late_policy_with_marked_late_accepts_late_submissions_no_matter_how_late()
-    {
-//todo
-
-    }
 
 
     /** @test */
@@ -406,7 +415,6 @@ public function score_is_correctly_computed_for_a_deduction_late_policy(){
     {
 
     }
-
 
 
     /** @test */

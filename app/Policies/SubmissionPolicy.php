@@ -42,14 +42,6 @@ class SubmissionPolicy
                 ->where('user_id', $user->id)
                 ->first('extension');
 
-            if (in_array($assignment->late_policy, ['deduction', 'marked late'])) {
-                $submission = Submission::where('user_id', $user->id)
-                    ->where('assignment_id', $assignment_id)
-                    ->where('question_id', $question_id)
-                    ->first();
-            }
-
-
             switch ($assignment->late_policy) {
                 case('not accepted'):
                     if ($extension) {
@@ -62,15 +54,26 @@ class SubmissionPolicy
                     break;
                 case('deduction'):
                 case('marked late'):
-                    if ($submission) {
-                        if ($extension) {
-                            if ($extension->extension < time()) {
-                                return Response::deny('No responses will be saved since your extension for this assignment has passed and you have already submitted a response.');
+                    switch ($assignment->assessment_type) {
+                        case('learning tree'):
+                        case('delayed'):
+                            if ($assignment->show_scores) {
+                                return Response::deny('No responses will be saved since the scores to this assignment have been released.');
                             }
-                        } else {
-                            return Response::deny('No responses will be saved since the due date for this assignment has passed and you have already submitted a response.');
-                        }
+                            if ($assignment->solutions_released) {
+                                return Response::deny('No responses will be saved since the solutions to this assignment have been released.');
+                            }
+                            break;
+                        case('real time'):
+                           //in theory, they can submit as late as they want
+
+
+
+
+                            break;
                     }
+
+                    //WHAT ABOUT REAL TIME????
                     break;
             }
         }
