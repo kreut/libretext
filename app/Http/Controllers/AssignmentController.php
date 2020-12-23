@@ -646,6 +646,7 @@ class AssignmentController extends Controller
                 DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
                 DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
                 DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
+                DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
                 $assignment->delete();
             });
             $response['type'] = 'success';

@@ -154,7 +154,7 @@
       <PageTitle v-if="questions !==['init']" :title="title" />
     </div>
     <div v-if="questions.length && !initializing">
-      <div v-if="isInstructor() && (has_submissions_or_file_submissions || solutionsReleased)">
+      <div v-if="isLocked()">
         <b-alert variant="info" show>
           <strong>This problem is locked.
             Either students have already submitted responses to this assignment or the solutions have been released. You
@@ -213,7 +213,7 @@
                         <b-button variant="primary"
                                   size="sm"
                                   class="m-1"
-                                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                                  :disabled="isLocked()"
                                   @click="updatePoints((questions[currentPage-1].id))"
                         >
                           Update Points
@@ -317,7 +317,7 @@
               <div>
                 <b-button class="mt-1 mb-2"
                           variant="danger"
-                          :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                          :disabled="isLocked()"
                           @click="removeQuestion(currentPage)"
                 >
                   Remove Question
@@ -653,6 +653,8 @@ import { toggleQuestionFiles } from '~/helpers/ToggleQuestionFiles'
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
+import { isLocked } from '~/helpers/Assignments'
+
 import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
 
 import Email from '~/components/Email'
@@ -758,6 +760,7 @@ export default {
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
+    this.isLocked = isLocked
   },
   async mounted () {
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions

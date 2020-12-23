@@ -79,9 +79,10 @@
         </b-tooltip>
 
         <b-form ref="form" @submit="createAssignment">
-          <div v-if="has_submissions_or_file_submissions && !solutionsReleased">
+          <div v-if="isLocked()">
+            {{ assessmentType }}
             <b-alert variant="info" show>
-              <strong>This assignment is locked.  Since students have submitted responses , the only
+              <strong>This assignment is locked. Since students have submitted responses , the only
                 item
                 that you can update is the assignment's name, the assignment's group, the instructions, and whether
                 students can view the
@@ -89,7 +90,7 @@
                 statistics. </strong>
             </b-alert>
           </div>
-          <div v-show="solutionsReleased">
+          <div v-show="solutionsReleased && (assessmentType !== 'real time')">
             <b-alert variant="info" show>
               <strong>This assignment is locked. Since you have released the solutions, the only
                 item
@@ -134,7 +135,7 @@
                   v-model="form.available_from_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                  :disabled="Boolean(solutionsReleased)"
+                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                   @shown="form.errors.clear('available_from_date')"
                 />
                 <has-error :form="form" field="available_from_date" />
@@ -143,7 +144,7 @@
                 <b-form-timepicker v-model="form.available_from_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                   :disabled="Boolean(solutionsReleased)"
+                                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                    @shown="form.errors.clear('available_from_time')"
                 />
                 <has-error :form="form" field="available_from_time" />
@@ -164,7 +165,7 @@
                   v-model="form.due_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('due_date') }"
-                  :disabled="Boolean(solutionsReleased)"
+                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                   @shown="form.errors.clear('due_date')"
                 />
                 <has-error :form="form" field="due_date" />
@@ -173,7 +174,7 @@
                 <b-form-timepicker v-model="form.due_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                   :disabled="Boolean(solutionsReleased)"
+                                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                    @shown="form.errors.clear('due_time')"
                 />
                 <has-error :form="form" field="due_time" />
@@ -234,7 +235,7 @@
             label-for="Source"
           >
             <b-form-radio-group v-model="form.source" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                                :disabled="isLocked()"
             >
               <span @click="resetSubmissionFilesAndPointsPerQuestion">
 
@@ -257,12 +258,12 @@
             label-for="Scoring Type"
           >
             <b-form-radio-group v-model="form.scoring_type" stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                                :disabled="isLocked()"
             >
               <span @click="form.students_can_view_assignment_statistics = 1">
-                <b-form-radio name="scoring_type" value="p">Points</b-form-radio></span>
+                <b-form-radio value="p">Points</b-form-radio></span>
               <span @click="resetSubmissionFilesAndPointsPerQuestion">
-                <b-form-radio name="scoring_type" value="c">Complete/Incomplete</b-form-radio>
+                <b-form-radio value="c">Complete/Incomplete</b-form-radio>
               </span>
             </b-form-radio-group>
           </b-form-group>
@@ -283,7 +284,7 @@
                     type="text"
                     placeholder=""
                     :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                    :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                    :disabled="isLocked()"
                     @keydown="form.errors.clear('default_points_per_question')"
                   />
                   <has-error :form="form" field="default_points_per_question" />
@@ -303,16 +304,16 @@
         >
           <b-form-radio-group v-model="form.assessment_type"
                               stacked
-                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                              :disabled="isLocked()"
           >
-            <span @click="!!Boolean(has_submissions_or_file_submissions || solutionsReleased) && showRealTimeOptions">
+            <span @click="!!isLocked() && showRealTimeOptions">
               <b-form-radio name="assessment_type" value="real time">
                 Real time <span id="real_time" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span></b-form-radio>
             </span>
-            <span @click="!!Boolean(has_submissions_or_file_submissions || solutionsReleased) && showDelayedOptions">
+            <span @click="!!isLocked() && showDelayedOptions">
               <b-form-radio name="assessment_type" value="delayed">
                 Delayed <span id="delayed" class="text-muted"><b-icon
                   icon="question-circle"
@@ -353,7 +354,7 @@
                   v-model="form.min_time_needed_in_learning_tree"
                   type="text"
                   placeholder="In Minutes"
-                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                  :disabled="isLocked()"
                   :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
                   @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
                 />
@@ -385,7 +386,7 @@
                   v-model="form.percent_earned_for_exploring_learning_tree"
                   type="text"
                   placeholder="Out of 100"
-                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                  :disabled="isLocked()"
                   :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
                   @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
                 />
@@ -414,7 +415,7 @@
                   v-model="form.submission_count_percent_decrease"
                   type="text"
                   placeholder="Out of 100"
-                  :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                  :disabled="isLocked()"
                   :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
                   @keydown="form.errors.clear('submission_count_percent_decrease')"
                 />
@@ -432,7 +433,7 @@
           label-for="Submission Files"
         >
           <b-form-radio-group v-model="form.submission_files" stacked
-                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                              :disabled="isLocked()"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
             <b-form-radio name="submission_files" value="q">
@@ -452,7 +453,7 @@
           label-for="Late Policy"
         >
           <b-form-radio-group v-model="form.late_policy" stacked
-                              :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                              :disabled="isLocked()"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
             <span @click="resetDeduction">
@@ -500,7 +501,7 @@
           >
             <b-form-radio-group v-model="form.late_deduction_applied_once"
                                 stacked
-                                :disabled="Boolean(has_submissions_or_file_submissions || solutionsReleased)"
+                                :disabled="isLocked()"
             >
               <b-form-radio value="1">
                 Just once
@@ -779,7 +780,8 @@ import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
 
-import { getAssignments } from '../../helpers/Assignments'
+import { isLocked, getAssignments } from '../../helpers/Assignments'
+
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
@@ -794,6 +796,7 @@ export default {
       assignment_group: ''
     }),
     title: '',
+    assessmentType: '',
     assignmentGroups: [{ value: null, text: 'Please choose one' }],
     isLoading: false,
     solutionsReleased: 0,
@@ -891,6 +894,7 @@ export default {
   }),
   created () {
     this.getAssignments = getAssignments
+    this.isLocked = isLocked
   },
   mounted () {
     this.courseId = this.$route.params.courseId
@@ -1112,7 +1116,7 @@ export default {
       this.number_of_questions = assignment.number_of_questions
 
       this.form.name = assignment.name
-      this.form.assessment_type = assignment.assessment_type
+      this.form.assessment_type = this.assessmentType = assignment.assessment_type
       this.form.available_from_date = assignment.available_from_date
       this.form.available_from_time = assignment.available_from_time
       this.form.due_date = assignment.due_date
@@ -1242,7 +1246,7 @@ export default {
       this.form.num_submissions_needed = '2'
       this.form.submission_files = 'q'
       this.form.default_points_per_question = '10'
-      this.form.scoring_type = 'c'
+      this.form.scoring_type = 'p'
 
       this.assignmentId = false
       this.form.errors.clear()

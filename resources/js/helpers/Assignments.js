@@ -16,3 +16,9 @@ export async function getAssignments () {
     this.$noty.error(error.message)
   }
 }
+
+export function isLocked () {
+  return (this.user.role === 2 && (
+    (this.assessmentType === 'real time' && this.has_submissions_or_file_submissions) ||
+    (this.assessmentType !== 'real time' && (this.has_submissions_or_file_submissions || this.solutionsReleased))))
+}
