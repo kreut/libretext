@@ -80,12 +80,36 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
+/** @test */
+
+    public function for_real_time_assessments_students_must_be_shown_scores()
+    {
+//todo
+
+    }
+
+    /** @test */
+
+    public function for_real_time_assessments_students_must_be_shown_solutions()
+    {
+//todo
+
+    }
+
+    /** @test */
+
+    public function for_real_time_assessments_students_must_be_shown_question_points()
+    {
+//todo
+
+    }
+
 
     /** @test */
 
     public function submission_count_percent_decrease_must_be_valid()
     {
-
+//todo
 
     }
 

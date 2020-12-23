@@ -1076,7 +1076,9 @@ export default {
       try {
         const { data } = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
         this.$noty[data.type](data.message)
-
+        if (data.type === 'error') {
+          return false
+        }
         assignment.solutions_released = !assignment.solutions_released
       } catch (error) {
         this.$noty.error(error.message)

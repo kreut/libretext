@@ -100,10 +100,17 @@ class AssignmentPolicy
                 $has_access = $assignment->course->isGrader();
                 break;
         }
-
+        if (!$has_access) {
+            $message ='You are not allowed to show/hide solutions.';
+        } else {
+            $has_access = $assignment->assessment_type === 'delayed';
+            if (!$has_access) {
+                $message = "Since this assignment is not a <strong>delayed</strong> assessment type, students will see the solutions immediately.";
+            }
+        }
         return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to show/hide solutions.');
+            : Response::deny($message);
     }
 
     public function showAssignmentStatistics(User $user, Assignment $assignment)
