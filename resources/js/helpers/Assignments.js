@@ -18,7 +18,7 @@ export async function getAssignments () {
 }
 
 export function isLocked () {
-  return (this.user.role === 2 && (
+  return Boolean(this.user.role === 2 && (
     (this.assessmentType === 'real time' && this.has_submissions_or_file_submissions) ||
     (this.assessmentType !== 'real time' && (this.has_submissions_or_file_submissions || this.solutionsReleased))))
 }

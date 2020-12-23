@@ -80,6 +80,12 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
+    /** @test */
+
+public function late_policy_deadline_must_be_valid(){
+
+
+}
 /** @test */
 
     public function for_real_time_assessments_students_must_be_shown_scores()

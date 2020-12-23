@@ -152,11 +152,11 @@
                 <b-form-datepicker
                   v-model="form.due_date"
                   :min="min"
-                  :class="{ 'is-invalid': form.errors.has('due_date') }"
+                  :class="{ 'is-invalid': form.errors.has('due') }"
                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                  @shown="form.errors.clear('due_date')"
+                  @shown="form.errors.clear('due')"
                 />
-                <has-error :form="form" field="due_date" />
+                <has-error :form="form" field="due" />
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.due_time"
@@ -518,6 +518,36 @@
           </b-form-group>
         </div>
         <b-form-group
+          v-if="form.late_policy !== 'not accepted'"
+          id="last"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Late Policy Deadline"
+          label-for="Late Policy Deadline"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="form.late_policy_deadline_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has('late_policy_deadline') }"
+                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                @shown="form.errors.clear('late_policy_deadline')"
+              />
+              <has-error :form="form" field="late_policy_deadline" />
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="form.late_policy_deadline_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has('late_policy_deadline_time') }"
+                                 :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                                 @shown="form.errors.clear('late_policy_deadline_time')"
+              />
+              <has-error :form="form" field="late_policy_deadline_time" />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
           id="include_in_weighted_average"
           label-cols-sm="4"
           label-cols-lg="3"
@@ -861,6 +891,8 @@ export default {
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
+      late_policy_deadline_date: '',
+      late_policy_deadline_time: '09:00:00',
       late_deduction_application_period: null,
       type_of_submission: 'correct',
       source: 'a',
@@ -990,10 +1022,9 @@ export default {
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
       this.form.assignment_group_id = null
-      this.form.available_from_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.available_from_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-      this.form.due_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.due_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+      this.form.available_from_date = this.form.due_date = this.form.late_policy_deadline_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+      this.form.available_from_time = this.form.due_time = this.form.late_policy_deadline_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
+
       this.form.late_policy = 'not accepted'
       this.form.late_deduction_percent = null
       this.form.late_deduction_applied_once = 1
@@ -1112,6 +1143,8 @@ export default {
       this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
       this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
       this.form.due_time = assignment.due_time
+      this.form.late_policy_deadline_time = assignment.late_policy_deadline_time
+      this.form.late_policy_deadline_date = assignment.late_policy_deadline_date
       this.form.assignment_group_id = assignment.assignment_group_id
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
       this.form.source = assignment.source
@@ -1167,6 +1200,7 @@ export default {
       // Trigger submit handler
       this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
       this.form.due = this.form.due_date + ' ' + this.form.due_time
+      this.form.late_policy_deadline = this.form.late_policy_deadline_date + ' ' + this.form.late_policy_deadline_time
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
     },
     deleteAssignment (assignmentId) {
@@ -1178,12 +1212,6 @@ export default {
         const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
 
         console.log(data)
-        if (data.available_after_due) {
-          // had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date', data.message)
-          console.log(this.form.errors)
-          return false
-        }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-properties')
       } catch (error) {
@@ -1196,14 +1224,6 @@ export default {
       try {
         this.form.course_id = this.courseId
         const { data } = await this.form.post(`/api/assignments`)
-
-        console.log(data)
-        if (data.available_after_due) {
-          // had to create a custom process for checking available date past due date
-          this.form.errors.set('due_date', data.message)
-          console.log(this.form.errors)
-          return false
-        }
         this.$noty[data.type](data.message)
         this.resetAll('modal-assignment-properties')
       } catch (error) {

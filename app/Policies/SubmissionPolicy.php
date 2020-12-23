@@ -54,26 +54,30 @@ class SubmissionPolicy
                     break;
                 case('deduction'):
                 case('marked late'):
-                    switch ($assignment->assessment_type) {
-                        case('learning tree'):
-                        case('delayed'):
+                    if (in_array($assignment->assessment_type,['learning tree', 'delayed'])){
                             if ($assignment->show_scores) {
                                 return Response::deny('No responses will be saved since the scores to this assignment have been released.');
                             }
                             if ($assignment->solutions_released) {
                                 return Response::deny('No responses will be saved since the solutions to this assignment have been released.');
                             }
-                            break;
-                        case('real time'):
-                           //in theory, they can submit as late as they want
-
-
-
-
-                            break;
                     }
-
-                    //WHAT ABOUT REAL TIME????
+                    //now let's check the late policy deadline
+                    //if past policy deadline
+                if ($extension) {
+                    if ($extension->extension < time()) {
+                        return Response::deny('No responses will be saved since your extension for this assignment has passed.');
+                    }
+                    if (strtotime($assignment->late_policy_deadline < time())){
+                        return Response::deny('No more late responses are being accepted.');
+                    }
+                } else {
+                    if (strtotime($assignment->late_policy_deadline < time())){
+                        return Response::deny('No more late responses are being accepted.');
+                    } else {
+                        Response::deny('No responses will be saved since the due date for this assignment has passed.');
+                    }
+                }
                     break;
             }
         }

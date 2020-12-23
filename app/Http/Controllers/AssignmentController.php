@@ -211,12 +211,16 @@ class AssignmentController extends Controller
                 } else {
 
                     $due = $assignment['due'];
+                    $late_policy_deadline = $assignment['late_policy_deadline'];
+
                     $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
                     $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
                     $assignments_info[$key]['status'] = $this->getStatus($available_from, $due);
                     $assignments_info[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
                     $assignments_info[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                    $assignments_info[$key]['late_policy_deadline_date'] = $late_policy_deadline ?$this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
+                    $assignments_info[$key]['late_policy_deadline_time'] = $late_policy_deadline ?$this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
                     $assignments_info[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments_info[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
@@ -279,17 +283,6 @@ class AssignmentController extends Controller
     }
 
 
-    public function checkDueDateAfterAvailableDate(StoreAssignment $request)
-    {
-        $response = [];
-        if (Carbon::parse($request->due) <= Carbon::parse($request->available_from)) {
-            $response['available_after_due'] = true;
-            $response['message'] = 'Your assignment should become due after it becomes available.';
-            $response['error'] = true;
-        }
-        return $response;
-    }
-
     /**
      * @param StoreAssignment $request
      * @param AssignmentGroupWeight $assignmentGroupWeight
@@ -311,17 +304,15 @@ class AssignmentController extends Controller
 
 
         try {
-            if ($due_date_response = $this->checkdueDateAfterAvailableDate($request)) {
-                return $due_date_response;
-            }
+
             $data = $request->validated();
 
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
             $assignment = Assignment::create(
                 ['name' => $data['name'],
-                    'available_from' => $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone),
-                    'due' => $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone),
+                    'available_from' => $this->formatDateFromRequest($request->available_from_date, $request->available_from_time),
+                    'due' => $this->formatDateFromRequest($request->due_date, $request->due_time),
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
@@ -338,6 +329,7 @@ class AssignmentController extends Controller
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? 0 : 1,
                     'show_points_per_question' => $request->assessment_type === 'delayed' ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
+                    'late_policy_deadline' => $this->getLatePolicyDeadeline($request),
                     'late_deduction_application_period' => $data['late_deduction_application_period'] ?? null,
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
@@ -385,7 +377,7 @@ class AssignmentController extends Controller
                 'late_policy' => $assignment->late_policy,
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
-                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree  : 0,
+                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree : 0,
                 'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,
@@ -579,21 +571,18 @@ class AssignmentController extends Controller
 
 
         try {
-            if ($due_date_response = $this->checkdueDateAfterAvailableDate($request)) {
-                return $due_date_response;
-            }
+
             $data = $request->validated();
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
-            $data['available_from'] = $this->convertLocalMysqlFormattedDateToUTC($data['available_from_date'] . ' ' . $data['available_from_time'], Auth::user()->time_zone);
+            $data['available_from'] =  $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
             $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0;
-            $data['due'] = $this->convertLocalMysqlFormattedDateToUTC($data['due_date'] . ' ' . $data['due_time'], Auth::user()->time_zone);
-            //remove what's not needed
-            foreach (['available_from_date', 'available_from_time', 'due_date', 'due_time'] as $value) {
-                unset($data[$value]);
-            }
-            //submissions exist so don't let them change the things below
+            $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
+            $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);
+            unset($data['available_from_date']);
+            unset($data['available_from_time']);
 
+            //submissions exist so don't let them change the things below
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
             if ($assignment->hasFileOrQuestionSubmissions()) {
                 unset($data['scoring_type']);
@@ -657,5 +646,15 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error removing <strong>$assignment->name</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function getLatePolicyDeadeline($request)
+    {
+        return $request->late_policy !== 'not accepted' ? $this->convertLocalMysqlFormattedDateToUTC($request->late_policy_deadline_date . ' ' . $request->late_policy_deadline_time, Auth::user()->time_zone) : null;
+    }
+
+    public function formatDateFromRequest($date, $time)
+    {
+        return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
     }
 }
