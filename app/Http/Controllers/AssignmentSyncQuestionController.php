@@ -251,14 +251,24 @@ class AssignmentSyncQuestionController extends Controller
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
         $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
-
+      $original_filename = null;
+      if ($assignment->assessment_type === 'real time' ) {
+           $solution = DB::table('solutions')
+               ->where('question_id', $question->id)
+               ->where('user_id', $assignment->course->user_id)
+               ->first();
+           if ($solution){
+               $original_filename = $solution->original_filename;
+           }
+       }
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
             'submission_score' => $response_info['submission_score'],
             'late_penalty_percent' => $response_info['late_penalty_percent'],
-            'late_question_submission' => $response_info['late_question_submission']
+            'late_question_submission' => $response_info['late_question_submission'],
+            'solution' =>  $original_filename
         ];
 
     }
@@ -474,7 +484,9 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
-                if ($assignment->solutions_released) {
+                $show_solution = ($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
+                    || ($assignment->assessment_type === 'real time' && $submission_count);
+                if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
 
@@ -540,7 +552,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
 
-                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]
+                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id] && $show_solution
                     ? $solutions_by_question_id[$question->id]
                     : false;
 

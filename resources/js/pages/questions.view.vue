@@ -500,9 +500,11 @@
                           Your question submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <span class="font-weight-bold">Number of attempts: </span> {{
-                      questions[currentPage - 1].submission_count
-                    }}<br>
+                    <span v-if="assessmentType==='learning tree'">
+                      <span class="font-weight-bold">Number of attempts: </span>
+                      {{
+                        questions[currentPage - 1].submission_count
+                      }}<br></span>
                     <span class="font-weight-bold">Last submitted:</span> {{
                       questions[currentPage - 1].last_submitted
                     }}<br>
@@ -850,6 +852,7 @@ export default {
         this.questions[this.currentPage - 1]['submission_score'] = data.submission_score
         this.questions[this.currentPage - 1]['late_penalty_percent'] = data.late_penalty_percent
         this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
+        this.questions[this.currentPage - 1]['solution'] = data.solution
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
@@ -876,8 +879,8 @@ export default {
           clientSideSubmit = false
         }
         try {
-          serverSideSubmit = ((technology === 'imathas') && (JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
-            (technology === 'webwork') && (JSON.parse(event.data).subject === 'webwork.result'))
+          serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
+            (technology === 'webwork' && JSON.parse(event.data).subject === 'webwork.result'))
         } catch (error) {
           serverSideSubmit = false
         }
@@ -948,7 +951,7 @@ export default {
       setTimeout(() => {
         this.showSubmissionMessage = false
       }, 8000)
-      if (data.type !== 'danger') {
+      if (this.submissionDataType !== 'danger') {
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
       }
     },

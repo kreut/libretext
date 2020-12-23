@@ -49,7 +49,7 @@ class Submission extends Model
             return $response;
         }
 
-        if ($assignment->solutions_released) {
+        if ($assignment->solutions_released && $assignment->assessment_type !== 'real time') {
             $response['message'] = 'You submission will not be saved since the solutions have been released.';
             return $response;
         }
@@ -108,6 +108,11 @@ class Submission extends Model
             $message = 'Question submission saved. Your scored was updated.';
 
             if ($submission) {
+                if ($assignment->assessment_type === 'real time') {
+                    $response['message'] = 'You can only submit once since you are provided with real-time feedback.';
+                    return $response;
+                }
+
                 if (($assignment->assessment_type === 'learning tree')) {
                     $explored_learning_tree = $submission->explored_learning_tree;
                     if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {

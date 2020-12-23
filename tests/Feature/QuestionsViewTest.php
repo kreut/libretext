@@ -75,6 +75,20 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function real_time_solutions_can_only_be_downloaded_after_submission(){
+
+
+
+    }
+
+
+    /** @test */
+public function can_only_submit_once_for_real_time_assessments(){
+
+
+
+}
+    /** @test */
 
 public function late_question_submission_marked_late_for_that_late_policy(){
 

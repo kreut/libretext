@@ -82,22 +82,10 @@
           <div v-if="isLocked()">
             {{ assessmentType }}
             <b-alert variant="info" show>
-              <strong>This assignment is locked. Since students have submitted responses , the only
-                item
-                that you can update is the assignment's name, the assignment's group, the instructions, and whether
-                students can view the
-                assignment
-                statistics. </strong>
-            </b-alert>
-          </div>
-          <div v-show="solutionsReleased && (assessmentType !== 'real time')">
-            <b-alert variant="info" show>
-              <strong>This assignment is locked. Since you have released the solutions, the only
-                item
-                that you can update is the assignment's name, the assignment's group, the instructions, and whether
-                students can view the
-                assignment
-                statistics.</strong>
+              <strong>This assignment is locked. Since students have submitted responses, the only
+                items that you can update are the assignment's name, the assignment's available/due dates,
+                the assignment's group, the instructions, and whether to include the assignment in the final score.
+                . </strong>
             </b-alert>
           </div>
 
