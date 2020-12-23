@@ -306,7 +306,6 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
             $assignment = Assignment::create(

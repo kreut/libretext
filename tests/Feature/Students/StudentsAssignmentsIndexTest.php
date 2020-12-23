@@ -56,18 +56,6 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-    public function assignment_file_must_contain_a_file()
-    {
-
-        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'submissionFile' => '',
-            'assignmentId' => $this->assignment->id,
-            'uploadLevel' => 'assignment'
-        ])->assertJson(['type' => 'error', 'message' => 'The submission file field is required.']);
-
-    }
-
 
     /** @test */
 
@@ -113,21 +101,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
     }
 
-    /** @test */
-    public function cannot_upload_if_past_due()
-    {
-        $assignment_due = $this->assignment->due;
-        $this->assignment->due = '2020-06-12 09:00:00';
-        $this->assignment->save();
 
-        $this->actingAs($this->student_user)->putJson("/api/submission-files", [
-            'assignmentFile' => 'abd.pdf',
-            'assignmentId' => $this->assignment->id,
-        ])
-            ->assertJson(['type' => 'error',
-                'message' => 'No late file submissions are accepted.']);
-
-    }
 
     /** @test */
     public function can_get_assignment_file_info_if_owner()
@@ -158,19 +132,6 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-    public function assignment_file_must_contain_a_pdf_file()
-    {
-
-        $this->actingAs($this->student_user_2)->putJson("/api/submission-files", [
-            'submissionFile' => 'sdflkj.ziggy',
-            'assignmentId' => $this->assignment->id,
-            'uploadLevel' => 'assignment'
-        ])
-            ->assertJson(['type' => 'error', 'message' => 'The submission file must be a file of type: pdf, txt, png, jpeg, jpg.']);
-
-
-    }
 
     /** @test */
 
@@ -180,16 +141,6 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-    public function cannot_store_assignment_file_if_not_enrolled_in_course()
-    {
-
-        $this->actingAs($this->student_user_3)->putJson("/api/submission-files", [
-            'submissionFile' => 'abd.pdf',
-            'assignmentId' => $this->assignment->id,
-        ])
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to upload a file to this assignment.']);
-    }
 
     /** @test */
     public function can_store_assignment_file_if_enrolled_in_course()

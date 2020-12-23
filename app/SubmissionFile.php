@@ -20,19 +20,6 @@ class SubmissionFile extends Model
 
     protected $guarded = [];
 
-    public function canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased(Extension $extension, Assignment $assignment)
-    {
-        $extension = $extension->getAssignmentExtensionByUser($assignment, Auth::user());
-        $due = $extension ? $extension : $assignment->due;
-        $response['type'] = 'error';
-        $response['message'] = '';
-        if ($assignment->late_policy === 'not accepted' && Carbon::parse($due) < Carbon::parse(now())) {
-            $response['message'] = "No late file submissions are accepted.";
-        } else {
-            $response['type'] = 'success';
-        }
-        return $response;
-    }
 
     public
     function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)

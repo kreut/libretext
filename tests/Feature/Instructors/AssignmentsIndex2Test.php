@@ -57,6 +57,8 @@ class AssignmentsIndex2Test extends TestCase
             'assignment_group_id' => 1];
     }
 
+
+
     /** @test */
 
     public function min_time_needed_in_learning_tree_must_be_valid()
@@ -157,6 +159,9 @@ public function late_policy_deadline_must_be_valid(){
     }
 
 
+
+
+
     /** @test */
     public function non_owner_cannot_toggle_show_points_per_question()
     {
@@ -227,13 +232,6 @@ public function late_policy_deadline_must_be_valid(){
 
     }
 
-    /** @test */
-    public function must_include_valid_due_date()
-    {
-        $this->assignment_info['due_date'] = "not a date";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due_date']);
-    }
 
     /** @test */
     public function must_include_valid_default_points_per_question()
@@ -258,11 +256,22 @@ public function late_policy_deadline_must_be_valid(){
 
 
     /** @test */
+    public function must_include_valid_due_date()
+    {
+        $this->assignment_info['due_date'] = "not a date";
+        $this->assignment_info['due'] = "not a date";
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors(['due']);
+    }
+
+
+    /** @test */
     public function must_include_valid_due_time()
     {
         $this->assignment_info['due_time'] = "not a time";
+        $this->assignment_info['due'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due_time']);
+            ->assertJsonValidationErrors(['due']);
     }
 
     /** @test */
@@ -270,7 +279,7 @@ public function late_policy_deadline_must_be_valid(){
     {
         $this->assignment_info['due'] = "1982-06-06";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJson(['message' => 'Your assignment should become due after it becomes available.']);
+            ->assertJsonValidationErrors(['due']);
     }
 
     /** @test */
@@ -279,7 +288,7 @@ public function late_policy_deadline_must_be_valid(){
 
         $this->assignment_info['available_from_time'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['available_from_time']);
+            ->assertJsonValidationErrors(['due']);
     }
 
     /** @test */

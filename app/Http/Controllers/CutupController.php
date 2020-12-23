@@ -70,10 +70,10 @@ class CutupController extends Controller
     public function setAsSolutionOrSubmission(Request $request, Assignment $assignment, Question $question, Cutup $cutup, Solution $solution, SubmissionFile $submissionFile, Extension $extension)
     {
 
+        $user = Auth::user();
+        $type = ($user->role === 2) ? 'solution' : 'submission';
 
-        $type = (Auth::user()->role === 2) ? 'solution' : 'submission';
-
-        $user_id = Auth::user()->id;
+        $user_id = $user->id;
         $response['type'] = 'error';
         $authorized = Gate::inspect('setAsSolutionOrSubmission', [$cutup, $assignment, $question]);
 
@@ -83,9 +83,9 @@ class CutupController extends Controller
         }
 
         if ($type === 'submission') {
-            if ($can_upload_response = $submissionFile->canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased($extension, $assignment)) {
-            if ($can_upload_response['type'] === 'error') {
-                    $response['message'] = 'You cannot set this cutup as a solution since this assignment is past due.';
+            if ($can_upload_response = $this->canSubmitBasedOnLatePolicy($user, $assignment, $assignment->id, $question->id)) {
+                if ($can_upload_response['type'] === 'error') {
+                    $response['message'] = $can_upload_response['message'];
                     return $response;
                 }
 
@@ -94,7 +94,7 @@ class CutupController extends Controller
 
         $chosen_cutups = str_replace(' ', '', $request->chosen_cutups);
         $page_numbers_and_extension = $chosen_cutups . '.pdf';
-        $chosen_cutups = explode(',',$chosen_cutups);
+        $chosen_cutups = explode(',', $chosen_cutups);
 
         try {
             $cutup_file = $cutup->mergeCutUpPdfs($submissionFile, $solution, $type, $assignment->id, $user_id, $chosen_cutups, $page_numbers_and_extension);
@@ -102,8 +102,8 @@ class CutupController extends Controller
             switch ($type) {
                 case('solution'):
                     //add the new full solution
-                    $sanitized_name = preg_replace( '/[^a-z0-9]+/', '_', strtolower($assignment->name ));
-                    $cutup_filename = $sanitized_name . "-q" . $request->question_num .".pdf";
+                    $sanitized_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($assignment->name));
+                    $cutup_filename = $sanitized_name . "-q" . $request->question_num . ".pdf";
                     $solution->updateOrCreate(
                         ['user_id' => $user_id,
                             'question_id' => $question->id,
@@ -112,21 +112,21 @@ class CutupController extends Controller
                     );
                     //now recompile with the new file
                     $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $user_id, $solution);
-                   if ($compiled_filename) {
-                       $compiled_file_data = [
-                           'file' => $compiled_filename,
-                           'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
-                           'updated_at' => Carbon::now()];
-                       $solution->updateOrCreate(
-                           [
-                               'user_id' => $user_id,
-                               'type' => 'a',
-                               'assignment_id' => $assignment->id,
-                               'question_id' => null
-                           ],
-                           $compiled_file_data
-                       );
-                   }
+                    if ($compiled_filename) {
+                        $compiled_file_data = [
+                            'file' => $compiled_filename,
+                            'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
+                            'updated_at' => Carbon::now()];
+                        $solution->updateOrCreate(
+                            [
+                                'user_id' => $user_id,
+                                'type' => 'a',
+                                'assignment_id' => $assignment->id,
+                                'question_id' => null
+                            ],
+                            $compiled_file_data
+                        );
+                    }
                     $response['message'] = 'Your cutup has been set as the solution.';
                     $response['cutup'] = $cutup_filename;
                     break;
@@ -174,7 +174,7 @@ class CutupController extends Controller
                 $h = new Handler(app());
                 $h->report($e);
             }
-            $response['message'] =  $e->getMessage();
+            $response['message'] = $e->getMessage();
         }
         return $response;
 

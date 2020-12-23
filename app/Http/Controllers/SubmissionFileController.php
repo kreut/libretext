@@ -263,7 +263,8 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $upload_level = $request->uploadLevel;
-        $user_id = Auth::user()->id;
+        $user =Auth::user();
+        $user_id = $user->id;
 
         $assignment = Assignment::find($assignment_id);
         $authorized = Gate::inspect('uploadSubmissionFile', [$submissionFile, $assignment]);
@@ -275,7 +276,7 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($can_upload_response = $submissionFile->canUploadFileBasedOnLatePolicyAndWhetherScoresOrSolutionsHaveBeenReleased($extension, $assignment)) {
+            if ($can_upload_response = $this->canSubmitBasedOnLatePolicy( $user, $assignment, $assignment_id,  $question_id)) {
                 if ($can_upload_response['type'] === 'error') {
                     $response['message'] =$can_upload_response['message'];
                     return $response;

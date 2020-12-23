@@ -71,7 +71,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->due = Carbon::yesterday();
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
-            ->assertJson(['message' => "You cannot set this cutup as a solution since this assignment is past due."]);
+            ->assertJson(['message' => "No responses will be saved since the due date for this assignment has passed."]);
 
     }
 
