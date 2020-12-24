@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "e0f8568071ddf21d28428bd9f83115d6",
+    "content-hash": "9484cf7636943daa73d07255b7bf9f7f",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -2895,6 +2895,40 @@
             "time": "2020-02-21T04:36:14+00:00"
         },
         {
+            "name": "setasign/composer-ioncube-license-installer",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Setasign/ComposerIoncubeLicenseInstaller.git",
+                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Setasign/ComposerIoncubeLicenseInstaller/zipball/821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
+                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1.1",
+                "php": "^5.4 || ^7.0 || ^8.0"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "setasign\\ComposerIoncubeLicenseInstaller\\InstallerPlugin"
+            },
+            "autoload": {
+                "psr-4": {
+                    "setasign\\ComposerIoncubeLicenseInstaller\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Installer plugin for ioncube licenses",
+            "time": "2020-09-14T07:34:39+00:00"
+        },
+        {
             "name": "setasign/fpdf",
             "version": "1.8.2",
             "source": {
@@ -3040,6 +3074,55 @@
             ],
             "abandoned": true,
             "time": "2020-02-19T12:21:53+00:00"
+        },
+        {
+            "name": "setasign/fpdi_pdf-parser_eval_ioncube_php7.1",
+            "version": "2.0.6",
+            "dist": {
+                "type": "zip",
+                "url": "https://www.setasign.com/downloads/2828332/FPDI_PDF-Parser-2.0.6_Ioncubed-PHP7.1.zip"
+            },
+            "require": {
+                "setasign/fpdi": "^2.0",
+                "setasign/fpdi_pdf-parser_ioncube_license": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "setasign\\FpdiPdfParser\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "support": {
+                "email": "support@setasign.com"
+            },
+            "time": "2020-12-04T00:00:00+00:00"
+        },
+        {
+            "name": "setasign/fpdi_pdf-parser_ioncube_license",
+            "version": "1.0.2864471",
+            "dist": {
+                "type": "zip",
+                "url": "https://www.setasign.com/downloads/eval/19864/ioncube/FPDI-PDF-Parser-License.zip"
+            },
+            "require": {
+                "setasign/composer-ioncube-license-installer": "*"
+            },
+            "type": "ioncube-license",
+            "extra": {
+                "licenseValidFor": [
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.3",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.4",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.6",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php7.1"
+                ]
+            },
+            "license": [
+                "proprietary"
+            ]
         },
         {
             "name": "snowfire/beautymail",
@@ -6384,6 +6467,7 @@
                 "faker",
                 "fixtures"
             ],
+            "abandoned": true,
             "time": "2019-12-12T13:22:17+00:00"
         },
         {
