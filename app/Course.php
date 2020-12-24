@@ -23,6 +23,10 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
+    public function extraPoints(){
+        return $this->hasMany('App\ExtraPoint');
+    }
+
 public function assignmentGroups() {
 $course = $this;
    return  AssignmentGroup::where(function ($q) use ($course) {
