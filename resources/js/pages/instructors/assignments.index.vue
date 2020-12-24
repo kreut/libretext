@@ -239,6 +239,7 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
+            v-show="false"
             id="scoring_type"
             label-cols-sm="4"
             label-cols-lg="3"
