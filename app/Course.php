@@ -23,8 +23,8 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
-    public function extraPoints(){
-        return $this->hasMany('App\ExtraPoint');
+    public function extraCredits(){
+        return $this->hasMany('App\ExtraCredit');
     }
 
 public function assignmentGroups() {

@@ -121,9 +121,9 @@ class ScoreController extends Controller
 
         $final_weighted_scores = [];
         $letter_grades = [];
-        $extra_points = [];
-        foreach ($course->extraPoints as $key => $value){
-            $extra_points[$value->user_id] = $value->extra_points;
+        $extra_credit = [];
+        foreach ($course->extraCredits as $key => $value){
+            $extra_credit[$value->user_id] = $value->extra_credit;
         }
 
 
@@ -136,10 +136,10 @@ class ScoreController extends Controller
                         : 0;
                 }
             }
-           if (!isset($extra_points[$user->id])){
-                $extra_points[$user->id]=0;
+           if (!isset($extra_credit[$user->id])){
+                $extra_credit[$user->id]=0;
             }
-            $final_weighted_scores[$user->id] +=  $extra_points[$user->id];
+            $final_weighted_scores[$user->id] +=  $extra_credit[$user->id];
 
         }
         foreach ($course->enrolledUsers as $key => $user) {
@@ -149,7 +149,7 @@ class ScoreController extends Controller
         }
         return ['final_weighted_scores' => $final_weighted_scores,
             'letter_grades' => $letter_grades,
-            'extra_points' => $extra_points];
+            'extra_credit' => $extra_credit];
     }
 
     public function getAssignmentIds($assignments)
@@ -176,14 +176,14 @@ class ScoreController extends Controller
                                       array $enrolled_users_last_first,
                                       $assignments,
                                       array $extensions,
-                                      array $extra_points,
+                                      array $extra_credit,
                                       array $final_weighted_scores,
                                       array $letter_grades,
                                       array $scores_by_user_and_assignment)
     {
         {
-            $extra_points_assignment_id = max($assignment_ids) + 1;
-            $weighted_score_assignment_id =   $extra_points_assignment_id + 1;
+            $extra_credit_assignment_id = max($assignment_ids) + 1;
+            $weighted_score_assignment_id =   $extra_credit_assignment_id + 1;
             $letter_grade_assignment_id = $weighted_score_assignment_id++;
             //now fill in the actual scores
             $rows = [];
@@ -204,8 +204,8 @@ class ScoreController extends Controller
                     $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
                 }
 
-                $columns[$extra_points_assignment_id] = $extra_points[$user_id];
-                $download_row_data[$extra_points_assignment_id] = $extra_points[$user_id];
+                $columns[$extra_credit_assignment_id] = $extra_credit[$user_id];
+                $download_row_data[$extra_credit_assignment_id] = $extra_credit[$user_id];
 
 
                 $columns[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
@@ -233,8 +233,8 @@ class ScoreController extends Controller
                 $download_fields->{$assignment->name} = $assignment->id;
                 array_push($fields, $field);
             }
-            array_push($fields, ['key' => "$extra_points_assignment_id", 'label' => 'Extra Points']);
-            $download_fields->{"Extra Points"} = $extra_points_assignment_id;
+            array_push($fields, ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit']);
+            $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
 
             array_push($fields, ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score']);
             $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
@@ -312,7 +312,7 @@ class ScoreController extends Controller
             $enrolled_users_last_first,
             $assignments,
             $extensions,
-            $final_weighted_scores_and_letter_grades['extra_points'],
+            $final_weighted_scores_and_letter_grades['extra_credit'],
             $final_weighted_scores_and_letter_grades['final_weighted_scores'],
             $final_weighted_scores_and_letter_grades['letter_grades'],
             $scores_by_user_and_assignment);
