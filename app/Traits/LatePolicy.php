@@ -52,64 +52,46 @@ trait LatePolicy
             return $response;
         }
 
-
+        if (!$assignment->assessment_type !== 'real time') {
+            if ($assignment->show_scores) {
+                $response['message'] = 'No responses will be saved since the scores to this assignment have been released.';
+                return $response;
+            }
+            if ($assignment->solutions_released) {
+                $response['message'] = 'No responses will be saved since the solutions to this assignment have been released.';
+                return $response;
+            }
+        }
         if (time() > strtotime($assignment->due)) {
+            //first let's see if there's an extension
             $extension = DB::table('extensions')
-                ->select(DB::raw('UNIX_TIMESTAMP(extension) as extension'))
+                ->select('extension')
                 ->where('assignment_id', $assignment_id)
                 ->where('user_id', $user->id)
                 ->first('extension');
+            if ($extension) {
+                if (strtotime($extension->extension) < time()) {
+                    $response['message'] = 'No responses will be saved since your extension for this assignment has passed.';
+                } else {
+                    $response['type'] = 'success';
+                }
+                    return $response;
+            }
 
-            switch ($assignment->late_policy) {
-                case('not accepted'):
-                    if ($extension) {
-                        if ($extension->extension < time()) {
-                            $response['message'] = 'No responses will be saved since your extension for this assignment has passed.';
-                            return $response;
-                        }
-                    } else {
-                        $response['message'] = 'No responses will be saved since the due date for this assignment has passed.';
-                        return $response;
-                    }
-                    break;
-                case('deduction'):
-                case('marked late'):
-                    if (in_array($assignment->assessment_type, ['learning tree', 'delayed'])) {
-                        if ($assignment->show_scores) {
-                            $response['message'] = 'No responses will be saved since the scores to this assignment have been released.';
-                            return $response;
-                        }
-                        if ($assignment->solutions_released) {
-                            $response['message'] = 'No responses will be saved since the solutions to this assignment have been released.';
-                            return $response;
-                        }
-                    }
-                    //now let's check the late policy deadline
-                    //if past policy deadline
-                    if ($extension) {
-                        if ($extension->extension < time()) {
-                            $response['message'] = 'No responses will be saved since your extension for this assignment has passed.';
-                            return $response;
-                        }
-                        if (strtotime($assignment->late_policy_deadline < time())) {
-                            $response['message'] = 'No more late responses are being accepted.';
-                            return $response;
-                        }
-                    } else {
-                        if (strtotime($assignment->late_policy_deadline < time())) {
-                            $response['message'] = 'No more late responses are being accepted.';
-                            return $response;
-                        } else {
-                            $response['message'] = 'No responses will be saved since the due date for this assignment has passed.';
-                            return $response;
-                        }
-                    }
-                    break;
+            if ($assignment->late_policy === 'not accepted') {
+                $response['message'] = 'No responses will be saved since the due date for this assignment has passed.';
+                return $response;
+            }
+            if (in_array($assignment->late_policy, ['deduction', 'marked late'])) {
+                //now let's check the late policy deadline
+                //if past policy deadline
+                if (strtotime($assignment->late_policy_deadline) < time()) {
+                    $response['message'] = 'No more late responses are being accepted.';
+                    return $response;
+                }
             }
         }
         $response['type'] = 'success';
         return $response;
     }
-
-
 }

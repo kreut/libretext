@@ -49,10 +49,6 @@ class Submission extends Model
             return $response;
         }
 
-        if ($assignment->solutions_released && $assignment->assessment_type !== 'real time') {
-            $response['message'] = 'You submission will not be saved since the solutions have been released.';
-            return $response;
-        }
 
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
 

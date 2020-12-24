@@ -63,6 +63,148 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+
+
+    /** @test */
+    public function real_time_solutions_can_only_be_downloaded_after_initial_submission()
+    {
+
+//todo
+    }
+
+
+    /** @test */
+    public function can_only_submit_once_for_real_time_assessments()
+    {
+//todo
+
+    }
+
+    /** @test */
+
+    public function late_question_submission_marked_late_for_marked_late_late_policy()
+    {
+//todo
+
+    }
+
+    /** @test */
+
+    public function late_file_submission_marked_late_for_marked_late_late_policy()
+    {
+//todo
+
+    }
+
+
+    /** @test */
+
+    public function score_is_correctly_computed_for_a_deduction_late_policy()
+    {
+
+
+    }
+
+
+    /** @test */
+    public function not_accepted_late_policy_will_not_accept_late_submissions(){
+        $this->assignment->due = "2001-03-05 09:00:00";
+        $this->assignment->save();
+
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'No responses will be saved since the due date for this assignment has passed.']);
+
+    }
+
+    /** @test */
+    public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_late_policy_deadline(){
+        $this->assignment->due = "2020-12-10 09:00:00";
+        $this->assignment->late_policy = 'marked late';
+        $this->assignment->late_policy_deadline = "2021-03-05 09:00:00";
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'Question submission saved. Your scored was updated.']);
+
+        $this->assignment->late_policy = 'delayed';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'Question submission saved. Your scored was updated.']);
+
+    }
+
+    /** @test */
+    public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_late_policy_deadline(){
+        $this->assignment->due = "2020-12-10 09:00:00";
+        $this->assignment->late_policy = 'marked late';
+        $this->assignment->late_policy_deadline = "2020-12-11 09:00:00";
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'No more late responses are being accepted.']);
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'No more late responses are being accepted.']);
+
+    }
+
+
+
+
+
+    /** @test */
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension()
+    {
+        $this->assignment->due = "2001-03-05 09:00:00";
+        $this->assignment->save();
+
+        Extension::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'extension' => '2027-01-01 09:00:00']);
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+
+    }
+
+
+
+    /** @test */
+public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_shown_or_solutions_released(){
+    $this->assignment->assessment_type = 'learning tree';
+    $this->assignment->show_scores = true;
+    $this->assignment->save();
+
+    $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+        ->assertJson(['type' => 'error',
+            'message' => 'No responses will be saved since the scores to this assignment have been released.']);
+
+    $this->assignment->assessment_type = 'delayed';
+    $this->assignment->show_scores = false;
+    $this->assignment->solutions_released = true;
+    $this->assignment->save();
+
+    $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+        ->assertJson(['type' => 'error',
+            'message' => 'No responses will be saved since the solutions to this assignment have been released.']);
+
+}
+
+    /** @test */
+    public function can_submit_response()
+    {
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+
+    }
+
+
+
+
     /** @test */
 
     public function student_cannot_create_cutups_if_the_assignment_is_past_due()
@@ -75,95 +217,35 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function real_time_solutions_can_only_be_downloaded_after_submission()
-    {
-
-
-    }
 
 
     /** @test */
-    public function can_only_submit_once_for_real_time_assessments()
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_no_extension()
     {
-
-
-    }
-
-    /** @test */
-
-    public function late_question_submission_marked_late_for_that_late_policy()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function late_file_submission_marked_late_for_that_late_policy()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function if_not_real_time_and_scores_released_or_solutions_released_cannot_submit_question_for_marked_late_or_deduction()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function if_not_real_time_and__scores_released_or_solutions_released_cannot_submit_file_for_marked_late_or_deduction()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function if_not_real_time_and__scores_released_or_solutions_released_cannot_create_cutup()
-    {
-
-
-    }
-
-
-    /** @test */
-
-    public function score_is_correctly_computed_for_a_deduction_late_policy()
-    {
-        //todo
-        //do not late, do late but not past 100%, do 100%
-
-    }
-
-    /** @test */
-    public function student_can_make_a_new_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
-    {
-
-//todo
-    }
-
-    /** @test */
-    public function student_cannot_update_submission_on_an_assignment_with_a_deduction_late_policy_even_if_it_is_past_the_extension_due_date()
-    {
-//todo
-
-    }
-
-
-
-    /** @test */
-    public function can_submit_response()
-    {
+        $this->assignment->due = "2001-03-05 09:00:00";
+        $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
+            ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
 
     }
+
+    /** @test */
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_past_extension()
+    {
+        $this->assignment->due = "2001-03-05 09:00:00";
+        $this->assignment->save();
+
+        Extension::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'extension' => '2020-01-01 09:00:00']);
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'error',
+                'message' => 'No responses will be saved since your extension for this assignment has passed.']);
+
+    }
+
 
 
     public function assignments_of_scoring_type_c_will_count_the_number_of_submissions_and_compare_to_the_number_of_questions()
@@ -771,47 +853,8 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension()
-    {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
 
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2027-01-01 09:00:00']);
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'success']);
-
-    }
-
-    /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_no_extension()
-    {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
-
-    }
-
-    /** @test */
-    public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_past_extension()
-    {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
-
-        Extension::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'extension' => '2020-01-01 09:00:00']);
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['type' => 'error',
-                'message' => 'No responses will be saved since your extension for this assignment has passed.']);
-
-    }
 
     /** @test */
     public function cannot_submit_response_if_assignment_not_yet_available()
