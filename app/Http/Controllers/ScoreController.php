@@ -241,7 +241,7 @@ class ScoreController extends Controller
 
             array_push($fields, ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade']);
             $download_fields->{"Letter Grade"} = $letter_grade_assignment_id;
-            return [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id];
+            return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id];
 
         }
     }
@@ -306,7 +306,7 @@ class ScoreController extends Controller
         [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($assignments, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
-        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
             $assignment_ids,
             $enrolled_users,
             $enrolled_users_last_first,
@@ -317,7 +317,7 @@ class ScoreController extends Controller
             $final_weighted_scores_and_letter_grades['letter_grades'],
             $scores_by_user_and_assignment);
 
-        return [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id];
+        return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id];
 
 
     }
@@ -368,13 +368,14 @@ class ScoreController extends Controller
         foreach ($course->extensions as $value) {
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
-        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
             'download_rows' => $download_rows,
+            'extra_credit_assignment_id' => $extra_credit_assignment_id,
             'weighted_score_assignment_id' => $weighted_score_assignment_id,//needed for testing...
-            'letter_grade_assignmnet_id' => $letter_grade_assignment_id,
+            'letter_grade_assignment_id' => $letter_grade_assignment_id,
             'assignment_groups' => array_values($assignment_groups)];//needed for testing...
     }
 

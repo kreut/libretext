@@ -56,9 +56,8 @@
                 <template v-for="assignmentIndex in assignmentsArray"
                           v-slot:cell()="data"
                 >
-                  <span @click="openStudentAssignmentModal(data.value,data.item.userId, data.field.key)"
-                        v-html="data.value"
-                  />
+                  <span @click="openStudentModal(data.value,data.item.userId, data.field.key)">{{ data.value }}
+                  </span>
                 </template>
               </b-table>
             </b-row>
@@ -71,16 +70,53 @@
         </b-alert>
       </div>
       <b-modal
-        id="modal-update-student-assignment"
+        id="modal-update-extra-credit"
         ref="modal"
-        title="Update Student Assignment"
+        title="Update Extra Credit"
+        ok-title="Submit"
+        @ok="submitUpdateExtraCredit"
+        @hidden="resetModalForms"
+      >
+        <p>
+          Extra Credit is applied after the final weighted average is computed.  As an example, if the final weighted
+          average is 82% and you give your student extra credit of 5%, their final average will be 87%.
+        </p>
+        <b-form ref="form">
+          <b-form-group
+            id="extra_credit"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Extra Credit"
+            label-for="Extra Credit"
+          >
+            <b-form-row>
+              <b-col lg="4">
+                <b-form-input
+                  id="score"
+                  v-model="extraCreditForm.extra_credit"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': extraCreditForm.errors.has('extra_credit') }"
+                  @keydown="extraCreditForm.errors.clear('extra_credit')"
+                />
+                <has-error :form="extraCreditForm" field="extra_credit" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+        </b-form>
+      </b-modal>
+
+      <b-modal
+        id="modal-student-extension-and-override"
+        ref="modal"
+        title="Update Student Extension And Override"
         ok-title="Submit"
         size="lg"
-        @ok="submitUpdateAssignmentByStudent"
+        @ok="submitUpdateExtensionOrOverrideByStudent"
         @hidden="resetModalForms"
       >
         <p>Please use this form to either provide an extension for your student or an override score.</p>
-        <b-form ref="form" @submit="updateAssignmentByStudent">
+        <b-form ref="form" @submit="updateExtensionOrOverrideByStudent">
           <b-form-group
             id="extension"
             label-cols-sm="4"
@@ -163,12 +199,18 @@ export default {
   middleware: 'auth',
   data: () => ({
     weightedAverageAssignmentId: 0,
+    extraCreditAssignmentId: 0,
     isLoading: true,
     min: '',
     form: new Form({
       extension_date: '',
       extension_time: '',
       score: null
+    }),
+    extraCreditForm: new Form({
+      extra_credit: null,
+      student_user_id: 0,
+      course_id: 0
     }),
     assignmentScoringType: null,
     sortBy: 'name',
@@ -213,13 +255,13 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    submitUpdateAssignmentByStudent (bvModalEvt) {
+    submitUpdateExtensionOrOverrideByStudent (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      this.updateAssignmentByStudent()
+      this.updateExtensionOrOverrideByStudent()
     },
-    async updateAssignmentByStudent () {
+    async updateExtensionOrOverrideByStudent () {
       let isUpdateScore = (this.currentScore !== this.form.score)
       let isUpdateExtension = ((this.currentExtensionDate !== this.form.extension_date) ||
         (this.currentExtensionTime !== this.form.extension_time))
@@ -236,8 +278,8 @@ export default {
           success = await this.updateExtension()
         }
         if (success) {
-          this.getScores()
-          this.resetAll('modal-update-student-assignment')
+          await this.getScores()
+          this.resetAll('modal-student-extension-and-override')
         }
       }
     },
@@ -275,8 +317,10 @@ export default {
     resetModalForms () {
       this.form.extension_date = ''
       this.form.extension_time = ''
+      this.extraCreditForm.extra_credit = ''
       this.form.score = null
       this.form.errors.clear()
+      this.extraCreditForm.errors.clear()
     },
     initStudentAssignmentCell (key) {
       console.log(key)
@@ -308,14 +352,52 @@ export default {
         return false
       }
     },
-    async openStudentAssignmentModal (value, studentUserId, assignmentId) {
+    async openStudentModal (value, studentUserId, assignmentId) {
       // name shouldn't be clickable
 
       if (assignmentId === 'name' || parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
         return false
       }
-
       this.studentUserId = studentUserId
+      if (parseInt(assignmentId) === parseInt(this.extraCreditAssignmentId)) {
+        await this.openExtraCreditModal()
+        return false
+      }
+      // Extension and override
+      await this.openExtensionAndOverrideModal(assignmentId)
+    },
+    async openExtraCreditModal () {
+      try {
+        this.extraCreditForm.course_id = this.courseId
+        this.extraCreditForm.student_user_id = this.studentUserId
+        const { data } = await axios.get(`/api/extra-credit/${this.courseId}/${this.studentUserId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.extraCreditForm.extra_credit = data.extra_credit
+        this.$bvModal.show('modal-update-extra-credit')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitUpdateExtraCredit (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const { data } = await this.extraCreditForm.post(`/api/extra-credit`)
+        console.log(data)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          await this.getScores()
+          this.resetAll('modal-update-extra-credit')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async openExtensionAndOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
       this.assignmentScoringType = this.assignmentScoringTypes[this.assignmentId]
 
@@ -323,7 +405,7 @@ export default {
         await this.getScoreByAssignmentAndStudent()
         await this.getExtensionByAssignmentAndStudent()
 
-        this.$bvModal.show('modal-update-student-assignment')
+        this.$bvModal.show('modal-student-extension-and-override')
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -362,6 +444,7 @@ export default {
           this.assignmentsArray = [...Array(this.fields.length).keys()]
           this.hasAssignments = true
           this.weightedAverageAssignmentId = data.weighted_score_assignment_id
+          this.extraCreditAssignmentId = data.extra_credit_assignment_id
         }
         this.canViewScores = true
       } catch (error) {

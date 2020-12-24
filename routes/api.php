@@ -66,6 +66,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/final-grades/{course}/round-scores/{roundScores}', 'FinalGradeController@roundScores');
     Route::patch('/final-grades/{course}/release-letter-grades/{letterGradesReleased}', 'FinalGradeController@releaseLetterGrades');
 
+    Route::post('/extra-credit', 'ExtraCreditController@store');
+    Route::get('/extra-credit/{course}/{user}', 'ExtraCreditController@show');
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/{course}', 'CourseController@show');
