@@ -12,7 +12,7 @@ use App\Assignment;
 use App\Extension;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
-use App\Traits\LatePolicy;
+use App\Traits\GeneralSubmissionPolicy;
 use App\Http\Requests\StoreScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -32,7 +32,7 @@ class SubmissionFileController extends Controller
 
     use S3;
     use DateFormatter;
-    use LatePolicy;
+    use GeneralSubmissionPolicy;
 
     public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
     {
@@ -276,7 +276,7 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($can_upload_response = $this->canSubmitBasedOnLatePolicy( $user, $assignment, $assignment_id,  $question_id)) {
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy( $user, $assignment, $assignment_id,  $question_id)) {
                 if ($can_upload_response['type'] === 'error') {
                     $response['message'] =$can_upload_response['message'];
                     return $response;

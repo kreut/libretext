@@ -18,7 +18,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
-use App\Traits\LatePolicy;
+use App\Traits\GeneralSubmissionPolicy;
 
 
 class CutupController extends Controller
@@ -26,7 +26,7 @@ class CutupController extends Controller
 
     use S3;
     use DateFormatter;
-    use LatePolicy;
+    use GeneralSubmissionPolicy;
 
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
@@ -83,7 +83,7 @@ class CutupController extends Controller
         }
 
         if ($type === 'submission') {
-            if ($can_upload_response = $this->canSubmitBasedOnLatePolicy($user, $assignment, $assignment->id, $question->id)) {
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment->id, $question->id)) {
                 if ($can_upload_response['type'] === 'error') {
                     $response['message'] = $can_upload_response['message'];
                     return $response;

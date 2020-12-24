@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
-use App\Traits\LatePolicy;
+use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
 
@@ -36,7 +36,7 @@ class AssignmentSyncQuestionController extends Controller
 
     use IframeFormatter;
     use DateFormatter;
-    use LatePolicy;
+    use GeneralSubmissionPolicy;
     use S3;
     use SubmissionFiles;
     use JWT;

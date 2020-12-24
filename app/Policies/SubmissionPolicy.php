@@ -7,12 +7,12 @@ use App\Submission;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Auth\Access\Response;
-use App\Traits\LatePolicy;
+use App\Traits\GeneralSubmissionPolicy;
 
 class SubmissionPolicy
 {
     use HandlesAuthorization;
-    use LatePolicy;
+    use GeneralSubmissionPolicy;
 
     /**
      * @param User $user
@@ -24,7 +24,7 @@ class SubmissionPolicy
      */
     public function store(User $user, $submission, $assignment, int $assignment_id, int $question_id)
     {
-        $response = $this->canSubmitBasedOnLatePolicy( $user,  $assignment, $assignment_id,  $question_id);
+        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy( $user,  $assignment, $assignment_id,  $question_id);
         $has_access = $response['type'] === 'success';
         return $has_access
             ? Response::allow()

@@ -6,7 +6,7 @@ use App\Exceptions\Handler;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Traits\S3;
-use App\Traits\LatePolicy;
+use App\Traits\GeneralSubmissionPolicy;
 
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\DB;
@@ -16,7 +16,7 @@ class SubmissionFile extends Model
 {
     use S3;
     use DateFormatter;
-    use LatePolicy;
+    use GeneralSubmissionPolicy;
 
     protected $guarded = [];
 
