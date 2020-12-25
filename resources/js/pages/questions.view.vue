@@ -189,7 +189,7 @@
                 <div v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0" class="text-center">
                   <b-alert variant="warning" show>
                     <span class="alert-link">
-                      A late penalty will be applied to your submission.</span>
+                      This submission will be marked lated.</span>
                   </b-alert>
                 </div>
                 <div v-if="isInstructor()" class="text-center">

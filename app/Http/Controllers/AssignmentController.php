@@ -478,7 +478,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function getAssignmentName(Assignment $assignment)
+    public function getAssignmentNameAndLatePolicy(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -486,6 +486,9 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment->id);
             $response['assignment'] = [
                 'name' => $assignment->name,
+                'late_policy' => $assignment->late_policy,
+                'late_deduction_percent' => $assignment->late_deduction_percent,
+                'late_deduction_application_period' => $assignment->late_deduction_application_period
             ];
             $response['type'] = 'success';
         } catch (Exception $e) {

@@ -135,14 +135,18 @@
                     <b-card header="default" :header-html="getStudentSubmissionTitle()" class="h-100">
                       <b-card-text>
                         <b-form ref="form">
-                          <b-alert :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission']" variant="warning">
+                          <b-alert :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] !== false" variant="warning">
                             <span class="alert-link">
-                              {{ assignment.latePolicy }}
-                              The file submission was late.</span>
+                              The file submission was late by  {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] }}.
+                              <span v-if="latePolicy === 'deduction'">
+                                According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
+                                <span v-if="lateDeductionApplicationPeriod !== 'once'">
+                                  per "{{ lateDeductionApplicationPeriod }}"</span>.
+                              </span>
+                            </span>
                           </b-alert>
                           <strong>Date Submitted:</strong> {{
-                            submissionFiles[currentQuestionPage - 1][currentStudentPage -
-                              1]['date_submitted']
+                            submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_submitted']
                           }} <br>
                           <strong>Date Graded:</strong> {{
                             submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
@@ -301,6 +305,9 @@ export default {
       { text: 'Ungraded Submissions', value: 'ungradedSubmissions' },
       { text: 'Graded Submissions', value: 'gradedSubmissions' }
     ],
+    latePolicy: null,
+    lateDeductionApplicationPeriod: '',
+    lateDeductionPercent: 0,
     isLoading: true,
     gradeView: 'allStudents',
     type: '',
@@ -331,7 +338,7 @@ export default {
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentName()
+    this.getAssignmentNameAndLatePolicy()
     this.type = this.$route.params.typeFiles.replace('-files', '') // question or assignment
     this.getSubmissionFiles(this.gradeView)
   },
@@ -352,7 +359,7 @@ export default {
       console.log(url)
       window.open(url, '_blank')
     },
-    async getAssignmentName () {
+    async getAssignmentNameAndLatePolicy () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/get-name`)
         console.log(data)
@@ -360,7 +367,11 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.title = `Grade File Submissions For ${data.assignment.name}`
+        let assignment = data.assignment
+        this.title = `Grade File Submissions For ${assignment.name}`
+        this.latePolicy = assignment.late_policy
+        this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
+        this.lateDeductionPercent = assignment.late_deduction_percent
       } catch (error) {
         this.title = 'Grade File Submissions'
       }
