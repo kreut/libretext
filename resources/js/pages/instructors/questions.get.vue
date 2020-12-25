@@ -116,11 +116,11 @@
                 :labels="{checked: 'Question File Uploaded Enabled', unchecked: 'Question File Upload Disabled'}"
                 @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
               />
-              <b-button v-if="questions[currentPage-1].inAssignment" v-b-modal.modal-upload-file
+              <b-button v-if="false && questions[currentPage-1].inAssignment" v-b-modal.modal-upload-file
                         class="mt-1 mb-2"
                         variant="dark"
                         @click="openUploadFileModal(questions[currentPage-1].id)"
-              >Upload Solution
+              >Upload Solution I'M HIDING THIS BUTTON AND IT'S JUST ON THE VIEW PAGE
               </b-button>
 
               <span v-if="questions[currentPage-1].solution">
