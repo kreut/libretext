@@ -7,7 +7,7 @@ use App\Course;
 use App\Enrollment;
 use App\FinalGrade;
 use App\User;
-use App\Question;
+use App\ExtraCredit;
 use App\Extension;
 use App\Traits\Test;
 
@@ -31,6 +31,8 @@ class ScoresIndexTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
 
+        $this->student_user_2 = factory(User::class)->create();//not enrolled
+        $this->student_user->role = 3;
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
@@ -43,6 +45,60 @@ class ScoresIndexTest extends TestCase
     }
 
     /** @test */
+
+public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_credit(){
+
+
+    $this->actingAs($this->user)->getJson("/api/extra-credit/{$this->course->id}/{$this->student_user_2->id}")
+    ->assertJson(['message' => 'You are not allowed to view this student\'s extra credit.']);
+}
+
+    /** @test */
+
+    public function if_a_student_is_in_the_course_a_user_can_get_their_extra_credit(){
+        ExtraCredit::create(['course_id' =>$this->course->id,
+            'user_id' => $this->student_user->id,
+            'extra_credit' => 10]);
+        $this->actingAs($this->user)->getJson("/api/extra-credit/{$this->course->id}/{$this->student_user->id}")
+            ->assertJson(['extra_credit' => '10.00']);
+    }
+
+
+    /** @test */
+
+    public function if_a_student_is_not_in_the_course_a_user_cannot_udpate_extra_credit()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+            'course_id' => $this->course->id,
+            'student_user_id' => $this->student_user_2->id,
+        'extra_credit' => 5])
+            ->assertJson(['message' => 'You are not allowed to give this student extra credit.']);
+    }
+
+    /** @test */
+
+    public function if_a_student_is_in_the_course_a_user_can_udpate_extra_credit()
+    {
+        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+            'course_id' => $this->course->id,
+            'student_user_id' => $this->student_user->id,
+            'extra_credit' => 5])
+            ->assertJson(['message' => 'The student has been given extra credit.']);
+    }
+
+    /** @test */
+
+    public function the_extra_credit_amount_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+            'course_id' => $this->course->id,
+            'student_user_id' => $this->student_user->id,
+            'extra_credit' => -5])
+            ->assertJsonValidationErrors(['extra_credit']);
+    }
+
+        /** @test */
 
     public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()
     {
@@ -60,10 +116,27 @@ class ScoresIndexTest extends TestCase
     }
 
 
-
     /** @test */
 
     public function correctly_computes_the_final_scores()
+    {
+
+        //4 assignments with 2 different weights
+        $without_extra_credit = 51.11;
+        $extra_credit = 10;
+        $this->createAssignmentGroupWeightsAndAssignments();
+        ExtraCredit::create(['course_id' =>$this->course->id,
+            'user_id' => $this->student_user->id,
+            'extra_credit' => $extra_credit]);
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}");
+        $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
+        $this->assertEquals(($without_extra_credit + $extra_credit) .'%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
+
+    }
+
+    /** @test */
+
+    public function correctly_computes_the_final_scores_with_extra_credit()
     {
 
         //4 assignments with 2 different weights

@@ -31,7 +31,7 @@ class ExtraCreditPolicy
 
         return $this->canAccessExtraCredit($course, $user, $student_user_id)
             ? Response::allow()
-            : Response::deny("You are not allowed to view this student's extra credit .");
+            : Response::deny("You are not allowed to view this student's extra credit.");
     }
 
 

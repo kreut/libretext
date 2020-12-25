@@ -98,8 +98,8 @@ class ScoreController extends Controller
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
 
             $score_as_proportion = (($total_points_by_assignment_id[$score->assignment_id]) <= 0)//total_points_by_assignment can be 0.00
-                                    ? 0
-                                    : $score->score / $total_points_by_assignment_id[$score->assignment_id];
+                ? 0
+                : $score->score / $total_points_by_assignment_id[$score->assignment_id];
             $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
                 ->first()
                 ->include_in_weighted_average
@@ -122,7 +122,7 @@ class ScoreController extends Controller
         $final_weighted_scores = [];
         $letter_grades = [];
         $extra_credit = [];
-        foreach ($course->extraCredits as $key => $value){
+        foreach ($course->extraCredits as $key => $value) {
             $extra_credit[$value->user_id] = $value->extra_credit;
         }
 
@@ -136,10 +136,11 @@ class ScoreController extends Controller
                         : 0;
                 }
             }
-           if (!isset($extra_credit[$user->id])){
-                $extra_credit[$user->id]=0;
+            if (!isset($extra_credit[$user->id])) {
+                $extra_credit[$user->id] = 0;
             }
-            $final_weighted_scores[$user->id] +=  $extra_credit[$user->id];
+
+            $final_weighted_scores[$user->id] += $extra_credit[$user->id];
 
         }
         foreach ($course->enrolledUsers as $key => $user) {
@@ -183,7 +184,7 @@ class ScoreController extends Controller
     {
         {
             $extra_credit_assignment_id = max($assignment_ids) + 1;
-            $weighted_score_assignment_id =   $extra_credit_assignment_id + 1;
+            $weighted_score_assignment_id = $extra_credit_assignment_id + 1;
             $letter_grade_assignment_id = $weighted_score_assignment_id++;
             //now fill in the actual scores
             $rows = [];
@@ -276,10 +277,12 @@ class ScoreController extends Controller
         $scores = $course->scores->where('user_id', $user->id)->whereIn('assignment_id', $assignment_ids);
 
 
-        [$rows, $fields, $download_rows, $download_fields, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
+
         $response['weighted_score'] = $course->students_can_view_weighted_average ? $rows[0][$weighted_score_assignment_id] : false;
         $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $rows[0][$letter_grade_assignment_id] : false;
         $response['type'] = 'success';
+
         return $response;
 
     }

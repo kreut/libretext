@@ -26,7 +26,7 @@ class ExtraCreditController extends Controller
                                     ->first();
 
 
-       $authorized = Gate::inspect('store', [$extraCredit, $course, $user->id]);
+       $authorized = Gate::inspect('show', [$extraCredit, $course, $user->id]);
 
         if (!$authorized->allowed()) {
             $response['type'] = 'error';
