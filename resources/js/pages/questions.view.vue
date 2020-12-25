@@ -483,6 +483,22 @@
               <b-row>
                 <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
+                    <span
+                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                    >
+                      <b-alert variant="warning" show>
+                        <a href="#" class="alert-link">
+                          Your question submission will be marked late.</a>
+                      </b-alert>
+                    </span>
+                    <span
+                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
+                    >
+                      <b-alert variant="warning" show>
+                        <a href="#" class="alert-link">
+                          A late penalty will be applied to your submission.</a>
+                      </b-alert>
+                    </span>
                     <span v-if="questions[currentPage-1].solution">
                       <span class="font-weight-bold">Solution:</span>
                       <a href=""
@@ -491,14 +507,6 @@
                         {{ standardizeFilename(questions[currentPage - 1].solution) }}
                       </a>
                       <br>
-                    </span>
-                    <span
-                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">
-                          Your question submission will be marked late.</a>
-                      </b-alert>
                     </span>
                     <span v-if="assessmentType==='learning tree'">
                       <span class="font-weight-bold">Number of attempts: </span>
@@ -672,7 +680,7 @@ export default {
   },
   data: () => ({
     latePolicy: '',
-    percentPenalty: 0,
+    learningTreePercentPenalty: 0,
     submissionCountPercentDecrease: 0,
     capitalFormattedAssessmentType: '',
     assessmentType: '',
@@ -946,7 +954,7 @@ export default {
       this.submissionDataType = ['success', 'info'].includes(data.type) ? data.type : 'danger'
 
       this.submissionDataMessage = data.message
-      this.percentPenalty = data.percent_penalty
+      this.learningTreePercentPenalty = data.learning_tree_percent_penalty
       this.showSubmissionMessage = true
       setTimeout(() => {
         this.showSubmissionMessage = false

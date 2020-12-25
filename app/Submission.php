@@ -99,7 +99,7 @@ class Submission extends Model
                 ->where('question_id', $data['question_id'])
                 ->select('learning_tree')
                 ->get();
-            $percent_penalty = 0;
+            $learning_tree_percent_penalty = 0;
             $explored_learning_tree = 0;
             $message = 'Question submission saved. Your scored was updated.';
 
@@ -131,14 +131,14 @@ class Submission extends Model
 
 
                     $proportion_of_score_received = max(1 - (($submission->submission_count - 1) * $assignment->submission_count_percent_decrease / 100), 0);
-                    $percent_penalty = 100 * (1 - $proportion_of_score_received);
+                    $learning_tree_percent_penalty = 100 * (1 - $proportion_of_score_received);
                     if ($explored_learning_tree) {
                         $learning_tree_points = (floatval($assignment->percent_earned_for_exploring_learning_tree) / 100) * floatval($assignment_question->points);
                         if ($data['all_correct']) {
                             $submission->answered_correctly_at_least_once = 1;//first time getting it right!
 
                             $data['score'] = max(floatval($assignment_question->points) * $proportion_of_score_received, $learning_tree_points);
-                            $message = "Your total score was updated with a penalty of $percent_penalty% applied.";
+                            $message = "Your total score was updated with a penalty of $learning_tree_percent_penalty% applied.";
                         } else {
                             $data['score'] = $learning_tree_points;
                             $message = "You submission was not correct but you're still receiving $learning_tree_points points for exploring the Learning Tree.";
@@ -151,7 +151,7 @@ class Submission extends Model
                 }
                 DB::beginTransaction();
                 $submission->submission = $data['submission'];
-                $submission->score =  $data['score'];
+                $submission->score = $this->applyLatePenalyToScore($assignment, $data['score']);
                 $submission->submission_count = $submission->submission_count + 1;
                 $submission->save();
 
@@ -163,13 +163,12 @@ class Submission extends Model
                     }
                 }
                 DB::beginTransaction();
-                Log::info("Score before going in: {$data['score']}");
-                $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
+
                 $submission = Submission::create(['user_id' => $data['user_id'],
                     'assignment_id' => $data['assignment_id'],
                     'question_id' => $data['question_id'],
                     'submission' => $data['submission'],
-                    'score' => Round($data['score'] * (100 -  $late_penalty_percent  ) / 100, 2),
+                    'score' => $this->applyLatePenalyToScore($assignment, $data['score']),
                     'answered_correctly_at_least_once' => $data['all_correct'],
                     'submission_count' => 1]);
             }
@@ -197,7 +196,7 @@ class Submission extends Model
             $response['type'] = $score_not_updated ? 'info' : 'success';
             $response['message'] = $message;
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
-            $response['percent_penalty'] = "$percent_penalty%";
+            $response['learning_tree_percent_penalty'] = "$learning_tree_percent_penalty%";
             $response['explored_learning_tree'] = $explored_learning_tree;
             $log = new \App\Log();
             $request->action = 'submit-question-response';
@@ -216,6 +215,11 @@ class Submission extends Model
 
     }
 
+    public function applyLatePenalyToScore($assignment, $score)
+    {
+        $late_penalty_percent = $this->latePenaltyPercent($assignment, Carbon::now('UTC'));
+        return Round($score * (100 - $late_penalty_percent) / 100, 2);
+    }
 
     public function latePenaltyPercent(Assignment $assignment, Carbon $now)
     {
@@ -224,12 +228,11 @@ class Submission extends Model
             $late_deduction_percent = $assignment->late_deduction_percent;
             $late_deduction_application_period = $assignment->late_deduction_application_period;
             if ($assignment->late_deduction_application_period !== 'once') {
-                $max_num_iterations = (int) floor(100 / $late_deduction_percent );
+                $max_num_iterations = (int)floor(100 / $late_deduction_percent);
                 //Ex 100/52 = 1.92....use 1.  Makes sense since you won't deduct more than 100%
                 //Ex 100/50 = 2.
                 $due = Carbon::parse($assignment->due);
                 for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
-                    Log::info("$now  now - due   $due");
                     if ($due > $now) {
                         break;
                     }
@@ -237,7 +240,7 @@ class Submission extends Model
                 }
                 $late_deduction_percent = $late_deduction_percent * $num_late_periods;
             }
-           return $late_deduction_percent;
+            return $late_deduction_percent;
         }
         return $late_deduction_percent;
     }

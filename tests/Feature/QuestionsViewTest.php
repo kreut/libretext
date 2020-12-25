@@ -31,16 +31,16 @@ class QuestionsViewTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
-
+        $this->question_points = 10;
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'points' => 10
+            'points' => $this->question_points
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
-            'points' => 10
+            'points' => $this->question_points
         ]);;
 
         $this->student_user = factory(User::class)->create();
@@ -63,22 +63,74 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+    /** @test */
+    public function can_only_submit_once_for_real_time_assessments()
+    {
+        $this->assignment->assessment_type = 'real time';
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message'=> 'You can only submit once since you are provided with real-time feedback.']);
+
+
+    }
+
+
+    /** @test */
+    public function score_is_correctly_computed_for_a_deduction_with_time_periods_late_policy()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = '1 hour';
+        $this->assignment->late_deduction_percent = 10;
+        $now = Carbon::now('UTC');
+        $this->assignment->due = $now->subHour(1)->subMinute(2)->toDateTimeString();//was due an hour and 2 minutes ago -- should penalize 20%
+        $this->assignment->late_policy_deadline = $now->addHour(5)->toDateTimeString();
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+//2 periods, therefore the 2....
+        $this->assertEquals($submission->score, $this->question_points * (1 - 2 * $this->assignment->late_deduction_percent / 100));
+
+    }
+
+    /** @test */
+
+    public function score_is_correctly_computed_for_a_deduction_only_once_late_policy()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = 'once';
+        $this->assignment->late_deduction_percent = 50;
+        $now = Carbon::now('UTC');
+        $this->assignment->due = $now->subHour(1)->toDateTimeString();//was due an hour ago.
+        $this->assignment->late_policy_deadline = $now->addHour(1)->toDateTimeString();
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+
+        $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100);
+
+    }
 
 
     /** @test */
     public function real_time_solutions_can_only_be_downloaded_after_initial_submission()
     {
 
-//todo
-    }
-
-
-    /** @test */
-    public function can_only_submit_once_for_real_time_assessments()
-    {
-//todo
 
     }
+
+
+
 
     /** @test */
 
@@ -98,16 +150,8 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
-
-    public function score_is_correctly_computed_for_a_deduction_late_policy()
+    public function not_accepted_late_policy_will_not_accept_late_submissions()
     {
-
-
-    }
-
-
-    /** @test */
-    public function not_accepted_late_policy_will_not_accept_late_submissions(){
         $this->assignment->due = "2001-03-05 09:00:00";
         $this->assignment->save();
 
@@ -118,7 +162,8 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_late_policy_deadline(){
+    public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_late_policy_deadline()
+    {
         $this->assignment->due = "2020-12-10 09:00:00";
         $this->assignment->late_policy = 'marked late';
         $this->assignment->late_policy_deadline = "2021-03-05 09:00:00";
@@ -135,7 +180,8 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_late_policy_deadline(){
+    public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_late_policy_deadline()
+    {
         $this->assignment->due = "2020-12-10 09:00:00";
         $this->assignment->late_policy = 'marked late';
         $this->assignment->late_policy_deadline = "2020-12-11 09:00:00";
@@ -150,9 +196,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'No more late responses are being accepted.']);
 
     }
-
-
-
 
 
     /** @test */
@@ -171,27 +214,27 @@ class QuestionsViewTest extends TestCase
     }
 
 
-
     /** @test */
-public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_shown_or_solutions_released(){
-    $this->assignment->assessment_type = 'learning tree';
-    $this->assignment->show_scores = true;
-    $this->assignment->save();
+    public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_shown_or_solutions_released()
+    {
+        $this->assignment->assessment_type = 'learning tree';
+        $this->assignment->show_scores = true;
+        $this->assignment->save();
 
-    $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-        ->assertJson(['type' => 'error',
-            'message' => 'No responses will be saved since the scores to this assignment have been released.']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'error',
+                'message' => 'No responses will be saved since the scores to this assignment have been released.']);
 
-    $this->assignment->assessment_type = 'delayed';
-    $this->assignment->show_scores = false;
-    $this->assignment->solutions_released = true;
-    $this->assignment->save();
+        $this->assignment->assessment_type = 'delayed';
+        $this->assignment->show_scores = false;
+        $this->assignment->solutions_released = true;
+        $this->assignment->save();
 
-    $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-        ->assertJson(['type' => 'error',
-            'message' => 'No responses will be saved since the solutions to this assignment have been released.']);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'error',
+                'message' => 'No responses will be saved since the solutions to this assignment have been released.']);
 
-}
+    }
 
     /** @test */
     public function can_submit_response()
@@ -201,8 +244,6 @@ public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_
             ->assertJson(['type' => 'success']);
 
     }
-
-
 
 
     /** @test */
@@ -216,7 +257,6 @@ public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_
             ->assertJson(['message' => "No responses will be saved since the due date for this assignment has passed."]);
 
     }
-
 
 
     /** @test */
@@ -245,7 +285,6 @@ public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_
                 'message' => 'No responses will be saved since your extension for this assignment has passed.']);
 
     }
-
 
 
     public function assignments_of_scoring_type_c_will_count_the_number_of_submissions_and_compare_to_the_number_of_questions()
@@ -852,8 +891,6 @@ public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_
                 'message' => 'No responses will be saved since the assignment is not part of your course.']);
 
     }
-
-
 
 
     /** @test */

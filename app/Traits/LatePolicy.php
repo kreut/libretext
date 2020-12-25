@@ -14,7 +14,7 @@ trait LatePolicy
     {
         $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
         $max_date_to_submit = $extension ? $extension : $assignment->due;
-        return $assignment->late_policy === 'marked late' && Carbon::parse($max_date_to_submit) < $date_submitted;
+        return in_array($assignment->late_policy,['marked late','deduction']) && Carbon::parse($max_date_to_submit) < $date_submitted;
     }
 
     public function isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, string $due, string $date_submitted)

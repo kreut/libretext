@@ -1151,6 +1151,7 @@ export default {
       this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
       this.form.late_policy_deadline_time = assignment.late_policy_deadline_time
       this.form.late_policy_deadline_date = assignment.late_policy_deadline_date
+      this.form.late_deduction_percent = assignment.late_deduction_percent
       this.form.assignment_group_id = assignment.assignment_group_id
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
       this.form.source = assignment.source

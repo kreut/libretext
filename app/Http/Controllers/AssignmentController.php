@@ -40,9 +40,10 @@ class AssignmentController extends Controller
 
         try {
             $assignment->update(['solutions_released' => !$solutionsReleased]);
-            $response['type'] = 'success';
-            $scores_released = !$solutionsReleased ? 'released' : 'hidden';
-            $response['message'] = "The solutions have been <strong>{$scores_released}</strong>.";
+            $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
+            $response['type'] = !$solutionsReleased  ? 'success' : 'info';
+
+            $response['message'] = "The solutions have been <strong>{$solutions_released}</strong>.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

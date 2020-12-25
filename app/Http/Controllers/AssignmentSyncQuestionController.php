@@ -28,6 +28,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
 
@@ -41,6 +42,7 @@ class AssignmentSyncQuestionController extends Controller
     use SubmissionFiles;
     use JWT;
     use QueryFiles;
+    use LatePolicy;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
