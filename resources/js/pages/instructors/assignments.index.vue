@@ -641,8 +641,7 @@
             <b-table class="header-high-z-index"
                      striped
                      hover
-                     responsive="true"
-                     sticky-header="600px"
+                     sticky-header="800px"
                      :no-border-collapse="true"
                      :fields="fields"
                      :items="assignments"
@@ -836,8 +835,10 @@ export default {
     fields: [
       {
         key: 'name',
+        label: 'Assignment Name',
         sortable: true,
-        thStyle: { minWidth: '175px' }
+        stickyColumn: true,
+        thStyle: 'min-width: 190px'
       },
       'shown',
       {
@@ -848,17 +849,16 @@ export default {
       {
         key: 'available_from',
         sortable: true,
-        thStyle: { minWidth: '175px' }
+        thStyle: 'min-width: 170px'
       },
       {
         key: 'due',
         sortable: true,
-        thStyle: { minWidth: '175px' }
+        thStyle: 'min-width: 170px'
       },
       'status',
       {
-        key: 'show_points_per_question',
-        thStyle: { minWidth: '120px' }
+        key: 'show_points_per_question'
       },
       {
         key: 'show_scores',
@@ -874,7 +874,7 @@ export default {
       },
       {
         key: 'actions',
-        thStyle: { minWidth: '100px' }
+        thStyle: 'min-width: 100px'
       }
     ],
     form: new Form({
@@ -1271,6 +1271,9 @@ export default {
   }
 }
 </script>
+<style scoped>
+
+</style>
 <style>
 svg:focus, svg:active:focus {
   outline: none !important;

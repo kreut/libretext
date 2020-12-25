@@ -4,11 +4,11 @@
       <navbar />
     </div>
 
-    <div class="container mt-4" style="min-height: 700px">
+    <div :class="{'container':true, 'mt-4':true,'expandHeight': (user === null)}">
       <child />
     </div>
 
-    <div v-if="!inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
+    <div v-if="(user === null) && !inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts Adapt platform is supported by the Department of Education Open Textbook Pilot Project and the <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>.
@@ -26,6 +26,7 @@
 
 <script>
 import Navbar from '~/components/Navbar'
+import { mapGetters } from 'vuex'
 
 export default {
   name: 'MainLayout',
@@ -34,6 +35,9 @@ export default {
   },
   data: () => ({
     inIFrame: true
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   created () {
     try {
@@ -44,3 +48,8 @@ export default {
   }
 }
 </script>
+<style>
+.expandHeight{
+  min-height: 700px
+}
+</style>
