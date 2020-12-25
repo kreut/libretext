@@ -136,8 +136,9 @@
                       <b-card-text>
                         <b-form ref="form">
                           <b-alert :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission']" variant="warning">
-                            <a href="#" class="alert-link">
-                              The file submission was late.</a>
+                            <span class="alert-link">
+                              {{ assignment.latePolicy }}
+                              The file submission was late.</span>
                           </b-alert>
                           <strong>Date Submitted:</strong> {{
                             submissionFiles[currentQuestionPage - 1][currentStudentPage -
@@ -272,8 +273,8 @@
         </div>
         <div v-if="showNoFileSubmissionsExistAlert" class="mt-4">
           <b-alert show variant="warning">
-            <a href="#" class="alert-link">
-              There are no submissions for this view.</a>
+            <span class="alert-link">
+              There are no submissions for this view.</span>
           </b-alert>
         </div>
       </div>

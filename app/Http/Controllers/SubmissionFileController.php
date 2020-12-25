@@ -13,6 +13,7 @@ use App\Extension;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\LatePolicy;
 use App\Http\Requests\StoreScore;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -33,6 +34,7 @@ class SubmissionFileController extends Controller
     use S3;
     use DateFormatter;
     use GeneralSubmissionPolicy;
+    use LatePolicy;
 
     public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
     {

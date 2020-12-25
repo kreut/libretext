@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
 use App\Traits\S3;
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\LatePolicy;
 
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +18,7 @@ class SubmissionFile extends Model
     use S3;
     use DateFormatter;
     use GeneralSubmissionPolicy;
+    use LatePolicy;
 
     protected $guarded = [];
 
@@ -161,7 +163,7 @@ class SubmissionFile extends Model
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $extension = isset($extensions[$user->user_id] ) ? $extensions[$user->user_id] : null;
-                if ($submission && $assignment->late_policy === 'marked late'){
+                if ($submission && in_array($assignment->late_policy, [ 'marked late', 'deduction'])){
                     $late_file_submission =  $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension,  $assignment->due,  $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
                 }
 

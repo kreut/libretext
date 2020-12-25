@@ -186,7 +186,12 @@
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
                 </div>
-
+                <div v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0" class="text-center">
+                  <b-alert variant="warning" show>
+                    <span class="alert-link">
+                      A late penalty will be applied to your submission.</span>
+                  </b-alert>
+                </div>
                 <div v-if="isInstructor()" class="text-center">
                   <b-form-row>
                     <b-col />
@@ -227,7 +232,7 @@
             <b-row class="text-center">
               <b-col>
                 <div v-if="timeLeft>0">
-                  <countdown :time="timeLeft">
+                  <countdown :time="timeLeft" @end="timeLeft=0">
                     <template slot-scope="props">
                       Time Until due：{{ props.days }} days, {{ props.hours }} hours,
                       {{ props.minutes }} minutes, {{ props.seconds }} seconds.
@@ -487,16 +492,8 @@
                       v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
                       <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">
-                          Your question submission will be marked late.</a>
-                      </b-alert>
-                    </span>
-                    <span
-                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">
-                          A late penalty will be applied to your submission.</a>
+                        <span class="alert-link">
+                          Your question submission will be marked late.</span>
                       </b-alert>
                     </span>
                     <span v-if="questions[currentPage-1].solution">
@@ -636,10 +633,10 @@
       </div>
 
       <b-alert show variant="warning" class="mt-3">
-        <a href="#" class="alert-link">
+        <span class="alert-link">
           <span v-show="source === 'a'">This assignment currently has no assessments.</span>
           <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
-        </a>
+        </span>
       </b-alert>
     </div>
     <div v-if="showQuestionDoesNotExistMessage">

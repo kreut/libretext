@@ -19,6 +19,7 @@ use Illuminate\Support\Facades\Log;
 use App\Traits\S3;
 use App\Traits\DateFormatter;
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\LatePolicy;
 
 
 class CutupController extends Controller
@@ -27,6 +28,7 @@ class CutupController extends Controller
     use S3;
     use DateFormatter;
     use GeneralSubmissionPolicy;
+    use LatePolicy;
 
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
