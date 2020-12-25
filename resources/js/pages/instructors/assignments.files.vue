@@ -506,10 +506,12 @@ export default {
         const { data } = await axios.get(`/api/submission-files/${this.type}/${this.assignmentId}/${gradeView}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
+          this.isLoading = false
           return false
         }
         this.showNoFileSubmissionsExistAlert = !this.hasSubmissions(data, this.type)
         if (this.showNoFileSubmissionsExistAlert) {
+          this.isLoading = false
           return false
         }
 
