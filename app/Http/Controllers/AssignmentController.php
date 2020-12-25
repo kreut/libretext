@@ -219,8 +219,8 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['status'] = $this->getStatus($available_from, $due);
                     $assignments_info[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
                     $assignments_info[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-                    $assignments_info[$key]['late_policy_deadline_date'] = $late_policy_deadline ?$this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
-                    $assignments_info[$key]['late_policy_deadline_time'] = $late_policy_deadline ?$this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
+                    $assignments_info[$key]['late_policy_deadline_date'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
+                    $assignments_info[$key]['late_policy_deadline_time'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
                     $assignments_info[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                     $assignments_info[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
@@ -306,6 +306,7 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
+
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
             $assignment = Assignment::create(
@@ -329,7 +330,7 @@ class AssignmentController extends Controller
                     'show_points_per_question' => $request->assessment_type === 'delayed' ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
                     'late_policy_deadline' => $this->getLatePolicyDeadeline($request),
-                    'late_deduction_application_period' => $data['late_deduction_application_period'] ?? null,
+                    'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
                 ]
@@ -347,6 +348,14 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error creating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
+    {
+        if ($request->late_deduction_applied_once) {
+            return 'once';
+        }
+        return $data['late_deduction_application_period'] ?? null;
     }
 
     /**
@@ -574,10 +583,11 @@ class AssignmentController extends Controller
             $data = $request->validated();
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
-            $data['available_from'] =  $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
+            $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
             $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0;
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);
+            $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             unset($data['available_from_date']);
             unset($data['available_from_time']);
 

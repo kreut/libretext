@@ -492,9 +492,11 @@
                                 stacked
                                 :disabled="isLocked()"
             >
-              <b-form-radio value="1">
-                Just once
-              </b-form-radio>
+              <span @click="form.late_deduction_application_period = ''">
+                <b-form-radio value="1">
+                  Just once
+                </b-form-radio>
+              </span>
               <b-form-radio class="mt-2" value="0">
                 <b-row>
                   <b-col lg="2" class="mt-1">
@@ -1144,6 +1146,9 @@ export default {
       this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
       this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
       this.form.due_time = assignment.due_time
+      this.form.late_policy = assignment.late_policy
+      this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
+      this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
       this.form.late_policy_deadline_time = assignment.late_policy_deadline_time
       this.form.late_policy_deadline_date = assignment.late_policy_deadline_date
       this.form.assignment_group_id = assignment.assignment_group_id
