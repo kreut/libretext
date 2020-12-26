@@ -10,6 +10,7 @@ let student_paths  = [
 ]
 
 let instructor_paths = [
+  { path: '/assignments/:assignmentId/gradebook', name: 'assignments.gradebook', component: page('instructors/assignment_summary/assignments.gradebook.vue') },
   { path: '/assignments/:assignmentId/questions/get', name: 'questions.get', component: page('instructors/questions.get.vue') },
   { path: '/assignments/:assignmentId/learning-trees/get', name: 'learning_trees.get', component: page('instructors/learning_trees.get.vue') },
   { path: '/learning-trees/:learningTreeId/get', name: 'learning_tree.get', component: page('instructors/learning_tree.get.vue') },

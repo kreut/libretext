@@ -79,7 +79,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
 
-    Route::get('/assignments/courses/{course}', 'AssignmentController@index');
+
 
     Route::get('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@index');
     Route::patch('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@update');
@@ -88,7 +88,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
 
-
+    Route::get('/assignments/courses/{course}', 'AssignmentController@index');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
@@ -113,6 +113,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::get('/scores/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
+    Route::get('/scores/assignment/{assignment}/get-assignment-questions-scores-by-user', 'ScoreController@getAssignmentQuestionScoresByUser');
 
 
     Route::get('/extensions/{assignment}/{user}', 'ExtensionController@show');

@@ -247,6 +247,138 @@ class ScoreController extends Controller
         }
     }
 
+    public function getScoresByAssignmentAndQuestion(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $scores = [];
+
+            $submissionFiles = $submissionFile->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+            if ($submissionFiles->isNotEmpty()) {
+                foreach ($submissionFiles as $key => $submission_file) {
+                    $scores[$submission_file->user_id] = $submission_file->score;
+                }
+            }
+
+            $submissions = $submission->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->get();
+
+            if ($submissions->isNotEmpty()) {
+                foreach ($submissions as $key => $submission) {
+                    $submission_file_score = $scores[$submission->user_id] ?? 0;
+                    $scores[$submission->user_id] = $submission_file_score + $submission->score;
+                }
+            }
+
+            $response['type'] = 'success';
+            $response['scores'] = array_values($scores);
+            return $response;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the scores summary.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function getAssignmentQuestionScoresByUser(Assignment $assignment, Score $score)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAssignmentQuestionScoresByUser', [$score, $assignment]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $enrolled_users = [];
+            foreach ($assignment->course->enrolledUsers as $key => $value) {
+                $enrolled_users[$value->id] = "{$value->last_name}, {$value->first_name}";
+            }
+
+            $file_submission_scores = [];
+            foreach ($assignment->fileSubmissions as $key => $value) {
+                $file_submission_scores[$value->user_id][$value->question_id] = $value->score;
+            }
+            $submission_scores = [];
+            foreach ($assignment->submissions as $key => $value) {
+                $submission_scores[$value->user_id][$value->question_id] = $value->score;
+            }
+            $questions = $assignment->questions;
+            $rows = [];
+
+            foreach ($enrolled_users as $user_id => $name) {
+                $columns = [];
+                foreach ($questions as $question) {
+                    switch ($assignment->scoring_type) {
+                        case('p'):
+                            $score = 0;
+                            $score = $score
+                                + ($submission_scores[$user_id][$value->question_id] ?? 0)
+                                + ($file_submission_scores[$user_id][$value->question_id] ?? 0);
+                            break;
+                        case('c'):
+                            $score = 'incomplete';
+                            if (isset($submission_scores[$user_id][$value->question_id])) {
+                                $score = 'Complete';
+                            }
+                            if (isset($file_submission_scores[$user_id][$value->question_id])) {
+                                $score = 'Complete';
+                            }
+                    }
+                    $columns[$question->id] = $score;
+                }
+                $columns['name'] = $enrolled_users[$user_id];
+                $columns['userId'] = $user_id;
+                $rows[] = $columns;
+
+            }
+
+            $fields = [['key' => 'name',
+                'label' => 'Name',
+                'sortable' => true,
+                'isRowHeader' => true,
+                'thStyle' => 'max-width: 100px']];
+
+            $i = 1;
+            foreach ($questions as $key => $question) {
+                $field = ['key' => "$question->id",
+                    'isRowHeader' => true,
+                    'label' => "#$i",
+                    'sortable' => true];
+                $i++;
+                array_push($fields, $field);
+            }
+
+            $response['type'] = 'success';
+            $response['rows'] = $rows;
+            $response['fields'] = $fields;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the scores for each question  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+
+    }
+
     public function getScoresByUser(Course $course)
     {
 
@@ -466,54 +598,6 @@ class ScoreController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the score.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
-
-    public function getScoresByAssignmentAndQuestion(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Submission $submission, Score $Score)
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getScoreByAssignmentAndQuestion', [$Score, $assignment]);
-
-        if (!$authorized->allowed()) {
-            $response['type'] = 'error';
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            $scores = [];
-
-            $submissionFiles = $submissionFile->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->get();
-            if ($submissionFiles->isNotEmpty()) {
-                foreach ($submissionFiles as $key => $submission_file) {
-                    $scores[$submission_file->user_id] = $submission_file->score;
-                }
-            }
-
-            $submissions = $submission->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->get();
-
-            if ($submissions->isNotEmpty()) {
-                foreach ($submissions as $key => $submission) {
-                    $submission_file_score = $scores[$submission->user_id] ?? 0;
-                    $scores[$submission->user_id] = $submission_file_score + $submission->score;
-                }
-            }
-
-            $response['type'] = 'success';
-            $response['scores'] = array_values($scores);
-            return $response;
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the scores summary.  Please try again or contact us for assistance.";
         }
         return $response;
 

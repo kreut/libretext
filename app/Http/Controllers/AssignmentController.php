@@ -41,7 +41,7 @@ class AssignmentController extends Controller
         try {
             $assignment->update(['solutions_released' => !$solutionsReleased]);
             $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
-            $response['type'] = !$solutionsReleased  ? 'success' : 'info';
+            $response['type'] = !$solutionsReleased ? 'success' : 'info';
 
             $response['message'] = "The solutions have been <strong>{$solutions_released}</strong>.";
         } catch (Exception $e) {
@@ -472,11 +472,9 @@ class AssignmentController extends Controller
     }
 
     /**
-     *
-     * Display the specified resource
-     *
      * @param Assignment $assignment
-     * @return Assignment
+     * @return array
+     * @throws Exception
      */
     public function getAssignmentNameAndLatePolicy(Assignment $assignment)
     {
@@ -499,6 +497,8 @@ class AssignmentController extends Controller
         }
         return $response;
     }
+
+
 
 
     /**
