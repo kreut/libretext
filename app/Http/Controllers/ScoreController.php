@@ -319,11 +319,22 @@ class ScoreController extends Controller
             foreach ($assignment->submissions as $key => $value) {
                 $submission_scores[$value->user_id][$value->question_id] = $value->score;
             }
+            $points = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->select('question_id', 'points')
+                ->get();
+            $total_points = 0;
+            foreach ($points as $key=>$value){
+                $total_points += $value->points;
+                $total_points_by_question_id[$value->question_id] = $value->points;
+            }
+
             $questions = $assignment->questions;
             $rows = [];
 
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
+                $assignment_score = 0;
                 foreach ($questions as $question) {
                     switch ($assignment->scoring_type) {
                         case('p'):
@@ -333,17 +344,16 @@ class ScoreController extends Controller
                                 + ($file_submission_scores[$user_id][$value->question_id] ?? 0);
                             break;
                         case('c'):
-                            $score = 'incomplete';
-                            if (isset($submission_scores[$user_id][$value->question_id])) {
-                                $score = 'Complete';
-                            }
-                            if (isset($file_submission_scores[$user_id][$value->question_id])) {
-                                $score = 'Complete';
-                            }
+                          $response['message'] = "Please contact us!  This page is not yet set up for Complete/Incomplete type assignments";
+                          return $response;
                     }
                     $columns[$question->id] = $score;
+                    $assignment_score += $score;
                 }
                 $columns['name'] = $enrolled_users[$user_id];
+                if ($total_points) {
+                    $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
+                                }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
 
@@ -357,13 +367,21 @@ class ScoreController extends Controller
 
             $i = 1;
             foreach ($questions as $key => $question) {
+                $points = $total_points_by_question_id[$question->id];
                 $field = ['key' => "$question->id",
                     'isRowHeader' => true,
-                    'label' => "#$i",
+                    'label' => "Q$i ($points)",
                     'sortable' => true];
                 $i++;
                 array_push($fields, $field);
             }
+            if ($total_points) {
+                $assignment_score_field = ['key' => 'percent_correct',
+                    'sortable' => true,
+                    'isRowHeader' => true];
+            }
+            array_push($fields, $assignment_score_field);
+
 
             $response['type'] = 'success';
             $response['rows'] = $rows;
