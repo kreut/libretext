@@ -389,7 +389,7 @@ class ScoreController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the scores for each question  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting the scores for each question.  Please try again or contact us for assistance.";
 
         }
         return $response;

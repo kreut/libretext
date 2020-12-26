@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\JWE;
+use App\Solution;
 use App\Traits\QueryFiles;
 use \Exception;
 
@@ -61,6 +62,63 @@ class AssignmentSyncQuestionController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the assignment questions.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('view', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            //Get all assignment questions Question Upload, Solution, Number of Points
+            $assignment_questions = DB::table('assignment_question')->where('assignment_id', $assignment->id)->get();
+            $question_ids = [];
+            foreach ($assignment_questions as $key => $value) {
+                $question_ids[] = $value->question_id;
+            }
+
+            $assignment_solutions = $solutions->whereIn('question_id', $question_ids)
+                ->where('user_id', Auth::user()->id)
+                ->get();
+
+            $assignment_solutions_by_question_id = [];
+            $rows = [];
+            foreach ($assignment_solutions as $key => $value) {
+                $assignment_solutions_by_question_id[$value->question_id] = $value->original_filename;
+            }
+            foreach ($assignment_questions as $key => $value) {
+                $columns = [];
+                $columns['question_files'] = $value->question_files;
+                $columns['points'] = $value->points;
+                $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
+                $columns['question_id'] = $value->question_id;
+                $rows[] = $columns;
+            }
+
+
+            $fields = [['key' => 'question_id',
+                'label' => 'Question',
+                'sortable' => true,
+                'isRowHeader' => true],
+                'question_files', 'points', 'solution'];
+
+            $response['type'] = 'success';
+            $response['rows'] = $rows;
+            $response['fields'] = $fields;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the questions summary for this assignment.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -253,16 +311,16 @@ class AssignmentSyncQuestionController extends Controller
         $submissions_by_question_id[$question->id] = $submission;
         $question_technologies[$question->id] = Question::find($question->id)->technology;
         $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
-      $original_filename = null;
-      if ($assignment->assessment_type === 'real time' ) {
-           $solution = DB::table('solutions')
-               ->where('question_id', $question->id)
-               ->where('user_id', $assignment->course->user_id)
-               ->first();
-           if ($solution){
-               $original_filename = $solution->original_filename;
-           }
-       }
+        $original_filename = null;
+        if ($assignment->assessment_type === 'real time') {
+            $solution = DB::table('solutions')
+                ->where('question_id', $question->id)
+                ->where('user_id', $assignment->course->user_id)
+                ->first();
+            if ($solution) {
+                $original_filename = $solution->original_filename;
+            }
+        }
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
@@ -270,7 +328,7 @@ class AssignmentSyncQuestionController extends Controller
             'submission_score' => $response_info['submission_score'],
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
-            'solution' =>  $original_filename
+            'solution' => $original_filename
         ];
 
     }
@@ -353,7 +411,7 @@ class AssignmentSyncQuestionController extends Controller
             $due_date_considering_extension = $assignment->due;
 
             if ($extension) {
-                if (Carbon::parse($extension)>Carbon::parse($assignment->due)) {
+                if (Carbon::parse($extension) > Carbon::parse($assignment->due)) {
                     $due_date_considering_extension = $extension;
                 }
             }
@@ -373,7 +431,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
             $user_as_collection = collect([Auth::user()]);
-            $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment,'allStudents', $user_as_collection);
+            $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
             $submission_files = [];
 
             //want to just pull out the single user which will be returned for each question
@@ -530,7 +588,7 @@ class AssignmentSyncQuestionController extends Controller
 
                     $assignment->questions[$key]['late_file_submission'] = ($formatted_submission_file_info['date_submitted'] !== 'N/A')
                         ?
-                        Carbon::parse($submission_file['date_submitted'] )->greaterThan(Carbon::parse($due_date_considering_extension))
+                        Carbon::parse($submission_file['date_submitted'])->greaterThan(Carbon::parse($due_date_considering_extension))
                         : false;
 
                     if ($assignment->show_scores) {
