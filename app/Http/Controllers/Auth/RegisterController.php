@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
 use App\User;
-use App\Role;
-use App\Course_Ta;
 use App\InstructorAccessCode;
 use App\GraderAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
@@ -20,10 +18,12 @@ use App\Rules\IsValidTimeZone;
 use App\Exceptions\Handler;
 use \Exception;
 
+use App\Traits\Registration;
 
 class RegisterController extends Controller
 {
     use RegistersUsers;
+    use Registration;
 
     /**
      * Create a new controller instance.
@@ -88,53 +88,25 @@ class RegisterController extends Controller
     protected function create(array $data)
     {
         try {
+            DB::beginTransaction();
+            [$course_id, $role] = $this->setRole($data);
+            $user = new User;
+            $user->first_name = $data['first_name'];
+            $user->last_name = $data['last_name'];
+            $user->email = $data['email'];
+            $user->password = bcrypt($data['password']);
+            $user->time_zone = $data['time_zone'];
+            $user->role = $role;
+            $user->save();
+            if ($role === 4) {
+                $this->addGraderToCourse($user->id, $course_id);
+            }
+            DB::commit();
 
-           return  DB::transaction(function () use ($data) {
-                switch ($data['registration_type']) {
-                    case('student'):
-                        $role = 3;
-                        break;
-                    case('instructor'):
-                        DB::table('instructor_access_codes')->where('access_code', $data['access_code'])->delete();
-                        $role = 2;
-                        break;
-                    case('grader'):
-                        $course_id = DB::table('grader_access_codes')->where('access_code', $data['access_code'])->value('course_id');
-                        GraderAccessCode::where('access_code', $data['access_code'])->delete();
-                        $role = 4;
-                        break;
-                    default:
-                        return false;
-                }
+            return $user;
 
-                $user = new User;
-                $user->first_name = $data['first_name'];
-                $user->last_name = $data['last_name'];
-                $user->email = $data['email'];
-                $user->password = bcrypt($data['password']);
-                $user->time_zone = $data['time_zone'];
-                $user->role = $role;
-                $user->save();
-                if ($role === 4) {
-                    $grader= DB::table('graders')
-                        ->where('user_id', $user->id)
-                        ->where('course_id', $course_id)
-                        ->get()
-                        ->isNotEmpty();
-                    if (!$grader) {
-                        DB::table('graders')->insert(
-                            ['user_id' => $user->id,
-                                'course_id' => $course_id,
-                                'created_at' => now(),
-                                'updated_at' => now()]
-                        );
-                    }
-
-                }
-
-                return $user;
-            });
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error completing your registration.  Please try again or contact us for assistance.";

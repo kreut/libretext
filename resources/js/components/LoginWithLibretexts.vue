@@ -1,8 +1,7 @@
 <template>
-  <button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
-    Login with
-    <img src='/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg' height="50px">
-  </button>
+  <b-button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
+    <img src="/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg" height="25px">Login with LibreTexts
+  </b-button>
 </template>
 
 <script>
