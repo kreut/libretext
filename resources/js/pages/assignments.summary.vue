@@ -4,9 +4,6 @@ n<template>
     <div v-if="loaded">
       <b-container>
         <b-row align-h="end">
-          <b-button v-if="user.role === 2" class="ml-3 mb-2 " variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
-            Get Assessments
-          </b-button>
           <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
             View Assessments
           </b-button>
@@ -105,9 +102,6 @@ export default {
     this.loaded = true
   },
   methods: {
-    getAssessmentsForAssignment (assignmentId) {
-      this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
-    },
     async getAssignmentSummary () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)

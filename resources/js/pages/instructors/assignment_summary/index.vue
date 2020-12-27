@@ -1,21 +1,34 @@
 <template>
-  <div class="row">
-    <div v-if="user.role === 2" class="col-md-3">
-      <card title="Assignment Information" class="properties-card">
-        <ul class="nav flex-column nav-pills">
-          <li v-for="tab in tabs" :key="tab.route" class="nav-item">
-            <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-              {{ tab.name }}
-            </router-link>
-          </li>
-        </ul>
-      </card>
-    </div>
+  <div>
+    <b-container>
+      <b-row align-h="end">
+        <b-button class="ml-3 mb-2 " variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
+          Get Assessments
+        </b-button>
+        <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
+          View Assessments
+        </b-button>
+      </b-row>
+      <hr>
+    </b-container>
+    <div class="row">
+      <div v-if="user.role === 2" class="col-md-3">
+        <card title="Assignment Information" class="properties-card">
+          <ul class="nav flex-column nav-pills">
+            <li v-for="tab in tabs" :key="tab.route" class="nav-item">
+              <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
+                {{ tab.name }}
+              </router-link>
+            </li>
+          </ul>
+        </card>
+      </div>
 
-    <div class="col-md-9">
-      <transition name="fade" mode="out-in">
-        <router-view />
-      </transition>
+      <div class="col-md-9">
+        <transition name="fade" mode="out-in">
+          <router-view />
+        </transition>
+      </div>
     </div>
   </div>
 </template>
@@ -23,6 +36,8 @@
 <script>
 
 import { mapGetters } from 'vuex'
+import axios from 'axios'
+
 export default {
   middleware: 'auth',
   computed: {
@@ -57,8 +72,33 @@ export default {
   mounted () {
     if (this.user.role !== 2) {
       this.$noty.error('You not have access to the course properties page.')
+      return false
     }
-  }
+    this.assignmentId = this.$route.params.assignmentId
+    this.getAssignmentSummary()
+  },
+  methods:
+    {
+      getAssessmentsForAssignment (assignmentId) {
+        this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
+      },
+      getStudentView (assignmentId) {
+        this.$router.push(`/assignments/${assignmentId}/questions/view`)
+      },
+      async getAssignmentSummary () {
+        try {
+          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
+          console.log(data)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      }
+    }
 }
 </script>
 

@@ -39,7 +39,6 @@ export default {
   }),
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.isLoading = true
     this.getAssignmentQuestionScoresByUser()
   },
   methods: {

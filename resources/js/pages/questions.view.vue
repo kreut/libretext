@@ -186,7 +186,7 @@
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
                 </div>
-                <div v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0" class="text-center">
+                <div v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0" class="text-center">
                   <b-alert variant="warning" show>
                     <span class="alert-link">
                       This submission will be marked lated.</span>

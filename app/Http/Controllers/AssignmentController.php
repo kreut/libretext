@@ -499,8 +499,6 @@ class AssignmentController extends Controller
     }
 
 
-
-
     /**
      *
      * Display the specified resource
@@ -523,13 +521,21 @@ class AssignmentController extends Controller
             $can_view_assignment_statistics = in_array($role, [2, 4])
                 || ($role === 3 && $assignment->students_can_view_assignment_statistics);
 
+
             $response['assignment'] = [
                 'name' => $assignment->name,
                 'instructions' => $assignment->instructions,
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
-                'assessment_type' => $assignment->assessment_type
+                'assessment_type' => $assignment->assessment_type,
+                'solutions_released' => $assignment->solutions_released,
+                'scores_released' => $assignment->scores_released,
+                'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
+                'include_in_weighted_average' => $assignment->include_in_weighted_average,
+                'late_policy' => $this->formatLatePolicy($assignment),
+                'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
+                'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
             ];
 
 
@@ -543,6 +549,34 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function formatLatePolicy($assignment)
+    {
+        $late_policy ='';
+        $late_policy_deadline = ($assignment->late_policy !== 'not accepted')
+            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->late_policy_deadline, Auth::user()->time_zone)
+            : '';
+        switch ($assignment->late_policy) {
+            case('not accepted'):
+                $late_policy = "No late assignments are accepted.";
+                break;
+            case('marked late'):
+                $late_policy = "Late assignments are marked late.  It is up to the instructor's discretion whether to apply a late penalty.";
+                break;
+            case('deduction'):
+                if ($assignment->late_deduction_application_period === 'once') {
+                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied once to any late assignment.";
+                } else {
+                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied every {$assignment->late_deduction_application_period} to any late assignment.";
+                }
+                break;
+        }
+
+        if ($assignment->late_policy !== 'not accepted') {
+            $late_policy .= "  Students cannot submit assessments later than  $late_policy_deadline.";
+        }
+
+        return $late_policy;
+    }
 
     public function getTimeLeft(Assignment $assignment)
     {
