@@ -11,13 +11,21 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Question Properties" />
-        <b-table
-          striped
-          hover
-          :no-border-collapse="true"
-          :fields="fields"
-          :items="items"
-        />
+        <div v-if="items.length">
+          <b-table
+            striped
+            hover
+            :no-border-collapse="true"
+            :fields="fields"
+            :items="items"
+          />
+        </div>
+        <div v-else>
+          <b-alert variant="warning" show>
+            <span class="font-weight-bold">This assignment doesn't have any questions.</span>
+            <strong />
+          </b-alert>
+        </div>
       </div>
     </div>
   </div>
@@ -42,7 +50,7 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    if (this.user.role !== 2) {
+    if (![2, 4].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment questions page.')
       return false
     }
@@ -52,7 +60,6 @@ export default {
   methods: {
     async getAssignmentInfo () {
       try {
-        console.log('sdfds')
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
         this.isLoading = false
         if (data.type === 'error') {

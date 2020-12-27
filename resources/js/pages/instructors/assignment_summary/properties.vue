@@ -49,7 +49,7 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    if (this.user.role !== 2) {
+    if (![2, 4].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment properties page.')
       return false
     }

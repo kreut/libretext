@@ -140,6 +140,9 @@ class AssignmentPolicy
             case(3):
                 $has_access = $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
                 break;
+            case(4):
+                $has_access = $assignment->course->isGrader();
+                    break;
             default:
                 $has_access = false;
         }

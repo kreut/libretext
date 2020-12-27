@@ -1173,7 +1173,7 @@ export default {
         return false
       }
 
-      this.$router.push(`/assignments/${assignment.id}/summary`)
+      this.$router.push(`/instructors/assignments/${assignment.id}/summary`)
     },
     getSubmissionFileView (assignmentId, submissionFiles) {
       if (submissionFiles === 0) {

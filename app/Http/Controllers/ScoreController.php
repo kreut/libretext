@@ -376,12 +376,13 @@ class ScoreController extends Controller
                 $i++;
                 array_push($fields, $field);
             }
+
             if ($total_points) {
-                $assignment_score_field = ['key' => 'percent_correct',
+                array_push($fields, $assignment_score_field = ['key' => 'percent_correct',
                     'sortable' => true,
-                    'isRowHeader' => true];
+                    'isRowHeader' => true]);
             }
-            array_push($fields, $assignment_score_field);
+
 
 
             $response['type'] = 'success';

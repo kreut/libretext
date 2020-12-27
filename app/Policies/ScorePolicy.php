@@ -40,7 +40,7 @@ class ScorePolicy
 
     public function getAssignmentQuestionScoresByUser(User $user, Score $score, Assignment $assignment)
     {
-        return (int)$assignment->course->user_id === (int)$user->id
+        return (int)$assignment->course->user_id === (int)$user->id || $assignment->course->isGrader()
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the question scores by user for this assignment.');
     }

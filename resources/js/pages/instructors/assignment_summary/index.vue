@@ -1,9 +1,9 @@
 <template>
   <div>
-    <div v-if="user.role === 2">
+    <div v-if="[2, 4].includes(user.role)">
       <b-container>
         <b-row align-h="end">
-          <b-button class="ml-3 mb-2 " variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
+          <b-button v-if="user.role === 2" class="ml-3 mb-2" variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
             Get Assessments
           </b-button>
           <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
@@ -13,7 +13,7 @@
         <hr>
       </b-container>
       <div class="row">
-        <div v-if="user.role === 2" class="col-md-3">
+        <div class="col-md-3">
           <card title="Assignment Information" class="properties-card">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
@@ -72,8 +72,8 @@ export default {
     }
   },
   mounted () {
-    if (this.user.role !== 2) {
-      this.$noty.error('You do not have access to the assignment properties page.')
+    if (![2, 4].includes(this.user.role)) {
+      this.$noty.error('sYou do not have access to the assignment properties page.')
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
