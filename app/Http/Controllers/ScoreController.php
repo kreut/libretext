@@ -363,6 +363,7 @@ class ScoreController extends Controller
                 'label' => 'Name',
                 'sortable' => true,
                 'isRowHeader' => true,
+                'stickyColumn' => true,
                 'thStyle' => 'max-width: 100px']];
 
             $i = 1;

@@ -1,6 +1,5 @@
 <template>
   <div>
-    <PageTitle title="Gradebook By Question And Student" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -13,6 +12,8 @@
       <b-table
         striped
         hover
+        responsive
+        sticky-header="800px"
         :no-border-collapse="true"
         :fields="fields"
         :items="items"
@@ -20,6 +21,7 @@
     </div>
   </div>
 </template>
+
 <script>
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
@@ -37,23 +39,22 @@ export default {
   }),
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentInfo()
+    this.isLoading = true
+    this.getAssignmentQuestionScoresByUser()
   },
   methods: {
-    async getAssignmentInfo () {
+    async getAssignmentQuestionScoresByUser () {
       try {
-        console.log('sdfds')
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
-        this.isLoading = false
-        if (data.type === 'error') {
+        const { data } = await axios.get(`/api/scores/assignment/${this.assignmentId}/get-assignment-questions-scores-by-user`)
+        console.log(data)
+        if (data.type !== 'success') {
           this.$noty.error(data.message)
           return false
         }
-        this.fields = data.fields
         this.items = data.rows
-        console.log(data)
+        this.fields = data.fields
       } catch (error) {
-
+        this.$noty.error(error.message)
       }
       this.isLoading = false
     }

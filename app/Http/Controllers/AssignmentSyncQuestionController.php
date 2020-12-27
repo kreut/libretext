@@ -95,21 +95,23 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_solutions as $key => $value) {
                 $assignment_solutions_by_question_id[$value->question_id] = $value->original_filename;
             }
+            $i = 1;
             foreach ($assignment_questions as $key => $value) {
                 $columns = [];
-                $columns['question_files'] = $value->question_files;
+                $columns['question_files'] = $value->question_files ? 'Allowed' : 'Not Allowed';
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
-                $columns['question_id'] = $value->question_id;
+                $columns['question_id'] = "Q$i";
                 $rows[] = $columns;
+                $i++;
             }
 
 
             $fields = [['key' => 'question_id',
-                'label' => 'Question',
-                'sortable' => true,
-                'isRowHeader' => true],
-                'question_files', 'points', 'solution'];
+                'label' => 'Question'],
+                ['key' => 'question_files',
+                    'name' => 'Question Uploads'
+                ], 'points', 'solution'];
 
             $response['type'] = 'success';
             $response['rows'] = $rows;

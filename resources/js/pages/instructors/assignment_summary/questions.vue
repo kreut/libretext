@@ -1,6 +1,5 @@
 <template>
   <div>
-    <PageTitle title="Gradebook By Question And Student" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -20,7 +19,6 @@
     </div>
   </div>
 </template>
-
 <script>
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
@@ -38,22 +36,23 @@ export default {
   }),
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.isLoading = true
-    this.getAssignmentQuestionScoresByUser()
+    this.getAssignmentInfo()
   },
   methods: {
-    async getAssignmentQuestionScoresByUser () {
+    async getAssignmentInfo () {
       try {
-        const { data } = await axios.get(`/api/scores/assignment/${this.assignmentId}/get-assignment-questions-scores-by-user`)
-        console.log(data)
-        if (data.type !== 'success') {
+        console.log('sdfds')
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
+        this.isLoading = false
+        if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.items = data.rows
         this.fields = data.fields
+        this.items = data.rows
+        console.log(data)
       } catch (error) {
-        this.$noty.error(error.message)
+
       }
       this.isLoading = false
     }
