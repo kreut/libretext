@@ -99,8 +99,8 @@ class OAuthController extends Controller
             'first_name' => $sUser->first_name,
             'last_name' => $sUser->last_name,
             'email' => $sUser->getEmail(),
-            'role' => 2,
-            'time_zone' => 'America/Los_Angeles',
+            'role' => 0,
+            'time_zone' => '',
             'email_verified_at' => now(),
         ]);
 
