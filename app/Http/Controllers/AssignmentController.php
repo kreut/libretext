@@ -538,7 +538,6 @@ class AssignmentController extends Controller
                 'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
             ];
 
-
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -570,9 +569,8 @@ class AssignmentController extends Controller
                 }
                 break;
         }
-
         if ($assignment->late_policy !== 'not accepted') {
-            $late_policy .= "  Students cannot submit assessments later than  $late_policy_deadline.";
+            $late_policy .= "  Students cannot submit assessments later than $late_policy_deadline.";
         }
 
         return $late_policy;

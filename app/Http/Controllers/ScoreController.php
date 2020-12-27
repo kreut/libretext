@@ -340,8 +340,8 @@ class ScoreController extends Controller
                         case('p'):
                             $score = 0;
                             $score = $score
-                                + ($submission_scores[$user_id][$value->question_id] ?? 0)
-                                + ($file_submission_scores[$user_id][$value->question_id] ?? 0);
+                                + ($submission_scores[$user_id][$question->id] ?? 0)
+                                + ($file_submission_scores[$user_id][$question->id] ?? 0);
                             break;
                         case('c'):
                           $response['message'] = "Please contact us!  This page is not yet set up for Complete/Incomplete type assignments";
