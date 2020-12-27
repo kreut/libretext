@@ -9,6 +9,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <PageTitle v-if="!isLoading" title="Assignment Gradebook" />
       <b-table
         striped
         hover
@@ -26,6 +27,7 @@
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { mapGetters } from 'vuex'
 
 export default {
   middleware: 'auth',
@@ -37,7 +39,14 @@ export default {
     items: [],
     isLoading: true
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You do not have access to the assignment gradebook page.')
+      return false
+    }
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentQuestionScoresByUser()
   },

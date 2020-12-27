@@ -84,6 +84,11 @@ class BreadcrumbController extends Controller
                             'active' => true];
                         break;
                     case('assignments.summary'):
+                    case('assignment.properties'):
+                    case('assignment.statistics'):
+                    case('assignment.questions'):
+                    case('assignment.gradebook'):
+
                         //My courses / The assignment's course / that assignment;
                         $breadcrumbs[] = ['text' => $assignment->course->name,
                             'href' => "/$users/courses/{$assignment->course->id}/assignments"];

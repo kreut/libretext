@@ -1,33 +1,35 @@
 <template>
   <div>
-    <b-container>
-      <b-row align-h="end">
-        <b-button class="ml-3 mb-2 " variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
-          Get Assessments
-        </b-button>
-        <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
-          View Assessments
-        </b-button>
-      </b-row>
-      <hr>
-    </b-container>
-    <div class="row">
-      <div v-if="user.role === 2" class="col-md-3">
-        <card title="Assignment Information" class="properties-card">
-          <ul class="nav flex-column nav-pills">
-            <li v-for="tab in tabs" :key="tab.route" class="nav-item">
-              <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-                {{ tab.name }}
-              </router-link>
-            </li>
-          </ul>
-        </card>
-      </div>
+    <div v-if="user.role === 2">
+      <b-container>
+        <b-row align-h="end">
+          <b-button class="ml-3 mb-2 " variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
+            Get Assessments
+          </b-button>
+          <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
+            View Assessments
+          </b-button>
+        </b-row>
+        <hr>
+      </b-container>
+      <div class="row">
+        <div v-if="user.role === 2" class="col-md-3">
+          <card title="Assignment Information" class="properties-card">
+            <ul class="nav flex-column nav-pills">
+              <li v-for="tab in tabs" :key="tab.route" class="nav-item">
+                <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
+                  {{ tab.name }}
+                </router-link>
+              </li>
+            </ul>
+          </card>
+        </div>
 
-      <div class="col-md-9">
-        <transition name="fade" mode="out-in">
-          <router-view />
-        </transition>
+        <div class="col-md-9">
+          <transition name="fade" mode="out-in">
+            <router-view />
+          </transition>
+        </div>
       </div>
     </div>
   </div>
@@ -71,7 +73,7 @@ export default {
   },
   mounted () {
     if (this.user.role !== 2) {
-      this.$noty.error('You not have access to the course properties page.')
+      this.$noty.error('You do not have access to the assignment properties page.')
       return false
     }
     this.assignmentId = this.$route.params.assignmentId

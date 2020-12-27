@@ -61,7 +61,8 @@ export default {
   },
   mounted () {
     if (this.user.role !== 2) {
-      this.$noty.error('You not have access to the course properties page.')
+      this.$noty.error('You do not have access to this page.')
+      return false
     }
   }
 }

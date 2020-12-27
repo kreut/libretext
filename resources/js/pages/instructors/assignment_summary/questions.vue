@@ -9,13 +9,16 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <b-table
-        striped
-        hover
-        :no-border-collapse="true"
-        :fields="fields"
-        :items="items"
-      />
+      <div v-if="!isLoading">
+        <PageTitle title="Question Properties" />
+        <b-table
+          striped
+          hover
+          :no-border-collapse="true"
+          :fields="fields"
+          :items="items"
+        />
+      </div>
     </div>
   </div>
 </template>
@@ -23,6 +26,7 @@
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { mapGetters } from 'vuex'
 
 export default {
   middleware: 'auth',
@@ -34,7 +38,14 @@ export default {
     items: [],
     isLoading: true
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You do not have access to the assignment questions page.')
+      return false
+    }
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
   },

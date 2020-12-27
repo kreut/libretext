@@ -10,6 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
+        <PageTitle title="Assignment Properties" />
         <b-card :header="assignment.name" class="h-100">
           <b-card-text>
             <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
@@ -31,6 +32,7 @@
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { mapGetters } from 'vuex'
 
 export default {
   middleware: 'auth',
@@ -43,7 +45,14 @@ export default {
     items: [
     ]
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    if (this.user.role !== 2) {
+      this.$noty.error('You do not have access to the assignment properties page.')
+      return false
+    }
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentSummary()
   },
