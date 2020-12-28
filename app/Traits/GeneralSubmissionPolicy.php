@@ -27,7 +27,7 @@ trait GeneralSubmissionPolicy
             return $response;
         }
 
-        if (!$assignment->assessment_type !== 'real time') {
+        if ($assignment->assessment_type === 'delayed') {
             if ($assignment->show_scores) {
                 $response['message'] = 'No responses will be saved since the scores to this assignment have been released.';
                 return $response;

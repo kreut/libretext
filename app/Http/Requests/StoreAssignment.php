@@ -67,9 +67,9 @@ class StoreAssignment extends FormRequest
             //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy
             //deducting 100% makes no sense!
             $rules['late_deduction_percent'] = 'required|integer|min:1|max:99';
+            $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
         }
         if ($this->late_policy !== 'not accepted') {
-            $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
             $rules['late_policy_deadline'] = new IsADateLaterThan($this->due, 'due', 'late policy deadline');
         }
 
