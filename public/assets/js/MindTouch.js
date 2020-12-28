@@ -9,7 +9,7 @@ function updateInAdapt () {
   // construct a form with hidden inputs, targeting the iframe
   let form = document.createElement('form')
   form.target = uniqueString
-  form.action = 'https://dev.adapt.libretexts.org/api/mind-touch-events/update'
+  form.action = 'https://adapt.libretexts.org/api/mind-touch-events/update'
   form.method = 'POST'
 
   // repeat for each parameter
