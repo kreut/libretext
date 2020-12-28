@@ -6,6 +6,9 @@
 
 <script>
 
+import axios from 'axios'
+import { redirectOnSSOCompletion } from '../helpers/LoginRedirect'
+
 export default {
   name: 'LoginWithLibreTexts',
 
@@ -32,10 +35,13 @@ export default {
 
       newWindow.location.href = url
     },
+    removeTimeZoneError () {
+      this.form.errors.clear('time_zone')
+    },
     /**
      * @param {MessageEvent} e
      */
-    onMessage (e) {
+    async onMessage (e) {
       if (e.origin !== window.origin || !e.data.token) {
         return
       }
@@ -43,8 +49,15 @@ export default {
       this.$store.dispatch('auth/saveToken', {
         token: e.data.token
       })
-
-      this.$router.push({ name: 'finish.sso.registration' })
+      try {
+        const { data } = await axios.get('/api/sso/completed-registration')
+        console.log(data.registration_type)
+        data.registration_type
+          ? redirectOnSSOCompletion(data.registration_type)
+          : this.$route.push('finish.sso.registration')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     }
   }
 }

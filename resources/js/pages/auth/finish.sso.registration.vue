@@ -74,26 +74,10 @@ export default {
     }
   },
   mounted () {
-    this.checkIfRegistrationCompleted()
     let timeZones = getTimeZones()
     populateTimeZoneSelect(timeZones, this)
   },
   methods: {
-    async checkIfRegistrationCompleted () {
-      try {
-        const { data } = await axios.get('/api/sso/completed-registration')
-        console.log(data.registration_type)
-        if (data.registration_type) {
-          redirectOnSSOCompletion(data.registration_type)
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    removeTimeZoneError () {
-      this.form.errors.clear('time_zone')
-    },
     async finishSSORegistration () {
       try {
         const { data } = await this.form.post('/api/sso/finish-registration')
