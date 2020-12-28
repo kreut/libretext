@@ -16,6 +16,13 @@ class SSOController extends Controller
 {
     use Registration;
 
+    public function completedRegistration(){
+        $roles = [2 =>'instructor', 3=>'student', 4=>'grader'];
+        $registration_type = Auth::user()->role ?$roles[Auth::user()->role ] : false;
+        $response['registration_type'] = $registration_type;//has some role
+        return $response;
+    }
+
     public function finishRegistration(FinishRegistration $request){
 
         $response['type'] = 'error';

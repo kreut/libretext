@@ -96,7 +96,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentNameAndLatePolicy');
 
 
-    Route::post('/finish-sso-registration', 'Auth\SSOController@finishRegistration');
+    Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
+    Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
 
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');

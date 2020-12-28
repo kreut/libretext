@@ -5,6 +5,7 @@
 </template>
 
 <script>
+
 export default {
   name: 'LoginWithLibreTexts',
 
@@ -31,7 +32,6 @@ export default {
 
       newWindow.location.href = url
     },
-
     /**
      * @param {MessageEvent} e
      */

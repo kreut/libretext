@@ -27,10 +27,8 @@ class OAuthController extends Controller
     }
 
     /**
-     * Redirect the user to the provider authentication page.
-     *
-     * @param  string $provider
-     * @return \Illuminate\Http\RedirectResponse
+     * @param $provider
+     * @return array
      */
     public function redirectToProvider($provider)
     {
@@ -40,10 +38,9 @@ class OAuthController extends Controller
     }
 
     /**
-     * Obtain the user information from the provider.
-     *
-     * @param  string $driver
-     * @return \Illuminate\Http\Response
+     * @param $provider
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\View\Factory|\Illuminate\View\View
+     * @throws EmailTakenException
      */
     public function handleProviderCallback($provider)
     {

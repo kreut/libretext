@@ -46,6 +46,7 @@
 
 <script>
 import Form from 'vform'
+import axios from 'axios'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import { redirectOnSSOCompletion } from '../../helpers/LoginRedirect'
@@ -73,22 +74,35 @@ export default {
     }
   },
   mounted () {
+    this.checkIfRegistrationCompleted()
     let timeZones = getTimeZones()
     populateTimeZoneSelect(timeZones, this)
   },
   methods: {
+    async checkIfRegistrationCompleted () {
+      try {
+        const { data } = await axios.get('/api/sso/completed-registration')
+        console.log(data.registration_type)
+        if (data.registration_type) {
+          redirectOnSSOCompletion(data.registration_type)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     removeTimeZoneError () {
       this.form.errors.clear('time_zone')
     },
     async finishSSORegistration () {
       try {
-        const { data } = await this.form.post('/api/finish-sso-registration')
+        const { data } = await this.form.post('/api/sso/finish-registration')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
 
-        redirectOnSSOCompletion(this.form.registration_type, this.$router)
+        redirectOnSSOCompletion(this.form.registration_type)
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
