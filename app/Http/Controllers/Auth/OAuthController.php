@@ -66,7 +66,7 @@ class OAuthController extends Controller
      * @param  \Laravel\Socialite\Contracts\User $sUser
      * @return \App\User|false
      */
-    protected function findOrCreateUser($provider, $user) //TODO: Make it so this function works!
+    protected function findOrCreateUser($provider, $user)
     {
         $oauthProvider = OAuthProvider::where('provider', $provider)
             ->where('provider_user_id', $user->getId())

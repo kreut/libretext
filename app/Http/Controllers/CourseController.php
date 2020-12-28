@@ -26,18 +26,22 @@ class CourseController extends Controller
     use DateFormatter;
 
     /**
-     *
-     *  Get the authenticated user's courses
-     *
-     * @return \Illuminate\Support\Collection
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
      */
-    public function index(Course $course)
+    public function index(Request $request, Course $course)
     {
 
         $response['type'] = 'error';
+
+
+        if ($request->session()->get('completed_sso_registration')){
+            \Log::info('Just finished registration.');
+        }
         $authorized = Gate::inspect('viewAny', $course);
         if (!$authorized->allowed()) {
-
             $response['message'] = $authorized->message();
             return $response;
         }
