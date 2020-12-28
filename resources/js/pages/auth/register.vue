@@ -87,7 +87,7 @@
               </v-button>
 
               <!-- GitHub Register Button -->
-              <login-with-libretexts />
+              <login-with-libretexts action="Register" />
             </div>
           </div>
         </form>

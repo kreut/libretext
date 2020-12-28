@@ -1,6 +1,7 @@
 <template>
   <b-button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
-    <img src="/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg" height="25px">Login with LibreTexts
+    <img src="/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg" height="25px">{{ action }} with
+    LibreTexts
   </b-button>
 </template>
 
@@ -11,7 +12,9 @@ import { redirectOnSSOCompletion } from '../helpers/LoginRedirect'
 
 export default {
   name: 'LoginWithLibreTexts',
-
+  props: {
+    action: { type: String, default: 'Register' }
+  },
   computed: {
     libretextsAuth: () => window.config.libretextsAuth,
     url: () => `/api/oauth/libretexts`
@@ -52,9 +55,11 @@ export default {
       try {
         const { data } = await axios.get('/api/sso/completed-registration')
         console.log(data.registration_type)
-        data.registration_type
-          ? redirectOnSSOCompletion(data.registration_type)
-          : this.$route.push('finish.sso.registration')
+        if (data.registration_type) {
+          redirectOnSSOCompletion(data.registration_type)
+        } else {
+          window.location = '/finish-sso-registration'
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
