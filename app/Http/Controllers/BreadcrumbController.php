@@ -83,7 +83,7 @@ class BreadcrumbController extends Controller
                             'href' => "/students/courses/{$course->id}/assignments",
                             'active' => true];
                         break;
-                    case('assignments.summary'):
+                    case('assignment.summary'):
                     case('assignment.statistics'):
                     case('assignment.questions'):
                     case('assignment.gradebook'):
