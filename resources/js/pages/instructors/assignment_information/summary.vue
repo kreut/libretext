@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Assignment Summaries" />
+        <PageTitle title="Assignment Summary" />
         <b-card :header="assignment.name" class="h-100">
           <b-card-text>
             <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>

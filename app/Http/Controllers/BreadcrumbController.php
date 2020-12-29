@@ -84,7 +84,6 @@ class BreadcrumbController extends Controller
                             'active' => true];
                         break;
                     case('assignments.summary'):
-                    case('assignment.properties'):
                     case('assignment.statistics'):
                     case('assignment.questions'):
                     case('assignment.gradebook'):

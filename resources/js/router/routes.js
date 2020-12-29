@@ -43,14 +43,14 @@ let general_paths  = [
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
       { path: 'password', name: 'settings.password', component: page('settings/password.vue') }
     ] },
-  { path: '/instructors/assignments/:assignmentId/summary',
-    component: page('instructors/assignment_summary/index.vue'),
+  { path: '/instructors/assignments/:assignmentId/information',
+    component: page('instructors/assignment_information/index.vue'),
     children: [
-      { path: '', redirect: { name: 'assignment.properties' } },
-      { path: 'properties', name: 'assignment.properties', component: page('instructors/assignment_summary/properties.vue') },
-      { path: 'statistics', name: 'assignment.statistics', component: page('instructors/assignment_summary/statistics.vue') },
-      { path: 'questions', name: 'assignment.questions', component: page('instructors/assignment_summary/questions.vue') },
-      { path: 'gradebook', name: 'assignment.gradebook', component: page('instructors/assignment_summary/gradebook.vue') },
+      { path: '', redirect: { name: 'assignment.summary' } },
+      { path: 'summary', name: 'assignment.summary', component: page('instructors/assignment_information/summary.vue') },
+      { path: 'statistics', name: 'assignment.statistics', component: page('instructors/assignment_information/statistics.vue') },
+      { path: 'questions', name: 'assignment.questions', component: page('instructors/assignment_information/questions.vue') },
+      { path: 'gradebook', name: 'assignment.gradebook', component: page('instructors/assignment_information/gradebook.vue') },
 
     ] },
   { path: '/instructors/courses/:courseId/properties',

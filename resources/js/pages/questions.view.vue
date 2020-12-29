@@ -909,7 +909,7 @@ export default {
           await this.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
-          let submission_data = {
+          let submissionData = {
             'submission': event.data,
             'assignment_id': this.assignmentId,
             'question_id': this.questions[this.currentPage - 1].id,
@@ -917,12 +917,12 @@ export default {
           }
 
           console.log('submitted')
-          console.log(submission_data)
+          console.log(submissionData)
 
           // if incorrect, show the learning tree stuff...
           try {
             this.hideResponse()
-            const { data } = await axios.post('/api/submissions', submission_data)
+            const { data } = await axios.post('/api/submissions', submissionData)
             console.log(data)
             if (!data.message) {
               data.type = 'error'
@@ -1147,7 +1147,7 @@ export default {
     setTimerToGetLearningTreePoints () {
       this.timerSetToGetLearningTreePoints = true
       this.timeLeftToGetLearningTreePoints = this.minTimeNeededInLearningTree
-      this.timeLeftToGetLearningTreePoints = 10000
+      console.log(this.minTimeNeededInLearningTree)
     },
     async getAssignmentInfo () {
       try {

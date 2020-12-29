@@ -50,8 +50,8 @@ export default {
       return [
         {
           icon: '',
-          name: 'Properties',
-          route: 'assignment.properties'
+          name: 'Summary',
+          route: 'assignment.summary'
         },
         {
           icon: '',
