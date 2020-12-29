@@ -783,6 +783,7 @@ export default {
     this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
+      await this.changePage(1)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
@@ -1252,12 +1253,6 @@ export default {
             return false
           }
         }
-        let iframeId = this.questions[this.currentPage - 1].iframe_id
-        this.$nextTick(() => {
-          iFrameResize({ log: false }, `#${iframeId}`)
-          iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
-        })
-
         this.questionPointsForm.points = this.questions[this.currentPage - 1].points
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         await this.showLearningTree(this.learningTree)
