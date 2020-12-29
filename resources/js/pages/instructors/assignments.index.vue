@@ -297,21 +297,21 @@
           >
             <span @click="!!isLocked() && showRealTimeOptions">
               <b-form-radio name="assessment_type" value="real time">
-                Real time <span id="real_time" class="text-muted"><b-icon
+                Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span></b-form-radio>
             </span>
             <span @click="!!isLocked() && showDelayedOptions">
               <b-form-radio name="assessment_type" value="delayed">
-                Delayed <span id="delayed" class="text-muted"><b-icon
+                Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
                   icon="question-circle"
                 /></span>
               </b-form-radio>
             </span>
             <span>
               <b-form-radio name="assessment_type" value="learning tree">
-                Learning Tree <span id="learning_tree" class="text-muted"><b-icon
+                Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
                   icon="question-circle"
                 />
                 </span>
@@ -445,7 +445,7 @@
                               :disabled="isLocked()"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-            <span @click="resetDeduction">
+            <span @click="initLateValues">
               <b-form-radio value="not accepted">
                 Do not accept late
               </b-form-radio>
@@ -935,10 +935,14 @@ export default {
     initTooltips(this)
   },
   methods: {
-    resetDeduction () {
+    initLateValues () {
       this.form.late_deduction_percent = null
       this.form.late_deduction_applied_once = 1
       this.form.late_deduction_application_period = null
+      this.form.late_policy_deadline_date = this.form.due_date
+      let start = this.$moment(this.$moment(this.form.due_date + ' ' + this.form.due_time), 'YYYY-MM-DD HH:mm:SS')
+      start = start.add(this.$moment.duration(20, 'minutes'))
+      this.form.late_policy_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     showDelayedOptions () {
       this.form.submission_files = 'q'
@@ -1173,7 +1177,7 @@ export default {
         return false
       }
 
-      this.$router.push(`/instructors/assignments/${assignment.id}/summary`)
+      this.$router.push(`/instructors/assignments/${assignment.id}/information`)
     },
     getSubmissionFileView (assignmentId, submissionFiles) {
       if (submissionFiles === 0) {

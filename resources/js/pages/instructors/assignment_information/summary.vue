@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Assignment Properties" />
+        <PageTitle title="Assignment Summaries" />
         <b-card :header="assignment.name" class="h-100">
           <b-card-text>
             <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
@@ -50,7 +50,7 @@ export default {
   }),
   mounted () {
     if (![2, 4].includes(this.user.role)) {
-      this.$noty.error('You do not have access to the assignment properties page.')
+      this.$noty.error('You do not have access to the assignment summary page.')
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
