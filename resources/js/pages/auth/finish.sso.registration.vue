@@ -91,8 +91,6 @@ export default {
           return false
         }
         // go to the page before the attempted login
-        alert('a')
-        alert(this.inIFrame)
         this.inIFrame ? this.$router.go(-2) : redirectOnSSOCompletion(this.form.registration_type)
       } catch (error) {
         if (!error.message.includes('status code 422')) {

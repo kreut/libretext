@@ -1,36 +1,6 @@
 <template>
   <div>
-    <b-modal
-      id="modal-enroll-in-course"
-      ref="modal"
-      ok-title="Submit"
-      :ok-only="true"
-      @ok="submitEnrollInCourse"
-    >
-      <template #modal-header>
-        Enroll In Course
-      </template>
-      <b-form ref="form" @submit="submitEnrollInCourse">
-        <p>To access this assignment, please provide the course access code given to you by your instructor.</p>
-        <b-form-group
-          id="access_code"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Access Code"
-          label-for="access_code"
-        >
-          <b-form-input
-            id="access_code"
-            v-model="form.access_code"
-            type="text"
-            :class="{ 'is-invalid': form.errors.has('access_code') }"
-            @keydown="form.errors.clear('access_code')"
-          />
-          <has-error :form="form" field="access_code" />
-        </b-form-group>
-      </b-form>
-    </b-modal>
-
+    <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -697,21 +667,19 @@ import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/Download
 
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
+import EnrollInCourse from '~/components/EnrollInCourse'
 import { getScoresSummary } from '~/helpers/Scores'
 
 export default {
   middleware: 'auth',
   components: {
+    EnrollInCourse,
     Scores,
     ToggleButton,
     Email
   },
   data: () => ({
-    inIFrame: false,
     canView: false,
-    form: new Form({
-      access_code: ''
-    }),
     latePolicy: '',
     learningTreePercentPenalty: 0,
     submissionCountPercentDecrease: 0,
@@ -806,11 +774,6 @@ export default {
     this.isLocked = isLocked
   },
   async mounted () {
-    try {
-      this.inIFrame = window.self !== window.top
-    } catch (e) {
-      this.inIFrame = true
-    }
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
@@ -845,24 +808,6 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    submitEnrollInCourse (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.enrollInCourse()
-    },
-    async enrollInCourse () {
-      try {
-        const { data } = await this.form.post('/api/enrollments')
-        if (data.validated) {
-          location.reload()
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-    },
     getWindowLocation () {
       return window.location
     },
