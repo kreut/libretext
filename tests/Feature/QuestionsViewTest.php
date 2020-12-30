@@ -215,15 +215,22 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
-    public function learning_tree_or_delayed_do_not_allow_submissions_if_scores_are_shown_or_solutions_released()
+    public function learning_tree_do_not_allow_submissions_if_solutions_released()
     {
         $this->assignment->assessment_type = 'learning tree';
-        $this->assignment->show_scores = true;
+        $this->assignment->show_scores = false;
+        $this->assignment->solutions_released = true;
         $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
-                'message' => 'No responses will be saved since the scores to this assignment have been released.']);
+                'message' => 'No responses will be saved since the solutions to this assignment have been released.']);
+
+    }
+
+    /** @test */
+    public function delayed_do_not_allow_submissions_if_scores_are_shown_or_solutions_released()
+    {
 
         $this->assignment->assessment_type = 'delayed';
         $this->assignment->show_scores = false;

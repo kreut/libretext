@@ -32,11 +32,14 @@ trait GeneralSubmissionPolicy
                 $response['message'] = 'No responses will be saved since the scores to this assignment have been released.';
                 return $response;
             }
+        }
+        if (in_array($assignment->assessment_type, ['delayed', 'learning tree'] )){
             if ($assignment->solutions_released) {
                 $response['message'] = 'No responses will be saved since the solutions to this assignment have been released.';
                 return $response;
             }
         }
+
         if (time() > strtotime($assignment->due)) {
             //first let's see if there's an extension
             $extension = DB::table('extensions')
