@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "9484cf7636943daa73d07255b7bf9f7f",
+    "content-hash": "71731a17dd5a7bf29ed380af8b97c36c",
     "packages": [
         {
             "name": "asm89/stack-cors",
@@ -2895,40 +2895,6 @@
             "time": "2020-02-21T04:36:14+00:00"
         },
         {
-            "name": "setasign/composer-ioncube-license-installer",
-            "version": "v1.0.1",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Setasign/ComposerIoncubeLicenseInstaller.git",
-                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/ComposerIoncubeLicenseInstaller/zipball/821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
-                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
-                "shasum": ""
-            },
-            "require": {
-                "composer-plugin-api": "^1.1",
-                "php": "^5.4 || ^7.0 || ^8.0"
-            },
-            "type": "composer-plugin",
-            "extra": {
-                "class": "setasign\\ComposerIoncubeLicenseInstaller\\InstallerPlugin"
-            },
-            "autoload": {
-                "psr-4": {
-                    "setasign\\ComposerIoncubeLicenseInstaller\\": "src/"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "description": "Installer plugin for ioncube licenses",
-            "time": "2020-09-14T07:34:39+00:00"
-        },
-        {
             "name": "setasign/fpdf",
             "version": "1.8.2",
             "source": {
@@ -2969,21 +2935,21 @@
         },
         {
             "name": "setasign/fpdi",
-            "version": "v2.3.4",
+            "version": "v2.3.5",
             "source": {
                 "type": "git",
                 "url": "https://github.com/Setasign/FPDI.git",
-                "reference": "2b5fb811c04f937ef257ef3f798cebeded33c136"
+                "reference": "f2246c8669bd25834f5c264425eb0e250d7a9312"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/2b5fb811c04f937ef257ef3f798cebeded33c136",
-                "reference": "2b5fb811c04f937ef257ef3f798cebeded33c136",
+                "url": "https://api.github.com/repos/Setasign/FPDI/zipball/f2246c8669bd25834f5c264425eb0e250d7a9312",
+                "reference": "f2246c8669bd25834f5c264425eb0e250d7a9312",
                 "shasum": ""
             },
             "require": {
                 "ext-zlib": "*",
-                "php": "^5.6 || ^7.0"
+                "php": "^5.6 || ^7.0 || ^8.0"
             },
             "conflict": {
                 "setasign/tfpdf": "<1.31"
@@ -3033,58 +2999,17 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2020-08-27T06:55:47+00:00"
+            "time": "2020-12-03T13:40:03+00:00"
         },
         {
-            "name": "setasign/fpdi-fpdf",
-            "version": "v2.3.0",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/Setasign/FPDI-FPDF.git",
-                "reference": "f2fdc44e4d5247a3bb55ed2c2c1396ef05c02357"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/Setasign/FPDI-FPDF/zipball/f2fdc44e4d5247a3bb55ed2c2c1396ef05c02357",
-                "reference": "f2fdc44e4d5247a3bb55ed2c2c1396ef05c02357",
-                "shasum": ""
-            },
-            "require": {
-                "setasign/fpdf": "^1.8.2",
-                "setasign/fpdi": "^2.3"
-            },
-            "type": "library",
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Jan Slabon",
-                    "email": "jan.slabon@setasign.com",
-                    "homepage": "https://www.setasign.com"
-                }
-            ],
-            "description": "Kind of metadata package for dependencies of the latest versions of FPDI and FPDF.",
-            "homepage": "https://www.setasign.com/fpdi",
-            "keywords": [
-                "fpdf",
-                "fpdi",
-                "pdf"
-            ],
-            "abandoned": true,
-            "time": "2020-02-19T12:21:53+00:00"
-        },
-        {
-            "name": "setasign/fpdi_pdf-parser_eval_ioncube_php7.1",
+            "name": "setasign/fpdi_pdf-parser",
             "version": "2.0.6",
             "dist": {
                 "type": "zip",
-                "url": "https://www.setasign.com/downloads/2828332/FPDI_PDF-Parser-2.0.6_Ioncubed-PHP7.1.zip"
+                "url": "https://www.setasign.com/downloads/2828331/FPDI_PDF-Parser-2.0.6.zip"
             },
             "require": {
-                "setasign/fpdi": "^2.0",
-                "setasign/fpdi_pdf-parser_ioncube_license": "*"
+                "setasign/fpdi": "^2.0"
             },
             "type": "library",
             "autoload": {
@@ -3099,30 +3024,6 @@
                 "email": "support@setasign.com"
             },
             "time": "2020-12-04T00:00:00+00:00"
-        },
-        {
-            "name": "setasign/fpdi_pdf-parser_ioncube_license",
-            "version": "1.0.2864471",
-            "dist": {
-                "type": "zip",
-                "url": "https://www.setasign.com/downloads/eval/19864/ioncube/FPDI-PDF-Parser-License.zip"
-            },
-            "require": {
-                "setasign/composer-ioncube-license-installer": "*"
-            },
-            "type": "ioncube-license",
-            "extra": {
-                "licenseValidFor": [
-                    "setasign/fpdi_pdf-parser_eval_ioncube_php5",
-                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.3",
-                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.4",
-                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.6",
-                    "setasign/fpdi_pdf-parser_eval_ioncube_php7.1"
-                ]
-            },
-            "license": [
-                "proprietary"
-            ]
         },
         {
             "name": "snowfire/beautymail",
@@ -8230,6 +8131,89 @@
             "description": "Library that helps with managing the version number of Git-hosted PHP projects",
             "homepage": "https://github.com/sebastianbergmann/version",
             "time": "2016-10-03T07:35:21+00:00"
+        },
+        {
+            "name": "setasign/composer-ioncube-license-installer",
+            "version": "v1.0.1",
+            "source": {
+                "type": "git",
+                "url": "https://github.com/Setasign/ComposerIoncubeLicenseInstaller.git",
+                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab"
+            },
+            "dist": {
+                "type": "zip",
+                "url": "https://api.github.com/repos/Setasign/ComposerIoncubeLicenseInstaller/zipball/821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
+                "reference": "821e7cdb43cc1473ea5123ebc51180d403f3e4ab",
+                "shasum": ""
+            },
+            "require": {
+                "composer-plugin-api": "^1.1",
+                "php": "^5.4 || ^7.0 || ^8.0"
+            },
+            "type": "composer-plugin",
+            "extra": {
+                "class": "setasign\\ComposerIoncubeLicenseInstaller\\InstallerPlugin"
+            },
+            "autoload": {
+                "psr-4": {
+                    "setasign\\ComposerIoncubeLicenseInstaller\\": "src/"
+                }
+            },
+            "notification-url": "https://packagist.org/downloads/",
+            "license": [
+                "MIT"
+            ],
+            "description": "Installer plugin for ioncube licenses",
+            "time": "2020-09-14T07:34:39+00:00"
+        },
+        {
+            "name": "setasign/fpdi_pdf-parser_eval_ioncube_php7.1",
+            "version": "2.0.6",
+            "dist": {
+                "type": "zip",
+                "url": "https://www.setasign.com/downloads/2828332/FPDI_PDF-Parser-2.0.6_Ioncubed-PHP7.1.zip"
+            },
+            "require": {
+                "setasign/fpdi": "^2.0",
+                "setasign/fpdi_pdf-parser_ioncube_license": "*"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "setasign\\FpdiPdfParser\\": "src/"
+                }
+            },
+            "license": [
+                "proprietary"
+            ],
+            "support": {
+                "email": "support@setasign.com"
+            },
+            "time": "2020-12-04T00:00:00+00:00"
+        },
+        {
+            "name": "setasign/fpdi_pdf-parser_ioncube_license",
+            "version": "1.0.2864471",
+            "dist": {
+                "type": "zip",
+                "url": "https://www.setasign.com/downloads/eval/19864/ioncube/FPDI-PDF-Parser-License.zip"
+            },
+            "require": {
+                "setasign/composer-ioncube-license-installer": "*"
+            },
+            "type": "ioncube-license",
+            "extra": {
+                "licenseValidFor": [
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.3",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.4",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php5.6",
+                    "setasign/fpdi_pdf-parser_eval_ioncube_php7.1"
+                ]
+            },
+            "license": [
+                "proprietary"
+            ]
         },
         {
             "name": "symfony/debug",
