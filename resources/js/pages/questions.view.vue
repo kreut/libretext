@@ -1,6 +1,17 @@
 <template>
   <div>
     <EnrollInCourse />
+    <b-modal
+      v-if="questions !==['init'] && questions.length"
+      id="embed-modal"
+      title="Embed Code"
+      ok-title="OK"
+      size="xl"
+    >
+      <p>You can embed this question in your Libretext book using:</p>
+
+      <span class="font-weight-bold"> &lt;iframe id="adapt-{{ assignmentId }}-{{ questions[currentPage-1].id }}" allowtransparency="true" frameborder="0" scrolling="no" src="{{ getCurrentPage() }}" style="width: 1px;min-width: 100%;min-height: 100px;" /&gt;</span>
+    </b-modal>
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -240,8 +251,13 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="user.role === 2">
-                  Link to Question: {{ getCurrentPage() }}
+                <div v-if="user.role === 2" class="mt-1">
+                  <b-button v-b-modal.embed-modal
+                            variant="info"
+                            size="sm"
+                  >
+                    Embed Code
+                  </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
