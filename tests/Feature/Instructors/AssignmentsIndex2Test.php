@@ -57,6 +57,26 @@ class AssignmentsIndex2Test extends TestCase
             'assignment_group_id' => 1];
     }
 
+    /** @test */
+
+    public function complete_incomplete_scoring_type_cannot_be_learning_trees_assessment_types()
+    {
+        $this->assignment_info['scoring_type'] = 'c';
+        $this->assignment_info['assessment_type'] = 'learning tree';
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('scoring_type');
+    }
+
+
+    /** @test */
+
+    public function complete_incomplete_scoring_type_must_have_a_late_policy_of_not_accepted()
+    {
+        $this->assignment_info['scoring_type'] = 'c';
+        $this->assignment_info['late_policy'] = 'deduction';
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('scoring_type');
+    }
 
 
     /** @test */
@@ -84,11 +104,13 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-public function late_policy_deadline_must_be_valid(){
+    public function late_policy_deadline_must_be_valid()
+    {
 
 
-}
-/** @test */
+    }
+
+    /** @test */
 
     public function for_real_time_assessments_students_must_be_shown_scores()
     {
@@ -157,9 +179,6 @@ public function late_policy_deadline_must_be_valid(){
         //todo
 
     }
-
-
-
 
 
     /** @test */

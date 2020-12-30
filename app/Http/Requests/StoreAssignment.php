@@ -6,6 +6,8 @@ namespace App\Http\Requests;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidSubmissionCountPercentDecrease;
+use App\Rules\IsValidLatePolicyForCompletedScoringType;
+use App\Rules\IsValidAssesmentTypeForScoringType;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -71,6 +73,10 @@ class StoreAssignment extends FormRequest
         }
         if ($this->late_policy !== 'not accepted') {
             $rules['late_policy_deadline'] = new IsADateLaterThan($this->due, 'due', 'late policy deadline');
+        }
+        if ($this->scoring_type === 'c'){
+          $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy), new isValidAssesmentTypeForScoringType($this->assessment_type)];
+
         }
 
         return $rules;

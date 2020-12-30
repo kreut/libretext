@@ -239,7 +239,6 @@
             </b-form-radio-group>
           </b-form-group>
           <b-form-group
-            v-show="false"
             id="scoring_type"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -251,8 +250,10 @@
             >
               <span @click="form.students_can_view_assignment_statistics = 1">
                 <b-form-radio value="p">Points</b-form-radio></span>
-              <span @click="resetSubmissionFilesAndPointsPerQuestion">
-                <b-form-radio value="c">Complete/Incomplete</b-form-radio>
+              <span @click="canSwitchToCompleteIncomplete">
+                <span @click="resetSubmissionFilesAndPointsPerQuestion">
+                  <b-form-radio value="c">Complete/Incomplete</b-form-radio>
+                </span>
               </span>
             </b-form-radio-group>
           </b-form-group>
@@ -309,7 +310,7 @@
                 /></span>
               </b-form-radio>
             </span>
-            <span>
+            <span @click="checkIfScoringTypeOfPoints">
               <b-form-radio name="assessment_type" value="learning tree">
                 Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
                   icon="question-circle"
@@ -445,17 +446,17 @@
                               :disabled="isLocked()"
           >
             <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+            <b-form-radio value="not accepted">
+              Do not accept late
+            </b-form-radio>
             <span @click="initLateValues">
-              <b-form-radio value="not accepted">
-                Do not accept late
-              </b-form-radio>
               <b-form-radio value="marked late">
                 Accept but mark late
               </b-form-radio>
+              <b-form-radio value="deduction">
+                Accept late with a deduction
+              </b-form-radio>
             </span>
-            <b-form-radio value="deduction">
-              Accept late with a deduction
-            </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
         <div v-show="form.late_policy === 'deduction'">
@@ -935,7 +936,32 @@ export default {
     initTooltips(this)
   },
   methods: {
-    initLateValues () {
+    checkIfScoringTypeOfPoints (event) {
+      if (this.form.scoring_type === 'c') {
+        event.preventDefault()
+        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
+        return false
+      }
+    },
+    canSwitchToCompleteIncomplete (event) {
+      if (this.form.late_policy !== 'not accepted') {
+        event.preventDefault()
+        this.$noty.info('If you would like a Complete/Incomplete Scoring Type, please choose "Do not accept late" as your Late Policy.  You will still be able to grant individual extensions.', {
+          timeout: 10000 })
+        return false
+      }
+      if (this.form.assessment_type === 'learning tree') {
+        event.preventDefault()
+        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
+        return false
+      }
+    },
+    initLateValues (event) {
+      if (this.form.scoring_type === 'c') {
+        event.preventDefault()
+        this.$noty.info('If you would like a Late Policy other than "Do not accept late, please change your Scoring Type to points.')
+        return false
+      }
       this.form.late_deduction_percent = null
       this.form.late_deduction_applied_once = 1
       this.form.late_deduction_application_period = null
