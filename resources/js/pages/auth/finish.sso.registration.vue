@@ -46,13 +46,13 @@
 
 <script>
 import Form from 'vform'
-import axios from 'axios'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import { redirectOnSSOCompletion } from '../../helpers/LoginRedirect'
 
 export default {
   data: () => ({
+    inIFrame: false,
     isStudent: true,
     form: new Form({
       registration_type: null,
@@ -76,6 +76,11 @@ export default {
   mounted () {
     let timeZones = getTimeZones()
     populateTimeZoneSelect(timeZones, this)
+    try {
+      this.inIFrame = window.self !== window.top
+    } catch (e) {
+      this.inIFrame = true
+    }
   },
   methods: {
     async finishSSORegistration () {
@@ -85,8 +90,10 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-
-        redirectOnSSOCompletion(this.form.registration_type)
+        // go to the page before the attempted login
+        alert('a')
+        alert(this.inIFrame)
+        this.inIFrame ? this.$router.go(-2) : redirectOnSSOCompletion(this.form.registration_type)
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)

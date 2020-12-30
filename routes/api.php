@@ -98,6 +98,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
     Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
+    Route::get('/sso/is-sso-user', 'Auth\SSOController@isSSOUser');
 
     Route::post('/assignments', 'AssignmentController@store');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');

@@ -125,10 +125,15 @@ export default {
     },
     async logout () {
       // Log out the user.
-      await this.$store.dispatch('auth/logout')
+      const { data } = await axios.get('/api/sso/is-sso-user')
 
-      // Redirect to login.
-      this.$router.push({ name: 'login' })
+      await this.$store.dispatch('auth/logout')
+      if (data.is_sso_user) {
+        window.location = 'https://sso.libretexts.org/cas/logout'
+      } else {
+        // Redirect to login.
+        this.$router.push({ name: 'login' })
+      }
     }
   }
 }

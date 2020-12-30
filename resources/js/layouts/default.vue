@@ -4,7 +4,7 @@
       <navbar />
     </div>
 
-    <div :class="{'container':true, 'mt-4':true,'expandHeight': (user === null)}">
+    <div :class="{'container':true, 'mt-4':true,'expandHeight': (user === null && !inIFrame)}">
       <child />
     </div>
 
@@ -48,7 +48,7 @@ export default {
   }
 }
 </script>
-<style>
+<style scoped>
 .expandHeight{
   min-height: 700px
 }

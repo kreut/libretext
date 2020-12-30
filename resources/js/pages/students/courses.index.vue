@@ -1,17 +1,18 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses"></PageTitle>
+    <PageTitle title="My Courses" />
     <div class="row mb-4 float-right">
-      <b-button variant="primary" v-b-modal.modal-enroll-in-course>Enroll In Course</b-button>
+      <b-button v-b-modal.modal-enroll-in-course variant="primary">
+        Enroll In Course
+      </b-button>
     </div>
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
       title="Enroll In Course"
+      ok-title="Submit"
       @ok="submitEnrollInCourse"
       @hidden="resetModalForms"
-      ok-title="Submit"
-
     >
       <b-form ref="form" @submit="submitEnrollInCourse">
         <p>To enroll in the course, please provide the access code given to you by your instructor.</p>
@@ -28,11 +29,9 @@
             type="text"
             :class="{ 'is-invalid': form.errors.has('access_code') }"
             @keydown="form.errors.clear('access_code')"
-          >
-          </b-form-input>
-          <has-error :form="form" field="access_code"></has-error>
+          />
+          <has-error :form="form" field="access_code" />
         </b-form-group>
-
       </b-form>
     </b-modal>
 
@@ -40,23 +39,25 @@
       <b-table striped hover :fields="fields" :items="enrolledInCourses">
         <template v-slot:cell(name)="data">
           <div class="mb-0">
-            <a href="" v-on:click.prevent="getAssignments(data.item.id)">{{ data.item.name }}</a>
+            <a href="" @click.prevent="getAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
         </template>
         <template v-slot:cell(start_date)="data">
-         {{  $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+          {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
         </template>
         <template v-slot:cell(end_date)="data">
-        {{  $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+          {{ $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
         </template>
       </b-table>
     </div>
     <div v-else>
       <br>
       <div class="mt-4">
-        <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning"><a href="#" class="alert-link">You currently are
-          not enrolled in any courses.
-        </a></b-alert>
+        <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning">
+          <a href="#" class="alert-link">You currently are
+            not enrolled in any courses.
+          </a>
+        </b-alert>
       </div>
     </div>
   </div>
@@ -64,8 +65,7 @@
 
 <script>
 import axios from 'axios'
-import Form from "vform"
-
+import Form from 'vform'
 
 export default {
   middleware: 'auth',
@@ -91,38 +91,34 @@ export default {
     showNoEnrolledInCoursesAlert: false,
     showPage: false
   }),
-  mounted() {
-    this.getEnrolledInCourses();
-
+  mounted () {
+    this.getEnrolledInCourses()
   },
   methods: {
-    getAssignments(courseId) {
+    getAssignments (courseId) {
       this.$router.push(`/students/courses/${courseId}/assignments`)
     },
-    resetModalForms() {
+    resetModalForms () {
       this.form.access_code = ''
       this.form.errors.clear()
-    }
-    ,
-    resetAll(modalId) {
+    },
+    resetAll (modalId) {
       this.getEnrolledInCourses()
       this.resetModalForms()
       // Hide the modal manually
       this.$nextTick(() => {
         this.$bvModal.hide(modalId)
       })
-    }
-    ,
-    submitEnrollInCourse(bvModalEvt) {
+    },
+    submitEnrollInCourse (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
       this.enrollInCourse()
-    }
-    ,
-    async enrollInCourse() {
+    },
+    async enrollInCourse () {
       try {
-        const {data} = await this.form.post('/api/enrollments')
+        const { data } = await this.form.post('/api/enrollments')
         if (data.validated) {
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
@@ -130,7 +126,7 @@ export default {
           }
         } else {
           if (data.type === 'error') {
-            this.$noty.error(data.message)//no access
+            this.$noty.error(data.message)// no access
             this.resetAll('modal-enroll-in-course')
           }
         }
@@ -138,9 +134,9 @@ export default {
         console.log(error)
       }
     },
-    async getEnrolledInCourses() {
+    async getEnrolledInCourses () {
       try {
-        const {data} = await axios.get('/api/enrollments')
+        const { data } = await axios.get('/api/enrollments')
         if (data.type === 'error') {
           this.$noty.error(data.message)
         } else {
@@ -154,8 +150,8 @@ export default {
       }
     }
   },
-  metaInfo() {
-    return {title: this.$t('home')}
+  metaInfo () {
+    return { title: this.$t('home') }
   }
 }
 </script>

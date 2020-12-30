@@ -15,13 +15,20 @@ export default {
   props: {
     action: { type: String, default: 'Register' }
   },
+  data: () => ({
+    inIFrame: false
+  }),
   computed: {
     libretextsAuth: () => window.config.libretextsAuth,
     url: () => `/api/oauth/libretexts`
   },
-
   mounted () {
     window.addEventListener('message', this.onMessage, false)
+    try {
+      this.inIFrame = window.self !== window.top
+    } catch (e) {
+      this.inIFrame = true
+    }
   },
 
   beforeDestroy () {
@@ -55,10 +62,12 @@ export default {
       try {
         const { data } = await axios.get('/api/sso/completed-registration')
         console.log(data.registration_type)
+
         if (data.registration_type) {
-          redirectOnSSOCompletion(data.registration_type)
+          this.inIFrame ? this.$router.go(-1) : redirectOnSSOCompletion(data.registration_type)
         } else {
           window.location = '/finish-sso-registration'
+          return false
         }
       } catch (error) {
         this.$noty.error(error.message)

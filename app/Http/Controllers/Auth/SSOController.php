@@ -20,6 +20,13 @@ class SSOController extends Controller
         $roles = [2 =>'instructor', 3=>'student', 4=>'grader'];
         $registration_type = Auth::user()->role ?$roles[Auth::user()->role ] : false;
         $response['registration_type'] = $registration_type;//has some role
+
+        return $response;
+    }
+
+    public function isSSOUser(){
+        $is_sso_user = DB::table('oauth_providers')->where('user_id', Auth::user()->id)->get();
+        $response['is_sso_user'] = $is_sso_user->isNotEmpty();
         return $response;
     }
 
