@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div style="min-height:400px">
     <EnrollInCourse />
     <b-modal
       v-if="questions !==['init'] && questions.length"

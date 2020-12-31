@@ -4,10 +4,9 @@
       <navbar />
     </div>
 
-    <div :class="{'container':true, 'mt-4':true,'expandHeight': (user === null && !inIFrame)}">
+    <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
       <child />
     </div>
-
     <div v-if="(user === null) && !inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">

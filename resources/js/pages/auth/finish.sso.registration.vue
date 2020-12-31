@@ -1,5 +1,5 @@
 <template>
-  <div class="row">
+  <div class="row pb-5">
     <div class="col-lg-8 m-auto">
       <card title="Complete Registration">
         <form>
