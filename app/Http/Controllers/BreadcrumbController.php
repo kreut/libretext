@@ -84,10 +84,10 @@ class BreadcrumbController extends Controller
                             'active' => true];
                         break;
                     case('students.assignments.summary'):
-                    case('instructors.assignment.summary'):
-                    case('instructors.assignment.statistics'):
-                    case('instructors.assignment.questions'):
-                    case('instructors.assignment.gradebook'):
+                    case('instructors.assignments.summary'):
+                    case('instructors.assignments.statistics'):
+                    case('instructors.assignments.questions'):
+                    case('instructors.assignments.gradebook'):
 
                         //My courses / The assignment's course / that assignment;
                         $breadcrumbs[] = ['text' => $assignment->course->name,
@@ -113,7 +113,6 @@ class BreadcrumbController extends Controller
                         $breadcrumbs[] = ['text' => "View Assessments",
                             'href' => "#",
                             'active' => true];
-
                         break;
 //My courses / The assignment's course / that assignment / questions get
                     case('gradebook.index'):

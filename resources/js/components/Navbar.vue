@@ -16,7 +16,7 @@
     <div v-if="logoLoaded" class="float-right p-2">
       <toggle-button
         class="mt-2"
-        :width="150"
+        :width="140"
         :value="isInstructorView"
         :sync="true"
         :font-size="14"
@@ -178,15 +178,19 @@ export default {
         console.log(data)
         if (data.type === 'success') {
           // Save the token.
-          await this.$store.dispatch('auth/saveToken', {
+          this.$store.dispatch('auth/saveToken', {
             token: data.token,
             remember: false
           })
           this.isInstructorView = !this.isInstructorView
-          // Fetch the user.
-          await this.$store.dispatch('auth/fetchUser')
-          await this.getBreadcrumbs(this.$router)
-          this.$router.push({ name: data.new_route_name })
+          if (data.new_route_name !== this.$router.history.current.name) {
+            await this.$store.dispatch('auth/fetchUser')
+            await this.getBreadcrumbs(this.$router)
+            await this.$router.push({ name: data.new_route_name })
+          } else {
+            this.$router.go()
+          }
+
           // Redirect to the correct home page
         } else {
           this.$noty.error(data.message)// no access
@@ -198,6 +202,7 @@ export default {
     async getBreadcrumbs (router) {
       try {
         console.log(router.name)
+        console.log({ 'name': router.name, 'params': router.params })
         const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
         this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
         this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['welcome', 'instructors.learning_trees.index', 'instructors.courses.index'].includes(router.name)

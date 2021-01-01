@@ -49,11 +49,11 @@ let general_paths  = [
   { path: '/instructors/assignments/:assignmentId/information',
     component: page('instructors/assignment_information/index.vue'),
     children: [
-      { path: '', redirect: { name: 'instructors.assignment.summary' } },
-      { path: 'summary', name: 'instructors.assignment.summary', component: page('instructors/assignment_information/summary.vue') },
-      { path: 'statistics', name: 'instructors.assignment.statistics', component: page('instructors/assignment_information/statistics.vue') },
-      { path: 'questions', name: 'instructors.assignment.questions', component: page('instructors/assignment_information/questions.vue') },
-      { path: 'gradebook', name: 'instructors.assignment.gradebook', component: page('instructors/assignment_information/gradebook.vue') },
+      { path: '', redirect: { name: 'instructors.assignments.summary' } },
+      { path: 'summary', name: 'instructors.assignments.summary', component: page('instructors/assignment_information/summary.vue') },
+      { path: 'statistics', name: 'instructors.assignments.statistics', component: page('instructors/assignment_information/statistics.vue') },
+      { path: 'questions', name: 'instructors.assignments.questions', component: page('instructors/assignment_information/questions.vue') },
+      { path: 'gradebook', name: 'instructors.assignments.gradebook', component: page('instructors/assignment_information/gradebook.vue') },
 
     ] },
   { path: '/instructors/courses/:courseId/properties',

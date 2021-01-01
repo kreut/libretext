@@ -51,22 +51,22 @@ export default {
         {
           icon: '',
           name: 'Summary',
-          route: 'instructors.assignment.summary'
+          route: 'instructors.assignments.summary'
         },
         {
           icon: '',
           name: 'Statistics',
-          route: 'instructors.assignment.statistics'
+          route: 'instructors.assignments.statistics'
         },
         {
           icon: '',
           name: 'Questions',
-          route: 'instructors.assignment.questions'
+          route: 'instructors.assignments.questions'
         },
         {
           icon: '',
           name: 'Gradebook',
-          route: 'instructors.assignment.gradebook'
+          route: 'instructors.assignments.gradebook'
         }
       ]
     }
