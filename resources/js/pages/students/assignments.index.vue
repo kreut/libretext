@@ -297,7 +297,7 @@ export default {
       }
 
       if (assignment.instructions || (assignment.show_scores && assignment.students_can_view_assignment_statistics)) {
-        this.$router.push(`/assignments/${assignment.id}/summary`)
+        this.$router.push(`/students/assignments/${assignment.id}/summary`)
         return false
       }
 

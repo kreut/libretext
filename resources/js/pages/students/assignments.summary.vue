@@ -23,7 +23,7 @@ n<template>
 
 import { mapGetters } from 'vuex'
 import axios from 'axios'
-import AssignmentStatistics from '../components/AssignmentStatistics'
+import AssignmentStatistics from '../../components/AssignmentStatistics'
 
 export default {
   components: { AssignmentStatistics },

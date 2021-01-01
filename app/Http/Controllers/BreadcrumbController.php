@@ -37,8 +37,8 @@ class BreadcrumbController extends Controller
                     case('learning_trees.get'):
                     $breadcrumbs[] = ['text' => $assignment->course->name,
                         'href' => "/$users/courses/{$assignment->course->id}/assignments"];
-                    $breadcrumbs[] = ['text' => "$assignment->name Summary",
-                        'href' => "/assignments/{$assignment->id}/summary",
+                    $breadcrumbs[] = ['text' => "$assignment->name Information",
+                        'href' => "/instructors/assignments/{$assignment->id}/information",
                         ];
                     $breadcrumbs[] = ['text' => 'Get Assessments',
                         'href' => "#",
@@ -83,10 +83,11 @@ class BreadcrumbController extends Controller
                             'href' => "/students/courses/{$course->id}/assignments",
                             'active' => true];
                         break;
-                    case('assignment.summary'):
-                    case('assignment.statistics'):
-                    case('assignment.questions'):
-                    case('assignment.gradebook'):
+                    case('students.assignments.summary'):
+                    case('instructors.assignment.summary'):
+                    case('instructors.assignment.statistics'):
+                    case('instructors.assignment.questions'):
+                    case('instructors.assignment.gradebook'):
 
                         //My courses / The assignment's course / that assignment;
                         $breadcrumbs[] = ['text' => $assignment->course->name,
@@ -97,33 +98,22 @@ class BreadcrumbController extends Controller
                         break;
                     case('questions.view'):
                         //My courses / The assignment's course / that assignment summary / the assignment questions
-
                         $breadcrumbs[] = ['text' => $assignment->course->name,
                             'href' => "/$users/courses/{$assignment->course->id}/assignments"];
 
                         if (Auth::user()->role === 3) {
                             if ($assignment->instructions || $assignment->students_can_view_assignment_statistics) {
                                 $breadcrumbs[] = ['text' => "{$assignment->name}",
-                                    'href' => "/assignments/{$assignment_id}/summary"];
+                                    'href' => "/students/assignments/{$assignment_id}/summary"];
                             }
                         } else {
                             $breadcrumbs[] = ['text' => "{$assignment->name}",
-                                'href' => "/assignments/{$assignment_id}/summary"];
+                                'href' => "/instructors/assignments/{$assignment_id}/information"];
                         }
                         $breadcrumbs[] = ['text' => "View Assessments",
                             'href' => "#",
                             'active' => true];
 
-                        break;
-                    case('questions.get'):
-                        $assignment_id = $params['assignmentId'];
-                        $breadcrumbs[] = ['text' => $assignment->course->name,
-                            'href' => "/instructors/courses/{$assignment->course->id}/assignments"];
-                        $breadcrumbs[] = ['text' => $assignment->name,
-                            'href' => "/assignments/{$assignment_id}/summary"];
-                        $breadcrumbs[] = ['text' => "Add Questions",
-                            'href' => "#",
-                            'active' => true];
                         break;
 //My courses / The assignment's course / that assignment / questions get
                     case('gradebook.index'):
