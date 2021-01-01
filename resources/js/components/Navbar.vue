@@ -38,6 +38,15 @@
               </router-link>
             </b-nav-item>
           </b-navbar-nav>
+          <b-navbar-nav v-if="isMe && (user !== null)" class="ml-2 mr-2 mb-1">
+            <b-nav-item>
+              <span class="nav-link" active-class="active">
+                <router-link :to="{ name: 'login.as'}">
+                  Login As
+                </router-link>
+              </span>
+            </b-nav-item>
+          </b-navbar-nav>
           <b-navbar-nav class="ml-2 mr-2 mb-1">
             <b-nav-item>
               <span class="nav-link" active-class="active" @click="openSendEmailModal">
@@ -95,6 +104,7 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    isMe: () => window.config.isMe,
     currentRouteName () {
       return this.$route.name
     }

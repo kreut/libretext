@@ -21,7 +21,10 @@ let instructor_paths = [
   { path: '/courses/:courseId/gradebook', name: 'gradebook.index', component: page('instructors/gradebook.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
 ]
+let admin_paths = [
 
+  { path: '/login-as', name: 'login.as', component: page('admin/login.as.vue') }
+]
 let general_paths  = [
   { path: '/question-in-iframe', name: 'question_in_iframe', component: page('iframe_test.vue') },
   { path: '/assignments/:assignmentId/summary', name: 'assignments.summary', component: page('assignments.summary.vue') },
@@ -66,4 +69,4 @@ let general_paths  = [
   { path: '*', component: page('errors/404.vue') }
 ]
 
-export default _.concat( [{ path: '/h5p', name: 'h5p', component: page('h5p.vue') }], general_paths, student_paths, instructor_paths)
+export default _.concat( [{ path: '/h5p', name: 'h5p', component: page('h5p.vue') }], general_paths, student_paths, instructor_paths, admin_paths)

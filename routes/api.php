@@ -52,6 +52,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('logout', 'Auth\LoginController@logout');
 
     Route::get('/user', 'Auth\UserController@current');
+    Route::get('/user/all', 'Auth\UserController@getAll');
+    Route::post('/user/login-as', 'Auth\UserController@loginAs');
 
     Route::get('/get-locally-saved-query-page-contents/{pageId}', 'QueryController@getLocallySavedQueryPageContents');
 
