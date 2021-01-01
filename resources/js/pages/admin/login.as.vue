@@ -9,7 +9,10 @@
             v-model="form.user"
             :data="users"
             placeholder="Type a name"
+            :class="{ 'is-invalid': form.errors.has('user') }"
+            @keydown="form.errors.clear('user')"
           />
+          <has-error :form="form" field="user" />
         </div>
         <b-button variant="primary" @click="submitLoginAs">
           Submit
@@ -80,7 +83,9 @@ export default {
           this.$noty.error(data.message)// no access
         }
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     }
   }

@@ -15,6 +15,7 @@
     </b-navbar-brand>
     <div v-if="logoLoaded" class="float-right p-2">
       <toggle-button
+        v-if="(user !== null)"
         class="mt-2"
         :width="140"
         :value="isInstructorView"
@@ -25,6 +26,11 @@
         :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
         @change="toggleStudentView()"
       />
+      <span v-if="isMe && (user !== null)">
+        <router-link :to="{ name: 'login.as'}">
+          <b-button size="sm" variant="outline-primary">Login As</b-button>
+        </router-link>
+      </span>
     </div>
     <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
@@ -60,15 +66,7 @@
               </router-link>
             </b-nav-item>
           </b-navbar-nav>
-          <b-navbar-nav v-if="isMe && (user !== null)" class="ml-2 mr-2 mb-1">
-            <b-nav-item>
-              <span class="nav-link" active-class="active">
-                <router-link :to="{ name: 'login.as'}">
-                  Login As
-                </router-link>
-              </span>
-            </b-nav-item>
-          </b-navbar-nav>
+
           <b-navbar-nav class="ml-2 mr-2 mb-1">
             <b-nav-item>
               <span class="nav-link" active-class="active" @click="openSendEmailModal">
@@ -156,10 +154,8 @@ export default {
         this.breadcrumbs = []
       }
       this.breadcrumbsLoaded = true
+      this.isInstructorView = this.user.role === 2
     }
-  },
-  mounted () {
-    this.isInstructorView = this.user.role === 2
   },
   methods: {
     async toggleStudentView () {
@@ -205,7 +201,7 @@ export default {
         console.log({ 'name': router.name, 'params': router.params })
         const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
         this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
-        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['welcome', 'instructors.learning_trees.index', 'instructors.courses.index'].includes(router.name)
+        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
       } catch (error) {
         this.$noty(error.message)
       }

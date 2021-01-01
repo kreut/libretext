@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Http\Requests\LoginAsRequest;
 use App\User;
 use App\Course;
 use App\Assignment;
@@ -90,7 +91,7 @@ class UserController extends Controller
      * @param User $user
      * @return array|bool
      */
-    public function loginAs(Request $request, User $user)
+    public function loginAs(LoginAsRequest $request, User $user)
     {
         $response['type'] = 'error';
 

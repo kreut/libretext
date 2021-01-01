@@ -62,6 +62,9 @@ class BreadcrumbController extends Controller
                     case('instructors.courses.index'):
                         $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
                         break;
+                    case('login.as'):
+                        $breadcrumbs[0] = ['text' => 'My Course', 'href' => "/$users/courses"];
+                        break;
                     case('instructors.learning_trees.editor'):
                         $breadcrumbs[0] =  ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];
                         $breadcrumbs[1] =  ['text' => 'Editor', 'href' => "#", 'active' => true];
