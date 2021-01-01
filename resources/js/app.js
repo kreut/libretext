@@ -9,22 +9,21 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import JsonExcel from 'vue-json-excel'
 import VueCountdown from '@chenfengyuan/vue-countdown'
-Vue.component(VueCountdown.name, VueCountdown)
 
 import '~/plugins'
 import '~/components'
 
-import 'vuejs-noty/dist/vuejs-noty.css' //https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
+import 'vuejs-noty/dist/vuejs-noty.css' // https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
 
 import iFrameResize from 'iframe-resizer/js/iframeResizer'
 
 import VueMoment from 'vue-moment'
-
+Vue.component(VueCountdown.name, VueCountdown)
 
 Vue.directive('resize', {
-  bind: function (el, {value = {}}) {
+  bind: function (el, { value = {} }) {
     el.addEventListener('load', () => iFrameResize(value, el))
-  },
+  }
 })
 
 Vue.component('downloadExcel', JsonExcel)

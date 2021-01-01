@@ -1,6 +1,8 @@
 <template>
   <div>
-  <h2 class="page-title">{{ title }}</h2><hr>
+    <h2 class="page-title">
+      {{ title }}
+    </h2> <hr>
   </div>
 </template>
 
@@ -8,9 +10,10 @@
 export default {
   name: 'PageTitle',
 
-  props: {
-    title: ''
-
+  props: { title: {
+    type: String,
+    default: ''
+  }
   }
 }
 </script>

@@ -54,13 +54,13 @@
               <b-button variant="link" style="padding:0px; padding-bottom:3px"
                         @click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)"
               >
-                {{ this.assignmentFileInfo.original_filename }}
+                {{ assignmentFileInfo.original_filename }}
               </b-button>
               <br>
-              Score: {{ this.assignmentFileInfo.submission_file_score }}<br>
-              Date submitted: {{ this.assignmentFileInfo.date_submitted }}<br>
-              Date graded: {{ this.assignmentFileInfo.date_graded }}<br>
-              Text feedback: {{ this.assignmentFileInfo.text_feedback }}<br>
+              Score: {{ assignmentFileInfo.submission_file_score }}<br>
+              Date submitted: {{ assignmentFileInfo.date_submitted }}<br>
+              Date graded: {{ assignmentFileInfo.date_graded }}<br>
+              Text feedback: {{ assignmentFileInfo.text_feedback }}<br>
             </p><hr>
           </b-card-text>
         </b-card>
@@ -284,8 +284,6 @@ export default {
     },
     openUploadAssignmentFileModal (assignmentId) {
       console.log(this.assignmentFileInfo)
-      return false
-      console.log(assignment)
       return false
       this.form.errors.clear('assignmentFile')
       this.form.assignmentId = assignmentId

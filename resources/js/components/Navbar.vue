@@ -9,12 +9,32 @@
     />
 
     <b-navbar-brand href="/">
-      <img src="/assets/img/libretexts_section_complete_adapt_header.png" class="d-inline-block align-top pl-3">
+      <img src="/assets/img/libretexts_section_complete_adapt_header.png" class="d-inline-block align-top pl-3"
+           @load="logoLoaded = true"
+      >
     </b-navbar-brand>
-
-    <b-nav aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between" style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;">
-      <span v-if="oneBreadcrumb" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"><a :href="breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
-      <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs" style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important" />
+    <div v-if="logoLoaded" class="float-right p-2">
+      <toggle-button
+        class="mt-2"
+        :width="150"
+        :value="isInstructorView"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+        :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
+        @change="toggleStudentView()"
+      />
+    </div>
+    <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
+           style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
+    >
+      <span v-if="oneBreadcrumb"
+            style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
+      ><a :href="breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
+      <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
+                    style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
+      />
       <b-navbar-nav class="ml-auto mt-0 mb-0">
         <b-row>
           <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
@@ -33,7 +53,9 @@
           </b-nav-item-dropdown>
           <b-navbar-nav v-show="!user">
             <b-nav-item href="/login">
-              <router-link :to="{ name: 'login' }" class="nav-link" :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''">
+              <router-link :to="{ name: 'login' }" class="nav-link"
+                           :style="this.$router.history.current.name === 'login' ? 'color:#6C757D' : ''"
+              >
                 {{ $t('login') }}
               </router-link>
             </b-nav-item>
@@ -82,16 +104,24 @@
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import Email from './Email'
+import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
   components: {
-    Email
+    Email,
+    ToggleButton
   },
 
   data: () => ({
+    isInstructorView: false,
+    canToggleStudentView: false,
+    courseId: 0,
+    assignmentId: 0,
     appName: window.config.appName,
     oneBreadcrumb: false,
+    logoLoaded: false,
     isLearningTreesEditor: false,
+    breadcrumbsLoaded: false,
     breadcrumbs: [
       {
         text: '',
@@ -111,15 +141,60 @@ export default {
   },
   watch: {
     '$route' (to, from) {
+      if (to.params.courseId) {
+        this.courseId = to.params.courseId
+      }
+      if (to.params.assignmentId) {
+        this.assignmentId = to.params.assignmentId
+      }
+      this.canToggleStudentView = Boolean(this.assignmentId + this.courseId)
+
       this.isLearningTreesEditor = (to.name === 'instructors.learning_trees.editor') ? 'color:#E9ECEF !important;' : ''
       if (this.user) {
         this.getBreadcrumbs(this.$router.history.current)
       } else {
         this.breadcrumbs = []
       }
+      this.breadcrumbsLoaded = true
     }
   },
+  mounted () {
+    this.isInstructorView = this.user.role === 2
+  },
   methods: {
+    async toggleStudentView () {
+      if (!this.canToggleStudentView) {
+        let message = 'Please visit a page within a course to toggle the view.'
+        this.$noty.info(message)
+        return false
+      }
+      try {
+        const { data } = await axios.post('/api/user/toggle-student-view',
+          {
+            course_id: this.courseId,
+            assignment_id: this.assignmentId,
+            route_name: this.$router.history.current.name
+          })
+        console.log(data)
+        if (data.type === 'success') {
+          // Save the token.
+          await this.$store.dispatch('auth/saveToken', {
+            token: data.token,
+            remember: false
+          })
+          this.isInstructorView = !this.isInstructorView
+          // Fetch the user.
+          await this.$store.dispatch('auth/fetchUser')
+          await this.getBreadcrumbs(this.$router)
+          this.$router.push({ name: data.new_route_name })
+          // Redirect to the correct home page
+        } else {
+          this.$noty.error(data.message)// no access
+        }
+      } catch (error) {
+        this.$noty(error.message)
+      }
+    },
     async getBreadcrumbs (router) {
       try {
         console.log(router.name)
@@ -127,7 +202,7 @@ export default {
         this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
         this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['welcome', 'instructors.learning_trees.index', 'instructors.courses.index'].includes(router.name)
       } catch (error) {
-        console.log(error.message)
+        this.$noty(error.message)
       }
     },
     openSendEmailModal () {
