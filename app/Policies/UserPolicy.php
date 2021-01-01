@@ -14,13 +14,23 @@ class UserPolicy
 
     public function __construct()
     {
-        $this->admins = ['me@me.com', 'kreut@hotmail.com', 'adapt@libretexts.org'];
+
     }
 
+    private function isAdmin($user){
+        $admins = ['kreut@hotmail.com', 'adapt@libretexts.org'];
+        if ( in_array(env('APP_ENV')  ,['local','testing'])){
+            $admins[] = 'me@me.com';
+        }
+        $isValidEmail =  in_array($user->email,$admins);
+
+        $isValidCookie  =isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === env('IS_ME_COOKIE'));
+        return $isValidEmail && $isValidCookie;
+    }
     public function getAll(User $user)
     {
 
-        return (in_array($user->email, $this->admins))
+        return $this->isAdmin($user)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the users from the database.');
     }
@@ -29,7 +39,7 @@ class UserPolicy
     function loginAs(User $user)
     {
 
-        return (in_array($user->email, $this->admins))
+        return$this->isAdmin($user)
             ? Response::allow()
             : Response::deny('You are not allowed to log in as a different user.');
     }

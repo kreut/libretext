@@ -68,25 +68,22 @@ class UserController extends Controller
 
 
     }
-    public function getNewRouteFromOldRouteAndNewUserType(string $route_name, string $new_user_types){
+
+    public function getNewRouteFromOldRouteAndNewUserType(string $route_name, string $new_user_types)
+    {
 
         $current_user_types = $new_user_types === 'students' ? 'instructors' : 'students';
         $route_name_without_role = str_replace($current_user_types . '.', '', $route_name);
-        if ($route_name === 'questions.view'){
+        if ($route_name === 'questions.view') {
             return 'questions.view';
-        } else if (in_array($route_name_without_role,['assignments.index', 'courses.index', 'assignments.summary'])){
+        } else if (in_array($route_name_without_role, ['assignments.index', 'courses.index', 'assignments.summary'])) {
             return "$new_user_types.$route_name_without_role";
         } else {
             return "$new_user_types.courses.index";
         }
 
 
-
-
-
-
-
-}
+    }
 
     /**
      * @param Request $request
@@ -102,11 +99,18 @@ class UserController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $user_info = explode(' --- ', $request->user);
-        $email = $user_info[1];
-        $new_user = User::where('email', $email)->first();
-        $response['type'] = 'success';
-        $response['token'] = \JWTAuth::fromUser($new_user);
+        $user_info = [];
+        try {
+            $user_info = explode(' --- ', $request->user);
+            $email = $user_info[1];
+            $new_user = User::where('email', $email)->first();
+            $response['type'] = 'success';
+            $response['token'] = \JWTAuth::fromUser($new_user);
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error logging in as {$user_info[0]}.  Please try again or contact us for assistance.";
+        }
         return $response;
 
     }
@@ -114,7 +118,6 @@ class UserController extends Controller
 
     public function getAll(Request $request, User $user)
     {
-
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAll', $user);
         if (!$authorized->allowed()) {
@@ -134,7 +137,7 @@ class UserController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error getting all users.  Please try again or contact us for assistance.";
 
         }
         return $response;
