@@ -194,9 +194,9 @@ export default {
             token: data.token,
             remember: false
           })
+          this.$store.dispatch('auth/fetchUser')
           this.isInstructorView = !this.isInstructorView
           if (data.new_route_name !== this.$router.history.current.name) {
-            await this.$store.dispatch('auth/fetchUser')
             await this.getBreadcrumbs(this.$router)
             await this.$router.push({ name: data.new_route_name })
           } else {
@@ -208,7 +208,7 @@ export default {
           this.$noty.error(data.message)// no access
         }
       } catch (error) {
-        this.$noty(error.message)
+        this.$noty.error(error.message)
       }
     },
     async getBreadcrumbs (router) {

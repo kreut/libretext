@@ -44,13 +44,12 @@ class UserController extends Controller
             if (!$request->session()->exists('instructor_user_id')) {
                 session(['instructor_user_id' => $request->user()->id]);
                 $new_user = $Course->find($course_id)->enrollments->sortBy('id')->first();
-
                 $new_user = $User->where('id', $new_user['user_id'])
                     ->where('first_name', 'Fake')
                     ->where('last_name', 'Student')
                     ->where('email', null)
                     ->first();//don't REALLY need this -- just to double check that I didn't do something silly
-                $new_user_types = 'students';
+               $new_user_types = 'students';
 
             } else {
                 $user_id = session('instructor_user_id');
@@ -59,6 +58,7 @@ class UserController extends Controller
                 $new_user_types = 'instructors';
 
             }
+
             $response['type'] = 'success';
             $response['new_route_name'] = $this->getNewRouteFromOldRouteAndNewUserType($route_name, $new_user_types);
             $response['token'] = \JWTAuth::fromUser($new_user);
