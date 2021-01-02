@@ -279,7 +279,7 @@
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
-                  <b-button class="mt-1 mb-2 mr-2" variant="success" @click="getQuestionsForAssignment()">
+                  <b-button class="mt-1 mb-2 mr-2" variant="success" @click="getAssessmentsForAssignment()">
                     Add Questions
                   </b-button>
                 </div>
