@@ -110,7 +110,7 @@ class LearningTreeController extends Controller
     }
 
     /**
-     * @param StoreLearningTreeInfo $request
+     * @param UpdateLearningTreeInfo $request
      * @param LearningTree $learningTree
      * @return array
      * @throws Exception
@@ -140,7 +140,7 @@ class LearningTreeController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error upating the learning tree.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating the learning tree.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -171,6 +171,7 @@ class LearningTreeController extends Controller
                 return $response;
             }
             $learningTree->root_node_page_id = $data['page_id'];
+            $learningTree->root_node_library = $data['library'];
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
             $learningTree->user_id = Auth::user()->id;
