@@ -15,7 +15,7 @@
     </b-navbar-brand>
     <div v-if="logoLoaded" class="float-right p-2">
       <toggle-button
-        v-if="(user !== null)"
+        v-if="showToggleStudentView && (user !== null)"
         class="mt-2"
         :width="140"
         :value="isInstructorView"
@@ -35,9 +35,9 @@
     <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
-      <span v-if="oneBreadcrumb"
+      <span v-if="oneBreadcrumb && (user !== null)"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
-      ><a :href="breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
+      ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
       <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
                     style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important"
       />
@@ -111,6 +111,8 @@ export default {
   },
 
   data: () => ({
+    showToggleStudentView: false,
+    originalRole: 0,
     isInstructorView: false,
     canToggleStudentView: false,
     courseId: 0,
@@ -154,10 +156,24 @@ export default {
         this.breadcrumbs = []
       }
       this.breadcrumbsLoaded = true
-      this.isInstructorView = this.user.role === 2
+      this.getSession()
+      this.isInstructorView = this.user !== null && this.user.role === 2
     }
   },
   methods: {
+    async getSession () {
+      console.log(this.user)
+      if (this.user !== null) {
+        try {
+          const { data } = await axios.get('/api/user/get-session')
+          console.log(data)
+          this.originalRole = data.original_role
+        } catch (error) {
+          this.$noty(error.message)
+        }
+        this.showToggleStudentView = parseInt(this.originalRole) === 2
+      }
+    },
     async toggleStudentView () {
       if (!this.canToggleStudentView) {
         let message = 'Please visit a page within a course to toggle the view.'

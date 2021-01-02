@@ -41,12 +41,13 @@ class LoginController extends Controller
         }
 
         $user = $this->guard()->user();
+        session()->put('original_role', $user->role);
+        session()->put('original_email', $user->email);
         if ($user instanceof MustVerifyEmail && ! $user->hasVerifiedEmail()) {
             return false;
         }
 
         $this->guard()->setToken($token);
-
         return true;
     }
 
@@ -62,7 +63,6 @@ class LoginController extends Controller
 
         $token = (string) $this->guard()->getToken();
         $expiration = $this->guard()->getPayload()->get('exp');
-
         return response()->json([
             'token' => $token,
             'token_type' => 'bearer',
@@ -98,6 +98,13 @@ class LoginController extends Controller
      */
     public function logout(Request $request)
     {
+
+        if ($request->session()->has('original_role')) {
+            $request->session()->forget('original_role');
+        }
+        if ($request->session()->has('original_email')) {
+            $request->session()->forget('original_email');
+        }
         $this->guard()->logout();
     }
 }

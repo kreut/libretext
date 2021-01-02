@@ -22,7 +22,8 @@ class UserPolicy
         if ( in_array(env('APP_ENV')  ,['local','testing'])){
             $admins[] = 'me@me.com';
         }
-        $isValidEmail =  in_array($user->email,$admins);
+
+        $isValidEmail =  in_array(session()->get('original_email'),$admins);//get the original email since they may be in student view
 
         $isValidCookie  =isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === env('IS_ME_COOKIE'));
         return $isValidEmail && $isValidCookie;

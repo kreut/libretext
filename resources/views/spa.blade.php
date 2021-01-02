@@ -5,7 +5,7 @@ $config = [
     'locales' => config('app.locales'),
     'githubAuth' => config('services.github.client_id'),
     'libretextsAuth' => config('services.libretexts.client_id'),
-    'isMe' => env('IS_ME_COOKIE')=== ($_COOKIE['IS_ME'] ?? 'no cookie present')
+    'isMe' => env('IS_ME_COOKIE') === ($_COOKIE['IS_ME'] ?? 'no cookie present')
 ];
 @endphp
 <!DOCTYPE html>

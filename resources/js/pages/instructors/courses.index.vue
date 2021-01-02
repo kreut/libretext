@@ -1,7 +1,7 @@
 <template>
   <div>
     <PageTitle v-if="canViewCourses" title="My Courses" />
-    <div v-if="user.role === 2">
+    <div v-if="user && user.role === 2">
       <div v-if="canViewCourses" class="row mb-4 float-right">
         <b-button v-b-modal.modal-course-details variant="primary">
           Add Course
@@ -60,7 +60,7 @@
                 Gradebook
               </b-tooltip>
               <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
-            <span v-if="user.role === 2">
+            <span v-if="user && user.role === 2">
 
               <span class="pr-1" @click="getProperties(data.item)">
                 <b-tooltip :target="getTooltipTarget('properties',data.item.id)"

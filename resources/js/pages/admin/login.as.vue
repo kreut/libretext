@@ -1,24 +1,35 @@
 <template>
   <div>
-    <b-card header="default" header-html="Login As user">
-      <b-form ref="form">
-        <p>To access this assignment, please provide the course access code given to you by your instructor.</p>
-        <div class="col-7 pb-2">
-          <vue-bootstrap-typeahead
-            ref="queryTypeahead"
-            v-model="form.user"
-            :data="users"
-            placeholder="Type a name"
-            :class="{ 'is-invalid': form.errors.has('user') }"
-            @keydown="form.errors.clear('user')"
-          />
-          <has-error :form="form" field="user" />
-        </div>
-        <b-button variant="primary" @click="submitLoginAs">
-          Submit
-        </b-button>
-      </b-form>
-    </b-card>
+    <PageTitle v-if="canViewLoginAs" title="Log In As Another User" />
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
+      />
+      <b-card v-if="canViewLoginAs" header="default" header-html="Login As user">
+        <b-form ref="form">
+          <p>To access this assignment, please provide the course access code given to you by your instructor.</p>
+          <div class="col-7 pb-2">
+            <vue-bootstrap-typeahead
+              ref="queryTypeahead"
+              v-model="form.user"
+              :data="users"
+              placeholder="Type a name"
+              :class="{ 'is-invalid': form.errors.has('user') }"
+              @keydown="form.errors.clear('user')"
+            />
+            <has-error :form="form" field="user" />
+          </div>
+          <b-button variant="primary" @click="submitLoginAs">
+            Submit
+          </b-button>
+        </b-form>
+      </b-card>
+    </div>
   </div>
 </template>
 <script>
@@ -26,17 +37,20 @@ import Form from 'vform'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
-import { redirectOnLogin } from '~/helpers/LoginRedirect'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   components: {
-    VueBootstrapTypeahead
+    VueBootstrapTypeahead, Loading
   },
   data: () => ({
     form: new Form({
       user: ''
     }),
-    users: []
+    users: [],
+    isLoading: true,
+    canViewLoginAs: false
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -58,10 +72,12 @@ export default {
           return false
         } else {
           this.users = data.users
+          this.canViewLoginAs = true
           console.log(this.users)
         }
       } catch (error) {
         this.$noty.error(error.message)
+        this.isLoading = false
       }
     },
     async submitLoginAs () {

@@ -624,7 +624,7 @@
       </b-modal>
       <b-container>
         <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
-          <b-button v-if="(user.role === 2)"
+          <b-button v-if="(user && user.role === 2)"
                     v-b-modal.modal-assignment-properties
                     class="mr-1" variant="primary"
                     @click="initAddAssignment"
@@ -654,7 +654,7 @@
               </template>
               <template v-slot:cell(name)="data">
                 <div class="mb-0">
-                  <span v-if="user.role === 2">
+                  <span v-if="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
                                delay="500"
                     >
@@ -754,7 +754,7 @@
                       icon="check2"
                     />
                   </span>
-                  <span v-if="user.role === 2">
+                  <span v-if="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
                                delay="500"
                     >
@@ -924,16 +924,19 @@ export default {
     this.courseId = this.$route.params.courseId
     this.isLoading = true
     this.getCourseInfo()
-    if (![2, 4].includes(this.user.role)) {
-      this.isLoading = false
-      this.$noty.error('You are not allowed to access this page.')
-      return false
+    if (this.user) {
+      if (![2, 4].includes(this.user.role)) {
+        this.isLoading = false
+        this.$noty.error('You are not allowed to access this page.')
+        return false
+      }
+
+      this.getAssignments()
+      this.getAssignmentGroups(this.courseId)
+      this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+      this.getTooltipTarget = getTooltipTarget
+      initTooltips(this)
     }
-    this.getAssignments()
-    this.getAssignmentGroups(this.courseId)
-    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-    this.getTooltipTarget = getTooltipTarget
-    initTooltips(this)
   },
   methods: {
     checkIfScoringTypeOfPoints (event) {

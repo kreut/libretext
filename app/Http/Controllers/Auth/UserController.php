@@ -27,6 +27,10 @@ class UserController extends Controller
         return response()->json($request->user());
     }
 
+    public function getSession(Request $request){
+        return $request->session()->all();
+    }
+
     public function toggleStudentView(Request $request, User $User, Course $Course, Assignment $Assignment)
     {
         $response['type'] = 'error';
