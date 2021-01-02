@@ -80,7 +80,6 @@
 
         <b-form ref="form" @submit="createAssignment">
           <div v-if="isLocked()">
-            {{ assessmentType }}
             <b-alert variant="info" show>
               <strong>This assignment is locked. Since students have submitted responses, the only
                 items that you can update are the assignment's name, the assignment's available/due dates,
@@ -123,7 +122,6 @@
                   v-model="form.available_from_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                   @shown="form.errors.clear('available_from_date')"
                 />
                 <has-error :form="form" field="available_from_date" />
@@ -132,7 +130,6 @@
                 <b-form-timepicker v-model="form.available_from_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                    @shown="form.errors.clear('available_from_time')"
                 />
                 <has-error :form="form" field="available_from_time" />
@@ -153,7 +150,6 @@
                   v-model="form.due_date"
                   :min="min"
                   :class="{ 'is-invalid': form.errors.has('due') }"
-                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                   @shown="form.errors.clear('due')"
                 />
                 <has-error :form="form" field="due" />
@@ -162,7 +158,6 @@
                 <b-form-timepicker v-model="form.due_time"
                                    locale="en"
                                    :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                   :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                    @shown="form.errors.clear('due_time')"
                 />
                 <has-error :form="form" field="due_time" />
