@@ -79,7 +79,7 @@ Log::info('Finished curl');
             foreach ($events_to_update as $key => $event) {
                 Log::info('updating ' . $event->page_id);
                 try {
-                    $updated = $Question->getQuestionIdsByPageId($event->page_id, true);
+                    $updated = $Question->getQuestionIdsByPageId($event->page_id, 'query',true);
                 } catch (Exception $e) {
                     Log::info($event->page_id . ' ' . $e->getMessage());
                 }

@@ -191,14 +191,16 @@ class Question extends Model
 
     /**
      * @param int $page_id
-     * @param Question $Question
-     * @param $cache_busting
-     * @return array|false
+     * @param string $library
+     * @param bool $cache_busting
+     * @return array
      * @throws Exception
      */
-    public function getQuestionIdsByPageId(int $page_id, bool $cache_busting)
+    public function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting)
     {
-        $question = Question::where('page_id', $page_id)->first();
+        $question = Question::where('page_id',$page_id)
+                            ->where('library', $library)
+                            ->first();
 
         if ($question && !$cache_busting) {
             return [$question->id]; ///just part of the search....

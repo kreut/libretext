@@ -38,7 +38,7 @@ class QuestionController extends Controller
         $page_id = $this->validatePageId($request);
 
 
-        $question_ids = $page_id ? $Question->getQuestionIdsByPageId($page_id, false)
+        $question_ids = $page_id ? $Question->getQuestionIdsByPageId($page_id, 'query',false)
             : $this->getQuestionIdsByWordTags($request);
 
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')

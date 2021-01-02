@@ -29,7 +29,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
         }
 
         try {
-            $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, false)[0];
+            $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, $learningTree->root_node_library,false)[0];
             DB::beginTransaction();
             DB::table('assignment_question')
                 ->insert([

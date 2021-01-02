@@ -35,7 +35,7 @@ class MindTouchEventController extends Controller
             usleep(2000000);//delay in case of race condition
             $question = Question::where('page_id', $request->page_id)->first();
             if ($question) {
-                $Question->getQuestionIdsByPageId($request->page_id, true);
+                $Question->getQuestionIdsByPageId($request->page_id, 'query',true);
             }
         } catch (Exception $e) {
             $h = new Handler(app());
