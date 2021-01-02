@@ -55,14 +55,14 @@
           label="Library"
           label-for="library"
         >
-          <b-input v-model="learningTreeForm.library" disabled />
-          <b-form-select v-show="false"
-                         v-model="learningTreeForm.library"
-                         :options="libraryOptions"
-                         :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
-                         @keydown="learningTreeForm.errors.clear('library')"
-          />
-          <has-error :form="learningTreeForm" field="library" />
+          <div class="mb-2 mr-2">
+            <b-form-select v-model="learningTreeForm.library"
+                           :options="libraryOptions"
+                           :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
+                           @change="learningTreeForm.errors.clear('library')"
+            />
+            <has-error :form="learningTreeForm" field="library" />
+          </div>
         </b-form-group>
         <b-form-group>
           <b-form-group
@@ -103,8 +103,7 @@
           Create New
         </b-button>
         <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
-          Update
-          Info
+          Update Info
         </b-button>
         <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
           Delete
@@ -118,7 +117,7 @@
             <b-button id="add"
                       class="ml-2"
                       variant="secondary"
-                      :disabled="this.learningTreeId === 0"
+                      :disabled="learningTreeId === 0"
                       @click="addRemediation"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
@@ -314,7 +313,7 @@ export default {
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     if (this.learningTreeId === 0) {
       this.$bvModal.show('modal-learning-tree-details')
-      this.learningTreeForm.library = 'query'
+      this.learningTreeForm.library = null
     } else {
       this.getLearningTreeLearningTreeId(this.learningTreeId)
     }
@@ -422,6 +421,8 @@ export default {
         const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)
         this.title = data.title
         this.description = data.description
+        this.assessmentPageId = data.page_id
+        this.assessmentLibrary = data.library
         if (data.learning_tree) {
           flowy.import(JSON.parse(data.learning_tree))
         }

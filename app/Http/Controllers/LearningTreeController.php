@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Http\Requests\StoreLearningTreeInfo;
+use App\Http\Requests\UpdateLearningTreeInfo;
 use App\LearningTree;
 use App\Query;
 use App\Question;
@@ -19,18 +20,13 @@ class LearningTreeController extends Controller
 {
 
 
-    public function getLearningTreeByAssignmentQuestion() {
+    public function getLearningTreeByAssignmentQuestion()
+    {
 ///after submitting, check if there's a learning tree
 /// if there is
 
 
     }
-
-
-
-
-
-
 
 
     public function learningTreeExists(Request $request)
@@ -114,12 +110,12 @@ class LearningTreeController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param StoreLearningTreeInfo $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
      */
-    public function updateLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    public function updateLearningTreeInfo(UpdateLearningTreeInfo $request, LearningTree $learningTree)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $learningTree);
@@ -221,6 +217,21 @@ EOT;
             ->pluck('learning_tree');
     }
 
+    public function getNodeLibraryTextFromLearningTree($learning_tree)
+    {
+        $re = '/(?<=<span class=\'library\'>).*?(?=<\/span>)/m';
+        preg_match($re, $learning_tree, $matches);
+
+        return $matches[0] ?? 'Could not find library';
+    }
+
+    public function getNodePageIdFromLearningTree($learning_tree)
+    {
+        $re = '/(?<=<span class=\'page_id\'>).*?(?=<\/span>)/m';
+        preg_match($re, $learning_tree, $matches);
+
+        return $matches[0] ?? 'Could not find Page Id';
+    }
 
     public function show(Request $request, LearningTree $learningTree)
     {
@@ -232,6 +243,9 @@ EOT;
             $response['learning_tree'] = $learningTree->learning_tree;
             $response['title'] = $learningTree->title;
             $response['description'] = $learningTree->description;
+            $response['library'] = $this->getNodeLibraryTextFromLearningTree($learningTree->learning_tree);
+            $response['page_id'] = $this->getNodePageIdFromLearningTree($learningTree->learning_tree);
+
 
         } catch (Exception $e) {
             $h = new Handler(app());
