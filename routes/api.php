@@ -57,7 +57,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
     Route::get('/user/get-session', 'Auth\UserController@getSession');
 
-    Route::get('/get-locally-saved-query-page-contents/{pageId}', 'QueryController@getLocallySavedQueryPageContents');
+    Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');

@@ -6,9 +6,9 @@ namespace App\Http\Controllers;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Solution;
-use App\Query;
+use App\Libretext;
 use App\Traits\IframeFormatter;
-use App\Traits\QueryFiles;
+use App\Traits\LibretextFiles;
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -22,7 +22,7 @@ use Illuminate\Support\Facades\Log;
 class QuestionController extends Controller
 {
     use IframeFormatter;
-    use QueryFiles;
+    use LibretextFiles;
 
     public function getQuestionsByTags(Request $request, Question $Question)
     {
@@ -60,7 +60,7 @@ class QuestionController extends Controller
             $questions[$key]['inAssignment'] = false;
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
-            $questions[$key]['non_technology_iframe_src'] = $this->getLocallySavedQueryPageIframeSrc($question);
+            $questions[$key]['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
             $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
             $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
@@ -88,7 +88,7 @@ class QuestionController extends Controller
         if ($question_info) {
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
-            $question['non_technology_iframe_src'] =$this->getLocallySavedQueryPageIframeSrc( $question_info);
+            $question['non_technology_iframe_src'] =$this->getLocallySavedPageIframeSrc( $question_info);
             $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
             $response['type'] = 'success';
             $response['question'] = $question;

@@ -6,7 +6,7 @@ namespace App\Http\Controllers;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
 use App\LearningTree;
-use App\Query;
+use App\Libretext;
 use App\Question;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
@@ -335,8 +335,8 @@ EOT;
 
         $response['type'] = 'error';
         try {
-            $Query = new Query(['library' => $library]);
-            $contents = $Query->getContentsByPageId($pageId);
+            $Libretext = new Libretext(['library' => $library]);
+            $contents = $Libretext->getContentsByPageId($pageId);
             $response['body'] = $contents['body'];
             $response['title'] = $contents['@title'] ?? 'Title';
             $response['type'] = 'success';
@@ -348,7 +348,7 @@ EOT;
                 $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
             } else {
                 try {
-                    $contents = $Query->getBodyFromPrivatePage($pageId);
+                    $contents = $Libretext->getBodyFromPrivatePage($pageId);
                     $response['body'] = $contents['@title'] ?? 'Title';
                     $response['title'] = $contents;
                     $response['type'] = 'success';

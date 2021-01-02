@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Query;
+use App\Libretext;
 
 class ImportQuestionsFromQuery extends Command
 {
@@ -38,7 +38,7 @@ class ImportQuestionsFromQuery extends Command
      */
     public function handle()
     {
-       $query = new Query();
-       $query->import();
+       $libretext = new Libretext(['library' => 'query']);
+       $libretext->import();
     }
 }

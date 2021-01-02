@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\JWE;
 use App\Solution;
-use App\Traits\QueryFiles;
+use App\Traits\LibretextFiles;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -42,7 +42,7 @@ class AssignmentSyncQuestionController extends Controller
     use S3;
     use SubmissionFiles;
     use JWT;
-    use QueryFiles;
+    use LibretextFiles;
     use LatePolicy;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
@@ -715,7 +715,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 //Frankenstein type problems
 
-                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedQueryPageIframeSrc($question);
+                $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
 
             }
 

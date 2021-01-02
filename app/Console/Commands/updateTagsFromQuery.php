@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use Illuminate\Console\Command;
-use App\Query;
+use App\Libretext;
 
 class updateTagsFromQuery extends Command
 {
@@ -38,7 +38,7 @@ class updateTagsFromQuery extends Command
      */
     public function handle()
     {
-        $query = new Query();
-        $query->updateTags();
+        $libretext = new Libretext(['library' => 'query']);
+        $libretext->updateTags();
     }
 }

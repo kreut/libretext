@@ -15,7 +15,7 @@ use App\Traits\S3;
 use App\Exceptions\Handler;
 use \Exception;
 
-class Query extends Model
+class Libretext extends Model
 {
 
     use MindTouchTokens;
@@ -33,7 +33,7 @@ class Query extends Model
 
         $this->client = new Client();
         $this->tokens = $this->getTokens();
-        $this->library = $attributes['library'] ?? 'query';
+        $this->library = $attributes['library'];
         $this->token = $this->tokens->{$this->library};
 
     }
@@ -162,7 +162,7 @@ class Query extends Model
 
     public function getContentsByPageId($page_id)
     {
-        https://query.libretexts.org/@api/deki/pages/1860/contents
+
 
         $headers = ['Origin' => 'https://adapt.libretexts.org', 'x-deki-token' => $this->token];
 
@@ -186,7 +186,7 @@ class Query extends Model
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "PUT",
-            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"query","mode": "view", "format":"xhtml"}',
+            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"' . $this->library . '","mode": "view", "format":"xhtml"}',
             CURLOPT_HTTPHEADER => [
                 "Origin: https://adapt.libretexts.org",
                 "Content-Type: text/plain"
@@ -289,7 +289,7 @@ MATHJAX;
     {
         $scripts = "['glMol' => " . ($extras['glMol'] ? 1 : 0) . ",'MathJax' => " . ($extras['MathJax'] ? 1 : 0) . "]";
         $php = '<?php $extras = ' . $scripts . '; ?>' . "\r\n";
-        $config = "<?php require_once(__DIR__ . '/../query.config.php'); ?>\r\n";
+        $config = "<?php require_once(__DIR__ . '/../libretext.config.php'); ?>\r\n";
         return $php . $config . $body;
 
     }

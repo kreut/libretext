@@ -2,16 +2,16 @@
 
 namespace App\Console\Commands;
 
-use App\Query;
+use App\Libretext;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use App\Question;
-use App\Traits\QueryFiles;
+use App\Traits\LibretextFiles;
 
 class RefactorNonTechnology extends Command
 {
 
-    use QueryFiles;
+    use LibretextFiles;
 
     /**
      * The name and signature of the console command.
@@ -46,7 +46,7 @@ class RefactorNonTechnology extends Command
     {
 
 
-        $Query = new Query();
+        $Libretext = new Libretext(['library' => 'query']);
         $all_files = Storage::disk('public')->allFiles();
         foreach ($all_files as $key => $file) {
             if (strpos($file, '.') === 0 || strpos($file, 'config') !== false || strpos($file, 'query') !== false || strpos($file, 'img') !== false) {
@@ -60,7 +60,7 @@ echo $page_id . "\r\n";
                 // id=102629;  //Frankenstein test
                 //Public type questions
 echo "page id $page_id";
-                $contents = $Query->getContentsByPageId($page_id);
+                $contents = $Libretext->getContentsByPageId($page_id);
                 $body = $contents['body'][0];
             } catch (Exception $e) {
 
@@ -74,7 +74,7 @@ echo "page id $page_id";
 
                 //private page so try again!
                 try {
-                    $body = $Query->getBodyFromPrivatePage($page_id);
+                    $body = $Libretext->getBodyFromPrivatePage($page_id);
                 } catch (Exception $e) {
                     echo json_encode(['type' => 'error',
                         'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
@@ -85,22 +85,22 @@ echo "page id $page_id";
 
             try {
 
-                if ($technology = $Query->getTechnologyFromBody($body)) {
-                    $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
+                if ($technology = $Libretext->getTechnologyFromBody($body)) {
+                    $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
 
                     $non_technology = str_replace($technology_iframe, '', $body);
                     $has_non_technology = trim($non_technology) !== '';
 
                     if ($has_non_technology) {
                         //Frankenstein type problem
-                        $non_technology = $Query->addExtras($non_technology,
+                        $non_technology = $Libretext->addExtras($non_technology,
                             ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                                 'MathJax' => false]);
                         Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
                         Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
                     }
                 } else {
-                    $non_technology = $Query->addExtras($body,
+                    $non_technology = $Libretext->addExtras($body,
                         ['glMol' => false,
                             'MathJax' => true
                         ]);

@@ -13,7 +13,7 @@ use \Exception;
 class Question extends Model
 {
 
-    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology'];
+    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology', 'library'];
 
     public function __construct(array $attributes = [])
     {
@@ -213,35 +213,35 @@ class Question extends Model
         ///enter it into the database if I can get it
         ///
         /// getPageInfoByPageId(int $page_id)
-        $Query = new Query();
+        $Libretext = new Libretext(['library' => $library]);
         $technology_and_tags['technology'] = false;
         $technology_and_tags['tags'] = [];
 
         try {
             // id=102629;  //Frankenstein test
             //Public type questions
-            $page_info = $Query->getPageInfoByPageId($page_id);
-            $technology_and_tags = $Query->getTechnologyAndTags($page_info);
-            $contents = $Query->getContentsByPageId($page_id);
+            $page_info = $Libretext->getPageInfoByPageId($page_id);
+            $technology_and_tags = $Libretext->getTechnologyAndTags($page_info);
+            $contents = $Libretext->getContentsByPageId($page_id);
             $body = $contents['body'][0];
         } catch (Exception $e) {
 
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
                 //some other error besides forbidden
                 echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'message' => 'We tried getting that public page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                     'timeout' => 12000]);
                 exit;
             }
 
             //private page so try again!
             try {
-                $body = $Query->getBodyFromPrivatePage($page_id);
+                $body = $Libretext->getBodyFromPrivatePage($page_id);
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
                 echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'message' => 'We tried getting that private page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                     'timeout' => 12000]);
                 exit;
             }
@@ -249,48 +249,48 @@ class Question extends Model
 
         try {
 
-            if ($technology = $Query->getTechnologyFromBody($body)) {
-                $technology_iframe = $Query->getTechnologyIframeFromBody($body, $technology);
+            if ($technology = $Libretext->getTechnologyFromBody($body)) {
+                $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
 
                 $non_technology = str_replace($technology_iframe, '', $body);
                 $has_non_technology = trim($non_technology) !== '';
 
                 if ($has_non_technology) {
                     //Frankenstein type problem
-                    $non_technology = $Query->addExtras($non_technology,
+                    $non_technology = $Libretext->addExtras($non_technology,
                         ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                             'MathJax' => false]);
-                    Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
-                    Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+                    Storage::disk('local')->put("$library/{$page_id}.php", $non_technology);
+                    Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
                 }
             } else {
                 $technology_iframe = '';
                 $has_non_technology = true;
-                $non_technology = $Query->addExtras($body,
+                $non_technology = $Libretext->addExtras($body,
                     ['glMol' => false,
                         'MathJax' => true
                     ]);
                 $technology = 'text';
-                Storage::disk('local')->put("query/{$page_id}.php", $non_technology);
-                Storage::disk('s3')->put("query/{$page_id}.php", $non_technology);
+                Storage::disk('local')->put("$library/{$page_id}.php", $non_technology);
+                Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
             }
 
             $question = Question::updateOrCreate(
-                ['page_id' => $page_id],
+                ['page_id' => $page_id, 'library' => $library],
                 ['technology' => $technology,
                     'non_technology' => $has_non_technology,
                     'technology_iframe' => $technology_iframe
                 ]);
 
             if ($technology_and_tags['tags']) {
-                $Query->addTagsToQuestion($question, $technology_and_tags['tags']);
+                $Libretext->addTagsToQuestion($question, $technology_and_tags['tags']);
             }
             return [$question->id];
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             echo json_encode(['type' => 'error',
-                'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                'message' => 'We tried saving that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                 'timeout' => 12000]);
             exit;
         }
