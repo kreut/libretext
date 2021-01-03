@@ -327,7 +327,7 @@ class AssignmentController extends Controller
                     'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0,
                     'late_policy' => $data['late_policy'],
                     'show_scores' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? 0 : 1,
-                    'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? 0 : 1,
+                    'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
                     'show_points_per_question' => $request->assessment_type === 'delayed' ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
                     'late_policy_deadline' => $this->getLatePolicyDeadeline($request),

@@ -41,7 +41,7 @@ class QuestionController extends Controller
         $question_ids = $page_id ? $Question->getQuestionIdsByPageId($page_id, 'query',false)
             : $this->getQuestionIdsByWordTags($request);
 
-        $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
+        $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology', 'library')
             ->whereIn('id', $question_ids)->get();
 
         $solutions = Solution::select('question_id', 'original_filename')

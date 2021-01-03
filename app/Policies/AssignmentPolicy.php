@@ -103,9 +103,9 @@ class AssignmentPolicy
         if (!$has_access) {
             $message ='You are not allowed to show/hide solutions.';
         } else {
-            $has_access = $assignment->assessment_type === 'delayed';
+            $has_access = $assignment->assessment_type !== 'real time';
             if (!$has_access) {
-                $message = "Since this assignment is not a <strong>delayed</strong> assessment type, students will see the solutions immediately.";
+                $message = "Since this assignment is a <strong>real time</strong> assessment type, students will see the solutions immediately.";
             }
         }
         return $has_access
