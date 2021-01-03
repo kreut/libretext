@@ -64,6 +64,24 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+
+    public function user_can_get_query_page_if_page_id_is_in_one_of_their_assignments()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/query/1")
+            ->assertJson(['message' => 'authorized']);
+    }
+
+    /** @test */
+
+    public function instructor_can_get_query_page_by_page_id()
+    {
+        $this->actingAs($this->user)->getJson("/api/get-locally-saved-page-contents/query/1")
+            ->assertJson(['message' => 'authorized']);
+    }
+
+
+
+    /** @test */
     public function can_only_submit_once_for_real_time_assessments()
     {
         $this->assignment->assessment_type = 'real time';
@@ -326,25 +344,10 @@ class QuestionsViewTest extends TestCase
 
     public function user_cannot_get_query_page_if_page_id_is_not_in_one_of_their_assignments()
     {
-        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/10")
+        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/query/10")
             ->assertJson(['message' => 'You are not allowed to view this non-technology question.']);
     }
 
-    /** @test */
-
-    public function user_can_get_query_page_if_page_id_is_in_one_of_their_assignments()
-    {
-        $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/1")
-            ->assertJson(['message' => 'authorized']);
-    }
-
-    /** @test */
-
-    public function instructor_can_get_query_page_by_page_id()
-    {
-        $this->actingAs($this->user)->getJson("/api/get-locally-saved-page-contents/1")
-            ->assertJson(['message' => 'authorized']);
-    }
 
 
     /** @test */

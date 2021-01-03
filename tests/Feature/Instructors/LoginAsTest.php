@@ -26,6 +26,7 @@ class LoginAsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->withSession(['original_email'=> 'bogus'])
             ->get('/api/user/all');
         $this->assertEquals('You are not allowed to retrieve the users from the database.', $response->original['message']);
     }
@@ -36,6 +37,7 @@ class LoginAsTest extends TestCase
         $this->user->email = 'me@me.com';
         $this->user->save();
         $response = $this->actingAs($this->user)
+            ->withSession(['original_email'=> $this->user->email])
             ->get('/api/user/all');
         $this->assertEquals('You are not allowed to retrieve the users from the database.', $response->original['message']);
     }
@@ -48,6 +50,7 @@ class LoginAsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->withSession(['original_email'=> $this->user->email])
             ->get('/api/user/all');
         $this->assertEquals('success', $response->original['type']);
     }
@@ -58,6 +61,7 @@ class LoginAsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->withSession(['original_email'=> 'bogus'])
             ->post('/api/user/login-as', $this->login_as_info);
         $this->assertEquals('You are not allowed to log in as a different user.', $response->original['message']);
     }
@@ -68,6 +72,7 @@ class LoginAsTest extends TestCase
         $this->user->email = 'me@me.com';
         $this->user->save();
         $response = $this->actingAs($this->user)
+            ->withSession(['original_email'=> $this->user->email])
             ->post('/api/user/login-as', $this->login_as_info);
         $this->assertEquals('You are not allowed to log in as a different user.', $response->original['message']);
     }
@@ -80,6 +85,7 @@ class LoginAsTest extends TestCase
         $response = $this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('IS_ME', env('IS_ME_COOKIE'))
+            ->withSession(['original_email'=> $this->user->email])
             ->post('/api/user/login-as', $this->login_as_info);
         $this->assertEquals('success', $response->original['type']);
     }
