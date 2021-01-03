@@ -35,6 +35,7 @@
 <script>
 import Form from 'vform'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import { redirectOnLogin } from '~/helpers/LoginRedirect'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
