@@ -12,12 +12,15 @@ import VueCountdown from '@chenfengyuan/vue-countdown'
 
 import '~/plugins'
 import '~/components'
-
+import VueClipboard from 'vue-clipboard2'
 import 'vuejs-noty/dist/vuejs-noty.css' // https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
 
 import iFrameResize from 'iframe-resizer/js/iframeResizer'
 
 import VueMoment from 'vue-moment'
+
+VueClipboard.config.autoSetContainer = true // add this line
+Vue.use(VueClipboard)
 Vue.component(VueCountdown.name, VueCountdown)
 
 Vue.directive('resize', {

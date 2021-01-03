@@ -1,17 +1,6 @@
 <template>
   <div style="min-height:400px">
     <EnrollInCourse />
-    <b-modal
-      v-if="questions !==['init'] && questions.length"
-      id="embed-modal"
-      title="Embed Code"
-      ok-title="OK"
-      size="xl"
-    >
-      <p>You can embed this question in your Libretext book using:</p>
-
-      <span class="font-weight-bold"> &lt;iframe id="adapt-{{ assignmentId }}-{{ questions[currentPage-1].id }}" allowtransparency="true" frameborder="0" scrolling="no" src="{{ getCurrentPage() }}" style="width: 1px;min-width: 100%;min-height: 100px;" /&gt;</span>
-    </b-modal>
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -252,11 +241,13 @@
                   </countdown>
                 </div>
                 <div v-if="user.role === 2" class="mt-1">
-                  <b-button v-b-modal.embed-modal
+                  <b-button v-clipboard:copy="embedCode"
+                            v-clipboard:success="onCopy"
+                            v-clipboard:error="onError"
                             variant="info"
                             size="sm"
                   >
-                    Embed Code
+                    Get Embed Code
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
@@ -695,6 +686,7 @@ export default {
     Email
   },
   data: () => ({
+    embedCode: '',
     canView: false,
     latePolicy: '',
     learningTreePercentPenalty: 0,
@@ -824,6 +816,12 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    onCopy: function () {
+      this.$noty.success('The embed code for this assessment has been copied to your clipboard and can be pasted into your Libretext.')
+    },
+    onError: function () {
+      this.$noty.error('There was a problem copying the embed code to your clipboard.')
+    },
     getWindowLocation () {
       return window.location
     },
@@ -1079,6 +1077,7 @@ export default {
       this.showSubmissionMessage = false
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
+        this.embedCode = `<iframe id="adapt-${this.assignmentId}-${this.questions[currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.getCurrentPage()}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
         let iframeId = this.questions[currentPage - 1].iframe_id
         iFrameResize({ log: false }, `#${iframeId}`)
         iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
