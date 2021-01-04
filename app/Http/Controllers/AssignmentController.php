@@ -175,7 +175,7 @@ class AssignmentController extends Controller
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-                $scores_by_assignment = $Score->getUserScoresByCourse($course, Auth::user());
+                [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByCourse($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
             } else {
@@ -207,6 +207,7 @@ class AssignmentController extends Controller
                     } else {
                         $assignments_info[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
                     }
+                    $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {

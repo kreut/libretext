@@ -61,7 +61,8 @@
               Date submitted: {{ assignmentFileInfo.date_submitted }}<br>
               Date graded: {{ assignmentFileInfo.date_graded }}<br>
               Text feedback: {{ assignmentFileInfo.text_feedback }}<br>
-            </p><hr>
+            </p>
+            <hr>
           </b-card-text>
         </b-card>
         <div v-if="assignmentFileInfo.file_feedback_url">
@@ -102,7 +103,9 @@
             {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
             {{ data.item.due.is_extension ? '(Extension)' : '' }}
           </template>
-
+          <template v-slot:head(z_score)="data">
+            Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
+          </template>
           <template v-slot:cell(files)="data">
             <div v-if="data.item.submission_files === 'a'">
               <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
@@ -156,6 +159,11 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    showZScoreTooltip: {
+      fallbackPlacement: ['right'],
+      placement: 'right',
+      title: 'The z-score tells you how many standard deviations you are away from the mean.  A z-score of 0 tells you that your score was the exact mean of the distribution.  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean; z-scores outside of this range are considered atypical.'
+    },
     isLoading: true,
     studentsCanViewWeightedAverage: false,
     letterGradesReleased: false,
@@ -171,14 +179,26 @@ export default {
     assignments: [],
     courseId: false,
     fields: [
-      { key: 'name',
-        sortable: true },
-      { key: 'available_from',
-        sortable: true },
-      { key: 'due',
-        sortable: true },
-      'number_submitted',
+      {
+        key: 'name',
+        sortable: true
+      },
+      {
+        key: 'available_from',
+        sortable: true
+      },
+      {
+        key: 'due',
+        sortable: true
+      },
+      {
+        key: 'number_submitted',
+        label: 'Submitted'
+      },
       'score',
+      {
+        key: 'z_score'
+      },
       'files',
       'solution_key'
     ],
@@ -239,7 +259,7 @@ export default {
         const { data } = await axios.get(`/api/assignment-files/assignment-file-info-by-student/${assignmentId}`)
         this.assignmentFileInfo = data.assignment_file_info
         if (!this.assignmentFileInfo) {
-          this.$noty.info("You can't have any feedback if you haven't submitted a file!")
+          this.$noty.info('You can\'t have any feedback if you haven\'t submitted a file!')
           return false
         }
         console.log(this.assignmentFileInfo)

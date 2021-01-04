@@ -55,9 +55,9 @@ class Score extends Model
 
                 if ($submission_files->isNotEmpty()) {
                     foreach ($submission_files as $submission_file) {
-                            $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
-                                ? $submission_file->score
-                                : 0;
+                        $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
+                            ? $submission_file->score
+                            : 0;
                     }
                 }
 
@@ -111,6 +111,7 @@ class Score extends Model
         $scores_released = [];
         $scoring_types = [];
         $scores_by_assignment = [];
+        $z_scores_by_assignment = [];
 
 
 //initialize
@@ -118,6 +119,7 @@ class Score extends Model
             $assignment_ids[] = $assignment->id;
             $scores_released[$assignment->id] = $assignment->show_scores;
             $scoring_types[$assignment->id] = $assignment->scoring_type;
+            $z_scores_by_assignment[$assignment->id] = 'N/A';
             if ($assignment->scoring_type === 'p') {
                 $scores_by_assignment[$assignment->id] = ($assignment->show_scores)
                     ? 0 : 'Not yet released';
@@ -132,20 +134,39 @@ class Score extends Model
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
             ->get();
+        $statistics = DB::table('scores')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('assignment_id', DB::raw('AVG(score) as average'), DB::raw('STDDEV(score) as std_dev'))
+            ->groupBy('assignment_id')
+            ->get();
+        foreach ($statistics as $key => $value) {
+            $statistics_by_assignment[$value->assignment_id] = [
+                'average' => $value->average,
+                'std_dev' => $value->std_dev];
+        }
+
 
 //show the score for points only if the scores have been released
 //otherwise show the score
         foreach ($scores as $key => $value) {
-            if ($scoring_types[$value->assignment_id] === 'p') {
-                if ($scores_released[$value->assignment_id]) {
-                    $scores_by_assignment[$value->assignment_id] = $value->score;
+            $assignment_id = $value->assignment_id;
+            $score = $value->score;
+            if ($scoring_types[$assignment_id] === 'p') {
+                if ($scores_released[$assignment_id]) {
+                    $scores_by_assignment[$assignment_id] = $score;
+                    if ($statistics_by_assignment[$assignment_id]['std_dev'] > 0) {
+                        $z_score = ($score - $statistics_by_assignment[$assignment_id]['average']) / $statistics_by_assignment[$assignment_id]['std_dev'];
+                        $z_scores_by_assignment[$assignment_id] = round($z_score, 2);
+                    } else {
+                        $z_scores_by_assignment[$assignment_id] = "Std Dev is 0";
+                    }
                 }
             } else {
-                $scores_by_assignment[$value->assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';
+                $scores_by_assignment[$assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';
             }
         }
 
-        return $scores_by_assignment;
+        return [$scores_by_assignment, $z_scores_by_assignment];
 
     }
 
