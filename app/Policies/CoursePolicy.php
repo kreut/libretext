@@ -14,6 +14,24 @@ class CoursePolicy
     use CommonPolicies;
 
     /**
+     * @param User $user
+     * @param Course $course
+     * @param int $student_user_id
+     * @return Response
+     */
+    public
+    function loginAsStudentInCourse(User $user, Course $course, int $student_user_id)
+    {
+        $student_enrolled_in_course = $course->enrollments->contains('user_id', $student_user_id);
+        $owner_of_course = ($course->user_id === (int) $user->id);
+        $is_grader = $course->isGrader();
+        //check if the student is in their course.
+        return ($student_enrolled_in_course && ($owner_of_course || $is_grader))
+            ? Response::allow()
+            : Response::deny('You are not allowed to log in as this student.');
+    }
+
+    /**
      * Determine whether the user can view any courses.
      *
      * @param \App\User $user

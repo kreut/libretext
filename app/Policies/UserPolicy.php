@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Course;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -40,9 +41,11 @@ class UserPolicy
     function loginAs(User $user)
     {
 
-        return$this->isAdmin($user)
+        return $this->isAdmin($user)
             ? Response::allow()
             : Response::deny('You are not allowed to log in as a different user.');
     }
+
+
 
 }

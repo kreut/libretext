@@ -53,10 +53,8 @@
                        :sort-desc.sync="sortDesc"
                        sort-icon-left
               >
-                <template v-for="assignmentIndex in assignmentsArray"
-                          v-slot:cell()="data"
-                >
-                  <span @click="openStudentModal(data.value,data.item.userId, data.field.key)">{{ data.value }}
+                <template v-slot:cell()="data">
+                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key)">{{ data.value }}
                   </span>
                 </template>
               </b-table>
@@ -352,19 +350,49 @@ export default {
         return false
       }
     },
-    async openStudentModal (value, studentUserId, assignmentId) {
+    async loginAsStudentInCourse (studentUserId) {
+      try {
+        const { data } = await axios.post('/api/user/login-as-student-in-course',
+          {
+            course_id: this.courseId,
+            student_user_id: studentUserId
+          })
+
+        if (data.type === 'success') {
+          // Save the token.
+          this.$store.dispatch('auth/saveToken', {
+            token: data.token,
+            remember: false
+          })
+
+          // Fetch the user.
+          await this.$store.dispatch('auth/fetchUser')
+          // Redirect to the correct home page
+          this.$router.push({ name: 'students.assignments.index' })
+        } else {
+          this.$noty.error(data.message)// no access
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getStudentAction (value, studentUserId, assignmentId) {
       // name shouldn't be clickable
 
-      if (assignmentId === 'name' || parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
+      if (parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
         return false
       }
-      this.studentUserId = studentUserId
-      if (parseInt(assignmentId) === parseInt(this.extraCreditAssignmentId)) {
-        await this.openExtraCreditModal()
-        return false
+      if (assignmentId === 'name') {
+        this.loginAsStudentInCourse(studentUserId)
+      } else {
+        this.studentUserId = studentUserId
+        if (parseInt(assignmentId) === parseInt(this.extraCreditAssignmentId)) {
+          await this.openExtraCreditModal()
+          return false
+        }
+        // Extension and override
+        await this.openExtensionAndOverrideModal(assignmentId)
       }
-      // Extension and override
-      await this.openExtensionAndOverrideModal(assignmentId)
     },
     async openExtraCreditModal () {
       try {

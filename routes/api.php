@@ -55,6 +55,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/user/all', 'Auth\UserController@getAll');
     Route::post('/user/toggle-student-view', 'Auth\UserController@toggleStudentView');
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
+    Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
     Route::get('/user/get-session', 'Auth\UserController@getSession');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');

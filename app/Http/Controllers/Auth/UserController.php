@@ -27,7 +27,8 @@ class UserController extends Controller
         return response()->json($request->user());
     }
 
-    public function getSession(Request $request){
+    public function getSession(Request $request)
+    {
         return $request->session()->all();
     }
 
@@ -42,6 +43,7 @@ class UserController extends Controller
                 $course_id = $Assignment->find($assignment_id)->course->id;
             }
             if (!$request->session()->exists('instructor_user_id')) {
+                //remember who they are and log them in as fake student
                 session(['instructor_user_id' => $request->user()->id]);
                 $new_user = $Course->find($course_id)->enrollments->sortBy('id')->first();
                 $new_user = $User->where('id', $new_user['user_id'])
@@ -49,7 +51,7 @@ class UserController extends Controller
                     ->where('last_name', 'Student')
                     ->where('email', null)
                     ->first();//don't REALLY need this -- just to double check that I didn't do something silly
-               $new_user_types = 'students';
+                $new_user_types = 'students';
 
             } else {
                 $user_id = session('instructor_user_id');
@@ -87,6 +89,40 @@ class UserController extends Controller
             return "$new_user_types.courses.index";
         }
 
+
+    }
+
+    /**
+     * @param Request $request
+     * @param User $user
+     * @param Course $Course
+     * @return array
+     * @throws Exception
+     */
+    public function loginAsStudentInCourse(Request $request, Course $Course)
+    {
+        $response['type'] = 'error';
+
+        $course = $Course->where('id', $request->course_id)->first();
+
+        $authorized = Gate::inspect('loginAsStudentInCourse', [$course, $request->student_user_id]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $new_user = User::find($request->student_user_id);
+            session(['instructor_user_id' => $request->user()->id]);//to remember who to toggle back to!
+            $response['type'] = 'success';
+            $response['token'] = \JWTAuth::fromUser($new_user);
+            $response['success'] = true;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error logging you in as this student.  Please try again or contact us for assistance.";
+        }
+        return $response;
 
     }
 
