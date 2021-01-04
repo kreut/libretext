@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\FinalGrade;
+use App\Grader;
 use App\User;
 use App\ExtraCredit;
 use App\Extension;
@@ -33,6 +34,11 @@ class ScoresIndexTest extends TestCase
 
         $this->student_user_2 = factory(User::class)->create();//not enrolled
         $this->student_user->role = 3;
+
+        $this->grader_user = factory(User::class)->create();
+        $this->grader_user->role = 4;
+        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
+
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
@@ -46,17 +52,55 @@ class ScoresIndexTest extends TestCase
 
     /** @test */
 
-public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_credit(){
-
-
-    $this->actingAs($this->user)->getJson("/api/extra-credit/{$this->course->id}/{$this->student_user_2->id}")
-    ->assertJson(['message' => 'You are not allowed to view this student\'s extra credit.']);
-}
+    public function instructors_can_log_in_as_students_in_their_courses()
+    {
+        $this->actingAs($this->user)->postJson('/api/user/login-as-student-in-course',
+            [
+                'course_id' => $this->course->id,
+                'student_user_id' => $this->student_user->id
+            ])
+            ->assertJson(['type' => 'success']);
+    }
 
     /** @test */
 
-    public function if_a_student_is_in_the_course_a_user_can_get_their_extra_credit(){
-        ExtraCredit::create(['course_id' =>$this->course->id,
+    public function instructors_cannot_log_in_as_students_not_in_their_courses()
+    {
+        $this->actingAs($this->user)->postJson('/api/user/login-as-student-in-course',
+            [
+                'course_id' => $this->course->id,
+                'student_user_id' => $this->student_user_2->id
+            ])
+            ->assertJson(['message' => 'You are not allowed to log in as this student.']);
+    }
+
+    /** @test */
+
+    public function graders_can_log_in_as_students_in_their_courses()
+    {
+        $this->actingAs($this->grader_user)->postJson('/api/user/login-as-student-in-course',
+            [
+                'course_id' => $this->course->id,
+                'student_user_id' => $this->student_user->id
+            ])
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+
+    public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_credit()
+    {
+
+
+        $this->actingAs($this->user)->getJson("/api/extra-credit/{$this->course->id}/{$this->student_user_2->id}")
+            ->assertJson(['message' => 'You are not allowed to view this student\'s extra credit.']);
+    }
+
+    /** @test */
+
+    public function if_a_student_is_in_the_course_a_user_can_get_their_extra_credit()
+    {
+        ExtraCredit::create(['course_id' => $this->course->id,
             'user_id' => $this->student_user->id,
             'extra_credit' => 10]);
         $this->actingAs($this->user)->getJson("/api/extra-credit/{$this->course->id}/{$this->student_user->id}")
@@ -69,10 +113,10 @@ public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_
     public function if_a_student_is_not_in_the_course_a_user_cannot_udpate_extra_credit()
     {
 
-        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+        $this->actingAs($this->user)->postJson("/api/extra-credit", [
             'course_id' => $this->course->id,
             'student_user_id' => $this->student_user_2->id,
-        'extra_credit' => 5])
+            'extra_credit' => 5])
             ->assertJson(['message' => 'You are not allowed to give this student extra credit.']);
     }
 
@@ -80,7 +124,7 @@ public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_
 
     public function if_a_student_is_in_the_course_a_user_can_udpate_extra_credit()
     {
-        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+        $this->actingAs($this->user)->postJson("/api/extra-credit", [
             'course_id' => $this->course->id,
             'student_user_id' => $this->student_user->id,
             'extra_credit' => 5])
@@ -91,14 +135,14 @@ public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_
 
     public function the_extra_credit_amount_must_be_valid()
     {
-        $this->actingAs($this->user)->postJson("/api/extra-credit",[
+        $this->actingAs($this->user)->postJson("/api/extra-credit", [
             'course_id' => $this->course->id,
             'student_user_id' => $this->student_user->id,
             'extra_credit' => -5])
             ->assertJsonValidationErrors(['extra_credit']);
     }
 
-        /** @test */
+    /** @test */
 
     public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()
     {
@@ -125,12 +169,12 @@ public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_
         $without_extra_credit = 51.11;
         $extra_credit = 10;
         $this->createAssignmentGroupWeightsAndAssignments();
-        ExtraCredit::create(['course_id' =>$this->course->id,
+        ExtraCredit::create(['course_id' => $this->course->id,
             'user_id' => $this->student_user->id,
             'extra_credit' => $extra_credit]);
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
-        $this->assertEquals(($without_extra_credit + $extra_credit) .'%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
+        $this->assertEquals(($without_extra_credit + $extra_credit) . '%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
     }
 
@@ -146,8 +190,6 @@ public function if_a_student_is_not_in_the_course_a_user_cannot_get_their_extra_
         $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 
     }
-
-
 
 
     /** @test */
