@@ -272,10 +272,22 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
-            $assignment->questions()->detach($question);
+            DB::beginTransaction();
+            $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
+                ->where('assignment_id', $assignment->id)
+                ->first()
+                ->id;
+            DB::table('assignment_question_learning_tree')
+                ->where('assignment_question_id', $assignment_question_id)
+                ->delete();
+            DB::table('assignment_question')->where('question_id', $question->id)
+                ->where('assignment_id', $assignment->id)
+                ->delete();
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been removed from the assignment.';
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing the question from the assignment.  Please try again or contact us for assistance.";

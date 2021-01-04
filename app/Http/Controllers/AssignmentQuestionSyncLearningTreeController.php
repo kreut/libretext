@@ -27,9 +27,16 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, $learningTree->root_node_library,false)[0];
+            $in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question_id)->get()->isNotEmpty();
+            if ($in_assignment){
+                $response['message'] = 'That Learning Tree is already in the assignment.';
+                return $response;
+
+            }
+
             DB::beginTransaction();
             DB::table('assignment_question')
                 ->insert([
