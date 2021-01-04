@@ -13,6 +13,7 @@ use App\SubmissionFile;
 use Carbon\Carbon;
 use App\Score;
 use App\Submission;
+use App\Traits\Statistics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -20,6 +21,7 @@ use Tests\TestCase;
 
 class QuestionsViewTest extends TestCase
 {
+    use Statistics;
 
     public function setup(): void
     {
@@ -51,17 +53,178 @@ class QuestionsViewTest extends TestCase
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
 
+        $this->student_user_3 = factory(User::class)->create();
+        $this->student_user_3->role = 3;
+
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'course_id' => $this->course->id
         ]);
+        $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
         $this->h5pSubmission = [
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'submission' => '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}'
+            'submission' => $this->submission_object
         ];
     }
+
+    /** @test */
+    public function correctly_computes_the_z_score_for_a_file_submission()
+    {
+
+        $scores = [80, 40, 36];
+
+        DB::table('assignment_question')
+            ->where('question_id', $this->question->id)
+            ->update(['question_files' => 1]);
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+
+        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            SubmissionFile::create($data);
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+        //need the token....
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        $headers = [
+            'Accept' => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+        $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
+
+    }
+
+    /** @test */
+    public function correctly_computes_the_z_score_if_there_is_no_file_submission()
+    {
+
+        $scores = [40, 36];
+
+        DB::table('assignment_question')
+            ->where('question_id', $this->question->id)
+            ->update(['question_files' => 1]);
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+
+        $user_ids = [$this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            SubmissionFile::create($data);
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+        //need the token....
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        $headers = [
+            'Accept' => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+        $this->assertEquals('N/A', $response['questions'][0]['submission_file_z_score']);
+
+    }
+
+    /** @test */
+    public function correctly_computes_the_z_score_for_a_question_submission()
+    {
+        $scores = [80, 40, 36];
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = ['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object];
+        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            Submission::create($data);
+        }
+    }
+
+
+
+    /** @test */
+    public function correctly_computes_the_z_score_if_there_is_no_question_submission()
+    {
+        $scores = [40, 36];
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = ['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object];
+        $user_ids = [$this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            Submission::create($data);
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+        //need the token....
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        $headers = [
+            'Accept' => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+        $this->assertEquals('N/A', $response['questions'][0]['submission_z_score']);
+
+    }
+
 
     /** @test */
 
@@ -80,7 +243,6 @@ class QuestionsViewTest extends TestCase
     }
 
 
-
     /** @test */
     public function can_only_submit_once_for_real_time_assessments()
     {
@@ -89,7 +251,7 @@ class QuestionsViewTest extends TestCase
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message'=> 'You can only submit once since you are provided with real-time feedback.']);
+            ->assertJson(['message' => 'You can only submit once since you are provided with real-time feedback.']);
 
 
     }
@@ -146,8 +308,6 @@ class QuestionsViewTest extends TestCase
 
 
     }
-
-
 
 
     /** @test */
@@ -347,7 +507,6 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user)->getJson("/api/get-locally-saved-page-contents/query/10")
             ->assertJson(['message' => 'You are not allowed to view this non-technology question.']);
     }
-
 
 
     /** @test */

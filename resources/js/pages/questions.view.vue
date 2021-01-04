@@ -526,9 +526,10 @@
                       questions[currentPage - 1].student_response
                     }}<br>
                     <div v-if="(scoring_type === 'p') && showScores">
-                      <span class="font-weight-bold">Question Score:</span> {{
+                      <span class="font-weight-bold">Score:</span> {{
                         questions[currentPage - 1].submission_score
                       }}<br>
+                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
                     </div>
                     <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                       <span class="font-weight-bold">Late Penalty:</span> {{
@@ -600,13 +601,14 @@
                       </span>
                     </span>
                     <span v-if="showScores">
-                      <strong>File Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
                       <span v-if="questions[currentPage - 1].grader_id">
                         <b-button size="sm" variant="outline-primary"
                                   @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
                         >Contact Grader</b-button>
                       </span>
                     </span><br>
+                    <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
                     <hr>
                     <div class="mt-2">
                       <b-button v-b-modal.modal-upload-file variant="primary"

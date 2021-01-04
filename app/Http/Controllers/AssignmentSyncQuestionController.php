@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use App\JWE;
 use App\Solution;
 use App\Traits\LibretextFiles;
+use App\Traits\Statistics;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -44,6 +45,7 @@ class AssignmentSyncQuestionController extends Controller
     use JWT;
     use LibretextFiles;
     use LatePolicy;
+    use Statistics;
 
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
@@ -450,6 +452,7 @@ class AssignmentSyncQuestionController extends Controller
             $learning_trees_by_question_id = [];
             $learning_tree_penalties_by_question_id = [];
 
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $question_files[$question->question_id] = $question->question_files;
@@ -474,7 +477,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->get();
 
-            //  dd($question_ids);
+
             $submissions_by_question_id = [];
             if ($submissions) {
                 foreach ($submissions as $key => $value) {
@@ -497,6 +500,10 @@ class AssignmentSyncQuestionController extends Controller
             }
 
 
+            $mean_and_std_dev_by_question_submissions = $this->getMeanAndStdDev('submissions', 'assignment_id', [$assignment->id], 'question_id');
+            $mean_and_std_dev_by_submission_files = $this->getMeanAndStdDev('submission_files', 'assignment_id', [$assignment->id], 'question_id');
+
+
             $seeds = DB::table('seeds')
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', Auth::user()->id)
@@ -517,7 +524,7 @@ class AssignmentSyncQuestionController extends Controller
                     ->whereIn('question_id', $question_ids)
                     ->where('user_id', $assignment->course->user_id)
                     ->get();
-                //  dd($question_ids);
+
                 if ($solutions) {
                     foreach ($solutions as $key => $value) {
                         $solutions_by_question_id[$value->question_id] = $value->original_filename;
@@ -531,6 +538,7 @@ class AssignmentSyncQuestionController extends Controller
             $got_first_temporary_url = false;
             $domd = new \DOMDocument();
             $JWE = new JWE();
+
             foreach ($assignment->questions as $key => $question) {
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
@@ -554,7 +562,11 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
+                    $assignment->questions[$key]['submission_z_score'] = isset($mean_and_std_dev_by_question_submissions[$question->id])
+                        ? $this->computeZScore($submission_score, $mean_and_std_dev_by_question_submissions[$question->id])
+                        : 'N/A';
                 }
+
                 if ($assignment->assessment_type === 'learning tree') {
                     $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
@@ -594,9 +606,13 @@ class AssignmentSyncQuestionController extends Controller
                         : false;
 
                     if ($assignment->show_scores) {
+                        $submission_files_score = $formatted_submission_file_info['submission_file_score'];
                         $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
-                        $assignment->questions[$key]['submission_file_score'] = $formatted_submission_file_info['submission_file_score'];
+                        $assignment->questions[$key]['submission_file_score'] = $submission_files_score;
                         $assignment->questions[$key]['grader_id'] = $submission_files_by_question_id[$question->id]['grader_id'];
+                        $assignment->questions[$key]['submission_file_z_score'] = isset($mean_and_std_dev_by_submission_files[$question->id])
+                            ? $this->computeZScore($submission_files_score, $mean_and_std_dev_by_submission_files[$question->id])
+                            : 'N/A';
                     }
                     if ($assignment->solutions_released) {
                         $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
@@ -711,7 +727,6 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
                 }
-
 
                 //Frankenstein type problems
 

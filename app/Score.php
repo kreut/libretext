@@ -7,10 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use App\Traits\Statistics;
+
 use Carbon\Carbon;
 
 class Score extends Model
 {
+    use Statistics;
     protected $fillable = ['user_id', 'assignment_id', 'score'];
 
     public function updateAssignmentScore(int $student_user_id, int $assignment_id, string $submission_files_type)
@@ -134,16 +137,9 @@ class Score extends Model
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
             ->get();
-        $statistics = DB::table('scores')
-            ->whereIn('assignment_id', $assignment_ids)
-            ->select('assignment_id', DB::raw('AVG(score) as average'), DB::raw('STDDEV(score) as std_dev'))
-            ->groupBy('assignment_id')
-            ->get();
-        foreach ($statistics as $key => $value) {
-            $statistics_by_assignment[$value->assignment_id] = [
-                'average' => $value->average,
-                'std_dev' => $value->std_dev];
-        }
+
+        $mean_and_std_dev_by_assignment = $this->getMeanAndStdDev('scores', 'assignment_id',$assignment_ids, 'assignment_id');
+
 
 
 //show the score for points only if the scores have been released
@@ -154,18 +150,12 @@ class Score extends Model
             if ($scoring_types[$assignment_id] === 'p') {
                 if ($scores_released[$assignment_id]) {
                     $scores_by_assignment[$assignment_id] = $score;
-                    if ($statistics_by_assignment[$assignment_id]['std_dev'] > 0) {
-                        $z_score = ($score - $statistics_by_assignment[$assignment_id]['average']) / $statistics_by_assignment[$assignment_id]['std_dev'];
-                        $z_scores_by_assignment[$assignment_id] = round($z_score, 2);
-                    } else {
-                        $z_scores_by_assignment[$assignment_id] = "Std Dev is 0";
-                    }
+                    $z_scores_by_assignment[$assignment_id]  = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
                 }
             } else {
                 $scores_by_assignment[$assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';
             }
         }
-
         return [$scores_by_assignment, $z_scores_by_assignment];
 
     }

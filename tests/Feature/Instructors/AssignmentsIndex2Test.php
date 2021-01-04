@@ -57,6 +57,7 @@ class AssignmentsIndex2Test extends TestCase
             'assignment_group_id' => 1];
     }
 
+
     /** @test */
 
     public function complete_incomplete_scoring_type_cannot_be_learning_trees_assessment_types()

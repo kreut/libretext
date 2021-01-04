@@ -20,10 +20,10 @@ trait SubmissionFiles
         $formatted_submission_file_info['submission'] = $submission_file['submission'] ?? null;
         $formatted_submission_file_info['original_filename'] = $submission_file['original_filename'] ?? null;
         $formatted_submission_file_info['date_submitted'] = isset($submission_file['date_submitted'])
-            ? $helpers->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_submitted'], Auth::user()->time_zone)
+            ? $helpers->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_submitted'], Auth::user()->time_zone, 'M d, Y g:i:s a')
             : 'N/A';
         $formatted_submission_file_info['date_graded'] = ($submission_file['date_graded'])
-            ? $helpers->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_graded'], Auth::user()->time_zone)
+            ? $helpers->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($submission_file['date_graded'], Auth::user()->time_zone, 'M d, Y g:i:s a')
             : 'N/A';
         $formatted_submission_file_info['file_feedback_exists'] = isset($submission_file['file_feedback']);
         $formatted_submission_file_info['file_feedback'] = $submission_file['file_feedback'] ?? null;
