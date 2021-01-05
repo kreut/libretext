@@ -353,7 +353,6 @@ export default {
     this.courseId = this.$route.params.courseId
     this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
     this.editAssignment = this.$refs.assignmentProperties.editAssignment
-    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.isLoading = true
