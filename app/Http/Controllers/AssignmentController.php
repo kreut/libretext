@@ -387,7 +387,7 @@ class AssignmentController extends Controller
                 'late_policy' => $assignment->late_policy,
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
-                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree * 60000 : 0,//in milliseconds
+                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree * 3000 : 0,//in milliseconds
                 'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,

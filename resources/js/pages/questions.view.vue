@@ -187,7 +187,10 @@
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
                 </div>
-                <div v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0" class="text-center">
+                <div
+                  v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
+                  class="text-center"
+                >
                   <b-alert variant="warning" show>
                     <span class="alert-link">
                       This submission will be marked lated.</span>
@@ -546,6 +549,10 @@
                         </template>
                       </countdown>
                     </b-alert>
+                    {{ !showSubmissionMessage }}
+                    {{ !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0) }}
+                    {{ !timerSetToGetLearningTreePoints }}
+                    {{ showLearningTreePointsMessage }}
                     <b-alert variant="info" :show="!showSubmissionMessage &&
                       !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
                       !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
@@ -555,7 +562,9 @@
                         {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
                         Tree.</span>
                     </b-alert>
-                    <b-alert variant="info" :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints">
+                    <b-alert variant="info"
+                             :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
+                    >
                       <span class="font-weight-bold"> Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!</span>
                     </b-alert>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -883,6 +892,10 @@ export default {
         this.questions[this.currentPage - 1]['late_penalty_percent'] = data.late_penalty_percent
         this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
         this.questions[this.currentPage - 1]['solution'] = data.solution
+        if (data.submission_count > 1) {
+          // successfully made a submission so they don't need to know about the points for the learning tree anymore
+          this.showLearningTreePointsMessage = false
+        }
         // show initially if you made no attempts OR you've already visited the learning tree
         // if you made an attempt, hide the question until you visit the learning tree
         // only get additional points and with a penalty IF they get it all correct
@@ -970,6 +983,7 @@ export default {
     },
     async showResponse (data) {
       console.log('showing response')
+      console.log(data)
       if (data.learning_tree && !this.learningTree) {
         await this.showLearningTree(data.learning_tree)
       }
@@ -1287,6 +1301,11 @@ export default {
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
         if (this.questions[this.currentPage - 1].submitted_but_did_not_explore_learning_tree) {
           this.showDidNotAnswerCorrectlyMessage = true
+        }
+
+        if (this.questions[this.currentPage - 1].explored_learning_tree && parseInt(this.questions[this.currentPage - 1].submission_score) === 0) {
+          // haven't yet gotten points for exploring the learning tree
+          this.showLearningTreePointsMessage = true
         }
         await this.showLearningTree(this.learningTree)
 
