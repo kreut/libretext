@@ -353,9 +353,11 @@ export default {
     this.courseId = this.$route.params.courseId
     this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
     this.editAssignment = this.$refs.assignmentProperties.editAssignment
-
+    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
     this.isLoading = true
-    this.getCourseInfo()
+    await this.getCourseInfo()
     if (this.user) {
       if (![2, 4].includes(this.user.role)) {
         this.isLoading = false
@@ -364,10 +366,7 @@ export default {
       }
 
       this.getAssignments()
-      this.getAssignmentGroups(this.courseId)
-      this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.getTooltipTarget = getTooltipTarget
-      initTooltips(this)
+      await this.getAssignmentGroups(this.courseId)
     }
   },
   methods: {
