@@ -11,6 +11,17 @@
                background="#FFFFFF"
       />
       <AssignmentProperties ref="assignmentProperties" />
+      <b-modal
+        id="modal-delete-assignment"
+        ref="modal"
+        title="Confirm Delete Assignment"
+        ok-title="Yes, delete assignment!"
+        @ok="handleDeleteAssignment"
+        @hidden="resetModalForms"
+      >
+        <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
+        <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+      </b-modal>
       <b-tooltip target="internal"
                  delay="250"
       >
@@ -342,6 +353,7 @@ export default {
   async  mounted () {
     this.courseId = this.$route.params.courseId
     this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
+    this.editAssignment = this.$refs.assignmentProperties.editAssignment
 
     this.isLoading = true
     this.getCourseInfo()
@@ -544,44 +556,7 @@ export default {
       this.form.errors.clear('default_points_per_question')
       this.form.errors.clear('external_source_points')
     },
-    editAssignment (assignment) {
-      console.log(assignment)
 
-      this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
-      this.solutionsReleased = assignment.solutions_released
-      this.assignmentId = assignment.id
-      this.number_of_questions = assignment.number_of_questions
-
-      this.form.name = assignment.name
-      this.form.assessment_type = this.assessmentType = assignment.assessment_type
-      this.form.available_from_date = assignment.available_from_date
-      this.form.available_from_time = assignment.available_from_time
-      this.form.due_date = assignment.due_date
-      this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
-      this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
-      this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
-      this.form.due_time = assignment.due_time
-      this.form.late_policy = assignment.late_policy
-      this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
-      this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
-      this.form.late_policy_deadline_time = assignment.late_policy_deadline_time
-      this.form.late_policy_deadline_date = assignment.late_policy_deadline_date
-      this.form.late_deduction_percent = assignment.late_deduction_percent
-      this.form.assignment_group_id = assignment.assignment_group_id
-      this.form.include_in_weighted_average = assignment.include_in_weighted_average
-      this.form.source = assignment.source
-      this.form.instructions = assignment.instructions
-      this.form.type_of_submission = assignment.type_of_submission
-      this.form.submission_files = assignment.submission_files
-      this.form.num_submissions_needed = assignment.num_submissions_needed
-      this.form.default_points_per_question = assignment.default_points_per_question
-      this.form.scoring_type = assignment.scoring_type
-      this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
-      this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
-        ? assignment.external_source_points
-        : ''
-      this.$bvModal.show('modal-assignment-properties')
-    },
     getAssignmentView (role, assignment) {
       if (assignment.source === 'x') {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.')

@@ -1,9 +1,8 @@
-export function getTooltipTarget(item, id){
+export function getTooltipTarget (item, id) {
   return `${item}_${id}`
 }
-export function initTooltips(vm) {
-
-//the following was the only way for me to get rid of the tooltips after closing the modal
+export function initTooltips (vm) {
+// the following was the only way for me to get rid of the tooltips after closing the modal
   vm.$root.$on('bv::modal::hide', (bvEvent, modalId) => {
     vm.modalHidden = true
   })

@@ -596,17 +596,6 @@
         </b-form-row>
       </b-form-group>
     </b-modal>
-    <b-modal
-      id="modal-delete-assignment"
-      ref="modal"
-      title="Confirm Delete Assignment"
-      ok-title="Yes, delete assignment!"
-      @ok="handleDeleteAssignment"
-      @hidden="resetModalForms"
-    >
-      <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
-      <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
-    </b-modal>
   </div>
 </template>
 
@@ -688,21 +677,11 @@ export default {
   },
   mounted () {
     this.courseId = this.$route.params.courseId
-    this.isLoading = true
-    this.getCourseInfo()
-    if (this.user) {
-      if (![2, 4].includes(this.user.role)) {
-        this.isLoading = false
-        this.$noty.error('You are not allowed to access this page.')
-        return false
-      }
 
-      this.getAssignments()
-      this.getAssignmentGroups(this.courseId)
-      this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.getTooltipTarget = getTooltipTarget
-      initTooltips(this)
-    }
+    this.getAssignmentGroups(this.courseId)
+    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
   },
   methods: {
     checkIfScoringTypeOfPoints (event) {
