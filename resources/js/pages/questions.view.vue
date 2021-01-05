@@ -28,6 +28,9 @@
           question file submission at a time, especially helpful if your submissions are in a non-PDF format.
         </span>
       </p>
+      <p>
+        <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
+      </p>
       <b-form ref="form">
         <b-form-group>
           <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" @click="showCutups = true">
