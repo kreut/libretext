@@ -589,15 +589,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    submitAssignmentInfo (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
-      this.form.due = this.form.due_date + ' ' + this.form.due_time
-      this.form.late_policy_deadline = this.form.late_policy_deadline_date + ' ' + this.form.late_policy_deadline_time
-      !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-    },
     deleteAssignment (assignmentId) {
       this.assignmentId = assignmentId
       this.$bvModal.show('modal-delete-assignment')
