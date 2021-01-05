@@ -769,15 +769,6 @@ export default {
         this.$bvModal.show('modal-create-assignment-group')
       }
     },
-    async getCourseInfo () {
-      try {
-        const { data } = await axios.get(`/api/courses/${this.courseId}`)
-        this.title = `${data.course.name} Assignments`
-        console.log(data)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     async getAssignmentGroups (courseId) {
       try {
         const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
