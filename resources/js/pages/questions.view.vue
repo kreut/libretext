@@ -536,7 +536,7 @@
                         questions[currentPage - 1].late_penalty_percent
                       }}%<br>
                     </div>
-                    <b-alert variant="info" :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage">
+                    <b-alert :show="(timerSetToGetLearningTreePoints && !showLearningTreePointsMessage)" variant="info">
                       <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                         <template slot-scope="props">
                           <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
@@ -554,6 +554,9 @@
                       <span class="font-weight-bold"> Upon your next attempt at this assessment, you will receive
                         {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
                         Tree.</span>
+                    </b-alert>
+                    <b-alert variant="info" :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints">
+                      <span class="font-weight-bold"> Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!</span>
                     </b-alert>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
@@ -688,6 +691,7 @@ export default {
     Email
   },
   data: () => ({
+    showDidNotAnswerCorrectlyMessage: false,
     embedCode: '',
     canView: false,
     latePolicy: '',
@@ -1084,6 +1088,7 @@ export default {
         iFrameResize({ log: false }, `#${iframeId}`)
         iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
       })
+
       if (this.showAssignmentStatistics) {
         try {
           this.loaded = false
@@ -1168,8 +1173,8 @@ export default {
     },
     setTimerToGetLearningTreePoints () {
       this.timerSetToGetLearningTreePoints = true
+      this.showDidNotAnswerCorrectlyMessage = false
       this.timeLeftToGetLearningTreePoints = this.minTimeNeededInLearningTree
-      console.log(this.minTimeNeededInLearningTree)
     },
     async getAssignmentInfo () {
       try {
@@ -1280,6 +1285,9 @@ export default {
         }
         this.questionPointsForm.points = this.questions[this.currentPage - 1].points
         this.learningTree = this.questions[this.currentPage - 1].learning_tree
+        if (this.questions[this.currentPage - 1].submitted_but_did_not_explore_learning_tree) {
+          this.showDidNotAnswerCorrectlyMessage = true
+        }
         await this.showLearningTree(this.learningTree)
 
         this.initializing = false
@@ -1288,7 +1296,7 @@ export default {
       }
       this.iframeLoaded = true
     },
-    initCurrentPage (questionId) {
+    initCurrentPage () {
       let questionExistsInAssignment = false
       for (let i = 0; i <= this.questions.length - 1; i++) {
         if (parseInt(this.questions[i].id) === parseInt(this.questionId)) {
