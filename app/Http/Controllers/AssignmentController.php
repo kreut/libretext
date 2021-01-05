@@ -551,7 +551,7 @@ class AssignmentController extends Controller
 
     public function formatLatePolicy($assignment)
     {
-        $late_policy ='';
+        $late_policy = '';
         $late_policy_deadline = ($assignment->late_policy !== 'not accepted')
             ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->late_policy_deadline, Auth::user()->time_zone)
             : '';
@@ -674,19 +674,26 @@ class AssignmentController extends Controller
         }
 
         try {
-            DB::transaction(function () use ($assignment) {
-                DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
-                DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('scores')->where('assignment_id', $assignment->id)->delete();
-                DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
-                DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
-                DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
-                DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
-                $assignment->delete();
-            });
+            $assignment_question_ids = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->get()
+                ->pluck('id');
+
+            DB::table('assignment_question_learning_tree')
+                ->whereIn('assignment_question_id', $assignment_question_ids)
+                ->delete();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
+            DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
+            DB::table('scores')->where('assignment_id', $assignment->id)->delete();
+            DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
+            DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
+            DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
+            DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
+            $assignment->delete();
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$assignment->name</strong> has been deleted.";
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing <strong>$assignment->name</strong>.  Please try again or contact us for assistance.";
