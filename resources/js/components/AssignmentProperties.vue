@@ -1017,8 +1017,8 @@ export default {
         }
       }
     },
-    resetAll (modalId) {
-      this.getAssignments()
+    async resetAll (modalId) {
+      await this.$parent.getAssignments()
       this.resetModalForms()
       // Hide the modal manually
       this.$nextTick(() => {
