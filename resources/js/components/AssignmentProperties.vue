@@ -729,9 +729,6 @@ export default {
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
     },
-    getGradeBook () {
-      this.$router.push(`/courses/${this.courseId}/gradebook`)
-    },
     getLockedQuestionsMessage (assignment) {
       if ((Number(assignment.has_submissions_or_file_submissions))) {
         return 'Since students have already submitted responses to this assignment, you won\'t be able to add or remove questions.'
