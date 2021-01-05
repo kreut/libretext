@@ -970,15 +970,6 @@ export default {
 
       this.$router.push(`/assignments/${assignmentId}/${type}-files`)
     },
-    async handleDeleteAssignment () {
-      try {
-        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-delete-assignment')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     submitAssignmentInfo (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
@@ -987,10 +978,6 @@ export default {
       this.form.due = this.form.due_date + ' ' + this.form.due_time
       this.form.late_policy_deadline = this.form.late_policy_deadline_date + ' ' + this.form.late_policy_deadline_time
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
-    },
-    deleteAssignment (assignmentId) {
-      this.assignmentId = assignmentId
-      this.$bvModal.show('modal-delete-assignment')
     },
     async updateAssignment () {
       try {
