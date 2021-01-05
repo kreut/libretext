@@ -10,7 +10,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <AssignmentProperties />
+      <AssignmentProperties ref="assignmentProperties" />
       <b-tooltip target="internal"
                  delay="250"
       >
@@ -237,7 +237,6 @@
           </b-alert>
         </div>
       </div>
-      </b-modal>
     </div>
   </div>
 </template>
@@ -328,38 +327,8 @@ export default {
         thStyle: 'min-width: 100px'
       }
     ],
-    form: new Form({
-      name: '',
-      available_from: '',
-      due: '',
-      assessment_type: 'real time',
-      min_time_needed_in_learning_tree: null,
-      percent_earned_for_exploring_learning_tree: null,
-      submission_count_percent_decrease: null,
-      available_from_date: '',
-      assignment_group_id: null,
-      available_from_time: '09:00:00',
-      due_date: '',
-      due_time: '09:00:00',
-      submission_files: '0',
-      late_policy: 'not accepted',
-      late_deduction_percent: null,
-      late_deduction_applied_once: 1,
-      late_policy_deadline_date: '',
-      late_policy_deadline_time: '09:00:00',
-      late_deduction_application_period: null,
-      type_of_submission: 'correct',
-      source: 'a',
-      scoring_type: 'p',
-      include_in_weighted_average: 1,
-      num_submissions_needed: '2',
-      default_points_per_question: 10,
-      external_source_points: 100,
-      instructions: ''
-    }),
     hasAssignments: false,
     has_submissions_or_file_submissions: false,
-    min: '',
     canViewAssignments: false,
     showNoAssignmentsAlert: false
   }),
@@ -372,6 +341,8 @@ export default {
   },
   async  mounted () {
     this.courseId = this.$route.params.courseId
+    this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment()
+
     this.isLoading = true
     this.getCourseInfo()
     if (this.user) {
@@ -389,26 +360,6 @@ export default {
     }
   },
   methods: {
-    checkIfScoringTypeOfPoints (event) {
-      if (this.form.scoring_type === 'c') {
-        event.preventDefault()
-        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
-        return false
-      }
-    },
-    canSwitchToCompleteIncomplete (event) {
-      if (this.form.late_policy !== 'not accepted') {
-        event.preventDefault()
-        this.$noty.info('If you would like a Complete/Incomplete Scoring Type, please choose "Do not accept late" as your Late Policy.  You will still be able to grant individual extensions.', {
-          timeout: 10000 })
-        return false
-      }
-      if (this.form.assessment_type === 'learning tree') {
-        event.preventDefault()
-        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
-        return false
-      }
-    },
     initLateValues (event) {
       if (this.form.scoring_type === 'c') {
         event.preventDefault()
@@ -503,25 +454,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
-    initAddAssignment () {
-      this.has_submissions_or_file_submissions = 0
-      this.solutionsReleased = 0
-      this.form.assignment_group_id = null
-      this.form.available_from_date = this.form.due_date = this.form.late_policy_deadline_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.available_from_time = this.form.due_time = this.form.late_policy_deadline_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-
-      this.form.late_policy = 'not accepted'
-      this.form.late_deduction_percent = null
-      this.form.late_deduction_applied_once = 1
-      this.form.late_deduction_application_period = null
-      this.form.source = 'a'
-      this.form.default_points_per_question = 10
-      this.form.instructions = ''
-      this.form.assessment_type = 'real time'
-      this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.submission_count_percent_decrease = null
     },
     async submitShowAssignment (assignment) {
       try {
