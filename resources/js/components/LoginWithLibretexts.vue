@@ -1,7 +1,6 @@
 <template>
   <b-button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
-    <img src="/assets/img/LibreTexts_library_svg_icons/LibreTexts_icon_white.svg" height="25px">{{ action }} with
-    LibreTexts
+    <span class="icon-SSO" /> Libre{{ action }}
   </b-button>
 </template>
 
@@ -110,3 +109,16 @@ function openWindow (url, title, options = {}) {
   return newWindow
 }
 </script>
+<style>
+@font-face {
+  font-family: 'moreicons';
+  src: url(https://cdn.libretexts.net/github/LibreTextsMain/Miscellaneous/icosso.woff) format("woff");
+  font-weight: normal;
+  font-style: normal;
+}
+.icon-SSO:after {
+  font-family: 'moreicons' !important;
+  content: "\e95d";
+  font-size: 15px;
+}
+</style>
