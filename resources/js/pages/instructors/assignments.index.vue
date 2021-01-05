@@ -17,7 +17,6 @@
         title="Confirm Delete Assignment"
         ok-title="Yes, delete assignment!"
         @ok="handleDeleteAssignment"
-        @hidden="resetModalForms"
       >
         <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
@@ -629,9 +628,8 @@ export default {
         }
       }
     },
-    resetAll (modalId) {
-      this.getAssignments()
-      this.resetModalForms()
+    async resetAll (modalId) {
+      await this.getAssignments()
       // Hide the modal manually
       this.$nextTick(() => {
         this.$bvModal.hide(modalId)
@@ -640,21 +638,6 @@ export default {
     resetAssignmentGroupForm () {
       this.assignmentGroupForm.errors.clear()
       this.assignmentGroupForm.assignment_group = ''
-    },
-    resetModalForms () {
-      this.form.name = ''
-      this.form.available_from_date = ''
-      this.form.available_from_time = '09:00:00'
-      this.form.due_date = ''
-      this.form.due_time = '09:00:00'
-      this.form.type_of_submission = 'correct'
-      this.form.num_submissions_needed = '2'
-      this.form.submission_files = 'q'
-      this.form.default_points_per_question = '10'
-      this.form.scoring_type = 'p'
-
-      this.assignmentId = false
-      this.form.errors.clear()
     },
     metaInfo () {
       return { title: this.$t('home') }
