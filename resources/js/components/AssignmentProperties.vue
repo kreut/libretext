@@ -838,7 +838,6 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
-      alert('df')
     },
     async submitShowAssignment (assignment) {
       try {

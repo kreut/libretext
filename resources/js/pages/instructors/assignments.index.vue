@@ -341,7 +341,7 @@ export default {
   },
   async  mounted () {
     this.courseId = this.$route.params.courseId
-    this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment()
+    this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
 
     this.isLoading = true
     this.getCourseInfo()
