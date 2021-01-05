@@ -40,7 +40,7 @@ class BreadcrumbController extends Controller
                     $breadcrumbs[] = ['text' => "$assignment->name Information",
                         'href' => "/instructors/assignments/{$assignment->id}/information",
                         ];
-                    $breadcrumbs[] = ['text' => 'Get Assessments',
+                    $breadcrumbs[] = ['text' => 'Add Assessments',
                         'href' => "#",
                         'active' => true];
                     break;
