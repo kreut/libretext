@@ -370,31 +370,6 @@ export default {
     }
   },
   methods: {
-    initLateValues (event) {
-      if (this.form.scoring_type === 'c') {
-        event.preventDefault()
-        this.$noty.info('If you would like a Late Policy other than "Do not accept late, please change your Scoring Type to points.')
-        return false
-      }
-      this.form.late_deduction_percent = null
-      this.form.late_deduction_applied_once = 1
-      this.form.late_deduction_application_period = null
-      this.form.late_policy_deadline_date = this.form.due_date
-      let start = this.$moment(this.$moment(this.form.due_date + ' ' + this.form.due_time), 'YYYY-MM-DD HH:mm:SS')
-      start = start.add(this.$moment.duration(20, 'minutes'))
-      this.form.late_policy_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-    },
-    showDelayedOptions () {
-      this.form.submission_files = 'q'
-      this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.submission_count_percent_decrease = null
-    },
-    showRealTimeOptions () {
-      this.form.min_time_needed_in_learning_tree = null
-      this.form.percent_earned_for_exploring_learning_tree = null
-      this.form.submission_count_percent_decrease = null
-    },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)
     },
@@ -404,35 +379,6 @@ export default {
       }
       if ((Number(assignment.solutions_released))) {
         return 'You have already released the solutions to this assignment, so you won\'t be able to add or remove questions.'
-      }
-    },
-
-    async handleCreateAssignmentGroup (bvModalEvt) {
-      bvModalEvt.preventDefault()
-      try {
-        const { data } = await this.assignmentGroupForm.post(`/api/assignmentGroups/${this.courseId}`)
-        console.log(data)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        let newAssignmentGroup = {
-          value: data.assignment_group_info.assignment_group_id,
-          text: data.assignment_group_info.assignment_group
-        }
-
-        this.assignmentGroups.splice(this.assignmentGroups.length - 1, 0, newAssignmentGroup)
-        this.form.assignment_group_id = data.assignment_group_info.assignment_group_id
-        this.$bvModal.hide('modal-create-assignment-group')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-    },
-    checkGroupId (groupId) {
-      if (groupId === -1) {
-        this.$bvModal.show('modal-create-assignment-group')
       }
     },
     async getCourseInfo () {
@@ -545,15 +491,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    resetSubmissionFilesAndPointsPerQuestion () {
-      this.form.default_points_per_question = 10
-      this.form.submission_files = 0
-      this.form.assessment_type = 'real time'
-      this.form.students_can_view_assignment_statistics = 0
-      this.form.external_source_points = 100
-      this.form.errors.clear('default_points_per_question')
-      this.form.errors.clear('external_source_points')
-    },
 
     getAssignmentView (role, assignment) {
       if (assignment.source === 'x') {
@@ -592,31 +529,6 @@ export default {
     deleteAssignment (assignmentId) {
       this.assignmentId = assignmentId
       this.$bvModal.show('modal-delete-assignment')
-    },
-    async updateAssignment () {
-      try {
-        const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-
-        console.log(data)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-properties')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
-    },
-    async createAssignment () {
-      try {
-        this.form.course_id = this.courseId
-        const { data } = await this.form.post(`/api/assignments`)
-        this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-properties')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-      }
     },
     async resetAll (modalId) {
       await this.getAssignments()
