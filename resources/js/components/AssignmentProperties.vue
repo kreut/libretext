@@ -945,14 +945,6 @@ export default {
         : ''
       this.$bvModal.show('modal-assignment-properties')
     },
-    getAssignmentView (role, assignment) {
-      if (assignment.source === 'x') {
-        this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.')
-        return false
-      }
-
-      this.$router.push(`/instructors/assignments/${assignment.id}/information`)
-    },
     getSubmissionFileView (assignmentId, submissionFiles) {
       if (submissionFiles === 0) {
         this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
