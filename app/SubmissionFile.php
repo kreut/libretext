@@ -213,9 +213,16 @@ class SubmissionFile extends Model
                 $reKeyedUserAndSubmissionFileInfo[$question][$key]['points'] = $points[$info['question_id']][$info['user_id']];
             }
         }
+        $sortedUserAndSubmissionFileInfo = [];
+        foreach  ($reKeyedUserAndSubmissionFileInfo as $question => $users){
+            usort($users, function($a, $b) {
+                return $a['name'] <=> $b['name'];
+            });
+            $sortedUserAndSubmissionFileInfo[$question] = $users;
 
+        }
 
-        return $reKeyedUserAndSubmissionFileInfo;
+        return $sortedUserAndSubmissionFileInfo;
 
 
     }
