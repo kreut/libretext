@@ -82,7 +82,6 @@
       <b-container>
         <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
           <b-button v-if="(user && user.role === 2)"
-                    v-b-modal.modal-assignment-properties
                     class="mr-1" variant="primary"
                     @click="initAddAssignment"
           >
@@ -277,7 +276,6 @@ export default {
     }),
     title: '',
     assessmentType: '',
-    assignmentGroups: [{ value: null, text: 'Please choose one' }],
     isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, // if there's an assignmentId it's an update
@@ -363,9 +361,7 @@ export default {
         this.$noty.error('You are not allowed to access this page.')
         return false
       }
-
       this.getAssignments()
-      await this.getAssignmentGroups(this.courseId)
     }
   },
   methods: {
@@ -385,27 +381,6 @@ export default {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
         console.log(data)
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async getAssignmentGroups (courseId) {
-      try {
-        const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
-        if (data.error) {
-          this.$noty.error(data.message)
-          return false
-        }
-        for (let i = 0; i < data.assignment_groups.length; i++) {
-          this.assignmentGroups.push({
-            value: data.assignment_groups[i]['id'],
-            text: data.assignment_groups[i]['assignment_group']
-          })
-        }
-        this.assignmentGroups.push({
-          value: -1,
-          text: 'Create new group'
-        })
       } catch (error) {
         this.$noty.error(error.message)
       }

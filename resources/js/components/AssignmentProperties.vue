@@ -618,7 +618,7 @@ export default {
     }),
     title: '',
     assessmentType: '',
-    assignmentGroups: [{ value: null, text: 'Please choose one' }],
+    assignmentGroups: [],
     isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, // if there's an assignmentId it's an update
@@ -678,7 +678,6 @@ export default {
   mounted () {
     this.courseId = this.$route.params.courseId
 
-    this.getAssignmentGroups(this.courseId)
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
@@ -767,6 +766,7 @@ export default {
       }
     },
     async getAssignmentGroups (courseId) {
+      this.assignmentGroups = [{ value: null, text: 'Please choose one' }]
       try {
         const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
         if (data.error) {
@@ -787,7 +787,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    initAddAssignment () {
+    async initAddAssignment () {
+      await this.getAssignmentGroups(this.courseId)
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
       this.form.assignment_group_id = null
@@ -805,6 +806,7 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
+      this.$bvModal.show('modal-assignment-properties')
     },
     resetSubmissionFilesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
@@ -815,9 +817,8 @@ export default {
       this.form.errors.clear('default_points_per_question')
       this.form.errors.clear('external_source_points')
     },
-    editAssignment (assignment) {
-      console.log(assignment)
-
+    async editAssignment (assignment) {
+      await this.getAssignmentGroups(this.courseId)
       this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
