@@ -17,13 +17,15 @@
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
                 straight average of all assignments within an assignment group. Finally, the averages by assignment
-                group
-                are weighted by the assignment group weights.
-              </p>
-              <p>
-                If you prefer a different grading methodology, please download the scores and input them into a
+                group are weighted by the assignment group weights.  If you prefer a different grading methodology, please download the scores and input them into a
                 spreadsheet.
               </p>
+              <ul>
+                <li>
+                  Click on any student name to log in as them and get a better understanding of that student's performance
+                </li>
+                <li>Click on any item in the Gradebook if you need to offer an extension or enter a score override</li>
+              </ul>
             </div>
             <b-row align-h="end">
               <download-excel
