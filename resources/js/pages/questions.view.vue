@@ -552,10 +552,6 @@
                         </template>
                       </countdown>
                     </b-alert>
-                    {{ !showSubmissionMessage }}
-                    {{ !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0) }}
-                    {{ !timerSetToGetLearningTreePoints }}
-                    {{ showLearningTreePointsMessage }}
                     <b-alert variant="info" :show="!showSubmissionMessage &&
                       !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
                       !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
@@ -622,8 +618,9 @@
                                   @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
                         >Contact Grader</b-button>
                       </span>
-                    </span><br>
-                    <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                      <br>
+                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                    </span>
                     <hr>
                     <div class="mt-2">
                       <b-button v-b-modal.modal-upload-file variant="primary"
