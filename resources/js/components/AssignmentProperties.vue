@@ -612,6 +612,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
+  props: { 'courseId': { type: Number, default: 0 } },
   data: () => ({
     assignmentGroupForm: new Form({
       assignment_group: ''
@@ -632,7 +633,6 @@ export default {
       { item: 'correct', name: 'correct' },
       { item: 'completed', name: 'completed' }
     ],
-    courseId: false,
     form: new Form({
       name: '',
       available_from: '',
@@ -676,8 +676,6 @@ export default {
     this.isLocked = isLocked
   },
   mounted () {
-    this.courseId = this.$route.params.courseId
-
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
@@ -906,7 +904,17 @@ export default {
       }
     },
     async resetAll (modalId) {
-      await this.$parent.getAssignments()
+      switch (this.$route.name) {
+        case ('instructors.assignments.summary'):
+          await this.$parent.getAssignmentSummary()
+          break
+        case ('instructors.assignments.index'):
+          await this.$parent.getAssignments()
+          break
+        default:
+          this.$noty.info('Please contact support. There is no refresh method for assignment properties.')
+      }
+
       this.resetModalForms()
       // Hide the modal manually
       this.$nextTick(() => {

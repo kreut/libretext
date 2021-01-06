@@ -218,15 +218,10 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
                     $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
-                    $assignments_info[$key]['status'] = $this->getStatus($available_from, $due);
-                    $assignments_info[$key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
-                    $assignments_info[$key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-                    $assignments_info[$key]['late_policy_deadline_date'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
-                    $assignments_info[$key]['late_policy_deadline_time'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
-                    $assignments_info[$key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
-                    $assignments_info[$key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
-                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
-                    $assignments_info[$key]['include_in_weighted_average'] = $assignment->include_in_weighted_average;
+                    $editing_form_items = $this->getEditingFormItems($available_from, $due, $late_policy_deadline, $assignment);
+                    foreach ($editing_form_items as $editing_form_key => $value) {
+                        $assignments_info[$key][$editing_form_key] = $value;
+                    }
                 }
 //same regardless of whether you're a student
                 $assignments_info[$key]['show_points_per_question'] = $assignment->show_points_per_question;
@@ -247,6 +242,22 @@ class AssignmentController extends Controller
         }
         return $response;
     }
+
+    public function getEditingFormItems(string $available_from, string $due, $late_policy_deadline, Assignment $assignment)
+    {
+        $editing_form_items = [];
+        $editing_form_items['status'] = $this->getStatus($available_from, $due);
+        $editing_form_items['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+        $editing_form_items['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+        $editing_form_items['late_policy_deadline_date'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
+        $editing_form_items['late_policy_deadline_time'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
+        $editing_form_items['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+        $editing_form_items['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+        $editing_form_items['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
+        $editing_form_items['include_in_weighted_average'] = $assignment->include_in_weighted_average;
+        return $editing_form_items;
+    }
+
 
     function getDefaultPointsPerQuestion(array $data)
     {
@@ -507,7 +518,7 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function getAssignmentSummary(Assignment $assignment)
+    public function getAssignmentSummary(Assignment $assignment, AssignmentGroup $assignmentGroup)
     {
 
         $response['type'] = 'error';
@@ -521,23 +532,23 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = in_array($role, [2, 4])
                 || ($role === 3 && $assignment->students_can_view_assignment_statistics);
+            $response['assignment'] = $assignment->attributesToArray();
 
-
-            $response['assignment'] = [
-                'name' => $assignment->name,
-                'instructions' => $assignment->instructions,
+            $formatted_items = [
+                'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
-                'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
-                'assessment_type' => $assignment->assessment_type,
-                'solutions_released' => $assignment->solutions_released,
-                'scores_released' => $assignment->scores_released,
-                'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
-                'include_in_weighted_average' => $assignment->include_in_weighted_average,
-                'late_policy' => $this->formatLatePolicy($assignment),
+                'formatted_late_policy' => $this->formatLatePolicy($assignment),
                 'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
                 'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
             ];
+            foreach ($formatted_items as $key=>$value){
+                $response['assignment'][$key] = $value;
+            }
+            $editing_form_items = $this->getEditingFormItems($assignment->available_from, $assignment->due, $assignment->late_policy_deadline, $assignment);
+            foreach ($editing_form_items as $key => $value) {
+                $response['assignment'][$key] = $value;
+            }
 
             $response['type'] = 'success';
         } catch (Exception $e) {

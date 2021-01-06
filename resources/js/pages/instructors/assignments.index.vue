@@ -10,7 +10,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <AssignmentProperties ref="assignmentProperties" />
+      <AssignmentProperties ref="assignmentProperties" :course-id="parseInt(courseId)" />
       <b-modal
         id="modal-delete-assignment"
         ref="modal"

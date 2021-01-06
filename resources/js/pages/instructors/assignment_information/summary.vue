@@ -11,21 +11,29 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Assignment Summary" />
-        <b-button @click="initEditAssignment()" />Edit Assignment
-        <AssignmentProperties ref="assignmentProperties" />
-        <b-card :header="assignment.name" class="h-100">
-          <b-card-text>
-            <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
-            <span class="font-weight-bold">Late Policy: </span><span class="font-italic">{{ assignment.late_policy }}</span><br>
-          </b-card-text>
-        </b-card>
+
+        <AssignmentProperties ref="assignmentProperties" :course-id="Number(courseId)" />
+        <b-container>
+          <b-row align-h="end" class="pb-2">
+            <b-button size="sm" variant="primary" @click="initEditAssignment()">
+              Edit Assignment
+            </b-button>
+          </b-row>
+
+          <b-card :header="assignment.name" class="h-100">
+            <b-card-text>
+              <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
+              <span class="font-weight-bold">Late Policy: </span><span class="font-italic">{{ assignment.formatted_late_policy }}</span><br>
+            </b-card-text>
+          </b-card>
+          <b-table
+            striped
+            hover
+            :no-border-collapse="true"
+            :items="items"
+          />
+        </b-container>
       </div>
-      <b-table
-        striped
-        hover
-        :no-border-collapse="true"
-        :items="items"
-      />
     </div>
   </div>
 </template>
@@ -36,7 +44,6 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import AssignmentProperties from '~/components/AssignmentProperties'
-import { isLocked, getAssignments } from '~/helpers/Assignments'
 
 export default {
   middleware: 'auth',
@@ -46,7 +53,7 @@ export default {
   },
   data: () => ({
     assignmentId: 0,
-
+    courseId: 0,
     isLoading: true,
     assignment: {},
     items: [
@@ -56,10 +63,7 @@ export default {
     user: 'auth/user'
   }),
   created () {
-    this.courseId = 2
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignments = getAssignments
-    this.isLocked = isLocked
   },
   mounted () {
     if (![2, 4].includes(this.user.role)) {
@@ -68,7 +72,6 @@ export default {
     }
 
     this.getAssignmentSummary()
-    this.courseId = this.$route.params.courseId
   },
   methods: {
     initEditAssignment () {
@@ -82,6 +85,7 @@ export default {
           return false
         }
         this.assignment = data.assignment
+        this.courseId = this.assignment.course_id
         this.items = [
           { property: 'Available On', value: this.$moment(this.assignment.available_on, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') },
           { property: 'Due', value: this.$moment(this.assignment.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') },
