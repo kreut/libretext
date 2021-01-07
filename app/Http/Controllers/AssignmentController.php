@@ -295,12 +295,7 @@ class AssignmentController extends Controller
         }
     }
 
-    public function submissionFilesData(Request $request, array $data){
-        return  ($data['source'] === 'a' && $request->assessment_type === 'delayed' && $data['open_ended_response'] === 'file') ? 'q' : 0;//maybe in the future I'll have assignment/question
-    }
-    public function submissionTextsData(Request $request, array $data){
-        return ($data['source'] === 'a' && $request->assessment_type === 'delayed' && $data['open_ended_response'] === 'text');
-    }
+
     /**
      * @param StoreAssignment $request
      * @param AssignmentGroupWeight $assignmentGroupWeight
@@ -333,21 +328,20 @@ class AssignmentController extends Controller
                     'available_from' => $this->formatDateFromRequest($request->available_from_date, $request->available_from_time),
                     'due' => $this->formatDateFromRequest($request->due_date, $request->due_time),
                     'source' => $data['source'],
-                    'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : '',
+                    'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
-                    'external_source_points' => ($data['source'] === 'x' && $data['scoring_type'] === 'p')? $data['external_source_points'] : null,
+                    'external_source_points' => ($data['source'] === 'x' && $data['scoring_type'] === 'p') ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
-                    'submission_files' => $this->submissionFilesData($request, $data),
-                    'submission_texts' =>  $this->submissionTextsData($request, $data),
+                    'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
                     'late_policy' => $data['late_policy'],
-                    'show_scores' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? 0 : 1,
+                    'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
-                    'show_points_per_question' => $request->assessment_type === 'delayed' ? 0 : 1,
+                    'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
                     'late_policy_deadline' => $this->getLatePolicyDeadeline($request),
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
@@ -368,6 +362,17 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error creating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function getDefaultOpenEndedSubmissionType(Request $request, array $data)
+    {
+        if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
+            return '';
+        } else {
+            return $data['default_open_ended_submission_type'];
+
+        }
+
     }
 
     public function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
@@ -549,7 +554,7 @@ class AssignmentController extends Controller
                 'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
                 'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
             ];
-            foreach ($formatted_items as $key=>$value){
+            foreach ($formatted_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
             $editing_form_items = $this->getEditingFormItems($assignment->available_from, $assignment->due, $assignment->late_policy_deadline, $assignment);
@@ -639,8 +644,7 @@ class AssignmentController extends Controller
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
-            $data['submission_files']= $this->submissionFilesData($request, $data);
-            $data['submission_texts'] =$this->submissionTextsData($request, $data);
+            $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType( $request, $data);
 
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);

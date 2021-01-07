@@ -60,6 +60,12 @@
         minimum time as described above.
       </b-tooltip>
 
+      <b-tooltip target="default_open_ended_submission_type_tooltip"
+                 delay="250"
+      >
+        Adjust this option if your assignment of open-ended questions. This option can be changed on a per question basis once you start adding questions to your assignment.
+      </b-tooltip>
+
       <b-tooltip target="submission_count_percent_decrease_tooltip"
                  delay="250"
       >
@@ -401,24 +407,29 @@
       </div>
       <b-form-group
         v-show="form.scoring_type === 'p' && form.assessment_type === 'delayed' && form.source === 'a'"
-        id="open_ended_response"
+        id="default_open_ended_submission_type"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Open-ended Responses"
-        label-for="Open-ended Responses"
+        label="Default Open-ended Submission Type"
+        label-for="Default Open-ended Submission Type"
       >
-        <b-form-radio-group v-model="form.open_ended_response" stacked
+        <template slot="label">
+          Default Open-ended Submission Type
+          <span id="default_open_ended_submission_type_tooltip">
+            <b-icon class="text-muted" icon="question-circle" /></span>
+        </template>
+        <b-form-radio-group v-model="form.default_open_ended_submission_type" stacked
                             :disabled="isLocked()"
         >
-          <!-- <b-form-radio name="open_ended_response" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio name="open_ended_response" value="text">
-            Students can submit text responses to questions
+          <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+          <b-form-radio value="text">
+            Text
           </b-form-radio>
-          <b-form-radio name="open_ended_response" value="file">
-            Students can upload file responses to questions
+          <b-form-radio value="file">
+            Uploaded File
           </b-form-radio>
-          <b-form-radio name="open_ended_response" value="0">
-            No open-ended responses to questions
+          <b-form-radio value="0">
+            None
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -433,7 +444,7 @@
         <b-form-radio-group v-model="form.late_policy" stacked
                             :disabled="isLocked()"
         >
-          <!-- <b-form-radio name="open_ended_response" value="a">At the assignment level</b-form-radio>-->
+          <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
           <b-form-radio value="not accepted">
             Do not accept late
           </b-form-radio>
@@ -649,7 +660,7 @@ export default {
       available_from_time: '09:00:00',
       due_date: '',
       due_time: '09:00:00',
-      open_ended_response: 'text',
+      default_open_ended_submission_type: 'text',
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
@@ -719,7 +730,7 @@ export default {
       this.form.late_policy_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     showDelayedOptions () {
-      this.form.open_ended_response = 'text'
+      this.form.default_open_ended_submission_type = 'text'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
@@ -811,7 +822,7 @@ export default {
     },
     resetOpenEndedResponsesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
-      this.form.open_ended_response = 'text'
+      this.form.default_open_ended_submission_type = 'text'
       this.form.assessment_type = 'real time'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
@@ -845,7 +856,7 @@ export default {
       this.form.source = assignment.source
       this.form.instructions = assignment.instructions
       this.form.type_of_submission = assignment.type_of_submission
-      this.form.open_ended_response = assignment.open_ended_response
+      this.form.default_open_ended_submission_type = assignment.default_open_ended_submission_type
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
@@ -919,7 +930,7 @@ export default {
       this.form.due_time = '09:00:00'
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
-      this.form.open_ended_response = 'q'
+      this.form.default_open_ended_submission_type = 'text'
       this.form.default_points_per_question = '10'
       this.form.scoring_type = 'p'
 

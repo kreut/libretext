@@ -46,7 +46,7 @@ class StoreAssignment extends FormRequest
             'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
-            'open_ended_response' => Rule::in(['file', 'text', 0]),
+            'default_open_ended_submission_type' => Rule::in(['file', 'text', 0]),
         ];
         if ($this->scoring_type === 'p') {
             switch ($this->source) {

@@ -77,7 +77,6 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentSummary()
   },
   methods:
     {

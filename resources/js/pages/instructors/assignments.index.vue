@@ -21,64 +21,7 @@
         <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
       </b-modal>
-      <b-tooltip target="internal"
-                 delay="250"
-      >
-        Get questions from the Adapt database or from the Query library
-      </b-tooltip>
-      <b-tooltip target="late_deduction_application_period_tooltip"
-                 delay="250"
-      >
-        Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction percent
-        is 20%
-        and the timeframe is 1 hour, then if a student uploads the file 1 hour and 40 minutes late, then the percent
-        is applied twice
-        and they'll have a 40% deduction when computing the score.
-      </b-tooltip>
-      <b-tooltip target="external"
-                 delay="250"
-      >
-        Use questions outside of Adapt and manually input scores into the grade book
-      </b-tooltip>
-      <b-tooltip target="delayed"
-                 delay="250"
-      >
-        Scores and solutions are not automatically released. This type of assessment works well
-        for open-ended questions.
-      </b-tooltip>
 
-      <b-tooltip target="real_time"
-                 delay="250"
-      >
-        Scores and solutions are released in real time, providing students with immediate feedback.
-      </b-tooltip>
-      <b-tooltip target="learning_tree"
-                 delay="250"
-      >
-        Students are provided with Learning Trees which consist of a root question node and remediation nodes.
-        The remediation nodes provide the student with supplementary material to help them answer the initial
-        question.
-      </b-tooltip>
-      <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
-                 delay="250"
-      >
-        The minimum time a student must be in a Learning Tree before they can earn a percent of the
-        original question points.
-      </b-tooltip>
-      <b-tooltip target="percent_earned_for_exploring_learning_tree_tooltip"
-                 delay="250"
-      >
-        The percent of the question points that a student earns for entering the Learning Tree for at least the
-        minimum time as described above.
-      </b-tooltip>
-
-      <b-tooltip target="submission_count_percent_decrease_tooltip"
-                 delay="250"
-      >
-        For each new attempt after their first free attempt, students will be awarded the total number of new
-        attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering
-        the Learning Tree.
-      </b-tooltip>
       <b-container>
         <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
           <b-button v-if="(user && user.role === 2)"
