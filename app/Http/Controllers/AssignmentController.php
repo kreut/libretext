@@ -295,7 +295,12 @@ class AssignmentController extends Controller
         }
     }
 
-
+    public function submissionFilesData(Request $request, array $data){
+        return  ($data['source'] === 'a' && $request->assessment_type === 'delayed' && $data['open_ended_response'] === 'file') ? 'q' : 0;//maybe in the future I'll have assignment/question
+    }
+    public function submissionTextsData(Request $request, array $data){
+        return ($data['source'] === 'a' && $request->assessment_type === 'delayed' && $data['open_ended_response'] === 'text');
+    }
     /**
      * @param StoreAssignment $request
      * @param AssignmentGroupWeight $assignmentGroupWeight
@@ -322,6 +327,7 @@ class AssignmentController extends Controller
 
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
+
             $assignment = Assignment::create(
                 ['name' => $data['name'],
                     'available_from' => $this->formatDateFromRequest($request->available_from_date, $request->available_from_time),
@@ -336,7 +342,8 @@ class AssignmentController extends Controller
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],
-                    'submission_files' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0,
+                    'submission_files' => $this->submissionFilesData($request, $data),
+                    'submission_texts' =>  $this->submissionTextsData($request, $data),
                     'late_policy' => $data['late_policy'],
                     'show_scores' => ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? 0 : 1,
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
@@ -632,12 +639,15 @@ class AssignmentController extends Controller
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
-            $data['submission_files'] = ($data['source'] === 'a' && $request->assessment_type === 'delayed') ? $data['submission_files'] : 0;
+            $data['submission_files']= $this->submissionFilesData($request, $data);
+            $data['submission_texts'] =$this->submissionTextsData($request, $data);
+
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             unset($data['available_from_date']);
             unset($data['available_from_time']);
+            unset($data['open_ended_response']);
 
             //submissions exist so don't let them change the things below
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
