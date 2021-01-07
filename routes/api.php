@@ -181,6 +181,9 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::put('/solution-files', 'SolutionController@storeSolutionFile');
     Route::post('/solution-files/download', 'SolutionController@downloadSolutionFile');
 
+    Route::post('/submission-texts', 'SubmissionTextController@storeSubmissionText');
+
+
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
     Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
     Route::post('/submission-files/score', 'SubmissionFileController@storeScore');

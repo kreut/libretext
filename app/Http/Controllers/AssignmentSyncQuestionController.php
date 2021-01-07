@@ -439,6 +439,7 @@ class AssignmentSyncQuestionController extends Controller
 
             $question_ids = [];
             $open_ended_file_submissions = [];
+            $open_ended_text_submissions = [];
             $points = [];
             $solutions_by_question_id = [];
             if (!$assignment_question_info['questions']) {
@@ -449,6 +450,17 @@ class AssignmentSyncQuestionController extends Controller
 
 
             $user_as_collection = collect([Auth::user()]);
+            $submission_texts_by_question_and_user = $SubmissionText->getUserAndQuestionTextInfo($assignment, 'allStudents', $user_as_collection);
+
+
+           Start:
+            1. abstract getting the score information
+            2. do the grader stuff
+
+
+
+
+
             $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
             $submission_files = [];
 
@@ -472,6 +484,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_file_submissions[$question->question_id] = $question->open_ended_submission_type === 'file';
+                $open_ended_text_submissions[$question->question_id] = $question->open_ended_submission_type === 'text';
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
 
                 $points[$question->question_id] = $question->points;
@@ -612,9 +625,16 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['submission_count'] = $submission_count;
                 $open_ended_file_submission = $open_ended_file_submissions[$question->id];
+                $open_ended_text_submission = $open_ended_text_submissions[$question->id];
 
                 $assignment->questions[$key]['open_ended_file_submission'] = $open_ended_file_submission;//camel case because using in vue
-                if ($open_ended_file_submission) {
+                $assignment->questions[$key]['open_ended_text_submission'] = $open_ended_text_submission;
+
+                if ($open_ended_text_submission) {
+
+                    $assignment->questions[$key]['text_submission'] = $submission_text['submission'];
+                }
+                    if ($open_ended_file_submission) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
 
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];

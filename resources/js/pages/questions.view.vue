@@ -465,7 +465,22 @@
                   />
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe" />
-                sdfljsdflkjkljdsf
+                <div>
+                  <div>
+                    <b-form-textarea
+                      id="textarea"
+                      v-model="textForm.text_submission"
+                      placeholder="Please provide your response in the space provided..."
+                      rows="3"
+                      max-rows="6"
+                    />
+                  </div>
+                  <div class="mt-2">
+                    <b-button variant="primary" class="float-right" @click="submitText">
+                      Submit
+                    </b-button>
+                  </div>
+                </div>
               </div>
             </b-col>
             <b-col v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
@@ -694,6 +709,7 @@ export default {
     Email
   },
   data: () => ({
+    responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
       { value: 'file', text: 'File' },
@@ -743,6 +759,11 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
+    textForm: new Form({
+      text_submission: '',
+      assignmentId: null,
+      questionId: null
+    }),
     uploadFileForm: new Form({
       questionFile: null,
       assignmentId: null,
@@ -831,6 +852,20 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async submitText () {
+      try {
+        this.textForm.questionId = this.questions[this.currentPage - 1].id
+        this.textForm.assignmentId = this.assignmentId
+        const { data } = await this.textForm.post('/api/submission-texts')
+        console.log(data)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].last_submitted = data.last_submitted
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async updateOpenEndedSubmissionType (questionId) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-open-ended-submission-type`, { 'open_ended_submission_type': this.openEndedSubmissionType })
@@ -1104,6 +1139,7 @@ export default {
       this.showQuestion = true
       this.showSubmissionMessage = false
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
+      this.text_submission = this.questions[this.currentPage - 1].text_submission ? this.questions[this.currentPage - 1].text_submission : ''
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         this.embedCode = `<iframe id="adapt-${this.assignmentId}-${this.questions[currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.getCurrentPage()}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
