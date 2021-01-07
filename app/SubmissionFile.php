@@ -129,7 +129,7 @@ class SubmissionFile extends Model
 
         $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
-            ->where('question_files', 1)
+            ->where('open_ended_submission_type', 'file')
             ->get();
 
         $question_ids = [];

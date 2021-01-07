@@ -105,17 +105,6 @@
               >Remove Question
               </b-button>
 
-              <toggle-button
-                v-if="questionFilesAllowed"
-                :width="250"
-                :value="questions[currentPage-1].questionFiles"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Question File Uploaded Enabled', unchecked: 'Question File Upload Disabled'}"
-                @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-              />
               <b-button v-if="false && questions[currentPage-1].inAssignment" v-b-modal.modal-upload-file
                         class="mt-1 mb-2"
                         variant="dark"
@@ -155,8 +144,6 @@
 <script>
 import axios from 'axios'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-import { ToggleButton } from 'vue-js-toggle-button'
-import { toggleQuestionFiles } from '~/helpers/ToggleQuestionFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
@@ -169,7 +156,6 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 export default {
   components: {
     VueBootstrapTypeahead,
-    ToggleButton,
     Loading
   },
   middleware: 'auth',
@@ -200,7 +186,6 @@ export default {
     user: 'auth/user'
   }),
   created () {
-    this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile

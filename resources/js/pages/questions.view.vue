@@ -330,52 +330,46 @@
             @input="changePage(currentPage)"
           />
         </div>
-        <div v-if="isInstructor()">
-          <b-container>
-            <b-row>
-              <div>
-                <b-button class="mt-1 mb-2"
-                          variant="danger"
-                          :disabled="isLocked()"
-                          @click="removeQuestion(currentPage)"
-                >
-                  Remove Question
-                </b-button>
-                <span v-if="questionFilesAllowed">
-                  <span class="font-italic">Question File Upload Enabled: </span><toggle-button
-                    :width="60"
-                    :value="Boolean(questions[currentPage-1].questionFiles)"
-                    :sync="true"
-                    :font-size="14"
-                    :margin="4"
-                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                    :labels="{checked: 'Yes', unchecked: 'No'}"
-                    @change="toggleQuestionFiles(questions, currentPage, assignmentId, $noty)"
-                  />
-                </span>
-              </div>
-              <div>
-                <b-button v-b-modal.modal-upload-file
-                          class="mt-1 mb-2 ml-1"
-                          variant="dark"
-                          @click="openUploadFileModal(questions[currentPage-1].id)"
-                >
-                  Upload Solution
-                </b-button>
-                <span v-if="questions[currentPage-1].solution">
-                  Uploaded solution:
-                  <a href=""
-                     @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
-                  >
-                    {{ questions[currentPage - 1].solution }}
-                  </a>
-                </span>
-                <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
-              </div>
-            </b-row>
-            <hr>
-          </b-container>
+
+        <div v-if="isInstructor()" class="d-flex flex-row">
+          <div class="p-2">
+            <b-button class="mt-1 mb-2"
+                      variant="danger"
+                      :disabled="isLocked()"
+                      @click="removeQuestion(currentPage)"
+            >
+              Remove Question
+            </b-button>
+          </div>
+          <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
+            <span class="font-italic">Open-Ended Submission Type:</span>
+            <b-form-select v-model="openEndedSubmissionType"
+                           :options="openEndedSubmissionTypeOptions"
+                           style="width:100px"
+                           @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+            />
+          </div>
+          <div class="p-2">
+            <b-button v-b-modal.modal-upload-file
+                      class="mt-1 mb-2 ml-1"
+                      variant="dark"
+                      @click="openUploadFileModal(questions[currentPage-1].id)"
+            >
+              Upload Solution
+            </b-button>
+            <span v-if="questions[currentPage-1].solution">
+              Uploaded solution:
+              <a href=""
+                 @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
+              >
+                {{ questions[currentPage - 1].solution }}
+              </a>
+            </span>
+            <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+          </div>
         </div>
+
+        <hr>
 
         <b-container>
           <b-row>
@@ -399,7 +393,7 @@
                       </b-button>
                     </div>
                     <hr>
-                    <b-container class="bv-example-row">
+                    <b-container>
                       <b-row align-h="center">
                         <template v-for="remediationObject in this.learningTreeAsList">
                           <b-col v-for="(value, name) in remediationObject"
@@ -671,14 +665,14 @@
       </b-alert>
     </div>
   </div>
+  </div>
 </template>
 
 <script>
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-import { ToggleButton } from 'vue-js-toggle-button'
-import { toggleQuestionFiles } from '~/helpers/ToggleQuestionFiles'
+
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
@@ -696,10 +690,14 @@ export default {
   components: {
     EnrollInCourse,
     Scores,
-    ToggleButton,
     Email
   },
   data: () => ({
+    openEndedSubmissionTypeOptions: [
+      { value: 'text', text: 'Text' },
+      { value: 'file', text: 'File' },
+      { value: 'none', text: 'None' }
+    ],
     showDidNotAnswerCorrectlyMessage: false,
     embedCode: '',
     canView: false,
@@ -758,6 +756,8 @@ export default {
     questionPointsForm: new Form({
       points: null
     }),
+    openEndedSubmissionTypeAllowed: false,
+    openEndedSubmissionType: 'text',
     showLearningTreePointsMessage: false,
     remediationIframeId: '',
     iframeLoaded: false,
@@ -789,7 +789,6 @@ export default {
   },
   created () {
     h5pResizer()
-    this.toggleQuestionFiles = toggleQuestionFiles
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
@@ -831,6 +830,14 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async updateOpenEndedSubmissionType (questionId) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-open-ended-submission-type`, { 'open_ended_submission_type': this.openEndedSubmissionType })
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     onCopy: function () {
       this.$noty.success('The embed code for this assessment has been copied to your clipboard and can be pasted into your Libretext.')
     },
@@ -1095,6 +1102,7 @@ export default {
     async changePage (currentPage) {
       this.showQuestion = true
       this.showSubmissionMessage = false
+      this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         this.embedCode = `<iframe id="adapt-${this.assignmentId}-${this.questions[currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.getCurrentPage()}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
@@ -1214,7 +1222,7 @@ export default {
         this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
-        this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
+        this.openEndedSubmissionTypeAllowed = (assignment.assessment_type === 'delayed')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
         this.latePolicy = assignment.late_policy
         this.showScores = Boolean(Number(assignment.show_scores))

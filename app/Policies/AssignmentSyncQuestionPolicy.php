@@ -64,7 +64,7 @@ class AssignmentSyncQuestionPolicy
             : Response::deny($message);
     }
 
-    public function toggleQuestionFiles(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    public function updateOpenEndedSubmissionType(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
 
         return $user->id === ((int)$assignment->course->user_id)

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Solution;
 use App\Traits\LibretextFiles;
@@ -100,7 +101,7 @@ class AssignmentSyncQuestionController extends Controller
             $i = 1;
             foreach ($assignment_questions as $key => $value) {
                 $columns = [];
-                $columns['question_files'] = $value->question_files ? 'Allowed' : 'Not Allowed';
+                $columns['open_ended_submission_type'] = $value->open_ended_submission_type;
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
                 $columns['question_id'] = "Q$i";
@@ -111,8 +112,8 @@ class AssignmentSyncQuestionController extends Controller
 
             $fields = [['key' => 'question_id',
                 'label' => 'Question'],
-                ['key' => 'question_files',
-                    'name' => 'Question Uploads'
+                ['key' => 'open_ended_submission_type',
+                    'name' => 'Open Ended Submission Type'
                 ], 'points', 'solution'];
 
             $response['type'] = 'success';
@@ -151,7 +152,7 @@ class AssignmentSyncQuestionController extends Controller
                     $response['questions'][$question_info->question_id] = $question_info;
                     //for the axios call from questions.get.vue
                     $response['question_ids'][] = $question_info->question_id;
-                    if ($question_info->question_files) {
+                    if ($question_info->open_ended_submission_file === 'file') {
                         $response['question_files'][] = $question_info->question_id;
                     }
 
@@ -168,11 +169,12 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function toggleQuestionFiles(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('toggleQuestionFiles', [$assignmentSyncQuestion, $assignment]);
+
+        $authorized = Gate::inspect('updateOpenEndedSubmissionType', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
 
@@ -180,16 +182,16 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+            $data = $request->validated();
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['question_files' => $request->question_files]);
-            $response['type'] = $request->question_files ? 'success' : 'info';
-            $response['message'] = $request->question_files ? 'Your students can now upload a question file for this question.'
-                : 'Your student can no longer upload a question file for this question.';
+                ->update(['open_ended_submission_type' => $data['open_ended_submission_type']]);
+            $response['type'] = 'success';
+            $response['message'] = "The open-ended submission type has been updated.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error toggling the file upload option.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating the open-ended submission type.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -243,8 +245,8 @@ class AssignmentSyncQuestionController extends Controller
                 ->insert([
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
-                    'points' => $assignment->default_points_per_question //don't need to test since tested already when creating an assignment
-                ]);
+                    'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
         } catch (Exception $e) {
@@ -464,12 +466,14 @@ class AssignmentSyncQuestionController extends Controller
             $learning_trees_by_question_id = [];
             $learning_tree_penalties_by_question_id = [];
             $submitted_but_did_not_explore_learning_tree = [];
-            $explored_learning_tree=[];
-
+            $explored_learning_tree = [];
+            $open_ended_submission_types = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
-                $question_files[$question->question_id] = $question->question_files;
+                $question_files[$question->question_id] = $question->open_ended_submission_type === 'file';
+                $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
+
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
             }
@@ -556,6 +560,7 @@ class AssignmentSyncQuestionController extends Controller
             $JWE = new JWE();
 
             foreach ($assignment->questions as $key => $question) {
+
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
 
@@ -570,6 +575,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 $assignment->questions[$key]['student_response'] = $student_response;
+                $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $show_solution = ($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
                     || ($assignment->assessment_type === 'real time' && $submission_count);
                 if ($show_solution) {
