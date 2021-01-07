@@ -210,7 +210,7 @@
           <b-form-radio-group v-model="form.source" stacked
                               :disabled="isLocked()"
           >
-            <span @click="resetSubmissionFilesAndPointsPerQuestion">
+            <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
 
               <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
                 icon="question-circle"
@@ -236,7 +236,7 @@
             <span @click="form.students_can_view_assignment_statistics = 1">
               <b-form-radio value="p">Points</b-form-radio></span>
             <span @click="canSwitchToCompleteIncomplete">
-              <span @click="resetSubmissionFilesAndPointsPerQuestion">
+              <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
                 <b-form-radio value="c">Complete/Incomplete</b-form-radio>
               </span>
             </span>
@@ -401,21 +401,24 @@
       </div>
       <b-form-group
         v-show="form.scoring_type === 'p' && form.assessment_type === 'delayed' && form.source === 'a'"
-        id="submission_files"
+        id="open_ended_response"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Submission Files"
-        label-for="Submission Files"
+        label="Open-ended Responses"
+        label-for="Open-ended Responses"
       >
-        <b-form-radio-group v-model="form.submission_files" stacked
+        <b-form-radio-group v-model="form.open_ended_response" stacked
                             :disabled="isLocked()"
         >
-          <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio name="submission_files" value="q">
-            At the question level
+          <!-- <b-form-radio name="open_ended_response" value="a">At the assignment level</b-form-radio>-->
+          <b-form-radio name="open_ended_response" value="text">
+            Students can submit text responses to questions
           </b-form-radio>
-          <b-form-radio name="submission_files" value="0">
-            Students cannot upload files
+          <b-form-radio name="open_ended_response" value="file">
+            Students can upload file responses to questions
+          </b-form-radio>
+          <b-form-radio name="open_ended_response" value="0">
+            No open-ended responses to questions
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -430,7 +433,7 @@
         <b-form-radio-group v-model="form.late_policy" stacked
                             :disabled="isLocked()"
         >
-          <!-- <b-form-radio name="submission_files" value="a">At the assignment level</b-form-radio>-->
+          <!-- <b-form-radio name="open_ended_response" value="a">At the assignment level</b-form-radio>-->
           <b-form-radio value="not accepted">
             Do not accept late
           </b-form-radio>
@@ -646,7 +649,7 @@ export default {
       available_from_time: '09:00:00',
       due_date: '',
       due_time: '09:00:00',
-      submission_files: '0',
+      open_ended_response: 'text',
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
@@ -716,7 +719,7 @@ export default {
       this.form.late_policy_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     showDelayedOptions () {
-      this.form.submission_files = 'q'
+      this.form.open_ended_response = 'text'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
@@ -806,9 +809,9 @@ export default {
       this.form.submission_count_percent_decrease = null
       this.$bvModal.show('modal-assignment-properties')
     },
-    resetSubmissionFilesAndPointsPerQuestion () {
+    resetOpenEndedResponsesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
-      this.form.submission_files = 0
+      this.form.open_ended_response = 'text'
       this.form.assessment_type = 'real time'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
@@ -842,7 +845,7 @@ export default {
       this.form.source = assignment.source
       this.form.instructions = assignment.instructions
       this.form.type_of_submission = assignment.type_of_submission
-      this.form.submission_files = assignment.submission_files
+      this.form.open_ended_response = assignment.open_ended_response
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
@@ -851,23 +854,6 @@ export default {
         ? assignment.external_source_points
         : ''
       this.$bvModal.show('modal-assignment-properties')
-    },
-    getSubmissionFileView (assignmentId, submissionFiles) {
-      if (submissionFiles === 0) {
-        this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
-        return false
-      }
-      let type
-      switch (submissionFiles) {
-        case ('q'):
-          type = 'question'
-          break
-        case ('a'):
-          type = 'assignment'
-          break
-      }
-
-      this.$router.push(`/assignments/${assignmentId}/${type}-files`)
     },
     submitAssignmentInfo (bvModalEvt) {
       // Prevent modal from closing
@@ -933,7 +919,7 @@ export default {
       this.form.due_time = '09:00:00'
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
-      this.form.submission_files = 'q'
+      this.form.open_ended_response = 'q'
       this.form.default_points_per_question = '10'
       this.form.scoring_type = 'p'
 
