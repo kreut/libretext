@@ -260,7 +260,7 @@
                   <div v-if="(scoring_type === 'p')">
                     <div v-if="user.role === 3 && showScores">
                       <p>
-                        <span v-if="questions[currentPage-1].questionFiles">
+                        <span v-if="questions[currentPage-1].open_ended_file_submission">
                           You achieved a total score of
                           {{ questions[currentPage - 1].total_score * 1 }}
                           out of a possible
@@ -465,6 +465,7 @@
                   />
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe" />
+                sdfljsdflkjkljdsf
               </div>
             </b-col>
             <b-col v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
@@ -566,7 +567,7 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="questions[currentPage-1].questionFiles && (user.role === 3)" class="mt-3 mb-3">
+              <b-row v-if="questions[currentPage-1].open_ended_file_submission && (user.role === 3)" class="mt-3 mb-3">
                 <b-card header="Default" header-html="<h5>File Submission Information</h5>">
                   <b-card-text>
                     <span

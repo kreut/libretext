@@ -438,7 +438,7 @@ class AssignmentSyncQuestionController extends Controller
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];
-            $question_files = [];
+            $open_ended_file_submissions = [];
             $points = [];
             $solutions_by_question_id = [];
             if (!$assignment_question_info['questions']) {
@@ -471,7 +471,7 @@ class AssignmentSyncQuestionController extends Controller
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
-                $question_files[$question->question_id] = $question->open_ended_submission_type === 'file';
+                $open_ended_file_submissions[$question->question_id] = $question->open_ended_submission_type === 'file';
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
 
                 $points[$question->question_id] = $question->points;
@@ -611,10 +611,10 @@ class AssignmentSyncQuestionController extends Controller
                     : false;
 
                 $assignment->questions[$key]['submission_count'] = $submission_count;
-                $has_question_files = $question_files[$question->id];
+                $open_ended_file_submission = $open_ended_file_submissions[$question->id];
 
-                $assignment->questions[$key]['questionFiles'] = $has_question_files;//camel case because using in vue
-                if ($has_question_files) {
+                $assignment->questions[$key]['open_ended_file_submission'] = $open_ended_file_submission;//camel case because using in vue
+                if ($open_ended_file_submission) {
                     $submission_file = $submission_files_by_question_id[$question->id] ?? false;
 
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
@@ -650,7 +650,7 @@ class AssignmentSyncQuestionController extends Controller
                         $got_first_temporary_url = true;
                     }
                 }
-                $submission_file_score = $has_question_files ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
+                $submission_file_score = $open_ended_file_submission ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
