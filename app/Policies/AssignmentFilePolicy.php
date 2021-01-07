@@ -57,9 +57,6 @@ switch($user->role){
             $message = 'You are not allowed to access these assignment files.';
         }
 
-        if ((int)$assignment->assignment_files !== 1) {
-            $message = 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.';
-        }
         return (((int)$assignment->course->user_id === $user->id) && ((int)$assignment->assignment_files === 1))
             ? Response::allow()
             : Response::deny($message);

@@ -1136,10 +1136,14 @@ export default {
       }
     },
     async changePage (currentPage) {
+      console.log(this.questions[currentPage - 1])
       this.showQuestion = true
       this.showSubmissionMessage = false
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
-      this.text_submission = this.questions[this.currentPage - 1].text_submission ? this.questions[this.currentPage - 1].text_submission : ''
+      if (this.openEndedSubmissionType === 'text') {
+        this.textForm.text_submission = this.questions[currentPage - 1].submission
+      }
+
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
         this.embedCode = `<iframe id="adapt-${this.assignmentId}-${this.questions[currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.getCurrentPage()}" style="width: 1px;min-width: 100%;min-height: 100px;" />`

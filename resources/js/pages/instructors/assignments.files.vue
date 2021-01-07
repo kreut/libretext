@@ -339,7 +339,7 @@ export default {
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentNameAndLatePolicy()
-    this.type = this.$route.params.typeFiles.replace('-files', '') // question or assignment
+    this.type = 'question'
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {

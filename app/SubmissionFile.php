@@ -129,7 +129,7 @@ class SubmissionFile extends Model
 
         $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
-            ->where('open_ended_submission_type', 'file')
+            ->whereIn('open_ended_submission_type', ['file','text'])
             ->get();
 
         $question_ids = [];
@@ -158,6 +158,7 @@ class SubmissionFile extends Model
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
+                $open_ended_submission_type = $question->open_ended_submission_type;
                 $question_id = $question->question_id;
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
@@ -198,6 +199,7 @@ class SubmissionFile extends Model
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
+                $all_info['open_ended_submission_type'] = $open_ended_submission_type;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
                 // $all_info['grader_name'] = $grader_name;
@@ -221,7 +223,6 @@ class SubmissionFile extends Model
             $sortedUserAndSubmissionFileInfo[$question] = $users;
 
         }
-
         return $sortedUserAndSubmissionFileInfo;
 
 

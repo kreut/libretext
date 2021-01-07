@@ -450,15 +450,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
             $user_as_collection = collect([Auth::user()]);
-            $submission_texts_by_question_and_user = $SubmissionText->getUserAndQuestionTextInfo($assignment, 'allStudents', $user_as_collection);
-
-
-           Start:
-            1. abstract getting the score information
-            2. do the grader stuff
-
-
-
+            // $submission_texts_by_question_and_user = $SubmissionText->getUserAndQuestionTextInfo($assignment, 'allStudents', $user_as_collection);
 
 
             $submission_files_by_question_and_user = $SubmissionFile->getUserAndQuestionFileInfo($assignment, 'allStudents', $user_as_collection);
@@ -483,10 +475,7 @@ class AssignmentSyncQuestionController extends Controller
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
-                $open_ended_file_submissions[$question->question_id] = $question->open_ended_submission_type === 'file';
-                $open_ended_text_submissions[$question->question_id] = $question->open_ended_submission_type === 'text';
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
-
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
             }
@@ -624,19 +613,14 @@ class AssignmentSyncQuestionController extends Controller
                     : false;
 
                 $assignment->questions[$key]['submission_count'] = $submission_count;
-                $open_ended_file_submission = $open_ended_file_submissions[$question->id];
-                $open_ended_text_submission = $open_ended_text_submissions[$question->id];
 
-                $assignment->questions[$key]['open_ended_file_submission'] = $open_ended_file_submission;//camel case because using in vue
-                $assignment->questions[$key]['open_ended_text_submission'] = $open_ended_text_submission;
 
-                if ($open_ended_text_submission) {
+                $submission_file = $submission_files_by_question_id[$question->id] ?? false;
 
-                    $assignment->questions[$key]['text_submission'] = $submission_text['submission'];
-                }
-                    if ($open_ended_file_submission) {
-                    $submission_file = $submission_files_by_question_id[$question->id] ?? false;
 
+                if ($submission_file) {
+
+                    $assignment->questions[$key]['open_ended_submission_type'] =  $submission_file['open_ended_submission_type'];
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
                     $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
 
@@ -670,7 +654,7 @@ class AssignmentSyncQuestionController extends Controller
                         $got_first_temporary_url = true;
                     }
                 }
-                $submission_file_score = $open_ended_file_submission ? ($formatted_submission_file_info['submission_file_score'] ?? 0) : 0;
+                $submission_file_score = $formatted_submission_file_info['submission_file_score'] ?? 0;
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
@@ -781,6 +765,7 @@ class AssignmentSyncQuestionController extends Controller
 
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions;
+
 
         } catch (Exception $e) {
             $h = new Handler(app());

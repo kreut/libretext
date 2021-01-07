@@ -47,16 +47,13 @@ class SubmissionFilePolicy
     public function viewAssignmentFilesByAssignment(User $user, SubmissionFile $submissionFile, Assignment $assignment)
     {
         $message = '';
-        $is_submission_files = in_array($assignment->submission_files, ['a', 'q']);
+
         $has_access = $assignment->course->isGrader() || ((int)$assignment->course->user_id === $user->id);
         if (!$has_access) {
-            $message = 'You are not allowed to access these assignment files.';
+            $message = 'You are not allowed to access these submissions for grading.';
         }
 
-        if (!$is_submission_files) {
-            $message = 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.';
-        }
-        return ($has_access && $is_submission_files)
+        return ($has_access)
             ? Response::allow()
             : Response::deny($message);
     }

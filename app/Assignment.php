@@ -47,10 +47,11 @@ class Assignment extends Model
     {
         $questionFileSubmissions = DB::table('submission_files')
             ->leftJoin('users','grader_id','=','users.id')
-            ->where('type','q')
+            ->whereIn('type',['q', 'text'])
             ->where('assignment_id',$this->id)
             ->select('submission_files.*', DB::raw('CONCAT(users.first_name," ", users.last_name) AS grader_name'))
             ->get();
+
         return collect($questionFileSubmissions);
     }
 
