@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height:400px">
+  <div style="min-height:400px; margin-bottom:100px">
     <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
@@ -258,13 +258,12 @@
                 </div>
                 <div class="font-italic font-weight-bold">
                   <div v-if="(scoring_type === 'p')">
-                    <div v-if="user.role === 3 && showScores">
+                    <div v-if="user.role === 3 && showScores && isOpenEnded">
                       <p>
-                        <span v-if="questions[currentPage-1].open_ended_file_submission">
-                          You achieved a total score of
-                          {{ questions[currentPage - 1].total_score * 1 }}
-                          out of a possible
-                          {{ questions[currentPage - 1].points * 1 }} points.</span>
+                        You achieved a total score of
+                        {{ questions[currentPage - 1].total_score * 1 }}
+                        out of a possible
+                        {{ questions[currentPage - 1].points * 1 }} points.
                       </p>
                     </div>
                   </div>
@@ -466,7 +465,7 @@
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe" />
                 <div>
-                  <div v-if="isOpenEndedTextSubmission">
+                  <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
                       <b-form-textarea
                         id="textarea"
@@ -511,7 +510,7 @@
               />
             </b-col>
             <b-col v-if="(user.role === 3)" cols="4">
-              <b-row>
+              <b-row v-if="questions[currentPage-1].technology_iframe">
                 <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
                     <span
@@ -584,7 +583,7 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="(isOpenEndedFileSubmission || isOpenEndedTextSubmission) && (user.role === 3)" class="mt-3 mb-3">
+              <b-row v-if="isOpenEnded && (user.role === 3)" class="mt-3 mb-3">
                 <b-card header="Default" :header-html="getOpenEndedTitle()">
                   <b-card-text>
                     <span
@@ -715,6 +714,7 @@ export default {
     Email
   },
   data: () => ({
+    isOpenEnded: false,
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
     openEndedType: '',
@@ -1159,6 +1159,7 @@ export default {
       if (this.isOpenEndedTextSubmission) {
         this.textForm.text_submission = this.questions[currentPage - 1].submission
       }
+      this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
