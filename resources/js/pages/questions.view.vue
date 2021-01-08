@@ -688,7 +688,6 @@
       </b-alert>
     </div>
   </div>
-  </div>
 </template>
 
 <script>

@@ -186,7 +186,7 @@ class Submission extends Model
                     }
                     break;
                 case 'p':
-                    $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->submission_files);
+                    $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type);
                     break;
             }
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);

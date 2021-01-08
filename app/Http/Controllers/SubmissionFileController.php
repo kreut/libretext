@@ -119,7 +119,7 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignment_id;
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
-        $type = $request->type;
+
 
         $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
 
@@ -129,14 +129,10 @@ class SubmissionFileController extends Controller
             return $response;
         }
 
-        if (!in_array($type, ['question', 'assignment'])) {
-            $response['message'] = 'That is not a valid type of submission file.';
-            return $response;
-        }
 
         try {
-           $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
-            $this->updateTextFeedbackOrScore($type, 'text_feedback', $text_feedback, $student_user_id, $assignment_id, $question_id);
+            $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
+            $this->updateTextFeedbackOrScore('text_feedback', $text_feedback, $student_user_id, $assignment_id, $question_id);
 
 
             $response['type'] = 'success';
@@ -158,7 +154,7 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignment_id;
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
-        $type = $request->type;
+
         $assignment = $Assignment->find($assignment_id);
         $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment]);
 
@@ -168,41 +164,31 @@ class SubmissionFileController extends Controller
             return $response;
         }
 
-        if (!in_array($type, ['question', 'assignment'])) {
-            $response['message'] = 'That is not a valid type of submission file.';
+
+        $max_points = DB::table('assignment_question')
+            ->where('question_id', $question_id)
+            ->where('assignment_id', $assignment_id)
+            ->first()
+            ->points;
+        $submission_info = DB::table('submissions')
+            ->where('question_id', $question_id)
+            ->where('assignment_id', $assignment_id)
+            ->first();
+        $submission_points = $submission_info->score ?? 0;
+        if ($submission_points + $request->score > $max_points) {
+            $response['message'] = "The total of your Question Submission Score and File Submission score can't be greater than the total number of points for this question.";
             return $response;
         }
 
-        switch($type){
-            case('question'):
-                $max_points = DB::table('assignment_question')
-                                                ->where('question_id', $question_id)
-                                                ->where('assignment_id', $assignment_id)
-                                                ->first()
-                                                ->points;
-                $submission_info = DB::table('submissions')
-                                        ->where('question_id', $question_id)
-                                        ->where('assignment_id', $assignment_id)
-                                        ->first();
-                $submission_points = $submission_info->score ?? 0;
-                if ($submission_points + $request->score > $max_points){
-                    $response['message'] = "The total of your Question Submission Score and File Submission score can't be greater than the total number of points for this question.";
-                    return $response;
-                }
 
-                break;
-            case('assignment'):
-                //todo
-                break;
-        }
         $data = $request->validated();
         try {
 
 
             DB::beginTransaction();
 
-            $this->updateTextFeedbackOrScore($type, 'score', $data['score'], $student_user_id, $assignment_id, $question_id);
-            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->submission_files);
+            $this->updateTextFeedbackOrScore('score', $data['score'], $student_user_id, $assignment_id, $question_id);
+            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type);
 
             DB::commit();
             $response['type'] = 'success';
@@ -220,30 +206,16 @@ class SubmissionFileController extends Controller
 
     }
 
-    public function updateTextFeedbackOrScore(string $type, string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
+    public function updateTextFeedbackOrScore(string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
     {
-        switch ($type) {
-            case('assignment'):
-                DB::table('submission_files')
-                    ->where('user_id', $student_user_id)
-                    ->where('assignment_id', $assignment_id)
-                    ->where('type', 'a')
-                    ->update([$column => $value,
-                        'date_graded' => Carbon::now(),
-                        'grader_id' => Auth::user()->id]);
-                break;
-            case('question'):
-                DB::table('submission_files')
-                    ->where('user_id', $student_user_id)
-                    ->where('assignment_id', $assignment_id)
-                    ->where('question_id', $question_id)
-                    ->where('type', 'q')
-                    ->update([$column => $value,
-                        'date_graded' => Carbon::now(),
-                        'grader_id' => Auth::user()->id]);
+        DB::table('submission_files')
+            ->where('user_id', $student_user_id)
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->update([$column => $value,
+                'date_graded' => Carbon::now(),
+                'grader_id' => Auth::user()->id]);
 
-                break;
-        }
     }
     //storeSubmission
 
@@ -265,7 +237,7 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $upload_level = $request->uploadLevel;
-        $user =Auth::user();
+        $user = Auth::user();
         $user_id = $user->id;
 
         $assignment = Assignment::find($assignment_id);
@@ -278,9 +250,9 @@ class SubmissionFileController extends Controller
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy( $user, $assignment, $assignment_id,  $question_id)) {
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
                 if ($can_upload_response['type'] === 'error') {
-                    $response['message'] =$can_upload_response['message'];
+                    $response['message'] = $can_upload_response['message'];
                     return $response;
                 }
             }
@@ -391,7 +363,7 @@ class SubmissionFileController extends Controller
             }
             $response['message'] = "Your file submission has been saved.";
 
-            $response['late_file_submission']= $this->isLateSubmission($extension, $assignment, Carbon::now());
+            $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
 
 
             if (($upload_count >= $max_number_of_uploads_allowed - 3)) {
@@ -400,8 +372,8 @@ class SubmissionFileController extends Controller
             $response['type'] = 'success';
             $log = new \App\Log();
             $request->action = 'submit-question-file';
-            $request->data =   ['assignment_id' => $assignment_id,
-                            'question_id' => $question_id];
+            $request->data = ['assignment_id' => $assignment_id,
+                'question_id' => $question_id];
             $log->store($request);
             DB::commit();
         } catch (Exception $e) {
@@ -422,21 +394,21 @@ class SubmissionFileController extends Controller
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $student_user_id = $request->userId;
-        $type = $request->type;
 
-        $authorized = Gate::inspect('uploadFileFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id),]);
+
+        $authorized = Gate::inspect('uploadFileFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
+        if (!$question_id) {
+            $response['message'] = "You are missing the question id.";
+            return $response;
+        }
         try {
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if (!in_array($type, ['question', 'assignment'])) {
-                $response['message'] = 'That is not a valid type of submission file.';
-                return $response;
-            }
             $validator = Validator::make($request->all(), [
                 'fileFeedback' => $this->fileValidator()
             ]);
@@ -445,26 +417,15 @@ class SubmissionFileController extends Controller
                 $response['message'] = $validator->errors()->first('fileFeedback');
                 return $response;
             }
-            $file_feedback_exists = false;
-            switch ($type) {
-                case('assignment'):
-                    $file_feedback_exists = DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('type', 'a')
-                        ->whereNotNull('file_feedback')
-                        ->first();
-                    break;
-                case('question'):
-                    $file_feedback_exists = DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('question_id', $question_id)
-                        ->where('type', 'q')
-                        ->whereNotNull('file_feedback')
-                        ->first();
-                    break;
-            }
+
+
+            $file_feedback_exists = DB::table('submission_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->whereNotNull('file_feedback')
+                ->first();
+
             if ($file_feedback_exists) {
                 $response['message'] = "You can only upload file feedback once per student submission.";
                 return $response;
@@ -474,23 +435,13 @@ class SubmissionFileController extends Controller
             $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($fileFeedback);
             Storage::disk('s3')->put($fileFeedback, $feedbackContents, ['StorageClass' => 'STANDARD_IA']);
-            switch ($type) {
-                case('assignment'):
-                    DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('type', 'a')
-                        ->update(['file_feedback' => basename($fileFeedback)]);
-                    break;
-                case('question'):
-                    DB::table('submission_files')
-                        ->where('user_id', $student_user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->where('question_id', $question_id)
-                        ->where('type', 'q')
-                        ->update(['file_feedback' => basename($fileFeedback)]);
-                    break;
-            }
+
+            DB::table('submission_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->update(['file_feedback' => basename($fileFeedback)]);
+
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
             $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($fileFeedback));

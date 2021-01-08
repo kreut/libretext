@@ -14,9 +14,10 @@ use Carbon\Carbon;
 class Score extends Model
 {
     use Statistics;
+
     protected $fillable = ['user_id', 'assignment_id', 'score'];
 
-    public function updateAssignmentScore(int $student_user_id, int $assignment_id, string $submission_files_type)
+    public function updateAssignmentScore(int $student_user_id, int $assignment_id, string $assessment_type)
     {
 
         //files are for extra credit
@@ -47,57 +48,30 @@ class Score extends Model
                 $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
             }
         }
-        switch ($submission_files_type) {
-            case('q'):
+        if ($assessment_type === 'delayed') {
+            $submission_files = DB::table('submission_files')
+                ->where('assignment_id', $assignment_id)
+                ->whereIn('type', ['q', 'text']) //'q', 'a', or 0
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', $student_user_id)->get();
 
-                $submission_files = DB::table('submission_files')
-                    ->where('assignment_id', $assignment_id)
-                    ->where('type', 'q') //'q', 'a', or 0
-                    ->whereIn('question_id', $question_ids)
-                    ->where('user_id', $student_user_id)->get();
-
-                if ($submission_files->isNotEmpty()) {
-                    foreach ($submission_files as $submission_file) {
-                        $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
-                            ? $submission_file->score
-                            : 0;
-                    }
+            if ($submission_files->isNotEmpty()) {
+                foreach ($submission_files as $submission_file) {
+                    $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
+                        ? $submission_file->score
+                        : 0;
                 }
+            }
 
-                foreach ($assignment_question_scores_info as $score) {
-                    $question_points = $score['question'];
-                    $file_points = $score['file'];
-                    $assignment_score = $assignment_score + $question_points + $file_points;
-                }
-                break;
-            case('a'):
-                $assignment_score_from_questions = $assignment_question_scores_info ?
-                    $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
-                    : 0;
-                //get the points from the submission
-                $submission_file = DB::table('submission_files')
-                    ->where('assignment_id', $assignment_id)
-                    ->where('type', 'a') //'q', 'a', or 0
-                    ->where('user_id', $student_user_id)->first();
-
-                $points_from_submissions = $assignment_score_from_questions + ($submission_file->score ?? 0);
-
-                //get the total assignment points
-                $total_assignment_points = 0;
-                foreach ($assignment_questions as $question) {
-                    $total_assignment_points = $total_assignment_points + $question->points;
-
-                }
-
-                $assignment_score = min($total_assignment_points, $points_from_submissions);
-                break;
-
-            case('0'):
-                $assignment_score = $assignment_question_scores_info ?
-                    $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
-                    : 0;
-                break;
-
+            foreach ($assignment_question_scores_info as $score) {
+                $question_points = $score['question'];
+                $file_points = $score['file'];
+                $assignment_score = $assignment_score + $question_points + $file_points;
+            }
+        } else {
+            $assignment_score = $assignment_question_scores_info ?
+                $this->getAssignmentScoreFromQuestions($assignment_question_scores_info)
+                : 0;
         }
         DB::table('scores')
             ->updateOrInsert(
@@ -138,8 +112,7 @@ class Score extends Model
             ->where('user_id', $user->id)
             ->get();
 
-        $mean_and_std_dev_by_assignment = $this->getMeanAndStdDev('scores', 'assignment_id',$assignment_ids, 'assignment_id');
-
+        $mean_and_std_dev_by_assignment = $this->getMeanAndStdDev('scores', 'assignment_id', $assignment_ids, 'assignment_id');
 
 
 //show the score for points only if the scores have been released
@@ -150,7 +123,7 @@ class Score extends Model
             if ($scoring_types[$assignment_id] === 'p') {
                 if ($scores_released[$assignment_id]) {
                     $scores_by_assignment[$assignment_id] = $score;
-                    $z_scores_by_assignment[$assignment_id]  = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
+                    $z_scores_by_assignment[$assignment_id] = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
                 }
             } else {
                 $scores_by_assignment[$assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';

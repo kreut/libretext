@@ -42,8 +42,8 @@
           <b-container>
             <b-row>
               <p class="font-italic">
-                <strong>Instructions:</strong> For each student, please enter a file submission score and optionally
-                add comments in the form of text or a file upload.  The total number of points that the student receives
+                <strong>Instructions:</strong> For each student, please enter a submission score for the open-ended component and optionally
+                add comments in the form of text or a file upload. The total number of points that the student receives
                 for this questions will be the sum of the points that they received for submitting any automatically
                 graded responses (Question Submission Score)
                 plus the number of points that you give them for their file submission (File Submission Score).
@@ -105,7 +105,7 @@
             <div v-if="type === 'question'" class="text-center">
               <h5 class="font-italic">
                 This question is out of
-                {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }} points.
+                {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }} points.
               </h5>
               <div class="mb-2">
                 <b-button variant="outline-primary"
@@ -135,9 +135,14 @@
                     <b-card header="default" :header-html="getStudentSubmissionTitle()" class="h-100">
                       <b-card-text>
                         <b-form ref="form">
-                          <b-alert :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] !== false" variant="warning">
+                          <b-alert
+                            :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] !== false"
+                            variant="warning"
+                          >
                             <span class="alert-link">
-                              The file submission was late by  {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] }}.
+                              The file submission was late by  {{
+                                submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission']
+                              }}.
                               <span v-if="latePolicy === 'deduction'">
                                 According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
                                 <span v-if="lateDeductionApplicationPeriod !== 'once'">
@@ -154,17 +159,19 @@
                               : 'Not yet graded.'
                           }}<br>
                           <strong>Question Submission Score:</strong> {{
-                            1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
+                            1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
                           }}<br>
-                          <strong>File Submission Score:</strong> {{
-                            1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
+                          <strong>{{ capitalize(openEndedType) }}  Submission Score:</strong> {{
+                            1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
                           }}
                           <br>
                           <strong>Total Score For this Question:</strong>
-                          {{ (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
-                            + (1*submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0) }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points']*1 }}
+                          {{
+                            (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
+                              + (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)
+                          }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }}
                           <br>
-                          <b-input-group prepend="File Submission Score:" class="mt-3">
+                          <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
                             <b-form-input v-model="scoreForm.score"
                                           type="text"
                                           placeholder="Enter the score"
@@ -183,6 +190,7 @@
                             <b-row>
                               <b-col>
                                 <b-button variant="outline-primary"
+                                          :disabled="isOpenEndedTextSubmission"
                                           @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
                                 >
                                   Open Submission File
@@ -251,9 +259,17 @@
                 <div
                   v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null)"
                 >
-                  <iframe width="600" height="600"
-                          :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
-                  />
+                  <div v-if="isOpenEndedFileSubmission">
+                    <iframe width="600" height="600"
+                            :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
+                    />
+                  </div>
+                  <div v-if="isOpenEndedTextSubmission">
+                    <b-card>
+                      <span class="font-weight-bold"> {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'] }}
+                      </span>
+                    </b-card>
+                  </div>
                 </div>
                 <div v-else>
                   <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }} has not submitted a file.</span>
@@ -300,6 +316,9 @@ export default {
     Loading
   },
   data: () => ({
+    isOpenEndedFileSubmission: false,
+    isOpenEndedTextSubmission: false,
+    openEndedType: '',
     gradeViews: [
       { text: 'All Students', value: 'allStudents' },
       { text: 'Ungraded Submissions', value: 'ungradedSubmissions' },
@@ -343,6 +362,9 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    capitalize (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    },
     getGraderFeedbackTitle () {
       let grader = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
         ? 'by ' + this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
@@ -368,12 +390,12 @@ export default {
           return false
         }
         let assignment = data.assignment
-        this.title = `Grade File Submissions For ${assignment.name}`
+        this.title = `Grade Open-Ended Submissions For ${assignment.name}`
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent
       } catch (error) {
-        this.title = 'Grade File Submissions'
+        this.title = 'Grade Open-Ended Submissions'
       }
     },
     async toggleView () {
@@ -383,7 +405,6 @@ export default {
       try {
         this.scoreForm.assignment_id = this.assignmentId
         this.scoreForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
-        this.scoreForm.type = this.type
         this.scoreForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
 
         const { data } = await this.scoreForm.post('/api/submission-files/score')
@@ -414,7 +435,6 @@ export default {
         this.uploading = true
         // https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
         let formData = new FormData()
-        formData.append('type', this.type) // extra not really needed but makes it clearer and prevents accidents with null questionId
         formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
         formData.append('assignmentId', this.assignmentId)
         formData.append('questionId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
@@ -441,7 +461,6 @@ export default {
       try {
         this.textFeedbackForm.assignment_id = this.assignmentId
         this.textFeedbackForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
-        this.textFeedbackForm.type = this.type
         this.textFeedbackForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
 
         const { data } = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
@@ -458,12 +477,15 @@ export default {
     async changePage () {
       console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
-      console.log(this.currentQuestionPage - 1)
-      console.log(this.currentStudentPage - 1)
+      this.scoreForm.score = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['score']
 
-      console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
+      this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
+      this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+      this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       await this.getTemporaryUrl('file_feedback', this.currentQuestionPage, this.currentStudentPage)
-      await this.getTemporaryUrl('submission', this.currentQuestionPage, this.currentStudentPage)
+      if (this.isOpenEndedFileSubmission) {
+        await this.getTemporaryUrl('submission', this.currentQuestionPage, this.currentStudentPage)
+      }
       this.viewSubmission = true
     },
     async getTemporaryUrl (file, currentQuestionPage, currentStudentPage) {
@@ -487,25 +509,13 @@ export default {
     submissionUrlExists (currentStudentPage) {
       return (this.submissionFiles[currentStudentPage - 1]['submission_url'] !== null)
     },
-    hasSubmissions (data, type) {
-      let hasSubmissions
-      switch (type) {
-        case ('question'):
-          hasSubmissions = (data.user_and_submission_file_info.length > 0)
-          break
-        case ('assignment'):
-          hasSubmissions = (data.user_and_submission_file_info[0].length > 0)
-          break
-      }
-      return hasSubmissions
-    },
     setQuestionAndStudent (questionId, studentUserId) {
       console.log(questionId, studentUserId)
       for (let i = 0; i < this.submissionFiles.length; i++) {
         for (let j = 0; j < this.submissionFiles[i].length; j++) {
           console.log(this.submissionFiles[i][j]['question_id'], this.submissionFiles[i][j]['user_id'])
           if (parseInt(questionId) === parseInt(this.submissionFiles[i][j]['question_id']) &&
-            parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
+          parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
             this.currentQuestionPage = i + 1
             this.currentStudentPage = j + 1
             return
@@ -521,7 +531,7 @@ export default {
           this.isLoading = false
           return false
         }
-        this.showNoFileSubmissionsExistAlert = !this.hasSubmissions(data, this.type)
+        this.showNoFileSubmissionsExistAlert = !(data.user_and_submission_file_info.length > 0)
         if (this.showNoFileSubmissionsExistAlert) {
           this.isLoading = false
           return false
@@ -542,6 +552,11 @@ export default {
         } else {
           this.textFeedbackForm.textFeedback = this.submissionFiles[0][0]['text_feedback']
         }
+
+        this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
+        this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+
+        this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       } catch (error) {
         this.$noty.error(error.message)
       }
