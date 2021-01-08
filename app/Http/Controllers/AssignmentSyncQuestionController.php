@@ -152,7 +152,7 @@ class AssignmentSyncQuestionController extends Controller
                     $response['questions'][$question_info->question_id] = $question_info;
                     //for the axios call from questions.get.vue
                     $response['question_ids'][] = $question_info->question_id;
-                    if ($question_info->open_ended_submission_file === 'file') {
+                    if ($question_info->open_ended_submission_type === 'file') {
                         $response['question_files'][] = $question_info->question_id;
                     }
 

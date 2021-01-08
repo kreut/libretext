@@ -466,19 +466,21 @@
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe" />
                 <div>
-                  <div>
-                    <b-form-textarea
-                      id="textarea"
-                      v-model="textForm.text_submission"
-                      placeholder="Please provide your response in the space provided..."
-                      rows="3"
-                      max-rows="6"
-                    />
-                  </div>
-                  <div class="mt-2">
-                    <b-button variant="primary" class="float-right" @click="submitText">
-                      Submit
-                    </b-button>
+                  <div v-if="isOpenEndedTextSubmission">
+                    <div>
+                      <b-form-textarea
+                        id="textarea"
+                        v-model="textForm.text_submission"
+                        placeholder="Please provide your response in the space provided..."
+                        rows="3"
+                        max-rows="6"
+                      />
+                    </div>
+                    <div class="mt-2 mb-3">
+                      <b-button variant="primary" class="float-right" @click="submitText">
+                        Submit
+                      </b-button>
+                    </div>
                   </div>
                 </div>
               </div>
@@ -582,27 +584,30 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="questions[currentPage-1].open_ended_file_submission && (user.role === 3)" class="mt-3 mb-3">
-                <b-card header="Default" header-html="<h5>File Submission Information</h5>">
+              <b-row v-if="(isOpenEndedFileSubmission || isOpenEndedTextSubmission) && (user.role === 3)" class="mt-3 mb-3">
+                <b-card header="Default" :header-html="getOpenEndedTitle()">
                   <b-card-text>
                     <span
                       v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
                     >
                       <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">Your file submission will be marked late.</a>
+                        <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <strong> Uploaded file:</strong>
-                    <span v-if="questions[currentPage-1].submission_file_exists">
-                      <a href=""
-                         @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)"
-                      >
-                        {{ questions[currentPage - 1].original_filename }}
-                      </a>
+                    <span v-if="isOpenEndedFileSubmission">
+                      <strong> Uploaded file:</strong>
+                      <span v-if="questions[currentPage-1].submission_file_exists">
+                        <a href=""
+                           @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)"
+                        >
+                          {{ questions[currentPage - 1].original_filename }}
+                        </a>
+                      </span>
+
+                      <span v-if="!questions[currentPage-1].submission_file_exists">
+                        No files have been uploaded
+                      </span><br>
                     </span>
-                    <span v-if="!questions[currentPage-1].submission_file_exists">
-                      No files have been uploaded
-                    </span><br>
                     <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
                     <span v-if="showScores">
                       <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
@@ -631,14 +636,16 @@
                       <br>
                       <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
                     </span>
-                    <hr>
-                    <div class="mt-2">
-                      <b-button v-b-modal.modal-upload-file variant="primary"
-                                class="float-right mr-2"
-                                @click="openUploadFileModal(questions[currentPage-1].id)"
-                      >
-                        Upload New File
-                      </b-button>
+                    <div v-if="isOpenEndedFileSubmission">
+                      <hr>
+                      <div class="mt-2">
+                        <b-button v-b-modal.modal-upload-file variant="primary"
+                                  class="float-right mr-2"
+                                  @click="openUploadFileModal(questions[currentPage-1].id)"
+                        >
+                          Upload New File
+                        </b-button>
+                      </div>
                     </div>
                   </b-card-text>
                 </b-card>
@@ -709,6 +716,9 @@ export default {
     Email
   },
   data: () => ({
+    isOpenEndedFileSubmission: false,
+    isOpenEndedTextSubmission: false,
+    openEndedType: '',
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
@@ -852,6 +862,10 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getOpenEndedTitle () {
+      let capitalizedTitle = this.openEndedType.charAt(0).toUpperCase() + this.openEndedType.slice(1)
+      return `<h5>${capitalizedTitle} Submission Information</h5>`
+    },
     async submitText () {
       try {
         this.textForm.questionId = this.questions[this.currentPage - 1].id
@@ -1139,8 +1153,11 @@ export default {
       console.log(this.questions[currentPage - 1])
       this.showQuestion = true
       this.showSubmissionMessage = false
-      this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
-      if (this.openEndedSubmissionType === 'text') {
+      this.openEndedType = this.questions[currentPage - 1].open_ended_submission_type
+      this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+
+      this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
+      if (this.isOpenEndedTextSubmission) {
         this.textForm.text_submission = this.questions[currentPage - 1].submission
       }
 
