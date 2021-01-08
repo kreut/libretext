@@ -63,7 +63,7 @@
       <b-tooltip target="default_open_ended_submission_type_tooltip"
                  delay="250"
       >
-        Adjust this option if your assignment of open-ended questions. This option can be changed on a per question basis once you start adding questions to your assignment.
+        Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per question basis once you start adding questions to the assignment.
       </b-tooltip>
 
       <b-tooltip target="submission_count_percent_decrease_tooltip"
