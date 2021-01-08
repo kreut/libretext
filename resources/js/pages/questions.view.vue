@@ -605,7 +605,7 @@
                     <span v-if="showScores">
                       <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
                     </span>
-                    <span v-if="solutionsReleased">
+                    <span v-if="showScores">
                       <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
                         N/A
                         <span v-if="questions[currentPage-1].file_feedback">
@@ -618,8 +618,6 @@
                         <br>
                         <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
                       </span>
-                    </span>
-                    <span v-if="showScores">
                       <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
                       <span v-if="questions[currentPage - 1].grader_id">
                         <b-button size="sm" variant="outline-primary"
