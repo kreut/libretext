@@ -4,8 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
+use App\Submission;
 use \Exception;
-use App\Extension;
 use App\SubmissionFile;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -23,19 +23,19 @@ class SubmissionTextController extends Controller
 
     use DateFormatter;
 
-    public function storeSubmissionText(Request $request, Extension $extension, SubmissionFile $submissionFile)
+    public function storeSubmissionText(Request $request, SubmissionFile $submissionFile, Submission $submission)
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $assignment = Assignment::find($assignment_id);
         $user = Auth::user();
-/**
-        $authorized = Gate::inspect('storeSubmissionText', [$submissionFile, $assignment]);
+
+        $authorized = Gate::inspect('store', [$submission, $assignment, $assignment_id, $question_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }**/
+        }
         try {
             //validator put here to be consistent with the file submissions
 
