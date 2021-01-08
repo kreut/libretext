@@ -278,7 +278,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->where('type', 'q')
+            ->whereIn('type', ['q','text'])
             ->select('question_id', 'assignment_id')
             ->get();
         foreach ($results as $key => $value) {
