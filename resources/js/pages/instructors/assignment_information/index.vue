@@ -60,8 +60,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Questions',
-          route: 'instructors.assignments.questions'
+          name: 'Question Properties',
+          route: 'instructors.assignments.questions.properties'
         },
         {
           icon: '',
