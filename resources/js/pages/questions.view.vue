@@ -1,6 +1,5 @@
 <template>
   <div style="min-height:400px; margin-bottom:100px">
-    <ckeditor v-model="editorData" :config="editorConfig" />
     <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
@@ -468,13 +467,7 @@
                 <div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
-                      <b-form-textarea
-                        id="textarea"
-                        v-model="textForm.text_submission"
-                        placeholder="Please provide your response in the space provided..."
-                        rows="3"
-                        max-rows="6"
-                      />
+                      <ckeditor v-model="textForm.text_submission" :config="editorConfig" />
                     </div>
                     <div class="mt-2 mb-3">
                       <b-button variant="primary" class="float-right" @click="submitText">
@@ -720,16 +713,15 @@ export default {
     editorData: '<p>Content of the editor.</p>',
     editorConfig: {
       toolbar: [
-        { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+        { name: 'clipboard', items: [ 'Cut', 'Copy', '-', 'Undo', 'Redo' ] },
         { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] },
-        { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
+        { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Indent', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
         { name: 'links', items: [ 'Link', 'Unlink' ] },
         { name: 'insert', items: [ 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar' ] },
-        '/',
-        { name: 'styles', items: [ 'Styles', 'Format', 'Font', 'FontSize' ] },
         { name: 'colors', items: [ 'TextColor', 'BGColor' ] }
       ],
-      removeButtons: ''
+      removeButtons: '',
+      height: 100
     },
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,

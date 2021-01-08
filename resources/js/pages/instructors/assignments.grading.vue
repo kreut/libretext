@@ -264,8 +264,7 @@
                   </div>
                   <div v-if="isOpenEndedTextSubmission">
                     <b-card>
-                      <span class="font-weight-bold"> {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'] }}
-                      </span>
+                      <span class="font-weight-bold" v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']" />
                     </b-card>
                   </div>
                 </div>
