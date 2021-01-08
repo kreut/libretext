@@ -42,7 +42,7 @@ class AssignmentsPropertiesTest extends TestCase
         $this->assignment->late_policy_deadline = '2027-06-12 02:00:00';
         $this->assignment->save();
 
-        $response['assignment'] = ['late_policy' => "A deduction of 20% is applied every 2 hours to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
+        $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied every 2 hours to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson($response);
     }
@@ -56,7 +56,7 @@ class AssignmentsPropertiesTest extends TestCase
         $this->assignment->late_policy_deadline = '2027-06-12 02:00:00';
         $this->assignment->save();
 
-        $response['assignment'] = ['late_policy' => "A deduction of 20% is applied once to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
+        $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied once to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson($response);
     }
@@ -66,7 +66,7 @@ class AssignmentsPropertiesTest extends TestCase
     {
         $this->assignment->late_policy = 'not accepted';
         $this->assignment->save();
-        $response['assignment']  = ['late_policy' => "No late assignments are accepted."];
+        $response['assignment']  = ['formatted_late_policy' => "No late assignments are accepted."];
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson($response);
 

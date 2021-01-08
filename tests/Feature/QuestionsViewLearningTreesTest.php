@@ -38,6 +38,7 @@ class QuestionsViewLearningTreesTest extends TestCase
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
+            'open_ended_submission_type' => 'none',
             'points' => 10
         ]);
 

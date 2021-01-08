@@ -39,6 +39,7 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 2
         ]);
 
@@ -46,6 +47,7 @@ trait Test
         Score::create([
             'user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
+            'open_ended_submission_type' => 'none',
             'score' => 2
         ]);
 
@@ -62,12 +64,14 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 10
         ]);
 
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 20
         ]);
 
@@ -91,12 +95,14 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 1
         ]);
 
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 2
         ]);
 
@@ -121,6 +127,7 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 50
         ]);
 
@@ -128,6 +135,7 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
+            'open_ended_submission_type' => 'none',
             'points' => 50
         ]);
 

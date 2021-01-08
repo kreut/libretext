@@ -56,6 +56,20 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /** @test */
+    public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()
+    {
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'open_ended_submission_type'=>'none'
+        ]);
+
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+    }
+
 
     /** @test **/
     public function cannot_add_a_question_if_students_have_already_made_a_submission()
@@ -267,12 +281,6 @@ class QuestionsGetTest extends TestCase
                 'message' => 'You are not allowed to add a question to this assignment.']);
     }
 
-    /** @test */
-    public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()
-    {
-        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'success']);
-    }
 
     /** @test */
     public function cannot_remove_a_question_from_an_assignment_if_there_is_already_a_submission()
@@ -320,7 +328,8 @@ class QuestionsGetTest extends TestCase
             ->insert([
                 'assignment_id' => $this->assignment->id,
                 'question_id' => $this->question->id,
-                'points' => $this->assignment->default_points_per_question
+                'points' => $this->assignment->default_points_per_question,
+                'open_ended_submission_type' => 'file'
             ]);
 
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
@@ -336,7 +345,8 @@ class QuestionsGetTest extends TestCase
             ->insert([
                 'assignment_id' => $this->assignment->id,
                 'question_id' => $this->question->id,
-                'points' => $this->assignment->default_points_per_question
+                'points' => $this->assignment->default_points_per_question,
+                'open_ended_submission_type' => 'file'
             ]);
         $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")
             ->assertJson(['type' => 'error']);

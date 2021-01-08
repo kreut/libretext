@@ -52,10 +52,22 @@ class AssignmentsIndex2Test extends TestCase
             'include_in_weighted_average' => 1,
             'late_policy' => 'not accepted',
             'assessment_type' => 'delayed',
-            'submission_files' => 'a',
+            'default_open_ended_submission_type' => 'file',
             'instructions' => 'Some instructions',
             'assignment_group_id' => 1];
     }
+
+
+    /** @test */
+    public function must_include_a_valid_default_open_ended_submission_type()
+    {
+
+        $this->assignment_info['default_open_ended_submission_type'] = "7";
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors(['default_open_ended_submission_type']);
+    }
+
+
 
 
     /** @test */
@@ -309,15 +321,6 @@ class AssignmentsIndex2Test extends TestCase
         $this->assignment_info['available_from_time'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJsonValidationErrors(['due']);
-    }
-
-    /** @test */
-    public function must_include_whether_files_are_allowed()
-    {
-
-        $this->assignment_info['submission_files'] = "7";
-        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['submission_files']);
     }
 
 

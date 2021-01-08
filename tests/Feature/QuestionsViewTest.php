@@ -37,12 +37,14 @@ class QuestionsViewTest extends TestCase
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
-            'points' => $this->question_points
+            'points' => $this->question_points,
+            'open_ended_submission_type' => 'file'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
-            'points' => $this->question_points
+            'points' => $this->question_points,
+            'open_ended_submission_type' => 'file'
         ]);;
 
         $this->student_user = factory(User::class)->create();
@@ -70,14 +72,21 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+
+    public function must_submit_a_question_with_a_valid_technology()
+    {
+
+        $this->h5pSubmission['technology'] = 'bogus technology';
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)->assertStatus(422);
+
+    }
+
+    /** @test */
     public function correctly_computes_the_z_score_for_a_file_submission()
     {
 
         $scores = [80, 40, 36];
 
-        DB::table('assignment_question')
-            ->where('question_id', $this->question->id)
-            ->update(['question_files' => 1]);
 
         //create fake submissions --- I just care about the scores.
         $this->assignment->show_scores = 1;
@@ -123,7 +132,7 @@ class QuestionsViewTest extends TestCase
 
         DB::table('assignment_question')
             ->where('question_id', $this->question->id)
-            ->update(['question_files' => 1]);
+            ->update(['open_ended_submission_type' => 'file']);
 
         //create fake submissions --- I just care about the scores.
         $this->assignment->show_scores = 1;
@@ -821,21 +830,12 @@ class QuestionsViewTest extends TestCase
     }
 
 
-    /** @test */
 
-    public function must_submit_a_question_with_a_valid_technology()
-    {
-        $this->assignment->submission_files = '0';
-        $this->assignment->save();
-        $this->h5pSubmission['technology'] = 'bogus technology';
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)->assertStatus(422);
-
-    }
 
     /** @test */
     public function must_submit_a_question_with_a_valid_assignment_number()
     {
-        $this->assignment->submission_files = '0';
+
         $this->h5pSubmission['assignment_id'] = false;
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions",
@@ -846,8 +846,8 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function must_submit_a_question_with_a_valid_question_number()
     {
-        $this->assignment->submission_files = '0';
-        $this->assignment->save();
+
+
         $this->h5pSubmission['question_id'] = false;
         $this->actingAs($this->student_user)->postJson("/api/submissions",
             $this->h5pSubmission)->assertStatus(422);
@@ -859,8 +859,7 @@ class QuestionsViewTest extends TestCase
 
     public function assignments_of_scoring_type_p_and_no_question_files_will_compute_the_score_based_on_the_question_points()
     {
-        $this->assignment->submission_files = '0';
-        $this->assignment->save();
+
         $this->actingAs($this->student_user)->postJson("/api/submissions",
             $this->h5pSubmission);
 

@@ -15,7 +15,7 @@ use App\Assignment;
 use App\Enrollment;
 use App\SubmissionFile;
 
-class AssignmentFileTest extends TestCase
+class GradingTest extends TestCase
 {
 
     public function setup(): void
@@ -43,6 +43,7 @@ class AssignmentFileTest extends TestCase
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
+            'open_ended_submission_type' => 'file',
             'points' => 10
         ]);
         $this->question_file = factory(SubmissionFile::class)->create([
@@ -54,13 +55,23 @@ class AssignmentFileTest extends TestCase
 
 
     }
+    /** @test */
+    public function cannot_get_assignment_files_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/all_students")
+            ->assertJson([
+                'type' => 'error',
+                'message' => 'You are not allowed to access these submissions for grading.'
+            ]);
+
+    }
 
     /** @test */
     public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_will_use_min_of_the_points_per_question_compared_to_the_sum_of_the_question_and_file_points()
     {
 
-        $this->assignment->submission_files = 'q';///question level
-        $this->assignment->save();
+
+
         $question_score = 5;
 
         $file_submission_score = 2.0;
@@ -102,8 +113,7 @@ class AssignmentFileTest extends TestCase
     public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_cannot_submit_a_score_greater_than_the_total_number_of_points_in_the_question()
     {
 
-        $this->assignment->submission_files = 'q';///question level
-        $this->assignment->save();
+
         $question_score = 5;
 
         $file_submission_score = 30;
@@ -134,70 +144,6 @@ class AssignmentFileTest extends TestCase
 
 
 
-    /** @test */
-
-    public function assignments_of_scoring_type_p_and_assignment_file_will_find_the_max_of_the_total_question_points_and_file_points()
-    {
-
-        $this->assignment->submission_files = 'a';///assignment level
-        $this->assignment->save();
-        $question_score = 5;
-
-        $file_submission_score = 2.0;
-
-        //get the total assignment points
-        $assignment_questions = DB::table('assignment_question')->where('assignment_id', $this->assignment->id)->get();
-
-        $total_assignment_points = 0;
-        foreach ($assignment_questions as $question) {
-            $total_assignment_points = $total_assignment_points + $question->points;
-        }
-
-        Submission::create([
-            'user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'question_id'=> $this->question->id,
-            'submission' => 'some other submission',
-            'score' => $question_score,
-            'answered_correctly_at_least_once' => 0,
-            'submission_count' => 1]);
-
-
-        //Now submit a question_file score
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
-            'type' => 'assignment',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' =>  $file_submission_score])
-            ->assertJson(['type'=> 'success']);
-
-
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-
-        $this->assertEquals( $score->score, min((float) $total_assignment_points, (float) ($question_score + $file_submission_score)), 'Sum is smaller than the number of points');
-        //Now submit a question_file score
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
-            'type' => 'assignment',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' =>  100*$file_submission_score])
-            ->assertJson(['type'=> 'success']);
-
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-
-
-        $this->assertEquals( (float) $score->score, (float) min( $total_assignment_points, $question_score + 100*$file_submission_score), 'Sum is larger than the number of points');
-    }
 
     /** @test */
     public function owner_can_submit_score()
@@ -222,37 +168,19 @@ class AssignmentFileTest extends TestCase
 
     }
 
-    /** @test */
-    public function cannot_get_assignment_files_if_not_owner()
-    {
-        $this->actingAs($this->user_2)->getJson("/api/submission-files/assignment/{$this->assignment->id}/all_students")
-            ->assertJson([
-                'type' => 'error',
-                'message' => 'You are not allowed to access these assignment files.'
-            ]);
 
-    }
 
     /** @test */
 
     public function can_get_assignment_files_if_owner()
     {
 
-        $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}/all_students")
+        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/all_students")
             ->assertJson(['type' => 'success']);
 
     }
 
 
-    /** @test */
-    public function cannot_get_assignment_files_if_assignment_files_not_enabled()
-    {
-        $this->assignment->submission_files = '0';
-        $this->assignment->save();
-        $this->actingAs($this->user)->getJson("/api/submission-files/assignment/{$this->assignment->id}/all_students")
-            ->assertJson(['type' => 'error', 'message' => 'This assignment currently does not have assignment uploads enabled.  Please edit the assignment in order to view this screen.']);
-
-    }
 
 
     /** @test */
