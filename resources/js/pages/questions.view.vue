@@ -882,7 +882,7 @@ export default {
         console.log(data)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.questions[this.currentPage - 1].last_submitted = data.last_submitted
+          this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         }
       } catch (error) {
         this.$noty.error(error.message)

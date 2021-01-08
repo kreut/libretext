@@ -78,7 +78,7 @@ class SubmissionTextController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = 'Your text submission was saved.';
-            $response['last_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
+            $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
                 $user->time_zone, 'M d, Y g:i:s a');
             $log = new \App\Log();
             $request->action = 'submit-question-text';
