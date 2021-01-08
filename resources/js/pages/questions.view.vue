@@ -1,5 +1,6 @@
 <template>
   <div style="min-height:400px; margin-bottom:100px">
+    <ckeditor v-model="editorData" :config="editorConfig" />
     <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
@@ -705,15 +706,31 @@ import Email from '~/components/Email'
 import Scores from '~/components/Scores'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import { getScoresSummary } from '~/helpers/Scores'
+import CKEditor from 'ckeditor4-vue'
 
 export default {
   middleware: 'auth',
   components: {
     EnrollInCourse,
     Scores,
-    Email
+    Email,
+    ckeditor: CKEditor.component
   },
   data: () => ({
+    editorData: '<p>Content of the editor.</p>',
+    editorConfig: {
+      toolbar: [
+        { name: 'clipboard', items: [ 'Cut', 'Copy', 'Paste', 'PasteText', 'PasteFromWord', '-', 'Undo', 'Redo' ] },
+        { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] },
+        { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Outdent', 'Indent', '-', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
+        { name: 'links', items: [ 'Link', 'Unlink' ] },
+        { name: 'insert', items: [ 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar' ] },
+        '/',
+        { name: 'styles', items: [ 'Styles', 'Format', 'Font', 'FontSize' ] },
+        { name: 'colors', items: [ 'TextColor', 'BGColor' ] }
+      ],
+      removeButtons: ''
+    },
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
