@@ -70,22 +70,20 @@
           </b-form-group>
           <hr>
           <div v-if="!showNoFileSubmissionsExistAlert">
-            <div v-show="type === 'question'">
-              <div class="text-center h5">
-                Question
-              </div>
-              <div class="overflow-auto">
-                <b-pagination
-                  v-model="currentQuestionPage"
-                  :total-rows="submissionFiles.length"
-                  :per-page="perPage"
-                  align="center"
-                  first-number
-                  last-number
-                  limit="10"
-                  @input="changePage(currentQuestionPage)"
-                />
-              </div>
+            <div class="text-center h5">
+              Question
+            </div>
+            <div class="overflow-auto">
+              <b-pagination
+                v-model="currentQuestionPage"
+                :total-rows="submissionFiles.length"
+                :per-page="perPage"
+                align="center"
+                first-number
+                last-number
+                limit="10"
+                @input="changePage(currentQuestionPage)"
+              />
             </div>
             <div class="text-center h5">
               Student
@@ -102,7 +100,7 @@
                 @input="changePage()"
               />
             </div>
-            <div v-if="type === 'question'" class="text-center">
+            <div class="text-center">
               <h5 class="font-italic">
                 This question is out of
                 {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }} points.
@@ -329,7 +327,6 @@ export default {
     lateDeductionPercent: 0,
     isLoading: true,
     gradeView: 'allStudents',
-    type: '',
     title: '',
     loaded: true,
     viewSubmission: true,
@@ -358,7 +355,6 @@ export default {
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentNameAndLatePolicy()
-    this.type = 'question'
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
@@ -525,7 +521,7 @@ export default {
     },
     async getSubmissionFiles (gradeView) {
       try {
-        const { data } = await axios.get(`/api/submission-files/${this.type}/${this.assignmentId}/${gradeView}`)
+        const { data } = await axios.get(`/api/submission-files/${this.assignmentId}/${gradeView}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false

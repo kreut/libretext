@@ -422,17 +422,7 @@ export default {
         this.$noty.info('If you would like students to upload files as part of the assignment, please edit this assignment.')
         return false
       }
-      let type
-      switch (submissionFiles) {
-        case ('q'):
-          type = 'question'
-          break
-        case ('a'):
-          type = 'assignment'
-          break
-      }
-
-      this.$router.push(`/assignments/${assignmentId}/${type}-files`)
+      this.$router.push(`/assignments/${assignmentId}/grading`)
     },
     async handleDeleteAssignment () {
       try {

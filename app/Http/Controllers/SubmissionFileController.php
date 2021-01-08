@@ -36,7 +36,7 @@ class SubmissionFileController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
-    public function getSubmissionFilesByAssignment(Request $request, string $type, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
+    public function getSubmissionFilesByAssignment(Request $request, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
     {
 
         $response['type'] = 'error';
@@ -50,17 +50,8 @@ class SubmissionFileController extends Controller
 
         try {
 
-            switch ($type) {
-                case('assignment'):
-                    $user_and_submission_file_info = $submissionFile->getUserAndAssignmentFileInfo($assignment, $gradeView);
-
-                    break;
-                case('question'):
-                    $user_and_submission_file_info = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $assignment->course->enrolledUsers);
-            }
-
             $response['type'] = 'success';
-            $response['user_and_submission_file_info'] = $user_and_submission_file_info;
+            $response['user_and_submission_file_info'] = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $assignment->course->enrolledUsers);
 
         } catch (Exception $e) {
             $h = new Handler(app());
