@@ -643,7 +643,7 @@ class AssignmentSyncQuestionController extends Controller
                             ? $this->computeZScore($submission_files_score, $mean_and_std_dev_by_submission_files[$question->id])
                             : 'N/A';
                     }
-                    if ($assignment->solutions_released) {
+                    if ($assignment->show_scores) {
                         $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
                         $assignment->questions[$key]['file_feedback'] = $formatted_submission_file_info['file_feedback'];
                         $assignment->questions[$key]['text_feedback'] = $formatted_submission_file_info['text_feedback'];
