@@ -16,6 +16,15 @@ class GraderPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+
+    public function store(User $user, Grader $Grader)
+    {
+        return (int) $user->role === 4
+            ? Response::allow()
+            : Response::deny('You are not allowed to add yourself to a course.');
+    }
+
+
     public function getGraders(User $user, Grader $Grader, Course $course)
     {
         return $this->ownsCourseByUser($course, $user)

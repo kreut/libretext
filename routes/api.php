@@ -194,8 +194,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/invitations/{course}', 'InvitationController@emailInvitation');
 
-    Route::get('/grader/{course}', 'GraderController@getGradersByCourse');
-    Route::delete('/grader/{course}/{user}', 'GraderController@removeGraderFromCourse');
+    Route::post('/graders/', 'GraderController@store');
+    Route::get('/graders/{course}', 'GraderController@getGradersByCourse');
+    Route::delete('/graders/{course}/{user}', 'GraderController@removeGraderFromCourse');
 
 
 });

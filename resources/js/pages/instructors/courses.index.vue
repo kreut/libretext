@@ -35,6 +35,43 @@
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
     </b-modal>
+
+    <div v-if="user && user.role === 4">
+      <div v-if="canViewCourses" class="row mb-4 float-right">
+        <b-button v-b-modal.modal-course-grader-access-code variant="primary">
+          Add Course
+        </b-button>
+      </div>
+    </div>
+
+    <b-modal
+      id="modal-course-grader-access-code"
+      ref="modal"
+      ok-title="Submit"
+      title="Enroll as Grader"
+      @ok="submitAddGraderToCourse"
+    >
+      <b-form ref="form">
+        <p>To become a course grader, please provide the course access code given to you by your instructor.</p>
+        <b-form-group
+          id="access_code"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Access Code"
+          label-for="access_code"
+        >
+          <b-form-input
+            id="access_code"
+            v-model="graderForm.access_code"
+            type="text"
+            :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
+            @keydown="graderForm.errors.clear('access_code')"
+          />
+          <has-error :form="graderForm" field="access_code" />
+        </b-form-group>
+      </b-form>
+    </b-modal>
+
     <div v-if="hasCourses">
       <b-table striped hover
                :fields="fields"
@@ -134,6 +171,9 @@ export default {
     showNoCoursesAlert: false,
     canViewCourses: false,
     modalHidden: false,
+    graderForm: new Form({
+      access_code: ''
+    }),
     newCourseForm: new Form({
       name: '',
       start_date: '',
@@ -149,6 +189,20 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async submitAddGraderToCourse (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const { data } = await this.graderForm.post('/api/graders')
+        if (data.type === 'success') {
+          this.$noty[data.type](data.message)
+          this.resetAll('modal-course-grader-access-code')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     async createCourse () {
       try {
         const { data } = await this.newCourseForm.post('/api/courses')

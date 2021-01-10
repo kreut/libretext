@@ -93,7 +93,7 @@ export default {
     async inviteGrader (courseId) {
       this.courseId = courseId
       try {
-        const { data } = await axios.get(`/api/grader/${this.courseId}`)
+        const { data } = await axios.get(`/api/graders/${this.courseId}`)
         this.graders = data.graders
         console.log(data)
         if (data.type === 'error') {
@@ -106,7 +106,7 @@ export default {
     },
     async deleteGrader (userId) {
       try {
-        const { data } = await axios.delete(`/api/grader/${this.courseId}/${userId}`)
+        const { data } = await axios.delete(`/api/graders/${this.courseId}/${userId}`)
 
         if (data.type === 'error') {
           this.$noty.error('We were not able to remove the grader from the course.  Please try again or contact us for assistance.')
