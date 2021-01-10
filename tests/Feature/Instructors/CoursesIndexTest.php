@@ -3,6 +3,7 @@
 namespace Tests\Feature\Instructors;
 
 use App\CourseAccessCode;
+use App\GraderAccessCode;
 use App\User;
 use App\Course;
 use App\Grader;
@@ -19,32 +20,73 @@ class CoursesIndexTest extends TestCase
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
+        $this->course_3 = factory(Course::class)->create(['user_id' => $this->user->id]);
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
         Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
         Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course_2->id]);
-
-    }
-/** @test */
-    public function owner_can_refresh_course_access_code(){
+        GraderAccessCode::create(['course_id' => $this->course_3->id, 'access_code' => 'sdfsdOlwf']);
 
     }
 
     /** @test */
-    public function non_owner_cannot_refresh_course_access_code(){
+    public function grader_access_code_must_be_valid()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/graders",
+            ['access_code' => 'some access_code'])
+            ->assertJsonValidationErrors(['access_code']);
 
     }
 
     /** @test */
-    public function owner_can_remove_a_grader_from_a_course(){
+    public function only_graders_can_add_themselves_to_courses()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/graders",
+            ['access_code' => 'sdfsdOlwf'])
+            ->assertJson(['message' => 'You are not allowed to add yourself to a course.']);
 
     }
 
     /** @test */
-    public function non_owner_cannot_remove_a_grader_from_a_course(){
+    public function a_grader_with_a_valid_access_code_can_add_themselves_to_a_cousre()
+    {
+
+        $this->course_3->name = "New Grader Course";
+        $this->course_3->save();
+        $this->actingAs($this->grader_user)->postJson("/api/graders",
+            ['access_code' => 'sdfsdOlwf'])
+            ->assertJson(['message' => 'You have been added as a grader to <strong>New Grader Course</strong>.']);
 
     }
+
+
+    /** @test */
+    public function owner_can_refresh_course_access_code()
+    {
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_refresh_course_access_code()
+    {
+
+    }
+
+    /** @test */
+    public function owner_can_remove_a_grader_from_a_course()
+    {
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_remove_a_grader_from_a_course()
+    {
+
+    }
+
     /** @test */
     public function user_cannot_email_grader_invitation_without_a_valid_email()
     {
@@ -107,9 +149,11 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to view courses.']);
 
     }
+
     /** @test */
 
-    public function correctly_handles_different_timezones() {
+    public function correctly_handles_different_timezones()
+    {
 
     }
 
