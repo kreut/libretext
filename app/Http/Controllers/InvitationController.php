@@ -42,7 +42,8 @@ class InvitationController extends Controller
             $instructor_info = ['instructor' => "{$instructor->first_name} {$instructor->last_name}" ,
                 'course' => $course->name,
                 'access_code' => $access_code,
-                'link' => request()->getSchemeAndHttpHost() . '/register/grader'];
+                'login_link' => request()->getSchemeAndHttpHost() . '/login',
+                'signup_link' => request()->getSchemeAndHttpHost() . '/register/grader'];
 
             $beautymail->send('emails.grader_invitation', $instructor_info, function($message)
             use ($to_email) {
