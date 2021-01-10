@@ -248,40 +248,14 @@ class SubmissionFileController extends Controller
                 }
             }
 
-            if (!in_array($upload_level, ['question', 'assignment'])) {
-                $response['message'] = 'That is not a valid type of submission file.';
-                return $response;
-            }
+            $latest_submission = DB::table('submission_files')
+                ->where('type', 'q') //not needed but for completeness
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->where('user_id', $user_id)
+                ->select('upload_count')
+                ->first();
 
-            if ($upload_level === 'question') {
-                $question_is_in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment_id)
-                    ->where('question_id', $question_id)
-                    ->get()
-                    ->isNotEmpty();
-                if (!$question_is_in_assignment) {
-                    $response['message'] = 'That question is not in the assignment.';
-                    return $response;
-                }
-
-            }
-            switch ($upload_level) {
-                case('assignment'):
-                    $latest_submission = DB::table('submission_files')
-                        ->where('type', 'a')
-                        ->where('assignment_id', $assignment_id)
-                        ->where('user_id', $user_id)
-                        ->first();
-                    break;
-                case('question'):
-                    $latest_submission = DB::table('submission_files')
-                        ->where('type', 'q') //not needed but for completeness
-                        ->where('assignment_id', $assignment_id)
-                        ->where('question_id', $question_id)
-                        ->where('user_id', $user_id)
-                        ->select('upload_count')
-                        ->first();
-                    break;
-            }
             $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
 
 

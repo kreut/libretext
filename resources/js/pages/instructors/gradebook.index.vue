@@ -116,6 +116,11 @@
         @hidden="resetModalForms"
       >
         <p>Please use this form to either provide an extension for your student or an override score.</p>
+        <div v-if="extensionWarning">
+          <b-alert variant="info" show>
+            <span class="font-weight-bold">{{ extensionWarning }}</span>
+          </b-alert>
+        </div>
         <b-form ref="form" @submit="updateExtensionOrOverrideByStudent">
           <b-form-group
             id="extension"
@@ -198,6 +203,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    extensionWarning: '',
     weightedAverageAssignmentId: 0,
     extraCreditAssignmentId: 0,
     isLoading: true,
@@ -336,6 +342,7 @@ export default {
           this.form.extension_date = data.extension_date
           this.form.extension_time = data.extension_time
         }
+        this.extensionWarning = data.extension_warning
       } else {
         this.$noty.error(data.message)
         return false

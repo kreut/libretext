@@ -43,7 +43,11 @@ class AssignmentController extends Controller
             $solutions_released = !$solutionsReleased ? 'released' : 'hidden';
             $response['type'] = !$solutionsReleased ? 'success' : 'info';
 
-            $response['message'] = "The solutions have been <strong>{$solutions_released}</strong>.";
+            $response['message'] = "The solutions have been <strong>{$solutions_released}</strong>.  ";
+            if (!$solutionsReleased) {
+                $response['message'] .= $this->getActiveExtensionMessage($assignment, 'solution');
+            }
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -92,13 +96,35 @@ class AssignmentController extends Controller
             $assignment->update(['show_scores' => !$showScores]);
             $response['type'] = !$showScores ? 'success' : 'info';
             $scores_released = !$showScores ? 'can' : 'cannot';
-            $response['message'] = "Your students <strong>{$scores_released}</strong> view their scores.";
+            $response['message'] = "Your students <strong>{$scores_released}</strong> view their scores.  ";
+            if (!$showScores) {
+                $response['message'] .= $this->getActiveExtensionMessage($assignment, 'score');
+            }
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param string $type
+     * @return string
+     */
+    public function getActiveExtensionMessage(Assignment $assignment, string $type)
+    {
+
+        if ($assignment->extensions->isNotEmpty()) {
+            foreach ($assignment->extensions as $key => $value) {
+                if (time() < strtotime($value->extension)) {
+                    $type_message = ($type === 'score') ? "other students' scores and grader comments" : "the solutions";
+                    return "<br><br>Please note that at least one of your students has an active extension and they can potentially view {$type_message}.";
+                }
+            }
+        }
+        return '';
     }
 
     public function showPointsPerQuestion(Request $request, Assignment $assignment, int $showPointsPerQuestion)
@@ -644,7 +670,7 @@ class AssignmentController extends Controller
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
-            $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType( $request, $data);
+            $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
 
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);

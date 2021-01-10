@@ -472,7 +472,6 @@ export default {
     async changePage () {
       console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
-      this.scoreForm.score = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['score']
 
       this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
       this.isOpenEndedFileSubmission = (this.openEndedType === 'file')

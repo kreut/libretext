@@ -25,12 +25,12 @@ class SubmissionTextController extends Controller
 
     public function storeSubmissionText(Request $request, SubmissionFile $submissionFile, Submission $submission)
     {
+
         $response['type'] = 'error';
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $assignment = Assignment::find($assignment_id);
         $user = Auth::user();
-
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment_id, $question_id]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -45,9 +45,8 @@ class SubmissionTextController extends Controller
                     return $response;
                 }
             }
-            if ($request->text_submission === '') {
-
-                $response['message'] = "You did not submit anything.";
+            if (!$request->text_submission) {
+                $response['message'] = "You did not submit any text.";
                 return $response;
             }
             $now = Carbon::now();

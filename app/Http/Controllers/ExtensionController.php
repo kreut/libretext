@@ -21,10 +21,12 @@ class ExtensionController extends Controller
 
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param StoreExtension $request
+     * @param Assignment $assignment
+     * @param User $user
+     * @param Extension $extension
+     * @return array
+     * @throws Exception
      */
     public function store(StoreExtension $request, Assignment $assignment, User $user, Extension $extension)
     {
@@ -45,7 +47,7 @@ class ExtensionController extends Controller
             $data = $request->validated();
 
             Extension::updateOrCreate(
-                [ 'user_id' => $user->id, 'assignment_id' => $assignment->id],
+                ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['extension' => $this->convertLocalMysqlFormattedDateToUTC($data['extension_date'] . ' ' . $data['extension_time'], Auth::user()->time_zone)]
             );
 
@@ -61,10 +63,12 @@ class ExtensionController extends Controller
     }
 
     /**
-     * Display the specified resource.
-     *
-     * @param \App\Extension $extension
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param User $user
+     * @param Extension $extension
+     * @return array
+     * @throws Exception
      */
     public function show(Request $request, Assignment $assignment, User $user, Extension $extension)
     {
@@ -84,6 +88,16 @@ class ExtensionController extends Controller
             $response['type'] = 'success';
             $response['extension_date'] = '';
             $response['extension_time'] = '';
+            $response['extension_warning'] = '';
+            if ($assignment->show_scores) {
+                $response['extension_warning'] .= "The assignment scores have been released.  ";
+            }
+            if ($assignment->solutions_released) {
+                $response['extension_warning'] .= "The assignment solutions are available.";
+            }
+            if ($response['extension_warning']) {
+                $response['extension_warning'] = "Before providing an extension please note that:  " . $response['extension_warning'];
+            }
             if ($extension) {
                 $response['extension_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($extension->extension, Auth::user()->time_zone);
                 $response['extension_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($extension->extension, Auth::user()->time_zone);

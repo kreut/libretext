@@ -29,8 +29,8 @@ class QuestionsViewTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
+        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id, 'solutions_released' => 0]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
         $this->question_points = 10;
@@ -49,7 +49,7 @@ class QuestionsViewTest extends TestCase
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
-        $this->cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
+        $cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
 
         $this->student_user_2 = factory(User::class)->create();
@@ -60,7 +60,7 @@ class QuestionsViewTest extends TestCase
 
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
-            'course_id' => $this->course->id
+            'course_id' => $course->id
         ]);
         $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
         $this->h5pSubmission = [
@@ -70,6 +70,74 @@ class QuestionsViewTest extends TestCase
             'submission' => $this->submission_object
         ];
     }
+
+
+    /** @test */
+    public function student_cannot_submit_text_if_it_was_graded()
+    {
+
+        SubmissionFile::create( ['assignment_id'=> $this->assignment->id,
+            'question_id'=> $this->question->id,
+            'user_id'=> $this->student_user->id,
+            'type' => 'text',
+            'original_filename'=>'',
+            'submission' => 'some text',
+            'date_submitted' => Carbon::now()]);
+        DB::table('submission_files')->where( 'assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->where('user_id', $this->student_user->id)
+            ->update(['date_graded' => Carbon::now()]);
+
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
+                'questionId' => $this->question->id,
+                'assignmentId' => $this->assignment->id,
+                'text_submission' => 'Some other cool text after it was graded.']
+        )->assertJson(['message' => 'Your submission has already been graded and may not be re-submitted.']);
+
+    }
+    public function student_can_submit_text()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
+                'questionId' => $this->question->id,
+                'assignmentId' => $this->assignment->id,
+                'text_submission' => 'Here is my cool text.']
+        )->assertJson(['message' => 'Your text submission was saved.']);
+    }
+
+
+
+
+    /** @test */
+    public function must_contain_text_when_submitting()
+    {
+
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
+                'questionId' => $this->question->id,
+                'assignmentId' => $this->assignment->id,
+                'text_submission' => '']
+        )->assertJson(['message' => 'You did not submit any text.']);
+
+    }
+
+
+/** @test */
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension_even_if_solutions_are_released()
+    {
+        $this->assignment->due = "2001-03-05 09:00:00";
+        $this->assignment->assessment_type = 'delayed';
+        $this->assignment->show_scores = false;
+        $this->assignment->solutions_released = true;
+        $this->assignment->save();
+
+        Extension::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'extension' => '2027-01-01 09:00:00']);
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['type' => 'success']);
+
+    }
+
 
     /** @test */
 
@@ -193,7 +261,6 @@ class QuestionsViewTest extends TestCase
             Submission::create($data);
         }
     }
-
 
 
     /** @test */
@@ -828,8 +895,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'That question is not part of the assignment so you cannot download the solutions.']);
 
     }
-
-
 
 
     /** @test */

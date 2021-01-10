@@ -7,6 +7,7 @@ use App\FinalGrade;
 use App\Grader;
 use App\User;
 use App\Assignment;
+use App\Extension;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -27,6 +28,9 @@ class AssignmentsIndex1Test extends TestCase
         $this->user_2 = factory(User::class)->create();
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
         $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course_2->id]);
+
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
@@ -55,6 +59,35 @@ class AssignmentsIndex1Test extends TestCase
             'assignment_group_id' => 1];
 
     }
+
+    /** @test */
+
+    public function an_owner_is_warned_before_showing_scores_if_there_is_an_active_extension()
+    {
+      Extension::create(['user_id' => $this->student_user->id,
+          'assignment_id' => $this->assignment->id,
+          'extension' => '2040-01-01 00:00:00']);
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
+            ->assertJson(['message' => "Your students <strong>can</strong> view their scores.  <br><br>Please note that at least one of your students has an active extension and they can potentially view other students' scores and grader comments."]);
+
+    }
+
+    /** @test */
+
+    public function an_owner_is_warned_before_releasing_solutions_if_there_is_an_active_extension()
+    {
+        Extension::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'extension' => '2040-01-01 00:00:00']);
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
+            ->assertJson(['message' => "The solutions have been <strong>released</strong>.  <br><br>Please note that at least one of your students has an active extension and they can potentially view the solutions."]);
+
+    }
+
+
+
     /** @test */
     public function non_owner_cannot_toggle_showing_assignments()
     {
@@ -269,7 +302,7 @@ class AssignmentsIndex1Test extends TestCase
     {
         $this->actingAs($this->grader_user)
             ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.']);
+            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.  ']);
     }
 
     /** @test */
@@ -278,7 +311,7 @@ class AssignmentsIndex1Test extends TestCase
     {
         $this->actingAs($this->grader_user)
             ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.']);
+            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.  ']);
     }
 
 
@@ -302,7 +335,7 @@ class AssignmentsIndex1Test extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
-            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.']);
+            ->assertJson(['message' => 'Your students <strong>can</strong> view their scores.  ']);
     }
 
     /** @test */
@@ -311,7 +344,7 @@ class AssignmentsIndex1Test extends TestCase
     {
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/solutions-released/0")
-            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.']);
+            ->assertJson(['message' => 'The solutions have been <strong>released</strong>.  ']);
     }
 
     /** @test * */

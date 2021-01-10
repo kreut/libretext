@@ -51,6 +51,29 @@ class ScoresIndexTest extends TestCase
     }
 
     /** @test */
+    public function owner_is_warned_when_creating_an_extension_if_scores_are_shown()
+    {
+        $this->createExtensionForTesting();
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+        $this->actingAs($this->user)->getJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}")
+            ->assertJson(['extension_warning' => 'Before providing an extension please note that:  The assignment scores have been released.  ']);
+    }
+
+    /** @test */
+    public function owner_is_warned_when_creating_an_extension_if_solutions_are_released()
+    {
+        $this->createExtensionForTesting();
+        $this->assignment->solutions_released = 1;
+        $this->assignment->save();
+        $this->actingAs($this->user)->getJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}")
+            ->assertJson(['extension_warning' => 'Before providing an extension please note that:  The assignment solutions are available.']);
+    }
+
+
+
+
+    /** @test */
 
     public function instructors_can_log_in_as_students_in_their_courses()
     {
@@ -260,7 +283,7 @@ class ScoresIndexTest extends TestCase
 
     }
 
-    public function creatExtensionForTesting()
+    public function createExtensionForTesting()
     {
         //create an extension
         return factory(Extension::class)->create([
@@ -273,7 +296,7 @@ class ScoresIndexTest extends TestCase
     /** @test */
     public function can_get_extension_if_owner()
     {
-        $this->creatExtensionForTesting();
+        $this->createExtensionForTesting();
         $this->actingAs($this->user)->getJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}")
             ->assertJson(['type' => 'success']);
     }
@@ -281,7 +304,7 @@ class ScoresIndexTest extends TestCase
     /** @test */
     public function cannot_get_extension_for_student_if_not_owner()
     {
-        $this->creatExtensionForTesting();
+        $this->createExtensionForTesting();
         $this->actingAs($this->user_2)->getJson("/api/extensions/{$this->assignment->id}/{$this->student_user->id}")
             ->assertJson(['type' => 'error',
                 'message' => 'You are not allowed to view this extension.']);
