@@ -65,7 +65,21 @@ class Assignment extends Model
         return collect($learningTrees);
     }
 
+public function idByCourseAssignmentUser($assignment_course_as_string) {
+    $assignment_course_info = explode(' --- ', $assignment_course_as_string);
+    if (!isset($assignment_course_info[1])){
+        return false;
+    }
+    $assignment = DB::table('assignments')
+        ->join('courses', 'assignments.course_id', '=', 'courses.id')
+        ->where('courses.name',$assignment_course_info[0])
+        ->where('assignments.name', $assignment_course_info[1])
+        ->where('courses.user_id', request()->user()->id)
+        ->select('assignments.id')
+        ->first();
+  return $assignment ? $assignment->id : false;
 
+}
     public function submissions()
     {
         return $this->hasMany('App\Submission');

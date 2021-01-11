@@ -117,6 +117,21 @@ class CoursePolicy
             : Response::deny('You are not allowed to create assignments for this course.');
     }
 
+    /**
+     * Determine whether the user can view the course.
+     *
+     * @param \App\User $user
+     * @param \App\Course $course
+     * @return mixed
+     */
+    public function importAssignment(User $user, Course $course)
+    {
+        return $this->ownsCourseByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to import assignments to this course.');
+    }
+
+
 
     /**
      * Determine whether the user can create courses.

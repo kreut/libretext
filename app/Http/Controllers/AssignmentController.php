@@ -27,6 +27,109 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
+    public function importAssignment(Request $request, Course $course, Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $course_assignment = $request->course_assignment;
+        $level = $request->level;
+
+        $authorized = Gate::inspect('importAssignment', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
+        $assignment_id = $assignment->idByCourseAssignmentUser($course_assignment);
+        if (!$assignment_id) {
+            $response['message'] = "That is not an assignment from one of your courses.";
+            return $response;
+        }
+
+        if (!in_array($level, ['properties_and_questions', 'properties'])) {
+            $response['message'] = "You should either choose 'properties and questions' or just 'properties'.";
+            return $response;
+
+        }
+
+        try {
+
+            $assignment_id = $assignment->idByCourseAssignmentUser($course_assignment);
+            $assignment = Assignment::find($assignment_id);
+
+            DB::beginTransaction();
+            $imported_assignment = $assignment->replicate();
+            $imported_assignment->name = "$imported_assignment->name Import";
+            $imported_assignment->course_id = $course->id;
+            $imported_assignment->save();
+            if ($level === 'properties_and_questions') {
+                $assignment_questions = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment_id)
+                    ->get();
+                foreach ($assignment_questions as $key => $assignment_question) {
+                    $assignment_question->assignment_id = $imported_assignment->id;
+                    //add each question
+                    $assignment_question_array = json_decode(json_encode($assignment_question), true);
+                    unset($assignment_question_array['id']);
+                    $new_assignment_id = DB::table('assignment_question')->insertGetId($assignment_question_array);
+                    //add the learning tree associated with the question
+                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                        ->where('assignment_question_id', $assignment_question->id)
+                        ->first();
+                    if ($assignment_question_learning_tree) {
+                        $assignment_question_learning_tree = $assignment_question_learning_tree->toArray();
+                        $assignment_question_learning_tree['assignment_question_id'] = $new_assignment_id;
+                        unset($assignment_question_learning_tree['id']);
+                        DB::table('assignment_question')->insert($assignment_question_learning_tree);
+                    }
+                }
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = ($level === 'properties_and_questions')
+                ? "<strong>$imported_assignment->name</strong> and its questions have been imported.</br></br>Don't forget to change the dates associated with this assignment."
+                : "<strong>$imported_assignment->name</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment.";
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error importing the assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    public function getImportableAssignmentsByUser(Request $request, Course $course)
+    {
+
+        $response['type'] = 'error';
+
+        try {
+
+            $assignments_by_user = DB::table('assignments')
+                ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                ->select(DB::raw('assignments.id AS assignment_id, courses.name AS course_name, assignments.name AS assignment_name'))
+                ->where('courses.user_id', $request->user()->id)
+                ->where('courses.id', '<>', $course->id)//don't get them for this course
+                ->get();
+            $assignments = [];
+
+            foreach ($assignments_by_user as $key => $value) {
+                $assignments[] = "$value->course_name --- $value->assignment_name";
+            }
+            $response['all_assignments'] = $assignments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your assignments.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public function createAssignmentFromTemplate(Request $request, Assignment $assignment)
     {
 
@@ -48,11 +151,9 @@ class AssignmentController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating an assignment from {$assignment->name}.  Please try again or contact us for assistance.";
         }
         return $response;
-
-
     }
 
     public function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)

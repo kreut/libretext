@@ -11,6 +11,39 @@
                background="#FFFFFF"
       />
       <AssignmentProperties ref="assignmentProperties" :course-id="parseInt(courseId)" />
+
+      <b-modal
+        id="modal-import-assignment"
+        ref="modal"
+        title="Import Assignment"
+        ok-title="Yes, import assignment!"
+        @ok="handleImportAssignment"
+      >
+        <b-form-group
+          id="import_level"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Import Level"
+          label-for="Import Level"
+        >
+          <b-form-radio-group v-model="importAssignmentForm.level" stacked>
+            <b-form-radio value="properties_and_questions">
+              Properties and questions
+            </b-form-radio>
+            <b-form-radio value="just_properties">
+              Just the properties
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
+        <vue-bootstrap-typeahead
+          ref="queryTypeahead"
+          v-model="importAssignmentForm.course_assignment"
+          :data="allAssignments"
+          placeholder="Enter an assignment from one of your courses"
+        />
+      </b-modal>
+
       <b-modal
         id="modal-delete-assignment"
         ref="modal"
@@ -25,12 +58,23 @@
       <b-container>
         <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
           <b-button v-if="(user && user.role === 2)"
-                    class="mr-1" variant="primary"
+                    class="mr-1"
+                    size="sm"
+                    variant="primary"
                     @click="initAddAssignment"
           >
             Add Assignment
           </b-button>
+          <b-button v-if="(user && user.role === 2)"
+                    class="mr-1"
+                    size="sm"
+                    variant="outline-primary"
+                    @click="initImportAssignment"
+          >
+            Import Assignment
+          </b-button>
           <b-button class="mr-1"
+                    size="sm"
                     @click="getGradeBook()"
           >
             Gradebook
@@ -210,7 +254,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { isLocked, getAssignments } from '~/helpers/Assignments'
 
 import AssignmentProperties from '~/components/AssignmentProperties'
@@ -222,12 +266,18 @@ export default {
   components: {
     ToggleButton,
     Loading,
-    AssignmentProperties
+    AssignmentProperties,
+    VueBootstrapTypeahead
   },
   data: () => ({
+    importAssignmentForm: new Form({
+      course_assignment: '',
+      level: 'properties_and_questions'
+    }),
     assignmentGroupForm: new Form({
       assignment_group: ''
     }),
+    allAssignments: [],
     title: '',
     assessmentType: '',
     isLoading: false,
@@ -319,6 +369,33 @@ export default {
     }
   },
   methods: {
+    async handleImportAssignment (bvEvt) {
+      bvEvt.preventDefault()
+      try {
+        const { data } = await axios.post(`/api/assignments/import/${this.courseId}`, this.importAssignmentForm)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.getAssignments()
+        this.$bvModal.hide('modal-import-assignment')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async initImportAssignment () {
+      try {
+        const { data } = await axios.get(`/api/assignments/importable-by-user/${this.courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.allAssignments = data.all_assignments
+        this.$bvModal.show('modal-import-assignment')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async createAssignmentFromTemplate (assignmentId) {
       try {
         const { data } = await axios.post(`/api/assignments/${assignmentId}/create-assignment-from-template`)
