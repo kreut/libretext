@@ -149,7 +149,7 @@
         </div>
       </b-form>
     </b-modal>
-    <div v-if="questionId" class="text-center">
+    <div v-if="inIFrame" class="text-center">
       <h5 v-if="(questions !==['init']) && canView">
         {{ name }}: Assessment {{ currentPage }} of {{ questions.length }}
       </h5>
@@ -319,7 +319,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
-            v-if="!questionId"
+            v-if="!inIFrame"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
@@ -708,6 +708,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    inIFrame: false,
     editorData: '<p>Content of the editor.</p>',
     editorConfig: {
       toolbar: [
@@ -826,6 +827,11 @@ export default {
     }
   },
   created () {
+    try {
+      this.inIFrame = window.self !== window.top
+    } catch (e) {
+      this.inIFrame = true
+    }
     h5pResizer()
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes

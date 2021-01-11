@@ -104,21 +104,15 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['open_ended_submission_type'] = $value->open_ended_submission_type;
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
-                $columns['question_id'] = "Q$i";
+                $columns['question_number'] = "Q$i";
+                $columns['question_id'] = $value->question_id;
                 $rows[] = $columns;
                 $i++;
             }
 
-
-            $fields = [['key' => 'question_id',
-                'label' => 'Question'],
-                ['key' => 'open_ended_submission_type',
-                    'name' => 'Open Ended Submission Type'
-                ], 'points', 'solution'];
-
             $response['type'] = 'success';
             $response['rows'] = $rows;
-            $response['fields'] = $fields;
+
 
         } catch (Exception $e) {
             $h = new Handler(app());

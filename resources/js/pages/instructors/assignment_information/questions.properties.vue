@@ -18,7 +18,13 @@
             :no-border-collapse="true"
             :fields="fields"
             :items="items"
-          />
+          >
+            <template v-slot:cell(question_number)="data">
+              <div class="mb-0">
+                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">{{ data.item.question_number }}</a>
+              </div>
+            </template>
+          </b-table>
         </div>
         <div v-else>
           <b-alert variant="warning" show>
@@ -42,7 +48,19 @@ export default {
     Loading
   },
   data: () => ({
-    fields: [],
+
+    fields: [
+      {
+        key: 'question_number',
+        label: 'Question'
+      },
+      {
+        key: 'open_ended_submission_type',
+        label: 'Open Ended Submission Type'
+      },
+      'points',
+      'solution'
+    ],
     items: [],
     isLoading: true
   }),
@@ -58,6 +76,10 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
+    viewQuestion (questionId) {
+      this.$router.push({ path: `/assignments/${this.assignmentId}/questions/view/${questionId}` })
+      return false
+    },
     async getAssignmentInfo () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
@@ -66,7 +88,6 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.fields = data.fields
         this.items = data.rows
         console.log(data)
       } catch (error) {
