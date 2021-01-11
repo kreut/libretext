@@ -19,7 +19,7 @@ class UserPolicy
     }
 
     private function isAdmin($user){
-        $admins = ['kreut@hotmail.com', 'adapt@libretexts.org'];
+        $admins = ['kreut@hotmail.com', 'adapt@libretexts.org','dlarsen@ucdavis.edu'];
         if ( in_array(env('APP_ENV')  ,['local','testing'])){
             $admins[] = 'me@me.com';
         }
