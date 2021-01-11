@@ -54,7 +54,7 @@ class EmailController extends Controller
         try {
             if ($type === 'contact_grader') {
                 $student_user_id = Auth::user()->id;
-                $link = $request->getSchemeAndHttpHost() . "/assignments/grading/$assignment_id/$question_id/$student_user_id";
+                $link = $request->getSchemeAndHttpHost() . "/assignments/$assignment_id/grading/$question_id/$student_user_id";
                 Mail::to($to_email)
                     ->send(new \App\Mail\ContactGrader($data['subject'], $data['text'], $data['email'], $data['name'], $link));
             } else {

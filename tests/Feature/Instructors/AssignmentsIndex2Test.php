@@ -5,10 +5,12 @@ namespace Tests\Feature\Instructors;
 use App\Course;
 use App\FinalGrade;
 use App\Grader;
+use App\Question;
 use App\User;
 use App\Assignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class AssignmentsIndex2Test extends TestCase
@@ -23,6 +25,13 @@ class AssignmentsIndex2Test extends TestCase
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->question = factory(Question::class)->create(['page_id' => 1]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => $this->question_points,
+            'open_ended_submission_type' => 'file'
+        ]);
 
         $this->user_2 = factory(User::class)->create();
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
@@ -57,10 +66,41 @@ class AssignmentsIndex2Test extends TestCase
             'assignment_group_id' => 1];
     }
 
+/** @test */
 
+public function non_owner_of_assignment_cannot_import_it_to_their_course(){
+   // $this->import_info = ['']
+    //`/api/assignments/import/${this.courseId}`, this.importAssignmentForm)
+
+
+}
+
+/** @test */
+
+    public function owner_of_assignment_can_import_just_properties(){
+
+
+
+    }
 
     /** @test */
-    public function nonowner_of_assignment_cannot_create_it_from_template()
+
+    public function owner_of_assignment_can_import_properties_and_questions(){
+
+
+
+    }
+
+    /** @test */
+
+    public function owner_of_assignment_can_import_properties_and_learning_trees(){
+
+
+
+    }
+
+    /** @test */
+    public function non_owner_of_assignment_cannot_create_it_from_template()
     {
 
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template")
