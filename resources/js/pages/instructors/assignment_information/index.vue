@@ -2,19 +2,20 @@
   <div>
     <div v-if="[2, 4].includes(user.role)">
       <b-container>
-        <b-row align-h="end">
-          <b-button v-if="user.role === 2" class="ml-3 mb-2" variant="primary" @click="getAssessmentsForAssignment(assignmentId)">
-            Add Assessments
-          </b-button>
-          <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
-            View Assessments
-          </b-button>
-        </b-row>
         <hr>
       </b-container>
       <div class="row">
-        <div class="col-md-3">
-          <card title="Assignment Information" class="properties-card">
+        <div class="mt-2 mb-2">
+          <b-row class="ml-3">
+            <b-button v-if="user.role === 2"
+                      size="sm"
+                      variant="primary"
+                      @click="getAssessmentsForAssignment(assignmentId)"
+            >
+              Add Assessments
+            </b-button>
+          </b-row>
+          <card title="Assignment Information" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
