@@ -16,7 +16,7 @@
         <b-container>
           <b-row align-h="end" class="pb-2">
             <b-button size="sm" variant="primary" @click="initEditAssignment()">
-              Edit Assignment
+              <b-icon icon="gear" /> Edit Assignment
             </b-button>
           </b-row>
 
