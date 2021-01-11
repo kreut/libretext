@@ -60,10 +60,28 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment_id);
 
             DB::beginTransaction();
+            $assignment_group = AssignmentGroup::find($assignment->assignment_group_id);
+            $imported_assignment_group = DB::table('assignment_groups')
+                ->where('user_id', $assignment_group->user_id)
+                ->where('assignment_group', $assignment_group->assignment_group)
+                ->where('course_id', $course->id)
+                ->get();
+            if ( $imported_assignment_group->isEmpty()) {
+                $imported_assignment_group = $assignment_group->replicate();
+                $imported_assignment_group->course_id = $course->id;
+                $imported_assignment_group_id = $imported_assignment_group->save();
+            } else {
+                $imported_assignment_group_id = $assignment_group->id;
+            }
+
             $imported_assignment = $assignment->replicate();
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
+            $imported_assignment->assignment_group_id = $imported_assignment_group_id;
             $imported_assignment->save();
+
+
+
             if ($level === 'properties_and_questions') {
                 $assignment_questions = DB::table('assignment_question')
                     ->where('assignment_id', $assignment_id)
@@ -73,16 +91,17 @@ class AssignmentController extends Controller
                     //add each question
                     $assignment_question_array = json_decode(json_encode($assignment_question), true);
                     unset($assignment_question_array['id']);
-                    $new_assignment_id = DB::table('assignment_question')->insertGetId($assignment_question_array);
+                    $new_assignment_question_id = DB::table('assignment_question')->insertGetId($assignment_question_array);
                     //add the learning tree associated with the question
                     $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                         ->where('assignment_question_id', $assignment_question->id)
                         ->first();
                     if ($assignment_question_learning_tree) {
-                        $assignment_question_learning_tree = $assignment_question_learning_tree->toArray();
-                        $assignment_question_learning_tree['assignment_question_id'] = $new_assignment_id;
-                        unset($assignment_question_learning_tree['id']);
-                        DB::table('assignment_question')->insert($assignment_question_learning_tree);
+                        DB::table('assignment_question_learning_tree')->insert([
+                            'assignment_question_id'=>$new_assignment_question_id,
+                            'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
+                            'created_at' => Carbon::now(),
+                            'updated_at' => Carbon::now()]);
                     }
                 }
             }

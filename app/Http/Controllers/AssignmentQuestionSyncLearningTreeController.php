@@ -28,10 +28,10 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
             return $response;
         }
         try {
-            $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, $learningTree->root_node_library,false)[0];
+            $question_id = $Question->getQuestionIdsByPageId($learningTree->root_node_page_id, $learningTree->root_node_library, false)[0];
             $in_assignment = DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question_id)->get()->isNotEmpty();
-            if ($in_assignment){
+            if ($in_assignment) {
                 $response['message'] = 'That Learning Tree is already in the assignment.';
                 return $response;
 
@@ -42,8 +42,9 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                 ->insert([
                     'assignment_id' => $assignment->id,
                     'question_id' => $question_id,
-                    'points' => $assignment->default_points_per_question //don't need to test since tested already when creating an assignment
-                ]);
+                    'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                    'open_ended_submission_type' => 0
+            ]);
             $assignment_question_id = DB::getPdo()->lastInsertId();
             DB::table('assignment_question_learning_tree')
                 ->insert([
