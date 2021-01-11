@@ -153,7 +153,7 @@
                       icon="check2"
                     />
                   </span>
-                  <span v-if="user && user.role === 2">
+                  <span v-show="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('editAssignment',data.item.id)"
                                delay="500"
                     >
@@ -165,6 +165,7 @@
                       />
                     </span>
                     <b-tooltip :target="getTooltipTarget('createAssignmentFromTemplate',data.item.id)"
+                               triggers="hover"
                                delay="500"
                     >
                       Create Assignment From Template
