@@ -164,6 +164,16 @@
                               icon="gear"
                       />
                     </span>
+                    <b-tooltip :target="getTooltipTarget('createAssignmentFromTemplate',data.item.id)"
+                               delay="500"
+                    >
+                      Create Assignment From Template
+                    </b-tooltip>
+                    <span class="pr-1" @click="createAssignmentFromTemplate(data.item.id)">
+                      <b-icon :id="getTooltipTarget('createAssignmentFromTemplate',data.item.id)"
+                              icon="clipboard-check"
+                      />
+                    </span>
                     <b-tooltip :target="getTooltipTarget('deleteAssignment',data.item.id)"
                                delay="500"
                     >
@@ -275,7 +285,7 @@ export default {
       },
       {
         key: 'actions',
-        thStyle: 'min-width: 100px'
+        thStyle: 'min-width: 120px'
       }
     ],
     hasAssignments: false,
@@ -290,7 +300,7 @@ export default {
     this.getAssignments = getAssignments
     this.isLocked = isLocked
   },
-  async  mounted () {
+  async mounted () {
     this.courseId = this.$route.params.courseId
     this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
     this.editAssignment = this.$refs.assignmentProperties.editAssignment
@@ -308,6 +318,17 @@ export default {
     }
   },
   methods: {
+    async createAssignmentFromTemplate (assignmentId) {
+      try {
+        const { data } = await axios.post(`/api/assignments/${assignmentId}/create-assignment-from-template`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.getAssignments()
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getGradeBook () {
       this.$router.push(`/courses/${this.courseId}/gradebook`)
     },

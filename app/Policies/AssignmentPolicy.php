@@ -61,7 +61,7 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to get questions for this assignment.');
     }
 
-    /**
+   /**
      * Determine whether the user can update the assignment.
      *
      * @param \App\User $user
@@ -74,6 +74,22 @@ class AssignmentPolicy
             ? Response::allow()
             : Response::deny('You are not allowed to update this assignment.');
     }
+
+    /**
+     * Determine whether the user can update the assignment.
+     *
+     * @param \App\User $user
+     * @param \App\Assignment $assignment
+     * @return mixed
+     */
+    public function createFromTemplate(User $user, Assignment $assignment)
+    {
+        return $user->id === (int)$assignment->course->user_id
+            ? Response::allow()
+            : Response::deny("You are not allowed to create an assignment from this template.");
+    }
+
+
 
     /**
      * Determine whether the user can update the assignment.

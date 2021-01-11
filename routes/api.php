@@ -106,6 +106,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/sso/is-sso-user', 'Auth\SSOController@isSSOUser');
 
     Route::post('/assignments', 'AssignmentController@store');
+    Route::post('/assignments/{assignment}/create-assignment-from-template', 'AssignmentController@createAssignmentFromTemplate');
     Route::patch('/assignments/{assignment}/show-assignment-statistics/{showAssignmentStatistics}', 'AssignmentController@showAssignmentStatistics');
     Route::patch('/assignments/{assignment}/show-scores/{showScores}', 'AssignmentController@showScores');
     Route::patch('/assignments/{assignment}/show-points-per-question/{showPointsPerQuestion}', 'AssignmentController@showPointsPerQuestion');

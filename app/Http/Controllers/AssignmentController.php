@@ -27,6 +27,34 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
+    public function createAssignmentFromTemplate(Request $request, Assignment $assignment)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('createFromTemplate', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignments = Assignment::find($assignment->id);
+            $new_assignment = $assignments->replicate();
+            $new_assignment->name = $new_assignment->name . " copy";
+            $new_assignment->save();
+            $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error releasing the solutions to <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     public function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)
     {
 

@@ -58,6 +58,26 @@ class AssignmentsIndex2Test extends TestCase
     }
 
 
+
+    /** @test */
+    public function nonowner_of_assignment_cannot_create_it_from_template()
+    {
+
+        $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template")
+            ->assertJson(['message' => 'You are not allowed to create an assignment from this template.']);
+    }
+
+    /** @test */
+    public function owner_of_assignment_can_create_it_from_template()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template")
+            ->assertJson(['message' => "<strong>{$this->assignment->name} copy</strong> is using the same template as <strong>{$this->assignment->name}</strong>. Don't forget to add questions and update the assignment's dates."]);
+    }
+
+
+
+
     /** @test */
     public function must_include_a_valid_default_open_ended_submission_type()
     {
@@ -66,8 +86,6 @@ class AssignmentsIndex2Test extends TestCase
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJsonValidationErrors(['default_open_ended_submission_type']);
     }
-
-
 
 
     /** @test */
