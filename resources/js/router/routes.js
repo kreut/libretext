@@ -28,7 +28,7 @@ let admin_paths = [
 ]
 let general_paths  = [
   { path: '/question-in-iframe', name: 'question_in_iframe', component: page('iframe_test.vue') },
-  { path: '/assignments/:assignmentId/questions/view/:questionId?', name: 'questions.view', component: page('questions.view.vue') },
+  { path: '/assignments/:assignmentId/questions/view/:questionId?/:shownSections?', name: 'questions.view', component: page('questions.view.vue') },
   { path: '/submission', name: 'submission.index', component: page('submission.store.vue') },
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },

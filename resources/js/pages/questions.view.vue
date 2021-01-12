@@ -16,20 +16,89 @@
       ok-title="OK"
       size="xl"
     >
-      Title: <br>
-      Submission Information:<br>
-      Attribution: <br>
+      Attribution:
+      <toggle-button
+        :width="80"
+        class="mt-1"
+        :value="iFrameAttribution"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+        @change="iFrameAttribution = !iFrameAttribution;updateShare()"
+      />
+      <b-icon id="attribution-tooltip"
+              v-b-tooltip.hover
+              class="text-muted"
+              icon="question-circle"
+              title="Tooltip directive content"
+      /><b-tooltip target="attribution-tooltip" triggers="hover">
+        The attribution includes who authored the question and the license associated with the question.
+      </b-tooltip><br>
+      Submission Information:
+      <toggle-button
+        class="mt-1"
+        :width="80"
+        :value="iFrameSubmissionInformation"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+        @change="iFrameSubmissionInformation = !iFrameSubmissionInformation;updateShare()"
+      /> <b-icon id="submissionInformation-tooltip"
+                 v-b-tooltip.hover
+                 class="text-muted"
+                 icon="question-circle"
+                 title="Tooltip directive content"
+      /><b-tooltip target="submissionInformation-tooltip" triggers="hover">
+        The submission information includes when the question was submitted, the score on the question, and the last submitted.
+      </b-tooltip>
+      <br>
+      Assignment Information:
+      <toggle-button
+        class="mt-1"
+        :width="80"
+        :value="iFrameAssignmentInformation"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+        @change="iFrameAssignmentInformation = !iFrameAssignmentInformation; updateShare()"
+      />
+      <b-icon id="header-tooltip"
+              v-b-tooltip.hover
+              class="text-muted"
+              icon="question-circle"
+              title="Tooltip directive content"
+      /><b-tooltip target="assignmentInformation-tooltip" triggers="hover">
+        This information includes the name of the assignment, the question number in the assignment, and the time left in the assignment.
+      </b-tooltip>
+
       <b-table />
 
+      <span class="font-weight-bold">URL:</span> <span class="font-italic">{{ currentUrl }}</span>
+      <b-button v-clipboard:copy="currentUrl"
+                v-clipboard:success="onCopy"
+                v-clipboard:error="onError"
+                size="sm"
+                variant="outline-primary"
+      >
+        Copy
+      </b-button>
+      <br>
+      <br>
+      <span class="font-weight-bold">iFrame:</span> <span class="font-italic">{{ embedCode }}</span>
       <b-button v-clipboard:copy="embedCode"
                 v-clipboard:success="onCopy"
                 v-clipboard:error="onError"
+                size="sm"
+                variant="outline-primary"
       >
-        button
-      </b-button>
-      Url:{{ getCurrentPage() }}<br>
-      iFrame: {{ getEmbedCode() }}<br>
-      </b-button>
+        Copy
+      </b-button><br>
     </b-modal>
 
     <b-modal
@@ -270,11 +339,12 @@
                 </div>
                 <div v-if="user.role === 2" class="mt-1">
                   <b-button
-                    v-b-modal.modal-share
                     variant="info"
                     size="sm"
+                    @click="openModalShare()"
                   >
-                    <b-icon icon="share" /> Share
+                    <b-icon icon="share" />
+                    Share
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
@@ -707,6 +777,8 @@ import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
 
+import { ToggleButton } from 'vue-js-toggle-button'
+
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
@@ -726,19 +798,30 @@ export default {
     EnrollInCourse,
     Scores,
     Email,
+    ToggleButton,
     ckeditor: CKEditor.component
   },
   data: () => ({
+    shownSections: '',
+    iFrameAssignmentInformation: true,
+    iFrameSubmissionInformation: true,
+    iFrameAttribution: true,
     inIFrame: false,
     editorData: '<p>Content of the editor.</p>',
     editorConfig: {
       toolbar: [
-        { name: 'clipboard', items: [ 'Cut', 'Copy', '-', 'Undo', 'Redo' ] },
-        { name: 'basicstyles', items: [ 'Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat' ] },
-        { name: 'paragraph', items: [ 'NumberedList', 'BulletedList', '-', 'Indent', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock' ] },
-        { name: 'links', items: [ 'Link', 'Unlink' ] },
-        { name: 'insert', items: [ 'Table', 'HorizontalRule', 'Smiley', 'SpecialChar' ] },
-        { name: 'colors', items: [ 'TextColor', 'BGColor' ] }
+        { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
+        {
+          name: 'basicstyles',
+          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
+        },
+        {
+          name: 'paragraph',
+          items: ['NumberedList', 'BulletedList', '-', 'Indent', 'Blockquote', '-', 'JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock']
+        },
+        { name: 'links', items: ['Link', 'Unlink'] },
+        { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
+        { name: 'colors', items: ['TextColor', 'BGColor'] }
       ],
       removeButtons: '',
       height: 100
@@ -830,6 +913,7 @@ export default {
     learningTreeAsList_1: [],
     perPage: 1,
     currentPage: 1,
+    currentUrl: '',
     currentCutup: 1,
     questions: [],
     initializing: true, // use to show a blank screen until all is loaded
@@ -865,6 +949,7 @@ export default {
 
     this.assignmentId = this.$route.params.assignmentId
     this.questionId = this.$route.params.questionId
+    this.shownSections = this.$route.params.shownSections
     this.canView = await this.getAssignmentInfo()
     if (!this.canView) {
       return false
@@ -895,6 +980,38 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    updateShare () {
+      this.currentUrl = this.getCurrentUrl()
+      this.embedCode = this.getEmbedCode()
+    },
+    openModalShare () {
+      this.$bvModal.show('modal-share')
+      this.currentUrl = this.getCurrentUrl()
+      this.embedCode = this.getEmbedCode()
+    },
+    getEmbedCode () {
+      return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
+    },
+    getCurrentUrl () {
+      let url = `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
+      let extras = []
+      if (this.iFrameAssignmentInformation) {
+        extras.push('assignmentInformation')
+      }
+      if (this.iFrameSubmissionInformation) {
+        extras.push('submissionInformation')
+      }
+      if (this.iFrameAttribution) {
+        extras.push('attribution')
+      }
+      if (extras.length) {
+        url += '/'
+        for (let i = 0; i < extras.length; i++) {
+          url += extras[i] + '-'
+        }
+      }
+      return url.slice(0, -1)
+    },
     getInitialCurrentPage (questionId) {
       console.log('here')
       console.log(this.questions)
@@ -935,16 +1052,13 @@ export default {
       }
     },
     onCopy: function () {
-      this.$noty.success('The embed code for this assessment has been copied to your clipboard and can be pasted into your Libretext.')
+      this.$noty.success('The code to share has been copied to your clipboard.')
     },
     onError: function () {
       this.$noty.error('There was a problem copying the embed code to your clipboard.')
     },
     getWindowLocation () {
       return window.location
-    },
-    getCurrentPage () {
-      return `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
     },
     async updateExploredLearningTree () {
       try {
