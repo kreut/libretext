@@ -653,9 +653,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
 
-                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id] && $show_solution
-                    ? $solutions_by_question_id[$question->id]
-                    : false;
+                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id] ??  false;
 
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [

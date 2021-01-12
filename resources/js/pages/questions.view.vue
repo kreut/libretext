@@ -725,7 +725,6 @@ export default {
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
-    openEndedType: '',
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
@@ -853,7 +852,8 @@ export default {
     this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
-      await this.changePage(1)
+      this.currentPage = this.getInitialCurrentPage(this.questionId)
+      await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
@@ -874,8 +874,18 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    getInitialCurrentPage (questionId) {
+      console.log('here')
+      console.log(this.questions)
+      for (let i = 1; i <= this.questions.length; i++) {
+        console.log(parseInt(this.questions[i - 1].id) + '  ' + parseInt(questionId))
+        if (parseInt(this.questions[i - 1].id) === parseInt(questionId)) {
+          return i
+        }
+      }
+    },
     getOpenEndedTitle () {
-      let capitalizedTitle = this.openEndedType.charAt(0).toUpperCase() + this.openEndedType.slice(1)
+      let capitalizedTitle = this.openEndedSubmissionType.charAt(0).toUpperCase() + this.openEndedSubmissionType.slice(1)
       return `<h5>${capitalizedTitle} Submission Information</h5>`
     },
     async submitText () {
@@ -896,6 +906,9 @@ export default {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-open-ended-submission-type`, { 'open_ended_submission_type': this.openEndedSubmissionType })
         this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].open_ended_submission_type = this.openEndedSubmissionType
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -1165,10 +1178,10 @@ export default {
       console.log(this.questions[currentPage - 1])
       this.showQuestion = true
       this.showSubmissionMessage = false
-      this.openEndedType = this.questions[currentPage - 1].open_ended_submission_type
-      this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+      this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
+      this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
 
-      this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
+      this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
         this.textForm.text_submission = this.questions[currentPage - 1].submission
       }
