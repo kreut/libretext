@@ -30,7 +30,7 @@
             <b-form-radio value="properties_and_questions">
               Properties and questions
             </b-form-radio>
-            <b-form-radio value="just_properties">
+            <b-form-radio value="properties_and_not_questions">
               Just the properties
             </b-form-radio>
           </b-form-radio-group>

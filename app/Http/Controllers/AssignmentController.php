@@ -48,8 +48,8 @@ class AssignmentController extends Controller
             return $response;
         }
 
-        if (!in_array($level, ['properties_and_questions', 'properties'])) {
-            $response['message'] = "You should either choose 'properties and questions' or just 'properties'.";
+        if (!in_array($level, ['properties_and_questions', 'properties_and_not_questions'])) {
+            $response['message'] = "You should either choose 'properties and questions' or 'properties and not questions'.";
             return $response;
 
         }
@@ -541,7 +541,7 @@ class AssignmentController extends Controller
     public function getDefaultOpenEndedSubmissionType(Request $request, array $data)
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
-            return '';
+            return 0;
         } else {
             return $data['default_open_ended_submission_type'];
 
