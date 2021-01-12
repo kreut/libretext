@@ -86,12 +86,18 @@ export default {
     async finishSSORegistration () {
       try {
         const { data } = await this.form.post('/api/sso/finish-registration')
+        console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         // go to the page before the attempted login
-        this.inIFrame ? this.$router.go(-2) : redirectOnSSOCompletion(this.form.registration_type)
+        if (this.inIFrame) {
+          window.location = data.landing_page // instead of router push so that I can get the refreshed user
+          return false
+        } else {
+          redirectOnSSOCompletion(this.form.registration_type)
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)

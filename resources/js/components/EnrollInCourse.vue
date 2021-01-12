@@ -38,6 +38,7 @@
 
 <script>
 import Form from 'vform'
+import { mapGetters } from 'vuex'
 
 export default {
   props: { getEnrolledInCourses: Function },
@@ -47,7 +48,11 @@ export default {
       access_code: ''
     })
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
+    // never completed the registration in the iframe
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -94,6 +99,15 @@ export default {
         const { data } = await this.form.post('/api/enrollments')
         if (data.validated) {
           location.reload()
+        }
+        // they never finished the registration page
+        if (parseInt(this.user.role) === 0) {
+          alert('You did not complete the previous registration page.')
+          window.location = '/finish-sso-registration'
+          return false
+        }
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {

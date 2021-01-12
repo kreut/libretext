@@ -10,16 +10,19 @@ use App\Http\Requests\FinishRegistration;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+use Illuminate\Http\Request;
+
 use App\Traits\Registration;
 
 class SSOController extends Controller
 {
     use Registration;
 
-    public function completedRegistration(){
+    public function completedRegistration(Request $request){
         $roles = [2 =>'instructor', 3=>'student', 4=>'grader'];
         $registration_type = Auth::user()->role ?$roles[Auth::user()->role ] : false;
         $response['registration_type'] = $registration_type;//has some role
+        $response['landing_page'] = $request->session()->get('landing_page');
 
         return $response;
     }
@@ -46,6 +49,7 @@ class SSOController extends Controller
             }
             DB::commit();
             $response['type'] = 'success';
+            $response['landing_page'] = $request->session()->get('landing_page');
             $request->session()->flash('completed_sso_registration', true);
         } catch (Exception $e) {
             DB::rollback();

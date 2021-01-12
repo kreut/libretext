@@ -60,10 +60,9 @@ export default {
       })
       try {
         const { data } = await axios.get('/api/sso/completed-registration')
-        console.log(data.registration_type)
-
+        console.log(data)
         if (data.registration_type) {
-          this.inIFrame ? this.$router.go(-1) : redirectOnSSOCompletion(data.registration_type)
+          this.inIFrame ? await this.$router.push({ path: data.landing_page }) : redirectOnSSOCompletion(data.registration_type)
         } else {
           window.location = '/finish-sso-registration'
           return false
@@ -116,6 +115,7 @@ function openWindow (url, title, options = {}) {
   font-weight: normal;
   font-style: normal;
 }
+
 .icon-SSO:after {
   font-family: 'moreicons' !important;
   content: "\e95d";
