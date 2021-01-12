@@ -9,6 +9,28 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+    <b-modal
+      id="modal-share"
+      ref="modal"
+      title="Share"
+      ok-title="OK"
+      size="xl"
+    >
+      Title: <br>
+      Submission Information:<br>
+      Attribution: <br>
+      <b-table />
+
+      <b-button v-clipboard:copy="embedCode"
+                v-clipboard:success="onCopy"
+                v-clipboard:error="onError"
+      >
+        button
+      </b-button>
+      Url:{{ getCurrentPage() }}<br>
+      iFrame: {{ getEmbedCode() }}<br>
+      </b-button>
+    </b-modal>
 
     <b-modal
       id="modal-upload-file"
@@ -247,13 +269,12 @@
                   </countdown>
                 </div>
                 <div v-if="user.role === 2" class="mt-1">
-                  <b-button v-clipboard:copy="embedCode"
-                            v-clipboard:success="onCopy"
-                            v-clipboard:error="onError"
-                            variant="info"
-                            size="sm"
+                  <b-button
+                    v-b-modal.modal-share
+                    variant="info"
+                    size="sm"
                   >
-                    Get Embed Code
+                    <b-icon icon="share" /> Share
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
@@ -1189,7 +1210,6 @@ export default {
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
-        this.embedCode = `<iframe id="adapt-${this.assignmentId}-${this.questions[currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.getCurrentPage()}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
         let iframeId = this.questions[currentPage - 1].iframe_id
         iFrameResize({ log: false }, `#${iframeId}`)
         iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
