@@ -24,7 +24,7 @@ class StoreScore extends FormRequest
     public function rules()
     {
         return [
-            'score'=> 'required|numeric|gt:0'
+            'score'=> 'required|numeric|gte:0'
         ];
     }
 
