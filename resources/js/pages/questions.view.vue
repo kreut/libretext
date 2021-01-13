@@ -443,7 +443,7 @@
             <b-button v-b-modal.modal-upload-file
                       class="mt-1 mb-2 ml-1"
                       variant="dark"
-                      @click="openUploadFileModal(questions[currentPage-1].id)"
+                      @click="questionsopenUploadFileModal(questions[currentPage-1].id)"
             >
               Upload Solution
             </b-button>
@@ -568,6 +568,7 @@
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3">
                     <audio-recorder
+                      ref="recorder"
                       class="m-auto"
                       :upload-url="audioUploadUrl"
                       :time="1"
@@ -687,13 +688,20 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <span v-if="isOpenEndedFileSubmission">
+                    <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
-                        <a href=""
+                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'file'"
+                           href=""
                            @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)"
                         >
                           {{ questions[currentPage - 1].original_filename }}
+                        </a>
+                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'audio'"
+                           :href="questions[currentPage-1].submission_file_url"
+                           target="”_blank”"
+                        >
+                          Play Me
                         </a>
                       </span>
 
@@ -1008,11 +1016,15 @@ export default {
       this.$noty[data.type](data.message)
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+        this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
+        this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
       }
+      this.$refs.recorder.removeRecord()
     },
     failedUpload (data) {
       this.$noty.error('We were not able to perform the upload.  Please try again or contact us for assistance.')
       axios.post('/api/submission-audios/error', JSON.stringify(data))
+      this.$refs.recorder.removeRecord()
     },
     updateShare () {
       this.currentUrl = this.getCurrentUrl()

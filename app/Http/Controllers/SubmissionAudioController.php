@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentFile;
 use App\Exceptions\Handler;
 use App\User;
 use \Exception;
@@ -91,14 +92,11 @@ class SubmissionAudioController extends Controller
                     'question_id' => $question_id],
                 $submission_file_data
             );
-            $response['submission'] = basename($submission);
-            $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
-            $response['original_filename'] = 'audio';
+
+
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
-
+            $response['submission_file_url'] =$this->getTemporaryUrl($assignment_id, basename($submission));
             $response['message'] = "Your audio submission has been saved.";
-
-
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
 
 
@@ -121,7 +119,7 @@ class SubmissionAudioController extends Controller
     }
 
 
-    public function storeAudioFeedback(Request $request, User $user, Assignment $assignment, Question $question)
+    public function storeAudioFeedback(Request $request, User $user, Assignment $assignment, Question $question, AssignmentFile $assignmentFile)
     {
 
         $response['type'] = 'error';
@@ -130,11 +128,11 @@ class SubmissionAudioController extends Controller
         $student_user_id = $user->id;
 
 
-        /* $authorized = Gate::inspect('uploadAudioFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
+         $authorized = Gate::inspect('uploadAudioFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }*/
+        }
 
         try {
 
