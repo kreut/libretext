@@ -232,11 +232,7 @@ class SubmissionFileController extends Controller
         $user_id = $user->id;
 
         $assignment = Assignment::find($assignment_id);
-        $authorized = Gate::inspect('uploadSubmissionFile', [$submissionFile, $assignment]);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
+
 
         try {
             //validator put here because I wasn't using vform so had to manually handle errors

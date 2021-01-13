@@ -105,7 +105,7 @@
                     </b-tooltip>
                     <span v-show="data.item.source === 'a'" class="pr-1" @click="getQuestions(data.item)">
                       <b-icon
-                        v-show="data.item.has_submissions_or_file_submissions > 0"
+                        v-show="isLocked(data.item)"
                         :id="getTooltipTarget('getQuestions',data.item.id)"
                         icon="lock-fill"
                       />

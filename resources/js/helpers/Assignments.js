@@ -17,8 +17,16 @@ export async function getAssignments () {
   }
 }
 
-export function isLocked () {
+export function isLocked (assignment) {
+  // on the assignments index page I have to pass in the specific assignment
+  // otherwise, I'm within an assignment.
+  if (assignment) {
+    assignment.assessmentType = assignment.assessment_type // coming straight from the server so I use underscore
+    assignment.solutionsReleased = assignment.solutions_released
+  } else {
+    assignment = this
+  }
   return Boolean(this.user.role === 2 && (
-    (this.assessmentType !== 'delayed' && this.has_submissions_or_file_submissions) ||
-    (this.assessmentType === 'delayed' && (this.has_submissions_or_file_submissions || this.solutionsReleased))))
+    (assignment.assessmentType !== 'delayed' && assignment.has_submissions_or_file_submissions) ||
+    (assignment.assessmentType === 'delayed' && (assignment.has_submissions_or_file_submissions || assignment.solutionsReleased))))
 }

@@ -11,6 +11,7 @@ use App\Question;
 use App\SubmissionFile;
 use App\Traits\LatePolicy;
 use App\Traits\s3;
+use App\Traits\GeneralSubmissionPolicy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,6 +27,7 @@ class SubmissionAudioController extends Controller
     use DateFormatter;
     use LatePolicy;
     use s3;
+    use GeneralSubmissionPolicy;
 
     public function logError(Request $request)
     {
@@ -38,14 +40,16 @@ class SubmissionAudioController extends Controller
         $response['type'] = 'error';
         $assignment_id = $assignment->id;
         $question_id = $question->id;
-        $user_id = $request->user()->id;
-        /*
-                $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
+        $user = $request->user();
+        $user_id = $user->id;
 
-                if (!$authorized->allowed()) {
-                    $response['message'] = $authorized->message();
-                    return $response;
-                }*/
+
+        if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
+            if ($can_upload_response['type'] === 'error') {
+                $response['message'] = $can_upload_response['message'];
+                return $response;
+            }
+        }
 
         try {
             $max_number_of_uploads_allowed = 15;//number allowed per question/assignment
@@ -111,7 +115,7 @@ class SubmissionAudioController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to retrieve the audio submissions for this assignment.  Please try again or contact us for assistance.";
         }
         return $response;
     }

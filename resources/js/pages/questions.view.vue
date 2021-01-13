@@ -723,16 +723,16 @@
                       </span>
                       <br>
                       <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-                    </span>
-                    <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                    <span v-if="questions[currentPage - 1].grader_id">
-                      <b-button size="sm" variant="outline-primary"
-                                @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                      >Contact Grader</b-button>
-                    </span>
-                    <br>
-                    <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
 
+                      <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      <span v-if="questions[currentPage - 1].grader_id">
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                        >Contact Grader</b-button>
+                      </span>
+                      <br>
+                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                    </span>
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
                       <div class="mt-2">
