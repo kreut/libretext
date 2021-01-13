@@ -958,7 +958,9 @@ export default {
     this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
-      this.currentPage = this.getInitialCurrentPage(this.questionId)
+      if (this.questionId) {
+        this.currentPage = this.getInitialCurrentPage(this.questionId)
+      }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
