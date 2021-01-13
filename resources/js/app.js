@@ -9,7 +9,7 @@ import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 import JsonExcel from 'vue-json-excel'
 import VueCountdown from '@chenfengyuan/vue-countdown'
-
+import AudioRecorder from 'vue-audio-recorder'
 import '~/plugins'
 import '~/components'
 import VueClipboard from 'vue-clipboard2'
@@ -34,6 +34,7 @@ Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)
 Vue.use(VueMoment)
+Vue.use(AudioRecorder)
 
 Vue.config.productionTip = false
 

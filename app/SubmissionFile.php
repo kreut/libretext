@@ -129,7 +129,7 @@ class SubmissionFile extends Model
 
         $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
-            ->whereIn('open_ended_submission_type', ['file','text'])
+            ->whereIn('open_ended_submission_type', ['file','text','audio'])
             ->get();
 
         $question_ids = [];
@@ -223,6 +223,7 @@ class SubmissionFile extends Model
             $sortedUserAndSubmissionFileInfo[$question] = $users;
 
         }
+
         return $sortedUserAndSubmissionFileInfo;
 
 

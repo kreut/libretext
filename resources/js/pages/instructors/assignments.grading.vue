@@ -9,6 +9,22 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+
+      <b-modal
+        id="modal-audio-feedback"
+        ref="modal"
+        title="Upload Audio Feedback"
+        ok-title="Submit"
+        size="lg"
+      >
+        <audio-recorder
+          class="m-auto"
+          :upload-url="audioFeedbackUploadUrl"
+          :time="1"
+          :successful-upload="submittedAudioFeedbackUpload"
+          :failed-upload="failedAudioFeedbackUpload"
+        />
+      </b-modal>
       <b-modal
         id="modal-upload-file"
         ref="modal"
@@ -42,7 +58,8 @@
           <b-container>
             <b-row>
               <p class="font-italic">
-                <strong>Instructions:</strong> For each student, please enter a submission score for the open-ended component and optionally
+                <strong>Instructions:</strong> For each student, please enter a submission score for the open-ended
+                component and optionally
                 add comments in the form of text or a file upload. The total number of points that the student receives
                 for this questions will be the sum of the points that they received for submitting any automatically
                 graded responses (Question Submission Score)
@@ -159,11 +176,11 @@
                           <strong>Question Submission Score:</strong> {{
                             1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
                           }}<br>
-                          <strong>{{ capitalize(openEndedType) }}  Submission Score:</strong> {{
+                          <strong>{{ capitalize(openEndedType) }} Submission Score:</strong> {{
                             1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
                           }}
                           <br>
-                          <strong>Total Score For this Question:</strong>
+                          <strong>Total Score For This Question:</strong>
                           {{
                             (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
                               + (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)
@@ -186,17 +203,20 @@
                           <hr>
                           <b-container>
                             <b-row>
-                              <b-col>
+                              <b-col v-if="isOpenEndedFileSubmission">
                                 <b-button variant="outline-primary"
-                                          :disabled="isOpenEndedTextSubmission"
+                                          size="sm"
                                           @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
                                 >
-                                  Open Submission File
+                                  Open File Submission
                                 </b-button>
                               </b-col>
                               <b-col>
-                                <b-button :disabled="viewSubmission" @click="toggleView(currentStudentPage)">
-                                  View Submission File
+                                <b-button :disabled="viewSubmission"
+                                          size="sm"
+                                          @click="toggleView(currentStudentPage)"
+                                >
+                                  {{ openEndedType === 'audio' ? 'Load' : 'View' }} {{ capitalize(openEndedType) }} Submission
                                 </b-button>
                               </b-col>
                             </b-row>
@@ -229,17 +249,40 @@
                             </b-row>
                             <hr>
                             <b-row>
-                              <b-col>
-                                <b-button v-b-modal.modal-upload-file
-                                          variant="primary"
-                                          @click="openUploadFileModal()"
+                              <b-col v-if="isOpenEndedFileSubmission">
+                                <b-button
+                                  v-b-modal.modal-upload-file
+                                  variant="primary"
+                                  size="sm"
+                                  @click="openUploadFileModal()"
                                 >
                                   Upload Feedback File
                                 </b-button>
                               </b-col>
-                              <b-col>
-                                <b-button :disabled="!viewSubmission" @click="toggleView(currentStudentPage)">
+                              <b-col v-if="isOpenEndedFileSubmission">
+                                <b-button
+                                  :disabled="!viewSubmission"
+                                  size="sm"
+                                  @click="toggleView(currentStudentPage)"
+                                >
                                   View Feedback File
+                                </b-button>
+                              </b-col>
+                              <b-col v-if="isOpenEndedAudioSubmission">
+                                <b-button
+                                  variant="primary"
+                                  size="sm"
+                                  @click="openUploadAudioModal()"
+                                >
+                                  Upload Audio Feedback
+                                </b-button>
+                              </b-col>
+                              <b-col v-if="isOpenEndedAudioSubmission">
+                                <b-button
+                                  size="sm"
+                                  @click="toggleView(currentStudentPage)"
+                                >
+                                  Load Audio Feedback
                                 </b-button>
                               </b-col>
                             </b-row>
@@ -262,9 +305,16 @@
                             :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
                     />
                   </div>
+                  <div v-if="isOpenEndedAudioSubmission">
+                    <audio-player
+                      :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
+                    />
+                  </div>
                   <div v-if="isOpenEndedTextSubmission">
                     <b-card>
-                      <span class="font-weight-bold" v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']" />
+                      <span class="font-weight-bold"
+                            v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']"
+                      />
                     </b-card>
                   </div>
                 </div>
@@ -276,8 +326,13 @@
                 <div
                   v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url'] !== null)"
                 >
-                  <iframe width="600" height="600"
+                  <iframe v-if="openEndedType === 'file'"
+                          width="600"
+                          height="600"
                           :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                  />
+                  <audio-player v-if="openEndedType === 'audio'"
+                                :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
                   />
                 </div>
 
@@ -306,14 +361,17 @@ import { downloadSubmissionFile, downloadSolutionFile } from '~/helpers/Download
 import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
-
+import Vue from 'vue'
+Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
     Loading
   },
   data: () => ({
+    audioFeedbackUploadUrl: '',
     isOpenEndedFileSubmission: false,
+    isOpenEndedAudioSubmission: false,
     isOpenEndedTextSubmission: false,
     openEndedType: '',
     gradeViews: [
@@ -357,6 +415,19 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    failedAudioFeedbackUpload (data) {
+      this.$bvModal.hide('modal-audio-feedback')
+      this.$noty.error('We were not able to perform the upload.  Please try again or contact us for assistance.')
+      axios.post('/api/submission-audios/error', JSON.stringify(data))
+    },
+    submittedAudioFeedbackUpload (response) {
+      let data = response.data
+      this.$noty[data.type](data.message)
+      if (data.type === 'success') {
+        this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = data.file_feedback_url
+      }
+      this.$bvModal.hide('modal-audio-feedback')
+    },
     capitalize (word) {
       return word.charAt(0).toUpperCase() + word.slice(1)
     },
@@ -370,7 +441,7 @@ export default {
       return `<h5>Submission Information for  ${this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['name']}</h5>`
     },
     viewQuestion (questionId) {
-      window.open(`/assignments/${this.assignmentId}/questions/${questionId}/view`)
+      window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)
     },
     openInNewTab (url) {
       console.log(url)
@@ -418,6 +489,13 @@ export default {
     },
     openUploadFileModal () {
       this.fileFeedbackForm.errors.clear('fileFeedback')
+    },
+    openUploadAudioModal () {
+      this.$bvModal.show('modal-audio-feedback')
+      let assignmentId = parseInt(this.assignmentId)
+      let questionId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
+      let studentUserId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id'])
+      this.audioFeedbackUploadUrl = `/api/submission-audios/audio-feedback/${studentUserId}/${assignmentId}/${questionId}`
     },
     async handleOk (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -475,9 +553,10 @@ export default {
 
       this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
       this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+      this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
       this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       await this.getTemporaryUrl('file_feedback', this.currentQuestionPage, this.currentStudentPage)
-      if (this.isOpenEndedFileSubmission) {
+      if (this.isOpenEndedFileSubmission || this.isOpenEndedAudioSubmission) {
         await this.getTemporaryUrl('submission', this.currentQuestionPage, this.currentStudentPage)
       }
       this.viewSubmission = true
@@ -509,7 +588,7 @@ export default {
         for (let j = 0; j < this.submissionFiles[i].length; j++) {
           console.log(this.submissionFiles[i][j]['question_id'], this.submissionFiles[i][j]['user_id'])
           if (parseInt(questionId) === parseInt(this.submissionFiles[i][j]['question_id']) &&
-          parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
+            parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
             this.currentQuestionPage = i + 1
             this.currentStudentPage = j + 1
             return
@@ -549,7 +628,7 @@ export default {
 
         this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
         this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
-
+        this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
         this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       } catch (error) {
         this.$noty.error(error.message)
@@ -559,3 +638,8 @@ export default {
   }
 }
 </script>
+<style>
+div.ar-icon svg {
+  vertical-align:top !important;
+}
+</style>

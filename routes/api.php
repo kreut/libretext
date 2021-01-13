@@ -172,6 +172,11 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
 
 
+    Route::post('/submission-audios/audio-feedback/{user}/{assignment}/{question}','SubmissionAudioController@storeAudioFeedback');
+    Route::post('/submission-audios/{assignment}/{question}','SubmissionAudioController@store');
+    Route::post('/submission-audios/error','SubmissionAudioController@logError');
+
+
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::post('/enrollments', 'EnrollmentController@store');
 
@@ -189,6 +194,9 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
     Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
+
+
+
     Route::post('/submission-files/score', 'SubmissionFileController@storeScore');
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');

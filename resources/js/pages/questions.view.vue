@@ -566,6 +566,15 @@
                       </b-button>
                     </div>
                   </div>
+                  <div v-if="isOpenEndedAudioSubmission && user.role === 3">
+                    <audio-recorder
+                      class="m-auto"
+                      :upload-url="audioUploadUrl"
+                      :time="1"
+                      :successful-upload="submittedUpload"
+                      :failed-upload="failedUpload"
+                    />
+                  </div>
                 </div>
               </div>
             </b-col>
@@ -697,27 +706,33 @@
                       <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
                     </span>
                     <span v-if="showScores">
-                      <strong>File Feedback:</strong> <span v-if="!questions[currentPage-1].file_feedback">
-                        N/A
-                        <span v-if="questions[currentPage-1].file_feedback">
-                          <a href=""
-                             @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)"
-                          >
-                            file_feedback
-                          </a>
-                        </span>
-                        <br>
-                        <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-                      </span>
-                      <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                      <span v-if="questions[currentPage - 1].grader_id">
-                        <b-button size="sm" variant="outline-primary"
-                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                        >Contact Grader</b-button>
+                      <span v-if="questions[currentPage-1].file_feedback">
+                        <strong>{{ capitalize(questions[currentPage-1].open_ended_submission_type) }} Feedback:</strong>
+                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'audio'"
+                           :href="questions[currentPage-1].file_feedback_url"
+                           target="”_blank”"
+                        >
+                          Play Me
+                        </a>
+                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'file'"
+                           href=""
+                           @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)"
+                        >
+                          File Feedback
+                        </a>
                       </span>
                       <br>
-                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                      <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
                     </span>
+                    <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                    <span v-if="questions[currentPage - 1].grader_id">
+                      <b-button size="sm" variant="outline-primary"
+                                @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                      >Contact Grader</b-button>
+                    </span>
+                    <br>
+                    <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
                       <div class="mt-2">
@@ -791,6 +806,8 @@ import Scores from '~/components/Scores'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import { getScoresSummary } from '~/helpers/Scores'
 import CKEditor from 'ckeditor4-vue'
+import Vue from 'vue'
+Vue.prototype.$http = axios // needed for the audio player
 
 export default {
   middleware: 'auth',
@@ -802,6 +819,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    audioUploadUrl: '',
     shownSections: '',
     iFrameAssignmentInformation: true,
     iFrameSubmissionInformation: true,
@@ -829,11 +847,13 @@ export default {
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
+    isOpenEndedAudioSubmission: false,
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
       { value: 'file', text: 'File' },
-      { value: 'none', text: 'None' }
+      { value: 'audio', text: 'Audio' },
+      { value: 0, text: 'None' }
     ],
     showDidNotAnswerCorrectlyMessage: false,
     embedCode: '',
@@ -983,6 +1003,17 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    submittedUpload (response) {
+      let data = response.data
+      this.$noty[data.type](data.message)
+      if (data.type === 'success') {
+        this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+      }
+    },
+    failedUpload (data) {
+      this.$noty.error('We were not able to perform the upload.  Please try again or contact us for assistance.')
+      axios.post('/api/submission-audios/error', JSON.stringify(data))
+    },
     updateShare () {
       this.currentUrl = this.getCurrentUrl()
       this.embedCode = this.getEmbedCode()
@@ -1025,8 +1056,11 @@ export default {
         }
       }
     },
+    capitalize (word) {
+      return word.charAt(0).toUpperCase() + word.slice(1)
+    },
     getOpenEndedTitle () {
-      let capitalizedTitle = this.openEndedSubmissionType.charAt(0).toUpperCase() + this.openEndedSubmissionType.slice(1)
+      let capitalizedTitle = this.capitalize(this.openEndedSubmissionType)
       return `<h5>${capitalizedTitle} Submission Information</h5>`
     },
     async submitText () {
@@ -1314,16 +1348,19 @@ export default {
     },
     async changePage (currentPage) {
       console.log(this.questions[currentPage - 1])
+      this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
       this.showSubmissionMessage = false
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
+
+      this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
       this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
 
       this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
         this.textForm.text_submission = this.questions[currentPage - 1].submission
       }
-      this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission
+      this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission || this.isOpenEndedAudioSubmission
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
@@ -1593,8 +1630,8 @@ export default {
   }
 }
 </script>
-<style scoped>
-svg:hover {
-  fill: #138496;
+<style>
+div.ar-icon svg {
+  vertical-align:top !important;
 }
 </style>

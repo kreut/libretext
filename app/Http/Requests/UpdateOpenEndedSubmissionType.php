@@ -25,7 +25,7 @@ class UpdateOpenEndedSubmissionType extends FormRequest
     public function rules()
     {
         return [
-            'open_ended_submission_type' => Rule::in(['text', 'file', 'none'])
+            'open_ended_submission_type' => Rule::in(['text', 'file', 'audio',0])
         ];
     }
 }

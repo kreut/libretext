@@ -735,7 +735,6 @@ class AssignmentController extends Controller
             foreach ($editing_form_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
-
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

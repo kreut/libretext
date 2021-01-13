@@ -426,7 +426,10 @@
             Text
           </b-form-radio>
           <b-form-radio value="file">
-            Uploaded File
+            File
+          </b-form-radio>
+          <b-form-radio value="audio">
+            Audio
           </b-form-radio>
           <b-form-radio value="0">
             None

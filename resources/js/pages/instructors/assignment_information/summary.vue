@@ -92,7 +92,7 @@ export default {
           { property: 'Assessment Type', value: this.assignment.assessment_type },
           { property: 'Students Can View Assignment Statistics', value: this.students_can_view_assignment_statistics ? 'Yes' : 'No' },
           { property: 'Solutions Released', value: this.assignment.solutions_released ? 'Yes' : 'No' },
-          { property: 'Scores Released', value: this.assignment.scores_released ? 'Yes' : 'No' },
+          { property: 'Scores Released', value: this.assignment.show_scores ? 'Yes' : 'No' },
           { property: 'Include In Final Weighted Average', value: this.assignment.include_in_weighted_average ? 'Yes' : 'No' },
           { property: 'Total Points', value: this.assignment.total_points }
         ]
