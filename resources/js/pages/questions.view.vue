@@ -262,7 +262,7 @@
         <div class="mb-3">
           <b-container>
             <b-col>
-              <div v-if="source === 'a' && scoring_type === 'p' && !questionId">
+              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame">
                 <div class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
@@ -287,7 +287,7 @@
                 >
                   <b-alert variant="warning" show>
                     <span class="alert-link">
-                      This submission will be marked lated.</span>
+                      This submission will be marked late.</span>
                   </b-alert>
                 </div>
                 <div v-if="isInstructor()" class="text-center">
@@ -965,6 +965,7 @@ export default {
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
     }
+
     this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
     if (this.showAssignmentStatistics) {
       this.loaded = false
