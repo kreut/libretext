@@ -736,20 +736,13 @@
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
-                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'file'"
-                           href=""
-                           @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].submission, questions[currentPage-1].original_filename)"
+                        <a
+                          :href="questions[currentPage-1].submission_file_url"
+                          target="”_blank”"
                         >
-                          {{ questions[currentPage - 1].original_filename }}
-                        </a>
-                        <a v-if="questions[currentPage-1].open_ended_submission_type === 'audio'"
-                           :href="questions[currentPage-1].submission_file_url"
-                           target="”_blank”"
-                        >
-                          Play Audio Submission
+                          View Submission
                         </a>
                       </span>
-
                       <span v-if="!questions[currentPage-1].submission_file_exists">
                         No files have been uploaded
                       </span><br>
@@ -769,7 +762,7 @@
                           }}
                         </a>
                         <br>
-                        </a></span>
+                      </span>
                       <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
 
                       <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
@@ -1076,6 +1069,7 @@ export default {
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
+        this.questions[this.currentPage - 1].submission_file_exists = true
       }
       this.$refs.recorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
