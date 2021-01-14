@@ -139,6 +139,7 @@ class CutupController extends Controller
                         );
                     }
                     $response['message'] = 'Your cutup has been set as the solution.';
+                    $response['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/$user_id/$cutup_file", now()->addMinutes(120));
                     $response['cutup'] = $cutup_filename;
                     break;
                 case('submission'):
@@ -166,7 +167,7 @@ class CutupController extends Controller
                     );
 
                     $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
-                    $response['submission'] = $cutup_file;
+                    $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $cutup_file);
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = 'Your cutup has been saved as your file submission for this question.';
                     $response['cutup'] = $original_filename;

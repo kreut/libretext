@@ -543,9 +543,8 @@ class AssignmentSyncQuestionController extends Controller
                     foreach ($solutions as $key => $value) {
                         $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
                         $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                        if ($value->type === 'audio') {
-                            $solutions_by_question_id[$value->question_id]['solution_audio_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
-                        }
+                            $solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+
                     }
                 }
             }
@@ -660,9 +659,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
                 $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
-                if ($assignment->questions[$key]['solution_type'] === 'audio') {
-                    $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_audio_url'];
-                }
+                $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
 
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [

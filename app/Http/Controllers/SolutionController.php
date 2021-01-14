@@ -120,8 +120,9 @@ class SolutionController extends Controller
             $solutionContents = Storage::disk('local')->get($file);
             Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
             $original_filename = $request->file("solutionFile")->getClientOriginalName();
+            $basename = basename($file);
             $file_data = [
-                'file' => basename($file),
+                'file' => $basename,
                 'original_filename' => $original_filename,
                 'updated_at' => Carbon::now()];
             DB::beginTransaction();
@@ -161,6 +162,7 @@ class SolutionController extends Controller
                     $response['type'] = 'success';
                     $response['message'] = 'Your solution has been saved and the full answer key has been re-compiled.';
                     $response['original_filename'] = $original_filename;
+                    $response['solution_file_url'] =\Storage::disk('s3')->temporaryUrl("solutions/{$user_id}/$basename", now()->addMinutes(360));
                     break;
                 case('assignment'):
                     //get rid of the current ones

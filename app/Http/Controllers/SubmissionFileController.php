@@ -319,6 +319,7 @@ class SubmissionFileController extends Controller
                     );
                     $response['submission'] = basename($submission);
                     $response['original_filename'] = $original_filename;
+                    $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     break;
             }

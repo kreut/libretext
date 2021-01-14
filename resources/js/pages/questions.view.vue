@@ -117,7 +117,6 @@
       ok-title="Submit"
       size="lg"
       :hide-footer="true"
-      @ok="handleOk"
     >
       <span v-if="user.role === 2">
         <toggle-button
@@ -483,19 +482,12 @@
             >
               Upload Solution
             </b-button>
-
+            {{ questions[currentPage-1].solution_file_url }}
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
-              <span v-if="questions[currentPage-1].solution_type === 'q'">
-                <a href=""
-                   @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
-                >
-                  {{ questions[currentPage - 1].solution }}
-                </a>
-              </span>
-              <a v-if="questions[currentPage-1].solution_type === 'audio'"
-                 :href="questions[currentPage-1].solution_file_url"
-                 target="”_blank”"
+              <a
+                :href="questions[currentPage-1].solution_file_url"
+                target="”_blank”"
               >
                 {{ standardizeFilename(questions[currentPage - 1].solution) }}
               </a>
@@ -663,8 +655,9 @@
                     </span>
                     <span v-if="questions[currentPage-1].solution">
                       <span class="font-weight-bold">Solution:</span>
-                      <a href=""
-                         @click.prevent="downloadSolutionFile('q', assignmentId,questions[currentPage - 1].id, standardizeFilename(questions[currentPage - 1].solution))"
+                      <a
+                        :href="questions[currentPage-1].solution_file_url"
+                        target="”_blank”"
                       >
                         {{ standardizeFilename(questions[currentPage - 1].solution) }}
                       </a>
@@ -1584,9 +1577,11 @@ export default {
             this.questions[this.currentPage - 1].file_feedback = 'N/A'
             this.questions[this.currentPage - 1].submission_file_exists = true
             this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
+            this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
           }
           if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
+            this.questions[this.currentPage - 1].solution_file_url = data.solution_file_url
             this.questions[this.currentPage - 1].solution_type = 'q'
           }
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
