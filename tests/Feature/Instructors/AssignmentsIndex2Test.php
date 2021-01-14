@@ -132,7 +132,7 @@ class AssignmentsIndex2Test extends TestCase
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
-                'level' => 'properties'])
+                'level' => 'properties_and_not_questions'])
             ->assertJson(['message' => "<strong>First Assignment Import</strong> has been imported without its questions.</br></br>Don't forget to change the dates associated with this assignment."]);
 
 
@@ -145,7 +145,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
                 'level' => 'some fake level'])
-            ->assertJson(['message' => "You should either choose 'properties and questions' or just 'properties'."]);
+            ->assertJson(['message' => "You should either choose 'properties and questions' or 'properties and not questions'."]);
     }
 
 

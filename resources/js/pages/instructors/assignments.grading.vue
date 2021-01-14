@@ -373,6 +373,7 @@ export default {
     ToggleButton
   },
   data: () => ({
+
     feedbackModalTitle: 'Upload PDF/Image File',
     feedbackTypeIsPdfImage: true,
     audioFeedbackUploadUrl: '',

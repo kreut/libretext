@@ -752,15 +752,14 @@
                     </span>
                     <span v-if="showScores">
                       <span v-if="questions[currentPage-1].file_feedback">
-                        <strong>Feedback:</strong>
-                        <a
-                          :href="questions[currentPage-1].file_feedback_url"
-                          target="”_blank”"
+                        <strong>{{ capitalize(questions[currentPage-1].file_feedback_type) }} Feedback:</strong>
+                        <a :href="questions[currentPage-1].file_feedback_url"
+                           target="”_blank”"
                         >
-                          View Feedback
+                          {{ questions[currentPage-1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback' }}
                         </a>
-                      </span>
-                      <br>
+                        <br>
+                        </a></span>
                       <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
 
                       <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
