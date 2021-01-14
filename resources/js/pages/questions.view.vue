@@ -725,8 +725,6 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    {{ questions[currentPage-1].open_ended_submission_type }}
-                    {{ questions[currentPage-1].submission_file_exists }}
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
@@ -736,8 +734,6 @@
                         >
                           {{ questions[currentPage - 1].original_filename }}
                         </a>
-                        {{ questions[currentPage-1].submission_file_url }}
-                        {{ questions[currentPage-1].open_ended_submission_type }}
                         <a v-if="questions[currentPage-1].open_ended_submission_type === 'audio'"
                            :href="questions[currentPage-1].submission_file_url"
                            target="”_blank”"
@@ -757,17 +753,11 @@
                     <span v-if="showScores">
                       <span v-if="questions[currentPage-1].file_feedback">
                         <strong>Feedback:</strong>
-                        <a v-if="questions[currentPage-1].file_feedback_type === 'audio'"
-                           :href="questions[currentPage-1].file_feedback_url"
-                           target="”_blank”"
+                        <a
+                          :href="questions[currentPage-1].file_feedback_url"
+                          target="”_blank”"
                         >
-                          Play Feedback
-                        </a>
-                        <a v-if="questions[currentPage-1].file_feedback_type !== 'audio'"
-                           href=""
-                           @click.prevent="downloadSubmissionFile(assignmentId, questions[currentPage-1].file_feedback, questions[currentPage-1].file_feedback)"
-                        >
-                          File Feedback
+                          View Feedback
                         </a>
                       </span>
                       <br>
