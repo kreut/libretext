@@ -550,9 +550,6 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
 
-//only get the first temporary urls...you'll get the rest onChange page in Vue
-            //this way we don't have to make tons of calls to S3 on initial page load
-            $got_first_temporary_url = false;
             $domd = new \DOMDocument();
             $JWE = new JWE();
 

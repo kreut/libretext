@@ -52,8 +52,9 @@ class SolutionController extends Controller
             $solutionContents = Storage::disk('local')->get($file);
             Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
             $original_filename = "Solution.mpg";
+            $basename = basename($file);
             $file_data = [
-                'file' => basename($file),
+                'file' => $basename,
                 'original_filename' => $original_filename,
                 'updated_at' => Carbon::now()];
 
@@ -76,6 +77,7 @@ class SolutionController extends Controller
             $response['type'] = 'success';
             $response['message'] = 'Your audio solution has been saved.';
             $response['solution'] = $original_filename;
+            $response['solution_file_url'] =\Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/$basename", now()->addMinutes(360));
 
         } catch (Exception $e) {
             DB::rollBack();

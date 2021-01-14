@@ -34,9 +34,11 @@
               class="text-muted"
               icon="question-circle"
               title="Tooltip directive content"
-      /><b-tooltip target="attribution-tooltip" triggers="hover">
+      />
+      <b-tooltip target="attribution-tooltip" triggers="hover">
         The attribution includes who authored the question and the license associated with the question.
-      </b-tooltip><br>
+      </b-tooltip>
+      <br>
       Submission Information:
       <toggle-button
         class="mt-1"
@@ -48,13 +50,16 @@
         :color="{checked: '#28a745', unchecked: '#6c757d'}"
         :labels="{checked: 'Shown', unchecked: 'Hidden'}"
         @change="iFrameSubmissionInformation = !iFrameSubmissionInformation;updateShare()"
-      /> <b-icon id="submissionInformation-tooltip"
-                 v-b-tooltip.hover
-                 class="text-muted"
-                 icon="question-circle"
-                 title="Tooltip directive content"
-      /><b-tooltip target="submissionInformation-tooltip" triggers="hover">
-        The submission information includes when the question was submitted, the score on the question, and the last submitted.
+      />
+      <b-icon id="submissionInformation-tooltip"
+              v-b-tooltip.hover
+              class="text-muted"
+              icon="question-circle"
+              title="Tooltip directive content"
+      />
+      <b-tooltip target="submissionInformation-tooltip" triggers="hover">
+        The submission information includes when the question was submitted, the score on the question, and the last
+        submitted.
       </b-tooltip>
       <br>
       Assignment Information:
@@ -74,8 +79,10 @@
               class="text-muted"
               icon="question-circle"
               title="Tooltip directive content"
-      /><b-tooltip target="assignmentInformation-tooltip" triggers="hover">
-        This information includes the name of the assignment, the question number in the assignment, and the time left in the assignment.
+      />
+      <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
+        This information includes the name of the assignment, the question number in the assignment, and the time left
+        in the assignment.
       </b-tooltip>
 
       <b-table />
@@ -99,7 +106,8 @@
                 variant="outline-primary"
       >
         Copy
-      </b-button><br>
+      </b-button>
+      <br>
     </b-modal>
 
     <b-modal
@@ -489,7 +497,7 @@
                  :href="questions[currentPage-1].solution_file_url"
                  target="”_blank”"
               >
-                {{ standardizeFilename(questions[currentPage-1].solution) }}
+                {{ standardizeFilename(questions[currentPage - 1].solution) }}
               </a>
               <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
             </span>
@@ -752,11 +760,13 @@
                     </span>
                     <span v-if="showScores">
                       <span v-if="questions[currentPage-1].file_feedback">
-                        <strong>{{ capitalize(questions[currentPage-1].file_feedback_type) }} Feedback:</strong>
+                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
                         <a :href="questions[currentPage-1].file_feedback_url"
                            target="”_blank”"
                         >
-                          {{ questions[currentPage-1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback' }}
+                          {{
+                            questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
+                          }}
                         </a>
                         <br>
                         </a></span>
@@ -845,6 +855,7 @@ import EnrollInCourse from '~/components/EnrollInCourse'
 import { getScoresSummary } from '~/helpers/Scores'
 import CKEditor from 'ckeditor4-vue'
 import Vue from 'vue'
+
 Vue.prototype.$http = axios // needed for the audio player
 
 export default {
@@ -1053,6 +1064,7 @@ export default {
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].solution = data.solution
         this.questions[this.currentPage - 1].solution_type = 'audio'
+        this.questions[this.currentPage - 1].solution_file_url = data.solution_file_url
       }
       this.$refs.recorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
@@ -1695,6 +1707,6 @@ export default {
 </script>
 <style>
 div.ar-icon svg {
-  vertical-align:top !important;
+  vertical-align: top !important;
 }
 </style>
