@@ -641,14 +641,18 @@ class AssignmentSyncQuestionController extends Controller
                     if ($assignment->show_scores) {
                         $assignment->questions[$key]['file_feedback_exists'] = $formatted_submission_file_info['file_feedback_exists'];
                         $assignment->questions[$key]['file_feedback'] = $formatted_submission_file_info['file_feedback'];
+                        $assignment->questions[$key]['text_feedback'] = $formatted_submission_file_info['text_feedback'];
+
+                        $assignment->questions[$key]['file_feedback_url'] = null;
                         $formatted_submission_file_info['file_feedback'] = null;
-                        if ($formatted_submission_file_info['file_feedback']) {
+                        if ($formatted_submission_file_info['file_feedback_exists']) {
+                            $assignment->questions[$key]['file_feedback_url'] = $formatted_submission_file_info['file_feedback_url'];
                             $assignment->questions[$key]['file_feedback_type'] = (pathinfo($formatted_submission_file_info['file_feedback'], PATHINFO_EXTENSION) === 'mpga') ? 'audio' : 'file';
                         }
                     }
 
                     $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'];
-                    $assignment->questions[$key]['file_feedback_url'] = $formatted_submission_file_info['file_feedback_url'];
+
 
                 }
                 $submission_file_score = $formatted_submission_file_info['submission_file_score'] ?? 0;
