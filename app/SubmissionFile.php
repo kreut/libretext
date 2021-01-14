@@ -26,6 +26,11 @@ class SubmissionFile extends Model
     public
     function getAllInfo(User $user, Assignment $assignment, $solution, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
     {
+        $file_feedback_type = null;
+        $file_feedback_url = null;
+        if ($file_feedback) {
+            $file_feedback_type = (pathinfo($file_feedback, PATHINFO_EXTENSION) === 'mpga') ? 'audio' : 'q';
+        }
         return ['user_id' => $user->id,
             'name' => $user->first_name . ' ' . $user->last_name,
             'submission' => $submission,
@@ -37,6 +42,7 @@ class SubmissionFile extends Model
             'date_graded' => $date_graded,
             'question_submission_score' => $question_submission_score,
             'solution' => $solution,
+            'file_feedback_type' => $file_feedback_type,
             'file_submission_score' => $file_submission_score,
             'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
             'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];

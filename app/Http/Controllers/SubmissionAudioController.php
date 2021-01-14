@@ -151,7 +151,7 @@ class SubmissionAudioController extends Controller
             $response['type'] = 'success';
             $response['message'] = 'Your audio feedback has been saved.';
             $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($audioFeedback));
-
+$response['file_feedback_type'] = 'audio';
 
         } catch (Exception $e) {
             $h = new Handler(app());

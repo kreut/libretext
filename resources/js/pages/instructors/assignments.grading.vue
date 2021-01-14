@@ -11,46 +11,64 @@
       />
 
       <b-modal
-        id="modal-audio-feedback"
-        ref="modal"
-        title="Upload Audio Feedback"
-        ok-title="Submit"
-        size="lg"
-      >
-        <audio-recorder
-          class="m-auto"
-          :upload-url="audioFeedbackUploadUrl"
-          :time="1"
-          :successful-upload="submittedAudioFeedbackUpload"
-          :failed-upload="failedAudioFeedbackUpload"
-        />
-      </b-modal>
-      <b-modal
         id="modal-upload-file"
         ref="modal"
-        title="Upload Feedback File"
-        ok-title="Submit"
+        hide-footer
         size="lg"
-        @ok="handleOk"
       >
-        <b-form ref="form">
-          <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
-          <b-form-file
-            ref="fileFeedbackInput"
-            v-model="fileFeedbackForm.fileFeedback"
-            placeholder="Choose a file or drop it here..."
-            drop-placeholder="Drop file here..."
-            :accept="getAcceptedFileTypes()"
+        <template v-slot:modal-title>
+          {{ feedbackModalTitle }}
+        </template>
+        <toggle-button
+          class="mt-1"
+          :width="105"
+          :value="feedbackTypeIsPdfImage"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
+          @change="toggleFeedbackType()"
+        />
+        <div v-if="feedbackTypeIsPdfImage">
+          <b-form ref="form">
+            <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
+            <b-form-file
+              ref="fileFeedbackInput"
+              v-model="fileFeedbackForm.fileFeedback"
+              placeholder="Choose a file or drop it here..."
+              drop-placeholder="Drop file here..."
+              :accept="getAcceptedFileTypes()"
+            />
+            <div v-if="uploading">
+              <b-spinner small type="grow" />
+              Uploading file...
+            </div>
+            <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">
+              {{ fileFeedbackForm.errors.get('fileFeedback') }}
+            </div>
+            <hr>
+            <b-row align-h="end" class="mr-2">
+              <b-button class="mr-2" @click="handleCancel">
+                Cancel
+              </b-button>
+              <b-button variant="primary" @click="handleOk">
+                Submit
+              </b-button>
+            </b-row>
+          </b-form>
+        </div>
+        <div v-if="!feedbackTypeIsPdfImage">
+          <audio-recorder
+            ref="recorder"
+            class="m-auto"
+            :upload-url="audioFeedbackUploadUrl"
+            :time="1"
+            :successful-upload="submittedAudioFeedbackUpload"
+            :failed-upload="failedAudioFeedbackUpload"
           />
-          <div v-if="uploading">
-            <b-spinner small type="grow" />
-            Uploading file...
-          </div>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            {{ fileFeedbackForm.errors.get('fileFeedback') }}
-          </div>
-        </b-form>
+        </div>
       </b-modal>
       <div v-if="!isLoading">
         <PageTitle :title="title" />
@@ -205,7 +223,7 @@
                             <b-row>
                               <b-col v-if="isOpenEndedFileSubmission">
                                 <b-button variant="outline-primary"
-                                          size="sm"
+
                                           @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
                                 >
                                   Open File Submission
@@ -213,10 +231,10 @@
                               </b-col>
                               <b-col>
                                 <b-button :disabled="viewSubmission"
-                                          size="sm"
+
                                           @click="toggleView(currentStudentPage)"
                                 >
-                                  {{ openEndedType === 'audio' ? 'Load' : 'View' }} {{ capitalize(openEndedType) }} Submission
+                                  View Submission
                                 </b-button>
                               </b-col>
                             </b-row>
@@ -248,43 +266,21 @@
                               </b-button>
                             </b-row>
                             <hr>
-                            <b-row>
-                              <b-col v-if="isOpenEndedFileSubmission">
-                                <b-button
-                                  v-b-modal.modal-upload-file
-                                  variant="primary"
-                                  size="sm"
-                                  @click="openUploadFileModal()"
-                                >
-                                  Upload Feedback File
-                                </b-button>
-                              </b-col>
-                              <b-col v-if="isOpenEndedFileSubmission">
-                                <b-button
-                                  :disabled="!viewSubmission"
-                                  size="sm"
-                                  @click="toggleView(currentStudentPage)"
-                                >
-                                  View Feedback File
-                                </b-button>
-                              </b-col>
-                              <b-col v-if="isOpenEndedAudioSubmission">
-                                <b-button
-                                  variant="primary"
-                                  size="sm"
-                                  @click="openUploadAudioModal()"
-                                >
-                                  Upload Audio Feedback
-                                </b-button>
-                              </b-col>
-                              <b-col v-if="isOpenEndedAudioSubmission">
-                                <b-button
-                                  size="sm"
-                                  @click="toggleView(currentStudentPage)"
-                                >
-                                  Load Audio Feedback
-                                </b-button>
-                              </b-col>
+                            <b-row class="d-flex justify-content-around">
+                              <b-button
+                                v-b-modal.modal-upload-file
+                                variant="primary"
+                                @click="openUploadFileModal()"
+                              >
+                                Upload Feedback
+                              </b-button>
+
+                              <b-button
+                                :disabled="!viewSubmission"
+                                @click="toggleView(currentStudentPage)"
+                              >
+                                View Feedback
+                              </b-button>
                             </b-row>
                           </b-container>
                         </b-form>
@@ -306,9 +302,11 @@
                     />
                   </div>
                   <div v-if="isOpenEndedAudioSubmission">
-                    <audio-player
-                      :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
-                    />
+                    <b-card sub-title="Submission">
+                      <audio-player
+                        :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
+                      />
+                    </b-card>
                   </div>
                   <div v-if="isOpenEndedTextSubmission">
                     <b-card>
@@ -326,14 +324,17 @@
                 <div
                   v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url'] !== null)"
                 >
-                  <iframe v-if="openEndedType === 'file'"
+                  <iframe v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] !== 'audio'"
                           width="600"
                           height="600"
                           :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
                   />
-                  <audio-player v-if="openEndedType === 'audio'"
-                                :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
-                  />
+                  <b-card sub-title="Feedback">
+                    <audio-player v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] === 'audio'"
+
+                                  :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                    />
+                  </b-card>
                 </div>
 
                 <div v-else>
@@ -362,13 +363,18 @@ import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import Vue from 'vue'
+import { ToggleButton } from 'vue-js-toggle-button'
+
 Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
-    Loading
+    Loading,
+    ToggleButton
   },
   data: () => ({
+    feedbackModalTitle: 'Upload PDF/Image File',
+    feedbackTypeIsPdfImage: true,
     audioFeedbackUploadUrl: '',
     isOpenEndedFileSubmission: false,
     isOpenEndedAudioSubmission: false,
@@ -415,8 +421,16 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    toggleFeedbackType () {
+      this.feedbackTypeIsPdfImage = !this.feedbackTypeIsPdfImage
+      let feedbackType = this.feedbackTypeIsPdfImage ? 'PDF/Image' : 'Audio'
+      this.feedbackModalTitle = `Upload ${feedbackType} File`
+    },
+    handleCancel () {
+      this.$bvModal.hide(`modal-upload-file`)
+    },
     failedAudioFeedbackUpload (data) {
-      this.$bvModal.hide('modal-audio-feedback')
+      this.$bvModal.hide('modal-upload-file')
       this.$noty.error('We were not able to perform the upload.  Please try again or contact us for assistance.')
       axios.post('/api/submission-audios/error', JSON.stringify(data))
     },
@@ -425,8 +439,10 @@ export default {
       this.$noty[data.type](data.message)
       if (data.type === 'success') {
         this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = data.file_feedback_url
+        this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_type = data.file_feedback_type
       }
-      this.$bvModal.hide('modal-audio-feedback')
+      this.$refs.recorder.removeRecord()
+      this.$bvModal.hide('modal-upload-file')
     },
     capitalize (word) {
       return word.charAt(0).toUpperCase() + word.slice(1)
@@ -489,9 +505,6 @@ export default {
     },
     openUploadFileModal () {
       this.fileFeedbackForm.errors.clear('fileFeedback')
-    },
-    openUploadAudioModal () {
-      this.$bvModal.show('modal-audio-feedback')
       let assignmentId = parseInt(this.assignmentId)
       let questionId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
       let studentUserId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id'])
@@ -520,6 +533,7 @@ export default {
         } else {
           this.$noty.success(data.message)
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
+          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_type'] = data.file_feedback_type
           this.$bvModal.hide('modal-upload-file')
         }
       } catch (error) {
@@ -640,6 +654,6 @@ export default {
 </script>
 <style>
 div.ar-icon svg {
-  vertical-align:top !important;
+  vertical-align: top !important;
 }
 </style>

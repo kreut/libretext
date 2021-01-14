@@ -379,19 +379,6 @@ class SubmissionFileController extends Controller
                 return $response;
             }
 
-
-            $file_feedback_exists = DB::table('submission_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
-                ->where('question_id', $question_id)
-                ->whereNotNull('file_feedback')
-                ->first();
-
-            if ($file_feedback_exists) {
-                $response['message'] = "You can only upload file feedback once per student submission.";
-                return $response;
-            }
-
             //save locally and to S3
             $fileFeedback = $request->file('fileFeedback')->store("assignments/$assignment_id", 'local');
             $feedbackContents = Storage::disk('local')->get($fileFeedback);
@@ -406,6 +393,7 @@ class SubmissionFileController extends Controller
             $response['type'] = 'success';
             $response['message'] = 'Your feedback file has been saved.';
             $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($fileFeedback));
+            $response['file_feedback_type'] = 'q';
 
 
         } catch (Exception $e) {
