@@ -9,6 +9,7 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+
     <b-modal
       id="modal-share"
       ref="modal"
@@ -110,135 +111,162 @@
       :hide-footer="true"
       @ok="handleOk"
     >
-      <p>
-        <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
-          solution at a time. If you upload a full PDF, students will be able to both download a full solution key
-          and download solutions on a per question basis.</span>
-        <span v-if="user.role !==2">
-          Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
-          question file submission at a time, especially helpful if your submissions are in a non-PDF format.
-        </span>
-      </p>
-      <p>
-        <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
-      </p>
-      <b-form ref="form">
-        <b-form-group>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" @click="showCutups = true">
-            Upload
-            <span v-if="user.role === 2">question solutions</span>
-            <span v-if="user.role !== 2">your question file submissions</span>
-            from a full PDF that Adapt will cut up for you
-          </b-form-radio>
-          <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
-            Upload individual
-            <span v-if="user.role === 2">question solution</span>
-            <span v-if="user.role !== 2">question file submissions</span>
-          </b-form-radio>
-        </b-form-group>
-        <div v-if="uploadLevel === 'assignment' && showCutups">
-          <hr>
-          <p>
-            Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
-            <span v-if="user.role !== 2">file submission for</span> this question or
-            <a href="#" @click="showCutups = false">
-              upload a new PDF</a>.
-          </p>
-          <b-container class="mb-2">
-            <b-form-group
-              id="chosen_cutups"
-              label-cols-sm="2"
-              label-cols-lg="2"
-              label="Chosen cutups"
-              label-for="chosen_cutups"
-            >
-              <b-form-row lg="12">
-                <b-col lg="3">
-                  <b-form-input
-                    id="name"
-                    v-model="cutupsForm.chosen_cutups"
-                    lg="3"
-                    type="text"
-                    :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
-                    @keydown="cutupsForm.errors.clear('chosen_cutups')"
-                  />
-                  <has-error :form="cutupsForm" field="chosen_cutups" />
-                </b-col>
-                <b-col lg="8" class="ml-3">
-                  <b-row>
-                    <b-button class="mt-1" size="sm" variant="outline-primary"
-                              @click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)"
-                    >
-                      Set As <span v-if="user.role === 2">Solution</span>
-                      <span v-if="user.role !== 2">Question File Submission</span>
-                    </b-button>
-                    <span v-show="settingAsSolution" class="ml-2">
-                      <b-spinner small type="grow" />
-                      Processing...
-                    </span>
-                  </b-row>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </b-container>
-          <div class="overflow-auto">
-            <b-pagination
-              v-model="currentCutup"
-              :total-rows="cutups.length"
-              :limit="12"
-              :per-page="perPage"
-              first-number
-              last-number
-              size="sm"
-              align="center"
-            />
-          </div>
-          <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
-            <b-embed
-              type="iframe"
-              aspect="16by9"
-              :src="cutups[currentCutup-1].temporary_url"
-              allowfullscreen
-            />
-          </div>
-        </div>
-        <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
-          <b-row align-h="center">
-            <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCutups = true">
-              Use Current Cutups
-            </b-button>
-          </b-row>
-        </b-container>
-        <div v-show="uploadLevel === 'question' || !showCutups">
-          <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
-          <b-form-file
-            ref="questionFileInput"
-            v-model="uploadFileForm[`${uploadFileType}File`]"
-            placeholder="Choose a file or drop it here..."
-            drop-placeholder="Drop file here..."
-            :accept="getSolutionUploadTypes()"
-          />
-          <div v-if="uploading">
-            <b-spinner small type="grow" />
-            Uploading file...
-          </div>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            {{ uploadFileForm.errors.get(this.uploadFileType) }}
-          </div>
-          <b-container>
+      <span v-if="user.role === 2">
+        <toggle-button
+          class="mt-1"
+          :width="105"
+          :value="solutionTypeIsPdfImage"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
+          @change="solutionTypeIsPdfImage= !solutionTypeIsPdfImage"
+        />
+
+      </span>
+      <div v-if="!solutionTypeIsPdfImage">
+        <audio-recorder
+          ref="recorder"
+          class="m-auto"
+          :upload-url="audioSolutionUploadUrl"
+          :time="1"
+          :successful-upload="submittedAudioSolutionUpload"
+          :failed-upload="failedAudioUpload"
+        />
+      </div>
+
+      <div v-if="solutionTypeIsPdfImage">
+        <p>
+          <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
+            solution at a time. If you upload a full PDF, students will be able to both download a full solution key
+            and download solutions on a per question basis.</span>
+          <span v-if="user.role !==2">
+            Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
+            question file submission at a time, especially helpful if your submissions are in a non-PDF format.
+          </span>
+        </p>
+        <p>
+          <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
+        </p>
+        <b-form ref="form">
+          <b-form-group>
+            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" @click="showCutups = true">
+              Upload
+              <span v-if="user.role === 2">question solutions</span>
+              <span v-if="user.role !== 2">your question file submissions</span>
+              from a full PDF that Adapt will cut up for you
+            </b-form-radio>
+            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
+              Upload individual
+              <span v-if="user.role === 2">question solution</span>
+              <span v-if="user.role !== 2">question file submissions</span>
+            </b-form-radio>
+          </b-form-group>
+          <div v-if="uploadLevel === 'assignment' && showCutups">
             <hr>
-            <b-row align-h="end">
-              <b-button class="mr-2" @click="handleCancel">
-                Cancel
-              </b-button>
-              <b-button variant="primary" @click="handleOk">
-                Submit
+            <p>
+              Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
+              <span v-if="user.role !== 2">file submission for</span> this question or
+              <a href="#" @click="showCutups = false">
+                upload a new PDF</a>.
+            </p>
+            <b-container class="mb-2">
+              <b-form-group
+                id="chosen_cutups"
+                label-cols-sm="2"
+                label-cols-lg="2"
+                label="Chosen cutups"
+                label-for="chosen_cutups"
+              >
+                <b-form-row lg="12">
+                  <b-col lg="3">
+                    <b-form-input
+                      id="name"
+                      v-model="cutupsForm.chosen_cutups"
+                      lg="3"
+                      type="text"
+                      :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
+                      @keydown="cutupsForm.errors.clear('chosen_cutups')"
+                    />
+                    <has-error :form="cutupsForm" field="chosen_cutups" />
+                  </b-col>
+                  <b-col lg="8" class="ml-3">
+                    <b-row>
+                      <b-button class="mt-1" size="sm" variant="outline-primary"
+                                @click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)"
+                      >
+                        Set As <span v-if="user.role === 2">Solution</span>
+                        <span v-if="user.role !== 2">Question File Submission</span>
+                      </b-button>
+                      <span v-show="settingAsSolution" class="ml-2">
+                        <b-spinner small type="grow" />
+                        Processing...
+                      </span>
+                    </b-row>
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+            </b-container>
+            <div class="overflow-auto">
+              <b-pagination
+                v-model="currentCutup"
+                :total-rows="cutups.length"
+                :limit="12"
+                :per-page="perPage"
+                first-number
+                last-number
+                size="sm"
+                align="center"
+              />
+            </div>
+            <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
+              <b-embed
+                type="iframe"
+                aspect="16by9"
+                :src="cutups[currentCutup-1].temporary_url"
+                allowfullscreen
+              />
+            </div>
+          </div>
+          <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
+            <b-row align-h="center">
+              <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCutups = true">
+                Use Current Cutups
               </b-button>
             </b-row>
           </b-container>
-        </div>
-      </b-form>
+          <div v-show="uploadLevel === 'question' || !showCutups">
+            <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
+            <b-form-file
+              ref="questionFileInput"
+              v-model="uploadFileForm[`${uploadFileType}File`]"
+              placeholder="Choose a file or drop it here..."
+              drop-placeholder="Drop file here..."
+              :accept="getSolutionUploadTypes()"
+            />
+            <div v-if="uploading">
+              <b-spinner small type="grow" />
+              Uploading file...
+            </div>
+            <input type="hidden" class="form-control is-invalid">
+            <div class="help-block invalid-feedback">
+              {{ uploadFileForm.errors.get(this.uploadFileType) }}
+            </div>
+            <b-container>
+              <hr>
+              <b-row align-h="end">
+                <b-button class="mr-2" @click="handleCancel">
+                  Cancel
+                </b-button>
+                <b-button variant="primary" @click="handleOk">
+                  Submit
+                </b-button>
+              </b-row>
+            </b-container>
+          </div>
+        </b-form>
+      </div>
     </b-modal>
     <div v-if="inIFrame" class="text-center">
       <h5 v-if="(questions !==['init']) && canView">
@@ -440,22 +468,31 @@
             />
           </div>
           <div class="p-2">
-            <b-button v-b-modal.modal-upload-file
-                      class="mt-1 mb-2 ml-1"
-                      variant="dark"
-                      @click="questionsopenUploadFileModal(questions[currentPage-1].id)"
+            <b-button
+              class="mt-1 mb-2 ml-1"
+              variant="dark"
+              @click="openSolutionModal(questions[currentPage-1])"
             >
               Upload Solution
             </b-button>
+
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
-              <a href=""
-                 @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
+              <span v-if="questions[currentPage-1].solution_type === 'q'">
+                <a href=""
+                   @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
+                >
+                  {{ questions[currentPage - 1].solution }}
+                </a>
+              </span>
+              <a v-if="questions[currentPage-1].solution_type === 'audio'"
+                 :href="questions[currentPage-1].solution_file_url"
+                 target="”_blank”"
               >
-                {{ questions[currentPage - 1].solution }}
+                {{ standardizeFilename(questions[currentPage-1].solution) }}
               </a>
+              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
             </span>
-            <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
           </div>
         </div>
 
@@ -572,8 +609,8 @@
                       class="m-auto"
                       :upload-url="audioUploadUrl"
                       :time="1"
-                      :successful-upload="submittedUpload"
-                      :failed-upload="failedUpload"
+                      :successful-upload="submittedAudioUpload"
+                      :failed-upload="failedAudioUpload"
                     />
                   </div>
                 </div>
@@ -744,7 +781,7 @@
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
                       <div class="mt-2">
-                        <b-button v-b-modal.modal-upload-file variant="primary"
+                        <b-button variant="primary"
                                   class="float-right mr-2"
                                   @click="openUploadFileModal(questions[currentPage-1].id)"
                         >
@@ -827,6 +864,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    solutionTypeIsPdfImage: true,
+    audioSolutionUploadUrl: '',
     audioUploadUrl: '',
     shownSections: '',
     iFrameAssignmentInformation: true,
@@ -1011,7 +1050,21 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
-    submittedUpload (response) {
+    openSolutionModal (question) {
+      this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
+      this.openUploadFileModal(question.id)
+    },
+    submittedAudioSolutionUpload (response) {
+      let data = response.data
+      this.$noty[data.type](data.message)
+      if (data.type === 'success') {
+        this.questions[this.currentPage - 1].solution = data.solution
+        this.questions[this.currentPage - 1].solution_type = 'audio'
+      }
+      this.$refs.recorder.removeRecord()
+      this.$bvModal.hide('modal-upload-file')
+    },
+    submittedAudioUpload (response) {
       let data = response.data
       this.$noty[data.type](data.message)
       if (data.type === 'success') {
@@ -1020,8 +1073,9 @@ export default {
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
       }
       this.$refs.recorder.removeRecord()
+      this.$bvModal.hide('modal-upload-file')
     },
-    failedUpload (data) {
+    failedAudioUpload (data) {
       this.$noty.error('We were not able to perform the upload.  Please try again or contact us for assistance.')
       axios.post('/api/submission-audios/error', JSON.stringify(data))
       this.$refs.recorder.removeRecord()
@@ -1137,7 +1191,8 @@ export default {
       this.$refs.email.openSendEmailModal(graderId)
     },
     getModalUploadFileTitle () {
-      return this.user.role === 3 ? 'Upload File Submission' : 'Upload Solutions'
+      let solutionType = this.solutionTypeIsPdfImage ? 'PDF/Image' : 'Audio'
+      return this.user.role === 3 ? 'Upload File Submission' : `Upload ${solutionType} Solution`
     },
     getSolutionUploadTypes () {
       return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
@@ -1292,6 +1347,7 @@ export default {
       }
     },
     openUploadFileModal (questionId) {
+      this.$bvModal.show('modal-upload-file')
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
       this.uploadFileForm.assignmentId = this.assignmentId
@@ -1322,6 +1378,7 @@ export default {
       }
       if (!this.uploadFileForm.errors.any() &&
         (this.uploadLevel === 'question' || !this.cutups.length)) {
+        this.questions[this.currentPage - 1].solution_type = 'q'
         this.$bvModal.hide(`modal-upload-file`)
       }
 
@@ -1531,6 +1588,7 @@ export default {
           }
           if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
+            this.questions[this.currentPage - 1].solution_type = 'q'
           }
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         } else {
@@ -1557,13 +1615,13 @@ export default {
     async getSelectedQuestions (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/view`)
-        console.log(JSON.parse(JSON.stringify(data)))
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
 
         this.questions = data.questions
+        console.log(this.questions)
         if (!this.questions.length) {
           this.initializing = false
           return false

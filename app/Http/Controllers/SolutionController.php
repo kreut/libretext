@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Question;
 use App\Solution;
 use App\Assignment;
 use App\Cutup;
@@ -24,6 +25,68 @@ class SolutionController extends Controller
 {
 
     use S3;
+
+    public function storeAudioSolutionFile(Request $request, Solution $Solution, Assignment $assignment, Question $question, Cutup $cutup)
+    {
+        $response['type'] = 'error';
+        $user_id = Auth::user()->id;
+        try {
+
+            $authorized = Gate::inspect('uploadSolutionFile', $Solution);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+
+            $validator = Validator::make($request->all(), [
+                "audio" => $this->audioFileValidator()
+            ]);
+
+            if ($validator->fails()) {
+                $response['message'] = $validator->errors()->first('audio');
+                return $response;
+            }
+
+            $file = $request->file("audio")->store("solutions/$user_id", 'local');
+            $solutionContents = Storage::disk('local')->get($file);
+            Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
+            $original_filename = "Solution.mpg";
+            $file_data = [
+                'file' => basename($file),
+                'original_filename' => $original_filename,
+                'updated_at' => Carbon::now()];
+
+            DB::beginTransaction();
+            //if there's an upload PDF/IMG get rid of it.
+            $Solution->where('question_id', $question->id)
+                ->where('type', 'q')
+                ->where('user_id', $user_id)
+                ->delete();
+            $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $user_id, $Solution);
+            $Solution->updateOrCreate(
+                [
+                    'user_id' => $user_id,
+                    'type' => 'audio',
+                    'question_id' => $question->id
+                ],
+                $file_data
+            );
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'Your audio solution has been saved.';
+            $response['solution'] = $original_filename;
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving this audio solution.  Please try again or contact us for assistance.";
+            return $response;
+        }
+        return $response;
+
+    }
 
     public function storeSolutionFile(Request $request, Solution $Solution, Cutup $cutup)
     {
@@ -63,6 +126,11 @@ class SolutionController extends Controller
             switch ($request->uploadLevel) {
                 case('question'):
                     $assignment_name = Assignment::find($assignment_id)->name;
+                    //if there's an upload audio get rid of it
+                    $Solution->where('question_id', $question_id)
+                        ->where('type', 'audio')
+                        ->where('user_id', $user_id)
+                        ->delete();
                     $Solution->updateOrCreate(
                         [
                             'user_id' => $user_id,

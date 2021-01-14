@@ -106,6 +106,15 @@ class CutupController extends Controller
                     //add the new full solution
                     $sanitized_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($assignment->name));
                     $cutup_filename = $sanitized_name . "-q" . $request->question_num . ".pdf";
+
+                    //if there's an audio one, then first get rid of it
+                    $solution->where('question_id', $question->id)
+                        ->where('type', 'audio')
+                        ->where('user_id', $user_id)
+                        ->delete();
+
+
+
                     $solution->updateOrCreate(
                         ['user_id' => $user_id,
                             'question_id' => $question->id,

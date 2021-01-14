@@ -432,8 +432,6 @@ class AssignmentSyncQuestionController extends Controller
             $assignment_question_info = $this->getQuestionInfoByAssignment($assignment);
 
             $question_ids = [];
-            $open_ended_file_submissions = [];
-            $open_ended_text_submissions = [];
             $points = [];
             $solutions_by_question_id = [];
             if (!$assignment_question_info['questions']) {
@@ -543,11 +541,14 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ($solutions) {
                     foreach ($solutions as $key => $value) {
-                        $solutions_by_question_id[$value->question_id] = $value->original_filename;
+                        $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
+                        $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
+                        if ($value->type === 'audio') {
+                            $solutions_by_question_id[$value->question_id]['solution_audio_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+                        }
                     }
                 }
             }
-
 
 //only get the first temporary urls...you'll get the rest onChange page in Vue
             //this way we don't have to make tons of calls to S3 on initial page load
@@ -614,7 +615,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ($submission_file) {
 
-                    $assignment->questions[$key]['open_ended_submission_type'] =  $submission_file['open_ended_submission_type'];
+                    $assignment->questions[$key]['open_ended_submission_type'] = $submission_file['open_ended_submission_type'];
                     $assignment->questions[$key]['submission'] = $submission_file['submission'];
                     $assignment->questions[$key]['submission_file_exists'] = (boolean)$assignment->questions[$key]['submission'];
 
@@ -653,7 +654,12 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
                 }
 
-                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id] ??  false;
+
+                $assignment->questions[$key]['solution'] = $solutions_by_question_id[$question->id]['original_filename'] ?? false;
+                $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
+                if ($assignment->questions[$key]['solution_type'] === 'audio') {
+                    $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_audio_url'];
+                }
 
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [
@@ -752,7 +758,6 @@ class AssignmentSyncQuestionController extends Controller
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
-
             }
 
             $response['type'] = 'success';

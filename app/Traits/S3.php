@@ -21,5 +21,10 @@ trait S3
         return ['required', 'mimes:pdf,txt,png,jpeg,jpg', 'max:500000'];//update in UploadFiles.js
     }
 
+    public function audioFileValidator()
+    {
+        return ['required', 'mimes:mpga', 'max:500000'];//update in UploadFiles.js
+    }
+
 
 }
