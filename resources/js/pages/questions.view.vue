@@ -482,7 +482,6 @@
             >
               Upload Solution
             </b-button>
-            {{ questions[currentPage-1].solution_file_url }}
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
               <a
@@ -603,9 +602,10 @@
                       </b-button>
                     </div>
                   </div>
-                  <div v-if="isOpenEndedAudioSubmission && user.role === 3">
+                  <div v-show="isOpenEndedAudioSubmission && user.role === 3">
                     <audio-recorder
-                      ref="recorder"
+                      ref="uploadRecorder"
+                      :key="questions[currentPage-1].id"
                       class="m-auto"
                       :upload-url="audioUploadUrl"
                       :time="1"
@@ -653,16 +653,8 @@
                           Your question submission will be marked late.</span>
                       </b-alert>
                     </span>
-                    <span v-if="questions[currentPage-1].solution">
-                      <span class="font-weight-bold">Solution:</span>
-                      <a
-                        :href="questions[currentPage-1].solution_file_url"
-                        target="”_blank”"
-                      >
-                        {{ standardizeFilename(questions[currentPage - 1].solution) }}
-                      </a>
-                      <br>
-                    </span>
+                    <span v-if="!questions[currentPage-1].open_ended_submission_type" v-html="solutionFileHtml" />
+
                     <span v-if="assessmentType==='learning tree'">
                       <span class="font-weight-bold">Number of attempts: </span>
                       {{
@@ -726,6 +718,7 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
+                    <span v-html="solutionFileHtml" />
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
@@ -777,6 +770,18 @@
                           Upload New File
                         </b-button>
                       </div>
+                    </div>
+                    <div v-if="showSubmittedAudioUploadSuccessMessage">
+                      <b-alert show variant="success">
+                        <span class="font-weight-bold">{{ showSubmittedAudioUploadSuccessMessage }}
+                        </span>
+                      </b-alert>
+                    </div>
+                    <div v-if="showSubmittedAudioUploadErrorMessage">
+                      <b-alert show variant="danger">
+                        <span class="font-weight-bold">{{ showSubmittedAudioUploadErrorMessage }}
+                        </span>
+                      </b-alert>
                     </div>
                   </b-card-text>
                 </b-card>
@@ -843,7 +848,7 @@ import CKEditor from 'ckeditor4-vue'
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
-
+let vm = Vue
 export default {
   middleware: 'auth',
   components: {
@@ -854,6 +859,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    solutionFileHtml: '',
+    showSubmittedAudioUploadErrorMessage: false,
+    showSubmittedAudioUploadSuccessMessage: false,
     solutionTypeIsPdfImage: true,
     audioSolutionUploadUrl: '',
     audioUploadUrl: '',
@@ -1040,31 +1048,53 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    setSolutionFileHtml (question) {
+      let standardizedFilename = this.standardizeFilename(question.solution)
+
+      return `<span v-if="${question.solution}">
+                      <span class="font-weight-bold">Solution:</span>
+                      <a
+                        href="${question.solution_file_url}"
+                        target="”_blank”"
+                      >
+                       ${standardizedFilename}
+          </a>
+                      <br>
+                    </span>`
+    },
     openSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
       this.openUploadFileModal(question.id)
     },
     submittedAudioSolutionUpload (response) {
       let data = response.data
-      this.$noty[data.type](data.message)
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].solution = data.solution
         this.questions[this.currentPage - 1].solution_type = 'audio'
         this.questions[this.currentPage - 1].solution_file_url = data.solution_file_url
+        this.showSuccessfulAudioSubmissiopnMessage = true
       }
       this.$refs.recorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
     },
     submittedAudioUpload (response) {
       let data = response.data
-      this.$noty[data.type](data.message)
       if (data.type === 'success') {
+        setTimeout(() => {
+          this.showSubmittedAudioUploadSuccessMessage = false
+        }, 3000)
+        this.showSubmittedAudioUploadSuccessMessage = data.message
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
         this.questions[this.currentPage - 1].submission_file_exists = true
+      } else {
+        this.showSubmittedAudioUploadErrorMessage = data.message
+        setTimeout(() => {
+          this.showSubmittedAudioUploadErrorMessage = false
+        }, 3000)
       }
-      this.$refs.recorder.removeRecord()
+      this.$refs.uploadRecorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
     },
     failedAudioUpload (data) {
@@ -1408,6 +1438,9 @@ export default {
       }
     },
     async changePage (currentPage) {
+      this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
+      this.showSubmittedAudioUploadSuccessMessage = false
+      this.showSubmittedAudioUploadErrorMessage = false
       console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
