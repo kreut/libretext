@@ -11,7 +11,7 @@ use App\Extension;
 use App\Question;
 use App\SubmissionFile;
 use App\Traits\LatePolicy;
-use App\Traits\s3;
+use App\Traits\S3;
 use App\Traits\GeneralSubmissionPolicy;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -27,7 +27,7 @@ class SubmissionAudioController extends Controller
 {
     use DateFormatter;
     use LatePolicy;
-    use s3;
+    use S3;
     use GeneralSubmissionPolicy;
 
     public function logError(Request $request)
