@@ -335,6 +335,9 @@
                                   :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
                     />
                   </b-card>
+                  <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
+                    <span class="font-weight-bold">{{ audioFeedbackDataMessage }}</span>
+                  </b-alert>
                 </div>
 
                 <div v-else>
@@ -373,7 +376,9 @@ export default {
     ToggleButton
   },
   data: () => ({
-
+    audioFeedbackDataType: '',
+    audioFeedbackDataMessage: '',
+    showAudioFeedbackMessage: false,
     feedbackModalTitle: 'Upload PDF/Image File',
     feedbackTypeIsPdfImage: true,
     audioFeedbackUploadUrl: '',
@@ -437,11 +442,17 @@ export default {
     },
     submittedAudioFeedbackUpload (response) {
       let data = response.data
-      this.$noty[data.type](data.message)
+      this.audioFeedbackDataType = (data.type === 'success') ? 'success' : 'danger'
+      this.audioFeedbackDataMessage = data.message
+      this.showAudioFeedbackMessage = true
+      setTimeout(() => {
+        this.showAudioFeedbackMessage = false
+      }, 3000)
       if (data.type === 'success') {
         this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = data.file_feedback_url
         this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_type = data.file_feedback_type
       }
+      this.viewSubmission = false
       this.$refs.recorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
     },
@@ -563,6 +574,7 @@ export default {
       }
     },
     async changePage () {
+      this.showAudioFeedbackMessage = false
       console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
 

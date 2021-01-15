@@ -484,12 +484,19 @@
             </b-button>
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
-              <a
+              <span v-if="!showUploadedAudioSolutionMessage"> <a
                 :href="questions[currentPage-1].solution_file_url"
                 target="”_blank”"
               >
                 {{ standardizeFilename(questions[currentPage - 1].solution) }}
               </a>
+              </span>
+
+              <span v-if="showUploadedAudioSolutionMessage"
+                    :class="uploadedAudioSolutionDataType"
+              >
+                {{ uploadedAudioSolutionDataMessage }}</span>
+
               <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
             </span>
           </div>
@@ -839,7 +846,7 @@ import CKEditor from 'ckeditor4-vue'
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
-let vm = Vue
+
 export default {
   middleware: 'auth',
   components: {
@@ -850,6 +857,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    uploadedAudioSolutionDataType: '',
+    showUploadedAudioSolutionMessage: false,
+    uploadedAudioSolutionDataMessage: '',
     solutionFileHtml: '',
     openEndedSubmissionDataType: '',
     showOpenEndedSubmissionMessage: false,
@@ -1059,6 +1069,12 @@ export default {
     },
     submittedAudioSolutionUpload (response) {
       let data = response.data
+      this.uploadedAudioSolutionDataType = (data.type === 'success') ? 'font-weight-bold text-success' : 'font-weight-bold text-danger'
+      this.uploadedAudioSolutionDataMessage = data.message
+      this.showUploadedAudioSolutionMessage = true
+      setTimeout(() => {
+        this.showUploadedAudioSolutionMessage = false
+      }, 3000)
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].solution = data.solution
         this.questions[this.currentPage - 1].solution_type = 'audio'
