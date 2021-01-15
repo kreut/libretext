@@ -602,7 +602,7 @@
                       </b-button>
                     </div>
                   </div>
-                  <div v-show="isOpenEndedAudioSubmission && user.role === 3">
+                  <div v-if="isOpenEndedAudioSubmission && user.role === 3">
                     <audio-recorder
                       ref="uploadRecorder"
                       :key="questions[currentPage-1].id"
@@ -771,18 +771,9 @@
                         </b-button>
                       </div>
                     </div>
-                    <div v-if="showSubmittedAudioUploadSuccessMessage">
-                      <b-alert show variant="success">
-                        <span class="font-weight-bold">{{ showSubmittedAudioUploadSuccessMessage }}
-                        </span>
-                      </b-alert>
-                    </div>
-                    <div v-if="showSubmittedAudioUploadErrorMessage">
-                      <b-alert show variant="danger">
-                        <span class="font-weight-bold">{{ showSubmittedAudioUploadErrorMessage }}
-                        </span>
-                      </b-alert>
-                    </div>
+                    <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
+                      <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
+                    </b-alert>
                   </b-card-text>
                 </b-card>
               </b-row>
@@ -860,8 +851,9 @@ export default {
   },
   data: () => ({
     solutionFileHtml: '',
-    showSubmittedAudioUploadErrorMessage: false,
-    showSubmittedAudioUploadSuccessMessage: false,
+    openEndedSubmissionDataType: '',
+    showOpenEndedSubmissionMessage: false,
+    openEndedSubmissionDataMessage: '',
     solutionTypeIsPdfImage: true,
     audioSolutionUploadUrl: '',
     audioUploadUrl: '',
@@ -1050,8 +1042,7 @@ export default {
   methods: {
     setSolutionFileHtml (question) {
       let standardizedFilename = this.standardizeFilename(question.solution)
-
-      return `<span v-if="${question.solution}">
+      return question.solution ? `
                       <span class="font-weight-bold">Solution:</span>
                       <a
                         href="${question.solution_file_url}"
@@ -1059,8 +1050,8 @@ export default {
                       >
                        ${standardizedFilename}
           </a>
-                      <br>
-                    </span>`
+                      <br>`
+        : ''
     },
     openSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
@@ -1079,20 +1070,17 @@ export default {
     },
     submittedAudioUpload (response) {
       let data = response.data
+      this.openEndedSubmissionDataType = (data.type === 'success') ? 'success' : 'danger'
+      this.openEndedSubmissionDataMessage = data.message
+      this.showOpenEndedSubmissionMessage = true
+      setTimeout(() => {
+        this.showOpenEndedSubmissionMessage = false
+      }, 8000)
       if (data.type === 'success') {
-        setTimeout(() => {
-          this.showSubmittedAudioUploadSuccessMessage = false
-        }, 3000)
-        this.showSubmittedAudioUploadSuccessMessage = data.message
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
         this.questions[this.currentPage - 1].submission_file_exists = true
-      } else {
-        this.showSubmittedAudioUploadErrorMessage = data.message
-        setTimeout(() => {
-          this.showSubmittedAudioUploadErrorMessage = false
-        }, 3000)
       }
       this.$refs.uploadRecorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
@@ -1220,6 +1208,9 @@ export default {
       return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
     },
     standardizeFilename (filename) {
+      if (!filename) {
+        return ''
+      }
       let ext = filename.slice((Math.max(0, filename.lastIndexOf('.')) || Infinity) + 1)
       let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')
       return `${name}-${this.currentPage}.${ext}`
@@ -1439,8 +1430,7 @@ export default {
     },
     async changePage (currentPage) {
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
-      this.showSubmittedAudioUploadSuccessMessage = false
-      this.showSubmittedAudioUploadErrorMessage = false
+      this.showOpenEndedSubmissionMessage = false
       console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
