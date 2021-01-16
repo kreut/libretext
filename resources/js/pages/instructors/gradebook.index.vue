@@ -489,12 +489,11 @@ export default {
       }
     },
     getHeaderColor (key, assignmentGroups) {
-      let colors = ['powderblue', 'steelblue', 'lightsteelblue', 'lightskyblue', 'royalblue', 'blue']
-      let color
+      let percent
       for (let j = 0; j < assignmentGroups.length; j++) {
         if (assignmentGroups[j].includes(parseInt(key))) {
-          color = colors[j % 6]
-          return { 'background-color': color, 'align': 'center' }
+          percent = 95 - 7 * j
+          return { 'background-color': `hsla(197, 65%, ${percent}%, 0.69)`, 'align': 'center' }
         }
       }
     }
