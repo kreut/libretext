@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Question Properties" />
+        <PageTitle title="Questions" />
         <div v-if="items.length">
           <b-table
             striped

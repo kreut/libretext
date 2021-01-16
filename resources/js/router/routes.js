@@ -52,7 +52,7 @@ let general_paths  = [
       { path: '', redirect: { name: 'instructors.assignments.summary' } },
       { path: 'summary', name: 'instructors.assignments.summary', component: page('instructors/assignment_information/summary.vue') },
       { path: 'statistics', name: 'instructors.assignments.statistics', component: page('instructors/assignment_information/statistics.vue') },
-      { path: 'questions', name: 'instructors.assignments.questions.properties', component: page('instructors/assignment_information/questions.properties.vue') },
+      { path: 'questions', name: 'instructors.assignments.questions', component: page('instructors/assignment_information/questions.vue') },
       { path: 'gradebook', name: 'instructors.assignments.gradebook', component: page('instructors/assignment_information/gradebook.vue') },
 
     ] },

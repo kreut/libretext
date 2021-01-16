@@ -89,7 +89,7 @@ class BreadcrumbController extends Controller
                     case('students.assignments.summary'):
                     case('instructors.assignments.summary'):
                     case('instructors.assignments.statistics'):
-                    case('instructors.assignments.questions.properties'):
+                    case('instructors.assignments.questions'):
                     case('instructors.assignments.gradebook'):
 
                         //My courses / The assignment's course / that assignment;

@@ -22,6 +22,11 @@
                   {{ tab.name }}
                 </router-link>
               </li>
+              <li>
+                <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
+                  Course Gradebook
+                </a>
+              </li>
             </ul>
           </card>
         </div>
@@ -47,6 +52,9 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    data: () => ({
+      courseId: 0
+    }),
     tabs () {
       return [
         {
@@ -61,12 +69,12 @@ export default {
         },
         {
           icon: '',
-          name: 'Question Properties',
-          route: 'instructors.assignments.questions.properties'
+          name: 'Questions',
+          route: 'instructors.assignments.questions'
         },
         {
           icon: '',
-          name: 'Gradebook',
+          name: 'Assignment Gradebook',
           route: 'instructors.assignments.gradebook'
         }
       ]
@@ -96,6 +104,7 @@ export default {
             this.$noty.error(data.message)
             return false
           }
+          this.courseId = data.assignment.course_id
           this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
         } catch (error) {
           this.$noty.error(error.message)
