@@ -94,7 +94,8 @@ export default {
           { property: 'Solutions Released', value: this.assignment.solutions_released ? 'Yes' : 'No' },
           { property: 'Scores Released', value: this.assignment.show_scores ? 'Yes' : 'No' },
           { property: 'Include In Final Weighted Average', value: this.assignment.include_in_weighted_average ? 'Yes' : 'No' },
-          { property: 'Total Points', value: this.assignment.total_points }
+          { property: 'Total Points', value: this.assignment.total_points },
+          { property: 'Number Of Questions', value: this.assignment.number_of_questions }
         ]
       } catch (error) {
         this.$noty.error(error.message)

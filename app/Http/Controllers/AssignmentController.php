@@ -698,12 +698,12 @@ class AssignmentController extends Controller
 
 
     /**
-     *
-     * Display the specified resource
-     *
      * @param Assignment $assignment
-     * @return Assignment
+     * @param AssignmentGroup $assignmentGroup
+     * @return array
+     * @throws Exception
      */
+
     public function getAssignmentSummary(Assignment $assignment, AssignmentGroup $assignmentGroup)
     {
 
@@ -725,8 +725,9 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'formatted_late_policy' => $this->formatLatePolicy($assignment),
-                'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
-                'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
+                'due' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->due, Auth::user()->time_zone),
+                'available_on' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
+                'number_of_questions' => count($assignment->questions)
             ];
             foreach ($formatted_items as $key => $value) {
                 $response['assignment'][$key] = $value;
