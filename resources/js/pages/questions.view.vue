@@ -283,6 +283,11 @@
     <div v-else>
       <PageTitle v-if="questions !==['init']" :title="title" />
     </div>
+    <div v-if="user.role === 3 && showAssessmentClosedMessage">
+      <b-alert variant="info" show>
+        <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details</span>
+      </b-alert>
+    </div>
     <div v-if="questions.length && !initializing">
       <div v-if="isLocked()">
         <b-alert variant="info" show>
@@ -292,7 +297,6 @@
             In addition, you cannot update the number of points per question.</strong>
         </b-alert>
       </div>
-
       <div v-if="questions.length">
         <div class="mb-3">
           <b-container>
@@ -857,6 +861,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showAssessmentClosedMessage: false,
     uploadedAudioSolutionDataType: '',
     showUploadedAudioSolutionMessage: false,
     uploadedAudioSolutionDataMessage: '',
@@ -1569,6 +1574,10 @@ export default {
           return false
         }
         let assignment = data.assignment
+        if (!assignment.shown) {
+          this.showAssessmentClosedMessage = true
+          return false
+        }
         this.title = `${assignment.name} Assessments`
         this.name = assignment.name
         this.assessmentType = assignment.assessment_type

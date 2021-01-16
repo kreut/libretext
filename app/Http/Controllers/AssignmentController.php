@@ -558,11 +558,10 @@ class AssignmentController extends Controller
     }
 
     /**
-     *
-     * Display the specified resource
-     *
      * @param Assignment $assignment
-     * @return Assignment
+     * @param Score $score
+     * @return array
+     * @throws Exception
      */
     public function viewQuestionsInfo(Assignment $assignment, Score $score)
     {
@@ -590,6 +589,7 @@ class AssignmentController extends Controller
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
+                'shown' => $assignment->shown,
                 'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
@@ -725,8 +725,8 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'formatted_late_policy' => $this->formatLatePolicy($assignment),
-                'due' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->due, Auth::user()->time_zone),
-                'available_on' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
+                'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
+                'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
                 'number_of_questions' => count($assignment->questions)
             ];
             foreach ($formatted_items as $key => $value) {
