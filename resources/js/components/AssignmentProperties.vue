@@ -47,6 +47,11 @@
         The remediation nodes provide the student with supplementary material to help them answer the initial
         question.
       </b-tooltip>
+      <b-tooltip target="clicker"
+                 delay="250"
+      >
+        Instructors manually open and close these real-time graded assessments.
+      </b-tooltip>
       <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
                  delay="250"
       >
@@ -304,6 +309,14 @@
           <span @click="checkIfScoringTypeOfPoints">
             <b-form-radio name="assessment_type" value="learning tree">
               Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
+                icon="question-circle"
+              />
+              </span>
+            </b-form-radio>
+          </span>
+          <span @click="checkSourceAndLatePolicy">
+            <b-form-radio name="assessment_type" value="clicker">
+              Clicker Assessments <span id="clicker" class="text-muted"><b-icon
                 icon="question-circle"
               />
               </span>
@@ -698,10 +711,20 @@ export default {
     initTooltips(this)
   },
   methods: {
+    checkSourceAndLatePolicy (event) {
+      if (this.form.source === 'x') {
+        event.preventDefault()
+        this.$noty.info('Clicker assessments must have a Source of "Internal".')
+      }
+      if (this.form.late_policy !== 'not accepted') {
+        event.preventDefault()
+        this.$noty.info('Click assessments must have a Late Policy of "Do not accept late".')
+      }
+    },
     checkIfScoringTypeOfPoints (event) {
       if (this.form.scoring_type === 'c') {
         event.preventDefault()
-        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
+        this.$noty.info('Learning Tree assessments types must have a Scoring Type of "Points".')
         return false
       }
     },
@@ -714,11 +737,16 @@ export default {
       }
       if (this.form.assessment_type === 'learning tree') {
         event.preventDefault()
-        this.$noty.info('Learning Tree assessments types must have a Scoring Type of points.')
+        this.$noty.info('Learning Tree assessments types must have a Scoring Type of "Points".')
         return false
       }
     },
     initLateValues (event) {
+      if (this.form.assessment_type === 'clicker') {
+        event.preventDefault()
+        this.$noty.info('Clicker assessments can only have the Late Policy of "Do not accept late".')
+        return false
+      }
       if (this.form.scoring_type === 'c') {
         event.preventDefault()
         this.$noty.info('If you would like a Late Policy other than "Do not accept late, please change your Scoring Type to points.')
