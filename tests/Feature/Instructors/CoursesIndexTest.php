@@ -31,6 +31,19 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
+public function a_non_owner_cannot_toggle_showing_a_course(){
+    $this->actingAs($this->user)->patchJson("/api/courses/{$this->course_2->id}/show-course/1")
+        ->assertJson(['message' => 'You are not allowed to show/hide this course.']);
+
+}
+    /** @test */
+    public function an_owner_can_toggle_showing_a_course(){
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-course/1")
+            ->assertJson(['message' => 'Your students <strong>cannot</strong> view this course.  In addition, the course access code has been revoked.']);
+    }
+
+
+    /** @test */
     public function grader_access_code_must_be_valid()
     {
 

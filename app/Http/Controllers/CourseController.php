@@ -228,9 +228,6 @@ class CourseController extends Controller
             $data['shown'] = 0;
             //create the course
             $new_course = $course->create($data);
-            //create the access code
-            $course_access_code->create(['course_id' => $new_course->id,
-                'access_code' => $course_access_code->createCourseAccessCode()]);
             //create a test student
             $fake_student = new User();
             $fake_student->last_name = 'Student';

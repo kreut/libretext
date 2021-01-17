@@ -21,6 +21,7 @@ class StudentsCoursesIndexTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
 
         $this->course_access_code = 'SomeCode';
         factory(CourseAccessCode::class)->create([
@@ -29,6 +30,28 @@ class StudentsCoursesIndexTest extends TestCase
 
 
     }
+
+    /** @test */
+    public function can_get_enrollments_of_shown_courses_if_user_is_a_student(){
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'course_id' => $this->course->id
+        ]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'course_id' => $this->course_2->id
+        ]);
+        $this->course_2->shown = 0;
+        $this->course_2->save();
+
+
+        $response = $this->actingAs( $this->student_user)->getJson("/api/enrollments");
+        $this->assertEquals(1, count($response->original['enrollments']));
+
+    }
+
+
+
 /** @test */
     public function can_get_enrollments_if_user_is_a_student(){
 
@@ -39,9 +62,8 @@ class StudentsCoursesIndexTest extends TestCase
         ]);
 
 
-        $this->actingAs( $this->user)->getJson("/api/enrollments")
-            ->assertJson([  'type' => 'error',
-                'message' => 'You must be a student to view your enrollments.']);
+        $this->actingAs( $this->student_user)->getJson("/api/enrollments")
+            ->assertJson([  'type' => 'success']);
     }
 
 
