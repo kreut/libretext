@@ -556,7 +556,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['points'] = $points[$question->id];
-
+                $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
                 $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];

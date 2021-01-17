@@ -405,7 +405,11 @@
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
-                  <b-button class="mt-1 mb-2 mr-2" variant="success" @click="getAssessmentsForAssignment()">
+                  <b-button class="mt-1 mb-2 mr-2"
+                            variant="success"
+                            size="sm"
+                            @click="getAssessmentsForAssignment()"
+                  >
                     Add Questions
                   </b-button>
                 </div>
@@ -463,8 +467,17 @@
         <div v-if="isInstructor()" class="d-flex flex-row">
           <div class="p-2">
             <b-button class="mt-1 mb-2"
+                      variant="primary"
+                      :disabled="isLocked()"
+                      size="sm"
+                      @click="editQuestion(currentPage)"
+            >
+              Edit Question
+            </b-button>
+            <b-button class="mt-1 mb-2"
                       variant="danger"
                       :disabled="isLocked()"
+                      size="sm"
                       @click="removeQuestion(currentPage)"
             >
               Remove Question
@@ -475,6 +488,7 @@
             <b-form-select v-model="openEndedSubmissionType"
                            :options="openEndedSubmissionTypeOptions"
                            style="width:100px"
+                           size="sm"
                            @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
             />
           </div>
@@ -482,6 +496,7 @@
             <b-button
               class="mt-1 mb-2 ml-1"
               variant="dark"
+              size="sm"
               @click="openSolutionModal(questions[currentPage-1])"
             >
               Upload Solution
@@ -1055,6 +1070,9 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    editQuestion (currentPage) {
+      window.open(this.questions[currentPage - 1].mindtouch_url)
+    },
     setSolutionFileHtml (question) {
       let standardizedFilename = this.standardizeFilename(question.solution)
       return question.solution ? `
