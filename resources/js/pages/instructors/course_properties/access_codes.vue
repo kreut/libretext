@@ -12,11 +12,18 @@
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Course Access Codes">
           <b-card-text>
-            <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
-            <p>Current Access code: {{ course.access_code }}</p>
-            <b-button class="float-right" variant="primary" @click="refreshAccessCode">
-              Refresh Access Code
-            </b-button>
+            <div v-if="course.access_code">
+              <p>By refreshing your access code, students will no longer be able to sign up using the old access code.</p>
+              <p>Current Access code: {{ course.access_code }}</p>
+              <b-button class="float-right" variant="primary" @click="refreshAccessCode">
+                Refresh Access Code
+              </b-button>
+            </div>
+            <div v-else>
+              <b-alert variant="info" show>
+                <span class="font-weight-bold">This course is currently not "shown" so it has no access code to refresh.</span>
+              </b-alert>
+            </div>
           </b-card-text>
         </b-card>
       </div>

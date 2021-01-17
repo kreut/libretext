@@ -33,6 +33,7 @@ class EnrollmentController extends Controller
                 ->join('enrollments', 'courses.id', '=', 'enrollments.course_id')
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('enrollments.user_id', '=', $request->user()->id)
+                ->where('courses.shown',1)
                 ->select(DB::raw('CONCAT(first_name, " " , last_name) AS instructor'), 'courses.name', 'courses.start_date', 'courses.end_date', 'courses.id')
                 ->get();
             $response['type'] = 'success';

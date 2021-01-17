@@ -76,6 +76,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/{course}', 'CourseController@show');
+    Route::patch('/courses/{course}/show-course/{shown}', 'CourseController@showCourse');
 
     Route::post('/courses', 'CourseController@store');
     Route::patch('/courses/{course}/students-can-view-weighted-average', 'CourseController@updateStudentsCanViewWeightedAverage');

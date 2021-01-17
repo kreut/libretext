@@ -8,21 +8,18 @@ use App\Exceptions\Handler;
 use \Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\DB;
-
-use App\Traits\AccessCodes;
 
 class CourseAccessCodeController extends Controller
 {
 
-    use AccessCodes;
+
 
     /**
-     * Update the specified resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @param \App\CourseAccessCode $courseAccessCode
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param CourseAccessCode $CourseAccessCode
+     * @param Course $Course
+     * @return array
+     * @throws Exception
      */
     public function update(Request $request, CourseAccessCode $CourseAccessCode, Course $Course)
     {
@@ -36,12 +33,9 @@ class CourseAccessCodeController extends Controller
             return $response;
         }
         try {
-            $access_code = $this->createCourseAccessCode();
-            DB::table('course_access_codes')
-                ->where('course_id', $request->course_id)
-                ->update(['access_code' => $access_code]);
+
             $response['type'] = 'success';
-            $response['access_code'] = $access_code;
+            $response['access_code'] = $CourseAccessCode->refreshCourseAccessCode($request->course_id);
             $response['message'] = 'The course access code has been refreshed.';
         } catch (Exception $e) {
             $h = new Handler(app());

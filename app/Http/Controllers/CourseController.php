@@ -37,7 +37,7 @@ class CourseController extends Controller
         $response['type'] = 'error';
 
 
-        if ($request->session()->get('completed_sso_registration')){
+        if ($request->session()->get('completed_sso_registration')) {
             \Log::info('Just finished registration.');
         }
         $authorized = Gate::inspect('viewAny', $course);
@@ -76,8 +76,8 @@ class CourseController extends Controller
             $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
             $course->save();
 
-            $verb =  $course->students_can_view_weighted_average ? "can" : "cannot";
-            $response['type'] =  $course->students_can_view_weighted_average ? 'success' : 'info';
+            $verb = $course->students_can_view_weighted_average ? "can" : "cannot";
+            $response['type'] = $course->students_can_view_weighted_average ? 'success' : 'info';
             $response['message'] = "Students <strong>$verb</strong> view their weighted averages.";
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -104,7 +104,7 @@ class CourseController extends Controller
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
                 'graders' => $course->graderNamesAndIds,
-                'access_code' => $course->accessCodes->access_code,
+                'access_code' => $course->accessCodes->access_code ?? false,
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date];
 
@@ -118,29 +118,78 @@ class CourseController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param CourseAccessCode $courseAccessCode
+     * @param int $shown
+     * @return array
+     * @throws Exception
+     */
+    public function showCourse(Request $request, Course $course, CourseAccessCode $courseAccessCode, int $shown)
+    {
 
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('showCourse', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $course->shown = !$shown;
+            $course->save();
+            $access_code_message = 'In addition, the course access code has been ';
+            if (!$shown) {
+                $course_access_code = $courseAccessCode->refreshCourseAccessCode($course->id);
+                $access_code_message .= 'refreshed.';
+            } else {
+                $courseAccessCode->where(['course_id' => $course->id])->delete();
+                $course_access_code = 'None';
+                $access_code_message .= 'revoked.';
+            }
+
+            DB::commit();
+            $response['type'] = !$shown ? 'success' : 'info';
+            $shown_message = !$shown ? 'can' : 'cannot';
+            $response['course_access_code'] =$course_access_code;
+            $response['message'] = "Your students <strong>{$shown_message}</strong> view this course.  $access_code_message";
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error showing <strong>{$course->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param $user
+     * @return \Illuminate\Support\Collection
+     */
     public function getCourses($user)
     {
 
         switch ($user->role) {
             case(2):
                 return DB::table('courses')
-                    ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+                    ->leftJoin('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
                     ->select('courses.*', 'course_access_codes.access_code')
                     ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
                     ->get();
-                break;
             case(4):
                 $courses = DB::table('graders')
                     ->where('user_id', $user->id)
                     ->get()
                     ->pluck('course_id');
                 return DB::table('courses')
-                    ->join('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
+                    ->leftJoin('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
                     ->select('courses.*', 'course_access_codes.access_code')
                     ->whereIn('courses.id', $courses)->orderBy('start_date', 'desc')
                     ->get();
-                break;
         }
     }
 
@@ -170,33 +219,33 @@ class CourseController extends Controller
 
         try {
             DB::beginTransaction();
-                $data = $request->validated();
-                $data['user_id'] = auth()->user()->id;
+            $data = $request->validated();
+            $data['user_id'] = auth()->user()->id;
 
 
-                $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
-                $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
+            $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
+            $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
+            $data['shown'] = 0;
+            //create the course
+            $new_course = $course->create($data);
+            //create the access code
+            $course_access_code->create(['course_id' => $new_course->id,
+                'access_code' => $course_access_code->createCourseAccessCode()]);
+            //create a test student
+            $fake_student = new User();
+            $fake_student->last_name = 'Student';
+            $fake_student->first_name = 'Fake';
+            $fake_student->time_zone = auth()->user()->time_zone;
+            $fake_student->role = 3;
+            $fake_student->save();
 
-                //create the course
-                $new_course = $course->create($data);
-                //create the access code
-                $course_access_code->create(['course_id' => $new_course->id,
-                    'access_code' => $course_access_code->createCourseAccessCode()]);
-                //create a test student
-                $fake_student = new User();
-                $fake_student->last_name = 'Student';
-                $fake_student->first_name = 'Fake';
-                $fake_student->time_zone = auth()->user()->time_zone;
-                $fake_student->role = 3;
-                $fake_student->save();
-
-                //enroll the fake student
-                $enrollment->create(['user_id' => $fake_student->id,
-                    'course_id' => $new_course->id]);
-                $finalGrade = new FinalGrade();
-                FinalGrade::create(['course_id'=>$new_course->id,
-                    'letter_grades' => $finalGrade->defaultLetterGrades() ]);
-          DB::commit();
+            //enroll the fake student
+            $enrollment->create(['user_id' => $fake_student->id,
+                'course_id' => $new_course->id]);
+            $finalGrade = new FinalGrade();
+            FinalGrade::create(['course_id' => $new_course->id,
+                'letter_grades' => $finalGrade->defaultLetterGrades()]);
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";
         } catch (Exception $e) {

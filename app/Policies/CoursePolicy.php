@@ -131,6 +131,13 @@ class CoursePolicy
             : Response::deny('You are not allowed to import assignments to this course.');
     }
 
+    public function showCourse(User $user, Course $course)
+    {
+        return $this->ownsCourseByUser($course, $user)
+            ? Response::allow()
+            : Response::deny('You are not allowed to show/hide this course.');
+    }
+
 
 
     /**

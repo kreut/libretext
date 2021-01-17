@@ -77,10 +77,30 @@
                :fields="fields"
                :items="courses"
       >
+        <template v-slot:head(shown)="data">
+          Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
+                                                                   icon="question-circle"
+          /></span>
+        </template>
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <a href="" @click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
+        </template>
+        <template v-slot:cell(shown)="data">
+          <toggle-button
+            :width="57"
+            :value="Boolean(data.item.shown)"
+            :sync="true"
+            :font-size="14"
+            :margin="4"
+            :color="{checked: '#28a745', unchecked: '#6c757d'}"
+            :labels="{checked: 'Yes', unchecked: 'No'}"
+            @change="submitShowCourse(data.item)"
+          />
+        </template>
+        <template v-slot:cell(access_code)="data">
+          {{ data.item.access_code ? data.item.access_code : 'None' }}
         </template>
         <template v-slot:cell(start_date)="data">
           {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
@@ -139,17 +159,24 @@ import { mapGetters } from 'vuex'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
 import CourseForm from '../../components/CourseForm'
 import Form from 'vform'
+import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
-  components: { CourseForm },
+  components: { CourseForm, ToggleButton },
   middleware: 'auth',
   data: () => ({
+    showCourseShownTooltip: {
+      fallbackPlacement: ['right'],
+      placement: 'right',
+      title: "Show or hide a course on the student's homepage.  If you are embedding assignments, please show/hide individual assignments; hiding the course won't hide the individually embedded assignments."
+    },
     fields: [
       {
         key: 'name',
         label: 'Course',
         sortable: true
       },
+      'shown',
       {
         key: 'start_date',
         sortable: true
@@ -189,6 +216,19 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async submitShowCourse (course) {
+      try {
+        const { data } = await axios.patch(`/api/courses/${course.id}/show-course/${Number(course.shown)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        course.shown = !course.shown
+        course.access_code = data.course_access_code
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitAddGraderToCourse (bvModalEvt) {
       bvModalEvt.preventDefault()
       try {

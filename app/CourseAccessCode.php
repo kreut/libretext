@@ -4,6 +4,8 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 use App\Traits\AccessCodes;
+use Illuminate\Support\Facades\DB;
+
 
 class CourseAccessCode extends Model
 {
@@ -15,5 +17,12 @@ class CourseAccessCode extends Model
      */
     protected $fillable = ['course_id', 'access_code'];
 
+    public function refreshCourseAccessCode($course_id) {
+        $access_code = $this->createCourseAccessCode();
+        DB::table('course_access_codes')
+            ->where('course_id', $course_id)
+            ->update(['access_code' => $access_code]);
+        return $access_code;
+    }
 
 }
