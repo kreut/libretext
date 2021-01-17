@@ -101,7 +101,7 @@ class AssignmentSyncQuestionController extends Controller
             $i = 1;
             foreach ($assignment_questions as $key => $value) {
                 $columns = [];
-                $columns['open_ended_submission_type'] = $value->open_ended_submission_type;
+                $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? $value->open_ended_submission_type : 'N/A';
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
                 $columns['question_number'] = "Q$i";
