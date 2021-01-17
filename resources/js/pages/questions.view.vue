@@ -515,9 +515,17 @@
                     :class="uploadedAudioSolutionDataType"
               >
                 {{ uploadedAudioSolutionDataMessage }}</span>
-
-              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
             </span>
+            <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+          </div>
+          <div v-if="assessmentType === 'clicker'" class="p-2">
+            <span class="font-italic">Student Access Level:</span>
+            <b-form-select v-model="questionAccessLevel"
+                           :options="questionAccessLevelOptions"
+                           style="width:200px"
+                           size="sm"
+                           @change="updateQuestionAccessLevel(questions[currentPage-1].id)"
+            />
           </div>
         </div>
 
@@ -915,6 +923,12 @@ export default {
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
     isOpenEndedAudioSubmission: false,
+    questionAccessLevel: 'neither_view_nor_submit',
+    questionAccessLevelOptions: [
+      { value: 'neither_view_nor_submit', text: 'Neither view nor submit' },
+      { value: 'view_and_submit', text: 'View and submit' },
+      { value: 'view_and_not_submit', text: 'View but not submit' }
+    ],
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
@@ -1192,6 +1206,19 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    async updateStudentAccessLevel (questionId) {
+      try {
+        alert('Start updateStudentAccessLevel')
+        return false
+
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-question-access-level`, { 'question_access_level': this.questionAccessLevel })
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].question_access_level = this.questionAccessLevel
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      },
     async updateOpenEndedSubmissionType (questionId) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-open-ended-submission-type`, { 'open_ended_submission_type': this.openEndedSubmissionType })

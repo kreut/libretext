@@ -240,7 +240,9 @@ class AssignmentSyncQuestionController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
+                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                    'can_view' => $assignment->assessment_type !== 'clicker' ? 1 : 0,
+                    'can_submit' => $assignment->assessment_type !== 'clicker' ? 1 : 0]);
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
         } catch (Exception $e) {
@@ -543,7 +545,7 @@ class AssignmentSyncQuestionController extends Controller
                     foreach ($solutions as $key => $value) {
                         $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
                         $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                            $solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+                        $solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
 
                     }
                 }
