@@ -519,7 +519,7 @@
             <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
           </div>
           <div v-if="assessmentType === 'clicker'" class="p-2">
-            <span class="font-italic">Student Access Level:</span>
+            <span class="font-italic">Question Access Level:</span>
             <b-form-select v-model="questionAccessLevel"
                            :options="questionAccessLevelOptions"
                            style="width:200px"
@@ -1212,10 +1212,20 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].question_access_level = this.questionAccessLevel
+          if (this.questionAccessLevel === 'view_and_submit') {
+            const self = this
+            setInterval(function () {
+              self.updateQuestionStatistics(self.questions[self.currentPage - 1].id)
+            }, 3000)
+          }
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
+    },
+    async updateQuestionStatistics (questionId) {
+      this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
+      this.renderChart(this.chartdata, this.options)
     },
     async updateOpenEndedSubmissionType (questionId) {
       try {
@@ -1520,9 +1530,7 @@ export default {
       if (this.showAssignmentStatistics) {
         try {
           this.loaded = false
-          const scoresData = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1]['id']}`)
-          console.log(scoresData)
-          this.chartdata = scoresData
+          this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`)
           this.loaded = true
         } catch (error) {
           this.$noty.error(error.message)
