@@ -889,6 +889,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    updateQuestionStatisticsSetInterval: null,
+    pollQuestionAccessLevelSetInterval: null,
     clickerMessage: '',
     clickerMessageType: '',
     showAssessmentClosedMessage: false,
@@ -1248,7 +1250,7 @@ export default {
           this.questions[this.currentPage - 1].question_access_level = this.questionAccessLevel
           if (this.questionAccessLevel === 'view_and_submit') {
             const self = this
-            setInterval(function () {
+            this.updateQuestionStatisticsSetInterval = setInterval(function () {
               self.updateQuestionStatistics(self, self.questions[self.currentPage - 1].id)
             }, 3000)
           }
@@ -1536,11 +1538,18 @@ export default {
       }
     },
     async changePage (currentPage) {
+      if (this.updateQuestionStatisticsSetInterval) {
+        clearInterval(this.updateQuestionStatisticsSetInterval)
+      }
+      if (this.pollQuestionAccessLevelSetInterval) {
+        clearInterval(this.pollQuestionAccessLevelSetInterval)
+      }
+
       this.questionAccessLevel = this.questions[currentPage - 1].question_access_level
       if (this.assessmentType === 'clicker' && this.user.role === 3) {
         this.updateClickerMessage(this.questionAccessLevel)
         const self = this
-        setInterval(function () {
+        this.pollQuestionAccessLevelSetInterval = setInterval(function () {
           self.pollQuestionAccessLevel(self.questions[currentPage - 1].id)
         }, 3000)
       }
