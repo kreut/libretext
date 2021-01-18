@@ -1206,11 +1206,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async updateStudentAccessLevel (questionId) {
+    async updateQuestionAccessLevel (questionId) {
       try {
-        alert('Start updateStudentAccessLevel')
-        return false
-
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-question-access-level`, { 'question_access_level': this.questionAccessLevel })
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
@@ -1218,7 +1215,8 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
-      },
+      }
+    },
     async updateOpenEndedSubmissionType (questionId) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-open-ended-submission-type`, { 'open_ended_submission_type': this.openEndedSubmissionType })

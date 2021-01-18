@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
+use App\Http\Requests\UpdateQuestionAccessLevel;
 use App\JWE;
 use App\Solution;
 use App\Traits\LibretextFiles;
@@ -186,6 +187,56 @@ class AssignmentSyncQuestionController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the open-ended submission type.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function updateQuestionAccessLevel(UpdateQuestionAccessLevel $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('updateQuestionAccessLevel', [$assignmentSyncQuestion, $assignment]);
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $data = $request->validated();
+            $can_view = $can_submit = $message = $type = '';
+            switch ($data['question_access_level']) {
+                case('neither_view_nor_submit'):
+                    $can_view = 0;
+                    $can_submit = 0;
+                    $type = 'info';
+                    $message = "Your students can neither view the questions nor submit responses.";
+                    break;
+                case('view_and_submit'):
+                    $can_view = 1;
+                    $can_submit = 1;
+                    $type = 'success';
+                    $message = "Your students can now view the questions and submit responses.";
+                    break;
+                case('view_and_not_submit'):
+                    $can_view = 1;
+                    $can_submit = 0;
+                    $type = 'info';
+                    $message = "Your student can now view the questions but not submit responses.";
+                    break;
+            }
+
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['can_view' => $can_view, 'can_submit' => $can_submit]);
+
+            $response['type'] = $type;
+            $response['message'] = $message;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the question access level.  Please try again or contact us for assistance.";
         }
         return $response;
 

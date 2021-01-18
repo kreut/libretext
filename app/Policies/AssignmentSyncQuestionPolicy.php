@@ -64,11 +64,36 @@ class AssignmentSyncQuestionPolicy
             : Response::deny($message);
     }
 
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
     public function updateOpenEndedSubmissionType(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
 
         return $user->id === ((int)$assignment->course->user_id)
             ? Response::allow()
-            : Response::deny("This cannot be updated since students have already submitted responses.");
+            : Response::deny("You are not allowed to update the open ended submission type.");
     }
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function updateQuestionAccessLevel(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    {
+
+        return $user->id === ((int)$assignment->course->user_id)
+            ? Response::allow()
+            : Response::deny("You are not allowed to update the question access level.");
+    }
+
+
+
+
+
 }
