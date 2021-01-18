@@ -13,6 +13,18 @@ trait GeneralSubmissionPolicy
         $response['type'] = 'error';
         $response['message'] = '';
 
+        if ($assignment->assessment_type === 'clicker'){
+            $assignment_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->select()
+                ->first(['can_view','can_submit']);
+            if (!($assignment_question->can_view && $assignment_question->can_submit)){
+                $response['message'] = "This question is currently not open for submission.";
+                return $response;
+            }
+
+        }
         if (!$assignment->questions->contains($question_id)) {
             $response['message'] = 'No responses will be saved since that question is not in the assignment.';
             return $response;

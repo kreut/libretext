@@ -368,7 +368,7 @@
             </b-col>
             <b-row class="text-center">
               <b-col>
-                <div v-if="timeLeft>0">
+                <div v-if="timeLeft>0 && assessmentType !== 'clicker'">
                   <countdown :time="timeLeft" @end="timeLeft=0">
                     <template slot-scope="props">
                       Time Until due：{{ props.days }} days, {{ props.hours }} hours,
