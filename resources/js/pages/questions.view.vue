@@ -614,9 +614,14 @@
                       :src="remediationSrc"
                       style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
               />
-              <div v-if="showQuestion">
+              <div v-if="assessmentType === 'clicker'">
+                <b-alert show :variant="clickerMessageType">
+                  <span class="font-weight-bold">{{ clickerMessage }}</span>
+                </b-alert>
+              </div>
+              <div v-if="showQuestion && !(user.role === 3 && questionAccessLevel === 'neither_view_nor_submit')">
                 <div>
-                  <iframe v-show="showQuestion && questions[currentPage-1].non_technology"
+                  <iframe v-show="questions[currentPage-1].non_technology"
                           :id="`non-technology-iframe-${currentPage}`"
                           allowtransparency="true"
                           frameborder="0"
@@ -884,6 +889,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    clickerMessage: '',
+    clickerMessageType: '',
     showAssessmentClosedMessage: false,
     uploadedAudioSolutionDataType: '',
     showUploadedAudioSolutionMessage: false,
@@ -1206,6 +1213,33 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    async pollQuestionAccessLevel (questionId) {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/get-question-access-level`)
+        if (data.type === 'success') {
+          this.questionAccessLevel = data.question_access_level
+          this.updateClickerMessage(this.questionAccessLevel)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    updateClickerMessage (questionAccessLevel) {
+      console.log(questionAccessLevel)
+      switch (questionAccessLevel) {
+        case ('view_and_submit'):
+          this.clickerMessage = 'This assessment is open and submissions are being recorded.'
+          this.clickerMessageType = 'success'
+          break
+        case ('view_and_not_submit'):
+          this.clickerMessage = 'Submissions will not be saved.'
+          this.clickerMessageType = 'info'
+          break
+        case ('neither_view_nor_submit'):
+          this.clickerMessage = 'Please wait for your instructor to open this assessment for submission.'
+          this.clickerMessageType = 'info'
+      }
+    },
     async updateQuestionAccessLevel (questionId) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-question-access-level`, { 'question_access_level': this.questionAccessLevel })
@@ -1502,7 +1536,14 @@ export default {
       }
     },
     async changePage (currentPage) {
-      this.questionAccessLevel = this.questions[currentPage - 1].question_level_access
+      this.questionAccessLevel = this.questions[currentPage - 1].question_access_level
+      if (this.assessmentType === 'clicker' && this.user.role === 3) {
+        this.updateClickerMessage(this.questionAccessLevel)
+        const self = this
+        setInterval(function () {
+          self.pollQuestionAccessLevel(self.questions[currentPage - 1].id)
+        }, 3000)
+      }
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false
       console.log(this.questions[currentPage - 1])

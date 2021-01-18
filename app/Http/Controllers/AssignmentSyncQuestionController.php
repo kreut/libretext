@@ -164,7 +164,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
-    public function getQuestionAccessLevel($question_info){
+    public function getFormattedQuestionAccessLevel($question_info){
         if ($question_info->can_view && $question_info->can_submit){
             return 'view_and_submit';
         }
@@ -196,6 +196,24 @@ class AssignmentSyncQuestionController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error updating the open-ended submission type.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function getQuestionAccessLevel( Assignment $assignment, Question $question){
+$response['type'] = 'error';
+
+        try {
+            $question_info = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $response['question_access_level'] = $this->getFormattedQuestionAccessLevel($question_info);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the question access level.  Please refresh the page.  If the problem persists, please contact us.";
         }
         return $response;
     }
@@ -526,14 +544,14 @@ class AssignmentSyncQuestionController extends Controller
             $submitted_but_did_not_explore_learning_tree = [];
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
-            $question_level_access  = [];
+            $question_access_level  = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
-                $question_level_access[$question->question_id] = $this->getQuestionAccessLevel($question);
+                $question_access_level[$question->question_id] = $this->getFormattedQuestionAccessLevel($question);
             }
 
             $question_info = DB::table('questions')
@@ -619,7 +637,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
-                $assignment->questions[$key]['question_level_access'] = $question_level_access[$question->id];
+                $assignment->questions[$key]['question_access_level'] = $question_access_level[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
