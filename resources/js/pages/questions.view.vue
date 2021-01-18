@@ -1242,24 +1242,34 @@ export default {
           this.clickerMessageType = 'info'
       }
     },
+    initViewAndSubmitPolling (questionAccessLevel) {
+      console.log(this.updateQuestionStatisticsSetInterval)
+      if (this.updateQuestionStatisticsSetInterval) {
+        clearInterval(this.updateQuestionStatisticsSetInterval)
+        this.updateQuestionStatisticsSetInterval = null
+        console.log('cleared')
+      }
+      if (questionAccessLevel === 'view_and_submit') {
+        const self = this
+        this.updateQuestionStatisticsSetInterval = setInterval(function () {
+          self.updateQuestionStatistics(self.questions[self.currentPage - 1].id)
+        }, 3000)
+      }
+    },
     async updateQuestionAccessLevel (questionId) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-question-access-level`, { 'question_access_level': this.questionAccessLevel })
         this.$noty[data.type](data.message)
-        if (data.type === 'success') {
-          this.questions[this.currentPage - 1].question_access_level = this.questionAccessLevel
-          if (this.questionAccessLevel === 'view_and_submit') {
-            const self = this
-            this.updateQuestionStatisticsSetInterval = setInterval(function () {
-              self.updateQuestionStatistics(self, self.questions[self.currentPage - 1].id)
-            }, 3000)
-          }
+        if (data.type !== 'error') {
+          console.log('success')
+          this.questions[this.currentPage - 1].question_access_level = data.question_access_level
+          this.initViewAndSubmitPolling(this.questionAccessLevel)
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async updateQuestionStatistics (self, questionId) {
+    async updateQuestionStatistics (questionId) {
       this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
     },
     async updateOpenEndedSubmissionType (questionId) {
@@ -1538,20 +1548,26 @@ export default {
       }
     },
     async changePage (currentPage) {
-      if (this.updateQuestionStatisticsSetInterval) {
-        clearInterval(this.updateQuestionStatisticsSetInterval)
-      }
-      if (this.pollQuestionAccessLevelSetInterval) {
-        clearInterval(this.pollQuestionAccessLevelSetInterval)
-      }
-
       this.questionAccessLevel = this.questions[currentPage - 1].question_access_level
-      if (this.assessmentType === 'clicker' && this.user.role === 3) {
-        this.updateClickerMessage(this.questionAccessLevel)
-        const self = this
-        this.pollQuestionAccessLevelSetInterval = setInterval(function () {
-          self.pollQuestionAccessLevel(self.questions[currentPage - 1].id)
-        }, 3000)
+      if (this.assessmentType === 'clicker') {
+        if (this.updateQuestionStatisticsSetInterval) {
+          clearInterval(this.updateQuestionStatisticsSetInterval)
+          this.updateQuestionStatisticsSetInterval = null
+        }
+
+        if (this.user.role === 3) {
+          // doesn't change once loaded
+          this.updateClickerMessage(this.questionAccessLevel)
+          const self = this
+          this.pollQuestionAccessLevelSetInterval = setInterval(function () {
+            self.pollQuestionAccessLevel(self.questions[currentPage - 1].id)
+          }, 3000)
+        }
+
+        if (this.user.role === 2) {
+          // could change
+          this.initViewAndSubmitPolling(this.questionAccessLevel)
+        }
       }
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false
