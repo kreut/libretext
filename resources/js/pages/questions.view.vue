@@ -1215,7 +1215,7 @@ export default {
           if (this.questionAccessLevel === 'view_and_submit') {
             const self = this
             setInterval(function () {
-              self.updateQuestionStatistics(self.questions[self.currentPage - 1].id)
+              self.updateQuestionStatistics(self, self.questions[self.currentPage - 1].id)
             }, 3000)
           }
         }
@@ -1223,9 +1223,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async updateQuestionStatistics (questionId) {
+    async updateQuestionStatistics (self, questionId) {
       this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
-      this.renderChart(this.chartdata, this.options)
     },
     async updateOpenEndedSubmissionType (questionId) {
       try {
@@ -1503,6 +1502,7 @@ export default {
       }
     },
     async changePage (currentPage) {
+      this.questionAccessLevel = this.questions[currentPage - 1].question_level_access
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false
       console.log(this.questions[currentPage - 1])

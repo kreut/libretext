@@ -138,6 +138,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['questions'] = [];
             $response['question_files'] = [];
             $response['question_ids'] = [];
+            $response['question_access_level'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->get();
@@ -163,7 +164,15 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
-
+    public function getQuestionAccessLevel($question_info){
+        if ($question_info->can_view && $question_info->can_submit){
+            return 'view_and_submit';
+        }
+        if ($question_info->can_view && !$question_info->can_submit){
+            return 'view_and_not_submit';
+        }
+        return 'neither_view_nor_submit';
+    }
     public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -517,12 +526,14 @@ class AssignmentSyncQuestionController extends Controller
             $submitted_but_did_not_explore_learning_tree = [];
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
+            $question_level_access  = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
+                $question_level_access[$question->question_id] = $this->getQuestionAccessLevel($question);
             }
 
             $question_info = DB::table('questions')
@@ -608,8 +619,10 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
+                $assignment->questions[$key]['question_level_access'] = $question_level_access[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
+
                 $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];
