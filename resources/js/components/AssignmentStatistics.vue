@@ -78,7 +78,7 @@ export default {
     if (this.canViewAssignmentStatistics) {
       try {
         const data = await this.getScoresSummary(this.assignmentId, `/api/assignments/${this.assignmentId}/scores-info`)
-        console.log(data)
+        // console.log(data)
         if (data) {
           this.chartdata = data
         }
@@ -93,7 +93,7 @@ export default {
     async getAssignmentSummary () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
-        console.log(data)
+        // console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

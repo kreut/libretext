@@ -889,6 +889,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    newchartdata: null,
     updateQuestionStatisticsSetInterval: null,
     pollQuestionAccessLevelSetInterval: null,
     clickerMessage: '',
@@ -1035,11 +1036,6 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
-  watch: {
-    chartData: function () {
-      this.renderChart(this.chartData, this.options)
-    }
-  },
   created () {
     try {
       this.inIFrame = window.self !== window.top
