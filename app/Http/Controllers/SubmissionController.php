@@ -85,9 +85,12 @@ class SubmissionController extends Controller
             $response['pie_chart_data'] = [];
             $response['pie_chart_data']['labels'] = $choices;
             $response['pie_chart_data']['datasets']['borderWidth'] = 1;
-            $response['pie_chart_data']['datasets']['borderColor'] = ['rgba(255,99,132,1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'];
-            $response['pie_chart_data']['datasets']['backgroundColor'] = ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'];
-            $response['pie_chart_data']['datasets']['data'] =$counts;
+            foreach ($choices as $key => $choice) {
+                $percent = 90 - 10 * $key;
+                $first = 197 - 20 * $key;
+                $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, ${percent}%, 0.9)";
+            }
+            $response['pie_chart_data']['datasets']['data'] = $counts;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
