@@ -82,6 +82,7 @@ export default {
         if (data) {
           this.chartdata = data
         }
+        console.log(this.chartdata)
       } catch (error) {
         this.$noty.error(error.message)
       }

@@ -20,34 +20,53 @@ export default {
   },
   watch: {
     chartdata: function () {
-      this.renderChart(this.chartdata, this.options)
-    },
-    mounted () {
-      if (!this.options) {
-        this.options = {
-          legend: {
-            display: false
-          },
-          scales: {
-            xAxes: [{
+      this.renderChart(this.chartdata, {
+        legend: {
+          display: false
+        },
+        animation: false,
+        scales: {
+          xAxes: [{
+            display: true,
+            scaleLabel: {
               display: true,
-              scaleLabel: {
-                display: true,
-                labelString: 'Score'
-              }
-            }],
-            yAxes: [{
+              labelString: 'Score'
+            }
+          }],
+          yAxes: [{
+            display: true,
+            scaleLabel: {
               display: true,
-              scaleLabel: {
-                display: true,
-                labelString: 'Number of Students'
-              }
-            }]
-          }
+              labelString: 'Number of Students'
+            }
+          }]
         }
-      }
+      })
     }
-
+  },
+  mounted () {
+    this.renderChart(this.chartdata, {
+      legend: {
+        display: false
+      },
+      animation: false,
+      scales: {
+        xAxes: [{
+          display: true,
+          scaleLabel: {
+            display: true,
+            labelString: 'Score'
+          }
+        }],
+        yAxes: [{
+          display: true,
+          scaleLabel: {
+            display: true,
+            labelString: 'Number of Students'
+          }
+        }]
+      }
+    })
   }
 }
 </script>

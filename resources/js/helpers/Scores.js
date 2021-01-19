@@ -1,25 +1,28 @@
 import axios from 'axios'
 import stats from 'stats-lite'
 
-function round(num, precision) {
+function round (num, precision) {
   num = parseFloat(num)
   if (!precision) return num
   return (Math.round(num / precision) * precision)
 }
 
-export async function getScoresSummary(id, url) {
+export async function getScoresSummary (id, url) {
   try {
-    const {data} = await axios.get(url)
-    if (data.type === 'error'){
+    console.log(url)
+    const { data } = await axios.get(url)
+    console.log('data')
+    console.log(data)
+    if (data.type === 'error') {
       this.$noty.error(data.message)
     }
-    if (!data.scores){
+    if (!data.scores) {
       return false
     }
     this.scores = data.scores.map(score => parseFloat(score))
-    this.scores =   this.scores.filter( value => !Number.isNaN(value) )//in case of nulls....
+    this.scores = this.scores.filter(value => !Number.isNaN(value))// in case of nulls....
     console.log(this.scores)
-    this.max = Math.max(...this.scores) //https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
+    this.max = Math.max(...this.scores) // https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/Math/max
     this.min = Math.min(...this.scores)
     this.mean = Math.round(stats.mean(this.scores) * 100) / 100
     this.stdev = Math.round(stats.stdev(this.scores) * 100) / 100
@@ -55,6 +58,8 @@ export async function getScoresSummary(id, url) {
         }
       }
     }
+    console.log('counts')
+    console.log(counts)
 
     return {
       labels: labels,
