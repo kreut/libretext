@@ -655,7 +655,10 @@
                 </div>
               </div>
             </b-col>
-            <b-col v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
+            <b-col v-if="assessmentType === 'clicker'">
+              <pie-chart />
+            </b-col>
+            <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
                 <b-card-text>
                   <ul>
@@ -875,6 +878,9 @@ import Scores from '~/components/Scores'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import { getScoresSummary } from '~/helpers/Scores'
 import CKEditor from 'ckeditor4-vue'
+
+import PieChart from '~/components/PieChart'
+
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -886,6 +892,7 @@ export default {
     Scores,
     Email,
     ToggleButton,
+    PieChart,
     ckeditor: CKEditor.component
   },
   data: () => ({
@@ -1266,7 +1273,17 @@ export default {
       }
     },
     async updateQuestionStatistics (questionId) {
-      this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
+      try {
+        const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/summary`)
+        console.log(data)
+        if (data.type !== 'error') {
+          console.log('success')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+
+      // this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${questionId}`)
     },
     async updateOpenEndedSubmissionType (questionId) {
       try {

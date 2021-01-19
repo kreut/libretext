@@ -30,4 +30,6 @@ class SubmissionPolicy
             ? Response::allow()
             : Response::deny($response['message']);
     }
+
+
 }

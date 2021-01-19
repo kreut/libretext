@@ -26,10 +26,90 @@ class SubmissionController extends Controller
 
     }
 
+    public function submissionSummary(Assignment $assignment, Question $question, Submission $submission)
+    {
+        $response['type'] = 'error';
+        /* $authorized = Gate::inspect('submissionSummary', [$submission ,$assignment, $assignment->id, $question->id]);
+
+         if (!$authorized->allowed()) {
+             $response['message'] = $authorized->message();
+             return $response;
+         }
+ **/
+        try {
+
+            $submission_results = DB::table('submissions')
+                ->join('questions', 'submissions.question_id', '=', 'questions.id')
+                ->where('submissions.assignment_id', $assignment->id)
+                ->where('submissions.question_id', $question->id)
+                ->select('submission', 'technology')
+                ->get();
+
+            $choices = [];
+            $counts = [];
+            foreach ($submission_results as $key => $value) {
+                $submission = json_decode($value->submission, true);
+                //Log::info(print_r($submission, true));
+
+                $technology = $value->technology;
+                switch ($technology) {
+                    case('h5p'):
+                        $object = $submission['object'];
+                        Log::info(print_r($submission,true));
+                       // Log::info($object['definition']['interactionType']);
+                        switch ($object['definition']['interactionType']) {
+                            case('choice'):
+                                if (!$choices) {
+                                    $choices = $this->getChoices($technology, $object['definition']);
+                                    foreach ($choices as $choice){
+                                        $counts[] = 0;
+                                    }
+                                    $response['choices'] = $choices;
+                                }
+                                if (isset($submission['result']['response'])) {
+                                    $h5p_response = $submission['result']['response'];
+                                    $counts[$h5p_response] ++;
+                                    $response['counts'] = $counts;
+                                }
+                                break;
+                            case('true-false'):
+
+                                break;
+
+                            default:
+                                $response['message'] = 'Only h5p is supported at this time.';
+                                return $response;
+                        }
+                }
+            }
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the submissions.  Please refresh the page and try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    public function getChoices($technology, $object)
+    {
+        $choices = [];
+        switch ($technology) {
+            case('h5p'):
+                foreach ($object['choices'] as $key => $choice) {
+                    $choices[] = array_values($choice['description'])[0];
+                }
+                break;
+
+        }
+        return $choices;
+    }
+
     public function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('store', [$submission ,$assignment, $assignment->id, $question->id]);
+        $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -38,12 +118,12 @@ class SubmissionController extends Controller
 
         try {
 
-        $submission->where('assignment_id', $assignment->id)
-            ->where('question_id', $question->id)
-            ->where('user_id', Auth::user()->id)
-            ->update(['explored_learning_tree' => 1]);
-        $response['type'] = 'success';
-        $response['explored_learning_tree'] = true;
+            $submission->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', Auth::user()->id)
+                ->update(['explored_learning_tree' => 1]);
+            $response['type'] = 'success';
+            $response['explored_learning_tree'] = true;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
