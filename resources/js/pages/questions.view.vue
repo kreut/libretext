@@ -655,8 +655,9 @@
                 </div>
               </div>
             </b-col>
-            <b-col v-if="assessmentType === 'clicker'">
-              <pie-chart />
+            <b-col v-if="assessmentType === 'clicker' && piechartdata">
+              {{ piechartdata }}
+              <pie-chart :chartdata="piechartdata" />
             </b-col>
             <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
@@ -896,7 +897,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
-    newchartdata: null,
+    piechartdata: null,
     updateQuestionStatisticsSetInterval: null,
     pollQuestionAccessLevelSetInterval: null,
     clickerMessage: '',
@@ -1275,7 +1276,7 @@ export default {
     async updateQuestionStatistics (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/summary`)
-        console.log(data)
+        this.piechartdata = data.pie_chart_data
         if (data.type !== 'error') {
           console.log('success')
         }

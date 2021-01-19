@@ -3,38 +3,56 @@ import { Pie } from 'vue-chartjs'
 
 export default {
   extends: Pie,
-  data () {
-    return {
-      chartData: {
-        labels: ['Italy', 'India', 'Japan', 'USA' ],
-        datasets: [{
-          borderWidth: 1,
-          borderColor: [
-            'rgba(255,99,132,1)',
-            'rgba(54, 162, 235, 1)',
-            'rgba(255, 206, 86, 1)',
-            'rgba(75, 192, 192, 1)'
-          ],
-          backgroundColor: [
-            'rgba(255, 99, 132, 0.2)',
-            'rgba(54, 162, 235, 0.2)',
-            'rgba(255, 206, 86, 0.2)',
-            'rgba(75, 192, 192, 0.2)'
-          ],
-          data: [1000,	500,	1500,	1000]
-        }]
-      },
-      options: {
+  props: {
+    chartdata: {
+      type: Object,
+      default: null
+    },
+    options: {
+      type: Object,
+      default: null
+    }
+  },
+  computed: {
+    chartData: function () {
+      return this.chartdata
+    }
+  },
+  watch: {
+    chartdata: function () {
+      this.renderChart({
+        labels: this.chartData.labels,
+        datasets: [
+          {
+            backgroundColor: this.chartData.datasets.backgroundColor,
+            data: this.chartData.datasets.data
+          }
+        ]
+      }, {
         legend: {
           display: true
         },
         responsive: true,
         maintainAspectRatio: false
-      }
+      })
+    },
+    mounted () {
+      this.renderChart({
+        labels: ['Books', 'Magazines', 'Newspapers'],
+        datasets: [
+          {
+            backgroundColor: ['red', 'black', '#00D8FF'],
+            data: [40, 20, 10]
+          }
+        ]
+      }, {
+        legend: {
+          display: true
+        },
+        responsive: true,
+        maintainAspectRatio: false
+      })
     }
-  },
-  mounted () {
-    this.renderChart(this.chartData, this.options)
   }
 }
 </script>

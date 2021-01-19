@@ -55,20 +55,20 @@ class SubmissionController extends Controller
                 switch ($technology) {
                     case('h5p'):
                         $object = $submission['object'];
-                        Log::info(print_r($submission,true));
-                       // Log::info($object['definition']['interactionType']);
+                        Log::info(print_r($submission, true));
+                        // Log::info($object['definition']['interactionType']);
                         switch ($object['definition']['interactionType']) {
                             case('choice'):
                                 if (!$choices) {
                                     $choices = $this->getChoices($technology, $object['definition']);
-                                    foreach ($choices as $choice){
+                                    foreach ($choices as $choice) {
                                         $counts[] = 0;
                                     }
                                     $response['choices'] = $choices;
                                 }
                                 if (isset($submission['result']['response'])) {
                                     $h5p_response = $submission['result']['response'];
-                                    $counts[$h5p_response] ++;
+                                    $counts[$h5p_response]++;
                                     $response['counts'] = $counts;
                                 }
                                 break;
@@ -82,6 +82,12 @@ class SubmissionController extends Controller
                         }
                 }
             }
+            $response['pie_chart_data'] = [];
+            $response['pie_chart_data']['labels'] = $choices;
+            $response['pie_chart_data']['datasets']['borderWidth'] = 1;
+            $response['pie_chart_data']['datasets']['borderColor'] = ['rgba(255,99,132,1)', 'rgba(54, 162, 235, 1)', 'rgba(255, 206, 86, 1)'];
+            $response['pie_chart_data']['datasets']['backgroundColor'] = ['rgba(255, 99, 132, 0.2)', 'rgba(54, 162, 235, 0.2)', 'rgba(255, 206, 86, 0.2)'];
+            $response['pie_chart_data']['datasets']['data'] =$counts;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

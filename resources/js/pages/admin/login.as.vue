@@ -12,7 +12,7 @@
       />
       <b-card v-if="canViewLoginAs" header="default" header-html="Login As user">
         <b-form ref="form">
-          <p>To access this assignment, please provide the course access code given to you by your instructor.</p>
+          <p>Use the form below to login as another user:</p>
           <div class="col-7 pb-2">
             <vue-bootstrap-typeahead
               ref="queryTypeahead"
