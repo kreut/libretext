@@ -65,6 +65,8 @@ class SubmissionController extends Controller
                                         $counts[] = 0;
                                     }
                                     $response['choices'] = $choices;
+                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0];
+                                    $response['correct_answer'] = $choices[$correct_answer_index];
                                 }
                                 if (isset($submission['result']['response'])) {
                                     $h5p_response = $submission['result']['response'];
@@ -73,13 +75,24 @@ class SubmissionController extends Controller
                                 }
                                 break;
                             case('true-false'):
-
+                                if (!$choices) {
+                                    $choices = ['True', 'False'];
+                                    $counts = [0, 0];
+                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0] ? 0 : 1;
+                                    $response['correct_answer'] = $choices[$correct_answer_index];
+                                }
+                                if (isset($submission['result']['response'])) {
+                                    $submission['result']['response'] ? $counts[0]++ : $counts[1]++;
+                                    $response['counts'] = $counts;
+                                }
                                 break;
-
-                            default:
-                                $response['message'] = 'Only h5p is supported at this time.';
-                                return $response;
                         }
+                        Log::info(print_r($submission['result'], true));
+
+                        break;
+                    default:
+                        $response['message'] = 'Only h5p is supported at this time.';
+                        return $response;
                 }
             }
             $response['pie_chart_data'] = [];
@@ -90,8 +103,15 @@ class SubmissionController extends Controller
                 $first = 197 - 20 * $key;
                 $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, ${percent}%, 0.9)";
             }
+            $total = array_sum($counts);
+            if ($total) {
+                foreach ($counts as $key => $count) {
+                    $counts[$key] = Round(100 * $count / $total);
+                }
+            }
             $response['pie_chart_data']['datasets']['data'] = $counts;
             $response['type'] = 'success';
+
 
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -32,8 +32,16 @@ export default {
         legend: {
           display: true
         },
+        animation: false,
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        tooltips: {
+          callbacks: {
+            label: function (tooltipItem, data) {
+              return data['labels'][tooltipItem['index']] + ': ' + data['datasets'][0]['data'][tooltipItem['index']] + '%'
+            }
+          }
+        }
       })
     },
     mounted () {
@@ -50,7 +58,14 @@ export default {
           display: true
         },
         responsive: true,
-        maintainAspectRatio: false
+        maintainAspectRatio: false,
+        tooltips: {
+          callbacks: {
+            label: function (tooltipItem, data) {
+              return data['labels'][tooltipItem['index']] + ': ' + data['datasets'][0]['data'][tooltipItem['index']] + '%'
+            }
+          }
+        }
       })
     }
   }

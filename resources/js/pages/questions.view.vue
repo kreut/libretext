@@ -656,7 +656,11 @@
               </div>
             </b-col>
             <b-col v-if="assessmentType === 'clicker' && piechartdata">
-              {{ piechartdata }}
+              <div>
+                <b-alert show variant="success" class="text-center">
+                  <span class="font-weight-bold">The correct answer is "{{ correctAnswer }}".</span>
+                </b-alert>
+              </div>
               <pie-chart :chartdata="piechartdata" />
             </b-col>
             <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
@@ -897,8 +901,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    correctAnswer: null,
     piechartdata: null,
-    updateQuestionStatisticsSetInterval: null,
+    updateSubmissionPieChartSetInterval: null,
     pollQuestionAccessLevelSetInterval: null,
     clickerMessage: '',
     clickerMessageType: '',
@@ -1247,16 +1252,16 @@ export default {
       }
     },
     initViewAndSubmitPolling (questionAccessLevel) {
-      console.log(this.updateQuestionStatisticsSetInterval)
-      if (this.updateQuestionStatisticsSetInterval) {
-        clearInterval(this.updateQuestionStatisticsSetInterval)
-        this.updateQuestionStatisticsSetInterval = null
+      console.log(this.updateSubmissionPieChartSetInterval)
+      if (this.updateSubmissionPieChartSetInterval) {
+        clearInterval(this.updateSubmissionPieChartSetInterval)
+        this.updateSubmissionPieChartSetInterval = null
         console.log('cleared')
       }
       if (questionAccessLevel === 'view_and_submit') {
         const self = this
-        this.updateQuestionStatisticsSetInterval = setInterval(function () {
-          self.updateQuestionStatistics(self.questions[self.currentPage - 1].id)
+        this.updateSubmissionPieChartSetInterval = setInterval(function () {
+          self.updateSubmissionPieChart(self.questions[self.currentPage - 1].id)
         }, 3000)
       }
     },
@@ -1273,10 +1278,11 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async updateQuestionStatistics (questionId) {
+    async updateSubmissionPieChart (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/summary`)
         this.piechartdata = data.pie_chart_data
+        this.correctAnswer = data.correct_answer
         if (data.type !== 'error') {
           console.log('success')
         }
@@ -1562,13 +1568,14 @@ export default {
       }
     },
     async changePage (currentPage) {
+      this.piechartdata = null
       this.questionAccessLevel = this.questions[currentPage - 1].question_access_level
       if (this.assessmentType === 'clicker') {
-        if (this.updateQuestionStatisticsSetInterval) {
-          clearInterval(this.updateQuestionStatisticsSetInterval)
-          this.updateQuestionStatisticsSetInterval = null
+        if (this.updateSubmissionPieChartSetInterval) {
+          clearInterval(this.updateSubmissionPieChartSetInterval)
+          this.updateSubmissionPieChartSetInterval = null
         }
-
+        await this.updateSubmissionPieChart(this.questions[currentPage - 1].id)
         if (this.user.role === 3) {
           // doesn't change once loaded
           this.updateClickerMessage(this.questionAccessLevel)
