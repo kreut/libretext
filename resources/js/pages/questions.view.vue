@@ -622,7 +622,9 @@
                           style="width: 1px;min-width: 100%;"
                   />
                 </div>
-                <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')" v-html="questions[currentPage-1].technology_iframe" />
+                <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                     v-html="questions[currentPage-1].technology_iframe"
+                />
                 <div>
                   <div class="vld-parent">
                     <loading
@@ -635,7 +637,9 @@
                       background="#FFFFFF"
                     />
                     <div v-if="assessmentType === 'clicker' && user.role === 3">
-                      <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                      <pie-chart :key="currentPage" :chartdata="piechartdata"
+                                 @pieChartLoaded="updateIsLoadingPieChart"
+                      />
                     </div>
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
@@ -1150,6 +1154,10 @@ export default {
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
+    if (this.clickerPollingSetInterval) {
+      clearInterval(this.clickerPollingSetInterval)
+      this.clickerPollingSetInterval = null
+    }
   },
   methods: {
     async submitClickerResultsReleased () {
