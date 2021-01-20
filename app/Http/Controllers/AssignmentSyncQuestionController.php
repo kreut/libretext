@@ -320,7 +320,8 @@ $response['type'] = 'error';
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                     'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
                     'can_view' => $assignment->assessment_type !== 'clicker' ? 1 : 0,
-                    'can_submit' => $assignment->assessment_type !== 'clicker' ? 1 : 0]);
+                    'can_submit' => $assignment->assessment_type !== 'clicker' ? 1 : 0,
+                    'clicker_results_released' => 0]);
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
         } catch (Exception $e) {
