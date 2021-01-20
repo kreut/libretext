@@ -43,6 +43,9 @@ class GradingTest extends TestCase
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
+            'can_view' =>1,
+            'can_submit' => 1,
+            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'file',
             'points' => 10
         ]);

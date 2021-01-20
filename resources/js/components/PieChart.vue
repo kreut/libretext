@@ -5,7 +5,6 @@ export default {
   extends: Pie,
   props: {
     chartdata: {
-      type: Object | Array,
       default: null
     },
     options: {
@@ -23,6 +22,8 @@ export default {
       this.$emit('pieChartLoaded')
       console.log(this.chartData)
       if (typeof this.chartData.datasets === 'undefined') {
+        // only way I could get it to disappear!
+        this.renderChart({})
         return false
       }
       this.renderChart({

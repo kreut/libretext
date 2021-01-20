@@ -30,6 +30,9 @@ class AssignmentsIndex2Test extends TestCase
         $this->original_assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
+            'can_view' =>1,
+            'can_submit' => 1,
+            'clicker_results_released' =>0,
             'points' => 10,
             'open_ended_submission_type' => 'file'
         ]);

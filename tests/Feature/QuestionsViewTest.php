@@ -38,12 +38,18 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
+            'can_view' =>1,
+            'can_submit' => 1,
+            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'file'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
             'points' => $this->question_points,
+            'can_view' =>1,
+            'can_submit' => 1,
+            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'file'
         ]);;
 

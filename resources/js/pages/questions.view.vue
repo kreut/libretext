@@ -1279,6 +1279,10 @@ export default {
     },
     updateClickerMessage (clickerStatus) {
       console.log(clickerStatus)
+      if (this.user.role === 2) {
+        this.clickerMessage = ''
+        return false
+      }
       switch (clickerStatus) {
         case ('view_and_submit'):
           this.clickerMessage = 'This assessment is open and submissions are being recorded.'
@@ -1616,7 +1620,7 @@ export default {
       this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
       if (this.assessmentType === 'clicker') {
         this.initClickerPolling()
-        this.updateClickerMessage()
+        this.updateClickerMessage(this.clickerStatus)
       }
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false
