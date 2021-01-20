@@ -610,7 +610,7 @@
                   <span class="font-weight-bold">{{ clickerMessage }}</span>
                 </b-alert>
               </div>
-              <div v-if="showQuestion && !(user.role === 3 && questionAccessLevel === 'neither_view_nor_submit')">
+              <div v-if="showQuestion && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')">
                 <div>
                   <iframe v-show="questions[currentPage-1].non_technology"
                           :id="`non-technology-iframe-${currentPage}`"
@@ -662,11 +662,11 @@
                   <div v-if="!isLoadingPieChart">
                     <div class="p-2">
                       <span class="font-italic">Clicker Status:</span>
-                      <b-form-select v-model="questionAccessLevel"
-                                     :options="questionAccessLevelOptions"
+                      <b-form-select v-model="clickerStatus"
+                                     :options="clickerStatusOptions"
                                      style="width:200px"
                                      size="sm"
-                                     @change="updateQuestionAccessLevel(questions[currentPage-1].id)"
+                                     @change="updateClickerStatus(questions[currentPage-1].id)"
                       />
                     </div>
                     <h4>{{ responsePercent }}% of students have responded</h4>
@@ -924,7 +924,7 @@ export default {
     correctAnswer: null,
     piechartdata: null,
     updateSubmissionPieChartSetInterval: null,
-    pollQuestionAccessLevelSetInterval: null,
+    pollClickerStatusSetInterval: null,
     clickerMessage: '',
     clickerMessageType: '',
     showAssessmentClosedMessage: false,
@@ -966,8 +966,8 @@ export default {
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
     isOpenEndedAudioSubmission: false,
-    questionAccessLevel: 'neither_view_nor_submit',
-    questionAccessLevelOptions: [
+    clickerStatus: 'neither_view_nor_submit',
+    clickerStatusOptions: [
       { value: 'neither_view_nor_submit', text: 'Neither view nor submit' },
       { value: 'view_and_submit', text: 'View and submit' },
       { value: 'view_and_not_submit', text: 'View but not submit' }
@@ -1247,20 +1247,20 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async pollQuestionAccessLevel (questionId) {
+    async pollClickerStatus (questionId) {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/get-question-access-level`)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/get-clicker-status`)
         if (data.type === 'success') {
-          this.questionAccessLevel = data.question_access_level
-          this.updateClickerMessage(this.questionAccessLevel)
+          this.clickerStatus = data.clicker_status
+          this.updateClickerMessage(this.clickerStatus)
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    updateClickerMessage (questionAccessLevel) {
-      console.log(questionAccessLevel)
-      switch (questionAccessLevel) {
+    updateClickerMessage (clickerStatus) {
+      console.log(clickerStatus)
+      switch (clickerStatus) {
         case ('view_and_submit'):
           this.clickerMessage = 'This assessment is open and submissions are being recorded.'
           this.clickerMessageType = 'success'
@@ -1274,28 +1274,28 @@ export default {
           this.clickerMessageType = 'info'
       }
     },
-    initViewAndSubmitPolling (questionAccessLevel) {
+    initViewAndSubmitPolling (clickerStatus) {
       console.log(this.updateSubmissionPieChartSetInterval)
       if (this.updateSubmissionPieChartSetInterval) {
         clearInterval(this.updateSubmissionPieChartSetInterval)
         this.updateSubmissionPieChartSetInterval = null
         console.log('cleared')
       }
-      if (questionAccessLevel === 'view_and_submit') {
+      if (clickerStatus === 'view_and_submit') {
         const self = this
         this.updateSubmissionPieChartSetInterval = setInterval(function () {
           self.updateSubmissionPieChart(self.questions[self.currentPage - 1].id)
         }, 3000)
       }
     },
-    async updateQuestionAccessLevel (questionId) {
+    async updateClickerStatus (questionId) {
       try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-question-access-level`, { 'question_access_level': this.questionAccessLevel })
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-clicker-status`, { 'clicker_status': this.clickerStatus })
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
           console.log('success')
-          this.questions[this.currentPage - 1].question_access_level = data.question_access_level
-          this.initViewAndSubmitPolling(this.questionAccessLevel)
+          this.questions[this.currentPage - 1].clicker_status = data.clicker_status
+          this.initViewAndSubmitPolling(this.clickerStatus)
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1596,7 +1596,7 @@ export default {
     },
     async changePage (currentPage) {
       this.piechartdata = null
-      this.questionAccessLevel = this.questions[currentPage - 1].question_access_level
+      this.clickerStatus = this.questions[currentPage - 1].clicker_status
       if (this.assessmentType === 'clicker') {
         if (this.updateSubmissionPieChartSetInterval) {
           clearInterval(this.updateSubmissionPieChartSetInterval)
@@ -1606,16 +1606,16 @@ export default {
         await this.updateSubmissionPieChart(this.questions[currentPage - 1].id)
         if (this.user.role === 3) {
           // doesn't change once loaded
-          this.updateClickerMessage(this.questionAccessLevel)
+          this.updateClickerMessage(this.clickerStatus)
           const self = this
-          this.pollQuestionAccessLevelSetInterval = setInterval(function () {
-            self.pollQuestionAccessLevel(self.questions[currentPage - 1].id)
+          this.pollClickerStatusSetInterval = setInterval(function () {
+            self.pollClickerStatus(self.questions[currentPage - 1].id)
           }, 3000)
         }
 
         if (this.user.role === 2) {
           // could change
-          this.initViewAndSubmitPolling(this.questionAccessLevel)
+          this.initViewAndSubmitPolling(this.clickerStatus)
         }
       }
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])

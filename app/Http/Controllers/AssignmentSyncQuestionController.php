@@ -4,7 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
-use App\Http\Requests\UpdateQuestionAccessLevel;
+use App\Http\Requests\UpdateClickerStatus;
 use App\JWE;
 use App\Solution;
 use App\Traits\LibretextFiles;
@@ -138,7 +138,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['questions'] = [];
             $response['question_files'] = [];
             $response['question_ids'] = [];
-            $response['question_access_level'] = [];
+            $response['clicker_status'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->get();
@@ -164,7 +164,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
-    public function getFormattedQuestionAccessLevel($question_info){
+    public function getFormattedClickerStatus($question_info){
         if ($question_info->can_view && $question_info->can_submit){
             return 'view_and_submit';
         }
@@ -200,7 +200,7 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
-    public function getQuestionAccessLevel( Assignment $assignment, Question $question){
+    public function getClickerStatus( Assignment $assignment, Question $question){
 $response['type'] = 'error';
 
         try {
@@ -208,7 +208,7 @@ $response['type'] = 'error';
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            $response['question_access_level'] = $this->getFormattedQuestionAccessLevel($question_info);
+            $response['clicker_status'] = $this->getFormattedClickerStatus($question_info);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -218,12 +218,12 @@ $response['type'] = 'error';
         return $response;
     }
 
-    public function updateQuestionAccessLevel(UpdateQuestionAccessLevel $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function updateClickerStatus(UpdateClickerStatus $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
 
-        $authorized = Gate::inspect('updateQuestionAccessLevel', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('updateClickerStatus', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
 
@@ -233,7 +233,7 @@ $response['type'] = 'error';
         try {
             $data = $request->validated();
             $can_view = $can_submit = $message = $type = '';
-            switch ($data['question_access_level']) {
+            switch ($data['clicker_status']) {
                 case('neither_view_nor_submit'):
                     $can_view = 0;
                     $can_submit = 0;
@@ -544,14 +544,14 @@ $response['type'] = 'error';
             $submitted_but_did_not_explore_learning_tree = [];
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
-            $question_access_level  = [];
+            $clicker_status  = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
-                $question_access_level[$question->question_id] = $this->getFormattedQuestionAccessLevel($question);
+                $clicker_status[$question->question_id] = $this->getFormattedClickerStatus($question);
             }
 
             $question_info = DB::table('questions')
@@ -637,7 +637,7 @@ $response['type'] = 'error';
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
-                $assignment->questions[$key]['question_access_level'] = $question_access_level[$question->id];
+                $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 

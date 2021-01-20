@@ -5,7 +5,7 @@ namespace App\Http\Requests;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
-class UpdateQuestionAccessLevel extends FormRequest
+class UpdateClickerStatus extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -25,7 +25,7 @@ class UpdateQuestionAccessLevel extends FormRequest
     public function rules()
     {
         return [
-            'question_access_level' => Rule::in(['neither_view_nor_submit', 'view_and_submit', 'view_and_not_submit'])
+            'clicker_status' => Rule::in(['neither_view_nor_submit', 'view_and_submit', 'view_and_not_submit'])
         ];
     }
 }

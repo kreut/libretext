@@ -169,7 +169,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/assignments/{assignment}/learning-trees/{learningTree}', 'AssignmentQuestionSyncLearningTreeController@store');
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-question-access-level', 'AssignmentSyncQuestionController@updateQuestionAccessLevel');
-    Route::get('/assignments/{assignment}/questions/{question}/get-question-access-level', 'AssignmentSyncQuestionController@getQuestionAccessLevel');
+    Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');
     Route::patch('/assignments/{assignment}/questions/{question}/update-points', 'AssignmentSyncQuestionController@updatePoints');

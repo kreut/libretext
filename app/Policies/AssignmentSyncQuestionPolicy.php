@@ -84,7 +84,7 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function updateQuestionAccessLevel(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    public function updateClickerStatus(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
 
         return $user->id === ((int)$assignment->course->user_id)
