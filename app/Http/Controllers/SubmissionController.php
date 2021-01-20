@@ -37,6 +37,7 @@ class SubmissionController extends Controller
         }
 
         try {
+$number_enrolled = count($assignment->course->enrollments)-1;//don't include Fake Student
 
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
@@ -82,7 +83,7 @@ class SubmissionController extends Controller
                                     $response['correct_answer'] = $choices[$correct_answer_index];
                                 }
                                 if (isset($submission['result']['response'])) {
-                                    $submission['result']['response'] ? $counts[0]++ : $counts[1]++;
+                                    $submission['result']['response'] === "true" ? $counts[0]++ : $counts[1]++;
                                     $response['counts'] = $counts;
                                 }
                                 break;
@@ -110,6 +111,7 @@ class SubmissionController extends Controller
                 }
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
+            $response['response_percent'] = Round(100*count($submission_results)/$number_enrolled,1);
             $response['type'] = 'success';
 
 

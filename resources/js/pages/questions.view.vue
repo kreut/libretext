@@ -518,15 +518,6 @@
             </span>
             <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
           </div>
-          <div v-if="assessmentType === 'clicker'" class="p-2">
-            <span class="font-italic">Question Access Level:</span>
-            <b-form-select v-model="questionAccessLevel"
-                           :options="questionAccessLevelOptions"
-                           style="width:200px"
-                           size="sm"
-                           @change="updateQuestionAccessLevel(questions[currentPage-1].id)"
-            />
-          </div>
         </div>
 
         <hr>
@@ -666,12 +657,25 @@
                   color="#007BFF"
                   background="#FFFFFF"
                 />
-                <div>
-                  <b-alert :show="!isLoadingPieChart" variant="success" class="text-center">
-                    <span class="font-weight-bold">The correct answer is "{{ correctAnswer }}".</span>
-                  </b-alert>
+
+                <div class="text-center font-italic">
+                  <div v-if="!isLoadingPieChart">
+                    <div class="p-2">
+                      <span class="font-italic">Clicker Status:</span>
+                      <b-form-select v-model="questionAccessLevel"
+                                     :options="questionAccessLevelOptions"
+                                     style="width:200px"
+                                     size="sm"
+                                     @change="updateQuestionAccessLevel(questions[currentPage-1].id)"
+                      />
+                    </div>
+                    <h4>{{ responsePercent }}% of students have responded</h4>
+                    <h5 v-if="responsePercent">
+                      The correct answer is "{{ correctAnswer }}"
+                    </h5>
+                  </div>
+                  <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
-                <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
               </div>
             </b-col>
             <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
@@ -915,6 +919,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    responsePercent: '',
     isLoadingPieChart: true,
     correctAnswer: null,
     piechartdata: null,
@@ -1302,6 +1307,7 @@ export default {
         if (data.type !== 'error') {
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
+          this.responsePercent = data.response_percent
         } else {
           this.$noty.error(data.message)
           clearInterval(this.updateSubmissionPieChartSetInterval)
