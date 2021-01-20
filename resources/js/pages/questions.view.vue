@@ -605,12 +605,14 @@
                       :src="remediationSrc"
                       style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
               />
+
               <div v-if="assessmentType === 'clicker'">
                 <b-alert show :variant="clickerMessageType">
                   <span class="font-weight-bold">{{ clickerMessage }}</span>
                 </b-alert>
               </div>
-              <div v-if="showQuestion && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')">
+
+              <div v-if="showQuestion">
                 <div>
                   <iframe v-show="questions[currentPage-1].non_technology"
                           :id="`non-technology-iframe-${currentPage}`"
@@ -620,10 +622,21 @@
                           style="width: 1px;min-width: 100%;"
                   />
                 </div>
-                <div v-html="questions[currentPage-1].technology_iframe" />
+                <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')" v-html="questions[currentPage-1].technology_iframe" />
                 <div>
-                  <div v-if="assessmentType === 'clicker' && user.role === 3">
-                    <pie-chart :key="currentPage" :chartdata="piechartdata" />
+                  <div class="vld-parent">
+                    <loading
+                      :active.sync="isLoadingPieChart"
+                      :can-cancel="true"
+                      :is-full-page="false"
+                      :width="128"
+                      :height="128"
+                      color="#007BFF"
+                      background="#FFFFFF"
+                    />
+                    <div v-if="assessmentType === 'clicker' && user.role === 3">
+                      <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                    </div>
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
@@ -1298,6 +1311,7 @@ export default {
       }
     },
     initClickerPolling () {
+      this.isLoadingPieChart = true
       if (this.clickerPollingSetInterval) {
         clearInterval(this.clickerPollingSetInterval)
         this.clickerPollingSetInterval = null
