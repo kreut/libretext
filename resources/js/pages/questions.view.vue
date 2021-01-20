@@ -666,7 +666,7 @@
                     Students can:
                     <b-form-select v-model="clickerStatus"
                                    :options="clickerStatusOptions"
-                                   style="width:200px"
+                                   style="width:360px"
                                    size="sm"
                                    @change="updateClickerStatus(questions[currentPage-1].id)"
                     />
@@ -985,9 +985,9 @@ export default {
     isOpenEndedAudioSubmission: false,
     clickerStatus: 'neither_view_nor_submit',
     clickerStatusOptions: [
-      { value: 'neither_view_nor_submit', text: 'neither view nor submit' },
-      { value: 'view_and_submit', text: 'view and submit' },
-      { value: 'view_and_not_submit', text: 'view but not submit' }
+      { value: 'neither_view_nor_submit', text: 'neither view the question nor submit a response' },
+      { value: 'view_and_submit', text: 'view the question and submit a response' },
+      { value: 'view_and_not_submit', text: 'view the question but not submit a response' }
     ],
     responseText: '',
     openEndedSubmissionTypeOptions: [
