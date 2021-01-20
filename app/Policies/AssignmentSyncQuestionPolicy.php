@@ -89,7 +89,15 @@ class AssignmentSyncQuestionPolicy
 
         return $user->id === ((int)$assignment->course->user_id)
             ? Response::allow()
-            : Response::deny("You are not allowed to update the question access level.");
+            : Response::deny("You are not allowed to update the clicker status.");
+    }
+
+    public function updateClickerResultsReleased(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    {
+
+        return $user->id === ((int)$assignment->course->user_id)
+            ? Response::allow()
+            : Response::deny("You are not allowed to update the clicker status for this question.");
     }
 
 

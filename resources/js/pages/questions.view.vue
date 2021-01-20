@@ -661,13 +661,26 @@
                 <div class="text-center font-italic">
                   <div v-if="!isLoadingPieChart">
                     <div class="p-2">
-                      <span class="font-italic">Clicker Status:</span>
+                      <span class="font-italic">Students can:</span>
                       <b-form-select v-model="clickerStatus"
                                      :options="clickerStatusOptions"
                                      style="width:200px"
                                      size="sm"
                                      @change="updateClickerStatus(questions[currentPage-1].id)"
                       />
+                      <span class="pl-2">
+                        Release Clicker Results:
+                        <toggle-button
+                          class="mt-1"
+                          :width="55"
+                          :value="clickerResultsReleased"
+                          :sync="true"
+                          :font-size="14"
+                          :margin="4"
+                          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                          :labels="{checked: 'Yes', unchecked: 'No'}"
+                          @change="submitClickerResultsReleased"
+                        /></span>
                     </div>
                     <h4>{{ responsePercent }}% of students have responded</h4>
                     <h5 v-if="responsePercent">
@@ -919,6 +932,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    clickerResultsReleased: false,
     responsePercent: '',
     isLoadingPieChart: true,
     correctAnswer: null,
@@ -968,9 +982,9 @@ export default {
     isOpenEndedAudioSubmission: false,
     clickerStatus: 'neither_view_nor_submit',
     clickerStatusOptions: [
-      { value: 'neither_view_nor_submit', text: 'Neither view nor submit' },
-      { value: 'view_and_submit', text: 'View and submit' },
-      { value: 'view_and_not_submit', text: 'View but not submit' }
+      { value: 'neither_view_nor_submit', text: 'neither view nor submit' },
+      { value: 'view_and_submit', text: 'view and submit' },
+      { value: 'view_and_not_submit', text: 'view but not submit' }
     ],
     responseText: '',
     openEndedSubmissionTypeOptions: [
@@ -1122,6 +1136,19 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    async submitClickerResultsReleased () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/clicker-results-released/${Number(this.clickerResultsReleased)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.clickerResultsReleased = !this.clickerResultsReleased
+        this.questions[this.currentPage - 1].clickerResultsReleased = this.clickerResultsReleased
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateIsLoadingPieChart () {
       this.isLoadingPieChart = false
     },

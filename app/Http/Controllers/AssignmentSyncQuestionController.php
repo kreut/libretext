@@ -901,4 +901,31 @@ $response['type'] = 'error';
         }
         return $seed;
     }
+
+    public function showClickerResults(Assignment $assignment, Question $question, int $showClickerResults, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateClickerResultsReleased', [$assignmentSyncQuestion,$assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update(['clicker_results_released'=> !$showClickerResults]);
+            $response['type'] = !$showClickerResults ? 'success' : 'info';
+            $clicker_results_released = !$showClickerResults ? 'can' : 'cannot';
+            $response['message'] = "Your students <strong>{$clicker_results_released }</strong> view the clicker results.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error showing/hiding the clicker results for <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 }
