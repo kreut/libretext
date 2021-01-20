@@ -21,6 +21,8 @@ export default {
   watch: {
     chartdata: function () {
       this.$emit('pieChartLoaded')
+      console.log(this.chartData)
+
       this.renderChart({
         labels: this.chartData.labels,
         datasets: [

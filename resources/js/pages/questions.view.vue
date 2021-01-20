@@ -623,7 +623,7 @@
                 <div v-html="questions[currentPage-1].technology_iframe" />
                 <div>
                   <div v-if="assessmentType === 'clicker' && user.role === 3">
-                    <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                    <pie-chart :key="currentPage" :chartdata="piechartdata" />
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
@@ -649,7 +649,6 @@
                 </div>
               </div>
             </b-col>
-            {{ isLoadingPieChart }}
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
               <div>
                 <div class="vld-parent">
@@ -689,7 +688,7 @@
                       The correct answer is "{{ correctAnswer }}"
                     </h5>
                   </div>
-                  <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
               </div>
             </b-col>
@@ -938,7 +937,7 @@ export default {
     responsePercent: '',
     isLoadingPieChart: true,
     correctAnswer: null,
-    piechartdata: null,
+    piechartdata: [],
     updateSubmissionPieChartSetInterval: null,
     pollClickerStatusSetInterval: null,
     clickerMessage: '',
@@ -1291,7 +1290,6 @@ export default {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
         if (data.type !== 'error') {
-          alert('y')
           this.piechartdata = data.pie_chart_data
         } else {
           this.$noty.error(data.message)
@@ -1330,6 +1328,8 @@ export default {
         this.updateSubmissionPieChartSetInterval = setInterval(function () {
           self.updateSubmissionPieChart(self.questions[self.currentPage - 1].id)
         }, 3000)
+      } else {
+        this.updateSubmissionPieChart(this.questions[this.currentPage - 1].id)
       }
     },
     async updateClickerStatus (questionId) {
@@ -1639,7 +1639,6 @@ export default {
       }
     },
     async changePage (currentPage) {
-      this.piechartdata = null
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
       if (this.assessmentType === 'clicker') {
@@ -1652,6 +1651,8 @@ export default {
         if (this.user.role === 3) {
           // doesn't change once loaded
           this.updateClickerMessage(this.clickerStatus)
+          clearInterval(this.pollClickerStatusSetInterval)
+          this.pollClickerStatusSetInterval = null
           const self = this
           this.pollClickerStatusSetInterval = setInterval(function () {
             self.pollClickerStatus(self.questions[currentPage - 1].id)
