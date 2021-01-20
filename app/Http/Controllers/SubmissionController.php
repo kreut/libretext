@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use \Exception;
 use App\Submission;
@@ -26,7 +27,7 @@ class SubmissionController extends Controller
 
     }
 
-    public function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission)
+    public function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $response['pie_chart_data'] = [];
@@ -38,7 +39,13 @@ class SubmissionController extends Controller
         }
 
         try {
-            $response['clicker_status'] = 'view_and_submit';
+            $question_info = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
+
+
             if (Auth::user()->role === 3){
                $clicker_results_released = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)

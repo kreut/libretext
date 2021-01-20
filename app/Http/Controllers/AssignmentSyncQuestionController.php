@@ -164,15 +164,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
     }
-    public function getFormattedClickerStatus($question_info){
-        if ($question_info->can_view && $question_info->can_submit){
-            return 'view_and_submit';
-        }
-        if ($question_info->can_view && !$question_info->can_submit){
-            return 'view_and_not_submit';
-        }
-        return 'neither_view_nor_submit';
-    }
+
     public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -200,23 +192,6 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
-    public function getClickerStatus( Assignment $assignment, Question $question){
-$response['type'] = 'error';
-
-        try {
-            $question_info = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->first();
-            $response['clicker_status'] = $this->getFormattedClickerStatus($question_info);
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating the question access level.  Please refresh the page.  If the problem persists, please contact us.";
-        }
-        return $response;
-    }
 
     public function updateClickerStatus(UpdateClickerStatus $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
@@ -487,7 +462,7 @@ $response['type'] = 'error';
     }
 
 
-    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension)
+    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -552,7 +527,7 @@ $response['type'] = 'error';
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
-                $clicker_status[$question->question_id] = $this->getFormattedClickerStatus($question);
+                $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
                 $clicker_results_released[$question->question_id] = $question->clicker_results_released;
             }
 

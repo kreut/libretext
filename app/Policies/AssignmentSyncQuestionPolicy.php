@@ -101,7 +101,4 @@ class AssignmentSyncQuestionPolicy
     }
 
 
-
-
-
 }

@@ -24,4 +24,14 @@ class AssignmentSyncQuestion extends Model
         }
         return $questions_count_by_assignment_id;
     }
+
+    public function getFormattedClickerStatus($question_info){
+        if ($question_info->can_view && $question_info->can_submit){
+            return 'view_and_submit';
+        }
+        if ($question_info->can_view && !$question_info->can_submit){
+            return 'view_and_not_submit';
+        }
+        return 'neither_view_nor_submit';
+    }
 }
