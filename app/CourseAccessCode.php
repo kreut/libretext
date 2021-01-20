@@ -19,9 +19,11 @@ class CourseAccessCode extends Model
 
     public function refreshCourseAccessCode($course_id) {
         $access_code = $this->createCourseAccessCode();
-        DB::table('course_access_codes')
-            ->where('course_id', $course_id)
-            ->update(['access_code' => $access_code]);
+        $courseAccessCode = new CourseAccessCode();
+        $courseAccessCode->updateOrCreate(
+            ['course_id' => $course_id],
+            ['access_code' => $access_code]
+        );
         return $access_code;
     }
 
