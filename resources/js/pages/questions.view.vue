@@ -692,7 +692,10 @@
                 </div>
               </div>
             </b-col>
-            <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
+            <b-col
+              v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2"
+              cols="4"
+            >
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
                 <b-card-text>
                   <ul>
@@ -938,8 +941,7 @@ export default {
     isLoadingPieChart: true,
     correctAnswer: null,
     piechartdata: [],
-    updateSubmissionPieChartSetInterval: null,
-    pollClickerStatusSetInterval: null,
+    clickerPollingSetInterval: null,
     clickerMessage: '',
     clickerMessageType: '',
     showAssessmentClosedMessage: false,
@@ -1275,31 +1277,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async pollClickerStatus (questionId) {
-      // first update whether they can submit
-      try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/get-clicker-status`)
-        if (data.type === 'success') {
-          this.clickerStatus = data.clicker_status
-          this.updateClickerMessage(this.clickerStatus)
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      // now update whether they can see the results
-      try {
-        const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
-        if (data.type !== 'error') {
-          this.piechartdata = data.pie_chart_data
-        } else {
-          this.$noty.error(data.message)
-          clearInterval(this.pollClickerStatusSetInterval)
-          this.pollClickerStatusSetInterval = null
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     updateClickerMessage (clickerStatus) {
       console.log(clickerStatus)
       switch (clickerStatus) {
@@ -1316,21 +1293,15 @@ export default {
           this.clickerMessageType = 'info'
       }
     },
-    initViewAndSubmitPolling (clickerStatus) {
-      console.log(this.updateSubmissionPieChartSetInterval)
-      if (this.updateSubmissionPieChartSetInterval) {
-        clearInterval(this.updateSubmissionPieChartSetInterval)
-        this.updateSubmissionPieChartSetInterval = null
-        console.log('cleared')
+    initClickerPolling () {
+      if (this.clickerPollingSetInterval) {
+        clearInterval(this.clickerPollingSetInterval)
+        this.clickerPollingSetInterval = null
       }
-      if (clickerStatus === 'view_and_submit') {
-        const self = this
-        this.updateSubmissionPieChartSetInterval = setInterval(function () {
-          self.updateSubmissionPieChart(self.questions[self.currentPage - 1].id)
-        }, 3000)
-      } else {
-        this.updateSubmissionPieChart(this.questions[this.currentPage - 1].id)
-      }
+      const self = this
+      this.clickerPollingSetInterval = setInterval(function () {
+        self.submitClickerPolling(self.questions[self.currentPage - 1].id)
+      }, 3000)
     },
     async updateClickerStatus (questionId) {
       try {
@@ -1339,23 +1310,25 @@ export default {
         if (data.type !== 'error') {
           console.log('success')
           this.questions[this.currentPage - 1].clicker_status = data.clicker_status
-          this.initViewAndSubmitPolling(this.clickerStatus)
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async updateSubmissionPieChart (questionId) {
+    async submitClickerPolling (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
+        console.log(data)
         if (data.type !== 'error') {
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
+          this.clickerStatus = data.clicker_status
+          this.updateClickerMessage(this.clickerStatus)
         } else {
           this.$noty.error(data.message)
-          clearInterval(this.updateSubmissionPieChartSetInterval)
-          this.updateSubmissionPieChartSetInterval = null
+          clearInterval(this.clickerPollingSetInterval)
+          this.clickerPollingSetInterval = null
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1642,27 +1615,8 @@ export default {
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
       if (this.assessmentType === 'clicker') {
-        if (this.updateSubmissionPieChartSetInterval) {
-          clearInterval(this.updateSubmissionPieChartSetInterval)
-          this.updateSubmissionPieChartSetInterval = null
-          this.isLoadingPieChart = true
-        }
-        await this.updateSubmissionPieChart(this.questions[currentPage - 1].id)
-        if (this.user.role === 3) {
-          // doesn't change once loaded
-          this.updateClickerMessage(this.clickerStatus)
-          clearInterval(this.pollClickerStatusSetInterval)
-          this.pollClickerStatusSetInterval = null
-          const self = this
-          this.pollClickerStatusSetInterval = setInterval(function () {
-            self.pollClickerStatus(self.questions[currentPage - 1].id)
-          }, 3000)
-        }
-
-        if (this.user.role === 2) {
-          // could change
-          this.initViewAndSubmitPolling(this.clickerStatus)
-        }
+        this.initClickerPolling()
+        this.updateClickerMessage()
       }
       this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false

@@ -38,6 +38,7 @@ class SubmissionController extends Controller
         }
 
         try {
+            $response['clicker_status'] = 'view_and_submit';
             if (Auth::user()->role === 3){
                $clicker_results_released = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)

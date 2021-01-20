@@ -5,7 +5,7 @@ export default {
   extends: Pie,
   props: {
     chartdata: {
-      type: Object,
+      type: Object | Array,
       default: null
     },
     options: {
@@ -22,7 +22,9 @@ export default {
     chartdata: function () {
       this.$emit('pieChartLoaded')
       console.log(this.chartData)
-
+      if (typeof this.chartData.datasets === 'undefined') {
+        return false
+      }
       this.renderChart({
         labels: this.chartData.labels,
         datasets: [
