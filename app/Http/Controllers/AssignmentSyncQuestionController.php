@@ -553,6 +553,7 @@ $response['type'] = 'error';
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $this->getFormattedClickerStatus($question);
+                $clicker_results_released[$question->question_id] = $question->clicker_results_released;
             }
 
             $question_info = DB::table('questions')
@@ -639,6 +640,7 @@ $response['type'] = 'error';
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
+                $assignment->questions[$key]['clicker_results_released'] =  $clicker_results_released[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 

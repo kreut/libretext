@@ -669,7 +669,7 @@
                                      @change="updateClickerStatus(questions[currentPage-1].id)"
                       />
                       <span class="pl-2">
-                        Release Clicker Results:
+                        Clicker Results Released:
                         <toggle-button
                           class="mt-1"
                           :width="55"
@@ -1624,6 +1624,7 @@ export default {
     async changePage (currentPage) {
       this.piechartdata = null
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
+      this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
       if (this.assessmentType === 'clicker') {
         if (this.updateSubmissionPieChartSetInterval) {
           clearInterval(this.updateSubmissionPieChartSetInterval)
