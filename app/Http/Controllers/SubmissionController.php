@@ -29,13 +29,13 @@ class SubmissionController extends Controller
     public function submissionSummary(Assignment $assignment, Question $question, Submission $submission)
     {
         $response['type'] = 'error';
-        /* $authorized = Gate::inspect('submissionSummary', [$submission ,$assignment, $assignment->id, $question->id]);
+        $authorized = Gate::inspect('submissionSummary', [$submission, $assignment, $question]);
 
-         if (!$authorized->allowed()) {
-             $response['message'] = $authorized->message();
-             return $response;
-         }
- **/
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
 
             $submission_results = DB::table('submissions')
@@ -55,7 +55,7 @@ class SubmissionController extends Controller
                 switch ($technology) {
                     case('h5p'):
                         $object = $submission['object'];
-                        Log::info(print_r($submission, true));
+                        //Log::info(print_r($submission, true));
                         // Log::info($object['definition']['interactionType']);
                         switch ($object['definition']['interactionType']) {
                             case('choice'):
@@ -87,7 +87,7 @@ class SubmissionController extends Controller
                                 }
                                 break;
                         }
-                        Log::info(print_r($submission['result'], true));
+                        //Log::info(print_r($submission['result'], true));
 
                         break;
                     default:

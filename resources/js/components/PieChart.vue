@@ -20,6 +20,7 @@ export default {
   },
   watch: {
     chartdata: function () {
+      this.$emit('pieChartLoaded')
       this.renderChart({
         labels: this.chartData.labels,
         datasets: [
@@ -33,30 +34,6 @@ export default {
           display: true
         },
         animation: false,
-        responsive: true,
-        maintainAspectRatio: false,
-        tooltips: {
-          callbacks: {
-            label: function (tooltipItem, data) {
-              return data['labels'][tooltipItem['index']] + ': ' + data['datasets'][0]['data'][tooltipItem['index']] + '%'
-            }
-          }
-        }
-      })
-    },
-    mounted () {
-      this.renderChart({
-        labels: ['Books', 'Magazines', 'Newspapers'],
-        datasets: [
-          {
-            backgroundColor: ['red', 'black', '#00D8FF'],
-            data: [40, 20, 10]
-          }
-        ]
-      }, {
-        legend: {
-          display: true
-        },
         responsive: true,
         maintainAspectRatio: false,
         tooltips: {

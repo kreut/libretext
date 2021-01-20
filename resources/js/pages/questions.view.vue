@@ -655,13 +655,24 @@
                 </div>
               </div>
             </b-col>
-            <b-col v-if="assessmentType === 'clicker' && piechartdata">
-              <div>
-                <b-alert show variant="success" class="text-center">
-                  <span class="font-weight-bold">The correct answer is "{{ correctAnswer }}".</span>
-                </b-alert>
+            <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
+              <div class="vld-parent">
+                <loading
+                  :active.sync="isLoadingPieChart"
+                  :can-cancel="true"
+                  :is-full-page="false"
+                  :width="128"
+                  :height="128"
+                  color="#007BFF"
+                  background="#FFFFFF"
+                />
+                <div>
+                  <b-alert :show="!isLoadingPieChart" variant="success" class="text-center">
+                    <span class="font-weight-bold">The correct answer is "{{ correctAnswer }}".</span>
+                  </b-alert>
+                </div>
+                <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
               </div>
-              <pie-chart :chartdata="piechartdata" />
             </b-col>
             <b-col v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2" cols="4">
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
@@ -875,6 +886,8 @@ import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
 import { isLocked } from '~/helpers/Assignments'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
 
@@ -896,11 +909,13 @@ export default {
     EnrollInCourse,
     Scores,
     Email,
+    Loading,
     ToggleButton,
     PieChart,
     ckeditor: CKEditor.component
   },
   data: () => ({
+    isLoadingPieChart: true,
     correctAnswer: null,
     piechartdata: null,
     updateSubmissionPieChartSetInterval: null,
@@ -1102,6 +1117,9 @@ export default {
     window.removeEventListener('message', this.receiveMessage)
   },
   methods: {
+    updateIsLoadingPieChart () {
+      this.isLoadingPieChart = false
+    },
     editQuestion (currentPage) {
       window.open(this.questions[currentPage - 1].mindtouch_url)
     },
@@ -1281,10 +1299,13 @@ export default {
     async updateSubmissionPieChart (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/summary`)
-        this.piechartdata = data.pie_chart_data
-        this.correctAnswer = data.correct_answer
         if (data.type !== 'error') {
-          console.log('success')
+          this.piechartdata = data.pie_chart_data
+          this.correctAnswer = data.correct_answer
+        } else {
+          this.$noty.error(data.message)
+          clearInterval(this.updateSubmissionPieChartSetInterval)
+          this.updateSubmissionPieChartSetInterval = null
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1574,6 +1595,7 @@ export default {
         if (this.updateSubmissionPieChartSetInterval) {
           clearInterval(this.updateSubmissionPieChartSetInterval)
           this.updateSubmissionPieChartSetInterval = null
+          this.isLoadingPieChart = true
         }
         await this.updateSubmissionPieChart(this.questions[currentPage - 1].id)
         if (this.user.role === 3) {

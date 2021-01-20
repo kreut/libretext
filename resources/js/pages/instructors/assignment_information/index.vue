@@ -48,12 +48,12 @@ import axios from 'axios'
 
 export default {
   middleware: 'auth',
+  data: () => ({
+    courseId: 0
+  }),
   computed: {
     ...mapGetters({
       user: 'auth/user'
-    }),
-    data: () => ({
-      courseId: 0
     }),
     tabs () {
       return [
