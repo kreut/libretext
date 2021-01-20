@@ -622,6 +622,9 @@
                 </div>
                 <div v-html="questions[currentPage-1].technology_iframe" />
                 <div>
+                  <div v-if="assessmentType === 'clicker' && user.role === 3">
+                    <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                  </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
                       <ckeditor v-model="textForm.text_submission" :config="editorConfig" />
@@ -646,47 +649,47 @@
                 </div>
               </div>
             </b-col>
+            {{ isLoadingPieChart }}
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
-              <div class="vld-parent">
-                <loading
-                  :active.sync="isLoadingPieChart"
-                  :can-cancel="true"
-                  :is-full-page="false"
-                  :width="128"
-                  :height="128"
-                  color="#007BFF"
-                  background="#FFFFFF"
-                />
+              <div>
+                <div class="vld-parent">
+                  <loading
+                    :active.sync="isLoadingPieChart"
+                    :can-cancel="true"
+                    :is-full-page="false"
+                    :width="128"
+                    :height="128"
+                    color="#007BFF"
+                    background="#FFFFFF"
+                  />
 
-                <div class="text-center font-italic">
-                  <div v-if="!isLoadingPieChart">
-                    <div class="p-2">
-                      <span class="font-italic">Students can:</span>
-                      <b-form-select v-model="clickerStatus"
-                                     :options="clickerStatusOptions"
-                                     style="width:200px"
-                                     size="sm"
-                                     @change="updateClickerStatus(questions[currentPage-1].id)"
-                      />
-                      <span class="pl-2">
-                        Clicker Results Released:
-                        <toggle-button
-                          class="mt-1"
-                          :width="55"
-                          :value="clickerResultsReleased"
-                          :sync="true"
-                          :font-size="14"
-                          :margin="4"
-                          :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                          :labels="{checked: 'Yes', unchecked: 'No'}"
-                          @change="submitClickerResultsReleased"
-                        /></span>
-                    </div>
+                  <div v-if="!isLoadingPieChart" class="text-center font-italic">
+                    Students can:
+                    <b-form-select v-model="clickerStatus"
+                                   :options="clickerStatusOptions"
+                                   style="width:200px"
+                                   size="sm"
+                                   @change="updateClickerStatus(questions[currentPage-1].id)"
+                    />
+                    <span class="pl-2">
+                      Clicker Results Released:
+                      <toggle-button
+                        class="mt-1"
+                        :width="55"
+                        :value="clickerResultsReleased"
+                        :sync="true"
+                        :font-size="14"
+                        :margin="4"
+                        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                        :labels="{checked: 'Yes', unchecked: 'No'}"
+                        @change="submitClickerResultsReleased"
+                      /></span>
                     <h4>{{ responsePercent }}% of students have responded</h4>
                     <h5 v-if="responsePercent">
                       The correct answer is "{{ correctAnswer }}"
                     </h5>
                   </div>
+                  <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
               </div>
             </b-col>
@@ -1288,6 +1291,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
         if (data.type !== 'error') {
+          alert('y')
           this.piechartdata = data.pie_chart_data
         } else {
           this.$noty.error(data.message)

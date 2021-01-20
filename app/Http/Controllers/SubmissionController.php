@@ -38,7 +38,7 @@ class SubmissionController extends Controller
         }
 
         try {
-            if (Auth::user()->role === 2){
+            if (Auth::user()->role === 3){
                $clicker_results_released = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
