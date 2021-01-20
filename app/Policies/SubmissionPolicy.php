@@ -33,7 +33,7 @@ class SubmissionPolicy
             : Response::deny($response['message']);
     }
 
-    public function submissionSummary(User $user, Submission $submission, Assignment $assignment, Question $question)
+    public function submissionPieChartData(User $user, Submission $submission, Assignment $assignment, Question $question)
     {
 
         $question_in_assignment = DB::table('assignment_question')

@@ -195,7 +195,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::patch('/submissions/{assignment}/{question}/explored-learning-tree', 'SubmissionController@exploredLearningTree');
     Route::post('/submissions', 'SubmissionController@store');
-    Route::get('/submissions/{assignment}/questions/{question}/summary', 'SubmissionController@submissionSummary');
+    Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');

@@ -687,7 +687,6 @@
                       The correct answer is "{{ correctAnswer }}"
                     </h5>
                   </div>
-                  <pie-chart :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
               </div>
             </b-col>
@@ -1275,11 +1274,25 @@ export default {
       }
     },
     async pollClickerStatus (questionId) {
+      // first update whether they can submit
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/${questionId}/get-clicker-status`)
         if (data.type === 'success') {
           this.clickerStatus = data.clicker_status
           this.updateClickerMessage(this.clickerStatus)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      // now update whether they can see the results
+      try {
+        const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
+        if (data.type !== 'error') {
+          this.piechartdata = data.pie_chart_data
+        } else {
+          this.$noty.error(data.message)
+          clearInterval(this.pollClickerStatusSetInterval)
+          this.pollClickerStatusSetInterval = null
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1330,7 +1343,7 @@ export default {
     },
     async updateSubmissionPieChart (questionId) {
       try {
-        const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/summary`)
+        const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
         if (data.type !== 'error') {
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer

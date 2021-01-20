@@ -26,10 +26,11 @@ class SubmissionController extends Controller
 
     }
 
-    public function submissionSummary(Assignment $assignment, Question $question, Submission $submission)
+    public function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('submissionSummary', [$submission, $assignment, $question]);
+        $response['pie_chart_data'] = [];
+        $authorized = Gate::inspect('submissionPieChartData', [$submission, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -37,7 +38,19 @@ class SubmissionController extends Controller
         }
 
         try {
-$number_enrolled = count($assignment->course->enrollments)-1;//don't include Fake Student
+            if (Auth::user()->role === 2){
+               $clicker_results_released = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->first()
+                    ->clicker_results_released;
+               if (!$clicker_results_released){
+                   $response['type'] = 'success';
+                   return $response;
+               }
+
+            }
+            $number_enrolled = count($assignment->course->enrollments) - 1;//don't include Fake Student
 
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
@@ -96,7 +109,7 @@ $number_enrolled = count($assignment->course->enrollments)-1;//don't include Fak
                         return $response;
                 }
             }
-            $response['pie_chart_data'] = [];
+
             $response['pie_chart_data']['labels'] = $choices;
             $response['pie_chart_data']['datasets']['borderWidth'] = 1;
             foreach ($choices as $key => $choice) {
@@ -111,7 +124,7 @@ $number_enrolled = count($assignment->course->enrollments)-1;//don't include Fak
                 }
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
-            $response['response_percent'] = Round(100*count($submission_results)/$number_enrolled,1);
+            $response['response_percent'] = Round(100 * count($submission_results) / $number_enrolled, 1);
             $response['type'] = 'success';
 
 
