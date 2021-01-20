@@ -353,6 +353,7 @@ class ScoreController extends Controller
                 $columns['name'] = $enrolled_users[$user_id];
                 if ($total_points) {
                     $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
+                    $columns['total_points'] =  $assignment_score;
                                 }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
@@ -378,7 +379,10 @@ class ScoreController extends Controller
             }
 
             if ($total_points) {
-                array_push($fields, $assignment_score_field = ['key' => 'percent_correct',
+                array_push($fields, ['key' => 'total_points',
+                    'sortable' => true,
+                    'isRowHeader' => true]);
+                array_push($fields,  ['key' => 'percent_correct',
                     'sortable' => true,
                     'isRowHeader' => true]);
             }
