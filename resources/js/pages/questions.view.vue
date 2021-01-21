@@ -285,7 +285,7 @@
     </div>
     <div v-if="user.role === 3 && showAssessmentClosedMessage">
       <b-alert variant="info" show>
-        <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details</span>
+        <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details.</span>
       </b-alert>
     </div>
     <div v-if="questions.length && !initializing">
@@ -1766,7 +1766,7 @@ export default {
           return false
         }
         let assignment = data.assignment
-        if (!assignment.shown) {
+        if (this.user.role === 3 && !assignment.shown) {
           this.showAssessmentClosedMessage = true
           return false
         }
