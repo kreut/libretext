@@ -470,9 +470,9 @@
                       variant="primary"
                       :disabled="isLocked()"
                       size="sm"
-                      @click="editQuestion(currentPage)"
+                      @click="editQuestionSource(currentPage)"
             >
-              Edit Question
+              Edit Question Source
             </b-button>
             <b-button class="mt-1 mb-2"
                       variant="danger"
@@ -1176,7 +1176,7 @@ export default {
     updateIsLoadingPieChart () {
       this.isLoadingPieChart = false
     },
-    editQuestion (currentPage) {
+    editQuestionSource (currentPage) {
       window.open(this.questions[currentPage - 1].mindtouch_url)
     },
     setSolutionFileHtml (question) {
