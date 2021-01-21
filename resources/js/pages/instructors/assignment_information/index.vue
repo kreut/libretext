@@ -59,6 +59,11 @@ export default {
       return [
         {
           icon: '',
+          name: 'Questions',
+          route: 'instructors.assignments.questions'
+        },
+        {
+          icon: '',
           name: 'Summary',
           route: 'instructors.assignments.summary'
         },
@@ -66,11 +71,6 @@ export default {
           icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
-        },
-        {
-          icon: '',
-          name: 'Questions',
-          route: 'instructors.assignments.questions'
         },
         {
           icon: '',
