@@ -8,88 +8,100 @@
       </card>
       <card v-else :title="registrationTitle">
         <form @submit.prevent="register" @keydown="form.onKeydown($event)">
-          <!-- Name -->
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
-            <div class="col-md-3">
-              <input v-model="form.first_name" :class="{ 'is-invalid': form.errors.has('first_name') }"
-                     class="form-control" type="text" name="first_name" placeholder="First"
-              >
-              <has-error :form="form" field="first_name" />
+          <!-- GitHub Register Button -->
+          <div v-if="isStudent">
+            <div class="text-center mb-2">
+              <login-with-libretexts action="Registration" />
             </div>
-            <div class="col-md-4">
-              <input v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
-                     class="form-control" type="text" name="last_name" placeholder="Last"
-              >
-              <has-error :form="form" field="last_name" />
+            <div class="text-center mb-2">
+              <span class="font-text-bold">OR</span>
             </div>
           </div>
+          <b-card sub-title="Register with Adapt"
+                  sub-title-text-variant="primary"
+                  header-text-variant="white"
+          >
+            <hr>
+            <!-- Name -->
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
+              <div class="col-md-3">
+                <input v-model="form.first_name" :class="{ 'is-invalid': form.errors.has('first_name') }"
+                       class="form-control" type="text" name="first_name" placeholder="First"
+                >
+                <has-error :form="form" field="first_name" />
+              </div>
+              <div class="col-md-4">
+                <input v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
+                       class="form-control" type="text" name="last_name" placeholder="Last"
+                >
+                <has-error :form="form" field="last_name" />
+              </div>
+            </div>
 
-          <!-- Email -->
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
-            <div class="col-md-7">
-              <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control"
-                     type="email" name="email"
-              >
-              <has-error :form="form" field="email" />
+            <!-- Email -->
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+              <div class="col-md-7">
+                <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control"
+                       type="email" name="email"
+                >
+                <has-error :form="form" field="email" />
+              </div>
             </div>
-          </div>
 
-          <!-- Password -->
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
-            <div class="col-md-7">
-              <input v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }" class="form-control"
-                     type="password" name="password"
-              >
-              <has-error :form="form" field="password" />
+            <!-- Password -->
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
+              <div class="col-md-7">
+                <input v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }" class="form-control"
+                       type="password" name="password"
+                >
+                <has-error :form="form" field="password" />
+              </div>
             </div>
-          </div>
 
-          <!-- Password Confirmation -->
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('confirm_password') }}</label>
-            <div class="col-md-7">
-              <input v-model="form.password_confirmation"
-                     :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control"
-                     type="password" name="password_confirmation"
-              >
-              <has-error :form="form" field="password_confirmation" />
+            <!-- Password Confirmation -->
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">{{ $t('confirm_password') }}</label>
+              <div class="col-md-7">
+                <input v-model="form.password_confirmation"
+                       :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control"
+                       type="password" name="password_confirmation"
+                >
+                <has-error :form="form" field="password_confirmation" />
+              </div>
             </div>
-          </div>
 
-          <!-- Access Code -->
-          <div v-if="isInstructor || isGrader" class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('access_code') }}</label>
-            <div class="col-md-7">
-              <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }"
-                     class="form-control" type="text" name="access_code"
-              >
-              <has-error :form="form" field="access_code" />
+            <!-- Access Code -->
+            <div v-if="isInstructor || isGrader" class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">{{ $t('access_code') }}</label>
+              <div class="col-md-7">
+                <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }"
+                       class="form-control" type="text" name="access_code"
+                >
+                <has-error :form="form" field="access_code" />
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Time zone</label>
-            <div class="col-md-7" @change="removeTimeZoneError()">
-              <b-form-select v-model="form.time_zone"
-                             :options="timeZones"
-                             :class="{ 'is-invalid': form.errors.has('time_zone') }"
-              />
-              <has-error :form="form" field="time_zone" />
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+              <div class="col-md-7" @change="removeTimeZoneError()">
+                <b-form-select v-model="form.time_zone"
+                               :options="timeZones"
+                               :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                />
+                <has-error :form="form" field="time_zone" />
+              </div>
             </div>
-          </div>
-          <div class="form-group row">
-            <div class="col-md-7 offset-md-3 d-flex">
-              <!-- Submit Button -->
-              <v-button :loading="form.busy">
-                {{ $t('register') }}
-              </v-button>
-
-              <!-- GitHub Register Button -->
-              <login-with-libretexts action="Register" />
+            <div class="form-group row">
+              <div class="col-md-7 offset-md-8 d-flex">
+                <!-- Submit Button -->
+                <v-button :loading="form.busy">
+                  Submit
+                </v-button>
+              </div>
             </div>
-          </div>
+          </b-card>
         </form>
       </card>
     </div>
@@ -130,6 +142,7 @@ export default {
     mustVerifyEmail: false,
     isGrader: false,
     isInstructor: false,
+    isStudent: false,
     registrationTitle: ''
   }),
   watch: {
@@ -153,13 +166,17 @@ export default {
         case 'instructor':
           this.registrationTitle = 'Instructor Registration'
           this.isInstructor = true
+          this.isStudent = this.isGrader = false
           break
         case 'student':
           this.registrationTitle = 'Student Registration'
+          this.isStudent = true
+          this.isInstructor = this.isGrader = false
           break
         case 'grader':
           this.registrationTitle = 'Grader Registration'
           this.isGrader = true
+          this.isStudent = this.isInstructor = false
           break
       }
     },

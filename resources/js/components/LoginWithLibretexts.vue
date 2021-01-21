@@ -1,6 +1,6 @@
 <template>
   <b-button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
-    <span class="icon-SSO" /> Libre{{ action }}
+    <span class="icon-SSO" /> Campus {{ action }}
   </b-button>
 </template>
 
@@ -12,7 +12,7 @@ import { redirectOnSSOCompletion } from '../helpers/LoginRedirect'
 export default {
   name: 'LoginWithLibreTexts',
   props: {
-    action: { type: String, default: 'Register' }
+    action: { type: String, default: 'Registration' }
   },
   data: () => ({
     inIFrame: false
