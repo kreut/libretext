@@ -1259,8 +1259,8 @@ export default {
       if (this.iFrameAttribution) {
         extras.push('attribution')
       }
+      url += '/'
       if (extras.length) {
-        url += '/'
         for (let i = 0; i < extras.length; i++) {
           url += extras[i] + '-'
         }
