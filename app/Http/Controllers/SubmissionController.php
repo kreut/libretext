@@ -132,7 +132,7 @@ class SubmissionController extends Controller
                 }
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
-            $response['response_percent'] = Round(100 * count($submission_results) / $number_enrolled, 1);
+            $response['response_percent'] = $number_enrolled ? Round(100 * count($submission_results) / $number_enrolled, 1) : 0;
             $response['type'] = 'success';
 
 
