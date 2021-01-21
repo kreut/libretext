@@ -468,7 +468,6 @@
           <div class="p-2">
             <b-button class="mt-1 mb-2"
                       variant="primary"
-                      :disabled="isLocked()"
                       size="sm"
                       @click="editQuestionSource(currentPage)"
             >
