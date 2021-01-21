@@ -6,6 +6,7 @@ use App\Assignment;
 
 use App\AssignmentSyncQuestion;
 use App\User;
+use App\Question;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 
@@ -21,11 +22,11 @@ class AssignmentSyncQuestionPolicy
      * @param \App\Assignment $assignment
      * @return mixed
      */
-    public function delete(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    public function delete(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
     {
-        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = ($assignment->hasFileOrQuestionSubmissions())
-            ? "You can't remove a question from this assignment since students have already submitted responses."
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int) $assignment->course->user_id));
+        $message = (!$assignment->questions->contains($question->id))
+            ? "You can't remove that question since it's not in the assignment."
             : 'You are not allowed to remove a question from this assignment.';
         return $authorized
             ? Response::allow()

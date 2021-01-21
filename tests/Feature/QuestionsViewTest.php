@@ -38,18 +38,18 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
-            'can_view' =>1,
+            'can_view' => 1,
             'can_submit' => 1,
-            'clicker_results_released' =>0,
+            'clicker_results_released' => 0,
             'open_ended_submission_type' => 'file'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
             'points' => $this->question_points,
-            'can_view' =>1,
+            'can_view' => 1,
             'can_submit' => 1,
-            'clicker_results_released' =>0,
+            'clicker_results_released' => 0,
             'open_ended_submission_type' => 'file'
         ]);;
 
@@ -77,19 +77,50 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+    /** @test */
+    public function correctly_recomputes_assignment_score_of_removed_question()
+    {
+        $submission_file_score = 10;
+        $submission_score = 20;
+        $current_assignment_score = 93;
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'score' => $submission_file_score,
+            'submission' => 'some text',
+            'date_submitted' => Carbon::now()]);
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => $submission_score,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object]);
+        Score::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'score' => $current_assignment_score]);
+
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->assertJson(['type' => 'success']);
+        $new_score = Score::where('assignment_id', $this->assignment->id)->where('user_id', $this->student_user->id)->first()->score;
+        $this->assertEquals($current_assignment_score - $submission_file_score - $submission_score, $new_score);
+    }
+
 
     /** @test */
     public function student_cannot_submit_text_if_it_was_graded()
     {
 
-        SubmissionFile::create( ['assignment_id'=> $this->assignment->id,
-            'question_id'=> $this->question->id,
-            'user_id'=> $this->student_user->id,
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
             'type' => 'text',
-            'original_filename'=>'',
+            'original_filename' => '',
             'submission' => 'some text',
             'date_submitted' => Carbon::now()]);
-        DB::table('submission_files')->where( 'assignment_id', $this->assignment->id)
+        DB::table('submission_files')->where('assignment_id', $this->assignment->id)
             ->where('question_id', $this->question->id)
             ->where('user_id', $this->student_user->id)
             ->update(['date_graded' => Carbon::now()]);
@@ -101,6 +132,7 @@ class QuestionsViewTest extends TestCase
         )->assertJson(['message' => 'Your submission has already been graded and may not be re-submitted.']);
 
     }
+
     public function student_can_submit_text()
     {
         $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
@@ -109,8 +141,6 @@ class QuestionsViewTest extends TestCase
                 'text_submission' => 'Here is my cool text.']
         )->assertJson(['message' => 'Your text submission was saved.']);
     }
-
-
 
 
     /** @test */
@@ -126,7 +156,7 @@ class QuestionsViewTest extends TestCase
     }
 
 
-/** @test */
+    /** @test */
     public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension_even_if_solutions_are_released()
     {
         $this->assignment->due = "2001-03-05 09:00:00";

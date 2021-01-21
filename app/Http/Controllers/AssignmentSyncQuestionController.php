@@ -315,7 +315,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('delete', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('delete', [$assignmentSyncQuestion, $assignment, $question]);
 
 
         if (!$authorized->allowed()) {
@@ -325,6 +325,7 @@ class AssignmentSyncQuestionController extends Controller
 
         try {
             DB::beginTransaction();
+            $this->subtractQuestionScoreFromAssignmentScore($assignment,$question);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->first()
@@ -347,7 +348,37 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
+public function subtractQuestionScoreFromAssignmentScore(Assignment $assignment, Question $question){
+    $submissions = DB::table('submissions')->where('question_id', $question->id)
+        ->where('assignment_id', $assignment->id)
+        ->select('user_id', 'score')
+        ->get();
+    $submissions_by_user_id = [];
+    foreach ($submissions as $submission){
+        $submissions_by_user_id[$submission->user_id] = $submission->score;
+    }
+    $submission_files = DB::table('submission_files')->where('question_id', $question->id)
+        ->where('assignment_id', $assignment->id)
+        ->where('score','<>', null)
+        ->select('user_id', 'score')
+        ->get();
+    $submission_files_by_user_id = [];
+    foreach ($submission_files as $submission_file){
+        $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
+    }
+    $scores = DB::table('scores')->where('assignment_id', $assignment->id)
+        ->select('user_id','score')
+        ->get();
+    foreach ($scores as $score){
+        $submission_file_score=$submission_files_by_user_id[$score->user_id]  ?? 0;
+        $submission_score=$submissions_by_user_id[$score->user_id]  ?? 0;
+        $new_score = $score->score-$submission_file_score-$submission_score;
+        DB::table('scores')->where('assignment_id', $assignment->id)
+            ->where('user_id', $score->user_id)
+            ->update(['score'=>$new_score]);
+    }
 
+}
     public function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
