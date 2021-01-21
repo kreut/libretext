@@ -66,7 +66,12 @@ class AssignmentController extends Controller
                 ->where('assignment_group', $assignment_group->assignment_group)
                 ->where('course_id', $course->id)
                 ->get();
-            if ( $imported_assignment_group->isEmpty()) {
+            $default_assignment_group = DB::table('assignment_groups')
+                ->where('user_id', 0)
+                ->where('assignment_group', $assignment_group->assignment_group)
+                ->get();
+            if ( $default_assignment_group->isEmpty() && $imported_assignment_group->isEmpty()) {
+                //don't have it in your course yet and it's not one of the default ones
                 $imported_assignment_group = $assignment_group->replicate();
                 $imported_assignment_group->course_id = $course->id;
                 $imported_assignment_group_id = $imported_assignment_group->save();

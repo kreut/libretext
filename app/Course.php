@@ -13,7 +13,7 @@ class Course extends Model
      *
      * @var array
      */
-    protected $fillable = ['name', 'start_date', 'end_date', 'user_id','shown'];
+    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
@@ -23,29 +23,47 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
-    public function extraCredits(){
+    public function extraCredits()
+    {
         return $this->hasMany('App\ExtraCredit');
     }
 
-public function assignmentGroups() {
-$course = $this;
-   return  AssignmentGroup::where(function ($q) use ($course) {
-       $q->where('user_id', 0)->orWhere(function ($q2) use ($course) {
-           $q2->where('user_id', Auth::user()->id)->where('course_id', $course->id);
-       });
-   })->get();
-}
+    public function assignmentGroups()
+    {
 
-public function assignmentGroupWeights() {
-    return DB::table('assignments')
-        ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
-        ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
-        ->where('assignment_group_weights.course_id', $this->id)
-        ->groupBy('assignment_groups.id','assignment_group_weights.assignment_group_weight')
-        ->select('assignment_groups.id','assignment_groups.assignment_group','assignment_group_weights.assignment_group_weight')
-        ->get();
+        $default_assignment_groups = AssignmentGroup::where('user_id', 0)->select()->get();
+        $course_assignment_groups = AssignmentGroup::where('user_id', Auth::user()->id)->where('course_id', $this->id)
+            ->select()
+            ->get();
 
-}
+        $assignment_groups = [];
+        $used_assignment_groups = [];
+        foreach ($default_assignment_groups as $key => $default_assignment_group) {
+            $assignment_groups[] = $default_assignment_group;
+            $used_assignment_groups[] = $default_assignment_group->assignment_group;
+        }
+
+        foreach ($course_assignment_groups as $key => $course_assignment_group) {
+            if (!in_array($course_assignment_group->assignment_group, $used_assignment_groups)) {
+                $assignment_groups[] = $course_assignment_group;
+                $used_assignment_groups[] = $course_assignment_group->assignment_group;
+            }
+        }
+        return collect($assignment_groups);
+    }
+
+    public function assignmentGroupWeights()
+    {
+        return DB::table('assignments')
+            ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
+            ->leftJoin('assignment_group_weights', 'assignment_groups.id', '=', 'assignment_group_weights.assignment_group_id')
+            ->where('assignment_group_weights.course_id', $this->id)
+            ->groupBy('assignment_groups.id', 'assignment_group_weights.assignment_group_weight')
+            ->select('assignment_groups.id', 'assignment_groups.assignment_group', 'assignment_group_weights.assignment_group_weight')
+            ->get();
+
+    }
+
     public function enrolledUsers()
     {
         return $this->hasManyThrough('App\User',
