@@ -315,11 +315,21 @@ class CourseController extends Controller
             DB::beginTransaction();
             $course->accessCodes()->delete();
             foreach ($course->assignments as $assignment) {
+                $assignment_question_ids = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                    ->get()
+                    ->pluck('id');
+
+                DB::table('assignment_question_learning_tree')
+                    ->whereIn('assignment_question_id', $assignment_question_ids)
+                    ->delete();
+
                 $assignment->questions()->detach();
                 $assignment->scores()->delete();
                 $assignment->seeds()->delete();
+
             }
             $course->assignments()->delete();
+
             AssignmentGroupWeight::where('course_id', $course->id)->delete();
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
