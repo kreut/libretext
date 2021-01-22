@@ -729,6 +729,9 @@ export default {
       }
     },
     canSwitchToCompleteIncomplete (event) {
+      event.preventDefault()
+      this.$noty.info('This option is currently unavailable.')
+      return false
       if (this.form.late_policy !== 'not accepted') {
         event.preventDefault()
         this.$noty.info('If you would like a Complete/Incomplete Scoring Type, please choose "Do not accept late" as your Late Policy.  You will still be able to grant individual extensions.', {
