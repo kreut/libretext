@@ -51,7 +51,7 @@ class Score extends Model
         if ($assessment_type === 'delayed') {
             $submission_files = DB::table('submission_files')
                 ->where('assignment_id', $assignment_id)
-                ->whereIn('type', ['q', 'text']) //'q', 'a', or 0
+                ->whereIn('type', ['q', 'text','audio']) //'q', 'a', or 0
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', $student_user_id)->get();
 
