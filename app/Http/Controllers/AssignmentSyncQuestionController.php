@@ -276,11 +276,11 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion, Score $score)
+    public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment, $question]);
 
         if (!$authorized->allowed()) {
 
@@ -460,7 +460,7 @@ class AssignmentSyncQuestionController extends Controller
      */
     public function getCompleteIncompleteScore(array $assignment_questions_by_id, int $user_id, $submissions_by_user_and_question_id, $submission_files_by_user_and_question_id)
     {
-        $new_score = 'c';;
+        $new_score = 'c';
         foreach ($assignment_questions_by_id as $question_id => $assignment_question) {
             if ($assignment_question['has_open_ended_submission'] && !isset($submission_files_by_user_and_question_id[$user_id][$question_id])) {
                 return 'i';

@@ -74,16 +74,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test **/
-    public function cannot_add_a_question_if_students_have_already_made_a_submission()
-    {
-
-        Submission::create($this->h5pSubmission);
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'error',
-                'message' => "You can't add a question to this assignment since students have already submitted responses."]);
-
-    }
 
     /** @test */
 
@@ -112,20 +102,6 @@ class QuestionsGetTest extends TestCase
 
     }
 
-
-
-
-    /** @test **/
-    public function cannot_add_a_question_if_students_have_already_made_a_submission_file()
-    {
-
-       SubmissionFile::create($this->submission_file);
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'error',
-                'message' => "You can't add a question to this assignment since students have already submitted responses."]);
-
-
-    }
 
     /**@test* */
     public function can_not_visit_get_questions_if_students_have_already_made_a_submission()
@@ -284,27 +260,18 @@ class QuestionsGetTest extends TestCase
                 'message' => 'You are not allowed to add a question to this assignment.']);
     }
 
-
-    /** @test */
-    public function cannot_remove_a_question_from_an_assignment_if_there_is_already_a_submission()
-    {
-        Submission::create($this->h5pSubmission);
-        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['message' => "You can't remove a question from this assignment since students have already submitted responses."]);
-    }
-
-    /** @test */
-    public function cannot_remove_a_question_from_an_assignment_if_there_is_already_a_file_submission()
-    {
-        SubmissionFile::create($this->submission_file);
-        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['message' => "You can't remove a question from this assignment since students have already submitted responses."]);
-    }
-
-
     /** @test */
     public function cannot_remove_a_question_to_an_assignment_if_you_are_not_the_owner()
     {
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'can_view' =>1,
+            'can_submit' => 1,
+            'clicker_results_released' =>0,
+            'open_ended_submission_type'=>'none'
+        ]);
 
         $this->actingAs($this->user_2)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'error',

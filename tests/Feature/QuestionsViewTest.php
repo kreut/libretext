@@ -136,6 +136,32 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function did_not_submit_technology_piece_for_one_of_the_questions_with_technology_should_be_incomplete()
+    {
+
+        //give score of incomplete
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        Score::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'score' => 'c']);
+        //submitted the first one
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => 5,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object]);
+        //remove assessment which they didn't submit anything
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
+        //should give back score of complete
+        $new_score = Score::where('user_id', $this->student_user->id)->where('assignment_id', $this->assignment->id)->first()->score;
+
+        $this->assertEquals('c', $new_score);
+
+    }
+    /** @test */
     public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type()
     {
         $submission_file_score = 10;

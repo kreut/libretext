@@ -16,11 +16,11 @@ class AssignmentSyncQuestionPolicy
 
 
     /**
-     * Determine whether the user can delete the question in the assignment.
-     *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
-     * @return mixed
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
      */
     public function delete(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
     {
@@ -34,21 +34,18 @@ class AssignmentSyncQuestionPolicy
     }
 
     /**
-     * Determine whether the user can add the question to the assignment.
-     *
-     * @param \App\User $user
-     * @param \App\Assignment $assignment
-     * @return mixed
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
      */
-    public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
     {
-        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
-        $message = ($assignment->hasFileOrQuestionSubmissions())
-            ? "You can't add a question to this assignment since students have already submitted responses."
-            : 'You are not allowed to add a question to this assignment.';
-        return $authorized
+
+        return ($user->id === (int) $assignment->course->user_id)
             ? Response::allow()
-            : Response::deny($message);
+            : Response::deny('You are not allowed to add a question to this assignment.');
     }
 
     public function update(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
