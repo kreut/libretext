@@ -32,10 +32,13 @@ class DbBackup extends Command
      */
     public function handle()
     {
-        echo "start";
-        $command = "mysqldump ".env('DB_DATABASE'). " | gzip > "  .env('DB_DATABASE') . ".gz";
+
+        $filename = env('DB_DATABASE') . "-" . Carbon::now()->format('Y-m-d') . ".sql";
+        echo "Backing up $filename\r\n";
+        $command = "mysqldump ".env('DB_DATABASE'). " | gzip > " . storage_path() . "/db_backups/". $filename . ".gz";
         $returnVar = NULL;
         $output  = NULL;
         exec($command, $output, $returnVar);
+        echo "Done.";
     }
 }
