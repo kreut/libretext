@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Assignment;
+use App\Question;
 use App\Solution;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -21,6 +22,14 @@ class SolutionPolicy
         return (int) $user->role === 2
             ? Response::allow()
             : Response::deny('You are not allowed to upload solutions.');
+
+    }
+
+    public function storeText(User $user, Solution $solution, Assignment $assignment, Question $question)
+    {
+        return $assignment->questions->contains($question->id) && (int) $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to submit a text-based solution to this question.');
 
     }
 

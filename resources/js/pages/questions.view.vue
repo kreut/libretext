@@ -141,6 +141,32 @@
           :successful-upload="submittedAudioSolutionUpload"
           :failed-upload="failedAudioUpload"
         />
+        <div v-if="showAddTextToSupportTheAudioFile">
+          <hr>
+          <b-form-group>
+            Would you like to add text to support the audio?
+            <span @click="showTextSolutionForm = true">
+              <b-form-radio class="custom-control-inline" name="show-text-solution-form">Yes</b-form-radio>
+            </span>
+            <span @click="closeAudioSolutionModal"> <b-form-radio class="custom-control-inline"
+                                                                  name="show-text-solution-form"
+            >No</b-form-radio>
+            </span>
+          </b-form-group>
+        </div>
+        <div v-if="showTextSolutionForm">
+          <div class="pt-3 pb-3">
+            <ckeditor v-model="textSolutionForm.text_solution"
+                      :config="editorConfig"
+                      :class="{ 'is-invalid': textSolutionForm.errors.has('text_solution') }"
+                      @keydown="textSolutionForm.errors.clear('text_solution')"
+            />
+            <has-error :form="textSolutionForm" field="text_solution" />
+          </div>
+          <div>
+            <span class="float-right"><b-button variant="primary" @click="submitTextSolution">Save Text</b-button></span>
+          </div>
+        </div>
       </div>
 
       <div v-if="solutionTypeIsPdfImage">
@@ -639,7 +665,7 @@
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
-                      <ckeditor v-model="textForm.text_submission" :config="editorConfig" />
+                      <ckeditor v-model="textSubmissionForm.text_submission" :config="editorConfig" />
                     </div>
                     <div class="mt-2 mb-3">
                       <b-button variant="primary" class="float-right" @click="submitText">
@@ -948,6 +974,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showTextSolutionForm: false,
+    showAddTextToSupportTheAudioFile: false,
     clickerResultsReleased: false,
     responsePercent: '',
     isLoadingPieChart: true,
@@ -1052,7 +1080,10 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
-    textForm: new Form({
+    textSolutionForm: new Form({
+      text_solution: ''
+    }),
+    textSubmissionForm: new Form({
       text_submission: '',
       assignmentId: null,
       questionId: null
@@ -1155,6 +1186,27 @@ export default {
     }
   },
   methods: {
+    closeAudioSolutionModal () {
+      this.textSolutionForm.text_solution = ''
+      this.textSolutionForm.errors.clear()
+      this.$bvModal.hide('modal-upload-file')
+      this.$refs.recorder.removeRecord()
+    },
+    async submitTextSolution () {
+      try {
+        let questionId = this.questions[this.currentPage - 1].id
+        this.textSolutionForm.question_id = questionId
+        const { data } = await this.textSolutionForm.post(`/api/solutions/text/${this.assignmentId}/${questionId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+
+        this.questions[this.currentPage - 1].text_solution = this.textSolutionForm.text_solution
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitClickerResultsReleased () {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/clicker-results-released/${Number(this.clickerResultsReleased)}`)
@@ -1203,11 +1255,15 @@ export default {
         this.questions[this.currentPage - 1].solution = data.solution
         this.questions[this.currentPage - 1].solution_type = 'audio'
         this.questions[this.currentPage - 1].solution_file_url = data.solution_file_url
-        this.showSuccessfulAudioSubmissiopnMessage = true
+        this.showSuccessfulAudioSubmissionMessage = true
+        this.showAddTextToSupportTheAudioFile = true
+      } else {
+        this.$refs.recorder.removeRecord()
+        this.$bvModal.hide('modal-upload-file')
+        this.$noty.error(data.message)
       }
-      this.$refs.recorder.removeRecord()
-      this.$bvModal.hide('modal-upload-file')
     },
+
     submittedAudioUpload (response) {
       let data = response.data
       this.openEndedSubmissionDataType = (data.type === 'success') ? 'success' : 'danger'
@@ -1281,9 +1337,9 @@ export default {
     },
     async submitText () {
       try {
-        this.textForm.questionId = this.questions[this.currentPage - 1].id
-        this.textForm.assignmentId = this.assignmentId
-        const { data } = await this.textForm.post('/api/submission-texts')
+        this.textSubmissionForm.questionId = this.questions[this.currentPage - 1].id
+        this.textSubmissionForm.assignmentId = this.assignmentId
+        const { data } = await this.textSubmissionForm.post('/api/submission-texts')
         console.log(data)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
@@ -1652,7 +1708,7 @@ export default {
 
       this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
-        this.textForm.text_submission = this.questions[currentPage - 1].submission
+        this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission
       }
       this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission || this.isOpenEndedAudioSubmission
 

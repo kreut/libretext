@@ -201,6 +201,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
 
+    Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');
     Route::put('/solution-files', 'SolutionController@storeSolutionFile');
     Route::post('/solution-files/download', 'SolutionController@downloadSolutionFile');

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\StoreTextSolution;
 use App\Question;
 use App\Solution;
 use App\Assignment;
@@ -25,14 +26,42 @@ class SolutionController extends Controller
 {
 
     use S3;
+    public function storeText(StoreTextSolution $request, Solution $Solution, Assignment $assignment, Question $question)
+    {
+        $response['type'] = 'error';
+        $user_id = Auth::user()->id;
+        try {
 
+            $authorized = Gate::inspect('storeText', [$Solution, $assignment, $question]);
+
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $Solution->where('user_id',$user_id)
+                ->where('question_id',$question->id)
+                ->update(['text'=>$request->text_solution]);
+
+            $response['type'] = 'success';
+            $response['message'] = 'Your text solution has been saved.';
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving this audio solution.  Please try again or contact us for assistance.";
+            return $response;
+        }
+        return $response;
+
+    }
     public function storeAudioSolutionFile(Request $request, Solution $Solution, Assignment $assignment, Question $question, Cutup $cutup)
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;
         try {
 
-            $authorized = Gate::inspect('uploadSolutionFile', $Solution);
+            $authorized = Gate::inspect('uploadSolutionFile', [$Solution, $assignment, $question]);
 
             if (!$authorized->allowed()) {
                 $response['message'] = $authorized->message();
