@@ -166,10 +166,6 @@ export default {
           return false
         }
         let assignment = data.assignment
-        this.hasSubmissions = assignment.hasSubmissions
-        if (this.hasSubmissions) {
-          this.$noty.error('This assignment is locked.  You can\'t add or remove Learning Trees from the assignment since students have already submitted responses.')
-        }
         this.title = `Add Learning Trees to "${assignment.name}"`
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {

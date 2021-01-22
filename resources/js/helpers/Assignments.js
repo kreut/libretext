@@ -16,17 +16,16 @@ export async function getAssignments () {
     this.$noty.error(error.message)
   }
 }
-
+export function isLockedMessage () {
+  return `This assignment is locked. Since students have submitted responses,
+              the only items that you can update are the assignment's name, the assignment's available/due dates,
+              the assignment's group, the instructions, and whether to include the assignment in the final score.`
+}
 export function isLocked (assignment) {
   // on the assignments index page I have to pass in the specific assignment
   // otherwise, I'm within an assignment.
-  if (assignment) {
-    assignment.assessmentType = assignment.assessment_type // coming straight from the server so I use underscore
-    assignment.solutionsReleased = assignment.solutions_released
-  } else {
+  if (!assignment) {
     assignment = this
   }
-  return Boolean(this.user.role === 2 && (
-    (assignment.assessmentType !== 'delayed' && assignment.has_submissions_or_file_submissions) ||
-    (assignment.assessmentType === 'delayed' && (assignment.has_submissions_or_file_submissions || assignment.solutionsReleased))))
+  return Boolean(this.user.role === 2 && assignment.has_submissions_or_file_submissions)
 }

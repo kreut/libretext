@@ -291,10 +291,7 @@
     <div v-if="questions.length && !initializing">
       <div v-if="isLocked()">
         <b-alert variant="info" show>
-          <strong>This problem is locked.
-            Either students have already submitted responses to this assignment or the solutions have been released. You
-            can view the questions but you cannot add or remove them.
-            In addition, you cannot update the number of points per question.</strong>
+          <strong>This problem is locked. Since students have already submitted responses, you cannot update the number of points per question.</strong>
         </b-alert>
       </div>
       <div v-if="questions.length">
@@ -475,7 +472,6 @@
             </b-button>
             <b-button class="mt-1 mb-2"
                       variant="danger"
-                      :disabled="isLocked()"
                       size="sm"
                       @click="removeQuestion(currentPage)"
             >

@@ -36,7 +36,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="!isLoading && !this.hasSubmissions">
+      <div v-if="!isLoading">
         <PageTitle :title="title" />
         <p>
           Using the search box you can find questions by tag.
@@ -173,7 +173,6 @@ export default {
     chosenTags: [],
     question: {},
     showQuestions: false,
-    hasSubmissions: false,
     gettingQuestions: false,
     title: '',
     uploadFileForm: new Form({
@@ -229,11 +228,6 @@ export default {
           return false
         }
         let assignment = data.assignment
-        this.hasSubmissions = assignment.hasSubmissions
-        if (this.hasSubmissions) {
-          this.$noty.error("This assignment is locked.  You can't add or remove questions from the assignment since students have already submitted responses.")
-          this.continueLoading = false
-        }
         this.title = `Add Questions to "${assignment.name}"`
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {

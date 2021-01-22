@@ -82,10 +82,7 @@
       <b-form ref="form" @submit="createAssignment">
         <div v-if="isLocked()">
           <b-alert variant="info" show>
-            <strong>This assignment is locked. Since students have submitted responses or you've released the solutions,
-              the only items that you can update are the assignment's name, the assignment's available/due dates,
-              the assignment's group, the instructions, and whether to include the assignment in the final score.
-            </strong>
+            <span class="font-weight-bold">{{ isLockedMessage() }}</span>
           </b-alert>
         </div>
 
@@ -636,7 +633,7 @@ import { mapGetters } from 'vuex'
 
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 
-import { isLocked, getAssignments } from '~/helpers/Assignments'
+import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments'
 
 import 'vue-loading-overlay/dist/vue-loading.css'
 
@@ -704,6 +701,7 @@ export default {
   created () {
     this.getAssignments = getAssignments
     this.isLocked = isLocked
+    this.isLockedMessage = isLockedMessage
   },
   mounted () {
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')

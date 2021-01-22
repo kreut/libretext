@@ -110,8 +110,8 @@
                         icon="lock-fill"
                       />
                     </span>
+                    <a href="" @click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
                   </span>
-                  <a href="" @click.prevent="getAssignmentView(user.role, data.item)">{{ data.item.name }}</a>
                 </div>
               </template>
               <template v-slot:cell(shown)="data">
@@ -255,7 +255,7 @@ import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-import { isLocked, getAssignments } from '~/helpers/Assignments'
+import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments'
 
 import AssignmentProperties from '~/components/AssignmentProperties'
 import Loading from 'vue-loading-overlay'
@@ -350,6 +350,7 @@ export default {
   created () {
     this.getAssignments = getAssignments
     this.isLocked = isLocked
+    this.isLockedMessage = isLockedMessage
   },
   async mounted () {
     this.courseId = this.$route.params.courseId
@@ -412,10 +413,7 @@ export default {
     },
     getLockedQuestionsMessage (assignment) {
       if ((Number(assignment.has_submissions_or_file_submissions))) {
-        return 'Since students have already submitted responses to this assignment, you won\'t be able to add or remove questions.'
-      }
-      if ((Number(assignment.solutions_released))) {
-        return 'You have already released the solutions to this assignment, so you won\'t be able to add or remove questions.'
+        return this.isLockedMessage()
       }
     },
     async getCourseInfo () {
