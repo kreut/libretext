@@ -19,7 +19,8 @@ export async function getAssignments () {
 export function isLockedMessage () {
   return `This assignment is locked. Since students have submitted responses,
               the only items that you can update are the assignment's name, the assignment's available/due dates,
-              the assignment's group, the instructions, and whether to include the assignment in the final score.`
+              the assignment's group, the instructions, and whether to include the assignment in the final score.  In addition
+              you can still add/remove questions.`
 }
 export function isLocked (assignment) {
   // on the assignments index page I have to pass in the specific assignment
