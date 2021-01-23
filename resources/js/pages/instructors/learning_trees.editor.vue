@@ -121,7 +121,7 @@
                       @click="addRemediation"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
-              Get Remediation
+              Get Node
             </b-button>
           </div>
         </div>
@@ -390,6 +390,7 @@ export default {
           this.title = this.learningTreeForm.title
           this.description = this.learningTreeForm.description
           this.assessmentLibrary = this.learningTreeForm.text
+          this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
           this.assessmentPageId = this.learningTreeForm.page_id
           this.$bvModal.hide('modal-learning-tree-details')
           console.log(data.learning_tree)
@@ -401,6 +402,11 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
+      }
+    },
+    setRemediationLibraryByAssessmentLibrary (assessmentLibrary) {
+      for (let i = 0; i < this.libraryOptions.length; i++) {
+        if (this.libraryOptions[i].text === assessmentLibrary) { return this.libraryOptions[i].value }
       }
     },
     async updateLearningTreeInfo () {
@@ -423,6 +429,7 @@ export default {
         this.description = data.description
         this.assessmentPageId = data.page_id
         this.assessmentLibrary = data.library
+        this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
         if (data.learning_tree) {
           flowy.import(JSON.parse(data.learning_tree))
         }
