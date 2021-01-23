@@ -3,7 +3,7 @@
 namespace App\Http\Controllers;
 
 
-use App\Http\Requests\StoreTextSolution;
+use App\Http\Requests\StoreSolutionText;
 use App\Question;
 use App\Solution;
 use App\Assignment;
@@ -26,7 +26,7 @@ class SolutionController extends Controller
 {
 
     use S3;
-    public function storeText(StoreTextSolution $request, Solution $Solution, Assignment $assignment, Question $question)
+    public function storeText(StoreSolutionText $request, Solution $Solution, Assignment $assignment, Question $question)
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;
@@ -40,7 +40,7 @@ class SolutionController extends Controller
             }
             $Solution->where('user_id',$user_id)
                 ->where('question_id',$question->id)
-                ->update(['text'=>$request->text_solution]);
+                ->update(['text'=>$request->solution_text]);
 
             $response['type'] = 'success';
             $response['message'] = 'Your text solution has been saved.';

@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
-use App\Rules\IsValidTextSolution;
+use App\Rules\IsValidSolutionText;
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTextSolution extends FormRequest
+class StoreSolutionText extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +26,7 @@ class StoreTextSolution extends FormRequest
     {
 
         return [
-            'text_solution' => new IsValidTextSolution($this->user()->id, $this->question_id)
+            'text_solution' => new IsValidSolutionText($this->user()->id, $this->question_id)
         ];
     }
 }

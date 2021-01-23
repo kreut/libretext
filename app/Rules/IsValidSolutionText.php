@@ -5,7 +5,7 @@ namespace App\Rules;
 use Illuminate\Contracts\Validation\Rule;
 use Illuminate\Support\Facades\DB;
 
-class IsValidTextSolution implements Rule
+class IsValidSolutionText implements Rule
 {
     /**
      * Create a new rule instance.

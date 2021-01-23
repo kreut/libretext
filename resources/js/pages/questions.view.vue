@@ -145,7 +145,7 @@
           <hr>
           <b-form-group>
             Would you like to add text to support the audio?
-            <span @click="showTextSolutionForm = true">
+            <span @click="showSolutionTextForm = true">
               <b-form-radio class="custom-control-inline" name="show-text-solution-form">Yes</b-form-radio>
             </span>
             <span @click="closeAudioSolutionModal"> <b-form-radio class="custom-control-inline"
@@ -154,17 +154,17 @@
             </span>
           </b-form-group>
         </div>
-        <div v-if="showTextSolutionForm">
+        <div v-if="showSolutionTextForm">
           <div class="pt-3 pb-3">
-            <ckeditor v-model="textSolutionForm.text_solution"
+            <ckeditor v-model="solutionTextForm.solution_text"
                       :config="editorConfig"
-                      :class="{ 'is-invalid': textSolutionForm.errors.has('text_solution') }"
-                      @keydown="textSolutionForm.errors.clear('text_solution')"
+                      :class="{ 'is-invalid': solutionTextForm.errors.has('solution_text') }"
+                      @keydown="solutionTextForm.errors.clear('solution_text')"
             />
-            <has-error :form="textSolutionForm" field="text_solution" />
+            <has-error :form="solutionTextForm" field="solution_text" />
           </div>
           <div>
-            <span class="float-right"><b-button variant="primary" @click="submitTextSolution">Save Text</b-button></span>
+            <span class="float-right"><b-button variant="primary" @click="submitSolutionText">Save Text</b-button></span>
           </div>
         </div>
       </div>
@@ -975,7 +975,7 @@ export default {
   },
   data: () => ({
     savedText: 1,
-    showTextSolutionForm: false,
+    showSolutionTextForm: false,
     showAddTextToSupportTheAudioFile: false,
     clickerResultsReleased: false,
     responsePercent: '',
@@ -1081,8 +1081,8 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
-    textSolutionForm: new Form({
-      text_solution: ''
+    solutionTextForm: new Form({
+      solution_text: ''
     }),
     textSubmissionForm: new Form({
       text_submission: '',
@@ -1192,22 +1192,22 @@ export default {
       this.$bvModal.show('modal-show-audio-solution')
     },
     closeAudioSolutionModal () {
-      this.textSolutionForm.text_solution = ''
-      this.textSolutionForm.errors.clear()
+      this.solutionTextForm.solution_text = ''
+      this.solutionTextForm.errors.clear()
       this.$bvModal.hide('modal-upload-file')
       this.$refs.recorder.removeRecord()
     },
-    async submitTextSolution () {
+    async submitSolutionText () {
       try {
         let questionId = this.questions[this.currentPage - 1].id
-        this.textSolutionForm.question_id = questionId
-        const { data } = await this.textSolutionForm.post(`/api/solutions/text/${this.assignmentId}/${questionId}`)
+        this.solutionTextForm.question_id = questionId
+        const { data } = await this.solutionTextForm.post(`/api/solutions/text/${this.assignmentId}/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
         }
 
-        this.questions[this.currentPage - 1].solution_text = this.textSolutionForm.text_solution
+        this.questions[this.currentPage - 1].solution_text = this.solutionTextForm.solution_text
         this.savedText = this.savedText + 1
         console.log(this.questions[this.currentPage - 1])
 
@@ -1682,14 +1682,14 @@ export default {
     async changePage (currentPage) {
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
-      this.showTextSolutionForm = false
+      this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
       if (this.assessmentType === 'clicker') {
         this.initClickerPolling()
         this.updateClickerMessage(this.clickerStatus)
       }
       this.showOpenEndedSubmissionMessage = false
-      this.textSolutionForm.text_solution = this.questions[currentPage - 1].text_solution
+      this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
       console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
