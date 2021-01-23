@@ -111,25 +111,6 @@
     </b-modal>
 
     <b-modal
-      id="modal-show-audio-solution"
-      ref="modal"
-      title="Audio Solution"
-      ok-title="OK"
-      ok-only
-      :size="questions[currentPage - 1].solution_text ? 'lg' : 'sm'"
-    >
-      <b-row align-h="center">
-        <b-card>
-          <audio-player
-            :src="questions[currentPage - 1].solution_file_url"
-          />
-        </b-card>
-      </b-row>
-      <div v-if="questions[currentPage - 1].solution_text" class="pt-3">
-        <span v-html="questions[currentPage - 1].solution_text" />
-      </div>
-    </b-modal>
-    <b-modal
       id="modal-upload-file"
       ref="modal"
       :title="getModalUploadFileTitle()"
@@ -544,19 +525,7 @@
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
               <span v-if="!showUploadedAudioSolutionMessage">
-                <span v-if="questions[currentPage-1].solution_type === 'audio'">
-                  <a
-                    href="" @click="openShowAudioSolutionModal"
-                  >auido{{ standardizeFilename(questions[currentPage - 1].solution) }}</a>
-                </span>
-                <span v-if="questions[currentPage-1].solution_type === 'q'">
-                  <a
-                    :href="questions[currentPage-1].solution_file_url"
-                    target="_blank"
-                  >
-                    {{ standardizeFilename(questions[currentPage - 1].solution) }}
-                  </a>
-                </span>
+                <SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" />
 
                 <span v-if="showUploadedAudioSolutionMessage"
                       :class="uploadedAudioSolutionDataType"
@@ -797,7 +766,9 @@
                           Your question submission will be marked late.</span>
                       </b-alert>
                     </span>
-                    <span v-if="!questions[currentPage-1].open_ended_submission_type" v-html="solutionFileHtml" />
+                    <span v-if="!questions[currentPage-1].open_ended_submission_type">
+                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" /><br>
+                    </span>
 
                     <span v-if="assessmentType==='learning tree'">
                       <span class="font-weight-bold">Number of attempts: </span>
@@ -862,7 +833,7 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <span v-html="solutionFileHtml" />
+                    <span class="font-weight-bold">Solution: </span> <SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" /><br>
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
@@ -984,6 +955,7 @@ import { getScoresSummary } from '~/helpers/Scores'
 import CKEditor from 'ckeditor4-vue'
 
 import PieChart from '~/components/PieChart'
+import SolutionFileHtml from '~/components/SolutionFileHtml'
 
 import Vue from 'vue'
 
@@ -997,6 +969,7 @@ export default {
     Email,
     Loading,
     ToggleButton,
+    SolutionFileHtml,
     PieChart,
     ckeditor: CKEditor.component
   },
@@ -1257,19 +1230,6 @@ export default {
     editQuestionSource (currentPage) {
       window.open(this.questions[currentPage - 1].mindtouch_url)
     },
-    setSolutionFileHtml (question) {
-      let standardizedFilename = this.standardizeFilename(question.solution)
-      return question.solution ? `
-                      <span class="font-weight-bold">Solution:</span>
-                      <a
-                        href="${question.solution_file_url}"
-                        target="”_blank”"
-                      >
-                       ${standardizedFilename}
-          </a>
-                      <br>`
-        : ''
-    },
     openUploadSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
       this.openUploadFileModal(question.id)
@@ -1498,14 +1458,6 @@ export default {
     getSolutionUploadTypes () {
       return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
     },
-    standardizeFilename (filename) {
-      if (!filename) {
-        return ''
-      }
-      let ext = filename.slice((Math.max(0, filename.lastIndexOf('.')) || Infinity) + 1)
-      let name = this.name.replace(/[/\\?%*:|"<>]/g, '-')
-      return `${name}-${this.currentPage}.${ext}`
-    },
     async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
@@ -1726,7 +1678,6 @@ export default {
         this.initClickerPolling()
         this.updateClickerMessage(this.clickerStatus)
       }
-      this.solutionFileHtml = this.setSolutionFileHtml(this.questions[currentPage - 1])
       this.showOpenEndedSubmissionMessage = false
       console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
