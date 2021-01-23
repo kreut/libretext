@@ -111,6 +111,25 @@
     </b-modal>
 
     <b-modal
+      id="modal-show-audio-solution"
+      ref="modal"
+      title="Audio Solution"
+      ok-title="OK"
+      ok-only
+      :size="questions[currentPage - 1].solution_text ? 'lg' : 'sm'"
+    >
+      <b-row align-h="center">
+        <b-card>
+          <audio-player
+            :src="questions[currentPage - 1].solution_file_url"
+          />
+        </b-card>
+      </b-row>
+      <div v-if="questions[currentPage - 1].solution_text" class="pt-3">
+        <span v-html="questions[currentPage - 1].solution_text" />
+      </div>
+    </b-modal>
+    <b-modal
       id="modal-upload-file"
       ref="modal"
       :title="getModalUploadFileTitle()"
@@ -518,26 +537,34 @@
               class="mt-1 mb-2 ml-1"
               variant="dark"
               size="sm"
-              @click="openSolutionModal(questions[currentPage-1])"
+              @click="openUploadSolutionModal(questions[currentPage-1])"
             >
               Upload Solution
             </b-button>
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
-              <span v-if="!showUploadedAudioSolutionMessage"> <a
-                :href="questions[currentPage-1].solution_file_url"
-                target="”_blank”"
-              >
-                {{ standardizeFilename(questions[currentPage - 1].solution) }}
-              </a>
-              </span>
+              <span v-if="!showUploadedAudioSolutionMessage">
+                <span v-if="questions[currentPage-1].solution_type === 'audio'">
+                  <a
+                    href="" @click="openShowAudioSolutionModal"
+                  >auido{{ standardizeFilename(questions[currentPage - 1].solution) }}</a>
+                </span>
+                <span v-if="questions[currentPage-1].solution_type === 'q'">
+                  <a
+                    :href="questions[currentPage-1].solution_file_url"
+                    target="_blank"
+                  >
+                    {{ standardizeFilename(questions[currentPage - 1].solution) }}
+                  </a>
+                </span>
 
-              <span v-if="showUploadedAudioSolutionMessage"
-                    :class="uploadedAudioSolutionDataType"
-              >
-                {{ uploadedAudioSolutionDataMessage }}</span>
+                <span v-if="showUploadedAudioSolutionMessage"
+                      :class="uploadedAudioSolutionDataType"
+                >
+                  {{ uploadedAudioSolutionDataMessage }}</span>
+              </span>
+              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
             </span>
-            <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
           </div>
         </div>
 
@@ -1186,6 +1213,10 @@ export default {
     }
   },
   methods: {
+    openShowAudioSolutionModal (event) {
+      event.preventDefault()
+      this.$bvModal.show('modal-show-audio-solution')
+    },
     closeAudioSolutionModal () {
       this.textSolutionForm.text_solution = ''
       this.textSolutionForm.errors.clear()
@@ -1239,7 +1270,7 @@ export default {
                       <br>`
         : ''
     },
-    openSolutionModal (question) {
+    openUploadSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
       this.openUploadFileModal(question.id)
     },
