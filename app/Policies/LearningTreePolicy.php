@@ -34,6 +34,14 @@ class LearningTreePolicy
 
     }
 
+    public function createLearningTreeFromTemplate(User $user, LearningTree $learningTree){
+
+    return ((int) $learningTree->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to create a template from this Learning Tree.');
+
+    }
+
     public function destroy(User $user, LearningTree $learningTree)
     {
         return ((int) $learningTree->user_id === $user->id)

@@ -28,6 +28,36 @@ class LearningTreeController extends Controller
 
     }
 
+    public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree){
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('createLearningTreeFromTemplate', $learningTree);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $response['type'] = 'error';
+
+        try {
+            $new_learning_tree = $learningTree->replicate();
+            $new_learning_tree->title = $new_learning_tree->title . ' copy';
+            $new_learning_tree->save();
+            $response['message'] = "The Learning Tree has been created.";
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving your learning trees.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+
+
+
+    }
 
     public function learningTreeExists(Request $request)
     {

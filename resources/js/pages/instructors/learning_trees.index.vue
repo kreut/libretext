@@ -34,10 +34,20 @@
               >
                 Edit Learning Tree
               </b-tooltip>
+              <b-tooltip :target="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
+                         triggers="hover"
+                         delay="500"
+              >
+                Create Learning Tree From Template
+              </b-tooltip>
               <span class="pr-1" @click="editLearningTree(data.item.id)">
                 <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil" />
               </span>
-
+              <span class="pr-1" @click="createLearningTreeFromTemplate(data.item.id)">
+                <b-icon :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
+                        icon="clipboard-check"
+                />
+              </span>
               <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
                          delay="500"
               >
@@ -101,12 +111,21 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async createLearningTreeFromTemplate (learningTreeId) {
+      try {
+        const { data } = await axios.post(`/api/learning-trees/${learningTreeId}/create-learning-tree-from-template`)
+        this.$noty[data.type](data.message)
+        await this.getLearningTrees()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async handleDeleteLearningTree () {
       try {
         const { data } = await axios.delete(`/api/learning-trees/${this.learningTreeId}`)
         this.$noty[data.type](data.message)
         this.$bvModal.hide('modal-delete-learning-tree')
-        this.getLearningTrees()
+        await this.getLearningTrees()
       } catch (error) {
         this.$noty.error(error.message)
       }
