@@ -85,7 +85,8 @@ class SolutionController extends Controller
             $file_data = [
                 'file' => $basename,
                 'original_filename' => $original_filename,
-                'updated_at' => Carbon::now()];
+                'updated_at' => Carbon::now(),
+                'text' => ''];
 
             DB::beginTransaction();
             //if there's an upload PDF/IMG get rid of it.

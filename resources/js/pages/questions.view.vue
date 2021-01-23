@@ -525,7 +525,7 @@
             <span v-if="questions[currentPage-1].solution">
               Uploaded solution:
               <span v-if="!showUploadedAudioSolutionMessage">
-                <SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" />
+                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage" :assignment-name="name" />
 
                 <span v-if="showUploadedAudioSolutionMessage"
                       :class="uploadedAudioSolutionDataType"
@@ -767,7 +767,7 @@
                       </b-alert>
                     </span>
                     <span v-if="!questions[currentPage-1].open_ended_submission_type">
-                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" /><br>
+                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" /><br>
                     </span>
 
                     <span v-if="assessmentType==='learning tree'">
@@ -833,7 +833,7 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <span class="font-weight-bold">Solution: </span> <SolutionFileHtml :question="questions[currentPage-1]" :current-page="currentPage" :assignment-name="name" /><br>
+                    <span class="font-weight-bold">Solution: </span> <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" /><br>
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
@@ -974,6 +974,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    savedText: 1,
     showTextSolutionForm: false,
     showAddTextToSupportTheAudioFile: false,
     clickerResultsReleased: false,
@@ -1206,9 +1207,16 @@ export default {
           return false
         }
 
-        this.questions[this.currentPage - 1].text_solution = this.textSolutionForm.text_solution
+        this.questions[this.currentPage - 1].solution_text = this.textSolutionForm.text_solution
+        this.savedText = this.savedText + 1
+        console.log(this.questions[this.currentPage - 1])
+
+        this.$refs.recorder.removeRecord()
+        this.$bvModal.hide('modal-upload-file')
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     },
     async submitClickerResultsReleased () {
@@ -1674,11 +1682,14 @@ export default {
     async changePage (currentPage) {
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
+      this.showTextSolutionForm = false
+      this.showAddTextToSupportTheAudioFile = false
       if (this.assessmentType === 'clicker') {
         this.initClickerPolling()
         this.updateClickerMessage(this.clickerStatus)
       }
       this.showOpenEndedSubmissionMessage = false
+      this.textSolutionForm.text_solution = this.questions[currentPage - 1].text_solution
       console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true

@@ -6,41 +6,41 @@
       title="Audio Solution"
       ok-title="OK"
       ok-only
-      :size="question.solution_text ? 'lg' : 'sm'"
+      :size="questions[currentPage-1].solution_text ? 'lg' : 'md'"
     >
       <b-row align-h="center">
         <b-card>
           <audio-player
-            :src="question.solution_file_url"
+            :src="questions[currentPage-1].solution_file_url"
           />
         </b-card>
       </b-row>
-      <div v-if="question.solution_text" class="pt-3">
-        <span v-html="question.solution_text" />
+      <div v-if="questions[currentPage-1].solution_text" class="pt-3">
+        <span v-html="questions[currentPage-1].solution_text" />
       </div>
     </b-modal>
-    <span v-if="question.solution_type === 'audio'">
+    <span v-if="questions[currentPage-1].solution_type === 'audio'">
       <a
         href="" @click="openShowAudioSolutionModal"
-      >{{ standardizeFilename(question.solution) }}</a>
+      >{{ standardizeFilename(questions[currentPage-1].solution) }}</a>
     </span>
-    <span v-if="question.solution_type === 'q'">
+    <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
-        :href="question.solution_file_url"
+        :href="questions[currentPage-1].solution_file_url"
         target="_blank"
       >
-        {{ standardizeFilename(question.solution) }}
+        {{ standardizeFilename(questions[currentPage-1].solution) }}
       </a>
     </span>
-    <span v-if="!question.solution">N/A</span>
+    <span v-if="!questions[currentPage-1].solution">N/A</span>
   </span>
 </template>
 
 <script>
 export default {
   props: {
-    question: {
-      type: Object,
+    questions: {
+      type: Array,
       default: null
     },
     currentPage: {
