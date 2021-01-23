@@ -27,6 +27,7 @@ class IsValidSolutionText implements Rule
      */
     public function passes($attribute, $value)
     {
+
         $audio_solution_exists =   DB::table('solutions')
             ->where('user_id', $this->user_id)
             ->where('question_id', $this->question_id)

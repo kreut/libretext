@@ -26,7 +26,7 @@ class StoreSolutionText extends FormRequest
     {
 
         return [
-            'text_solution' => new IsValidSolutionText($this->user()->id, $this->question_id)
+            'solution_text' => new IsValidSolutionText($this->user()->id, $this->question_id)
         ];
     }
 }

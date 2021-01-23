@@ -7,6 +7,7 @@ use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
+use App\Solution;
 use App\User;
 use App\Question;
 use App\SubmissionFile;
@@ -77,6 +78,58 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+
+    /** @test */
+    public function owner_can_submit_solution_text_attached_to_audio()
+    {
+
+        Solution::create([
+            'user_id'=> $this->user->id,
+            'type'=> 'audio',
+            'file'=> 'some_file.mpg',
+            'original_filename' => 'blah blah',
+            'assignment_id'=>$this->assignment->id,
+            'question_id' => $this->question->id]);
+        $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
+            ['solution_text' => 'some text',
+                'question_id' => $this->question->id]
+        )->assertJson(['message' => 'Your text solution has been saved.']);;
+
+    }
+
+
+
+
+    /** @test */
+
+    public function audio_must_exist_before_submitting_solution_text()
+    {
+        $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
+               ['solution_text' => 'My super cool text']
+        )->assertJsonValidationErrors('solution_text');
+
+}
+
+    /** @test */
+
+    public function solution_text_must_not_be_empty()
+    {
+        Solution::create([
+            'user_id'=> $this->user->id,
+            'type'=> 'q',
+            'file'=> 'some_file.pdf',
+            'original_filename' => 'blah blah',
+            'assignment_id'=>$this->assignment->id,
+            'question_id' => $this->question->id]);
+
+        $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
+            ['solution_text' => '']
+        )->assertJsonValidationErrors('solution_text');
+
+    }
+
+
+
     /** @test */
     public function change_incomplete_to_complete_if_completed_all_questions_but_removed_one()
     {
@@ -103,6 +156,7 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals('c', $new_score);
 
     }
+
     /** @test */
     public function complete_should_stay_complete_if_completed_all_questions_but_removed_one()
     {
@@ -161,6 +215,7 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals('c', $new_score);
 
     }
+
     /** @test */
     public function correctly_recomputes_assignment_score_of_removed_question_for_points_scoring_type()
     {

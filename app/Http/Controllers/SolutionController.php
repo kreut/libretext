@@ -38,9 +38,10 @@ class SolutionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+            $data = $request->validated();
             $Solution->where('user_id',$user_id)
                 ->where('question_id',$question->id)
-                ->update(['text'=>$request->solution_text]);
+                ->update(['text'=>$data['solution_text']]);
 
             $response['type'] = 'success';
             $response['message'] = 'Your text solution has been saved.';
