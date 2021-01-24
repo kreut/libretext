@@ -449,7 +449,6 @@ export default {
         if (data.type === 'success') {
           document.getElementById('blocklist').innerHTML = ''
           this.pageId = ''
-          this.library = null
         }
         this.$noty[data.type](data.message)
       } catch (error) {
