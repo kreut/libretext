@@ -3,7 +3,7 @@
     <b-modal
       id="modal-update-node"
       ref="modal"
-      title="Update "
+      title="Update Node"
       ok-title="Submit"
       @ok="submitUpdateNode"
     >
@@ -51,8 +51,8 @@
       ref="modal"
       title="Learning Tree Details"
       ok-title="Submit"
-      @ok="this.submitLearningTreeInfo"
-      @hidden="this.resetLearningTreeDetailsModal"
+      @ok="submitLearningTreeInfo"
+      @hidden="resetLearningTreeDetailsModal"
     >
       <p v-if="learningTreeId" class="font-italic">
         The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }}, a page id of {{ assessmentPageId }} and comes from the
@@ -374,21 +374,31 @@ export default {
     openUpdateNodeModal (nodeToUpdate) {
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
-      console.log(this.nodeToUpdate)
-      console.log(this.nodeToUpdate.querySelector('.blockyname').innerHTML)
+      this.nodeForm.page_id = ''
+      this.nodeForm.library = this.nodeToUpdate.querySelector('input[name="library"]').value
     },
-    async submitUpdateNode () {
+    async submitUpdateNode (bvModalEvt) {
+      bvModalEvt.preventDefault()
       try {
         const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
         console.log(data)
         if (data.type === 'success') {
+          let left = this.nodeToUpdate.style.left
+          let top = this.nodeToUpdate.style.top
+          this.nodeToUpdate.setAttribute('style', `border: 1px solid ${this.libraryColors[this.nodeForm.library]}; left: ${left}; top: ${top}`)
           this.nodeToUpdate.querySelector('input[name="page_id"]').value = this.nodeForm.page_id
           this.nodeToUpdate.querySelector('input[name="library"]').value = this.nodeForm.library
           this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = this.shortenString(data.title)
           this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.library, this.nodeForm.page_id)
+          await this.saveLearningTree()
+          this.$bvModal.hide('modal-update-node')
+        } else {
+          this.$noty.error(data.message)
         }
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     },
     resetAll () {
