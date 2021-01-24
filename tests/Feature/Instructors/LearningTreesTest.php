@@ -29,12 +29,46 @@ class LearningTreesTest extends TestCase
 
 
     /** @test */
+    public function non_owner_cannot_update_a_node()
+    {
+        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->actingAs($this->user_2)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'message' => 'You are not allowed to update this node.',
+            ]);
+
+    }
+
+    /** @test */
+    public function owner_can_update_a_node()
+    {
+        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'type' => 'success',
+            ]);
+
+    }
+
+
+    /** @test */
     public function owner_can_update_a_tree_to_the_database()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
-                'message' => 'The learning tree has been saved.',
+                'type'=> 'success'
+            ]);
+
+    }
+
+    /** @test */
+    public function non_owner_cannot_update_a_tree_to_the_database()
+    {
+        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->actingAs($this->user_2)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJson([
+                'message' => 'You are not allowed to update this Learning Tree.',
             ]);
 
     }
@@ -80,7 +114,7 @@ class LearningTreesTest extends TestCase
 
         $this->actingAs($this->student_user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
-                'message' => 'You are not allowed to save Learning Trees.',
+                'message' => 'You are not allowed to update this Learning Tree.',
             ]);
     }
 

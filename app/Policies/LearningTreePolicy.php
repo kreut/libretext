@@ -34,6 +34,14 @@ class LearningTreePolicy
 
     }
 
+    public function updateNode(User $user, LearningTree $learningTree)
+    {
+        return ((int) $learningTree->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update this node.');
+
+    }
+
     public function createLearningTreeFromTemplate(User $user, LearningTree $learningTree){
 
     return ((int) $learningTree->user_id === $user->id)

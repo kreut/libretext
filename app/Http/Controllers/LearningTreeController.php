@@ -31,12 +31,12 @@ class LearningTreeController extends Controller
     public function updateNode(UpdateNode $request, LearningTree $learningTree)
     {
         $response['type'] = 'error';
-       /* $authorized = Gate::inspect('store', $learningTree);
+        $authorized = Gate::inspect('updateNode', $learningTree);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
-        }*/
+        }
 
         $response['type'] = 'error';
         try {
@@ -139,7 +139,7 @@ class LearningTreeController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('store', $learningTree);
+        $authorized = Gate::inspect('update', $learningTree);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
