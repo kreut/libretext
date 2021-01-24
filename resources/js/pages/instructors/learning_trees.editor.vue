@@ -5,7 +5,7 @@
       ref="modal"
       title="Update "
       ok-title="Submit"
-      @ok="this.submitUpdateNode"
+      @ok="submitUpdateNode"
     >
       <b-form ref="form">
         <b-form-group
@@ -384,7 +384,8 @@ export default {
         if (data.type === 'success') {
           this.nodeToUpdate.querySelector('input[name="page_id"]').value = this.nodeForm.page_id
           this.nodeToUpdate.querySelector('input[name="library"]').value = this.nodeForm.library
-          this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = data.title
+          this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = this.shortenString(data.title)
+          this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.library, this.nodeForm.page_id)
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -568,8 +569,8 @@ export default {
         return false
       }
     },
-    getBlockNameHTML (library, pageId) {
-      let libraryText = this.getLibraryText(this.library)
+    getBlockyNameHTML (library, pageId) {
+      let libraryText = this.getLibraryText(library)
       return `<img src="/assets/img/${library}.svg" style="${this.libraryColors[library]}"><span class="library"
       >${libraryText}</span> - <span class="page_id">${pageId}</span>`
     },
@@ -587,7 +588,7 @@ export default {
         return false
       }
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-      let blockyNameHTML = this.getBlockNameHTML(this.library, this.pageId)
+      let blockyNameHTML = this.getBlockyNameHTML(this.library, this.pageId)
 
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
@@ -602,7 +603,7 @@ export default {
           <div class='blockydiv'>
           </div>
           <div class="blockin-info">
-          <span class="blockdesc"><span class="title">${this.shortenString(title)}</span>
+          <span class="blockdesc"><b-icon icon="pencil"></b-icon><span class="title">${this.shortenString(title)}</span>
           <span class="extra"></span>
         </div>
         </div>
