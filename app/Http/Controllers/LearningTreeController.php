@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
+use App\Http\Requests\UpdateNode;
 use App\LearningTree;
 use App\Libretext;
 use App\Question;
@@ -27,7 +28,40 @@ class LearningTreeController extends Controller
 
 
     }
+    public function updateNode(UpdateNode $request, LearningTree $learningTree)
+    {
+        $response['type'] = 'error';
+       /* $authorized = Gate::inspect('store', $learningTree);
 
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }*/
+
+        $response['type'] = 'error';
+        try {
+            $data = $request->validated();
+            $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
+            if ($validated_node['type'] === 'error') {
+                $response['message'] = $validated_node['message'];
+                return $response;
+            }
+            if ($validated_node['body'] === '') {
+                $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
+                return $response;
+            }
+
+            $response['title'] = $validated_node['title'];
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the node.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree){
 
         $response['type'] = 'error';
@@ -96,12 +130,12 @@ class LearningTreeController extends Controller
     }
 
     /**
-     * Store a newly created resource in storage.
-     *
-     * @param \Illuminate\Http\Request $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
      */
-    public function update(Request $request, LearningTree $learningTree)
+    public function updateLearningTree(Request $request, LearningTree $learningTree)
     {
 
         $response['type'] = 'error';
@@ -204,6 +238,8 @@ class LearningTreeController extends Controller
             $learningTree->root_node_library = $data['library'];
             $learningTree->title = $data['title'];
             $learningTree->description = $data['description'];
+
+
             $learningTree->user_id = Auth::user()->id;
             $learningTree->learning_tree = $this->getRootNode($validated_node['title'], $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();

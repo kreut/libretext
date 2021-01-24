@@ -153,7 +153,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::post('/learning-trees/learning-tree-exists', 'LearningTreeController@learningTreeExists');
     Route::delete('/learning-trees/{learningTree}', 'LearningTreeController@destroy');
-    Route::patch('/learning-trees/{learningTree}', 'LearningTreeController@update');
+    Route::patch('/learning-trees/nodes/{learningTree}', 'LearningTreeController@updateNode');
+    Route::patch('/learning-trees/{learningTree}', 'LearningTreeController@updateLearningTree');
     Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
 

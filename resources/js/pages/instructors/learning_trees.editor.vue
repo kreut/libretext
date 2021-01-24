@@ -1,12 +1,58 @@
 <template>
   <div>
     <b-modal
+      id="modal-update-node"
+      ref="modal"
+      title="Update "
+      ok-title="Submit"
+      @ok="this.submitUpdateNode"
+    >
+      <b-form ref="form">
+        <b-form-group
+          id="node_library"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Library"
+          label-for="library"
+        >
+          <div class="mb-2 mr-2">
+            <b-form-select v-model="nodeForm.library"
+                           :options="libraryOptions"
+                           :class="{ 'is-invalid': nodeForm.errors.has('library') }"
+                           @change="nodeForm.errors.clear('library')"
+            />
+            <has-error :form="nodeForm" field="library" />
+          </div>
+        </b-form-group>
+        <b-form-group>
+          <b-form-group
+            id="node_page_id"
+            label-cols-sm="5"
+            label-cols-lg="4"
+            label="Page Id"
+            label-for="page_id"
+          >
+            <b-form-input
+              id="page_id"
+              v-model="nodeForm.page_id"
+              type="text"
+              style="width: 80px"
+              :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
+              @keydown="nodeForm.errors.clear('page_id')"
+            />
+            <has-error :form="nodeForm" field="page_id" />
+          </b-form-group>
+        </b-form-group>
+      </b-form>
+    </b-modal>
+
+    <b-modal
       id="modal-learning-tree-details"
       ref="modal"
       title="Learning Tree Details"
       ok-title="Submit"
-      @ok="submitLearningTreeInfo"
-      @hidden="resetLearningTreeDetailsModal"
+      @ok="this.submitLearningTreeInfo"
+      @hidden="this.resetLearningTreeDetailsModal"
     >
       <p v-if="learningTreeId" class="font-italic">
         The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }}, a page id of {{ assessmentPageId }} and comes from the
@@ -102,10 +148,10 @@
         <b-button variant="success" size="sm" @click="initCreateNew">
           Create New
         </b-button>
-        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
+        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="this.editLearningTree">
           Update Info
         </b-button>
-        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
+        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="this.deleteLearningTree">
           Delete
         </b-button>
         <div id="search">
@@ -147,6 +193,11 @@ export default {
     return { title: this.$t('home') }
   },
   data: () => ({
+    nodeForm: new Form({
+      library: null,
+      page_id: ''
+    }),
+    nodeToUpdate: {},
     learningTreeForm: new Form({
       title: '',
       description: '',
@@ -296,7 +347,8 @@ export default {
         vm.openStudentLearningObjectiveModal()
       } else if (event.type === 'mouseup' && aclick && !noinfo) {
         if (event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging')) {
-          alert(event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging'))
+          // alert(event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging'))
+          vm.openUpdateNodeModal(event.target.closest('.block'))
           console.log(event.target.closest('.block').classList.contains('dragging'))
           tempblock = event.target.closest('.block')
           document.getElementById('properties').classList.add('expanded')
@@ -319,6 +371,25 @@ export default {
     }
   },
   methods: {
+    openUpdateNodeModal (nodeToUpdate) {
+      this.$bvModal.show('modal-update-node')
+      this.nodeToUpdate = nodeToUpdate.closest('.block')
+      console.log(this.nodeToUpdate)
+      console.log(this.nodeToUpdate.querySelector('.blockyname').innerHTML)
+    },
+    async submitUpdateNode () {
+      try {
+        const { data } = await this.nodeForm.patch(`/api/learning-trees/nodes/${this.learningTreeId}`)
+        console.log(data)
+        if (data.type === 'success') {
+          this.nodeToUpdate.querySelector('input[name="page_id"]').value = this.nodeForm.page_id
+          this.nodeToUpdate.querySelector('input[name="library"]').value = this.nodeForm.library
+          this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = data.title
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     resetAll () {
       this.learningTreeId = 0
       document.getElementById('canvas').innerHTML = ''
@@ -497,6 +568,11 @@ export default {
         return false
       }
     },
+    getBlockNameHTML (library, pageId) {
+      let libraryText = this.getLibraryText(this.library)
+      return `<img src="/assets/img/${library}.svg" style="${this.libraryColors[library]}"><span class="library"
+      >${libraryText}</span> - <span class="page_id">${pageId}</span>`
+    },
     async addRemediation () {
       if (!this.library) {
         this.$noty.error('Please choose a library.')
@@ -511,7 +587,8 @@ export default {
         return false
       }
       let blockElems = document.querySelectorAll('div.blockelem.create-flowy.noselect')
-      let libraryText = this.getLibraryText(this.library)
+      let blockyNameHTML = this.getBlockNameHTML(this.library, this.pageId)
+
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
         <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
         <input type="hidden" name='page_id' value="${this.pageId}">
@@ -520,12 +597,12 @@ export default {
 </div>
       <div class="blockin">
         <div class="blockyleft">
-          <p class="blockyname"> <img src="/assets/img/${this.library}.svg" style="${this.libraryColors[this.library]}"><span class="library">${libraryText}</span> - <span class="page_id">${this.pageId}</span></p>
+          <p class="blockyname"> ${blockyNameHTML} </p>
         </div>
           <div class='blockydiv'>
           </div>
           <div class="blockin-info">
-          <span class="blockdesc"><span class="title">${title}</span>
+          <span class="blockdesc"><span class="title">${this.shortenString(title)}</span>
           <span class="extra"></span>
         </div>
         </div>
@@ -536,6 +613,18 @@ export default {
       } else {
         document.getElementById('blocklist').innerHTML += newBlockElem
       }
+    },
+    shortenString (html) {
+      let doc = new DOMParser().parseFromString(html, 'text/html')
+      let string
+      string = doc.body.textContent
+      if (string === '') {
+        return 'No title'
+      }
+      if (string.length < 29) {
+        return string
+      }
+      return string.substr(0, 29) + '...'
     }
   }
 }

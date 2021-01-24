@@ -12,7 +12,7 @@ use App\Traits\Statistics;
 use \Exception;
 
 use Illuminate\Http\Request;
-use App\Http\Requests\updateAssignmentQuestionPointsRequest;
+use App\Http\Requests\UpdateAssignmentQuestionPointsRequest;
 use App\Assignment;
 use App\Question;
 use App\Submission;
@@ -245,7 +245,7 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updatePoints(updateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
