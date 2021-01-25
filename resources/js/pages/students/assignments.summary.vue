@@ -12,13 +12,19 @@ n<template>
       <div v-if="!isLoading">
         <PageTitle :title="name" />
         <b-container>
-          <b-row align-h="end">
-            <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
-              View Assessments
-            </b-button>
-          </b-row>
-          <hr>
-
+          <div v-if="assessmentType !== 'clicker'">
+            <b-row align-h="end">
+              <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
+                View Assessments
+              </b-button>
+            </b-row>
+            <hr>
+          </div>
+          <div v-if="assessmentType === 'clicker'">
+            <b-alert show variant="info">
+              <span class="font-weight-bold">Please wait for your instructor to open up this assignment.</span>
+            </b-alert>
+          </div>
           <b-card v-if="instructions.length" class="mb-2" header="default" header-html="<h5>Instructions</h5>">
             {{ instructions }}
           </b-card>
@@ -42,7 +48,9 @@ export default {
   components: { AssignmentStatistics, Loading },
   middleware: 'auth',
   data: () => ({
+    clickerPollingSetInterval: null,
     assessmentUrlType: '',
+    assessmentType: '',
     isLoading: true,
     name: '',
     instructions: '',
@@ -57,8 +65,36 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary()
     this.isLoading = false
+    if (this.assessmentType === 'clicker') {
+      this.initClickerPolling()
+    }
   },
   methods: {
+    initClickerPolling () {
+      let self = this
+      this.submitClickerPolling(this.assignmentId)
+      this.clickerPollingSetInterval = setInterval(function () {
+        self.submitClickerPolling(self.assignmentId)
+      }, 3000)
+    },
+    async submitClickerPolling (assignmentId) {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/clicker-question`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          clearInterval(this.clickerPollingSetInterval)
+          this.clickerPollingSetInterval = null
+          return false
+        }
+        let questionId = data.question_id
+        if (questionId) {
+          window.location = `/assignments/${this.assignmentId}/questions/view/${questionId}`
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.name = 'Assignment Summary'
+      }
+    },
     async getAssignmentSummary () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
@@ -69,6 +105,7 @@ export default {
         }
         let assignment = data.assignment
         this.instructions = assignment.instructions
+        this.assessmentType = assignment.assessment_type
         this.name = assignment.name
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
       } catch (error) {

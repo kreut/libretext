@@ -53,6 +53,37 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
+    public function getClickerQuestion(Request $request, Assignment $assignment){
+        $response['type'] = 'error';
+        /* $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+         $data = $request->validated();
+
+         if (!$authorized->allowed()) {
+
+             $response['message'] = $authorized->message();
+             return $response;
+         }*/
+
+        try {
+
+            $clicker_question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->whereNotNull('clicker_start')
+                ->select('question_id')
+                ->first();
+            $response['question_id'] = $clicker_question ? $clicker_question->question_id : false;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error starting this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+
+    }
     public function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -70,18 +101,26 @@ class AssignmentSyncQuestionController extends Controller
 
             $data = $request->validated();
             $clicker_start = CarbonImmutable::now();
-            $clicker_end = $clicker_start->add($data['submission_window']);
-
+            $seconds_padding = 6;
+            $clicker_end = $clicker_start->add($data['submission_window'])->addSeconds($seconds_padding);
+            DB::beginTransaction();
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)->update([
+            'clicker_start' => null,
+                'clicker_end' => null
+            ]);
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update([
                     'clicker_start' => $clicker_start,
                     'clicker_end' => $clicker_end
                 ]);
+            DB::commit();
+            $response['time_left'] = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
             $response['type'] = 'success';
             $response['message'] = 'You students can begin submitting responses.';
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error starting this clicker assessment.  Please try again or contact us for assistance.";

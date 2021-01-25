@@ -324,11 +324,11 @@
         <div class="mb-3">
           <b-container>
             <b-col>
-              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame && assessmentType !== 'clicker'">
-                <div class="text-center">
+              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame ">
+                <div v-if="assessmentType !== 'clicker'" class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion" class="text-center">
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'" class="text-center">
                   <h5>
                     This question is worth
                     {{ 1 * (questions[currentPage - 1].points) }}
@@ -392,7 +392,7 @@
             <b-row class="text-center">
               <b-col>
                 <div v-if="timeLeft>0">
-                  <countdown :time="timeLeft" @end="timeLeft=0">
+                  <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                     <template slot-scope="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
@@ -475,7 +475,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
-            v-if="!inIFrame && assessmentType !== 'clicker'"
+            v-if="!inIFrame && (assessmentType !== 'clicker' || user.role === 2)"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
@@ -641,6 +641,11 @@
                 <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                      v-html="questions[currentPage-1].technology_iframe"
                 />
+                <div v-if="assessmentType === 'clicker'">
+                  <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                    <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                  </b-alert>
+                </div>
                 <div>
                   <div class="vld-parent">
                     <loading
@@ -652,7 +657,11 @@
                       color="#007BFF"
                       background="#FFFFFF"
                     />
-                    <div v-if="assessmentType === 'clicker' && user.role === 3">
+                    <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata" class="text-center">
+                      <hr>
+                      <h5 v-if="correctAnswer" class="font-italic">
+                        The correct answer is "{{ correctAnswer }}"
+                      </h5>
                       <pie-chart :key="currentPage" :chartdata="piechartdata"
                                  @pieChartLoaded="updateIsLoadingPieChart"
                       />
@@ -1071,7 +1080,6 @@ export default {
     settingAsSolution: false,
     cutups: [],
     uploadLevel: 'assignment',
-    clickerTimeLeft: 0,
     timeLeft: 0,
     totalPoints: 0,
     uploadFileType: '',
@@ -1162,14 +1170,11 @@ export default {
       return false
     }
 
-    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c' || (this.user.role === 3 && this.assessmentType === 'clicker')) ? 12 : 8
+    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') || (this.assessmentType === 'clicker') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
         this.currentPage = this.getInitialCurrentPage(this.questionId)
-      }
-      if (this.assessmentType === 'clicker') {
-        this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
       }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
@@ -1197,6 +1202,10 @@ export default {
     }
   },
   methods: {
+    cleanUpClickerCounter () {
+      this.timeLeft = 0
+      this.updateClickerMessage('view_and_not_submit')
+    },
     getTimeLeftMessage (props, assessmentType) {
       let message = ''
       message = (assessmentType === 'clicker') ? 'Time Left: ' : 'Time Until Due: '
@@ -1225,6 +1234,7 @@ export default {
         if (data.type === 'error') {
           return false
         }
+        this.timeLeft = data.time_left
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -1253,7 +1263,6 @@ export default {
 
         this.questions[this.currentPage - 1].solution_text = this.solutionTextForm.solution_text
         this.savedText = this.savedText + 1
-        console.log(this.questions[this.currentPage - 1])
 
         this.$refs.recorder.removeRecord()
         this.$bvModal.hide('modal-upload-file')
@@ -1362,10 +1371,7 @@ export default {
       return url.slice(0, -1)
     },
     getInitialCurrentPage (questionId) {
-      console.log('here')
-      console.log(this.questions)
       for (let i = 1; i <= this.questions.length; i++) {
-        console.log(parseInt(this.questions[i - 1].id) + '  ' + parseInt(questionId))
         if (parseInt(this.questions[i - 1].id) === parseInt(questionId)) {
           return i
         }
@@ -1383,7 +1389,7 @@ export default {
         this.textSubmissionForm.questionId = this.questions[this.currentPage - 1].id
         this.textSubmissionForm.assignmentId = this.assignmentId
         const { data } = await this.textSubmissionForm.post('/api/submission-texts')
-        console.log(data)
+
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
@@ -1393,7 +1399,6 @@ export default {
       }
     },
     updateClickerMessage (clickerStatus) {
-      console.log(clickerStatus)
       if (this.user.role === 2) {
         this.clickerMessage = ''
         return false
@@ -1414,6 +1419,7 @@ export default {
     },
     initClickerPolling () {
       this.isLoadingPieChart = true
+      this.submitClickerPolling(this.questions[this.currentPage - 1].id)
       if (this.clickerPollingSetInterval) {
         clearInterval(this.clickerPollingSetInterval)
         this.clickerPollingSetInterval = null
@@ -1428,7 +1434,6 @@ export default {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-clicker-status`, { 'clicker_status': this.clickerStatus })
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-          console.log('success')
           this.questions[this.currentPage - 1].clicker_status = data.clicker_status
         }
       } catch (error) {
@@ -1438,8 +1443,12 @@ export default {
     async submitClickerPolling (questionId) {
       try {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
-        console.log(data)
+
         if (data.type !== 'error') {
+          if (data.redirect_question) {
+            // send students to the right page
+            window.location = `/assignments/${this.assignmentId}/questions/view/${data.redirect_question}`
+          }
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
@@ -1479,7 +1488,6 @@ export default {
     async updateExploredLearningTree () {
       try {
         const { data } = await axios.patch(`/api/submissions/${this.assignmentId}/${this.questions[this.currentPage - 1].id}/explored-learning-tree`)
-        console.log(data)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -1513,7 +1521,7 @@ export default {
     async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
         const { data } = await axios.get(`/api/assignments/${assignmentId}/${questionId}/last-submitted-info`)
-        console.log(data)
+
         this.questions[this.currentPage - 1]['last_submitted'] = data.last_submitted
         this.questions[this.currentPage - 1]['student_response'] = data.student_response
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
@@ -1533,12 +1541,9 @@ export default {
       }
     },
     async receiveMessage (event) {
-      // console.log(event.data)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
-        // console.log(technology)
-        // console.log(event.data)
-        // console.log(event)
+
         if (technology === 'imathas') {
 
         }
@@ -1570,9 +1575,7 @@ export default {
           iframe.setAttribute('height', JSON.parse(event.data).height)
         }
 
-        console.log('server side submit' + serverSideSubmit)
         if (serverSideSubmit) {
-          console.log('serverSideSubmit')
           await this.showResponse(JSON.parse(event.data))
         }
         if (clientSideSubmit) {
@@ -1583,14 +1586,10 @@ export default {
             'technology': technology
           }
 
-          console.log('submitted')
-          console.log(submissionData)
-
           // if incorrect, show the learning tree stuff...
           try {
             this.hideResponse()
             const { data } = await axios.post('/api/submissions', submissionData)
-            console.log(data)
             if (!data.message) {
               data.type = 'error'
               data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
@@ -1611,8 +1610,6 @@ export default {
       this.showSubmissionMessage = false
     },
     async showResponse (data) {
-      console.log('showing response')
-      console.log(data)
       if (data.learning_tree && !this.learningTree) {
         await this.showLearningTree(data.learning_tree)
       }
@@ -1719,7 +1716,6 @@ export default {
     },
     more (remediationObject) {
       for (let i = 0; i < this.learningTreeAsList.length; i++) {
-        // console.log(this.learningTreeAsList[i].id)
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
     },
@@ -1730,11 +1726,12 @@ export default {
       this.showAddTextToSupportTheAudioFile = false
       if (this.assessmentType === 'clicker') {
         this.initClickerPolling()
+        this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
         this.updateClickerMessage(this.clickerStatus)
       }
+
       this.showOpenEndedSubmissionMessage = false
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
-      console.log(this.questions[currentPage - 1])
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`
       this.showQuestion = true
       this.showSubmissionMessage = false
@@ -1778,7 +1775,6 @@ export default {
       // loop through each with parent having this level
       let pageId
       let library
-      // console.log('length ' + learningTree.length)
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
         // get the library and page ids
@@ -1823,8 +1819,6 @@ export default {
         }
       }
 
-      console.log('done')
-      console.log(this.learningTreeAsList)
       this.loadedTitles = true
     },
     explore (library, pageId) {
@@ -1844,7 +1838,7 @@ export default {
     async getAssignmentInfo () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
-        console.log(data)
+
         if (data.type === 'error') {
           if (data.message === 'You are not allowed to access this assignment.') {
             this.$bvModal.show('modal-enroll-in-course')
@@ -1892,15 +1886,13 @@ export default {
       this.settingAsSolution = true
       try {
         const { data } = await this.cutupsForm.post(`/api/cutups/${this.assignmentId}/${questionId}/set-as-solution-or-submission`)
-        console.log(data)
+
         this.settingAsSolution = false
         if (data.type === 'success') {
           this.$noty.success(data.message)
           this.$bvModal.hide('modal-upload-file')
-          // for instructor set the solution, for the student set an original_filename
-          console.log(data)
+
           if (this.user.role === 3) {
-            console.log(data)
             this.questions[this.currentPage - 1].submission = data.submission
             this.questions[this.currentPage - 1].original_filename = data.cutup
             this.questions[this.currentPage - 1].date_graded = 'N/A'
@@ -1919,7 +1911,6 @@ export default {
           this.cutupsForm.errors.set('chosen_cutups', data.message)
         }
       } catch (error) {
-        console.log(error)
         this.$noty.error('We could not set this cutup as your solution.  Please try again or contact us for assistance.')
       }
     },
@@ -1945,7 +1936,7 @@ export default {
         }
 
         this.questions = data.questions
-        console.log(this.questions)
+
         if (!this.questions.length) {
           this.initializing = false
           return false
@@ -1994,7 +1985,7 @@ export default {
           })
         }
       } catch (error) {
-        console.log(error.message)
+        $this.noty.error(error.message)
       }
     },
     getAssessmentsForAssignment () {

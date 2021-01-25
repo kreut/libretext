@@ -18,8 +18,8 @@ trait GeneralSubmissionPolicy
                 ->where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
                 ->select()
-                ->first(['can_view','can_submit']);
-            if (!($assignment_question->can_view && $assignment_question->can_submit)){
+                ->first(['clicker_start','clicker_end']);
+            if (!(time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end))){
                 $response['message'] = "This question is currently not open for submission.";
                 return $response;
             }

@@ -176,6 +176,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/clicker-results-released/{showClickerResults}', 'AssignmentSyncQuestionController@showClickerResults');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
 
+    Route::get('/assignments/{assignment}/clicker-question', 'AssignmentSyncQuestionController@getClickerQuestion');
 
 
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');

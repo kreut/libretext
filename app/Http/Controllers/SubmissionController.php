@@ -29,9 +29,18 @@ class SubmissionController extends Controller
 
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Submission $submission
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
+        $response['redirect_question'] = false;
         $response['pie_chart_data'] = [];
         $authorized = Gate::inspect('submissionPieChartData', [$submission, $assignment, $question]);
 
@@ -45,21 +54,31 @@ class SubmissionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
+            if (Auth::user()->role === 3 && !$question_info->clicker_start){
+                $clicker_question = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->whereNotNull('clicker_start')
+                    ->select('question_id')
+                    ->first();
+                $response['type'] = 'success';
+                $response['redirect_question'] = $clicker_question->question_id;
+                return $response;
+            }
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
 
             if (Auth::user()->role === 3) {
-                $clicker_results_released = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
+                $due= DB::table('assignments')
+                    ->where('id', $assignment->id)
+                    ->select('due')
                     ->first()
-                    ->clicker_results_released;
-                if (!$clicker_results_released) {
+                    ->due;
+                if (time() <= strtotime($due)) {
                     $response['type'] = 'success';
                     return $response;
                 }
 
             }
-            $number_enrolled = count($assignment->course->enrollments) - 1;//don't include Fake Student
+            $number_enrolled = count($assignment->course->enrollments);//don't include Fake Student
 
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
@@ -133,7 +152,8 @@ class SubmissionController extends Controller
                 }
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
-            $response['response_percent'] = $number_enrolled ? Round(100 * count($submission_results) / $number_enrolled, 1) : 0;
+            $number_submission_results = count($submission_results); //don't include Fake
+            $response['response_percent'] = $number_enrolled ? Round(100 *  $number_submission_results  / $number_enrolled, 1) : 0;
             $response['type'] = 'success';
 
 
