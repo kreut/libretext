@@ -12,7 +12,7 @@ n<template>
       <div v-if="!isLoading">
         <PageTitle :title="name" />
         <b-container>
-          <div v-if="assessmentType !== 'clicker'">
+          <div v-if="assessmentType !== 'clicker' || pastDue">
             <b-row align-h="end">
               <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
                 View Assessments
@@ -20,7 +20,7 @@ n<template>
             </b-row>
             <hr>
           </div>
-          <div v-if="assessmentType === 'clicker'">
+          <div v-if="assessmentType === 'clicker' && !pastDue">
             <b-alert show variant="info">
               <span class="font-weight-bold">Please wait for your instructor to open up this assignment.</span>
             </b-alert>
@@ -48,6 +48,7 @@ export default {
   components: { AssignmentStatistics, Loading },
   middleware: 'auth',
   data: () => ({
+    pastDue: false,
     clickerPollingSetInterval: null,
     assessmentUrlType: '',
     assessmentType: '',
@@ -65,7 +66,7 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary()
     this.isLoading = false
-    if (this.assessmentType === 'clicker') {
+    if (this.assessmentType === 'clicker' && !this.pastDue) {
       this.initClickerPolling()
     }
   },
@@ -107,6 +108,7 @@ export default {
         this.instructions = assignment.instructions
         this.assessmentType = assignment.assessment_type
         this.name = assignment.name
+        this.pastDue = assignment.past_due
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
       } catch (error) {
         this.$noty.error(error.message)

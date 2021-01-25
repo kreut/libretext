@@ -53,7 +53,8 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
-    public function getClickerQuestion(Request $request, Assignment $assignment){
+    public function getClickerQuestion(Request $request, Assignment $assignment)
+    {
         $response['type'] = 'error';
         /* $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
          $data = $request->validated();
@@ -82,8 +83,8 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
 
-
     }
+
     public function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -105,9 +106,13 @@ class AssignmentSyncQuestionController extends Controller
             $clicker_end = $clicker_start->add($data['submission_window'])->addSeconds($seconds_padding);
             DB::beginTransaction();
             DB::table('assignment_question')->where('assignment_id', $assignment->id)->update([
-            'clicker_start' => null,
+                'clicker_start' => null,
                 'clicker_end' => null
             ]);
+            if (strtotime($clicker_end) > strtotime($assignment->due)) {
+                DB::table('assignments')->where('id', $assignment->id)
+                            ->update(['due' => $clicker_end]);
+            }
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update([
@@ -738,7 +743,7 @@ class AssignmentSyncQuestionController extends Controller
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
-                if (!$question->clicker_start){
+                if (!$question->clicker_start) {
                     $clicker_time_left[$question->question_id] = 0;
                 } else {
                     $start = Carbon::now();

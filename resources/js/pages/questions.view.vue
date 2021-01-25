@@ -488,7 +488,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
-            v-if="!inIFrame && (assessmentType !== 'clicker' || user.role === 2)"
+            v-if="!inIFrame && (assessmentType !== 'clicker' || user.role === 2 || pastDue)"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
@@ -723,8 +723,8 @@
                         id="submission_time"
                         label-cols-sm="4"
                         label-cols-lg="5"
-                        label="Submission Window"
-                        label-for="Submission Window"
+                        label="Time To Submit:"
+                        label-for="Time To Submit"
                       >
                         <b-form-input
                           id="submission_window"
@@ -1002,6 +1002,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    pastDue: false,
     clickerStatus: '',
     countDownKey: 0,
     savedText: 1,
@@ -1458,10 +1459,11 @@ export default {
         const { data } = await axios.get(`/api/submissions/${this.assignmentId}/questions/${questionId}/pie-chart-data`)
 
         if (data.type !== 'error') {
-          if (data.redirect_question) {
+          if (data.redirect_question && !this.pastDue) {
             // send students to the right page
             window.location = `/assignments/${this.assignmentId}/questions/view/${data.redirect_question}`
           }
+          console.log(data)
           this.piechartdata = data.pie_chart_data
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
@@ -1867,6 +1869,7 @@ export default {
         }
         this.title = `${assignment.name} Assessments`
         this.name = assignment.name
+        this.pastDue = assignment.past_due
         this.assessmentType = assignment.assessment_type
         this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions

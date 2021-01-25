@@ -54,7 +54,8 @@ class SubmissionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
-            if (Auth::user()->role === 3 && !$question_info->clicker_start){
+            $past_due = time() > strtotime($assignment->due);
+            if (Auth::user()->role === 3 && !$question_info->clicker_start && !$past_due){
                 $clicker_question = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
                     ->whereNotNull('clicker_start')

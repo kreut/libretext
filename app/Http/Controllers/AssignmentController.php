@@ -586,6 +586,7 @@ class AssignmentController extends Controller
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => $this->getTimeLeft($assignment),
                 'late_policy' => $assignment->late_policy,
+                'past_due' => time() > strtotime($assignment->due),
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree * 3000 : 0,//in milliseconds
@@ -730,6 +731,7 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'formatted_late_policy' => $this->formatLatePolicy($assignment),
+                'past_due' => time() > strtotime($assignment->due),
                 'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
                 'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
                 'number_of_questions' => count($assignment->questions)
