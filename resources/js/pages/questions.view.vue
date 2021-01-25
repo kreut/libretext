@@ -324,7 +324,7 @@
         <div class="mb-3">
           <b-container>
             <b-col>
-              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame">
+              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame && assessmentType !== 'clicker'">
                 <div class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
@@ -394,16 +394,7 @@
                 <div v-if="timeLeft>0">
                   <countdown :time="timeLeft" @end="timeLeft=0">
                     <template slot-scope="props">
-                      Time Until due：{{ props.days }} days, {{ props.hours }} hours,
-                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
-                    </template>
-                  </countdown>
-                </div>
-                <div v-if="clickerTimeLeft>0">
-                  <countdown :time="clickerTimeLeft" @end="clickerTimeLeft=0">
-                    <template slot-scope="props">
-                      Time Until due：{{ props.days }} days, {{ props.hours }} hours,
-                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
+                      <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
                   </countdown>
                 </div>
@@ -484,7 +475,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
-            v-if="!inIFrame"
+            v-if="!inIFrame && assessmentType !== 'clicker'"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
@@ -545,7 +536,7 @@
           </div>
         </div>
 
-        <hr>
+        <hr v-if="assessmentType !== 'clicker'">
 
         <b-container>
           <b-row>
@@ -769,7 +760,7 @@
                       :height="400"
               />
             </b-col>
-            <b-col v-if="(user.role === 3)" cols="4">
+            <b-col v-if="(user.role === 3) && assessmentType !== 'clicker'" cols="4">
               <b-row v-if="questions[currentPage-1].technology_iframe">
                 <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
@@ -1171,14 +1162,14 @@ export default {
       return false
     }
 
-    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') ? 12 : 8
+    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c' || (this.user.role === 3 && this.assessmentType === 'clicker')) ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
         this.currentPage = this.getInitialCurrentPage(this.questionId)
       }
       if (this.assessmentType === 'clicker') {
-        this.clickerTimeLeft = this.questions[this.currentPage - 1].clicker_time_left
+        this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
       }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
@@ -1206,6 +1197,27 @@ export default {
     }
   },
   methods: {
+    getTimeLeftMessage (props, assessmentType) {
+      let message = ''
+      message = (assessmentType === 'clicker') ? 'Time Left: ' : 'Time Until Due: '
+      let timeLeft = parseInt(this.timeLeft) / 1000
+
+      if (timeLeft >= 60 * 60 * 24) {
+        message += `${props.days} days, ${props.hours} hours,
+          ${props.minutes} minutes, ${props.seconds} seconds.`
+      } else if (timeLeft >= 60 * 60) {
+        message += `${props.hours}  hours,
+          ${props.minutes}   minutes, ${props.seconds} seconds.`
+      } else if (timeLeft > 60) {
+        message += `${props.minutes} minutes, ${props.seconds} seconds.`
+      } else {
+        message += `${props.seconds} seconds.`
+      }
+      if (assessmentType === 'clicker') {
+        message = `<h4 class="font-italic">${message}</h4>`
+      }
+      return message
+    },
     async startClickerAssessment () {
       try {
         const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/start-clicker-assessment`)

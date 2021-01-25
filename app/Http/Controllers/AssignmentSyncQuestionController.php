@@ -704,8 +704,11 @@ class AssignmentSyncQuestionController extends Controller
                 } else {
                     $start = Carbon::now();
                     $end = Carbon::parse($question->clicker_end);
-                    $num_seconds = $end->diffInMilliseconds($start);
-                    $clicker_time_left[$question->question_id] = max($num_seconds,0);
+                    $num_seconds = 0;
+                    if ($end > $start) {
+                        $num_seconds = $end->diffInMilliseconds($start);
+                    }
+                    $clicker_time_left[$question->question_id] = $num_seconds;
                 }
                 $clicker_results_released[$question->question_id] = $question->clicker_results_released;
             }
