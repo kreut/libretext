@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
+use Carbon\Carbon;
+use Carbon\CarbonImmutable;
 use \Exception;
 use App\Submission;
 use App\Score;
@@ -45,17 +47,16 @@ class SubmissionController extends Controller
                 ->first();
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
 
-
-            if (Auth::user()->role === 3){
-               $clicker_results_released = DB::table('assignment_question')
+            if (Auth::user()->role === 3) {
+                $clicker_results_released = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question->id)
                     ->first()
                     ->clicker_results_released;
-               if (!$clicker_results_released){
-                   $response['type'] = 'success';
-                   return $response;
-               }
+                if (!$clicker_results_released) {
+                    $response['type'] = 'success';
+                    return $response;
+                }
 
             }
             $number_enrolled = count($assignment->course->enrollments) - 1;//don't include Fake Student

@@ -26,10 +26,11 @@ class AssignmentSyncQuestion extends Model
     }
 
     public function getFormattedClickerStatus($question_info){
-        if ($question_info->can_view && $question_info->can_submit){
+
+        if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)){
             return 'view_and_submit';
         }
-        if ($question_info->can_view && !$question_info->can_submit){
+        if (time() > strtotime($question_info->clicker_end) ){
             return 'view_and_not_submit';
         }
         return 'neither_view_nor_submit';

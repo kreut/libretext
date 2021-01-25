@@ -691,6 +691,7 @@ class AssignmentSyncQuestionController extends Controller
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
             $clicker_status = [];
+            $clicker_time_left = [];
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
@@ -698,6 +699,14 @@ class AssignmentSyncQuestionController extends Controller
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
+                if (!$question->clicker_start){
+                    $clicker_time_left[$question->question_id] = 0;
+                } else {
+                    $start = Carbon::now();
+                    $end = Carbon::parse($question->clicker_end);
+                    $num_seconds = $end->diffInMilliseconds($start);
+                    $clicker_time_left[$question->question_id] = max($num_seconds,0);
+                }
                 $clicker_results_released[$question->question_id] = $question->clicker_results_released;
             }
 
@@ -786,6 +795,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
+                $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
                 $assignment->questions[$key]['clicker_results_released'] = $clicker_results_released[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";

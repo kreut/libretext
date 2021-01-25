@@ -391,8 +391,16 @@
             </b-col>
             <b-row class="text-center">
               <b-col>
-                <div v-if="timeLeft>0 && assessmentType !== 'clicker'">
+                <div v-if="timeLeft>0">
                   <countdown :time="timeLeft" @end="timeLeft=0">
+                    <template slot-scope="props">
+                      Time Until due：{{ props.days }} days, {{ props.hours }} hours,
+                      {{ props.minutes }} minutes, {{ props.seconds }} seconds.
+                    </template>
+                  </countdown>
+                </div>
+                <div v-if="clickerTimeLeft>0">
+                  <countdown :time="clickerTimeLeft" @end="clickerTimeLeft=0">
                     <template slot-scope="props">
                       Time Until due：{{ props.days }} days, {{ props.hours }} hours,
                       {{ props.minutes }} minutes, {{ props.seconds }} seconds.
@@ -981,6 +989,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    clickerStatus: '',
+    countDownKey: 0,
     savedText: 1,
     showSolutionTextForm: false,
     showAddTextToSupportTheAudioFile: false,
@@ -1070,6 +1080,7 @@ export default {
     settingAsSolution: false,
     cutups: [],
     uploadLevel: 'assignment',
+    clickerTimeLeft: 0,
     timeLeft: 0,
     totalPoints: 0,
     uploadFileType: '',
@@ -1165,6 +1176,9 @@ export default {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
         this.currentPage = this.getInitialCurrentPage(this.questionId)
+      }
+      if (this.assessmentType === 'clicker') {
+        this.clickerTimeLeft = this.questions[this.currentPage - 1].clicker_time_left
       }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
@@ -1837,7 +1851,9 @@ export default {
         this.assessmentType = assignment.assessment_type
         this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
-        this.timeLeft = assignment.time_left
+        if (this.assessmentType !== 'clicker') {
+          this.timeLeft = assignment.time_left
+        }
         this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
         this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)
         this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
