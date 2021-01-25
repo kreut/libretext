@@ -9,6 +9,19 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+    <b-modal
+      id="modal-remove-question"
+      ref="modal"
+      title="Confirm Remove Question"
+      ok-title="Yes, remove question"
+      @ok="submitRemoveQuestion"
+    >
+      <p>
+        By removing the question, you will also delete all student submissions for this question.  In addition,
+        the scores will be re-computed.
+      </p>
+      <p><strong>Once a question is removed, the scores cannot be reverted!</strong></p>
+    </b-modal>
 
     <b-modal
       id="modal-share"
@@ -498,7 +511,7 @@
             <b-button class="mt-1 mb-2"
                       variant="danger"
                       size="sm"
-                      @click="removeQuestion(currentPage)"
+                      @click="openRemoveQuestionModal()"
             >
               Remove Question
             </b-button>
@@ -1993,15 +2006,18 @@ export default {
         ? this.$router.push(`/assignments/${this.assignmentId}/learning-trees/get`)
         : this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
     },
-    async removeQuestion (currentPage) {
+    openRemoveQuestionModal () {
+      this.$bvModal.show('modal-remove-question')
+    },
+    async submitRemoveQuestion () {
       try {
-        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[currentPage - 1].id}`)
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         this.$noty.info('The question has been removed from the assignment.')
-        this.questions.splice(currentPage - 1, 1)
+        this.questions.splice(this.currentPage - 1, 1)
         if (this.currentPage !== 1) {
           this.currentPage = this.currentPage - 1
         }
