@@ -3,12 +3,15 @@
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
+use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\Http\Requests\UpdateClickerStatus;
 use App\JWE;
+use App\Rules\IsValidPeriodOfTime;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
+use Carbon\CarbonImmutable;
 use \Exception;
 
 use Illuminate\Http\Request;
@@ -49,6 +52,49 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
+
+    public function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+        /* $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+         $data = $request->validated();
+
+         if (!$authorized->allowed()) {
+
+             $response['message'] = $authorized->message();
+             return $response;
+         }*/
+
+        try {
+
+            $data = $request->validated();
+            $clicker_start = CarbonImmutable::now();
+            $clicker_end = $clicker_start->add($data['submission_window']);
+
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([
+                    'clicker_start' => $clicker_start,
+                    'clicker_end' => $clicker_end
+                ]);
+            $response['type'] = 'success';
+            $response['message'] = 'You students can begin submitting responses.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error starting this clicker assessment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
     public function getQuestionIdsByAssignment(Assignment $assignment)
     {
 

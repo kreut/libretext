@@ -696,31 +696,38 @@
                     background="#FFFFFF"
                   />
 
-                  <div v-if="!isLoadingPieChart" class="text-center font-italic">
-                    Students can:
-                    <b-form-select v-model="clickerStatus"
-                                   :options="clickerStatusOptions"
-                                   style="width:360px"
-                                   size="sm"
-                                   @change="updateClickerStatus(questions[currentPage-1].id)"
-                    />
-                    <span class="pl-2">
-                      Clicker Results Released:
-                      <toggle-button
-                        class="mt-1"
-                        :width="55"
-                        :value="clickerResultsReleased"
-                        :sync="true"
-                        :font-size="14"
-                        :margin="4"
-                        :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                        :labels="{checked: 'Yes', unchecked: 'No'}"
-                        @change="submitClickerResultsReleased"
-                      /></span>
-                    <h4>{{ responsePercent }}% of students have responded</h4>
-                    <h5 v-if="responsePercent">
-                      The correct answer is "{{ correctAnswer }}"
-                    </h5>
+                  <div v-if="!isLoadingPieChart" class="font-italic">
+                    <b-form-row>
+                      <b-form-group
+                        id="submission_time"
+                        label-cols-sm="4"
+                        label-cols-lg="5"
+                        label="Submission Window"
+                        label-for="Submission Window"
+                      >
+                        <b-form-input
+                          id="submission_window"
+                          v-model="clickerTimeForm.submission_window"
+                          type="text"
+                          placeholder=""
+                          :class="{ 'is-invalid': clickerTimeForm.errors.has('submission_window') }"
+                          @keydown="clickerTimeForm.errors.clear('submission_window')"
+                        />
+                        <has-error :form="clickerTimeForm" field="submission_window" />
+                      </b-form-group>
+                      <b-col>
+                        <b-button variant="success" @click="startClickerAssessment">
+                          START!
+                        </b-button>
+                      </b-col>
+                    </b-form-row>
+                    <div class="text-center">
+                      <hr>
+                      <h4>{{ responsePercent }}% of students have responded</h4>
+                      <h5 v-if="responsePercent">
+                        The correct answer is "{{ correctAnswer }}"
+                      </h5>
+                    </div>
                   </div>
                   <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
@@ -1024,12 +1031,7 @@ export default {
     isOpenEndedFileSubmission: false,
     isOpenEndedTextSubmission: false,
     isOpenEndedAudioSubmission: false,
-    clickerStatus: 'neither_view_nor_submit',
-    clickerStatusOptions: [
-      { value: 'neither_view_nor_submit', text: 'neither view the question nor submit a response' },
-      { value: 'view_and_submit', text: 'view the question and submit a response' },
-      { value: 'view_and_not_submit', text: 'view the question but not submit a response' }
-    ],
+
     responseText: '',
     openEndedSubmissionTypeOptions: [
       { value: 'text', text: 'Text' },
@@ -1081,6 +1083,9 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     uploading: false,
+    clickerTimeForm: new Form({
+      submission_window: ''
+    }),
     solutionTextForm: new Form({
       solution_text: ''
     }),
@@ -1187,6 +1192,19 @@ export default {
     }
   },
   methods: {
+    async startClickerAssessment () {
+      try {
+        const { data } = await this.clickerTimeForm.post(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/start-clicker-assessment`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     openShowAudioSolutionModal (event) {
       event.preventDefault()
       this.$bvModal.show('modal-show-audio-solution')
