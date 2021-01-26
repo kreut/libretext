@@ -1974,7 +1974,7 @@ export default {
           })
         }
       } catch (error) {
-        $this.noty.error(error.message)
+        this.$noty.error(error.message)
       }
     },
     getAssessmentsForAssignment () {
