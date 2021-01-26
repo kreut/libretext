@@ -20,7 +20,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment, $Question]);
+        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
 

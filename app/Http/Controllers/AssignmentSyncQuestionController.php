@@ -317,7 +317,7 @@ class AssignmentSyncQuestionController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment, $question]);
+        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
 

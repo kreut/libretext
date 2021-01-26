@@ -47,7 +47,7 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
-    public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
+    public function add(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
 
         return ($user->id === (int) $assignment->course->user_id)
