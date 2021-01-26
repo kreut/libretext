@@ -6,7 +6,7 @@ use Tests\TestCase;
 use App\User;
 use App\LearningTree;
 
-class LearningTreesTest extends TestCase
+class LearningTreesEditorTest extends TestCase
 {
 
     public function setup(): void
