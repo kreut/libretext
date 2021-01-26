@@ -20,7 +20,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment, $Question]);
 
         if (!$authorized->allowed()) {
 
@@ -43,9 +43,6 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question_id,
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'can_view' =>1,
-                    'can_submit' => 1,
-                    'clicker_results_released' =>0,
                     'open_ended_submission_type' => 0
             ]);
             $assignment_question_id = DB::getPdo()->lastInsertId();
