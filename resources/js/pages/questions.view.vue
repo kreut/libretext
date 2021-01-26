@@ -535,7 +535,6 @@
               Upload Solution
             </b-button>
             <span v-if="questions[currentPage-1].solution">
-              Uploaded solution:
               <span v-if="!showUploadedAudioSolutionMessage">
                 <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage" :assignment-name="name" />
 
