@@ -76,9 +76,6 @@ class QuestionsGetTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'open_ended_submission_type'=>'none'
         ]);
 
@@ -273,9 +270,6 @@ class QuestionsGetTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'open_ended_submission_type'=>'none'
         ]);
 
@@ -305,9 +299,6 @@ class QuestionsGetTest extends TestCase
                 'assignment_id' => $this->assignment->id,
                 'question_id' => $this->question->id,
                 'points' => $this->assignment->default_points_per_question,
-                'can_view' =>1,
-                'can_submit' => 1,
-                'clicker_results_released' =>0,
                 'open_ended_submission_type' => 'file'
             ]);
 
@@ -325,9 +316,6 @@ class QuestionsGetTest extends TestCase
                 'assignment_id' => $this->assignment->id,
                 'question_id' => $this->question->id,
                 'points' => $this->assignment->default_points_per_question,
-                'can_view' =>1,
-                'can_submit' => 1,
-                'clicker_results_released' =>0,
                 'open_ended_submission_type' => 'file'
             ]);
         $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->assignment->id}/questions/ids")

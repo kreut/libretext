@@ -39,9 +39,6 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question()->id,
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'none',
             'points' => 2
         ]);
@@ -67,9 +64,6 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'none',
             'points' => 10
         ]);
@@ -77,9 +71,6 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'open_ended_submission_type' => 'none',
             'points' => 20
         ]);
@@ -105,9 +96,6 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'points' => 1
         ]);
 
@@ -115,9 +103,6 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'points' => 2
         ]);
 
@@ -143,9 +128,6 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'points' => 50
         ]);
 
@@ -154,9 +136,6 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'can_view' =>1,
-            'can_submit' => 1,
-            'clicker_results_released' =>0,
             'points' => 50
         ]);
 

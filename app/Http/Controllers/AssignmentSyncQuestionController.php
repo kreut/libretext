@@ -5,7 +5,6 @@ namespace App\Http\Controllers;
 use App\Exceptions\Handler;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
-use App\Http\Requests\UpdateClickerStatus;
 use App\JWE;
 use App\Rules\IsValidPeriodOfTime;
 use App\Solution;
@@ -56,14 +55,13 @@ class AssignmentSyncQuestionController extends Controller
     public function getClickerQuestion(Request $request, Assignment $assignment)
     {
         $response['type'] = 'error';
-        /* $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
-         $data = $request->validated();
+         $authorized = Gate::inspect('getClickerQuestion', $assignment);
 
          if (!$authorized->allowed()) {
 
              $response['message'] = $authorized->message();
              return $response;
-         }*/
+         }
 
         try {
 
@@ -89,14 +87,14 @@ class AssignmentSyncQuestionController extends Controller
     {
 
         $response['type'] = 'error';
-        /* $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
+        $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
          $data = $request->validated();
 
          if (!$authorized->allowed()) {
 
              $response['message'] = $authorized->message();
              return $response;
-         }*/
+         }
 
         try {
 
@@ -283,57 +281,6 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function updateClickerStatus(UpdateClickerStatus $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
-    {
-
-        $response['type'] = 'error';
-
-        $authorized = Gate::inspect('updateClickerStatus', [$assignmentSyncQuestion, $assignment]);
-
-        if (!$authorized->allowed()) {
-
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-        try {
-            $data = $request->validated();
-            $can_view = $can_submit = $message = $type = '';
-            switch ($data['clicker_status']) {
-                case('neither_view_nor_submit'):
-                    $can_view = 0;
-                    $can_submit = 0;
-                    $type = 'info';
-                    $message = "Your students can neither view the questions nor submit responses.";
-                    break;
-                case('view_and_submit'):
-                    $can_view = 1;
-                    $can_submit = 1;
-                    $type = 'success';
-                    $message = "Your students can now view the questions and submit responses.";
-                    break;
-                case('view_and_not_submit'):
-                    $can_view = 1;
-                    $can_submit = 0;
-                    $type = 'info';
-                    $message = "Your student can now view the questions but not submit responses.";
-                    break;
-            }
-
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->update(['can_view' => $can_view, 'can_submit' => $can_submit]);
-
-            $response['type'] = $type;
-            $response['message'] = $message;
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating the question access level.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-
-    }
 
     public function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
@@ -384,10 +331,7 @@ class AssignmentSyncQuestionController extends Controller
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                    'can_view' => $assignment->assessment_type !== 'clicker' ? 1 : 0,
-                    'can_submit' => $assignment->assessment_type !== 'clicker' ? 1 : 0,
-                    'clicker_results_released' => 0]);
+                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
             $this->updateAssignmentScoreBasedOnAddedQuestion($assignment, $question);
             DB::commit();
             $response['type'] = 'success';
@@ -754,7 +698,7 @@ class AssignmentSyncQuestionController extends Controller
                     }
                     $clicker_time_left[$question->question_id] = $num_seconds;
                 }
-                $clicker_results_released[$question->question_id] = $question->clicker_results_released;
+
             }
 
             $question_info = DB::table('questions')
@@ -843,7 +787,6 @@ class AssignmentSyncQuestionController extends Controller
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
-                $assignment->questions[$key]['clicker_results_released'] = $clicker_results_released[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
@@ -1107,30 +1050,5 @@ class AssignmentSyncQuestionController extends Controller
         return $seed;
     }
 
-    public function showClickerResults(Assignment $assignment, Question $question, int $showClickerResults, AssignmentSyncQuestion $assignmentSyncQuestion)
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('updateClickerResultsReleased', [$assignmentSyncQuestion, $assignment]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->update(['clicker_results_released' => !$showClickerResults]);
-            $response['type'] = !$showClickerResults ? 'success' : 'info';
-            $clicker_results_released = !$showClickerResults ? 'can' : 'cannot';
-            $response['message'] = "Your students <strong>{$clicker_results_released }</strong> view the clicker results.";
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error showing/hiding the clicker results for <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
 
 }

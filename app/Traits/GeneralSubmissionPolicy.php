@@ -8,6 +8,13 @@ use Illuminate\Support\Facades\DB;
 
 trait GeneralSubmissionPolicy
 {
+    /**
+     * @param User $user
+     * @param $assignment
+     * @param int $assignment_id
+     * @param int $question_id
+     * @return array
+     */
     public function canSubmitBasedOnGeneralSubmissionPolicy(User $user, $assignment, int $assignment_id, int $question_id)
     {
         $response['type'] = 'error';
@@ -19,7 +26,7 @@ trait GeneralSubmissionPolicy
                 ->where('question_id', $question_id)
                 ->select()
                 ->first(['clicker_start','clicker_end']);
-            if (!(time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end))){
+            if (!$assignment_question->clicker_start || (!(time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end)))){
                 $response['message'] = "This question is currently not open for submission.";
                 return $response;
             }

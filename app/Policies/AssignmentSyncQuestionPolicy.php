@@ -33,6 +33,13 @@ class AssignmentSyncQuestionPolicy
             : Response::deny($message);
     }
 
+    public function startClickerAssessment(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int)$assignment->course->user_id));
+        return $authorized
+            ? Response::allow()
+            : Response::deny('You are not allowed to start this clicker assessment.');
+    }
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -74,20 +81,6 @@ class AssignmentSyncQuestionPolicy
         return $user->id === ((int)$assignment->course->user_id)
             ? Response::allow()
             : Response::deny("You are not allowed to update the open ended submission type.");
-    }
-
-    /**
-     * @param User $user
-     * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param Assignment $assignment
-     * @return Response
-     */
-    public function updateClickerStatus(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
-    {
-
-        return $user->id === ((int)$assignment->course->user_id)
-            ? Response::allow()
-            : Response::deny("You are not allowed to update the clicker status.");
     }
 
     public function updateClickerResultsReleased(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)

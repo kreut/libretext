@@ -1008,7 +1008,6 @@ export default {
     savedText: 1,
     showSolutionTextForm: false,
     showAddTextToSupportTheAudioFile: false,
-    clickerResultsReleased: false,
     responsePercent: '',
     isLoadingPieChart: true,
     correctAnswer: null,
@@ -1286,19 +1285,6 @@ export default {
         }
       }
     },
-    async submitClickerResultsReleased () {
-      try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/clicker-results-released/${Number(this.clickerResultsReleased)}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        this.clickerResultsReleased = !this.clickerResultsReleased
-        this.questions[this.currentPage - 1].clickerResultsReleased = this.clickerResultsReleased
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     updateIsLoadingPieChart () {
       this.isLoadingPieChart = false
     },
@@ -1442,17 +1428,6 @@ export default {
       this.clickerPollingSetInterval = setInterval(function () {
         self.submitClickerPolling(self.questions[self.currentPage - 1].id)
       }, 3000)
-    },
-    async updateClickerStatus (questionId) {
-      try {
-        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-clicker-status`, { 'clicker_status': this.clickerStatus })
-        this.$noty[data.type](data.message)
-        if (data.type !== 'error') {
-          this.questions[this.currentPage - 1].clicker_status = data.clicker_status
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     async submitClickerPolling (questionId) {
       try {
@@ -1736,7 +1711,6 @@ export default {
     },
     async changePage (currentPage) {
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
-      this.clickerResultsReleased = this.questions[currentPage - 1].clicker_results_released
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
       if (this.assessmentType === 'clicker') {

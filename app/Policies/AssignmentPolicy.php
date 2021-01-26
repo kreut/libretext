@@ -14,6 +14,13 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    public function getClickerQuestion(User $user, Assignment $assignment){
+
+        return $assignment->course->enrollments->contains('user_id', $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the clicker questions for this assignment.');
+
+}
 
     /**
      * Determine whether the user can view the assignment.

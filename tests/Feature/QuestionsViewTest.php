@@ -39,18 +39,12 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
-            'can_view' => 1,
-            'can_submit' => 1,
-            'clicker_results_released' => 0,
             'open_ended_submission_type' => 'file'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
             'points' => $this->question_points,
-            'can_view' => 1,
-            'can_submit' => 1,
-            'clicker_results_released' => 0,
             'open_ended_submission_type' => 'file'
         ]);;
 
@@ -78,6 +72,72 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+    /** @test */
+    public function correctly_computes_the_z_score_for_a_file_submission()
+    {
+
+        $scores = [80, 40, 36];
+
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+
+        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            SubmissionFile::create($data);
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+        //need the token....
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        $headers = [
+            'Accept' => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+       $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
+
+    }
+
+/** @test */
+
+public function non_owner_cannot_start_a_clicker_assessment()
+{
+    $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment")
+        ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
+}
+
+    /** @test */
+
+    public function owner_can_start_a_clicker_assessment()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
+            ->assertJson(['message' => 'You students can begin submitting responses.']);
+    }
+
+    /** @test */
+
+    public function time_to_submit_a_clicker_assessment_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 oogas'])
+            ->assertJsonValidationErrors(['time_to_submit']);
+    }
 
     /** @test */
     public function owner_can_submit_solution_text_attached_to_audio()
@@ -93,7 +153,7 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
             ['solution_text' => 'some text',
                 'question_id' => $this->question->id]
-        )->assertJson(['message' => 'Your text solution has been saved.']);;
+        )->assertJson(['message' => 'Your text solution has been saved.']);
 
     }
 
@@ -324,48 +384,7 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function correctly_computes_the_z_score_for_a_file_submission()
-    {
 
-        $scores = [80, 40, 36];
-
-
-        //create fake submissions --- I just care about the scores.
-        $this->assignment->show_scores = 1;
-        $this->assignment->save();
-
-        $this->question->technology = 'h5p';
-        $this->question->save();
-        $data = [
-            'type' => 'q',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'fake_1.pdf',
-            'original_filename' => 'orig_fake_1.pdf',
-            'date_submitted' => Carbon::now()];
-
-        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
-        foreach ($user_ids as $key => $user_id) {
-            $data['score'] = $scores[$key];
-            $data['user_id'] = $user_ids[$key];
-            SubmissionFile::create($data);
-        }
-
-        $mean = array_sum($scores) / count($scores);
-        $std_dev = $this->stats_standard_deviation($scores);
-        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
-        //need the token....
-        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
-        $headers = [
-            'Accept' => 'application/json',
-            'AUTHORIZATION' => 'Bearer ' . $token
-        ];
-
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
-        $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
-
-    }
 
     /** @test */
     public function correctly_computes_the_z_score_if_there_is_no_file_submission()
