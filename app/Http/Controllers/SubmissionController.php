@@ -79,12 +79,16 @@ class SubmissionController extends Controller
                 }
 
             }
-            $number_enrolled = count($assignment->course->enrollments);//don't include Fake Student
-
+            $number_enrolled = count($assignment->course->enrollments)-1;//don't include Fake Student
+            $fake_student_user_id= DB::table('enrollments')->where('course_id', $assignment->course->id)
+                                                        ->orderBy('user_id')
+                                                        ->first()
+                                                        ->user_id;
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
                 ->where('submissions.assignment_id', $assignment->id)
                 ->where('submissions.question_id', $question->id)
+                ->where('submissions.user_id','<>', $fake_student_user_id)
                 ->select('submission', 'technology')
                 ->get();
 
