@@ -80,6 +80,7 @@ class SubmissionController extends Controller
 
             }
             $number_enrolled = count($assignment->course->enrollments)-1;//don't include Fake Student
+
             $fake_student_user_id= DB::table('enrollments')->where('course_id', $assignment->course->id)
                                                         ->orderBy('user_id')
                                                         ->first()
