@@ -727,18 +727,18 @@
                         label-for="Time To Submit"
                       >
                         <b-form-input
-                          id="submission_window"
-                          v-model="clickerTimeForm.submission_window"
+                          id="time_to_submit"
+                          v-model="clickerTimeForm.time_to_submit"
                           type="text"
                           placeholder=""
-                          :class="{ 'is-invalid': clickerTimeForm.errors.has('submission_window') }"
-                          @keydown="clickerTimeForm.errors.clear('submission_window')"
+                          :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
+                          @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                         />
-                        <has-error :form="clickerTimeForm" field="submission_window" />
+                        <has-error :form="clickerTimeForm" field="time_to_submit" />
                       </b-form-group>
                       <b-col>
                         <b-button variant="success" @click="startClickerAssessment">
-                          START!
+                          GO!
                         </b-button>
                       </b-col>
                     </b-form-row>
@@ -1108,7 +1108,7 @@ export default {
     showSubmissionMessage: false,
     uploading: false,
     clickerTimeForm: new Form({
-      submission_window: ''
+      time_to_submit: ''
     }),
     solutionTextForm: new Form({
       solution_text: ''

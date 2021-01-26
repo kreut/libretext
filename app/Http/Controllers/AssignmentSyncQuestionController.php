@@ -103,7 +103,7 @@ class AssignmentSyncQuestionController extends Controller
             $data = $request->validated();
             $clicker_start = CarbonImmutable::now();
             $seconds_padding = 6;
-            $clicker_end = $clicker_start->add($data['submission_window'])->addSeconds($seconds_padding);
+            $clicker_end = $clicker_start->add($data['time_to_submit'])->addSeconds($seconds_padding);
             DB::beginTransaction();
             DB::table('assignment_question')->where('assignment_id', $assignment->id)->update([
                 'clicker_start' => null,

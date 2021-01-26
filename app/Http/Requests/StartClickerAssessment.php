@@ -25,7 +25,7 @@ class StartClickerAssessment extends FormRequest
     public function rules()
     {
         return [
-            'submission_window' => new IsValidPeriodOfTime()
+            'time_to_submit' => new IsValidPeriodOfTime()
         ];
     }
 }
