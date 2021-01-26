@@ -384,6 +384,12 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->first()
                 ->id;
+            DB::table('submissions')->where('assignment_id', $assignment->id)
+                                          ->where('question_id', $question->id)
+                                         ->delete();
+            DB::table('submission_files')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->delete();
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->delete();

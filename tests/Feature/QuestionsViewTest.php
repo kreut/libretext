@@ -72,7 +72,75 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+
     /** @test */
+    public function removes_submission_files_if_question_removed()
+    {
+
+        //submitted the first one
+        $data = [
+            'type' => 'q',
+            'user_id'=>$this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+            SubmissionFile::create($data);
+            $data['question_id'] = $this->question_2->id;
+
+            //submitted the second one
+        SubmissionFile::create($data);
+
+        //remove the first one
+        $num_submissions_before_delete = SubmissionFile::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->get();
+
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
+        //should give back score of complete
+        $num_submissions_after_delete = SubmissionFile::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->get();
+
+        $this->assertEquals(count($num_submissions_before_delete)-1, count($num_submissions_after_delete));
+
+    }
+    /** @test */
+    public function removes_submissions_if_question_removed()
+    {
+
+        //submitted the first one
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => 5,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object]);
+        //submitted the second one
+        Submission::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'user_id' => $this->student_user->id,
+            'score' => 5,
+            'submission_count' => 1,
+            'answered_correctly_at_least_once' => false,
+            'submission' => $this->submission_object]);
+        //remove the first one
+        $num_submissions_before_delete = Submission::where('assignment_id', $this->assignment->id)
+                            ->where('user_id', $this->student_user->id)
+        ->get();
+
+       $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
+        //should give back score of complete
+        $num_submissions_after_delete = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->get();
+
+        $this->assertEquals(count($num_submissions_before_delete)-1, count($num_submissions_after_delete));
+
+    }
+        /** @test */
     public function correctly_computes_the_z_score_for_a_file_submission()
     {
 
@@ -187,6 +255,7 @@ public function non_owner_cannot_start_a_clicker_assessment()
         )->assertJsonValidationErrors('solution_text');
 
     }
+
 
 
 
