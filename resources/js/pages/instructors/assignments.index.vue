@@ -97,7 +97,7 @@
               </template>
               <template v-slot:cell(name)="data">
                 <div class="mb-0">
-                  <span v-if="user && user.role === 2">
+                  <span v-if="user && [2,4].includes(user.role)">
                     <b-tooltip :target="getTooltipTarget('getQuestions',data.item.id)"
                                delay="500"
                     >
