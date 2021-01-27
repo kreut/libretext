@@ -791,6 +791,9 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
+
+                $assignment->questions[$key]['library'] = $question->library;
+                $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];

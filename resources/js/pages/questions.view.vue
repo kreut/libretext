@@ -96,10 +96,11 @@
       <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
         This information includes the name of the assignment, the question number in the assignment, and the time left
         in the assignment.
-      </b-tooltip>
+      </b-tooltip><br>
 
-      <b-table />
-
+      <span class="font-weight-bold">Library:</span> {{ libraryText }}<br>
+      <span class="font-weight-bold">Page ID:</span> {{ questions[currentPage-1] ? questions[currentPage-1].page_id : '' }}<br>
+      <span class="font-weight-bold">Adapt ID:</span> {{ assignmentId }}-{{ questions[currentPage-1] ? questions[currentPage-1].id : '' }}<br>
       <span class="font-weight-bold">URL:</span> <span class="font-italic">{{ currentUrl }}</span>
       <b-button v-clipboard:copy="currentUrl"
                 v-clipboard:success="onCopy"
@@ -110,8 +111,7 @@
         Copy
       </b-button>
       <br>
-      <br>
-      <span class="font-weight-bold">iFrame:</span> <span class="font-italic">{{ embedCode }}</span>
+      <span class="font-weight-bold">iframe:</span> <span class="font-italic">{{ embedCode }}</span>
       <b-button v-clipboard:copy="embedCode"
                 v-clipboard:success="onCopy"
                 v-clipboard:error="onError"
@@ -984,6 +984,8 @@ import CKEditor from 'ckeditor4-vue'
 import PieChart from '~/components/PieChart'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
 
+import libraries from '~/helpers/Libraries'
+
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -1001,6 +1003,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    libraryText: '',
+    libraryOptions: libraries,
     pastDue: false,
     clickerStatus: '',
     countDownKey: 0,
@@ -1345,6 +1349,16 @@ export default {
       this.$bvModal.show('modal-share')
       this.currentUrl = this.getCurrentUrl()
       this.embedCode = this.getEmbedCode()
+      this.libraryText = this.getLibraryText(this.questions[this.currentPage - 1].library)
+    },
+    getLibraryText (library) {
+      let text = library
+      for (let i = 0; i < this.libraryOptions.length; i++) {
+        if (library === this.libraryOptions[i].value) {
+          text = this.libraryOptions[i].text
+        }
+      }
+      return text
     },
     getEmbedCode () {
       return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
