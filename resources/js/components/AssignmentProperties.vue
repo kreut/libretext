@@ -34,7 +34,12 @@
         Scores and solutions are not automatically released. This type of assessment works well
         for open-ended questions.
       </b-tooltip>
-      <b-tooltip target="complete/incomplete"
+      <b-tooltip target="performance"
+                 delay="250"
+      >
+        Students are given credit for providing correct answers.
+      </b-tooltip>
+      <b-tooltip target="completion"
                  delay="250"
       >
         Students are given full credit for automatically graded submissions as long as they submit something.
@@ -250,10 +255,12 @@
                               :disabled="isLocked()"
           >
             <span @click="form.students_can_view_assignment_statistics = 1">
-              <b-form-radio value="p">Points</b-form-radio></span>
+              <b-form-radio value="p">Performance</b-form-radio> <span id="performance" class="text-muted"><b-icon
+                icon="question-circle"
+              /></span></span>
             <span @click="canSwitchToCompleteIncomplete">
               <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-                <b-form-radio value="c">Complete/Incomplete <span id="complete/incomplete" class="text-muted"><b-icon
+                <b-form-radio value="c">Completion <span id="completion" class="text-muted"><b-icon
                   icon="question-circle"
                 /></span></b-form-radio>
               </span>
