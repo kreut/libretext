@@ -182,7 +182,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
 
-
+Route::patch('/api/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');
 
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
 

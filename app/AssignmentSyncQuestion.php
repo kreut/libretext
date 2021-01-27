@@ -25,14 +25,25 @@ class AssignmentSyncQuestion extends Model
         return $questions_count_by_assignment_id;
     }
 
-    public function getFormattedClickerStatus($question_info){
+    public function getFormattedClickerStatus($question_info)
+    {
 
-        if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)){
+        if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
             return 'view_and_submit';
         }
-        if (time() > strtotime($question_info->clicker_end) ){
+        if (time() > strtotime($question_info->clicker_end)) {
             return 'view_and_not_submit';
         }
         return 'neither_view_nor_submit';
+    }
+
+    public function orderQuestions(array $ordered_questions, Assignment $assignment)
+    {
+        foreach ($ordered_questions as $key => $question_id) {
+            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question_id)
+                ->update(['order' => $key + 1]);
+        }
+
     }
 }

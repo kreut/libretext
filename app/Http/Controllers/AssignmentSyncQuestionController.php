@@ -51,17 +51,50 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('order', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $ordered_questions = $request->ordered_questions;
+            DB::beginTransaction();
+            $assignmentSyncQuestion->orderQuestions($request->ordered_questions, $assignment);
+            DB::commit();
+            $response['message'] = 'Your questions have been re-ordered.';
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error ordering the questions for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
 
     public function getClickerQuestion(Request $request, Assignment $assignment)
     {
         $response['type'] = 'error';
-         $authorized = Gate::inspect('getClickerQuestion', $assignment);
+        $authorized = Gate::inspect('getClickerQuestion', $assignment);
 
-         if (!$authorized->allowed()) {
+        if (!$authorized->allowed()) {
 
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
 
@@ -88,13 +121,13 @@ class AssignmentSyncQuestionController extends Controller
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('startClickerAssessment', [$assignmentSyncQuestion, $assignment, $question]);
-         $data = $request->validated();
+        $data = $request->validated();
 
-         if (!$authorized->allowed()) {
+        if (!$authorized->allowed()) {
 
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
 
@@ -109,7 +142,7 @@ class AssignmentSyncQuestionController extends Controller
             ]);
             if (strtotime($clicker_end) > strtotime($assignment->due)) {
                 DB::table('assignments')->where('id', $assignment->id)
-                            ->update(['due' => $clicker_end]);
+                    ->update(['due' => $clicker_end]);
             }
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
@@ -281,7 +314,6 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-
     public function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -385,8 +417,8 @@ class AssignmentSyncQuestionController extends Controller
                 ->first()
                 ->id;
             DB::table('submissions')->where('assignment_id', $assignment->id)
-                                          ->where('question_id', $question->id)
-                                         ->delete();
+                ->where('question_id', $question->id)
+                ->delete();
             DB::table('submission_files')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->delete();

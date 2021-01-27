@@ -22,6 +22,14 @@ class AssignmentPolicy
 
 }
 
+    public function order(User $user, Assignment $assignment){
+
+        return $assignment->course->enrollments->contains('user_id', $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to order the questions for this assignment.');
+
+    }
+
     /**
      * Determine whether the user can view the assignment.
      *
