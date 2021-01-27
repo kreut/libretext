@@ -44,6 +44,7 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'open_ended_submission_type' => 'file',
+            'order' =>1,
             'points' => 10
         ]);
         $this->question_file = factory(SubmissionFile::class)->create([

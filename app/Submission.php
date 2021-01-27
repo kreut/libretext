@@ -41,7 +41,7 @@ class Submission extends Model
 
         $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
             ->where('question_id', $data['question_id'])
-            ->select('points')
+            ->select('points', 'open_ended_submission_type')
             ->first();
 
         if (!$assignment_question) {
@@ -58,31 +58,37 @@ class Submission extends Model
             return $response;
         }
 
-
-        switch ($data['technology']) {
-            case('h5p'):
-                $submission = json_decode($data['submission']);
-                $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
-                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                break;
-            case('imathas'):
-                $submission = $data['submission'];
-                $proportion_correct = floatval($submission->score);
-                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
-                break;
-            case('webwork'):
-                // Log::info('case webwork');
-                $submission = $data['submission'];
-                $proportion_correct = floatval($submission->score->score);
-                $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                Log::info('Score: ' . $data['score']);
-                $data['submission'] = json_encode($data['submission']);
-                break;
-            default:
-                $response['message'] = 'That is not a valid technology.';
-                return $response;
+        if ($assignment->scoring_type === 'c') {
+            //give students just half the score if there's some type of upload
+            $open_ended_submission_type_factor = in_array($assignment_question->open_ended_submission_type, ['file','audio','text']) ? .5 : 1;
+            $data['score'] = floatval($assignment_question->points) * $open_ended_submission_type_factor;
+        } else {
+            switch ($data['technology']) {
+                case('h5p'):
+                    $submission = json_decode($data['submission']);
+                    $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
+                    break;
+                case('imathas'):
+                    $submission = $data['submission'];
+                    $proportion_correct = floatval($submission->score);
+                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
+                    $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
+                    break;
+                case('webwork'):
+                    // Log::info('case webwork');
+                    $submission = $data['submission'];
+                    $proportion_correct = floatval($submission->score->score);
+                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
+                    Log::info('Score: ' . $data['score']);
+                    $data['submission'] = json_encode($data['submission']);
+                    break;
+                default:
+                    $response['message'] = 'That is not a valid technology.';
+                    return $response;
+            }
         }
+
         $data['all_correct'] = $data['score'] >= floatval($assignment_question->points);//>= so I don't worry about decimals
 
         try {
@@ -173,22 +179,8 @@ class Submission extends Model
                     'submission_count' => 1]);
             }
             //update the score if it's supposed to be updated
-            switch ($assignment->scoring_type) {
-                case 'c':
-                    $num_submissions_by_assignment = DB::table('submissions')
-                        ->where('user_id', $data['user_id'])
-                        ->where('assignment_id', $assignment->id)
-                        ->count();
-                    if ((int)$num_submissions_by_assignment === count($assignment->questions)) {
-                        Score::updateOrCreate(['user_id' => $data['user_id'],
-                            'assignment_id' => $assignment->id],
-                            ['score' => 'c']);
-                    }
-                    break;
-                case 'p':
-                    $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type);
-                    break;
-            }
+            $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type);
+
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
             if (env('DB_DATABASE') === "test_libretext") {
                 $response['submission_id'] = $submission->id;
@@ -278,7 +270,7 @@ class Submission extends Model
         $results = DB::table('submission_files')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
-            ->whereIn('type', ['q','text'])
+            ->whereIn('type', ['q', 'text'])
             ->select('question_id', 'assignment_id')
             ->get();
         foreach ($results as $key => $value) {

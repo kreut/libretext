@@ -31,6 +31,7 @@ class AssignmentsIndex2Test extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
+            'order' => 1,
             'open_ended_submission_type' => 'file'
         ]);
 

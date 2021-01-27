@@ -49,12 +49,14 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
+            'order'=> 1,
             'open_ended_submission_type'=>'none'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
             'points' => $this->question_points_2,
+            'order'=>1,
             'open_ended_submission_type'=>'none'
         ]);;
 

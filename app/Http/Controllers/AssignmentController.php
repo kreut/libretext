@@ -70,7 +70,7 @@ class AssignmentController extends Controller
                 ->where('user_id', 0)
                 ->where('assignment_group', $assignment_group->assignment_group)
                 ->get();
-            if ( $default_assignment_group->isEmpty() && $imported_assignment_group->isEmpty()) {
+            if ($default_assignment_group->isEmpty() && $imported_assignment_group->isEmpty()) {
                 //don't have it in your course yet and it's not one of the default ones
                 $imported_assignment_group = $assignment_group->replicate();
                 $imported_assignment_group->course_id = $course->id;
@@ -84,7 +84,6 @@ class AssignmentController extends Controller
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
             $imported_assignment->save();
-
 
 
             if ($level === 'properties_and_questions') {
@@ -103,7 +102,7 @@ class AssignmentController extends Controller
                         ->first();
                     if ($assignment_question_learning_tree) {
                         DB::table('assignment_question_learning_tree')->insert([
-                            'assignment_question_id'=>$new_assignment_question_id,
+                            'assignment_question_id' => $new_assignment_question_id,
                             'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
                             'created_at' => Carbon::now(),
                             'updated_at' => Carbon::now()]);
@@ -381,11 +380,8 @@ class AssignmentController extends Controller
                     //for comparing I just want the UTC version
                     $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments_info[$key]['past_due'] = $due < time();
-                    if (isset($scores_by_assignment[$assignment->id])) {
-                        $assignments_info[$key]['score'] = $scores_by_assignment[$assignment->id];
-                    } else {
-                        $assignments_info[$key]['score'] = ($assignment->scoring_type === 'p') ? '0' : 'Incomplete';
-                    }
+                    $assignments_info[$key]['score'] = $scores_by_assignment[$assignment->id] ?? 0;
+                   
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
@@ -440,11 +436,7 @@ class AssignmentController extends Controller
 
     function getDefaultPointsPerQuestion(array $data)
     {
-        $default_points_per_question = null;
-        if ($data['source'] === 'a') {
-            $default_points_per_question = ($data['scoring_type'] === 'p') ? $data['default_points_per_question'] : 0;
-        }
-        return $default_points_per_question;
+        return $data['source'] === 'a' ? $data['default_points_per_question'] : null;
     }
 
     public function getStatus(string $available_from, string $due)
@@ -512,7 +504,7 @@ class AssignmentController extends Controller
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
-                    'external_source_points' => ($data['source'] === 'x' && $data['scoring_type'] === 'p') ? $data['external_source_points'] : null,
+                    'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'scoring_type' => $data['scoring_type'],

@@ -378,7 +378,6 @@ class AssignmentSyncQuestionController extends Controller
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                     'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
-            $this->updateAssignmentScoreBasedOnAddedQuestion($assignment, $question);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.  ';
@@ -397,18 +396,6 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updateAssignmentScoreBasedOnAddedQuestion(Assignment $assignment, Question $question)
-    {
-        switch ($assignment->scoring_type) {
-            case('p'):
-                //nothing to do
-                break;
-            case('c'):
-                DB::table('scores')->where('assignment_id', $assignment->id)->update(['score' => 'i']);
-                break;
-        }
-
-    }
 
     public function destroy(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
@@ -476,101 +463,36 @@ class AssignmentSyncQuestionController extends Controller
             ->select('user_id', 'score')
             ->get();
 
-        switch ($assignment->scoring_type) {
-            case('p'):
-                //just remove the one...
-                $submissions = DB::table('submissions')->where('question_id', $question->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->select('user_id', 'score')
-                    ->get();
-                $submissions_by_user_id = [];
-                foreach ($submissions as $submission) {
-                    $submissions_by_user_id[$submission->user_id] = $submission->score;
-                }
-                $submission_files = DB::table('submission_files')->where('question_id', $question->id)
-                    ->where('assignment_id', $assignment->id)
-                    ->where('score', '<>', null)
-                    ->select('user_id', 'score')
-                    ->get();
-                $submission_files_by_user_id = [];
-                foreach ($submission_files as $submission_file) {
-                    $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
-                }
-                foreach ($scores as $score) {
-                    $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
-                    $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
-                    $new_score = $score->score - $submission_file_score - $submission_score;
-                    DB::table('scores')->where('assignment_id', $assignment->id)
-                        ->where('user_id', $score->user_id)
-                        ->update(['score' => $new_score]);
-                }
-                break;
-            case('c'):
-                $submissions = DB::table('submissions')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', '<>', $question->id)
-                    ->select('user_id', 'question_id')
-                    ->get();
-                $submissions_by_user_and_question_id = [];
-                foreach ($submissions as $submission) {
-                    $submissions_by_user_and_question_id[$submission->user_id][$submission->question_id] = true;
-                }
-                $submission_files = DB::table('submission_files')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', '<>', $question->id)
-                    ->select('user_id', 'question_id')
-                    ->get();
-                $submission_files_by_user_and_question_id = [];
-                foreach ($submission_files as $submission_file) {
-                    $submission_files_by_user_and_question_id[$submission_file->user_id][$submission_file->question_id] = true;
-                }
-
-                $assignment_questions = DB::table('assignment_question')
-                    ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                    ->where('assignment_id', $assignment->id)
-                    ->where('question_id', '<>', $question->id)
-                    ->select(DB::raw('questions.id AS question_id'), 'assignment_question.open_ended_submission_type', 'questions.technology_iframe')
-                    ->get();
-                $assignment_questions_by_id = [];
-                foreach ($assignment_questions as $key => $assignment_question) {
-                    $assignment_questions_by_question_id[$assignment_question->question_id] = ['has_open_ended_submission' => (int)$assignment_question->open_ended_submission_type !== 0,
-                        'has_submission' => (bool)$assignment_question->technology_iframe];
-                }
-
-                foreach ($scores as $score) {
-                    $user_id = $score->user_id;
-                    $new_score = $this->getCompleteIncompleteScore($assignment_questions_by_id, $user_id, $submissions_by_user_and_question_id, $submission_files_by_user_and_question_id);
-
-                    DB::table('scores')->where('assignment_id', $assignment->id)
-                        ->where('user_id', $user_id)
-                        ->update(['score' => $new_score]);
-                }
-                break;
+        //just remove the one...
+        $submissions = DB::table('submissions')->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->select('user_id', 'score')
+            ->get();
+        $submissions_by_user_id = [];
+        foreach ($submissions as $submission) {
+            $submissions_by_user_id[$submission->user_id] = $submission->score;
         }
-
+        $submission_files = DB::table('submission_files')->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('score', '<>', null)
+            ->select('user_id', 'score')
+            ->get();
+        $submission_files_by_user_id = [];
+        foreach ($submission_files as $submission_file) {
+            $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
+        }
+        foreach ($scores as $score) {
+            $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
+            $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
+            $new_score = $score->score - $submission_file_score - $submission_score;
+            DB::table('scores')->where('assignment_id', $assignment->id)
+                ->where('user_id', $score->user_id)
+                ->update(['score' => $new_score]);
+        }
 
     }
 
-    /**
-     * @param array $assignment_questions_by_id
-     * @param int $user_id
-     * @param $submissions_by_user_and_question_id
-     * @param $submission_files_by_user_and_question_id
-     * @return string
-     */
-    public function getCompleteIncompleteScore(array $assignment_questions_by_id, int $user_id, $submissions_by_user_and_question_id, $submission_files_by_user_and_question_id)
-    {
-        $new_score = 'c';
-        foreach ($assignment_questions_by_id as $question_id => $assignment_question) {
-            if ($assignment_question['has_open_ended_submission'] && !isset($submission_files_by_user_and_question_id[$user_id][$question_id])) {
-                return 'i';
-            }
-            if ($assignment_question['has_submission'] && !isset($submissions_by_user_and_question_id[$user_id][$question_id])) {
-                return 'i';
-            }
-        }
-        return $new_score;
-    }
+
 
     public function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {

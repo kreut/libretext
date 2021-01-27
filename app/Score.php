@@ -51,7 +51,7 @@ class Score extends Model
         if ($assessment_type === 'delayed') {
             $submission_files = DB::table('submission_files')
                 ->where('assignment_id', $assignment_id)
-                ->whereIn('type', ['q', 'text','audio']) //'q', 'a', or 0
+                ->whereIn('type', ['q', 'text', 'audio']) //'q', 'a', or 0
                 ->whereIn('question_id', $question_ids)
                 ->where('user_id', $student_user_id)->get();
 
@@ -97,15 +97,7 @@ class Score extends Model
             $scores_released[$assignment->id] = $assignment->show_scores;
             $scoring_types[$assignment->id] = $assignment->scoring_type;
             $z_scores_by_assignment[$assignment->id] = 'N/A';
-            if ($assignment->scoring_type === 'p') {
-                $scores_by_assignment[$assignment->id] = ($assignment->show_scores)
-                    ? 0 : 'Not yet released';
-
-            } else {
-                $scores_by_assignment[$assignment->id] = 'Incomplete';
-
-            }
-
+            $scores_by_assignment[$assignment->id] = ($assignment->show_scores) ? 0 : 'Not yet released';
         }
         $scores = DB::table('scores')
             ->whereIn('assignment_id', $assignment_ids)
@@ -120,14 +112,11 @@ class Score extends Model
         foreach ($scores as $key => $value) {
             $assignment_id = $value->assignment_id;
             $score = $value->score;
-            if ($scoring_types[$assignment_id] === 'p') {
-                if ($scores_released[$assignment_id]) {
-                    $scores_by_assignment[$assignment_id] = $score;
-                    $z_scores_by_assignment[$assignment_id] = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
-                }
-            } else {
-                $scores_by_assignment[$assignment_id] = ($value->score === 'c') ? 'Complete' : 'Incomplete';
+            if ($scores_released[$assignment_id]) {
+                $scores_by_assignment[$assignment_id] = $score;
+                $z_scores_by_assignment[$assignment_id] = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
             }
+
         }
         return [$scores_by_assignment, $z_scores_by_assignment];
 

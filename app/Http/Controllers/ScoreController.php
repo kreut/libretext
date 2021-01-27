@@ -193,13 +193,10 @@ class ScoreController extends Controller
                 $columns = [];
                 $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
                 foreach ($assignments as $assignment) {
-                    $default_score = ($assignment->scoring_type === 'p') ? 0 : 'Incomplete';
+                    $default_score = 0;
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
                     if (isset($extensions[$user_id][$assignment->id])) {
                         $score .= ' (E)';
-                    }
-                    if ($assignment->scoring_type === 'c') {
-                        $score = ($score === 'c') ? 'Complete' : 'Incomplete';//easier to read
                     }
                     $columns[$assignment->id] = $score;
                     $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
@@ -324,7 +321,7 @@ class ScoreController extends Controller
                 ->select('question_id', 'points')
                 ->get();
             $total_points = 0;
-            foreach ($points as $key=>$value){
+            foreach ($points as $key => $value) {
                 $total_points += $value->points;
                 $total_points_by_question_id[$value->question_id] = $value->points;
             }
@@ -336,25 +333,19 @@ class ScoreController extends Controller
                 $columns = [];
                 $assignment_score = 0;
                 foreach ($questions as $question) {
-                    switch ($assignment->scoring_type) {
-                        case('p'):
-                            $score = 0;
-                            $score = $score
-                                + ($submission_scores[$user_id][$question->id] ?? 0)
-                                + ($file_submission_scores[$user_id][$question->id] ?? 0);
-                            break;
-                        case('c'):
-                          $response['message'] = "Please contact us!  This page is not yet set up for Complete/Incomplete type assignments";
-                          return $response;
-                    }
+                    $score = 0;
+                    $score = $score
+                        + ($submission_scores[$user_id][$question->id] ?? 0)
+                        + ($file_submission_scores[$user_id][$question->id] ?? 0);
+
                     $columns[$question->id] = $score;
                     $assignment_score += $score;
                 }
                 $columns['name'] = $enrolled_users[$user_id];
                 if ($total_points) {
                     $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
-                    $columns['total_points'] =  $assignment_score;
-                                }
+                    $columns['total_points'] = $assignment_score;
+                }
                 $columns['userId'] = $user_id;
                 $rows[] = $columns;
 
@@ -382,11 +373,10 @@ class ScoreController extends Controller
                 array_push($fields, ['key' => 'total_points',
                     'sortable' => true,
                     'isRowHeader' => true]);
-                array_push($fields,  ['key' => 'percent_correct',
+                array_push($fields, ['key' => 'percent_correct',
                     'sortable' => true,
                     'isRowHeader' => true]);
             }
-
 
 
             $response['type'] = 'success';
@@ -559,8 +549,7 @@ class ScoreController extends Controller
             return $response;
         }
 
-        switch (Assignment::find($assignment->id)->scoring_type) {
-            case('p'):
+
                 $validator = Validator::make($request->all(), [
                     'score' => 'required|numeric|min:0|not_in:0'
                 ]);
@@ -569,16 +558,8 @@ class ScoreController extends Controller
                     $response['message'] = $validator->errors()->first('score');
                     return $response;
                 }
-                break;
-
-            case('c'):
-                //nothing to validate
 
 
-                break;
-
-
-        }
 
         try {
 

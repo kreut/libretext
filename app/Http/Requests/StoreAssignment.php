@@ -46,17 +46,16 @@ class StoreAssignment extends FormRequest
             'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
-            'default_open_ended_submission_type' => Rule::in(['file', 'text','audio', 0]),
+            'default_open_ended_submission_type' => Rule::in(['file', 'text', 'audio', 0]),
         ];
-        if ($this->scoring_type === 'p') {
-            switch ($this->source) {
-                case('a'):
-                    $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
-                    break;
-                case('x'):
-                    $rules['external_source_points'] = 'required|integer|min:0|max:200';
-                    break;
-            }
+        switch ($this->source) {
+            case('a'):
+                $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
+                break;
+            case('x'):
+                $rules['external_source_points'] = 'required|integer|min:0|max:200';
+                break;
+
         }
         if ($this->assessment_type === 'learning tree') {
             $rules['min_time_needed_in_learning_tree'] = 'required|integer|min:0|max:20';
@@ -74,8 +73,8 @@ class StoreAssignment extends FormRequest
         if ($this->late_policy !== 'not accepted') {
             $rules['late_policy_deadline'] = new IsADateLaterThan($this->due, 'due', 'late policy deadline');
         }
-        if ($this->scoring_type === 'c'){
-          $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy), new isValidAssesmentTypeForScoringType($this->assessment_type)];
+        if ($this->scoring_type === 'c') {
+            $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy), new isValidAssesmentTypeForScoringType($this->assessment_type)];
 
         }
 

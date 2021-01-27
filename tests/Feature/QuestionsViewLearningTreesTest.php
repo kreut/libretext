@@ -39,6 +39,7 @@ class QuestionsViewLearningTreesTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'open_ended_submission_type' => 'none',
+            'order'=> 1,
             'points' => 10
         ]);
 

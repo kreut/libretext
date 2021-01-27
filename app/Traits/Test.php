@@ -39,6 +39,7 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question()->id,
+            'order' =>1,
             'open_ended_submission_type' => 'none',
             'points' => 2
         ]);
@@ -65,6 +66,7 @@ trait Test
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order' =>1,
             'points' => 10
         ]);
 
@@ -72,6 +74,7 @@ trait Test
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order' =>1,
             'points' => 20
         ]);
 
@@ -96,6 +99,7 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order' =>1,
             'points' => 1
         ]);
 
@@ -103,6 +107,7 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order'=>1,
             'points' => 2
         ]);
 
@@ -128,6 +133,7 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order' =>1,
             'points' => 50
         ]);
 
@@ -136,6 +142,7 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
+            'order'=>1,
             'points' => 50
         ]);
 

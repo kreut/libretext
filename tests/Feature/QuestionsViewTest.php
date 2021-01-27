@@ -39,14 +39,16 @@ class QuestionsViewTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => $this->question_points,
+            'order' => 1,
             'open_ended_submission_type' => 'file'
         ]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
             'points' => $this->question_points,
+            'order' => 1,
             'open_ended_submission_type' => 'file'
-        ]);;
+        ]);
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -72,6 +74,51 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+    /** @test */
+
+    public function student_gets_half_credit_if_incorrect_for_complete_incomplete_assignment()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $question_points = 20;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $question_points, 'open_ended_submission_type' => 'file']);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $assignment_score = DB::table('scores')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->first()
+            ->score;
+        $this->assertEquals($assignment_score, .5* $question_points);
+
+    }
+
+
+    /** @test */
+
+    public function student_gets_full_credit_if_incorrect_for_complete_incomplete_assignment()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $question_points = 20;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $question_points, 'open_ended_submission_type' => 0]);
+
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $assignment_score = DB::table('scores')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->first()
+            ->score;
+        $this->assertEquals($assignment_score, $question_points);
+
+    }
+
+
 
     /** @test */
     public function removes_submission_files_if_question_removed()
@@ -80,16 +127,16 @@ class QuestionsViewTest extends TestCase
         //submitted the first one
         $data = [
             'type' => 'q',
-            'user_id'=>$this->student_user->id,
+            'user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'submission' => 'fake_1.pdf',
             'original_filename' => 'orig_fake_1.pdf',
             'date_submitted' => Carbon::now()];
-            SubmissionFile::create($data);
-            $data['question_id'] = $this->question_2->id;
+        SubmissionFile::create($data);
+        $data['question_id'] = $this->question_2->id;
 
-            //submitted the second one
+        //submitted the second one
         SubmissionFile::create($data);
 
         //remove the first one
@@ -103,9 +150,10 @@ class QuestionsViewTest extends TestCase
             ->where('user_id', $this->student_user->id)
             ->get();
 
-        $this->assertEquals(count($num_submissions_before_delete)-1, count($num_submissions_after_delete));
+        $this->assertEquals(count($num_submissions_before_delete) - 1, count($num_submissions_after_delete));
 
     }
+
     /** @test */
     public function removes_submissions_if_question_removed()
     {
@@ -128,19 +176,20 @@ class QuestionsViewTest extends TestCase
             'submission' => $this->submission_object]);
         //remove the first one
         $num_submissions_before_delete = Submission::where('assignment_id', $this->assignment->id)
-                            ->where('user_id', $this->student_user->id)
-        ->get();
+            ->where('user_id', $this->student_user->id)
+            ->get();
 
-       $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
+        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
         //should give back score of complete
         $num_submissions_after_delete = Submission::where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
             ->get();
 
-        $this->assertEquals(count($num_submissions_before_delete)-1, count($num_submissions_after_delete));
+        $this->assertEquals(count($num_submissions_before_delete) - 1, count($num_submissions_after_delete));
 
     }
-        /** @test */
+
+    /** @test */
     public function correctly_computes_the_z_score_for_a_file_submission()
     {
 
@@ -179,17 +228,17 @@ class QuestionsViewTest extends TestCase
         ];
 
         $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
-       $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
+        $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
 
     }
 
-/** @test */
+    /** @test */
 
-public function non_owner_cannot_start_a_clicker_assessment()
-{
-    $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment")
-        ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
-}
+    public function non_owner_cannot_start_a_clicker_assessment()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment")
+            ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
+    }
 
     /** @test */
 
@@ -212,11 +261,11 @@ public function non_owner_cannot_start_a_clicker_assessment()
     {
 
         Solution::create([
-            'user_id'=> $this->user->id,
-            'type'=> 'audio',
-            'file'=> 'some_file.mpg',
+            'user_id' => $this->user->id,
+            'type' => 'audio',
+            'file' => 'some_file.mpg',
             'original_filename' => 'blah blah',
-            'assignment_id'=>$this->assignment->id,
+            'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id]);
         $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
             ['solution_text' => 'some text',
@@ -226,28 +275,26 @@ public function non_owner_cannot_start_a_clicker_assessment()
     }
 
 
-
-
     /** @test */
 
     public function audio_must_exist_before_submitting_solution_text()
     {
         $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
-               ['solution_text' => 'My super cool text']
+            ['solution_text' => 'My super cool text']
         )->assertJsonValidationErrors('solution_text');
 
-}
+    }
 
     /** @test */
 
     public function solution_text_must_not_be_empty()
     {
         Solution::create([
-            'user_id'=> $this->user->id,
-            'type'=> 'q',
-            'file'=> 'some_file.pdf',
+            'user_id' => $this->user->id,
+            'type' => 'q',
+            'file' => 'some_file.pdf',
             'original_filename' => 'blah blah',
-            'assignment_id'=>$this->assignment->id,
+            'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id]);
 
         $this->actingAs($this->user)->postJson("/api/solutions/text/{$this->assignment->id}/{$this->question->id}",
@@ -256,35 +303,6 @@ public function non_owner_cannot_start_a_clicker_assessment()
 
     }
 
-
-
-
-    /** @test */
-    public function change_incomplete_to_complete_if_completed_all_questions_but_removed_one()
-    {
-
-        //give score of incomplete
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        Score::create(['user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'score' => 'i']);
-        //submitted the first one
-        Submission::create(['assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' => 5,
-            'submission_count' => 1,
-            'answered_correctly_at_least_once' => false,
-            'submission' => $this->submission_object]);
-        //remove assessment which they didn't submit anything
-        $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question_2->id}");
-        //should give back score of complete
-        $new_score = Score::where('user_id', $this->student_user->id)->where('assignment_id', $this->assignment->id)->first()->score;
-
-        $this->assertEquals('c', $new_score);
-
-    }
 
     /** @test */
     public function complete_should_stay_complete_if_completed_all_questions_but_removed_one()
@@ -452,7 +470,6 @@ public function non_owner_cannot_start_a_clicker_assessment()
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)->assertStatus(422);
 
     }
-
 
 
     /** @test */

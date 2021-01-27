@@ -337,7 +337,7 @@
         <div class="mb-3">
           <b-container>
             <b-col>
-              <div v-if="source === 'a' && scoring_type === 'p' && !inIFrame ">
+              <div v-if="source === 'a' && !inIFrame ">
                 <div v-if="assessmentType !== 'clicker'" class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
@@ -422,15 +422,13 @@
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
-                  <div v-if="(scoring_type === 'p')">
-                    <div v-if="user.role === 3 && showScores && isOpenEnded">
-                      <p>
-                        You achieved a total score of
-                        {{ questions[currentPage - 1].total_score * 1 }}
-                        out of a possible
-                        {{ questions[currentPage - 1].points * 1 }} points.
-                      </p>
-                    </div>
+                  <div v-if="user.role === 3 && showScores && isOpenEnded">
+                    <p>
+                      You achieved a total score of
+                      {{ questions[currentPage - 1].total_score * 1 }}
+                      out of a possible
+                      {{ questions[currentPage - 1].points * 1 }} points.
+                    </p>
                   </div>
                 </div>
                 <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
@@ -454,7 +452,7 @@
 
           <b-modal v-model="showAssignmentStatisticsModal" size="xl" title="Question Level Statistics">
             <b-container>
-              <b-row v-if="(scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 3">
+              <b-row v-if="showAssignmentStatistics && loaded && user.role === 3">
                 <b-col>
                   <b-card header="default" header-html="<h5>Summary</h5>">
                     <b-card-text>
@@ -754,7 +752,7 @@
               </div>
             </b-col>
             <b-col
-              v-if="assessmentType !== 'clicker' && (scoring_type === 'p') && showAssignmentStatistics && loaded && user.role === 2"
+              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
               cols="4"
             >
               <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
@@ -809,7 +807,7 @@
                     <span class="font-weight-bold">Last response:</span> {{
                       questions[currentPage - 1].student_response
                     }}<br>
-                    <div v-if="(scoring_type === 'p') && showScores">
+                    <div v-if="showScores">
                       <span class="font-weight-bold">Score:</span> {{
                         questions[currentPage - 1].submission_score
                       }}<br>
@@ -1186,7 +1184,7 @@ export default {
       return false
     }
 
-    this.questionCol = (this.user.role === 2 && this.scoring_type === 'c') || (this.assessmentType === 'clicker') ? 12 : 8
+    this.questionCol = (this.user.role === 2) || (this.assessmentType === 'clicker') ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
