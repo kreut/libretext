@@ -34,6 +34,14 @@
         Scores and solutions are not automatically released. This type of assessment works well
         for open-ended questions.
       </b-tooltip>
+      <b-tooltip target="complete/incomplete"
+                 delay="250"
+      >
+        Students are given full credit for automatically graded submissions as long as they submit something.
+        Open-ended submissions are manually graded.  For questions with both automatically
+        graded and open-ended submissions, students are awarded half of the points as long as they submit something
+        for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
+      </b-tooltip>
 
       <b-tooltip target="real_time"
                  delay="250"
@@ -245,14 +253,15 @@
               <b-form-radio value="p">Points</b-form-radio></span>
             <span @click="canSwitchToCompleteIncomplete">
               <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-                <b-form-radio value="c">Complete/Incomplete</b-form-radio>
+                <b-form-radio value="c">Complete/Incomplete <span id="complete/incomplete" class="text-muted"><b-icon
+                  icon="question-circle"
+                /></span></b-form-radio>
               </span>
             </span>
           </b-form-radio-group>
         </b-form-group>
         <div v-show="form.source === 'a'">
           <b-form-group
-            v-show="form.scoring_type === 'p'"
             id="default_points_per_question"
             label-cols-sm="4"
             label-cols-lg="3"
@@ -416,7 +425,7 @@
         </b-form-group>
       </div>
       <b-form-group
-        v-show="form.scoring_type === 'p' && form.assessment_type === 'delayed' && form.source === 'a'"
+        v-show="form.assessment_type === 'delayed' && form.source === 'a'"
         id="default_open_ended_submission_type"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -582,7 +591,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        v-show="form.source === 'x' && form.scoring_type === 'p'"
+        v-show="form.source === 'x'"
         id="total_points"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -727,15 +736,6 @@ export default {
       }
     },
     canSwitchToCompleteIncomplete (event) {
-      event.preventDefault()
-      this.$noty.info('This option is currently unavailable.')
-      return false
-      if (this.form.late_policy !== 'not accepted') {
-        event.preventDefault()
-        this.$noty.info('If you would like a Complete/Incomplete Scoring Type, please choose "Do not accept late" as your Late Policy.  You will still be able to grant individual extensions.', {
-          timeout: 10000 })
-        return false
-      }
       if (this.form.assessment_type === 'learning tree') {
         event.preventDefault()
         this.$noty.info('Learning Tree assessments types must have a Scoring Type of "Points".')
@@ -746,11 +746,6 @@ export default {
       if (this.form.assessment_type === 'clicker') {
         event.preventDefault()
         this.$noty.info('Clicker assessments can only have the Late Policy of "Do not accept late".')
-        return false
-      }
-      if (this.form.scoring_type === 'c') {
-        event.preventDefault()
-        this.$noty.info('If you would like a Late Policy other than "Do not accept late, please change your Scoring Type to points.')
         return false
       }
       this.form.late_deduction_percent = null
@@ -893,9 +888,7 @@ export default {
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
       this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
-      this.form.external_source_points = (assignment.source === 'x' && assignment.scoring_type === 'p')
-        ? assignment.external_source_points
-        : ''
+      this.form.external_source_points = assignment.source === 'x' ? assignment.external_source_points : ''
       this.$bvModal.show('modal-assignment-properties')
     },
     submitAssignmentInfo (bvModalEvt) {
