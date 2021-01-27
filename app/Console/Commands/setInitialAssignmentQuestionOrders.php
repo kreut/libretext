@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Assignment;
 use App\AssignmentSyncQuestion;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -39,20 +40,20 @@ class setInitialAssignmentQuestionOrders extends Command
      */
     public function handle()
     {
-        $assignments = DB::table('assignments')->get();
+        $assignments = Assignment::all();
         DB::beginTransaction();
         $assignmentSyncQuestion = new AssignmentSyncQuestion();
         foreach ($assignments as $assignment) {
             $assignment_questions = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
-                ->orderBy('assignment_question_id')
+                ->orderBy('id')
                 ->get();
             if ($assignment_questions) {
                 $ordered_questions = [];
                 foreach ($assignment_questions as $assignment_question) {
                     $ordered_questions[] = $assignment_question->question_id;
                 }
-                $assignmentSyncQuestion->orderQuestions($ordered_questions, $assignment->id);
+                $assignmentSyncQuestion->orderQuestions($ordered_questions, $assignment);
             }
         }
         DB::commit();

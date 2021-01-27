@@ -177,12 +177,13 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/clicker-question', 'AssignmentSyncQuestionController@getClickerQuestion');
 
 
+
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');
     Route::patch('/assignments/{assignment}/questions/{question}/update-points', 'AssignmentSyncQuestionController@updatePoints');
+    Route::patch('/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');
 
 
 
-Route::patch('/api/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');
 
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
 

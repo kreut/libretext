@@ -60,7 +60,7 @@ class AssignmentSyncQuestionController extends Controller
     public function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
-        $authorized = Gate::inspect('order', $assignment);
+        $authorized = Gate::inspect('order', [$assignmentSyncQuestion, $assignment]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -68,7 +68,6 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
-            $ordered_questions = $request->ordered_questions;
             DB::beginTransaction();
             $assignmentSyncQuestion->orderQuestions($request->ordered_questions, $assignment);
             DB::commit();
@@ -205,7 +204,10 @@ class AssignmentSyncQuestionController extends Controller
         try {
 
             //Get all assignment questions Question Upload, Solution, Number of Points
-            $assignment_questions = DB::table('assignment_question')->where('assignment_id', $assignment->id)->get();
+            $assignment_questions = DB::table('assignment_question')
+                                ->where('assignment_id', $assignment->id)
+                                ->orderBy('order')
+                                ->get();
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
                 $question_ids[] = $value->question_id;
@@ -262,6 +264,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['clicker_status'] = [];
             $assignment_question_info = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
                 ->get();
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {

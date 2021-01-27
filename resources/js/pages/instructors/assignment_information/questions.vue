@@ -113,16 +113,11 @@ export default {
     async saveNewOrder () {
       let orderedQuestions = []
       for (let i = 0; i < this.items.length; i++) {
-        orderedQuestions.push(this.items[i].id)
+        orderedQuestions.push(this.items[i].question_id)
       }
       try {
-        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/order`, { ordered_questions: orderedQuestions })
-        this.isLoading = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        console.log(data)
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/order`, { ordered_questions: orderedQuestions })
+        this.$noty[data.type](data.message)
       } catch (error) {
         this.$noty.error(error.message)
       }

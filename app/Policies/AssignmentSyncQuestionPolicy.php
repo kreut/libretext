@@ -14,6 +14,13 @@ class AssignmentSyncQuestionPolicy
 {
     use HandlesAuthorization;
 
+    public function order(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment){
+
+        return (int) $assignment->course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed to order the questions for this assignment.');
+
+    }
 
     /**
      * @param User $user
