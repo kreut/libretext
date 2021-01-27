@@ -99,7 +99,7 @@ trait GeneralSubmissionPolicy
                 if (in_array($assignment->late_policy, ['deduction', 'marked late'])) {
                     //now let's check the late policy deadline
                     //if past policy deadline
-                    if (strtotime($assignment->late_policy_deadline) < time()) {
+                    if (strtotime($assignment->final_submission_deadline) < time()) {
                         $response['message'] = 'No more late responses are being accepted.';
                         return $response;
                     }

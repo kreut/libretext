@@ -235,7 +235,7 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function late_policy_deadline_must_be_valid()
+    public function final_submission_deadline_must_be_valid()
     {
 
 

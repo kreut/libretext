@@ -34,7 +34,7 @@ class StoreAssignment extends FormRequest
 
         $this->merge(['due' => $this->due_date . ' ' . $this->due_time]);
         $this->merge(['available_from' => $this->available_from_date . ' ' . $this->available_from_time]);
-        $this->merge(['late_policy_deadline' => $this->late_policy_deadline_date . ' ' . $this->late_policy_deadline_time]);
+        $this->merge(['final_submission_deadline' => $this->final_submission_deadline_date . ' ' . $this->final_submission_deadline_time]);
 
         $rules = [
             'name' => ['required', 'max:255'],
@@ -71,7 +71,7 @@ class StoreAssignment extends FormRequest
             $rules['late_deduction_application_period'] = new IsValidPeriodOfTime();
         }
         if ($this->late_policy !== 'not accepted') {
-            $rules['late_policy_deadline'] = new IsADateLaterThan($this->due, 'due', 'late policy deadline');
+            $rules['final_submission_deadline'] = new IsADateLaterThan($this->due, 'due', 'late policy deadline');
         }
         if ($this->scoring_type === 'c') {
             $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy), new isValidAssesmentTypeForScoringType($this->assessment_type)];

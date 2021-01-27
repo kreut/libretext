@@ -381,19 +381,19 @@ class AssignmentController extends Controller
                     $assignments_info[$key]['is_available'] = strtotime($available_from) < time();
                     $assignments_info[$key]['past_due'] = $due < time();
                     $assignments_info[$key]['score'] = $scores_by_assignment[$assignment->id] ?? 0;
-                   
+
                     $assignments_info[$key]['z_score'] = $z_scores_by_assignment[$assignment->id];
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                 } else {
 
                     $due = $assignment['due'];
-                    $late_policy_deadline = $assignment['late_policy_deadline'];
+                    $final_submission_deadline = $assignment['final_submission_deadline'];
 
                     $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
                     $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
                     //for the editing form
-                    $editing_form_items = $this->getEditingFormItems($available_from, $due, $late_policy_deadline, $assignment);
+                    $editing_form_items = $this->getEditingFormItems($available_from, $due, $final_submission_deadline, $assignment);
                     foreach ($editing_form_items as $editing_form_key => $value) {
                         $assignments_info[$key][$editing_form_key] = $value;
                     }
@@ -418,14 +418,14 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function getEditingFormItems(string $available_from, string $due, $late_policy_deadline, Assignment $assignment)
+    public function getEditingFormItems(string $available_from, string $due, $final_submission_deadline, Assignment $assignment)
     {
         $editing_form_items = [];
         $editing_form_items['status'] = $this->getStatus($available_from, $due);
         $editing_form_items['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
         $editing_form_items['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-        $editing_form_items['late_policy_deadline_date'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($late_policy_deadline, Auth::user()->time_zone) : null;
-        $editing_form_items['late_policy_deadline_time'] = $late_policy_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($late_policy_deadline, Auth::user()->time_zone) : null;
+        $editing_form_items['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
+        $editing_form_items['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
         $editing_form_items['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
         $editing_form_items['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
         $editing_form_items['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
@@ -514,7 +514,7 @@ class AssignmentController extends Controller
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
                     'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
-                    'late_policy_deadline' => $this->getLatePolicyDeadeline($request),
+                    'final_submission_deadline' => $this->getFinalSubmissionDeadline($request),
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id
@@ -731,7 +731,7 @@ class AssignmentController extends Controller
             foreach ($formatted_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
-            $editing_form_items = $this->getEditingFormItems($assignment->available_from, $assignment->due, $assignment->late_policy_deadline, $assignment);
+            $editing_form_items = $this->getEditingFormItems($assignment->available_from, $assignment->due, $assignment->final_submission_deadline, $assignment);
             foreach ($editing_form_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
@@ -748,8 +748,8 @@ class AssignmentController extends Controller
     public function formatLatePolicy($assignment)
     {
         $late_policy = '';
-        $late_policy_deadline = ($assignment->late_policy !== 'not accepted')
-            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->late_policy_deadline, Auth::user()->time_zone)
+        $final_submission_deadline = ($assignment->late_policy !== 'not accepted')
+            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assignment->final_submission_deadline, Auth::user()->time_zone)
             : '';
         switch ($assignment->late_policy) {
             case('not accepted'):
@@ -767,7 +767,7 @@ class AssignmentController extends Controller
                 break;
         }
         if ($assignment->late_policy !== 'not accepted') {
-            $late_policy .= "  Students cannot submit assessments later than $late_policy_deadline.";
+            $late_policy .= "  Students cannot submit assessments later than $final_submission_deadline.";
         }
 
         return $late_policy;
@@ -820,7 +820,7 @@ class AssignmentController extends Controller
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
 
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
-            $data['late_policy_deadline'] = $this->getLatePolicyDeadeline($request);
+            $data['final_submission_deadline'] = $this->getFinalSubmissionDeadline($request);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             unset($data['available_from_date']);
             unset($data['available_from_time']);
@@ -899,9 +899,9 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function getLatePolicyDeadeline($request)
+    public function getFinalSubmissionDeadline($request)
     {
-        return $request->late_policy !== 'not accepted' ? $this->convertLocalMysqlFormattedDateToUTC($request->late_policy_deadline_date . ' ' . $request->late_policy_deadline_time, Auth::user()->time_zone) : null;
+        return $request->late_policy !== 'not accepted' ? $this->convertLocalMysqlFormattedDateToUTC($request->final_submission_deadline_date . ' ' . $request->final_submission_deadline_time, Auth::user()->time_zone) : null;
     }
 
     public function formatDateFromRequest($date, $time)

@@ -622,7 +622,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->late_deduction_percent = 10;
         $now = Carbon::now('UTC');
         $this->assignment->due = $now->subHour(1)->subMinute(2)->toDateTimeString();//was due an hour and 2 minutes ago -- should penalize 20%
-        $this->assignment->late_policy_deadline = $now->addHour(5)->toDateTimeString();
+        $this->assignment->final_submission_deadline = $now->addHour(5)->toDateTimeString();
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $submission = Submission::where('assignment_id', $this->assignment->id)
@@ -644,7 +644,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->late_deduction_percent = 50;
         $now = Carbon::now('UTC');
         $this->assignment->due = $now->subHour(1)->toDateTimeString();//was due an hour ago.
-        $this->assignment->late_policy_deadline = $now->addHour(1)->toDateTimeString();
+        $this->assignment->final_submission_deadline = $now->addHour(1)->toDateTimeString();
         $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
@@ -696,11 +696,11 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_late_policy_deadline()
+    public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_final_submission_deadline()
     {
         $this->assignment->due = "2020-12-10 09:00:00";
         $this->assignment->late_policy = 'marked late';
-        $this->assignment->late_policy_deadline = "2021-03-05 09:00:00";
+        $this->assignment->final_submission_deadline = "2021-03-05 09:00:00";
         $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
@@ -714,11 +714,11 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_late_policy_deadline()
+    public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_final_submission_deadline()
     {
         $this->assignment->due = "2020-12-10 09:00:00";
         $this->assignment->late_policy = 'marked late';
-        $this->assignment->late_policy_deadline = "2020-12-11 09:00:00";
+        $this->assignment->final_submission_deadline = "2020-12-11 09:00:00";
         $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)

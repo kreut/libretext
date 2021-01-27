@@ -39,7 +39,7 @@ class AssignmentsPropertiesTest extends TestCase
         $this->assignment->late_policy = 'deduction';
         $this->assignment->late_deduction_application_period = '2 hours';
         $this->assignment->late_deduction_percent = 20;
-        $this->assignment->late_policy_deadline = '2027-06-12 02:00:00';
+        $this->assignment->final_submission_deadline = '2027-06-12 02:00:00';
         $this->assignment->save();
 
         $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied every 2 hours to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
@@ -53,7 +53,7 @@ class AssignmentsPropertiesTest extends TestCase
         $this->assignment->late_policy = 'deduction';
         $this->assignment->late_deduction_application_period = 'once';
         $this->assignment->late_deduction_percent = 20;
-        $this->assignment->late_policy_deadline = '2027-06-12 02:00:00';
+        $this->assignment->final_submission_deadline = '2027-06-12 02:00:00';
         $this->assignment->save();
 
         $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied once to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
