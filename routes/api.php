@@ -63,6 +63,10 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+
+    Route::patch('notifications/assignments', 'NotificationController@update');
+
+
     Route::patch('/course-access-codes', 'CourseAccessCodeController@update');
 
     Route::patch('/final-grades/letter-grades/{course}', 'FinalGradeController@update');

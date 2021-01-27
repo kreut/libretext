@@ -1,8 +1,6 @@
 <template>
   <card :title="$t('your_password')">
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
-      <alert-success :form="form" :message="$t('password_updated')" />
-
       <!-- Password -->
       <div class="form-group row">
         <label class="col-md-3 col-form-label text-md-right">{{ $t('new_password') }}</label>
@@ -22,12 +20,11 @@
       </div>
 
       <!-- Submit Button -->
-      <div class="form-group row">
-        <div class="col-md-9 ml-md-auto">
-          <v-button :loading="form.busy" type="success">
-            {{ $t('update') }}
-          </v-button>
-        </div>
+      <hr>
+      <div class="float-right">
+        <b-button variant="primary" @click="update">
+          {{ $t('update') }}
+        </b-button>
       </div>
     </form>
   </card>
@@ -52,9 +49,14 @@ export default {
 
   methods: {
     async update () {
-      await this.form.patch('/api/settings/password')
-
-      this.form.reset()
+      try {
+        const { data } = await this.form.patch('/api/settings/password')
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
     }
   }
 }
