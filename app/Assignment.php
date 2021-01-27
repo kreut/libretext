@@ -12,7 +12,10 @@ class Assignment extends Model
 
     public function questions()
     {
-        return $this->belongsToMany('App\Question')->withTimestamps();
+        return $this->belongsToMany('App\Question', 'assignment_question')
+                ->withPivot('order')
+                ->orderBy('assignment_question.order')
+                ->withTimestamps();
     }
 
 

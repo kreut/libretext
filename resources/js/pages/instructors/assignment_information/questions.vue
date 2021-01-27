@@ -72,6 +72,7 @@ export default {
     draggable
   },
   data: () => ({
+    currentOrderedQuestions: [],
     items: [],
     isLoading: true
   }),
@@ -92,6 +93,16 @@ export default {
       for (let i = 0; i < this.items.length; i++) {
         orderedQuestions.push(this.items[i].question_id)
       }
+
+      let noChange = true
+      for (let i = 0; i < this.currentOrderedQuestions.length; i++) {
+        if (this.currentOrderedQuestions[i] !== this.items[i]) {
+          noChange = false
+        }
+      }
+      if (noChange) {
+        return false
+      }
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/order`, { ordered_questions: orderedQuestions })
         this.$noty[data.type](data.message)
@@ -99,6 +110,7 @@ export default {
           for (let i = 0; i < this.items.length; i++) {
             this.items[i].order = i + 1
           }
+          this.currentOrderedQuestions = this.items
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -118,6 +130,9 @@ export default {
           return false
         }
         this.items = data.rows
+        for (let i = 0; i < this.items.length; i++) {
+          this.currentOrderedQuestions.push(this.items[i].question_id)
+        }
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

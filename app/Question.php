@@ -278,6 +278,7 @@ class Question extends Model
             $question = Question::updateOrCreate(
                 ['page_id' => $page_id, 'library' => $library],
                 ['technology' => $technology,
+                    'title' => null, //I'll get the title when the question is re-loaded
                     'non_technology' => $has_non_technology,
                     'technology_iframe' => $technology_iframe
                 ]);
