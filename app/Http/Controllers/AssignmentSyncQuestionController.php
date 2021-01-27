@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
+use App\Libretext;
 use App\Rules\IsValidPeriodOfTime;
 use App\Solution;
 use App\Traits\LibretextFiles;
@@ -205,9 +206,11 @@ class AssignmentSyncQuestionController extends Controller
 
             //Get all assignment questions Question Upload, Solution, Number of Points
             $assignment_questions = DB::table('assignment_question')
-                                ->where('assignment_id', $assignment->id)
-                                ->orderBy('order')
-                                ->get();
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
+                ->select('assignment_question.*','questions.library','questions.page_id', 'questions.title',DB::raw('questions.id AS question_id'))
+                ->get();
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
                 $question_ids[] = $value->question_id;
@@ -217,21 +220,28 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('user_id', Auth::user()->id)
                 ->get();
 
+
             $assignment_solutions_by_question_id = [];
             $rows = [];
             foreach ($assignment_solutions as $key => $value) {
                 $assignment_solutions_by_question_id[$value->question_id] = $value->original_filename;
             }
-            $i = 1;
+
             foreach ($assignment_questions as $key => $value) {
                 $columns = [];
+                $columns['title']= $value->title;
+                if (!$value->title) {
+                    $Libretext = new Libretext(['library' => $value->library]);
+                    $contents = $Libretext->getContentsByPageId($value->page_id);
+                    $columns['title'] = $contents['@title'] ?? 'None';
+                    Question::where('id', $value->question_id)->update(['title' => $columns['title']]);
+                }
                 $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? $value->open_ended_submission_type : 'N/A';
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
-                $columns['question_number'] = "Q$i";
+                $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
                 $rows[] = $columns;
-                $i++;
             }
 
             $response['type'] = 'success';

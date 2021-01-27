@@ -16,7 +16,10 @@
             <thead>
               <tr>
                 <th scope="col">
-                  Question Number
+                  Order
+                </th>
+                <th scope="col">
+                  Title
                 </th>
                 <th scope="col">
                   Open Ended Submission Type
@@ -33,8 +36,9 @@
               <tr v-for="item in items" :key="item.id">
                 <td>
                   <b-icon icon="list" />
-                  <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.question_number }}</a>
+                  {{ item.order }}
                 </td>
+                <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
                 <td>
                   {{ item.open_ended_submission_type }}
                 </td>
@@ -43,21 +47,6 @@
               </tr>
             </tbody>
           </table>
-        </div>
-        <div v-if="items.length">
-          <b-table
-            striped
-            hover
-            :no-border-collapse="true"
-            :fields="fields"
-            :items="items"
-          >
-            <template v-slot:cell(question_number)="data">
-              <div class="mb-0">
-                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">{{ data.item.question_number }}</a>
-              </div>
-            </template>
-          </b-table>
         </div>
         <div v-else>
           <b-alert variant="warning" show>
@@ -83,18 +72,6 @@ export default {
     draggable
   },
   data: () => ({
-    fields: [
-      {
-        key: 'question_number',
-        label: 'Question'
-      },
-      {
-        key: 'open_ended_submission_type',
-        label: 'Open Ended Submission Type'
-      },
-      'points',
-      'solution'
-    ],
     items: [],
     isLoading: true
   }),
@@ -118,6 +95,11 @@ export default {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/order`, { ordered_questions: orderedQuestions })
         this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          for (let i = 0; i < this.items.length; i++) {
+            this.items[i].order = i + 1
+          }
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
