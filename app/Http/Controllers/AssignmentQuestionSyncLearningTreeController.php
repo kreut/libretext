@@ -42,6 +42,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                 ->insert([
                     'assignment_id' => $assignment->id,
                     'question_id' => $question_id,
+                    'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                     'open_ended_submission_type' => 0
             ]);

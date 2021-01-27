@@ -9,6 +9,12 @@ use Illuminate\Support\Collection;
 class AssignmentSyncQuestion extends Model
 {
 
+    public function getNewQuestionOrder(Assignment $assignment){
+        $max_order = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->max('order');
+        return $max_order ? $max_order+1 : 1;
+    }
     public function getQuestionCountByAssignmentIds(Collection $assignment_ids)
     {
         $questions_count_by_assignment_id = [];

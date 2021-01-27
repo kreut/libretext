@@ -209,7 +209,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
-                ->select('assignment_question.*','questions.library','questions.page_id', 'questions.title',DB::raw('questions.id AS question_id'))
+                ->select('assignment_question.*', 'questions.library', 'questions.page_id', 'questions.title', DB::raw('questions.id AS question_id'))
                 ->get();
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
@@ -229,7 +229,7 @@ class AssignmentSyncQuestionController extends Controller
 
             foreach ($assignment_questions as $key => $value) {
                 $columns = [];
-                $columns['title']= $value->title;
+                $columns['title'] = $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
                     $contents = $Libretext->getContentsByPageId($value->page_id);
@@ -375,6 +375,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->insert([
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
+                    'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                     'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
             $this->updateAssignmentScoreBasedOnAddedQuestion($assignment, $question);
@@ -441,6 +442,20 @@ class AssignmentSyncQuestionController extends Controller
             DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->delete();
+            $currently_ordered_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
+                ->get();
+
+            if ($currently_ordered_questions) {
+                $currently_ordered_question_ids = [];
+                foreach ($currently_ordered_questions as $key => $question) {
+                    $currently_ordered_question_ids[] = $question->question_id;
+                }
+                $assignmentSyncQuestion->orderQuestions($currently_ordered_question_ids, $assignment);
+            }
+
+
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been removed from the assignment.';
