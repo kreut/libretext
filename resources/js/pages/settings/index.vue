@@ -9,6 +9,12 @@
               {{ tab.name }}
             </router-link>
           </li>
+          <li>
+            <router-link v-if="user.role === 3" :to="{ name: 'settings.notifications' }" class="nav-link" active-class="active">
+              <b-icon-alarm-fill />
+              Notifications
+            </router-link>
+          </li>
         </ul>
       </card>
     </div>
@@ -22,10 +28,14 @@
 </template>
 
 <script>
+import { mapGetters } from 'vuex'
 export default {
   middleware: 'auth',
 
   computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
     tabs () {
       return [
         {

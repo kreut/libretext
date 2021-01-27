@@ -44,7 +44,8 @@ let general_paths  = [
     children: [
       { path: '', redirect: { name: 'settings.profile' } },
       { path: 'profile', name: 'settings.profile', component: page('settings/profile.vue') },
-      { path: 'password', name: 'settings.password', component: page('settings/password.vue') }
+      { path: 'password', name: 'settings.password', component: page('settings/password.vue') },
+      { path: 'notifications', name: 'settings.notifications', component: page('settings/notifications.vue') }
     ] },
   { path: '/instructors/assignments/:assignmentId/information',
     component: page('instructors/assignment_information/index.vue'),
