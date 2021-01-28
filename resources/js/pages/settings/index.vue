@@ -5,13 +5,11 @@
         <ul class="nav flex-column nav-pills">
           <li v-for="tab in tabs" :key="tab.route" class="nav-item">
             <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
-              <fa :icon="tab.icon" fixed-width />
               {{ tab.name }}
             </router-link>
           </li>
           <li>
             <router-link v-if="user.role === 3" :to="{ name: 'settings.notifications' }" class="nav-link" active-class="active">
-              <b-icon-alarm-fill />
               Notifications
             </router-link>
           </li>
@@ -39,12 +37,10 @@ export default {
     tabs () {
       return [
         {
-          icon: 'user',
           name: this.$t('profile'),
           route: 'settings.profile'
         },
         {
-          icon: 'lock',
           name: this.$t('password'),
           route: 'settings.password'
         }
