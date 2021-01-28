@@ -3,8 +3,8 @@
 namespace App\Console\Commands;
 
 use App\Email;
-use App\Mail\AssignmentDueReminder;
 use Illuminate\Console\Command;
+
 
 class sendAssignmentDueReminderEmails extends Command
 {

@@ -16,7 +16,8 @@ class Kernel extends ConsoleKernel
         Commands\storeQuestions::class,
         Commands\storeH5P::class,
         Commands\storeWebwork::class,
-        Commands\DbBackup::class
+        Commands\DbBackup::class,
+        Commands\sendAssignmentDueReminderEmails::class
 
     ];
 
@@ -28,8 +29,12 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('db:backup')->hourly()
-            ->emailOutputOnFailure('kreut@hotmail.com');;
+        if (env('APP_ENV') === 'production') {
+            $schedule->command('db:backup')->hourly()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+        }
+        $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
+            ->emailOutputOnFailure('kreut@hotmail.com');
 
     }
 

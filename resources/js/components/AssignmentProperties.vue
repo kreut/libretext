@@ -43,7 +43,7 @@
                  delay="250"
       >
         Students are given full credit for automatically graded submissions as long as they submit something.
-        Open-ended submissions are manually graded.  For questions with both automatically
+        Open-ended submissions are manually graded. For questions with both automatically
         graded and open-ended submissions, students are awarded half of the points as long as they submit something
         for the automatically graded piece, with the remaining points awarded at the discretion of the grader.
       </b-tooltip>
@@ -81,7 +81,8 @@
       <b-tooltip target="default_open_ended_submission_type_tooltip"
                  delay="250"
       >
-        Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per question basis once you start adding questions to the assignment.
+        Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per
+        question basis once you start adding questions to the assignment.
       </b-tooltip>
 
       <b-tooltip target="submission_count_percent_decrease_tooltip"
@@ -255,14 +256,16 @@
                               :disabled="isLocked()"
           >
             <span @click="form.students_can_view_assignment_statistics = 1">
-              <b-form-radio value="p">Performance</b-form-radio> <span id="performance" class="text-muted"><b-icon
+              <b-form-radio value="p">Performance <span id="performance" class="text-muted"><b-icon
                 icon="question-circle"
-              /></span></span>
+              /></span></b-form-radio>
+            </span>
             <span @click="canSwitchToCompleteIncomplete">
               <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
                 <b-form-radio value="c">Completion <span id="completion" class="text-muted"><b-icon
                   icon="question-circle"
-                /></span></b-form-radio>
+                /></span>
+                </b-form-radio>
               </span>
             </span>
           </b-form-radio-group>
