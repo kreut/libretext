@@ -20,9 +20,12 @@ class ContactGrader extends Mailable
 
 
     /**
-     * Create a new message instance.
-     *
-     * @return void
+     * ContactGrader constructor.
+     * @param string $subject
+     * @param string $text
+     * @param string $email
+     * @param string $name
+     * @param string $link
      */
     public function __construct(string $subject, string $text, string $email, string $name, string $link)
     {
