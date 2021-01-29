@@ -21,7 +21,6 @@ class Email extends Model
         $dt->setTimeZone(new \DateTimeZone('America/Los_Angeles'));
 
         $time = $dt->format('Y-m-d H:i:s');
-        Log::info($time);
         $notifications = DB::table('notifications')
             ->join('users', 'notifications.user_id', '=', 'users.id')
             ->join('enrollments', 'users.id', '=', 'enrollments.user_id')
@@ -34,8 +33,6 @@ class Email extends Model
                 'notifications.hours_until_due')
             ->get();
         foreach ($notifications as $notification) {
-            Log::info($time . ': ' . json_encode($notification));
-
             try {
                 $mail_info = [
                     'student_first_name' => $notification->first_name,
