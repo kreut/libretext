@@ -17,7 +17,7 @@
       @ok="submitRemoveQuestion"
     >
       <p>
-        By removing the question, you will also delete all student submissions for this question.  In addition,
+        By removing the question, you will also delete all student submissions for this question. In addition,
         the scores will be re-computed.
       </p>
       <p><strong>Once a question is removed, the scores cannot be reverted!</strong></p>
@@ -96,11 +96,15 @@
       <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
         This information includes the name of the assignment, the question number in the assignment, and the time left
         in the assignment.
-      </b-tooltip><br>
+      </b-tooltip>
+      <br>
 
       <span class="font-weight-bold">Library:</span> {{ libraryText }}<br>
-      <span class="font-weight-bold">Page ID:</span> {{ questions[currentPage-1] ? questions[currentPage-1].page_id : '' }}<br>
-      <span class="font-weight-bold">Adapt ID:</span> {{ assignmentId }}-{{ questions[currentPage-1] ? questions[currentPage-1].id : '' }}<br>
+      <span class="font-weight-bold">Page ID:</span>
+      {{ questions[currentPage - 1] ? questions[currentPage - 1].page_id : '' }}<br>
+      <span class="font-weight-bold">Adapt ID:</span> {{
+        assignmentId
+      }}-{{ questions[currentPage - 1] ? questions[currentPage - 1].id : '' }}<br>
       <span class="font-weight-bold">URL:</span> <span class="font-italic">{{ currentUrl }}</span>
       <b-button v-clipboard:copy="currentUrl"
                 v-clipboard:success="onCopy"
@@ -330,7 +334,8 @@
     <div v-if="questions.length && !initializing">
       <div v-if="isLocked()">
         <b-alert variant="info" show>
-          <strong>This problem is locked. Since students have already submitted responses, you cannot update the number of points per question.</strong>
+          <strong>This problem is locked. Since students have already submitted responses, you cannot update the number
+            of points per question.</strong>
         </b-alert>
       </div>
       <div v-if="questions.length">
@@ -341,7 +346,9 @@
                 <div v-if="assessmentType !== 'clicker'" class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'" class="text-center">
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
+                     class="text-center"
+                >
                   <h5>
                     This question is worth
                     {{ 1 * (questions[currentPage - 1].points) }}
@@ -534,7 +541,9 @@
             </b-button>
             <span v-if="questions[currentPage-1].solution">
               <span v-if="!showUploadedAudioSolutionMessage">
-                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage" :assignment-name="name" />
+                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                                  :assignment-name="name"
+                />
 
                 <span v-if="showUploadedAudioSolutionMessage"
                       :class="uploadedAudioSolutionDataType"
@@ -792,7 +801,10 @@
                       </b-alert>
                     </span>
                     <span v-if="!questions[currentPage-1].open_ended_submission_type">
-                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" /><br>
+                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
+                                                                                        :current-page="currentPage"
+                                                                                        :assignment-name="name"
+                      /><br>
                     </span>
 
                     <span v-if="assessmentType==='learning tree'">
@@ -858,7 +870,9 @@
                         <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                       </b-alert>
                     </span>
-                    <span class="font-weight-bold">Solution: </span> <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" /><br>
+                    <span class="font-weight-bold">Solution: </span>
+                    <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
+                    <br>
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                       <strong> Uploaded file:</strong>
                       <span v-if="questions[currentPage-1].submission_file_exists">
@@ -1001,6 +1015,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    defaultClickerTimeToSubmit: null,
     libraryText: '',
     libraryOptions: libraries,
     pastDue: false,
@@ -1725,6 +1740,7 @@ export default {
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
       if (this.assessmentType === 'clicker') {
+        this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
         this.initClickerPolling()
         this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
         this.updateClickerMessage(this.clickerStatus)
@@ -1860,6 +1876,9 @@ export default {
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         if (this.assessmentType !== 'clicker') {
           this.timeLeft = assignment.time_left
+        } else {
+          this.defaultClickerTimeToSubmit = assignment.default_clicker_time_to_submit
+          this.clickerTimeForm.time_to_submit = this.defaultClickerTimeToSubmit
         }
         this.minTimeNeededInLearningTree = assignment.min_time_needed_in_learning_tree
         this.percentEarnedForExploringLearningTree = parseInt(assignment.percent_earned_for_exploring_learning_tree)

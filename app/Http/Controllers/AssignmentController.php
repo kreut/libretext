@@ -439,6 +439,11 @@ class AssignmentController extends Controller
         return $data['source'] === 'a' ? $data['default_points_per_question'] : null;
     }
 
+    function getDefaultClickerTimeToSubmit($assessment_type, $data){
+        return $assessment_type === 'clicker' ? $data['default_clicker_time_to_submit'] : null;
+
+    }
+
     public function getStatus(string $available_from, string $due)
     {
         if (Carbon::now() < Carbon::parse($available_from)) {
@@ -507,6 +512,7 @@ class AssignmentController extends Controller
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
+                    'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
                     'late_policy' => $data['late_policy'],
@@ -571,8 +577,8 @@ class AssignmentController extends Controller
         }
         try {
             $assignment = Assignment::find($assignment->id);
-            $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
-            $response['assignment'] = [
+           $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
+                $response['assignment'] = [
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
@@ -581,6 +587,7 @@ class AssignmentController extends Controller
                 'past_due' => time() > strtotime($assignment->due),
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
+                'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
                 'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree * 3000 : 0,//in milliseconds
                 'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
@@ -818,7 +825,7 @@ class AssignmentController extends Controller
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
-
+            $data['default_clicker_time_to_submit'] =  $this->getDefaultClickerTimeToSubmit($request->assessment_type,$data);
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['final_submission_deadline'] = $this->getFinalSubmissionDeadline($request);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);

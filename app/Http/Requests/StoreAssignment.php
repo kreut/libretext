@@ -64,6 +64,9 @@ class StoreAssignment extends FormRequest
 
         }
 
+        if ($this->assessment_type === 'clicker'){
+            $rules['default_clicker_time_to_submit'] = new IsValidPeriodOfTime();
+        }
         if ($this->late_policy === 'deduction') {
             //has to be at least one or division by 0 issue in setScoreBasedOnLatePolicy
             //deducting 100% makes no sense!

@@ -53,6 +53,13 @@
       >
         Scores and solutions are released in real time, providing students with immediate feedback.
       </b-tooltip>
+
+      <b-tooltip target="default_clicker_time_to_submit_tooltip"
+                 delay="250"
+      >
+        The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker questions.
+        This can be changed at the individual question level.
+      </b-tooltip>
       <b-tooltip target="learning_tree"
                  delay="250"
       >
@@ -340,6 +347,37 @@
           </span>
         </b-form-radio-group>
       </b-form-group>
+      <div v-show="form.assessment_type === 'clicker'">
+        <b-form-group
+          id="default_clicker_time_to_submit"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Default Time To Submit"
+          label-for="default_clicker_time_to_submit"
+        >
+          <template slot="label">
+            Default Clicker Time To Submit <span id="default_clicker_time_to_submit_tooltip"
+                                                 class="text-muted"
+            ><b-icon
+              icon="question-circle"
+            /></span>
+          </template>
+          <b-form-row>
+            <b-col lg="3">
+              <b-form-input
+                id="default_points_per_question"
+                v-model="form.default_clicker_time_to_submit"
+                type="text"
+                placeholder=""
+                :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
+                @keydown="form.errors.clear('default_clicker_time_to_submit')"
+              />
+              <has-error :form="form" field="default_clicker_time_to_submit" />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+      </div>
+
       <div v-show="form.assessment_type === 'learning tree'">
         <b-form-group
           id="min_time_needed_in_learning_tree"
@@ -850,6 +888,7 @@ export default {
       this.form.late_deduction_application_period = null
       this.form.source = 'a'
       this.form.default_points_per_question = 10
+      this.form.default_clicker_time_to_submit = ''
       this.form.instructions = ''
       this.form.assessment_type = 'real time'
       this.form.min_time_needed_in_learning_tree = null
@@ -872,7 +911,7 @@ export default {
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id
       this.number_of_questions = assignment.number_of_questions
-
+      this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
       this.form.name = assignment.name
       this.form.assessment_type = this.assessmentType = assignment.assessment_type
       this.form.available_from_date = assignment.available_from_date
