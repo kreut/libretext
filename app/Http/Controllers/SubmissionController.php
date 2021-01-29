@@ -89,7 +89,7 @@ class SubmissionController extends Controller
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
                 ->where('submissions.assignment_id', $assignment->id)
                 ->where('submissions.question_id', $question->id)
-                ->where('submissions.user_id','<>', $fake_student_user_id)
+                //->where('submissions.user_id','<>', $fake_student_user_id)
                 ->select('submission', 'technology')
                 ->get();
 

@@ -332,7 +332,7 @@
       </b-alert>
     </div>
     <div v-if="questions.length && !initializing">
-      <div v-if="isLocked()">
+      <div v-if="isLocked() && !presentationMode">
         <b-alert variant="info" show>
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the number
             of points per question.</strong>
@@ -342,6 +342,25 @@
         <div class="mb-3">
           <b-container>
             <b-col>
+              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
+                <h5>
+                  Presentation Mode: <toggle-button
+                    :width="60"
+                    class="mt-2"
+                    :value="presentationMode"
+                    :sync="true"
+                    size="lg"
+                    :font-size="14"
+                    :margin="4"
+                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                    :labels="{checked: 'On', unchecked: 'Off'}"
+                    @change="presentationMode = !presentationMode"
+                  />
+                </h5>
+                <b-button variant="success" @click="startClickerAssessment">
+                  GO!
+                </b-button>
+              </div>
               <div v-if="source === 'a' && !inIFrame ">
                 <div v-if="assessmentType !== 'clicker'" class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
@@ -372,7 +391,7 @@
                       This submission will be marked late.</span>
                   </b-alert>
                 </div>
-                <div v-if="isInstructor()" class="text-center">
+                <div v-if="isInstructor() && !presentationMode" class="text-center">
                   <b-form-row>
                     <b-col />
                     <h5 class="mt-1">
@@ -409,7 +428,7 @@
                 </div>
               </div>
             </b-col>
-            <b-row class="text-center">
+            <b-row class="text-center font-italic">
               <b-col>
                 <div v-if="timeLeft>0">
                   <countdown :time="timeLeft" @end="cleanUpClickerCounter">
@@ -418,7 +437,7 @@
                     </template>
                   </countdown>
                 </div>
-                <div v-if="user.role === 2" class="mt-1">
+                <div v-if="isInstructor() && !presentationMode" class="mt-1">
                   <b-button
                     variant="info"
                     size="sm"
@@ -444,7 +463,7 @@
                     Statistics
                   </b-button>
                 </div>
-                <div v-if="isInstructor() && !(has_submissions_or_file_submissions || solutionsReleased)">
+                <div v-if="isInstructor() && !presentationMode">
                   <b-button class="mt-1 mb-2 mr-2"
                             variant="success"
                             size="sm"
@@ -493,7 +512,7 @@
         </div>
         <div class="overflow-auto">
           <b-pagination
-            v-if="!inIFrame && (assessmentType !== 'clicker' || user.role === 2 || pastDue)"
+            v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"
             v-model="currentPage"
             :total-rows="questions.length"
             :per-page="perPage"
@@ -504,7 +523,7 @@
           />
         </div>
 
-        <div v-if="isInstructor()" class="d-flex flex-row">
+        <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
           <div class="p-2">
             <b-button class="mt-1 mb-2"
                       variant="primary"
@@ -724,7 +743,7 @@
                   />
 
                   <div v-if="!isLoadingPieChart" class="font-italic">
-                    <b-form-row>
+                    <b-form-row v-if="!presentationMode">
                       <b-form-group
                         id="submission_time"
                         label-cols-sm="4"
@@ -1015,6 +1034,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    presentationMode: false,
     defaultClickerTimeToSubmit: null,
     libraryText: '',
     libraryOptions: libraries,
@@ -1872,6 +1892,7 @@ export default {
         this.name = assignment.name
         this.pastDue = assignment.past_due
         this.assessmentType = assignment.assessment_type
+        this.presentationMode = (this.assessmentType === 'clicker')
         this.capitalFormattedAssessmentType = this.assessmentType === 'learning tree' ? 'Learning Trees' : 'Questions'
         this.has_submissions_or_file_submissions = assignment.has_submissions_or_file_submissions
         if (this.assessmentType !== 'clicker') {

@@ -97,6 +97,9 @@ export default {
           { property: 'Total Points', value: this.assignment.total_points },
           { property: 'Number Of Questions', value: this.assignment.number_of_questions }
         ]
+        if (this.assignment.assessment_type === 'clicker') {
+          this.items.splice(2, 0, { property: 'Default Clicker Time To Submit', value: this.assignment.default_clicker_time_to_submit })
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
