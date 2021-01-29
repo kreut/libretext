@@ -1219,7 +1219,7 @@ export default {
       return false
     }
 
-    this.questionCol = (this.user.role === 2) || (this.assessmentType === 'clicker') ? 12 : 8
+    this.questionCol = this.assessmentType === 'clicker' ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
