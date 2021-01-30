@@ -30,7 +30,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
         if (env('APP_ENV') === 'production') {
-            $schedule->command('db:backup')->hourly()
+            $schedule->command('db:backup')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
         }
         $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
