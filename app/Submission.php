@@ -58,36 +58,37 @@ class Submission extends Model
             return $response;
         }
 
-        if ($assignment->scoring_type === 'c') {
-            //give students just half the score if there's some type of upload
-            $open_ended_submission_type_factor = in_array($assignment_question->open_ended_submission_type, ['file','audio','text']) ? .5 : 1;
-            $data['score'] = floatval($assignment_question->points) * $open_ended_submission_type_factor;
-        } else {
-            switch ($data['technology']) {
-                case('h5p'):
-                    $submission = json_decode($data['submission']);
-                    $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
-                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                    break;
-                case('imathas'):
-                    $submission = $data['submission'];
-                    $proportion_correct = floatval($submission->score);
-                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                    $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
-                    break;
-                case('webwork'):
-                    // Log::info('case webwork');
-                    $submission = $data['submission'];
-                    $proportion_correct = floatval($submission->score->score);
-                    $data['score'] = floatval($assignment_question->points) * $proportion_correct;
-                    Log::info('Score: ' . $data['score']);
-                    $data['submission'] = json_encode($data['submission']);
-                    break;
-                default:
-                    $response['message'] = 'That is not a valid technology.';
-                    return $response;
-            }
+
+        switch ($data['technology']) {
+            case('h5p'):
+                $submission = json_decode($data['submission']);
+                $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                break;
+            case('imathas'):
+                $submission = $data['submission'];
+                $proportion_correct = floatval($submission->score);
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                $data['submission'] = json_encode($data['submission'], JSON_UNESCAPED_SLASHES);
+                break;
+            case('webwork'):
+                // Log::info('case webwork');
+                $submission = $data['submission'];
+                $proportion_correct = floatval($submission->score->score);
+                $data['score'] = $assignment->scoring_type === 'p'
+                    ? floatval($assignment_question->points) * $proportion_correct
+                    : $this->computeScoreForCompletion($assignment_question);
+                $data['submission'] = json_encode($data['submission']);
+                break;
+            default:
+                $response['message'] = 'That is not a valid technology.';
+                return $response;
         }
+
 
         $data['all_correct'] = $data['score'] >= floatval($assignment_question->points);//>= so I don't worry about decimals
 
@@ -341,5 +342,11 @@ class Submission extends Model
         return $num_sumbissions_per_assignment;
 
 
+    }
+
+    public function computeScoreForCompletion($assignment_question)
+    {
+        $open_ended_submission_type_factor = in_array($assignment_question->open_ended_submission_type, ['file', 'audio', 'text']) ? .5 : 1;
+        return floatval($assignment_question->points) * $open_ended_submission_type_factor;
     }
 }

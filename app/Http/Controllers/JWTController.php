@@ -65,7 +65,7 @@ class JWTController extends Controller
 
     public function processAnswerJWT(Request $request)
     {
-        Log::info('processing');
+
         $JWE = new JWE();
         //$referer = $request->headers->get('referer');//will use this to determine the technology
         $technology = 'webwork';
@@ -86,7 +86,7 @@ class JWTController extends Controller
         }
         $jwe = new JWE();
         $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT, $technology));
-Log::info(json_encode($problemJWT));
+
         $missing_properties = !(
             isset($problemJWT->adapt) &&
             isset($problemJWT->adapt->assignment_id) &&
