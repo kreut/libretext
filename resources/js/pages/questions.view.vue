@@ -1241,7 +1241,6 @@ export default {
         this.$noty.error(error.message)
       }
     }
-    this.logVisitAssessment(this.assignmentId, this.questions[0].id)
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
