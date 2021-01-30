@@ -65,6 +65,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 
     Route::patch('notifications/assignments', 'NotificationController@update');
+    Route::get('notifications/assignments', 'NotificationController@show');
 
 
     Route::patch('/course-access-codes', 'CourseAccessCodeController@update');

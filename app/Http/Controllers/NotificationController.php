@@ -11,6 +11,28 @@ use Illuminate\Support\Facades\DB;
 
 class NotificationController extends Controller
 {
+
+    public function show(Request $request, Notification $notification){
+        $response['type'] = 'error';
+        try {
+            $user_id = $request->user()->id;
+
+            $notification = $notification->where('user_id', $user_id)
+                            ->first();
+            $response['hours_until_due'] = $notification ? $notification->hours_until_due : 0;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating this notification.  Please try again by refreshing the page or contact us for assistance.";
+
+        }
+        return $response;
+
+    }
+
     public function update(UpdateHoursUntilDue $request, Notification $notification)
     {
 
