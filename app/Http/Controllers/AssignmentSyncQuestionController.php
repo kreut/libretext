@@ -569,7 +569,8 @@ class AssignmentSyncQuestionController extends Controller
 
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
-                    $student_response = $submission_object->result->response ? $submission_object->result->response : 'N/A';
+                    //Log::info(json_encode($submission_object->result));
+                    $student_response = isset($submission_object->result->response) ? $submission_object->result->response : 'N/A';
                     //$correct_response = $submission_object->object->definition->correctResponsesPattern;
                     break;
                 case('webwork'):
