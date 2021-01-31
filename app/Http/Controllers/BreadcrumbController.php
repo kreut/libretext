@@ -152,8 +152,7 @@ class BreadcrumbController extends Controller
             $response['breadcrumbs'] = $breadcrumbs;
         } catch (Exception $e) {
             //no message for the user: just for me
-            $h = new Handler(app());
-            $h->report($e);
+
         }
         return $response;
 

@@ -15,7 +15,8 @@ class Handler extends ExceptionHandler
      * @var array
      */
     protected $dontReport = [
-        'Illuminate\Auth\AuthenticationException'
+        'Illuminate\Auth\AuthenticationException',
+        'Illuminate\Database\Eloquent\ModelNotFoundException'
     ];
 
     /**
@@ -46,16 +47,22 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
-        Log::error(sprintf(
-            "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tController: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
-            get_class($exception),
-            $exception->getMessage(),
-            $exception->getTrace()[0]['file'],
-            $exception->getTrace()[0]['line'],
-            request()->path(),
-            json_encode(request()->all()),
-            request()->user() ? request()->user()->id : 'No user logged in'
-        ));
+        $dontReport = [
+            'Illuminate\Auth\AuthenticationException',
+            'Illuminate\Database\Eloquent\ModelNotFoundException'
+        ];
+        if (!in_array(get_class($exception),$dontReport)) {
+            Log::error(sprintf(
+                "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tController: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
+                get_class($exception),
+                $exception->getMessage(),
+                $exception->getTrace()[0]['file'],
+                $exception->getTrace()[0]['line'],
+                request()->path(),
+                json_encode(request()->all()),
+                request()->user() ? request()->user()->id : 'No user logged in'
+            ));
+        }
     }
 
     /**
