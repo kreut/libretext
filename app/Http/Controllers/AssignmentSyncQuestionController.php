@@ -232,8 +232,12 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['title'] = $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
-                    $contents = $Libretext->getContentsByPageId($value->page_id);
-                    $columns['title'] = $contents['@title'] ?? 'None';
+                    try {
+                        $contents = $Libretext->getContentsByPageId($value->page_id);
+                    } catch (Exception $e){
+
+                    }
+                    $columns['title'] = $contents['@title'] ?? 'Private title: contact us';
                     Question::where('id', $value->question_id)->update(['title' => $columns['title']]);
                 }
                 $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? $value->open_ended_submission_type : 'N/A';
