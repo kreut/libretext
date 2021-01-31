@@ -4,6 +4,7 @@ namespace App\Exceptions;
 
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
+use Illuminate\Support\Facades\Log;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -27,24 +28,41 @@ class Handler extends ExceptionHandler
         'password_confirmation',
     ];
 
+    protected function context()
+    {
+        return array_merge(parent::context(), [
+            'request' => request()->all(),
+            'controller' => request()->path()
+        ]);
+    }
+
     /**
      * Report or log an exception.
      *
-     * @param  \Throwable  $exception
+     * @param \Throwable $exception
      * @return void
      *
      * @throws \Exception
      */
     public function report(Throwable $exception)
     {
-        parent::report($exception);
+        Log::error(sprintf(
+            "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tController: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
+            get_class($exception),
+            $exception->getMessage(),
+            $exception->getTrace()[0]['file'],
+            $exception->getTrace()[0]['line'],
+            request()->path(),
+            json_encode(request()->all()),
+            request()->user()->id
+        ));
     }
 
     /**
      * Render an exception into an HTTP response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Throwable  $exception
+     * @param \Illuminate\Http\Request $request
+     * @param \Throwable $exception
      * @return \Symfony\Component\HttpFoundation\Response
      *
      * @throws \Throwable
@@ -57,14 +75,14 @@ class Handler extends ExceptionHandler
     /**
      * Convert an authentication exception into a response.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Illuminate\Auth\AuthenticationException  $exception
+     * @param \Illuminate\Http\Request $request
+     * @param \Illuminate\Auth\AuthenticationException $exception
      * @return \Illuminate\Http\Response
      */
     protected function unauthenticated($request, AuthenticationException $exception)
     {
         return $request->expectsJson()
-                    ? response()->json(['message' => $exception->getMessage()], 401)
-                    : redirect()->guest(url('/login'));
+            ? response()->json(['message' => $exception->getMessage()], 401)
+            : redirect()->guest(url('/login'));
     }
 }
