@@ -1,5 +1,19 @@
 <template>
   <div style="min-height:400px; margin-bottom:100px">
+    <div v-if="showInvalidAssignmentMessage">
+      <b-alert show variant="info">
+        <div class="font-weight-bold">
+          <p>
+            It looks like you're trying to access an assignment with the URL {{ $router.currentRoute.path }}
+            but we can't find that assignment.  Please log out then log back in as your instructor may have updated the link.
+          </p>
+          <p>
+            However, if you are still having issues and this is an embedded problem, please let your instructor know so that they can fix the URL.
+            And, if this is not an embedded problem, please Contact Us for assistance.
+          </p>
+        </div>
+      </b-alert>
+    </div>
     <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
@@ -1034,6 +1048,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showInvalidAssignmentMessage: false,
     presentationMode: false,
     defaultClickerTimeToSubmit: null,
     libraryText: '',
@@ -1913,7 +1928,12 @@ export default {
         this.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
         this.showPointsPerQuestion = assignment.show_points_per_question
       } catch (error) {
-        this.$noty.error(error.message)
+        if (error.message.includes('status code 404')) {
+          this.showInvalidAssignmentMessage = true
+          return false
+        } else {
+          this.$noty.error(error.message)
+        }
         this.title = 'Assessments'
       }
       return true
