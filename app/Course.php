@@ -86,7 +86,7 @@ class Course extends Model
 
     public function assignments()
     {
-        return $this->hasMany('App\Assignment')->orderBy('due', 'asc');
+        return $this->hasMany('App\Assignment')->orderBy('order');
     }
 
 

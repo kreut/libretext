@@ -120,7 +120,6 @@
               </th>
             </tr>
           </thead>
-
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
             <tr v-for="assignment in assignments" :key="assignment.id">
               <td>
@@ -320,51 +319,6 @@ export default {
       { item: 'completed', name: 'completed' }
     ],
     courseId: false,
-    fields: [
-      {
-        key: 'name',
-        label: 'Assignment Name',
-        sortable: true,
-        stickyColumn: true,
-        thStyle: 'min-width: 190px'
-      },
-      'shown',
-      {
-        key: 'assignment_group',
-        label: 'Group',
-        sortable: true
-      },
-      {
-        key: 'available_from',
-        sortable: true,
-        thStyle: 'min-width: 170px'
-      },
-      {
-        key: 'due',
-        sortable: true,
-        thStyle: 'min-width: 170px'
-      },
-      'status',
-      {
-        key: 'show_points_per_question'
-      },
-      {
-        key: 'show_scores',
-        label: 'Scores'
-      },
-      {
-        key: 'solutions_released',
-        label: 'Solutions'
-      },
-      {
-        key: 'students_can_view_assignment_statistics',
-        label: 'Statistics'
-      },
-      {
-        key: 'actions',
-        thStyle: 'min-width: 120px'
-      }
-    ],
     hasAssignments: false,
     has_submissions_or_file_submissions: false,
     canViewAssignments: false,
@@ -392,46 +346,38 @@ export default {
         this.$noty.error('You are not allowed to access this page.')
         return false
       }
-      this.getAssignments()
+      await this.getAssignments()
+      this.currentOrderedAssignments = this.assignments
     }
   },
   methods: {
-      async saveNewOrder () {
-        let orderedAssignments = []
-        for (let i = 0; i < this.items.length; i++) {
-          orderedAssignments.push(this.items[i].question_id)
-        }
-
-        let noChange = true
-        for (let i = 0; i < this.currentOrderedAssignments.length; i++) {
-          if (this.currentOrderedAssignments[i] !== this.items[i]) {
-            noChange = false
-          }
-        }
-        if (noChange) {
-          return false
-        }
-        try {
-          const { data } = await axios.patch(`/api/courses/${this.courseId}/assignments/order`, { ordered_assignments: orderedAssignments })
-          this.$noty[data.type](data.message)
-          if (data.type === 'success') {
-            for (let i = 0; i < this.items.length; i++) {
-              this.items[i].order = i + 1
-            }
-            this.currentOrderedAssignments = this.items
-          }
-        } catch (error) {
-          this.$noty.error(error.message)
-        }
-
+    async saveNewOrder () {
+      let orderedAssignments = []
+      for (let i = 0; i < this.assignments.length; i++) {
+        orderedAssignments.push(this.assignments[i].id)
       }
 
-
-
-
-
-
-
+      let noChange = true
+      for (let i = 0; i < this.currentOrderedAssignments.length; i++) {
+        if (this.currentOrderedAssignments[i] !== this.assignments[i]) {
+          noChange = false
+        }
+      }
+      if (noChange) {
+        return false
+      }
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.courseId}/order`, { ordered_assignments: orderedAssignments })
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          for (let i = 0; i < this.assignments.length; i++) {
+            this.assignments[i].order = i + 1
+          }
+          this.currentOrderedAssignments = this.assignments
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async handleImportAssignment (bvEvt) {
       bvEvt.preventDefault()

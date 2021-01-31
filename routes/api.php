@@ -88,6 +88,8 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
+    Route::post('/assignments/{course}/order', 'AssignmentsController@order');
+
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
 
 
@@ -99,6 +101,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
 
+    Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');

@@ -27,6 +27,33 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
+    public function order(Request $request, Course $course, Assignment $assignment)
+    {
+      /*  $response['type'] = 'error';
+        $authorized = Gate::inspect('order', [$assignment, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+      */
+
+        try {
+            DB::beginTransaction();
+            $assignment->orderAssignments($request->ordered_assignments, $course);
+            DB::commit();
+            $response['message'] = 'Your assignments have been re-ordered.';
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error ordering the assignments for this course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function importAssignment(Request $request, Course $course, Assignment $assignment)
     {
 
