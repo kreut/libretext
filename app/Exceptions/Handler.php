@@ -54,7 +54,7 @@ class Handler extends ExceptionHandler
             $exception->getTrace()[0]['line'],
             request()->path(),
             json_encode(request()->all()),
-            request()->user()->id
+            request()->user() ? request()->user()->id : 'No user logged in'
         ));
     }
 
