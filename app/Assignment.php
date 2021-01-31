@@ -10,6 +10,13 @@ class Assignment extends Model
 {
     protected $guarded = [];
 
+    public function getNewAssignmentOrder(Course $course){
+        $max_order = DB::table('assignments')
+            ->where('course_id', $course->id)
+            ->max('order');
+        return $max_order ? $max_order+1 : 1;
+    }
+
     public function orderAssignments(array $ordered_assignments, Course $course)
     {
         foreach ($ordered_assignments as $key => $assignment_id) {

@@ -550,7 +550,8 @@ class AssignmentController extends Controller
                     'final_submission_deadline' => $this->getFinalSubmissionDeadline($request),
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
-                    'course_id' => $course->id
+                    'course_id' => $course->id,
+                    'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
 
@@ -906,7 +907,8 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment_question_ids = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+            $assignment_question_ids = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
                 ->get()
                 ->pluck('id');
 
@@ -920,6 +922,11 @@ class AssignmentController extends Controller
             DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
+            $course = $assignment->course;
+            $assignments = $course->assignments->where('id','<>',$assignment->id)
+                                ->pluck('id')
+                                ->toArray();
+            $assignment->orderAssignments($assignments, $course);
             $assignment->delete();
             DB::commit();
             $response['type'] = 'success';

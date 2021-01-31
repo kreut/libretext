@@ -86,7 +86,9 @@ class Course extends Model
 
     public function assignments()
     {
-        return $this->hasMany('App\Assignment')->orderBy('order');
+        return Auth::user()->role === 3
+            ? $this->hasMany('App\Assignment')->orderBy('due')
+            : $this->hasMany('App\Assignment')->orderBy('order');
     }
 
 
