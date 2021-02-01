@@ -49,9 +49,13 @@ class Handler extends ExceptionHandler
     {
         $dontReport = [
             'Illuminate\Auth\AuthenticationException',
-            'Illuminate\Database\Eloquent\ModelNotFoundException'
+            'Illuminate\Database\Eloquent\ModelNotFoundException',
+            'Illuminate\Validation\ValidationException'
         ];
-        if (!in_array(get_class($exception),$dontReport)) {
+
+        $logoutError = strpos(json_encode(request()->all()),'{"logoutRequest":"<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"') !== false;
+
+        if (!$logoutError && !in_array(get_class($exception),$dontReport)) {
             Log::error(sprintf(
                 "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tController: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
                 get_class($exception),

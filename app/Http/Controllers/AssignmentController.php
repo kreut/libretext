@@ -29,14 +29,14 @@ class AssignmentController extends Controller
 
     public function order(Request $request, Course $course, Assignment $assignment)
     {
-      /*  $response['type'] = 'error';
+        $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignment, $course]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
-      */
+
 
         try {
             DB::beginTransaction();

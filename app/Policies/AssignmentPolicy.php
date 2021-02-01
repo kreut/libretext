@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Assignment;
+use App\Course;
 use App\Score;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -14,14 +15,23 @@ class AssignmentPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-    public function getClickerQuestion(User $user, Assignment $assignment){
+    public function getClickerQuestion(User $user, Assignment $assignment)
+    {
 
         return $assignment->course->enrollments->contains('user_id', $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to get the clicker questions for this assignment.');
 
-}
+    }
 
+    public function order(User $user, Assignment $assignment, Course $course)
+    {
+
+        return (int) $course->user_id === $user->id
+            ? Response::allow()
+            : Response::deny('You are not allowed re-order the assignments in that course.');
+
+    }
 
 
     /**
@@ -70,7 +80,7 @@ class AssignmentPolicy
             : Response::deny('You are not allowed to get questions for this assignment.');
     }
 
-   /**
+    /**
      * Determine whether the user can update the assignment.
      *
      * @param \App\User $user
@@ -99,7 +109,6 @@ class AssignmentPolicy
     }
 
 
-
     /**
      * Determine whether the user can update the assignment.
      *
@@ -126,7 +135,7 @@ class AssignmentPolicy
                 break;
         }
         if (!$has_access) {
-            $message ='You are not allowed to show/hide solutions.';
+            $message = 'You are not allowed to show/hide solutions.';
         } else {
             $has_access = $assignment->assessment_type !== 'real time';
             if (!$has_access) {
@@ -167,7 +176,7 @@ class AssignmentPolicy
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
-                    break;
+                break;
             default:
                 $has_access = false;
         }

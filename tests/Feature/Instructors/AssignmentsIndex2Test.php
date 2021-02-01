@@ -26,6 +26,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order'=>2]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->original_assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
@@ -80,6 +81,32 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
+    public function non_owner_cannot_reorder_assignments()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->course->id}/order", [
+            'ordered_assignments' => [$this->assignment_2->id, $this->assignment->id]
+        ])->assertJson(['message' => 'You are not allowed re-order the assignments in that course.']);
+    }
+
+    /** @test */
+
+    public function owner_can_reorder_assignments()
+    {
+        //dd($this->assignment->order . ' ' . $this->assignment_2->order);
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->course->id}/order", [
+            'ordered_assignments' => [$this->assignment_3->id, $this->assignment->id]
+        ]);
+        $assignments = DB::table('assignments')->where('course_id', $this->course->id)
+            ->get()
+            ->sortBy('order')
+            ->pluck('id')
+            ->toArray();
+        $this->assertEquals([$this->assignment_3->id, $this->assignment->id], $assignments);
+
+    }
+
+    /** @test */
+
     public function owner_of_assignment_can_import_properties_and_questions()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_3->id}",
@@ -123,7 +150,7 @@ class AssignmentsIndex2Test extends TestCase
             ->first()
             ->learning_tree_id;
 
-        $this->assertEquals( $original_assignment_question_learning_tree_id , $imported_assignment_question_learning_tree_id);
+        $this->assertEquals($original_assignment_question_learning_tree_id, $imported_assignment_question_learning_tree_id);
     }
 
 
