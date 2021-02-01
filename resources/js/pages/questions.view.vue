@@ -339,28 +339,21 @@
     <div v-if="questions !==['init'] && !inIFrame">
       <PageTitle :title="title" />
     </div>
-    <div v-if="inIFrame && !showSubmissionInformation">
+    <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
       <div v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0">
         <b-alert variant="warning" show>
           <span class="alert-link">
             Your question submission will be marked late.</span>
         </b-alert>
       </div>
-      START HERE!!!
-      <span class="font-weight-bold">Last submitted:</span> {{
-        questions[currentPage - 1].last_submitted
-      }}<br>
-
-      <span class="font-weight-bold">Last response:</span> {{
-        questions[currentPage - 1].student_response
-      }}<br>
-      <div v-if="showScores">
-        <span class="font-weight-bold">Score:</span> {{
-          questions[currentPage - 1].submission_score
-        }}<br>
+      <div v-show="parseInt(questions[currentPage - 1].submission_count) > 0" class="text-center">
+        <b-alert variant="success" show>
+          <span class="font-weight-bold">
+            You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
+            <span v-if="showScores">  You received a score of {{ questions[currentPage - 1].submission_score }}</span>.</span>
+        </b-alert>
       </div>
     </div>
-    END HERE!!!
     <div v-if="user.role === 3 && showAssessmentClosedMessage">
       <b-alert variant="info" show>
         <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details.</span>
@@ -633,10 +626,7 @@
                         Question
                       </b-button>
                     </div>
-                    <div v-if="inIFrame && !showSubmissionInformation">
-                      wefwe
-                    </div>
-                    <hr>
+                    <hr v-if="!inIFrame || (inIFrame && showAssignmentInformation)">
                     <b-container>
                       <b-row align-h="center">
                         <template v-for="remediationObject in learningTreeAsList">
