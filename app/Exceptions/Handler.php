@@ -47,17 +47,20 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
-        $dontReport = [
-            'Illuminate\Auth\AuthenticationException',
-            'Illuminate\Database\Eloquent\ModelNotFoundException',
-            'Illuminate\Validation\ValidationException'
-        ];
-
         $logoutError = strpos(json_encode(request()->all()),'{"logoutRequest":"<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"') !== false;
 
-        if (!$logoutError && !in_array(get_class($exception),$dontReport)) {
+        $dontReportException = in_array(get_class($exception),[
+            'Illuminate\Auth\AuthenticationException',
+            'Illuminate\Database\Eloquent\ModelNotFoundException',
+            'Illuminate\Validation\ValidationException',
+            'App\Exceptions\EmailTakenException'
+            ]);
+
+        $dontReportEndpoints = in_array($exception->getTrace()[0]['file'],['dns-query']);
+
+        if (!($logoutError || $dontReportException || $dontReportEndpoints)) {
             Log::error(sprintf(
-                "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tController: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
+                "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
                 get_class($exception),
                 $exception->getMessage(),
                 $exception->getTrace()[0]['file'],
