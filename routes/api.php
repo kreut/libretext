@@ -88,7 +88,7 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/courses/{course}', 'CourseController@update');
     Route::delete('/courses/{course}', 'CourseController@destroy');
 
-    Route::post('/assignments/{course}/order', 'AssignmentsController@order');
+    Route::patch('/assignments/{course}/order', 'AssignmentsController@order');
 
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
 
