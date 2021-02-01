@@ -122,7 +122,7 @@
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
             <tr v-for="assignment in assignments" :key="assignment.id">
-              <td>
+              <td style="width:300px">
                 <b-icon icon="list" /> <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"
@@ -152,8 +152,14 @@
                 />
               </td>
               <td>{{ assignment.assignment_group }}</td>
-              <td> {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}</td>
-              <td>{{ $moment(assignment.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}</td>
+              <td>
+                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
+                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+              </td>
+              <td style="width:200px">
+                {{ $moment(assignment.due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
+                {{ $moment(assignment.due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+              </td>
               <td> {{ assignment.status }}</td>
               <td>
                 <toggle-button
@@ -560,9 +566,7 @@ export default {
   }
 }
 </script>
-<style scoped>
-
-</style>
+<style scoped></style>
 <style>
 svg:focus, svg:active:focus {
   outline: none !important;
