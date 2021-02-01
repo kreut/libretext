@@ -721,7 +721,7 @@
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
-                      <ckeditor v-model="textSubmissionForm.text_submission" :config="editorConfig" />
+                      <ckeditor :key="questions[currentPage-1].id" v-model="textSubmissionForm.text_submission" :config="editorConfig" />
                     </div>
                     <div class="mt-2 mb-3">
                       <b-button variant="primary" class="float-right" @click="submitText">
@@ -1453,6 +1453,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+          this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
         }
       } catch (error) {
         this.$noty.error(error.message)
