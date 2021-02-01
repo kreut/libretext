@@ -5,11 +5,10 @@
         <div class="font-weight-bold">
           <p>
             It looks like you're trying to access an assignment with the URL {{ $router.currentRoute.path }}
-            but we can't find that assignment.  Please log out then log back in as your instructor may have updated the link.
-          </p>
-          <p>
-            However, if you are still having issues and this is an embedded problem, please let your instructor know so that they can fix the URL.
-            And, if this is not an embedded problem, please Contact Us for assistance.
+            but we can't find that assignment. Please log out then log back in as your instructor may have updated the
+            link.
+            However, if you are still having issues and this is an embedded problem, please let your instructor know so
+            that they can fix the URL.
           </p>
         </div>
       </b-alert>
@@ -332,13 +331,13 @@
         </b-form>
       </div>
     </b-modal>
-    <div v-if="inIFrame" class="text-center">
+    <div v-if="inIFrame && showAssignmentInformation" class="text-center">
       <h5 v-if="(questions !==['init']) && canView">
         {{ name }}: Assessment {{ currentPage }} of {{ questions.length }}
       </h5>
     </div>
-    <div v-else>
-      <PageTitle v-if="questions !==['init']" :title="title" />
+    <div v-if="questions !==['init'] && !inIFrame">
+      <PageTitle :title="title" />
     </div>
     <div v-if="user.role === 3 && showAssessmentClosedMessage">
       <b-alert variant="info" show>
@@ -358,7 +357,8 @@
             <b-col>
               <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
                 <h5>
-                  Presentation Mode: <toggle-button
+                  Presentation Mode:
+                  <toggle-button
                     :width="60"
                     class="mt-2"
                     :value="presentationMode"
@@ -444,7 +444,7 @@
             </b-col>
             <b-row class="text-center font-italic">
               <b-col>
-                <div v-if="timeLeft>0">
+                <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
                   <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                     <template slot-scope="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)" />
@@ -611,10 +611,13 @@
                         Question
                       </b-button>
                     </div>
+                    <div v-if="inIFrame && !showSubmissionInformation">
+                      wefwe
+                    </div>
                     <hr>
                     <b-container>
                       <b-row align-h="center">
-                        <template v-for="remediationObject in this.learningTreeAsList">
+                        <template v-for="remediationObject in learningTreeAsList">
                           <b-col v-for="(value, name) in remediationObject"
                                  v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
                                  cols="4"
@@ -721,7 +724,9 @@
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
                     <div>
-                      <ckeditor :key="questions[currentPage-1].id" v-model="textSubmissionForm.text_submission" :config="editorConfig" />
+                      <ckeditor :key="questions[currentPage-1].id" v-model="textSubmissionForm.text_submission"
+                                :config="editorConfig"
+                      />
                     </div>
                     <div class="mt-2 mb-3">
                       <b-button variant="primary" class="float-right" @click="submitText">
@@ -821,7 +826,10 @@
                       :height="400"
               />
             </b-col>
-            <b-col v-if="(user.role === 3) && assessmentType !== 'clicker'" cols="4">
+            <b-col
+              v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
+              cols="4"
+            >
               <b-row v-if="questions[currentPage-1].technology_iframe">
                 <b-card header="default" header-html="<h5>Question Submission Information</h5>">
                   <b-card-text>
@@ -1048,6 +1056,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showSubmissionInformation: true,
+    showAssignmentInformation: true,
+    showAttribution: true,
     showInvalidAssignmentMessage: false,
     presentationMode: false,
     defaultClickerTimeToSubmit: null,
@@ -1233,8 +1244,18 @@ export default {
     if (!this.canView) {
       return false
     }
-
-    this.questionCol = this.assessmentType === 'clicker' ? 12 : 8
+    if (this.inIFrame) {
+      if (!this.shownSections) {
+        this.showSubmissionInformation = false
+        this.showAssignmentInformation = false
+        this.showAttribution = false
+      } else {
+        this.showSubmissionInformation = this.shownSections.includes('submissionInformation')
+        this.showAssignmentInformation = this.shownSections.includes('assignmentInformation')
+        this.showAttribution = this.shownSections.includes('attribution')
+      }
+    }
+    this.questionCol = this.assessmentType === 'clicker' || !this.showSubmissionInformation ? 12 : 8
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
       if (this.questionId) {
