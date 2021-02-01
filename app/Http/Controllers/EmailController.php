@@ -51,7 +51,6 @@ class EmailController extends Controller
         $assignment_id = $extra_params['assignment_id'];
         $question_id = $extra_params['question_id'];
         $to_user_id = $request->to_user_id;
-        $to_email = User::find($to_user_id)->email;
         $authorized = Gate::inspect('contactGrader', [$email, $to_user_id, $assignment_id, $question_id]);
 
 
@@ -61,6 +60,7 @@ class EmailController extends Controller
         }
         $data = $request->validated();
         try {
+            $to_email = User::find($to_user_id)->email;
             $student_user_id = Auth::user()->id;
             $link = $request->getSchemeAndHttpHost() . "/assignments/$assignment_id/grading/$question_id/$student_user_id";
             Mail::to($to_email)

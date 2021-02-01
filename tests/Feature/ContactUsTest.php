@@ -20,7 +20,7 @@ class ContactUsTest extends TestCase
             'text' => 'some text that I want to write',
             'to_user_id' => 6
         ])
-            ->assertJson(['message' => 'You are not allowed to send that person an email.']);
+            ->assertJson(['message' => 'We do not support that email type.']);
 
     }
 

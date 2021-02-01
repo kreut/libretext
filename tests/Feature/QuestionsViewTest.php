@@ -73,6 +73,45 @@ class QuestionsViewTest extends TestCase
             'submission' => $this->submission_object
         ];
     }
+    /** @test */
+
+    public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
+    {
+        $this->actingAs($this->student_user_2)->postJson('/api/email/send', [
+            'name' => 'Ima Student',
+            'email' => 'some@email.com',
+            'subject' => 'Grading issue',
+            'text' => 'some student complaint',
+            'type' => 'contact_grader',
+            'extraParams' => ['question_id' => $this->question->id, 'assignment_id' => $this->assignment->id],
+            'to_user_id' => 100000,
+        ])
+            ->assertJson(['message' => 'You are not allowed to send that person an email.']);
+
+    }
+
+    /** @test */
+
+    public function score_is_correctly_computed_for_a_deduction_only_once_late_policy()
+    {
+
+        $this->assignment->late_policy = 'deduction';
+        $this->assignment->late_deduction_application_period = 'once';
+        $this->assignment->late_deduction_percent = 50;
+        $now = Carbon::now('UTC');
+        $this->assignment->due = $now->subHour(1)->toDateTimeString();//was due an hour ago.
+        $this->assignment->final_submission_deadline = $now->addHour(1)->toDateTimeString();
+        $this->assignment->save();
+
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $submission = Submission::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->where('question_id', $this->question->id)
+            ->first();
+
+        $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100);
+
+    }
 
     /** @test */
 
@@ -634,28 +673,7 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
 
-    public function score_is_correctly_computed_for_a_deduction_only_once_late_policy()
-    {
-
-        $this->assignment->late_policy = 'deduction';
-        $this->assignment->late_deduction_application_period = 'once';
-        $this->assignment->late_deduction_percent = 50;
-        $now = Carbon::now('UTC');
-        $this->assignment->due = $now->subHour(1)->toDateTimeString();//was due an hour ago.
-        $this->assignment->final_submission_deadline = $now->addHour(1)->toDateTimeString();
-        $this->assignment->save();
-
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $submission = Submission::where('assignment_id', $this->assignment->id)
-            ->where('user_id', $this->student_user->id)
-            ->where('question_id', $this->question->id)
-            ->first();
-
-        $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100);
-
-    }
 
 
     /** @test */
@@ -973,22 +991,7 @@ class QuestionsViewTest extends TestCase
     }
 
 
-    /** @test */
 
-    public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
-    {
-        $this->actingAs($this->student_user_2)->postJson('/api/email/send', [
-            'name' => 'Ima Student',
-            'email' => 'some@email.com',
-            'subject' => 'Grading issue',
-            'text' => 'some student complaint',
-            'type' => 'contact_grader',
-            'extraParams' => ['question_id' => $this->question->id, 'assignment_id' => $this->assignment->id],
-            'to_user_id' => 100000,
-        ])
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to send that person an email.']);
-
-    }
 
     /** @test */
 
