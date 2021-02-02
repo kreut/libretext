@@ -40,7 +40,7 @@ class QuestionsGetTest extends TestCase
             'user_id' => $this->student_user->id,
             'original_filename' => 'blah blah',
             'submission' => 'sflkjfwlKEKLie.jpg',
-            'score'=> '0.00',
+            'score' => '0.00',
             'date_submitted' => Carbon::now()
         ];
         $this->h5pSubmission = [
@@ -57,6 +57,44 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_do_a_mass_import()
+    {
+        $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
+            ['mass_import' => "1860,1862"])
+            ->assertJson(['message' => 'You are not allowed to update this assignment.']);
+
+    }
+
+    /** @test */
+    public function page_ids_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
+            ['mass_import' => "blah blah"])
+            ->assertJson(['message' => 'blah blah should be a positive integer.']);
+
+    }
+
+    /** @test */
+    public function owner_can_mass_import()
+    {
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
+            ['mass_import' => "1860,1862"])
+            ->assertJson(['page_ids_added_to_assignment' => '1860, 1862']);
+
+    }
+
+    /** @test */
+    public function mass_import_will_not_repeat_questions()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
+            ['mass_import' => "1860,1862"]);
+
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
+            ['mass_import' => "1860,1862"])
+            ->assertJson(['page_ids_not_added_to_assignment' => '1860, 1862']);
+
+    }
 
 
     /** @test */
@@ -79,14 +117,13 @@ class QuestionsGetTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
-            'order' =>1,
-            'open_ended_submission_type'=>'none'
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
         ]);
 
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
             ->assertJson(['type' => 'success']);
     }
-
 
 
     /** @test */
@@ -97,7 +134,8 @@ class QuestionsGetTest extends TestCase
             ['points' => 10])
             ->assertJson(['message' => 'You are not allowed to update that resource.']);
     }
-    /** @test **/
+
+    /** @test * */
     public function non_owner_cannot_get_assignment_info_for_get_questions()
     {
 
@@ -107,7 +145,7 @@ class QuestionsGetTest extends TestCase
 
     }
 
-    /** @test **/
+    /** @test * */
     public function owner_can_get_assignment_info_for_get_questions()
     {
 
@@ -146,7 +184,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-
     /** @test */
 
     public function cannot_update_points_if_points_are_not_valid()
@@ -162,7 +199,7 @@ class QuestionsGetTest extends TestCase
     public function can_update_points_if_points_if_owner()
     {
 
-        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['type' => 'success']);
 
 
@@ -173,7 +210,7 @@ class QuestionsGetTest extends TestCase
     public function cannot_update_points_if_student_made_a_submission()
     {
         Submission::create($this->h5pSubmission);
-        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['type' => 'error',
                 'message' => "This cannot be updated since students have already submitted responses."]);
 
@@ -184,7 +221,7 @@ class QuestionsGetTest extends TestCase
     public function cannot_update_points_if_student_made_a_file_submission()
     {
         SubmissionFile::create($this->submission_file);
-        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",['points' => 10])
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['type' => 'error',
                 'message' => "This cannot be updated since students have already submitted responses."]);
 
@@ -274,8 +311,8 @@ class QuestionsGetTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
-            'order' =>1,
-            'open_ended_submission_type'=>'none'
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
         ]);
 
         $this->actingAs($this->user_2)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")

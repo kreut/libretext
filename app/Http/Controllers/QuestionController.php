@@ -8,7 +8,6 @@ use App\AssignmentSyncQuestion;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Solution;
-use App\Libretext;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
 
@@ -51,7 +50,7 @@ class QuestionController extends Controller
             $questions_to_add = [];
             foreach ($page_ids as $page_id) {
                 if (!(is_numeric($page_id) && is_int(0+$page_id) &&  0+$page_id >0)){
-                    $response['message'] = "$page_id should be a positive integer";
+                    $response['message'] = "$page_id should be a positive integer.";
                     return $response;
                 }
                 $question_id = $Question->getQuestionIdsByPageId($page_id, 'query', true)[0];//returned as an array
