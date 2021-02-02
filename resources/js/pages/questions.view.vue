@@ -367,7 +367,7 @@
         </b-alert>
       </div>
       <div v-if="questions.length">
-        <div class="mb-3">
+        <div :class="assignmentInformationMarginBottom">
           <b-container>
             <b-col>
               <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
@@ -603,7 +603,7 @@
           </div>
         </div>
 
-        <hr v-if="assessmentType !== 'clicker'">
+        <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
 
         <b-container>
           <b-row>
@@ -626,7 +626,7 @@
                         Question
                       </b-button>
                     </div>
-                    <hr v-if="!inIFrame || (inIFrame && showAssignmentInformation)">
+                    <hr v-if="!inIFrame || showAssignmentInformation">
                     <b-container>
                       <b-row align-h="center">
                         <template v-for="remediationObject in learningTreeAsList">
@@ -1068,6 +1068,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    assignmentInformationMarginBottom: 'mb-3',
     showSubmissionInformation: true,
     showAssignmentInformation: true,
     showAttribution: true,
@@ -1265,6 +1266,9 @@ export default {
         this.showSubmissionInformation = this.shownSections.includes('submissionInformation')
         this.showAssignmentInformation = this.shownSections.includes('assignmentInformation')
         this.showAttribution = this.shownSections.includes('attribution')
+      }
+      if (!this.showAssignmentInformation) {
+        this.assignmentInformationMarginBottom = 'mb-0'
       }
     }
     this.questionCol = this.assessmentType === 'clicker' || !this.showSubmissionInformation ? 12 : 8
