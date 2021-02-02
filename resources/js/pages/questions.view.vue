@@ -59,7 +59,6 @@
               v-b-tooltip.hover
               class="text-muted"
               icon="question-circle"
-              title="Tooltip directive content"
       />
       <b-tooltip target="attribution-tooltip" triggers="hover">
         The attribution includes who authored the question and the license associated with the question.
@@ -81,7 +80,6 @@
               v-b-tooltip.hover
               class="text-muted"
               icon="question-circle"
-              title="Tooltip directive content"
       />
       <b-tooltip target="submissionInformation-tooltip" triggers="hover">
         The submission information includes when the question was submitted, the score on the question, and the last
@@ -100,11 +98,10 @@
         :labels="{checked: 'Shown', unchecked: 'Hidden'}"
         @change="iFrameAssignmentInformation = !iFrameAssignmentInformation; updateShare()"
       />
-      <b-icon id="header-tooltip"
+      <b-icon id="assignmentInformation-tooltip"
               v-b-tooltip.hover
               class="text-muted"
               icon="question-circle"
-              title="Tooltip directive content"
       />
       <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
         This information includes the name of the assignment, the question number in the assignment, and the time left

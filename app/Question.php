@@ -229,7 +229,7 @@ class Question extends Model
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
                 //some other error besides forbidden
                 echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that public page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'message' => 'We tried getting the public page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                     'timeout' => 12000]);
                 exit;
             }
@@ -241,7 +241,7 @@ class Question extends Model
                 $h = new Handler(app());
                 $h->report($e);
                 echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that private page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'message' => 'We tried getting that private page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                     'timeout' => 12000]);
                 exit;
             }
@@ -291,7 +291,7 @@ class Question extends Model
             $h = new Handler(app());
             $h->report($e);
             echo json_encode(['type' => 'error',
-                'message' => 'We tried saving that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                'message' => 'We tried saving that page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
                 'timeout' => 12000]);
             exit;
         }

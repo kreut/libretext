@@ -38,47 +38,100 @@
       />
       <div v-if="!isLoading">
         <PageTitle :title="title" />
-        <p>
-          Using the search box you can find questions by tag.
-          The tag can be a word associated with the question or can be the query library page id. To search
-          by page id, please use the tag: id={id}. For example, id=112358.
-          Note that adding multiple tags will result in a search result which matches all of the conditions.
-        </p>
-        <div class="col-5 p-0">
-          <vue-bootstrap-typeahead
-            ref="queryTypeahead"
-            v-model="query"
-            :data="tags"
-            placeholder="Enter a tag or page id"
-          />
-        </div>
-        <div class="mt-3 d-flex flex-row">
-          <b-button variant="primary" class="mr-2" @click="addTag()">
-            Add Tag
-          </b-button>
-          <b-button variant="success" class="mr-2" @click="getQuestionsByTags()">
-            <b-spinner v-if="gettingQuestions" small type="grow" />
-            Get Questions
-          </b-button>
-          <b-button variant="dark" @click="getStudentView(assignmentId)">
-            View as Student
-          </b-button>
-        </div>
+        <b-container>
+          <b-row align-h="end">
+            <b-button variant="primary" @click="getStudentView(assignmentId)">
+              View as Student
+            </b-button>
+          </b-row>
+          <hr>
+          <b-row>
+            <b-col cols="7" class="border-right" @click="resetPageIdToAssignmentMessages()">
+              <b-card header-html="<span class='font-weight-bold'>Search By Page Id or Tag</span>" class="h-100">
+                <b-card-text>
+                  <p>
+                    Search for questions by tag which can then be added to your assignment.
+                    <b-icon id="search-by-tag-tooltip"
+                            v-b-tooltip.hover
+                            class="text-muted"
+                            icon="question-circle"
+                    />
+                    <b-tooltip target="search-by-tag-tooltip" triggers="hover">
+                      Using the search box you can find questions by tag.
+                      The tag can be a word associated with the question or can be the query library page id. To search
+                      by page id, please use the tag: id={id}. For example, id=112358.
+                      Note that adding multiple tags will result in a search result which matches all of the conditions.
+                    </b-tooltip>
+                  </p>
+                  <div class="col-5 p-0">
+                    <vue-bootstrap-typeahead
+                      ref="queryTypeahead"
+                      v-model="query"
+                      :data="tags"
+                      placeholder="Enter a tag or page id"
+                    />
+                  </div>
+                  <div class="mt-3 d-flex flex-row">
+                    <b-button variant="primary" class="mr-2" @click="addTag()">
+                      Add Tag
+                    </b-button>
+                    <b-button variant="success" class="mr-2" @click="getQuestionsByTags()">
+                      <b-spinner v-if="gettingQuestions" small type="grow" />
+                      Get Questions
+                    </b-button>
+                  </div>
+                  <hr>
+                  <span class="font-weight-bold font-italic">Chosen Tags:</span>
+                  <div v-if="chosenTags.length>0">
+                    <ol>
+                      <li v-for="chosenTag in chosenTags" :key="chosenTag">
+                        <span @click="removeTag(chosenTag)">{{ chosenTag }}
+                          <b-icon icon="trash" variant="danger" /></span>
+                      </li>
+                    </ol>
+                  </div>
+                  <div v-else>
+                    <span class="text-danger">No tags have been chosen.</span>
+                  </div>
+                </b-card-text>
+              </b-card>
+            </b-col>
+            <b-col @click="resetSearchByTag">
+              <b-card header-html="<span class='font-weight-bold'>Mass Import By Page Id" class="h-100">
+                <b-card-text>
+                  <p>Perform a mass import of questions directly into your assignment.</p>
+                  <b-form-textarea
+                    id="textarea"
+                    v-model="massImport"
+                    placeholder="Comma separated list of page ids from the Query Library"
+                    rows="4"
+                    max-rows="5"
+                  />
+                  <div class="float-right mt-2">
+                    <b-button variant="success" class="mr-2" @click="massImportQuestions()">
+                      <b-spinner v-if="massImportingQuestions" small type="grow" />
+                      Import Questions
+                    </b-button>
+                  </div>
+                </b-card-text>
+              </b-card>
+            </b-col>
+          </b-row>
+        </b-container>
+
         <hr>
-        <div />
-        <h5>Chosen Tags:</h5>
-        <div v-if="chosenTags.length>0">
-          <ol>
-            <li v-for="chosenTag in chosenTags" :key="chosenTag">
-              <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                <b-icon icon="trash" variant="danger" /></span>
-            </li>
-          </ol>
-        </div>
-        <div v-else>
-          <span class="text-danger">No tags have been chosen.</span>
-        </div>
       </div>
+      <div v-if="pageIdsAddedToAssignmentMessage.length>0">
+        <b-alert show variant="success">
+          <span class="font-weight-bold">{{ pageIdsAddedToAssignmentMessage }}</span>
+        </b-alert>
+      </div>
+      <div v-if="pageIdsNotAddedToAssignmentMessage.length>0">
+        <b-alert show variant="info">
+          <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
+        </b-alert>
+      </div>
+
       <div v-if="questions.length>0" class="overflow-auto">
         <b-pagination
           v-model="currentPage"
@@ -160,6 +213,10 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    pageIdsNotAddedToAssignmentMessage: '',
+    pageIdsAddedToAssignmentMessage: '',
+    massImportingQuestions: false,
+    massImport: '',
     questionFilesAllowed: false,
     uploading: false,
     continueLoading: true,
@@ -198,6 +255,48 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
+    resetMassImport () {
+      this.questions = []
+      this.pageIdsAddedToAssignmentMessage = ''
+      this.pageIdsNotAddedToAssignmentMessage = ''
+      this.massImport = ''
+    },
+    resetSearchByTag () {
+      this.showQuestions = false
+      this.chosenTags = []
+    },
+    async massImportQuestions () {
+      if (this.massImportingQuestions) {
+        let numPageIds = (this.massImport.match(/,/g) || []).length + 3
+        let message = `Please be patient.  Validating all of your page id's  will take about ${numPageIds} seconds.`
+        this.$noty.info(message)
+        return false
+      }
+      this.pageIdsAddedToAssignmentMessage = ''
+      this.pageIdsNotAddedToAssignmentMessage = ''
+      this.massImportingQuestions = true
+      try {
+        const { data } = await axios.post(`/api/questions/${this.assignmentId}/mass-import-questions`, { 'mass_import': this.massImport })
+        this.massImportingQuestions = false
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.page_ids_added_to_assignment) {
+          let verb = data.page_ids_added_to_assignment.length > 1 ? 'were' : 'was'
+          this.pageIdsAddedToAssignmentMessage = `${data.page_ids_added_to_assignment} ${verb} added to this assignment.`
+        }
+        if (data.page_ids_not_added_to_assignment) {
+          let verb = data.page_ids_not_added_to_assignment.length > 1 ? 'were' : 'was'
+          let pronoun = data.page_ids_not_added_to_assignment.length > 1 ? 'they' : 'it'
+          this.pageIdsNotAddedToAssignmentMessage = `${data.page_ids_not_added_to_assignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.massImportingQuestions = false
+      }
+      this.massImport = ''
+    },
     openUploadFileModal (questionId) {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
