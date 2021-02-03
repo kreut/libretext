@@ -46,7 +46,7 @@
           </b-row>
           <hr>
           <b-row>
-            <b-col cols="7" class="border-right" @click="resetPageIdToAssignmentMessages()">
+            <b-col cols="7" class="border-right" @click="resetMassImport()">
               <b-card header-html="<span class='font-weight-bold'>Search By Page Id or Tag</span>" class="h-100">
                 <b-card-text>
                   <p>
@@ -103,7 +103,7 @@
                   <b-form-textarea
                     id="textarea"
                     v-model="massImport"
-                    placeholder="Comma separated list of page ids from the Query Library"
+                    placeholder="Comma separated list of page id's from the Query Library"
                     rows="4"
                     max-rows="5"
                   />
@@ -267,8 +267,8 @@ export default {
     },
     async massImportQuestions () {
       if (this.massImportingQuestions) {
-        let numPageIds = (this.massImport.match(/,/g) || []).length + 3
-        let message = `Please be patient.  Validating all of your page id's  will take about ${numPageIds} seconds.`
+        let timeToProcess = Math.ceil(((this.massImport.match(/,/g) || []).length) / 3)
+        let message = `Please be patient.  Validating all of your page id's  will take about ${timeToProcess} seconds.`
         this.$noty.info(message)
         return false
       }

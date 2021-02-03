@@ -78,9 +78,9 @@ class QuestionController extends Controller
 
             }
             DB::commit();
+            $response['page_ids_added_to_assignment'] = implode(', ', $page_ids_added_to_assignment);
+            $response['page_ids_not_added_to_assignment'] = implode(', ', $page_ids_not_added_to_assignment);
             $response['type'] = 'success';
-            $response['page_ids_added_to_assignment'] = implode($page_ids_added_to_assignment, ', ');
-            $response['page_ids_not_added_to_assignment'] = implode($page_ids_not_added_to_assignment, ', ');
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
