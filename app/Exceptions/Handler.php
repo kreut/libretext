@@ -58,19 +58,18 @@ class Handler extends ExceptionHandler
         $file = $exception->getTrace()[0]['file'] ?? 'None';
         $line = $exception->getTrace()[0]['line'] ?? 'None';
         $dontReportEndpoints = in_array($file, ['dns-query']);
+        $error_info = sprintf(
+            "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
+            get_class($exception),
+            $exception->getMessage(),
+            $file,
+            $line,
+            request()->path(),
+            json_encode(request()->all()),
+            request()->user() ? request()->user()->id : 'No user logged in'
+        );
+        !($logoutError || $dontReportException || $dontReportEndpoints) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
 
-        if (!($logoutError || $dontReportException || $dontReportEndpoints)) {
-            Log::error(sprintf(
-                "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
-                get_class($exception),
-                $exception->getMessage(),
-                $file,
-                $line,
-                request()->path(),
-                json_encode(request()->all()),
-                request()->user() ? request()->user()->id : 'No user logged in'
-            ));
-        }
     }
 
     /**
