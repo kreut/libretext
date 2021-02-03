@@ -68,8 +68,7 @@ class Handler extends ExceptionHandler
             json_encode(request()->all()),
             request()->user() ? request()->user()->id : 'No user logged in'
         );
-        !($logoutError || $dontReportException || $dontReportEndpoints) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
-
+        (env('APP_ENV') === 'local') || !($logoutError || $dontReportException || $dontReportEndpoints) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
     }
 
     /**

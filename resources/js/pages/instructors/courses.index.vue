@@ -1,13 +1,32 @@
 <template>
   <div>
+    <b-modal
+      id="modal-import-course"
+      ref="modal"
+      title="Import Course"
+      ok-title="Yes, import course!"
+      @ok="handleImportCourse"
+    >
+      <vue-bootstrap-typeahead
+        ref="queryTypeahead"
+        v-model="courseToImport"
+        :data="importableCourses"
+        placeholder="Enter a course name"
+      />
+    </b-modal>
     <PageTitle v-if="canViewCourses" title="My Courses" />
-    <div v-if="user && user.role === 2">
-      <div v-if="canViewCourses" class="row mb-4 float-right">
-        <b-button v-b-modal.modal-course-details variant="primary">
+    <b-container v-if="canViewCourses && user && user.role === 2">
+      <b-row align-h="end" class="mb-4">
+        <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
+                  size="sm"
+        >
           Add Course
         </b-button>
-      </div>
-    </div>
+        <b-button variant="outline-primary" size="sm" class="mr-1" @click="initImportCourse">
+          Import Course
+        </b-button>
+      </b-row>
+    </b-container>
 
     <b-modal
       id="modal-course-details"
@@ -159,12 +178,15 @@ import { mapGetters } from 'vuex'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
 import CourseForm from '../../components/CourseForm'
 import Form from 'vform'
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
-  components: { CourseForm, ToggleButton },
+  components: { CourseForm, ToggleButton, VueBootstrapTypeahead },
   middleware: 'auth',
   data: () => ({
+    importableCourses: [],
+    courseToImport: '',
     showCourseShownTooltip: {
       fallbackPlacement: ['right'],
       placement: 'right',
@@ -216,6 +238,33 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async initImportCourse () {
+      try {
+        const { data } = await axios.get(`/api/courses/importable`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.importableCourses = data.importable_courses
+        this.$bvModal.show('modal-import-course')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async handleImportCourse (bvEvt) {
+      bvEvt.preventDefault()
+      try {
+        const { data } = await axios.post(`/api/courses/import/${this.courseToImport}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.getAssignments()
+        this.$bvModal.hide('modal-import-course')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitShowCourse (course) {
       try {
         const { data } = await axios.patch(`/api/courses/${course.id}/show-course/${Number(course.shown)}`)

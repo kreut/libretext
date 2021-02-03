@@ -25,6 +25,40 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+    public function getImportable(Request $request, Course $course)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('import', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $importable_courses = DB::table('courses')
+                ->join('users', 'courses.user_id', '=', 'users.id')
+                ->where('public', 1)
+                ->orWhere('user_id', $request->user()->id)
+                ->select('name', 'first_name', 'last_name')
+                ->get();
+            $formatted_importable_courses = [];
+            foreach ($importable_courses as $course) {
+                $course_info = "$course->name --- $course->first_name $course->last_name";
+                if (!in_array($course_info, $formatted_importable_courses)) {
+                    $formatted_importable_courses[] = "$course->name --- $course->first_name $course->last_name";
+                }
+            }
+            $response['type'] = 'success';
+            $response['importable_courses'] = $formatted_importable_courses;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error retrieving the importable courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     /**
      * @param Request $request
      * @param Course $course
@@ -154,7 +188,7 @@ class CourseController extends Controller
             DB::commit();
             $response['type'] = !$shown ? 'success' : 'info';
             $shown_message = !$shown ? 'can' : 'cannot';
-            $response['course_access_code'] =$course_access_code;
+            $response['course_access_code'] = $course_access_code;
             $response['message'] = "Your students <strong>{$shown_message}</strong> view this course.  $access_code_message";
 
         } catch (Exception $e) {

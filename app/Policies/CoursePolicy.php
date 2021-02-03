@@ -13,6 +13,13 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    public function import(User $user, Course $course){
+
+        return ((int) $user->role === 2)
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve the importable courses.');
+
+    }
     /**
      * @param User $user
      * @param Course $course
