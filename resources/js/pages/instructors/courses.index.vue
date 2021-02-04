@@ -11,7 +11,7 @@
         ref="queryTypeahead"
         v-model="courseToImport"
         :data="formattedImportableCourses"
-        placeholder="Enter a course name"
+        placeholder="Enter a course or instructor name"
       />
     </b-modal>
     <PageTitle v-if="canViewCourses" title="My Courses" />
