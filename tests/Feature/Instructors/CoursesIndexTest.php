@@ -30,14 +30,44 @@ class CoursesIndexTest extends TestCase
 
     }
 
-    /** @test */
-public function a_non_owner_cannot_toggle_showing_a_course(){
-    $this->actingAs($this->user)->patchJson("/api/courses/{$this->course_2->id}/show-course/1")
-        ->assertJson(['message' => 'You are not allowed to show/hide this course.']);
 
-}
     /** @test */
-    public function an_owner_can_toggle_showing_a_course(){
+
+    public function cannot_import_non_public_course()
+    {
+        $this->course_2->public = 0;
+        $this->course_2->save();
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}")
+            ->assertJson(['message' => 'You are not allowed to import that course.']);
+    }
+
+    /** @test */
+    public function non_instructor_cannot_import_a_course()
+    {
+        $this->actingAs($this->grader_user)->postJson("/api/courses/import/{$this->course_2->id}")
+            ->assertJson(['message' => 'You are not allowed to import that course.']);
+
+    }
+
+    public function instructor_can_import_a_course()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}")
+            ->assertJson(['message' => '<strong>First Course Import</strong> has been imported.  </br></br>Don\'t forget to change the dates associated with this course and all of its assignments.']);
+
+    }
+
+    /** @test */
+    public function a_non_owner_cannot_toggle_showing_a_course()
+    {
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course_2->id}/show-course/1")
+            ->assertJson(['message' => 'You are not allowed to show/hide this course.']);
+
+    }
+
+    /** @test */
+    public function an_owner_can_toggle_showing_a_course()
+    {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-course/1")
             ->assertJson(['message' => 'Your students <strong>cannot</strong> view this course.  In addition, the course access code has been revoked.']);
     }
