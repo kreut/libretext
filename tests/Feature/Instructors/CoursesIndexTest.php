@@ -199,7 +199,8 @@ public function a_non_owner_cannot_toggle_showing_a_course(){
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10'
+            'end_date' => '2021-06-10',
+            'public' => 1
         ])->assertJson(['type' => 'success']);
     }
 
