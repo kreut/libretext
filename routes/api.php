@@ -82,6 +82,8 @@ Route::group(['middleware' => 'auth:api'], function () {
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/importable', 'CourseController@getImportable');
+    Route::post('/courses/import/{course}', 'CourseController@import');
+
     Route::get('/courses/{course}', 'CourseController@show');
     Route::patch('/courses/{course}/show-course/{shown}', 'CourseController@showCourse');
 

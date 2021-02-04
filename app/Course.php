@@ -118,6 +118,24 @@ class Course extends Model
 
     }
 
+    /**
+     * @param int $course_id
+     * @param Enrollment $enrollment
+     */
+    public function enrollFakeStudent(int $course_id, Enrollment $enrollment)
+    {
+        $fake_student = new User();
+        $fake_student->last_name = 'Student';
+        $fake_student->first_name = 'Fake';
+        $fake_student->time_zone = auth()->user()->time_zone;
+        $fake_student->role = 3;
+        $fake_student->save();
+
+        //enroll the fake student
+        $enrollment->create(['user_id' => $fake_student->id,
+            'course_id' => $course_id]);
+
+    }
 
     public function isGrader()
     {

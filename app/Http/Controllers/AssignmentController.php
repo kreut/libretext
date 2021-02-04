@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentSyncQuestion;
 use App\Traits\DateFormatter;
 use App\Course;
 use App\Solution;
@@ -11,6 +12,7 @@ use App\Extension;
 use App\Submission;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
+use Doctrine\DBAL\Schema\Synchronizer\SingleDatabaseSynchronizer;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -54,7 +56,7 @@ class AssignmentController extends Controller
 
 
     }
-    public function importAssignment(Request $request, Course $course, Assignment $assignment)
+    public function importAssignment(Request $request, Course $course, Assignment $assignment, AssignmentGroup $assignmentGroup, AssignmentSyncQuestion $assignmentSyncQuestion )
     {
 
         $response['type'] = 'error';
@@ -87,54 +89,16 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment_id);
 
             DB::beginTransaction();
-            $assignment_group = AssignmentGroup::find($assignment->assignment_group_id);
-            $imported_assignment_group = DB::table('assignment_groups')
-                ->where('user_id', $assignment_group->user_id)
-                ->where('assignment_group', $assignment_group->assignment_group)
-                ->where('course_id', $course->id)
-                ->get();
-            $default_assignment_group = DB::table('assignment_groups')
-                ->where('user_id', 0)
-                ->where('assignment_group', $assignment_group->assignment_group)
-                ->get();
-            if ($default_assignment_group->isEmpty() && $imported_assignment_group->isEmpty()) {
-                //don't have it in your course yet and it's not one of the default ones
-                $imported_assignment_group = $assignment_group->replicate();
-                $imported_assignment_group->course_id = $course->id;
-                $imported_assignment_group_id = $imported_assignment_group->save();
-            } else {
-                $imported_assignment_group_id = $assignment_group->id;
-            }
 
+            $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($course, $assignment);
             $imported_assignment = $assignment->replicate();
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
             $imported_assignment->save();
 
-
             if ($level === 'properties_and_questions') {
-                $assignment_questions = DB::table('assignment_question')
-                    ->where('assignment_id', $assignment_id)
-                    ->get();
-                foreach ($assignment_questions as $key => $assignment_question) {
-                    $assignment_question->assignment_id = $imported_assignment->id;
-                    //add each question
-                    $assignment_question_array = json_decode(json_encode($assignment_question), true);
-                    unset($assignment_question_array['id']);
-                    $new_assignment_question_id = DB::table('assignment_question')->insertGetId($assignment_question_array);
-                    //add the learning tree associated with the question
-                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-                        ->where('assignment_question_id', $assignment_question->id)
-                        ->first();
-                    if ($assignment_question_learning_tree) {
-                        DB::table('assignment_question_learning_tree')->insert([
-                            'assignment_question_id' => $new_assignment_question_id,
-                            'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
-                            'created_at' => Carbon::now(),
-                            'updated_at' => Carbon::now()]);
-                    }
-                }
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment_id, $imported_assignment->id);
             }
             DB::commit();
             $response['type'] = 'success';

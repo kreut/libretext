@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentSyncQuestion;
 use App\Course;
 use App\FinalGrade;
 use App\User;
@@ -25,11 +26,82 @@ class CourseController extends Controller
 
     use DateFormatter;
 
-    public function getImportable(Request $request, Course $course)
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param AssignmentGroup $assignmentGroup
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Enrollment $enrollment
+     * @param FinalGrade $finalGrade
+     * @return array
+     * @throws Exception
+     */
+    public function import(Request $request,
+                           Course $course,
+                           AssignmentGroup $assignmentGroup,
+                           AssignmentSyncQuestion $assignmentSyncQuestion,
+                           Enrollment $enrollment,
+                           FinalGrade $finalGrade)
     {
         $response['type'] = 'error';
 
         $authorized = Gate::inspect('import', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            DB::beginTransaction();
+            $imported_course = $course->replicate();
+            $imported_course->name = "$imported_course->name Import";
+            $imported_course->shown = 0;
+            $imported_course->user_id = $request->user()->id;
+            $imported_course->save();
+            foreach ($course->assignments as $assignment) {
+                $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
+                $imported_assignment = $assignment->replicate();
+                $imported_assignment->course_id = $imported_course->id;
+                $imported_assignment->shown = 0;
+                if ($imported_assignment->assessment_type !== 'real time') {
+                    $imported_assignment->solutions_released = 0;
+                }
+                if ($imported_assignment->assessment_type === 'delayed') {
+                    $imported_assignment->show_scores = 0;
+                }
+                $imported_assignment->students_can_view_assignment_statistics = 0;
+                $imported_assignment->assignment_group_id = $imported_assignment_group_id;
+                $imported_assignment->save();
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
+            }
+            $course->enrollFakeStudent($imported_course->id, $enrollment);
+            $finalGrade->setDefaultLetterGrades($imported_course->id);
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = "<strong>$imported_course->name</strong> has been imported.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error importing the course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getImportable(Request $request, Course $course)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('getImportable', $course);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -39,13 +111,16 @@ class CourseController extends Controller
                 ->join('users', 'courses.user_id', '=', 'users.id')
                 ->where('public', 1)
                 ->orWhere('user_id', $request->user()->id)
-                ->select('name', 'first_name', 'last_name')
+                ->select('name', 'first_name', 'last_name', 'courses.id')
                 ->get();
             $formatted_importable_courses = [];
             foreach ($importable_courses as $course) {
                 $course_info = "$course->name --- $course->first_name $course->last_name";
                 if (!in_array($course_info, $formatted_importable_courses)) {
-                    $formatted_importable_courses[] = "$course->name --- $course->first_name $course->last_name";
+                    $formatted_importable_courses[] = [
+                        'course_id' => $course->id,
+                        'formatted_course' => "$course->name --- $course->first_name $course->last_name"
+                    ];
                 }
             }
             $response['type'] = 'success';
@@ -212,7 +287,7 @@ class CourseController extends Controller
                 return DB::table('courses')
                     ->leftJoin('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
                     ->select('courses.*', 'course_access_codes.access_code')
-                    ->where('user_id', auth()->user()->id)->orderBy('start_date', 'desc')
+                    ->where('user_id', $user->id)->orderBy('start_date', 'desc')
                     ->get();
             case(4):
                 $courses = DB::table('graders')
@@ -262,20 +337,9 @@ class CourseController extends Controller
             $data['shown'] = 0;
             //create the course
             $new_course = $course->create($data);
-            //create a test student
-            $fake_student = new User();
-            $fake_student->last_name = 'Student';
-            $fake_student->first_name = 'Fake';
-            $fake_student->time_zone = auth()->user()->time_zone;
-            $fake_student->role = 3;
-            $fake_student->save();
+            $course->enrollFakeStudent($new_course->id, $enrollment);
+            $finalGrade->setDefaultLetterGrades($new_course->id);
 
-            //enroll the fake student
-            $enrollment->create(['user_id' => $fake_student->id,
-                'course_id' => $new_course->id]);
-            $finalGrade = new FinalGrade();
-            FinalGrade::create(['course_id' => $new_course->id,
-                'letter_grades' => $finalGrade->defaultLetterGrades()]);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$request->name</strong> has been created.";

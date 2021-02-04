@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
@@ -9,6 +10,30 @@ use Illuminate\Support\Collection;
 class AssignmentSyncQuestion extends Model
 {
 
+    public function importAssignmentQuestionsAndLearningTrees( int $from_assignment_id, int $to_assignment_id)
+    {
+        $assignment_questions = DB::table('assignment_question')
+            ->where('assignment_id', $from_assignment_id)
+            ->get();
+        foreach ($assignment_questions as $key => $assignment_question) {
+            $assignment_question->assignment_id = $to_assignment_id;
+            //add each question
+            $assignment_question_array = json_decode(json_encode($assignment_question), true);
+            unset($assignment_question_array['id']);
+            $new_assignment_question_id = DB::table('assignment_question')->insertGetId($assignment_question_array);
+            //add the learning tree associated with the question
+            $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                ->where('assignment_question_id', $assignment_question->id)
+                ->first();
+            if ($assignment_question_learning_tree) {
+                DB::table('assignment_question_learning_tree')->insert([
+                    'assignment_question_id' => $new_assignment_question_id,
+                    'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()]);
+            }
+        }
+    }
     public function getNewQuestionOrder(Assignment $assignment){
         $max_order = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)

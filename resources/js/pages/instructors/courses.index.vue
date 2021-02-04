@@ -10,7 +10,7 @@
       <vue-bootstrap-typeahead
         ref="queryTypeahead"
         v-model="courseToImport"
-        :data="importableCourses"
+        :data="formattedImportableCourses"
         placeholder="Enter a course name"
       />
     </b-modal>
@@ -185,12 +185,13 @@ export default {
   components: { CourseForm, ToggleButton, VueBootstrapTypeahead },
   middleware: 'auth',
   data: () => ({
+    formattedImportableCourses: [],
     importableCourses: [],
     courseToImport: '',
     showCourseShownTooltip: {
       fallbackPlacement: ['right'],
       placement: 'right',
-      title: "Show or hide a course on the student's homepage.  If you are embedding assignments, please show/hide individual assignments; hiding the course won't hide the individually embedded assignments."
+      title: 'Show or hide a course on the student\'s homepage.  If you are embedding assignments, please show/hide individual assignments; hiding the course won\'t hide the individually embedded assignments.'
     },
     fields: [
       {
@@ -246,21 +247,35 @@ export default {
           return false
         }
         this.importableCourses = data.importable_courses
+        for (let i = 0; i < data.importable_courses.length; i++) {
+          this.formattedImportableCourses.push(data.importable_courses[i].formatted_course)
+        }
         this.$bvModal.show('modal-import-course')
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
+    getIdOfCourseToImport (courseToImport) {
+      console.log(this.importableCourses)
+      for (let i = 0; i < this.importableCourses.length; i++) {
+        console.log(this.importableCourses[i].formatted_course, courseToImport)
+        if (this.importableCourses[i]['formatted_course'] === courseToImport) {
+          return this.importableCourses[i]['course_id']
+        }
+      }
+      return 0
+    },
     async handleImportCourse (bvEvt) {
       bvEvt.preventDefault()
       try {
-        const { data } = await axios.post(`/api/courses/import/${this.courseToImport}`)
+        let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
+        const { data } = await axios.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
         }
-        this.getAssignments()
         this.$bvModal.hide('modal-import-course')
+        await this.getCourses()
       } catch (error) {
         this.$noty.error(error.message)
       }

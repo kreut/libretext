@@ -13,13 +13,27 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-    public function import(User $user, Course $course){
+    public function import(User $user, Course $course)
+    {
 
-        return ((int) $user->role === 2)
+        $owner_of_course = (int)$course->user_id === (int)$user->id;
+        $is_public = (int)$course->public === 1;
+        $is_instructor = (int)$user->role === 2;
+        return ($is_instructor && ($owner_of_course || $is_public))
+            ? Response::allow()
+            : Response::deny('You are not allowed to import that course.');
+
+    }
+
+    public function getImportable(User $user, Course $course)
+    {
+
+        return ((int)$user->role === 2)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the importable courses.');
 
     }
+
     /**
      * @param User $user
      * @param Course $course
@@ -30,7 +44,7 @@ class CoursePolicy
     function loginAsStudentInCourse(User $user, Course $course, int $student_user_id)
     {
         $student_enrolled_in_course = $course->enrollments->contains('user_id', $student_user_id);
-        $owner_of_course = ($course->user_id === (int) $user->id);
+        $owner_of_course = ($course->user_id === (int)$user->id);
         $is_grader = $course->isGrader();
         //check if the student is in their course.
         return ($student_enrolled_in_course && ($owner_of_course || $is_grader))
@@ -66,7 +80,7 @@ class CoursePolicy
 
     public function viewCourseScoresByUser(User $user, Course $course)
     {
-        return  $course->enrollments->contains('user_id', $user->id) && ($course->students_can_view_weighted_average || $course->finalGrades->letter_grades_released)
+        return $course->enrollments->contains('user_id', $user->id) && ($course->students_can_view_weighted_average || $course->finalGrades->letter_grades_released)
             ? Response::allow()
             : Response::deny('You are not allowed to view this score.');
     }
@@ -94,7 +108,7 @@ class CoursePolicy
                 break;
             case(3):
             {
-               $has_access = $course->enrollments->contains('user_id', $user->id);
+                $has_access = $course->enrollments->contains('user_id', $user->id);
                 break;
             }
             case(4):
@@ -146,7 +160,6 @@ class CoursePolicy
     }
 
 
-
     /**
      * Determine whether the user can create courses.
      *
@@ -187,7 +200,6 @@ class CoursePolicy
             ? Response::allow()
             : Response::deny('You are not allowed to delete this course.');
     }
-
 
 
 }
