@@ -40,7 +40,8 @@ export default {
     editCourseForm: new Form({
       name: '',
       start_date: '',
-      end_date: ''
+      end_date: '',
+      public: '1'
     })
   }),
   computed: mapGetters({
@@ -69,6 +70,7 @@ export default {
         this.editCourseForm.name = course.name
         this.editCourseForm.start_date = course.start_date
         this.editCourseForm.end_date = course.end_date
+        this.editCourseForm.public = course.public
 
         console.log(data)
         if (data.type === 'error') {

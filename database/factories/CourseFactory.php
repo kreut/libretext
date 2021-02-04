@@ -11,7 +11,8 @@ $factory->define(Course::class, function (Faker $faker) {
         'name' => 'First Course',
         'start_date' => '2020-06-10',
         'shown' => 1,
-        'end_date' => '2021-06-10'
+        'end_date' => '2021-06-10',
+        'public' => 1
     ];
 
 });

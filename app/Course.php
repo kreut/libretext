@@ -13,7 +13,7 @@ class Course extends Model
      *
      * @var array
      */
-    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown'];
+    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown', 'public'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough

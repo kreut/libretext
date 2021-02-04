@@ -1,5 +1,10 @@
 <template>
   <div>
+    <b-tooltip target="public_tooltip"
+               delay="250"
+    >
+      Public courses can be imported by other instructors; non-public can only be imported by you.
+    </b-tooltip>
     <b-form ref="form">
       <b-form-group
         id="name"
@@ -50,6 +55,27 @@
           @shown="form.errors.clear('end_date')"
         />
         <has-error :form="form" field="end_date" />
+      </b-form-group>
+      <b-form-group
+        id="public"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="Public"
+      >
+        <template slot="label">
+          Public
+          <span id="public_tooltip">
+            <b-icon class="text-muted" icon="question-circle" /></span>
+        </template>
+        <b-form-radio-group v-model="form.public" stacked>
+          <b-form-radio name="public" value="1">
+            Yes
+          </b-form-radio>
+
+          <b-form-radio name="public" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
       </b-form-group>
     </b-form>
   </div>

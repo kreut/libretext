@@ -215,7 +215,8 @@ class CourseController extends Controller
                 'graders' => $course->graderNamesAndIds,
                 'access_code' => $course->accessCodes->access_code ?? false,
                 'start_date' => $course->start_date,
-                'end_date' => $course->end_date];
+                'end_date' => $course->end_date,
+                'public' => $course->public];
 
             $response['type'] = 'success';
         } catch (Exception $e) {
