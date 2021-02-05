@@ -36,10 +36,10 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    if (this.user.role !== 2) {
+    /* if (this.user.role !== 2) {
       this.$noty.error('You do not have access to the Learning Tree Editor.')
       return false
-    }
+    } */
     flowy(document.getElementById('canvas'))
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     this.getLearningTreeLearningByTreeId(this.learningTreeId)

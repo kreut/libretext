@@ -337,7 +337,9 @@
       <PageTitle :title="title" />
     </div>
     <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
-      <div v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0">
+      <div
+        v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
+      >
         <b-alert variant="warning" show>
           <span class="alert-link">
             Your question submission will be marked late.</span>
@@ -601,7 +603,60 @@
         </div>
 
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
+        <b-container>
+          <b-row>
+            <b-col cols="6">
+              <button class="primary mr-2" size="sm" @click="toggleRootAssessmentLearningTree">
+                Root Assessment
+              </button>
+              <button class="success" size="sm" @click="toggleRootAssessmentLearningTree">
+                Learning Tree
+              </button>
 
+              <div v-if="showRootAssessment"
+                   v-html="questions[currentPage-1].technology_iframe"
+              />
+            </b-col>
+            <b-col>
+              Pathway Navigator
+              <b-row align-h="center">
+                <template v-for="remediationObject in learningTreeAsList">
+                  <b-col v-for="(value, name) in remediationObject"
+                         v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
+                  >
+                    <div class="border border-info mr-1 p-3 rounded">
+                      <b-row align-h="center">
+                        <div class="mr-1 ml-2">
+                          <b-icon-arrow-up-circle-fill v-if="remediationObject.parent > 0" variant="info"
+                                                       icon="arrow-up-square-fill" @click="back(remediationObject)"
+                          />
+                          <a href="" @click="explore(remediationObject.library, remediationObject.pageId)">{{ remediationObject.title }}</a>
+                          <b-icon v-if="remediationObject.children.length"
+                                  icon="arrow-down-circle-fill" variant="info"
+                                  @click="more(remediationObject)"
+                          />
+                        </div>
+                      </b-row>
+                    </div>
+                  </b-col>
+                </template>
+              </b-row>
+            </b-col>
+            <div v-if="showRootAssessment">
+              asfdsdf
+            </div>
+          </b-row>
+          <b-row>
+            {{ !showRootAssessment }}
+            {{ learningTreeSrc }}
+            <iframe v-if="!showRootAssessment"
+                    allowtransparency="true"
+                    frameborder="0"
+                    :src="learningTreeSrc"
+                    style="width: 1200px;min-width: 100%;height:800px"
+            />
+          </b-row>
+        </b-container>
         <b-container>
           <b-row>
             <b-col :cols="questionCol">
@@ -1065,6 +1120,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    learningTreeSrc: '',
+    showRootAssessment: true,
     assignmentInformationMarginBottom: 'mb-3',
     showSubmissionInformation: true,
     showAssignmentInformation: true,
@@ -1299,6 +1356,10 @@ export default {
     }
   },
   methods: {
+    toggleRootAssessmentLearningTree () {
+      this.showRootAssessment = !this.showRootAssessment
+      this.learningTreeSrc = (this.showRootAssessment === false) ? `/learning-trees/26/get` : ''
+    },
     cleanUpClickerCounter () {
       this.timeLeft = 0
       this.updateClickerMessage('view_and_not_submit')
@@ -1695,6 +1756,8 @@ export default {
       this.showSubmissionMessage = false
     },
     async showResponse (data) {
+      console.log(data)
+      console.log(this.learningTree)
       if (data.learning_tree && !this.learningTree) {
         await this.showLearningTree(data.learning_tree)
       }
