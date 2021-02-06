@@ -620,21 +620,44 @@
             <b-col>
               Pathway Navigator
               <b-row align-h="center">
-                <template v-for="remediationObject in learningTreeAsList">
+                Previous Node
+                <b-col>
+                  <div class="border border-info mr-1 p-3 rounded">
+                    <b-row align-h="center">
+                      <div class="mr-1 ml-2">
+                        <a href="" @click="explore(previousNode.library, previousNode.pageId)">{{
+                          previousNode.title
+                        }}</a>
+                      </div>
+                    </b-row>
+                  </div>
+                </b-col>
+              </b-row>
+              <b-row align-h="center">
+                Active Node
+                <b-col>
+                  <div class="border border-info mr-1 p-3 rounded">
+                    <b-row align-h="center">
+                      <div class="mr-1 ml-2">
+                        <a href="" @click="explore(activeNode.library, activeNode.pageId)">{{
+                          activeNode.title
+                        }}</a>
+                      </div>
+                    </b-row>
+                  </div>
+                </b-col>
+              </b-row>
+              <b-row align-h="center">
+                Future Nodes
+                <template v-for="remediationObject in futureNodes">
                   <b-col v-for="(value, name) in remediationObject"
                          v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
                   >
                     <div class="border border-info mr-1 p-3 rounded">
                       <b-row align-h="center">
                         <div class="mr-1 ml-2">
-                          <b-icon-arrow-up-circle-fill v-if="remediationObject.parent > 0" variant="info"
-                                                       icon="arrow-up-square-fill" @click="back(remediationObject)"
-                          />
+                          {{ remediationObject.id }}
                           <a href="" @click="explore(remediationObject.library, remediationObject.pageId)">{{ remediationObject.title }}</a>
-                          <b-icon v-if="remediationObject.children.length"
-                                  icon="arrow-down-circle-fill" variant="info"
-                                  @click="more(remediationObject)"
-                          />
                         </div>
                       </b-row>
                     </div>
@@ -642,9 +665,9 @@
                 </template>
               </b-row>
             </b-col>
-            <div v-if="showRootAssessment">
-              asfdsdf
-            </div>
+          </b-row>
+          <b-row>
+            {{ learningTreeAsList }}
           </b-row>
           <b-row>
             {{ !showRootAssessment }}
@@ -1120,6 +1143,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    activeNode: {},
+    previousNode: {},
+    futureNodes: [],
     learningTreeSrc: '',
     showRootAssessment: true,
     assignmentInformationMarginBottom: 'mb-3',
@@ -1964,6 +1990,13 @@ export default {
               this.learningTreeAsList[i]['children'].push(this.learningTreeAsList[j]['id'])
             }
           }
+        }
+        this.previousNode = {}
+        this.activeNode = this.learningTreeAsList[0]
+        this.futureNodes = []
+        for (let i = 0; i < this.activeNode.children.length; i++) {
+          let child = this.activeNode.children[i]
+          this.futureNodes.push(this.learningTreeAsList[child])
         }
       }
 
