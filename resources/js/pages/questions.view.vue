@@ -625,7 +625,7 @@
                   <div class="border border-info mr-1 p-3 rounded">
                     <b-row align-h="center">
                       <div class="mr-1 ml-2">
-                        <a href="" @click="explore(previousNode.library, previousNode.pageId)">{{
+                        <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
                           previousNode.title
                         }}</a>
                       </div>
@@ -639,7 +639,7 @@
                   <div class="border border-info mr-1 p-3 rounded">
                     <b-row align-h="center">
                       <div class="mr-1 ml-2">
-                        <a href="" @click="explore(activeNode.library, activeNode.pageId)">{{
+                        <a href="" @click.prevent="explore(activeNode.library, activeNode.pageId, activeNode.id)">{{
                           activeNode.title
                         }}</a>
                       </div>
@@ -649,15 +649,13 @@
               </b-row>
               <b-row align-h="center">
                 Future Nodes
+                {{ futureNodes }}
                 <template v-for="remediationObject in futureNodes">
-                  <b-col v-for="(value, name) in remediationObject"
-                         v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
-                  >
+                  <b-col :key="remediationObject.id">
                     <div class="border border-info mr-1 p-3 rounded">
                       <b-row align-h="center">
                         <div class="mr-1 ml-2">
-                          {{ remediationObject.id }}
-                          <a href="" @click="explore(remediationObject.library, remediationObject.pageId)">{{ remediationObject.title }}</a>
+                          <a href="" @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)">{{ remediationObject.title }}</a>
                         </div>
                       </b-row>
                     </div>
@@ -1143,6 +1141,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    activeId: 0,
     activeNode: {},
     previousNode: {},
     futureNodes: [],
@@ -2002,9 +2001,21 @@ export default {
 
       this.loadedTitles = true
     },
-    explore (library, pageId) {
+    updateNavigator (activeId) {
+      this.activeNode = this.learningTreeAsList[activeId]
+      console.error(this.activeNode)
+      this.previousNode = parseInt(this.activeNode.parent) === -1 ? { title: 'None' } : this.learningTreeAsList[this.activeNode.parent]
+      let futureNodes = []
+      for (let i = 0; i < this.activeNode.children.length; i++) {
+        let child = this.activeNode.children[i]
+        futureNodes.push(this.learningTreeAsList[child])
+      }
+      this.futureNodes = futureNodes
+    },
+    explore (library, pageId, activeId) {
       this.showQuestion = false
       this.iframeLoaded = false
+      this.updateNavigator(activeId)
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
       if (!this.timerSetToGetLearningTreePoints) {
