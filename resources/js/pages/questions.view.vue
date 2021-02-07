@@ -605,71 +605,53 @@
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
         <b-container>
           <b-row>
-            <b-col cols="6">
-              <button class="primary mr-2" size="sm" @click="toggleRootAssessmentLearningTree">
+            <b-col cols="8">
+              <b-button class="mr-2" variant="primary" size="sm" @click="toggleRootAssessmentLearningTree">
                 Root Assessment
-              </button>
-              <button class="success" size="sm" @click="toggleRootAssessmentLearningTree">
+              </b-button>
+              <b-button variant="success" size="sm" @click="toggleRootAssessmentLearningTree">
                 Learning Tree
-              </button>
+              </b-button>
 
               <div v-if="showRootAssessment"
                    v-html="questions[currentPage-1].technology_iframe"
               />
             </b-col>
             <b-col>
-              Pathway Navigator
-              <b-row align-h="center">
-                Previous Node
-                <b-col>
-                  <div class="border border-info mr-1 p-3 rounded">
-                    <b-row align-h="center">
-                      <div class="mr-1 ml-2">
-                        <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
-                          previousNode.title
-                        }}</a>
-                      </div>
-                    </b-row>
-                  </div>
-                </b-col>
-              </b-row>
-              <b-row align-h="center">
-                Active Node
-                <b-col>
-                  <div class="border border-info mr-1 p-3 rounded">
-                    <b-row align-h="center">
-                      <div class="mr-1 ml-2">
-                        <a href="" @click.prevent="explore(activeNode.library, activeNode.pageId, activeNode.id)">{{
-                          activeNode.title
-                        }}</a>
-                      </div>
-                    </b-row>
-                  </div>
-                </b-col>
-              </b-row>
-              <b-row align-h="center">
-                Future Nodes
-                {{ futureNodes }}
-                <template v-for="remediationObject in futureNodes">
-                  <b-col :key="remediationObject.id">
-                    <div class="border border-info mr-1 p-3 rounded">
-                      <b-row align-h="center">
-                        <div class="mr-1 ml-2">
-                          <a href="" @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)">{{ remediationObject.title }}</a>
-                        </div>
-                      </b-row>
-                    </div>
-                  </b-col>
-                </template>
-              </b-row>
+              <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="mb-2">
+                <div v-if="previousNode.title">
+                  <b-row align-h="center" class="p-2">
+                    <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
+                      previousNode.title
+                    }}</a>
+                  </b-row>
+                  <b-row align-h="center">
+                    <b-icon icon="arrow-down-square-fill" variant="success" />
+                  </b-row>
+                </div>
+                <b-row align-h="center" class="p-2">
+                  <span class="font-weight-bold font-italic text-muted">{{
+                    activeNode.title
+                  }}</span>
+                </b-row>
+                <div v-if="futureNodes.length>0">
+                  <b-row align-h="center">
+                    <b-icon icon="arrow-down-square-fill" variant="success" />
+                  </b-row>
+                  <b-row class="p-2">
+                    <ul>
+                      <li v-for="remediationObject in futureNodes" :key="remediationObject.id">
+                        <a href=""
+                           @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
+                        >{{ remediationObject.title }}</a>
+                      </li>
+                    </ul>
+                  </b-row>
+                </div>
+              </b-card>
             </b-col>
           </b-row>
           <b-row>
-            {{ learningTreeAsList }}
-          </b-row>
-          <b-row>
-            {{ !showRootAssessment }}
-            {{ learningTreeSrc }}
             <iframe v-if="!showRootAssessment"
                     allowtransparency="true"
                     frameborder="0"
@@ -682,70 +664,12 @@
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="learningTreeAsList.length>0">
-                <b-alert show>
-                  <div v-if="!loadedTitles" class="text-center">
-                    <h5>
-                      <b-spinner variant="primary" type="grow" label="Spinning" />
-                      Loading
-                    </h5>
-                  </div>
-                  <div v-else>
-                    <div class="d-flex justify-content-between mb-2">
-                      <h5>Need some help? Explore the topics below.</h5>
-                      <b-button class="float-right" :disabled="Boolean(showQuestion)" variant="primary"
-                                @click="viewOriginalQuestion"
-                      >
-                        View Original
-                        Question
-                      </b-button>
-                    </div>
-                    <hr v-if="!inIFrame || showAssignmentInformation">
-                    <b-container>
-                      <b-row align-h="center">
-                        <template v-for="remediationObject in learningTreeAsList">
-                          <b-col v-for="(value, name) in remediationObject"
-                                 v-if="(remediationObject.show) && (name === 'title')" :key="value.id"
-                                 cols="4"
-                          >
-                            <b-row align-h="center">
-                              <b-col cols="4">
-                                <div class="h2 mb-0">
-                                  <b-icon v-if="remediationObject.parent > 0" variant="info"
-                                          icon="arrow-up-square-fill" @click="back(remediationObject)"
-                                  />
-                                </div>
-                              </b-col>
-                            </b-row>
-                            <div class="border border-info mr-1 p-3 rounded">
-                              <b-row align-h="center">
-                                <div class="mr-1 ml-2">
-                                  <strong>{{ remediationObject.title }}</strong>
-                                </div>
-                                <b-button size="sm" class="mr-2" variant="success"
-                                          @click="explore(remediationObject.library, remediationObject.pageId)"
-                                >
-                                  Go!
-                                </b-button>
-                              </b-row>
-                            </div>
-                            <b-container>
-                              <b-row align-h="center">
-                                <b-col cols="4">
-                                  <div class="h2 mb-0">
-                                    <b-icon v-if="remediationObject.children.length"
-                                            icon="arrow-down-square-fill" variant="info"
-                                            @click="more(remediationObject)"
-                                    />
-                                  </div>
-                                </b-col>
-                              </b-row>
-                            </b-container>
-                          </b-col>
-                        </template>
-                      </b-row>
-                    </b-container>
-                  </div>
-                </b-alert>
+                <div v-if="!loadedTitles" class="text-center">
+                  <h5>
+                    <b-spinner variant="primary" type="grow" label="Spinning" />
+                    Loading
+                  </h5>
+                </div>
               </div>
 
               <div v-if="!iframeLoaded" class="text-center">
@@ -2004,7 +1928,7 @@ export default {
     updateNavigator (activeId) {
       this.activeNode = this.learningTreeAsList[activeId]
       console.error(this.activeNode)
-      this.previousNode = parseInt(this.activeNode.parent) === -1 ? { title: 'None' } : this.learningTreeAsList[this.activeNode.parent]
+      this.previousNode = parseInt(this.activeNode.parent) === -1 ? {} : this.learningTreeAsList[this.activeNode.parent]
       let futureNodes = []
       for (let i = 0; i < this.activeNode.children.length; i++) {
         let child = this.activeNode.children[i]
