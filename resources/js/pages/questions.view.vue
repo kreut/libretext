@@ -616,6 +616,13 @@
               <div v-if="showRootAssessment"
                    v-html="questions[currentPage-1].technology_iframe"
               />
+              <iframe v-if="!showQuestion"
+                      v-show="iframeLoaded" :id="remediationIframeId"
+                      allowtransparency="true"
+                      frameborder="0"
+                      :src="remediationSrc"
+                      style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+              />
             </b-col>
             <b-col>
               <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="mb-2">
@@ -678,13 +685,6 @@
                   Loading...
                 </h5>
               </div>
-              <iframe v-if="!showQuestion"
-                      v-show="iframeLoaded" :id="remediationIframeId"
-                      allowtransparency="true"
-                      frameborder="0"
-                      :src="remediationSrc"
-                      style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
-              />
 
               <div v-if="assessmentType === 'clicker'">
                 <b-alert show :variant="clickerMessageType">
@@ -1937,8 +1937,14 @@ export default {
       this.futureNodes = futureNodes
     },
     explore (library, pageId, activeId) {
-      this.showQuestion = false
-      this.iframeLoaded = false
+      alert(activeId)
+      if (activeId > 0) {
+        this.showQuestion = false
+        this.iframeLoaded = false
+      } else {
+        this.showQuestion = true
+      }
+      // showRootAssessment
       this.updateNavigator(activeId)
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
