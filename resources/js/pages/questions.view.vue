@@ -870,7 +870,30 @@
                         questions[currentPage - 1].late_penalty_percent
                       }}%<br>
                     </div>
-
+                    <b-alert :show="(timerSetToGetLearningTreePoints && !showLearningTreePointsMessage)" variant="info">
+                      <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                        <template slot-scope="props">
+                          <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
+                            props.seconds
+                          }} seconds, you'll be able to re-submit.
+                          </span>
+                        </template>
+                      </countdown>
+                    </b-alert>
+                    <b-alert variant="info" :show="!showSubmissionMessage &&
+                      !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
+                      !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
+                      && (user.role === 3)"
+                    >
+                      <span class="font-weight-bold"> Upon your next attempt at this assessment, you will receive
+                        {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
+                        Tree.</span>
+                    </b-alert>
+                    <b-alert variant="info"
+                             :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
+                    >
+                      <span class="font-weight-bold"> Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!</span>
+                    </b-alert>
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
