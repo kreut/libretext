@@ -553,14 +553,23 @@ body, html {
   opacity: .5;
 }
 
+/*
 #canvas {
   position: absolute;
   width: calc(100% - 361px);
   height: 900px;
-  top: 0px;
+  top: 0;
   left: 341px;
   z-index: 0;
   overflow: auto;
+}*/
+#canvas {
+  position: absolute;
+  width: calc(100% - 361px);
+  height: 900px;
+  top: 0;
+  left: 341px;
+  z-index: 0;
 }
 
 #properties {

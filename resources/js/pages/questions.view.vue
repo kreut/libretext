@@ -613,6 +613,14 @@
             </b-button>
           </b-row>
         </b-container>
+        <b-container v-if="assessmentType === 'learning tree'">
+          <iframe
+            allowtransparency="true"
+            frameborder="0"
+            src="/learning-trees/26/get"
+            style="width: 1200px;min-width: 100%;height:800px"
+          />
+        </b-container>
         <b-container>
           <b-row>
             <b-col :cols="questionCol">
