@@ -39,8 +39,8 @@
       <!-- Submit Button -->
 
       <div class="float-right">
-        <b-button variant="primary">
-          {{ $t('update') }}
+        <b-button variant="primary" @click="update">
+          Update
         </b-button>
       </div>
     </form>
