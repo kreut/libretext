@@ -613,7 +613,7 @@
                 Learning Tree
               </b-button>
 
-              <div v-if="showRootAssessment"
+              <div v-if="showQuestion"
                    v-html="questions[currentPage-1].technology_iframe"
               />
               <iframe v-if="!showQuestion"
@@ -659,7 +659,7 @@
             </b-col>
           </b-row>
           <b-row>
-            <iframe v-if="!showRootAssessment"
+            <iframe v-if="!showQuestion"
                     allowtransparency="true"
                     frameborder="0"
                     :src="learningTreeSrc"
@@ -692,7 +692,7 @@
                 </b-alert>
               </div>
 
-              <div v-if="showQuestion">
+              <div v-if="showQuestion && assessmentType !== 'learning tree'">
                 <div>
                   <iframe v-show="questions[currentPage-1].non_technology"
                           :id="`non-technology-iframe-${currentPage}`"
@@ -1070,7 +1070,6 @@ export default {
     previousNode: {},
     futureNodes: [],
     learningTreeSrc: '',
-    showRootAssessment: true,
     assignmentInformationMarginBottom: 'mb-3',
     showSubmissionInformation: true,
     showAssignmentInformation: true,
@@ -1306,8 +1305,8 @@ export default {
   },
   methods: {
     toggleRootAssessmentLearningTree () {
-      this.showRootAssessment = !this.showRootAssessment
-      this.learningTreeSrc = (this.showRootAssessment === false) ? `/learning-trees/26/get` : ''
+      this.showQuestion = !this.showQuestion
+      this.learningTreeSrc = (this.showQuestion === false) ? `/learning-trees/26/get` : ''
     },
     cleanUpClickerCounter () {
       this.timeLeft = 0
@@ -1937,14 +1936,10 @@ export default {
       this.futureNodes = futureNodes
     },
     explore (library, pageId, activeId) {
-      alert(activeId)
-      if (activeId > 0) {
+      this.showQuestion = (activeId === 0)
+      if (!this.showQuestion) {
         this.showQuestion = false
-        this.iframeLoaded = false
-      } else {
-        this.showQuestion = true
       }
-      // showRootAssessment
       this.updateNavigator(activeId)
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
