@@ -1267,26 +1267,19 @@ export default {
       }
     }
     this.questionCol = this.assessmentType === 'clicker' || !this.showSubmissionInformation ? 12 : 8
+
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
+      this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
+      if (this.showAssignmentStatistics) {
+        this.getScoresSummary = getScoresSummary
+      }
       if (this.questionId) {
         this.currentPage = this.getInitialCurrentPage(this.questionId)
       }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
       window.addEventListener('message', this.receiveMessage, false)
-    }
-
-    this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
-    if (this.showAssignmentStatistics) {
-      this.loaded = false
-      this.getScoresSummary = getScoresSummary
-      try {
-        this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[0]['id']}`)
-        this.loaded = true
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     }
   },
   beforeDestroy () {
@@ -1844,6 +1837,7 @@ export default {
       })
 
       if (this.showAssignmentStatistics) {
+        this.getScoresSummary = getScoresSummary
         try {
           this.loaded = false
           this.chartdata = await this.getScoresSummary(this.assignmentId, `/api/scores/summary/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`)
