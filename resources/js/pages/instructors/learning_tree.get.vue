@@ -1,6 +1,6 @@
 <template>
   <div>
-    <div class="font-italic">
+    <div v-if="user.role === 2" class="font-italic">
       <b-row>
         <b-col class="col-md-3" />
         <h5>Title: {{ title }}</h5>
@@ -36,10 +36,6 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    /* if (this.user.role !== 2) {
-      this.$noty.error('You do not have access to the Learning Tree Editor.')
-      return false
-    } */
     flowy(document.getElementById('canvas'))
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     this.getLearningTreeLearningByTreeId(this.learningTreeId)

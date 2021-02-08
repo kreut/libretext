@@ -603,17 +603,26 @@
         </div>
 
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
-        <b-container v-if="assessmentType === 'learning tree'" class="mb-2">
+        <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length" class="mb-2">
           <b-row>
-            <b-button class="mr-2" variant="primary" size="sm" @click="toggleRootAssessmentLearningTree">
-              Root Assessment
-            </b-button>
-            <b-button variant="success" size="sm" @click="toggleRootAssessmentLearningTree">
-              Learning Tree
-            </b-button>
+            <b-col cols="10">
+              <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
+                Root Assessment
+              </b-button>
+              <b-button variant="success" size="sm" @click="showLearningTree = true">
+                Learning Tree
+              </b-button>
+            </b-col>
+            <b-col h-align="end">
+              <div class="float-right">
+                <b-button variant="info" size="sm" @click="showLearningTree = false">
+                  Pathway Navigator
+                </b-button>
+              </div>
+            </b-col>
           </b-row>
         </b-container>
-        <b-container v-if="assessmentType === 'learning tree'">
+        <b-container v-if="assessmentType === 'learning tree' && showLearningTree">
           <iframe
             allowtransparency="true"
             frameborder="0"
@@ -621,7 +630,7 @@
             style="width: 1200px;min-width: 100%;height:800px"
           />
         </b-container>
-        <b-container>
+        <b-container v-if="!showLearningTree">
           <b-row>
             <b-col :cols="questionCol">
               <div v-if="assessmentType === 'clicker'">
@@ -787,7 +796,7 @@
               v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
               cols="4"
             >
-              <b-row v-if="assessmentType === 'learning tree'">
+              <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length">
                 <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
                   <b-card-text>
                     <div v-if="previousNode.title">
@@ -861,30 +870,7 @@
                         questions[currentPage - 1].late_penalty_percent
                       }}%<br>
                     </div>
-                    <b-alert :show="(timerSetToGetLearningTreePoints && !showLearningTreePointsMessage)" variant="info">
-                      <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
-                        <template slot-scope="props">
-                          <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
-                            props.seconds
-                          }} seconds, you'll be able to re-submit.
-                          </span>
-                        </template>
-                      </countdown>
-                    </b-alert>
-                    <b-alert variant="info" :show="!showSubmissionMessage &&
-                      !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
-                      !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
-                      && (user.role === 3)"
-                    >
-                      <span class="font-weight-bold"> Upon your next attempt at this assessment, you will receive
-                        {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
-                        Tree.</span>
-                    </b-alert>
-                    <b-alert variant="info"
-                             :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
-                    >
-                      <span class="font-weight-bold"> Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!</span>
-                    </b-alert>
+
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                       <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                     </b-alert>
@@ -1048,6 +1034,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showLearningTree: false,
     activeId: 0,
     activeNode: {},
     previousNode: {},
@@ -1287,9 +1274,10 @@ export default {
     }
   },
   methods: {
-    toggleRootAssessmentLearningTree () {
-      this.showQuestion = !this.showQuestion
-      this.learningTreeSrc = (this.showQuestion === false) ? `/learning-trees/26/get` : ''
+    showRootAssessment () {
+      this.showLearningTree = false
+      this.updateNavigator(0)
+      this.showQuestion = true
     },
     cleanUpClickerCounter () {
       this.timeLeft = 0
@@ -1690,7 +1678,7 @@ export default {
       console.log(data)
       console.log(this.learningTree)
       if (data.learning_tree && !this.learningTree) {
-        await this.showLearningTree(data.learning_tree)
+        await this.getLearningTree(data.learning_tree)
       }
       this.submissionDataType = ['success', 'info'].includes(data.type) ? data.type : 'danger'
 
@@ -1844,7 +1832,7 @@ export default {
 
       this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
     },
-    async showLearningTree (learningTree) {
+    async getLearningTree (learningTree) {
       // loop through and get all with parent = -1
       this.learningTree = learningTree
       if (!this.learningTree) {
@@ -2071,7 +2059,7 @@ export default {
           // haven't yet gotten points for exploring the learning tree
           this.showLearningTreePointsMessage = true
         }
-        await this.showLearningTree(this.learningTree)
+        await this.getLearningTree(this.learningTree)
 
         this.initializing = false
       } catch (error) {
