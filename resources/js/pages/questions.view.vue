@@ -616,46 +616,50 @@
               <div v-if="showQuestion"
                    v-html="questions[currentPage-1].technology_iframe"
               />
-              <iframe v-if="!showQuestion"
-                      v-show="iframeLoaded" :id="remediationIframeId"
-                      allowtransparency="true"
-                      frameborder="0"
-                      :src="remediationSrc"
-                      style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
-              />
+              <div>
+                <iframe v-if="!showQuestion"
+                        v-show="iframeLoaded" :id="remediationIframeId"
+                        allowtransparency="true"
+                        frameborder="0"
+                        :src="remediationSrc"
+                        style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+                />
+              </div>
             </b-col>
             <b-col>
-              <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="mb-2">
-                <div v-if="previousNode.title">
+              <b-row>
+                <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="mb-2">
+                  <div v-if="previousNode.title">
+                    <b-row align-h="center" class="p-2">
+                      <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
+                        previousNode.title
+                      }}</a>
+                    </b-row>
+                    <b-row align-h="center">
+                      <b-icon icon="arrow-down-square-fill" variant="success" />
+                    </b-row>
+                  </div>
                   <b-row align-h="center" class="p-2">
-                    <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
-                      previousNode.title
-                    }}</a>
+                    <span class="font-weight-bold font-italic text-muted">{{
+                      activeNode.title
+                    }}</span>
                   </b-row>
-                  <b-row align-h="center">
-                    <b-icon icon="arrow-down-square-fill" variant="success" />
-                  </b-row>
-                </div>
-                <b-row align-h="center" class="p-2">
-                  <span class="font-weight-bold font-italic text-muted">{{
-                    activeNode.title
-                  }}</span>
-                </b-row>
-                <div v-if="futureNodes.length>0">
-                  <b-row align-h="center">
-                    <b-icon icon="arrow-down-square-fill" variant="success" />
-                  </b-row>
-                  <b-row class="p-2">
-                    <ul>
-                      <li v-for="remediationObject in futureNodes" :key="remediationObject.id">
-                        <a href=""
-                           @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
-                        >{{ remediationObject.title }}</a>
-                      </li>
-                    </ul>
-                  </b-row>
-                </div>
-              </b-card>
+                  <div v-if="futureNodes.length>0">
+                    <b-row align-h="center">
+                      <b-icon icon="arrow-down-square-fill" variant="success" />
+                    </b-row>
+                    <b-row class="p-2">
+                      <ul>
+                        <li v-for="remediationObject in futureNodes" :key="remediationObject.id">
+                          <a href=""
+                             @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
+                          >{{ remediationObject.title }}</a>
+                        </li>
+                      </ul>
+                    </b-row>
+                  </div>
+                </b-card>
+              </b-row>
             </b-col>
           </b-row>
         </b-container>
