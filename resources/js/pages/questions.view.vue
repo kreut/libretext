@@ -603,64 +603,14 @@
         </div>
 
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
-        <b-container>
+        <b-container v-if="assessmentType === 'learning tree'" class="mb-2">
           <b-row>
-            <b-col cols="8">
-              <b-button class="mr-2" variant="primary" size="sm" @click="toggleRootAssessmentLearningTree">
-                Root Assessment
-              </b-button>
-              <b-button variant="success" size="sm" @click="toggleRootAssessmentLearningTree">
-                Learning Tree
-              </b-button>
-
-              <div v-if="showQuestion"
-                   v-html="questions[currentPage-1].technology_iframe"
-              />
-              <div>
-                <iframe v-if="!showQuestion"
-                        v-show="iframeLoaded" :id="remediationIframeId"
-                        allowtransparency="true"
-                        frameborder="0"
-                        :src="remediationSrc"
-                        style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
-                />
-              </div>
-            </b-col>
-            <b-col>
-              <b-row>
-                <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="mb-2">
-                  <div v-if="previousNode.title">
-                    <b-row align-h="center" class="p-2">
-                      <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
-                        previousNode.title
-                      }}</a>
-                    </b-row>
-                    <b-row align-h="center">
-                      <b-icon icon="arrow-down-square-fill" variant="success" />
-                    </b-row>
-                  </div>
-                  <b-row align-h="center" class="p-2">
-                    <span class="font-weight-bold font-italic text-muted">{{
-                      activeNode.title
-                    }}</span>
-                  </b-row>
-                  <div v-if="futureNodes.length>0">
-                    <b-row align-h="center">
-                      <b-icon icon="arrow-down-square-fill" variant="success" />
-                    </b-row>
-                    <b-row class="p-2">
-                      <ul>
-                        <li v-for="remediationObject in futureNodes" :key="remediationObject.id">
-                          <a href=""
-                             @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
-                          >{{ remediationObject.title }}</a>
-                        </li>
-                      </ul>
-                    </b-row>
-                  </div>
-                </b-card>
-              </b-row>
-            </b-col>
+            <b-button class="mr-2" variant="primary" size="sm" @click="toggleRootAssessmentLearningTree">
+              Root Assessment
+            </b-button>
+            <b-button variant="success" size="sm" @click="toggleRootAssessmentLearningTree">
+              Learning Tree
+            </b-button>
           </b-row>
         </b-container>
         <b-container>
@@ -672,19 +622,21 @@
                 </b-alert>
               </div>
 
-              <div v-if="showQuestion && assessmentType !== 'learning tree'">
-                <div>
-                  <iframe v-show="questions[currentPage-1].non_technology"
-                          :id="`non-technology-iframe-${currentPage}`"
-                          allowtransparency="true"
-                          frameborder="0"
-                          :src="questions[currentPage-1].non_technology_iframe_src"
-                          style="width: 1px;min-width: 100%;"
+              <div v-if="showQuestion">
+                <div class="border border-dark p-2 rounded">
+                  <div>
+                    <iframe v-show="questions[currentPage-1].non_technology"
+                            :id="`non-technology-iframe-${currentPage}`"
+                            allowtransparency="true"
+                            frameborder="0"
+                            :src="questions[currentPage-1].non_technology_iframe_src"
+                            style="width: 1px;min-width: 100%;"
+                    />
+                  </div>
+                  <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                       v-html="questions[currentPage-1].technology_iframe"
                   />
                 </div>
-                <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
-                     v-html="questions[currentPage-1].technology_iframe"
-                />
                 <div v-if="assessmentType === 'clicker'">
                   <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                     <span class="font-weight-bold">{{ submissionDataMessage }}</span>
@@ -736,6 +688,14 @@
                   </div>
                 </div>
               </div>
+              <iframe
+                v-if="!showQuestion" v-show="iframeLoaded"
+                :id="remediationIframeId"
+                allowtransparency="true"
+                frameborder="0"
+                :src="remediationSrc"
+                style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+              />
             </b-col>
             <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
               <div>
@@ -819,8 +779,41 @@
               v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
               cols="4"
             >
+              <b-row v-if="assessmentType === 'learning tree'">
+                <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
+                  <b-card-text>
+                    <div v-if="previousNode.title">
+                      <b-row align-h="center" class="p-2">
+                        <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
+                          previousNode.title
+                        }}</a>
+                      </b-row>
+                      <b-row align-h="center">
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
+                      </b-row>
+                    </div>
+                    <b-row align-h="center" class="p-2">
+                      <span class="font-weight-bold font-italic text-muted">{{
+                        activeNode.title
+                      }}</span>
+                    </b-row>
+                    <div v-if="futureNodes.length>0">
+                      <b-row align-h="center">
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
+                      </b-row>
+                      <b-row class="p-2">
+                        <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id">
+                          <a href=""
+                             @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
+                          >{{ remediationObject.title }}</a>
+                        </b-col>
+                      </b-row>
+                    </div>
+                  </b-card-text>
+                </b-card>
+              </b-row>
               <b-row v-if="questions[currentPage-1].technology_iframe">
-                <b-card header="default" header-html="<h5>Question Submission Information</h5>">
+                <b-card header="default" header-html="<h5>Question Submission Information</h5>" class="sidebar-card">
                   <b-card-text>
                     <span
                       v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
@@ -890,8 +883,8 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="isOpenEnded && (user.role === 3)" class="mt-3 mb-3">
-                <b-card header="Default" :header-html="getOpenEndedTitle()">
+              <b-row v-if="isOpenEnded && (user.role === 3)" :class="{ 'mt-3': questions[currentPage-1].technology_iframe, 'mb-3': true }">
+                <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
                   <b-card-text>
                     <span
                       v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
@@ -2122,5 +2115,9 @@ export default {
 <style>
 div.ar-icon svg {
   vertical-align: top !important;
+}
+
+.sidebar-card {
+  width: 368px;
 }
 </style>
