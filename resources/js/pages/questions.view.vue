@@ -658,34 +658,10 @@
               </b-card>
             </b-col>
           </b-row>
-          <b-row>
-            <iframe v-if="!showQuestion"
-                    allowtransparency="true"
-                    frameborder="0"
-                    :src="learningTreeSrc"
-                    style="width: 1200px;min-width: 100%;height:800px"
-            />
-          </b-row>
         </b-container>
         <b-container>
           <b-row>
             <b-col :cols="questionCol">
-              <div v-if="learningTreeAsList.length>0">
-                <div v-if="!loadedTitles" class="text-center">
-                  <h5>
-                    <b-spinner variant="primary" type="grow" label="Spinning" />
-                    Loading
-                  </h5>
-                </div>
-              </div>
-
-              <div v-if="!iframeLoaded" class="text-center">
-                <h5>
-                  <b-spinner variant="primary" type="grow" label="Spinning" />
-                  Loading...
-                </h5>
-              </div>
-
               <div v-if="assessmentType === 'clicker'">
                 <b-alert show :variant="clickerMessageType">
                   <span class="font-weight-bold">{{ clickerMessage }}</span>
@@ -1913,20 +1889,14 @@ export default {
             }
           }
         }
-        this.previousNode = {}
-        this.activeNode = this.learningTreeAsList[0]
-        this.futureNodes = []
-        for (let i = 0; i < this.activeNode.children.length; i++) {
-          let child = this.activeNode.children[i]
-          this.futureNodes.push(this.learningTreeAsList[child])
-        }
+
+        this.updateNavigator(0)
       }
 
       this.loadedTitles = true
     },
     updateNavigator (activeId) {
       this.activeNode = this.learningTreeAsList[activeId]
-      console.error(this.activeNode)
       this.previousNode = parseInt(this.activeNode.parent) === -1 ? {} : this.learningTreeAsList[this.activeNode.parent]
       let futureNodes = []
       for (let i = 0; i < this.activeNode.children.length; i++) {
