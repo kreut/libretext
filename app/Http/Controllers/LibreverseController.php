@@ -26,12 +26,19 @@ class LibreverseController extends Controller
 
     }
 
+    public function getTitles(Request $request){
+        $titles = [];
+        foreach ($request->libraries_and_page_ids as $value){
+            $titles[$value['id']] = $this->getTitleByLibraryAndPageId($value['library'], $value['pageId']);
+        }
+        return ['titles' =>$titles];
+    }
     /**
      * @param Request $request
      * @param string $library
      * @param int $pageId
      */
-    public function getTitleByLibraryAndPageId(Request $request, string $library, int $pageId)
+    public function getTitleByLibraryAndPageId(string $library, int $pageId)
     {
         $title_info = DB::table('titles')->where('library', $library)
             ->where('page_id', $pageId)

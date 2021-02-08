@@ -883,7 +883,9 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="isOpenEnded && (user.role === 3)" :class="{ 'mt-3': questions[currentPage-1].technology_iframe, 'mb-3': true }">
+              <b-row v-if="isOpenEnded && (user.role === 3)"
+                     :class="{ 'mt-3': questions[currentPage-1].technology_iframe, 'mb-3': true }"
+              >
                 <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
                   <b-card-text>
                     <span
@@ -1844,6 +1846,7 @@ export default {
       // loop through each with parent having this level
       let pageId
       let library
+      let librariesAndPagIds = []
       for (let i = 0; i < this.learningTree.length; i++) {
         let remediation = this.learningTree[i]
         // get the library and page ids
@@ -1866,11 +1869,16 @@ export default {
           }
         }
         if (pageId && library) {
-          const { data } = await axios.get(`/api/libreverse/library/${library}/page/${pageId}/title`)
+          console.log(pageId, library)
+          librariesAndPagIds.push({
+            'library': library,
+            'pageId': pageId,
+            'id': id
+          })
           let remediation = {
             'library': library,
             'pageId': pageId,
-            'title': data,
+            'title': 'None',
             'parent': parent,
             'id': id,
             'show': (parent === 0)
@@ -1886,10 +1894,13 @@ export default {
             }
           }
         }
-
-        this.updateNavigator(0)
       }
+      const { data } = await axios.post('/api/libreverse/library/titles', { 'libraries_and_page_ids': librariesAndPagIds })
 
+      for (let i = 0; i < this.learningTreeAsList.length; i++) {
+        this.learningTreeAsList[i].title = data.titles[i]
+      }
+      this.updateNavigator(0)
       this.loadedTitles = true
     },
     updateNavigator (activeId) {
@@ -2056,7 +2067,7 @@ export default {
 
         this.initializing = false
       } catch (error) {
-        this.$noty.error('We could not retrieve the questions for this assignment.  Please try again or contact us for assistance.')
+        this.$noty.error(`We could not retrieve the questions for this assignment: ${error.message}.  Please try again or contact us for assistance.`)
       }
       this.iframeLoaded = true
     },
