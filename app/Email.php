@@ -17,16 +17,13 @@ class Email extends Model
     public function sendAssignmentDueReminders()
     {
 
-        $dt = new \DateTime(now(), new \DateTimeZone('UTC'));
-        $dt->setTimeZone(new \DateTimeZone('America/Los_Angeles'));
-
-        $time = $dt->format('Y-m-d H:i:s');
         $notifications = DB::table('notifications')
             ->join('users', 'notifications.user_id', '=', 'users.id')
             ->join('enrollments', 'users.id', '=', 'enrollments.user_id')
             ->join('assignments', 'enrollments.course_id', '=', 'assignments.course_id')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->where('assignments.due', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
+            ->where('assignments.notifications',1)
             ->select('users.first_name', 'users.last_name', 'users.email',
                 DB::raw('assignments.name AS assignment_name'), DB::raw('assignments.id AS assignment_id'),
                 DB::raw('courses.name AS course_name'),
