@@ -47,6 +47,7 @@ class StoreAssignment extends FormRequest
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
             'default_open_ended_submission_type' => Rule::in(['file', 'text', 'audio', 0]),
+            'notifications' => Rule::in([0,1])
         ];
         switch ($this->source) {
             case('a'):

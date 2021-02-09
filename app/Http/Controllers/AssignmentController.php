@@ -515,6 +515,7 @@ class AssignmentController extends Controller
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
+                    'notifications' => $data['notifications'],
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );

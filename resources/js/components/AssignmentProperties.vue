@@ -14,6 +14,12 @@
       >
         Get questions from the Adapt database or from the Query library
       </b-tooltip>
+      <b-tooltip target="notifications_tooltip"
+                 delay="250"
+      >
+        Students can optionally request to receive notifications for upcoming due dates.  You may want to turn this option
+        off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
+      </b-tooltip>
       <b-tooltip target="late_deduction_application_period_tooltip"
                  delay="250"
       >
@@ -337,7 +343,7 @@
               </span>
             </b-form-radio>
           </span>
-          <span @click="checkSourceAndLatePolicy">
+          <span @click="checkSourceAndLatePolicy; form.notifications=0">
             <b-form-radio name="assessment_type" value="clicker">
               Clicker Assessments <span id="clicker" class="text-muted"><b-icon
                 icon="question-circle"
@@ -679,6 +685,26 @@
           />
         </b-form-row>
       </b-form-group>
+      <b-form-group
+        id="notifications"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="notifications"
+      >
+        <template slot="label">
+          Notifications  <span id="notifications_tooltip" class="text-muted"><b-icon
+            icon="question-circle"
+          /></span>
+        </template>
+        <b-form-radio-group v-model="form.notifications" stacked>
+          <b-form-radio name="notifications" value="1">
+            On
+          </b-form-radio>
+          <b-form-radio name="notifications" value="0">
+            Off
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
     </b-modal>
   </div>
 </template>
@@ -744,7 +770,8 @@ export default {
       num_submissions_needed: '2',
       default_points_per_question: 10,
       external_source_points: 100,
-      instructions: ''
+      instructions: '',
+      notifications: 1
     }),
     hasAssignments: false,
     has_submissions_or_file_submissions: false,
@@ -851,6 +878,14 @@ export default {
       if (groupId === -1) {
         this.$bvModal.show('modal-create-assignment-group')
       }
+      // don't notify students for exams
+      for (let i = 0; i < this.assignmentGroups.length; i++) {
+        if (this.assignmentGroups[i].value === groupId) {
+          if (['exam', 'midterm', 'quiz', 'final'].includes(this.assignmentGroups[i].text.toLowerCase())) {
+            this.form.notifications = 0
+          }
+        }
+      }
     },
     async getAssignmentGroups (courseId) {
       this.assignmentGroups = [{ value: null, text: 'Please choose one' }]
@@ -894,6 +929,7 @@ export default {
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
+      this.form.notifications = 1
       this.$bvModal.show('modal-assignment-properties')
     },
     resetOpenEndedResponsesAndPointsPerQuestion () {
@@ -938,6 +974,7 @@ export default {
       this.form.scoring_type = assignment.scoring_type
       this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
       this.form.external_source_points = assignment.source === 'x' ? assignment.external_source_points : ''
+      this.form.notifications = assignment.notifications
       this.$bvModal.show('modal-assignment-properties')
     },
     submitAssignmentInfo (bvModalEvt) {
