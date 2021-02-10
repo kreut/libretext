@@ -402,7 +402,7 @@
                     points.
                   </h5>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && !questions[currentPage-1].answered_correctly_at_least_once"
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
                      class="text-center"
                 >
                   <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
@@ -625,7 +625,7 @@
         </div>
 
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
-        <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length" class="mb-2">
+        <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt" class="mb-2">
           <b-row>
             <b-col cols="4">
               <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
@@ -849,7 +849,7 @@
               v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
               cols="4"
             >
-              <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length">
+              <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt">
                 <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
                   <b-card-text>
                     <div v-if="previousNode.title">
@@ -1085,6 +1085,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    answeredCorrectlyOnTheFirstAttempt: false,
     showPathwayNavigator: true,
     showLearningTree: false,
     activeId: 0,
@@ -1643,6 +1644,7 @@ export default {
         this.questions[this.currentPage - 1]['submission_count'] = data.submission_count
         this.questions[this.currentPage - 1]['submission_score'] = data.submission_score
         this.questions[this.currentPage - 1]['late_penalty_percent'] = data.late_penalty_percent
+        this.questions[this.currentPage - 1]['answered_correctly_at_least_once'] = data.answered_correctly_at_least_once
         this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
         this.questions[this.currentPage - 1]['solution'] = data.solution
         if (data.submission_count > 1) {
@@ -1847,7 +1849,9 @@ export default {
         this.timeLeft = this.questions[this.currentPage - 1].clicker_time_left
         this.updateClickerMessage(this.clickerStatus)
       }
-
+      if (this.assessmentType === 'learning tree') {
+        this.answeredCorrectlyOnTheFirstAttempt = parseInt(this.questions[this.currentPage - 1].answered_correctly_at_least_once) + parseInt(this.questions[this.currentPage - 1].submission_count) === 2
+      }
       this.showOpenEndedSubmissionMessage = false
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
       this.audioUploadUrl = `/api/submission-audios/${this.assignmentId}/${this.questions[currentPage - 1].id}`

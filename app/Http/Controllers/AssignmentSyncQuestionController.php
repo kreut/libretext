@@ -545,6 +545,7 @@ class AssignmentSyncQuestionController extends Controller
             'submission_score' => rtrim(rtrim($response_info['submission_score'], "0"), "."),
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
+            'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
             'solution' => $original_filename
         ];
 
@@ -560,6 +561,7 @@ class AssignmentSyncQuestionController extends Controller
         $last_submitted = 'N/A';
         $submission_count = 0;
         $late_question_submission = false;
+        $answered_correctly_at_least_once = 0;
         if (isset($submissions_by_question_id[$question_id])) {
             $submission = $submissions_by_question_id[$question_id];
             $last_submitted = $submission->updated_at;
@@ -568,7 +570,7 @@ class AssignmentSyncQuestionController extends Controller
             $submission_count = $submission->submission_count;
             $late_penalty_percent = $Submission->latePenaltyPercent($assignment, Carbon::parse($last_submitted));
             $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
-
+            $answered_correctly_at_least_once = $submission->answered_correctly_at_least_once;
 
             switch ($question_technologies[$question_id]) {
                 case('h5p'):
@@ -607,7 +609,7 @@ class AssignmentSyncQuestionController extends Controller
 
             }
         }
-        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent', 'late_question_submission');
+        return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent', 'late_question_submission', 'answered_correctly_at_least_once');
 
     }
 
@@ -672,7 +674,7 @@ class AssignmentSyncQuestionController extends Controller
             $open_ended_submission_types = [];
             $clicker_status = [];
             $clicker_time_left = [];
-            $answered_correctly_at_least_once = [];
+
 
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
@@ -732,7 +734,6 @@ class AssignmentSyncQuestionController extends Controller
                         : '0%';
                     $submitted_but_did_not_explore_learning_tree[$value->question_id] = $submission_exists_by_question_id && ($submissions_by_question_id[$value->question_id]->explored_learning_tree === null);
                     $explored_learning_tree[$value->question_id] = $submission_exists_by_question_id && $submissions_by_question_id[$value->question_id]->explored_learning_tree !== null;
-                    $answered_correctly_at_least_once[$value->question_id] = $submission_exists_by_question_id ? $submissions_by_question_id[$value->question_id]->answered_correctly_at_least_once : 0;
                 }
             }
 
@@ -792,6 +793,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
+                $answered_correctly_at_least_once = $response_info['answered_correctly_at_least_once'];
                 $submission_score = rtrim(rtrim($response_info['submission_score'], "0"), ".");
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
@@ -818,7 +820,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
                     $assignment->questions[$key]['submitted_but_did_not_explore_learning_tree'] = $submitted_but_did_not_explore_learning_tree[$question->id];
                     $assignment->questions[$key]['explored_learning_tree'] = $explored_learning_tree[$question->id];
-                    $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once[$question->id];
+                    $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once;
 
                 }
 
