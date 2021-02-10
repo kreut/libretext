@@ -405,10 +405,14 @@
                 <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree'"
                      class="text-center"
                 >
-                  <span class="text-bold">
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
                     A penalty of
                     {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
                   </span>
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1" class="text-bold text-info">
+                    With the penalty, the maximum score that you can receive for this question is
+                    {{ parseFloat(questions[currentPage-1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count)-1))/100 }}
+                    points.</span>
                 </div>
                 <div
                   v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
@@ -458,6 +462,18 @@
             </b-col>
             <b-row class="text-center font-italic">
               <b-col>
+                <div v-if="assessmentType === 'learning tree'">
+                  <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
+                    <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
+                      questions[currentPage - 1].last_submitted
+                    }}</span>
+                  </div>
+                  <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                    <span class="font-weight-bold">You had a late penalty of </span> {{
+                      questions[currentPage - 1].late_penalty_percent
+                    }}%
+                  </span>
+                </div>
                 <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
                   <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                     <template slot-scope="props">
@@ -552,19 +568,9 @@
         </div>
         <div v-if="assessmentType === 'learning tree'">
           <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
-            <span class="font-weight-bold">Your achieved a score of {{
+            <span class="font-weight-bold">You achieved a score of {{
               questions[currentPage - 1].submission_score
-            }}.  This response was submitted on {{
-              questions[currentPage - 1].last_submitted
-            }} after {{ questions[currentPage - 1].submission_count }} attempt<span
-              v-if="parseInt(questions[currentPage - 1].submission_count) >1"
-            >s</span>.
-              <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                <span class="font-weight-bold">You had a late penalty of </span> {{
-                  questions[currentPage - 1].late_penalty_percent
-                }}%
-              </span>
-            </span>
+            }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
         <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
@@ -658,7 +664,7 @@
                 && (user.role === 3)"
               >
                 <span class="font-weight-bold"> Try again and you will receive
-                  {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> for exploring the Learning
+                  {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> just for exploring the Learning
                   Tree.</span>
               </b-alert>
               <b-alert variant="info"
@@ -1956,6 +1962,7 @@ export default {
       this.futureNodes = futureNodes
     },
     explore (library, pageId, activeId) {
+      this.showSubmissionMessage = false
       this.showQuestion = (activeId === 0)
       if (!this.showQuestion) {
         this.showQuestion = false

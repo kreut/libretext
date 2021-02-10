@@ -543,7 +543,7 @@ class AssignmentSyncQuestionController extends Controller
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'submission_score' => $response_info['submission_score'],
+            'submission_score' => rtrim(rtrim($response_info['submission_score'], "0"),"."),
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'solution' => $original_filename
@@ -674,6 +674,7 @@ class AssignmentSyncQuestionController extends Controller
             $clicker_status = [];
             $clicker_time_left = [];
 
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
@@ -732,6 +733,7 @@ class AssignmentSyncQuestionController extends Controller
                         : '0%';
                     $submitted_but_did_not_explore_learning_tree[$value->question_id] = $submission_exists_by_question_id && ($submissions_by_question_id[$value->question_id]->explored_learning_tree === null);
                     $explored_learning_tree[$value->question_id] = $submission_exists_by_question_id && $submissions_by_question_id[$value->question_id]->explored_learning_tree !== null;
+
                 }
             }
 
@@ -791,7 +793,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
-                $submission_score = $response_info['submission_score'];
+                $submission_score = rtrim(rtrim($response_info['submission_score'], "0"),".");
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];

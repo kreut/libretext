@@ -440,7 +440,7 @@ function getTotalPointsByAssignment(Course $course){
             ->select(DB::raw('SUM(assignment_question.points) as total_points,assignments.id'))
             ->get();
       foreach ($points_info as $value){
-          $total_points_by_assignment [$value->id] = trim(rtrim($value->total_points, "0"),".");
+          $total_points_by_assignment [$value->id] = rtrim(rtrim($value->total_points, "0"),".");
       }
       return  $total_points_by_assignment ;
 
