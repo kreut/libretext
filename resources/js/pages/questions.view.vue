@@ -402,7 +402,7 @@
                     points.
                   </h5>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree'"
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && !questions[currentPage-1].answered_correctly_at_least_once"
                      class="text-center"
                 >
                   <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
