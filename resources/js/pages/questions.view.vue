@@ -390,7 +390,7 @@
                 </b-button>
               </div>
               <div v-if="source === 'a' && !inIFrame ">
-                <div v-if="assessmentType !== 'clicker'" class="text-center">
+                <div v-if="!['clicker','learning tree'].includes(assessmentType)" class="text-center">
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
                 <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
@@ -550,7 +550,23 @@
             @input="changePage(currentPage)"
           />
         </div>
-
+        <div v-if="assessmentType === 'learning tree'">
+          <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
+            <span class="font-weight-bold">Your achieved a score of {{
+              questions[currentPage - 1].submission_score
+            }}.  This response was submitted on {{
+              questions[currentPage - 1].last_submitted
+            }} after {{ questions[currentPage - 1].submission_count }} attempt<span
+              v-if="parseInt(questions[currentPage - 1].submission_count) >1"
+            >s</span>.
+              <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                <span class="font-weight-bold">You had a late penalty of </span> {{
+                  questions[currentPage - 1].late_penalty_percent
+                }}%
+              </span>
+            </span>
+          </b-alert>
+        </div>
         <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
           <div class="p-2">
             <b-button class="mt-1 mb-2"
@@ -605,20 +621,51 @@
         <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
         <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length" class="mb-2">
           <b-row>
-            <b-col cols="10">
+            <b-col cols="4">
               <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
                 Root Assessment
               </b-button>
-              <b-button variant="success" size="sm" @click="showLearningTree = true">
-                Learning Tree
-              </b-button>
+              <toggle-button
+                :width="160"
+                class="mt-2"
+                :value="showPathwayNavigator"
+                :sync="true"
+                size="lg"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#467fd0', unchecked: '#28a745'}"
+                :labels="{checked: 'Pathway Navigator', unchecked: 'Learning Tree'}"
+                @change="togglePathwayNavigatorLearningTree"
+              />
             </b-col>
-            <b-col h-align="end">
-              <div class="float-right">
-                <b-button variant="info" size="sm" @click="showLearningTree = false">
-                  Pathway Navigator
-                </b-button>
-              </div>
+            <b-col>
+              <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+              </b-alert>
+              <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
+                <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                  <template slot-scope="props">
+                    <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
+                      props.seconds
+                    }} seconds, then re-submit.
+                    </span>
+                  </template>
+                </countdown>
+              </b-alert>
+              <b-alert variant="info" :show="!showSubmissionMessage &&
+                !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
+                !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
+                && (user.role === 3)"
+              >
+                <span class="font-weight-bold"> Try again and you will receive
+                  {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> for exploring the Learning
+                  Tree.</span>
+              </b-alert>
+              <b-alert variant="info"
+                       :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
+              >
+                <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
+              </b-alert>
             </b-col>
           </b-row>
         </b-container>
@@ -819,7 +866,7 @@
                         <b-icon icon="arrow-down-square-fill" variant="success" />
                       </b-row>
                       <b-row class="p-2">
-                        <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id">
+                        <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id" class="border border-primary rounded m-1">
                           <a href=""
                              @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
                           >{{ remediationObject.title }}</a>
@@ -829,8 +876,10 @@
                   </b-card-text>
                 </b-card>
               </b-row>
-              <b-row v-if="questions[currentPage-1].technology_iframe">
-                <b-card header="default" header-html="<h5>Question Submission Information</h5>" class="sidebar-card">
+              <b-row v-if="assessmentType !== 'learning tree' && questions[currentPage-1].technology_iframe">
+                <b-card header="default"
+                        header-html="<h5>Question Submission Information</h5>" class="sidebar-card"
+                >
                   <b-card-text>
                     <span
                       v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
@@ -870,33 +919,6 @@
                         questions[currentPage - 1].late_penalty_percent
                       }}%<br>
                     </div>
-                    <b-alert :show="(timerSetToGetLearningTreePoints && !showLearningTreePointsMessage)" variant="info">
-                      <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
-                        <template slot-scope="props">
-                          <span class="font-weight-bold">  After exploring the Learning Tree for {{ props.minutes }} minutes, {{
-                            props.seconds
-                          }} seconds, you'll be able to re-submit.
-                          </span>
-                        </template>
-                      </countdown>
-                    </b-alert>
-                    <b-alert variant="info" :show="!showSubmissionMessage &&
-                      !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
-                      !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
-                      && (user.role === 3)"
-                    >
-                      <span class="font-weight-bold"> Upon your next attempt at this assessment, you will receive
-                        {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} points for exploring the Learning
-                        Tree.</span>
-                    </b-alert>
-                    <b-alert variant="info"
-                             :show="showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
-                    >
-                      <span class="font-weight-bold"> Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!</span>
-                    </b-alert>
-                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
-                    </b-alert>
                   </b-card-text>
                 </b-card>
               </b-row>
@@ -1057,6 +1079,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    showPathwayNavigator: true,
     showLearningTree: false,
     activeId: 0,
     activeNode: {},
@@ -1290,8 +1313,14 @@ export default {
     }
   },
   methods: {
+    togglePathwayNavigatorLearningTree () {
+      this.showPathwayNavigator = !this.showPathwayNavigator
+      this.showLearningTree = !this.showPathwayNavigator
+      this.showQuestion = this.showPathwayNavigator
+    },
     showRootAssessment () {
       this.showLearningTree = false
+      this.showPathwayNavigator = true
       this.updateNavigator(0)
       this.showQuestion = true
     },

@@ -148,7 +148,8 @@ class Submission extends Model
                             $message = "Your total score was updated with a penalty of $learning_tree_percent_penalty% applied.";
                         } else {
                             $data['score'] = $learning_tree_points;
-                            $message = "You submission was not correct but you're still receiving $learning_tree_points points for exploring the Learning Tree.";
+                            $s =  $learning_tree_points > 1 ? 's' : '';
+                            $message = "Incorrect! But you're still receiving $learning_tree_points point$s for exploring the Learning Tree.";
                         }
                     } else {
                         if (!$data['all_correct']) {

@@ -103,6 +103,9 @@
             {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
             {{ data.item.due.is_extension ? '(Extension)' : '' }}
           </template>
+          <template v-slot:cell(score)="data">
+            {{ data.item.score }}/{{ data.item.total_points }}
+          </template>
           <template v-slot:head(z_score)="data">
             Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
           </template>
