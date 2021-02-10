@@ -31,7 +31,8 @@ class QuestionsViewLearningTreesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id,
             'solutions_released' => 0,
             'assessment_type' => 'learning tree',
-            'submission_count_percent_decrease' => 10]);
+            'submission_count_percent_decrease' => 10,
+            'percent_earned_for_exploring_learning_tree' => 50]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
 
 
@@ -72,6 +73,20 @@ class QuestionsViewLearningTreesTest extends TestCase
     }
 
     /** @test */
+    public function incorrect_responses_still_get_learning_tree_points_as_the_score_if_explored_learning_tree()
+    {
+
+        $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )->original['submission_id'];
+        $submission = Submission::find($submission_id);
+        $submission->explored_learning_tree = 1;
+        $submission->save();
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )
+            ->assertJson(['message' => "Incorrect! But you're still receiving 5 points for exploring the Learning Tree."]);
+    }
+
+
+
+    /** @test */
     public function student_in_course_can_update_explored_learning_tree()
     {
         $this->actingAs($this->student_user)->patchJson("api/submissions/{$this->assignment->id}/{$this->question->id}/explored-learning-tree")
@@ -107,16 +122,6 @@ class QuestionsViewLearningTreesTest extends TestCase
     }
 
 
-    /** @test */
-    public function incorrect_responses_still_get_learning_tree_points_as_the_score_if_explored_learning_tree()
-    {
-        $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )->original['submission_id'];
-        $submission = Submission::find($submission_id);
-        $submission->explored_learning_tree = 1;
-        $submission->save();
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )
-            ->assertJson(['message' => 'You submission was not correct but you\'re still receiving 0 points for exploring the Learning Tree.']);
-    }
 
     /** @test */
     public function correct_penalty_applied_based_on_penalty_percent_and_submission_count()

@@ -76,6 +76,7 @@ class AssignmentsIndex2Test extends TestCase
             'assessment_type' => 'delayed',
             'default_open_ended_submission_type' => 'file',
             'instructions' => 'Some instructions',
+            'notifications' => 1,
             'assignment_group_id' => 1];
     }
 
