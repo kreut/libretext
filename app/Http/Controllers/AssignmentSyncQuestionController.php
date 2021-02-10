@@ -674,6 +674,7 @@ class AssignmentSyncQuestionController extends Controller
             $open_ended_submission_types = [];
             $clicker_status = [];
             $clicker_time_left = [];
+            $learning_tree_ids_by_question_id = [];
 
 
             foreach ($assignment_question_info['questions'] as $question) {
@@ -724,6 +725,7 @@ class AssignmentSyncQuestionController extends Controller
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
                 foreach ($assignment->learningTrees() as $value) {
+                    $learning_tree_ids_by_question_id[$value->question_id] = $value->learning_tree_id;
                     $submission_exists_by_question_id = isset($submissions_by_question_id[$value->question_id]) && $submissions_by_question_id[$value->question_id]->submission_count >= 1;
                     $learning_trees_by_question_id[$value->question_id] =
                         $submission_exists_by_question_id
@@ -821,6 +823,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['submitted_but_did_not_explore_learning_tree'] = $submitted_but_did_not_explore_learning_tree[$question->id];
                     $assignment->questions[$key]['explored_learning_tree'] = $explored_learning_tree[$question->id];
                     $assignment->questions[$key]['answered_correctly_at_least_once'] = $answered_correctly_at_least_once;
+                    $assignment->questions[$key]['learning_tree_id'] = $learning_tree_ids_by_question_id[$question->id];
 
                 }
 

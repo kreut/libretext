@@ -679,7 +679,7 @@
           <iframe
             allowtransparency="true"
             frameborder="0"
-            src="/learning-trees/26/get"
+            :src="learningTreeSrc"
             style="width: 1200px;min-width: 100%;height:800px"
           />
         </b-container>
@@ -1851,6 +1851,7 @@ export default {
       }
       if (this.assessmentType === 'learning tree') {
         this.answeredCorrectlyOnTheFirstAttempt = parseInt(this.questions[this.currentPage - 1].answered_correctly_at_least_once) + parseInt(this.questions[this.currentPage - 1].submission_count) === 2
+        this.learningTreeSrc = `/learning-trees/${this.questions[currentPage - 1].learning_tree_id}/get`
       }
       this.showOpenEndedSubmissionMessage = false
       this.solutionTextForm.solution_text = this.questions[currentPage - 1].solution_text
