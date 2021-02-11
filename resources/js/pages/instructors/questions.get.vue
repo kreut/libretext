@@ -97,9 +97,9 @@
               </b-card>
             </b-col>
             <b-col @click="resetSearchByTag">
-              <b-card header-html="<span class='font-weight-bold'>Mass Import By Page Id" class="h-100">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
                 <b-card-text>
-                  <p>Perform a mass import of questions directly into your assignment.</p>
+                  <p>Perform a direct import of questions directly into your assignment.</p>
                   <b-form-textarea
                     id="textarea"
                     v-model="massImport"
