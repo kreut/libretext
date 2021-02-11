@@ -287,8 +287,8 @@ export default {
           this.pageIdsAddedToAssignmentMessage = `${data.page_ids_added_to_assignment} ${verb} added to this assignment.`
         }
         if (data.page_ids_not_added_to_assignment) {
-          let verb = data.page_ids_not_added_to_assignment.length > 1 ? 'were' : 'was'
-          let pronoun = data.page_ids_not_added_to_assignment.length > 1 ? 'they' : 'it'
+          let verb = data.page_ids_not_added_to_assignment.includes(',') ? 'were' : 'was'
+          let pronoun = data.page_ids_not_added_to_assignment.includes(',') ? 'they' : 'it'
           this.pageIdsNotAddedToAssignmentMessage = `${data.page_ids_not_added_to_assignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
         }
       } catch (error) {
