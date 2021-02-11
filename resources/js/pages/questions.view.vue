@@ -1975,7 +1975,7 @@ export default {
       this.updateNavigator(activeId)
       this.remediationSrc = `https://${library}.libretexts.org/@go/page/${pageId}`
       this.remediationIframeId = `remediation-${library}-${pageId}`
-      if (!this.timerSetToGetLearningTreePoints) {
+      if (!this.timerSetToGetLearningTreePoints && !this.questions[this.currentPage - 1].explored_learning_tree) {
         this.setTimerToGetLearningTreePoints()
       }
     },
