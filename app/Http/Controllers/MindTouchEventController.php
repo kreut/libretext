@@ -38,7 +38,7 @@ class MindTouchEventController extends Controller
                                 ->where('library',$request_library)
                                 ->first();
             if ($question) {
-                Log::info("Cache busting page id $request->page_id from $request_library");
+                //Log::info("Cache busting page id $request->page_id from $request_library");
                 $Question->getQuestionIdsByPageId($request->page_id, $request_library,true);//possibly recreate non-technology piece
             }
         } catch (Exception $e) {
