@@ -1,5 +1,5 @@
 // was also doing on page load because I was storing the location as well.  But if I don't need that, this will bust the cache on update
-function updateInAdapt () {
+function updateInAdapt (action) {
   let iframe = document.createElement('iframe')
   let uniqueString = 'MyUNiQueId'
   document.body.appendChild(iframe)
@@ -23,16 +23,20 @@ function updateInAdapt () {
 
   let data = JSON.parse($('#mt-global-settings').html())
   input1.value = data.pageId
-  input2.value = 'saved'
+  input2.value = action
   form.appendChild(input1)
   form.appendChild(input2)
   document.body.appendChild(form)
   form.submit()
 }
 
+$(document).on('click', '.edit-update', function () {
+  console.log('Updated title')
+  updateInAdapt('updated_title')
+})
 $(document).on('click', '#cke_18', function () {
-  console.log('Sent to Adapt')
-  updateInAdapt()
+  console.log('updated_question')
+  updateInAdapt('updated_question')
 })
 
 window.tagObserverSet = false
@@ -43,7 +47,7 @@ $(document).on('click', '#mt-summary', function () {
       let target = document.querySelector('#live-tag-entries')
       let observer = new MutationObserver(function (mutations) {
         console.log('tags changed')
-        updateInAdapt()
+        updateInAdapt('udpated_question')
       })
 
       let config = { attributes: true, childList: true, characterData: true }

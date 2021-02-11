@@ -6,6 +6,7 @@ use App\MindTouchEvent;
 use App\Question;
 use Illuminate\Database\Eloquent\Model;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
@@ -33,9 +34,27 @@ class Libretext extends Model
 
         $this->client = new Client();
         $this->tokens = $this->getTokens();
-        $this->library = $attributes['library'];
-        $this->token = $this->tokens->{$this->library};
+        if ($attributes) {
+            $this->library = $attributes['library'];
+            $this->token = $this->tokens->{$this->library};
+        }
 
+    }
+
+    /**
+     * @param string $library
+     * @param int $pageId
+     * @return false|mixed|string
+     */
+    public function getTitleByLibraryAndPageId(string $library, int $pageId){
+        $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
+        $xml = simplexml_load_string($response->body());
+        if (($pos = strpos($xml->attributes()->title[0], ":")) !== FALSE) {
+            $title = substr($xml->attributes()->title[0], $pos + 1);
+        } else {
+            $title = $xml->attributes()->title[0];
+        }
+        return $title;
     }
 
     public function import()
