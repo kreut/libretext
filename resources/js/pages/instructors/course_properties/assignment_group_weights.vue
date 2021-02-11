@@ -1,32 +1,46 @@
 <template>
   <div>
-    <b-card v-if="user.role === 2">
-      <b-card-text>
-        <p>
-          <strong>Note: This page is incomplete --- I need to add how to add the assignment groups from this page.</strong>
-          Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
-          all scores.
-        </p>
-        <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
-          <template v-slot:cell(assignment_group_weight)="data">
-            <b-col lg="5">
-              <b-form-input
-                :id="`assignment_group_id_${data.item.id}}`"
-                v-model="assignmentGroupWeightsForm[data.item.id]"
-                type="text"
-                :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
-                @keydown="assignmentGroupWeightsFormWeightError = ''"
-              />
-            </b-col>
-          </template>
-        </b-table>
-        <div class="ml-5">
-          <b-form-invalid-feedback :state="false">
-            {{ assignmentGroupWeightsFormWeightError }}
-          </b-form-invalid-feedback>
-        </div>
-      </b-card-text>
-    </b-card>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
+      />
+      <div v-if="!isLoading && user.role === 2">
+        <b-card header="default" header-html="Assignment Group Weights">
+          <b-card-text>
+            <p>
+              Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
+              all scores.
+            </p>
+            <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
+              <template v-slot:cell(assignment_group_weight)="data">
+                <b-col lg="5">
+                  <b-form-input
+                    :id="`assignment_group_id_${data.item.id}}`"
+                    v-model="assignmentGroupWeightsForm[data.item.id]"
+                    type="text"
+                    :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
+                    @keydown="assignmentGroupWeightsFormWeightError = ''"
+                  />
+                </b-col>
+              </template>
+            </b-table>
+            <div class="ml-5">
+              <b-form-invalid-feedback :state="false">
+                {{ assignmentGroupWeightsFormWeightError }}
+              </b-form-invalid-feedback>
+            </div>
+          </b-card-text>
+          <b-button class="float-right" variant="primary" @click="submitAssignmentGroupWeights">
+            Submit
+          </b-button>
+        </b-card>
+      </div>
+    </div>
   </div>
 </template>
 
@@ -34,13 +48,18 @@
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
+import Loading from 'vue-loading-overlay'
+import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
-
+  components: {
+    Loading
+  },
   data: () => ({
 
     course: {},
+    isLoading: true,
     letterGradesReleased: false,
     assignmentGroupWeightsFormWeightError: '',
     assignmentGroupWeightsForm: {},
@@ -66,6 +85,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
         console.log(data)
+        this.isLoading = false
         if (data.error) {
           this.$noty.error(data.message)
           return false
@@ -79,10 +99,10 @@ export default {
         this.assignmentGroupWeightsForm = new Form(formInputs)
       } catch (error) {
         this.$noty.error(error.message)
+        this.isLoading = false
       }
     },
-    async submitAssignmentGroupWeights (bvModalEvt) {
-      bvModalEvt.preventDefault()
+    async submitAssignmentGroupWeights () {
       try {
         const { data } = await this.assignmentGroupWeightsForm.patch(`/api/assignmentGroupWeights/${this.courseId}`)
         if (data.form_error) {
@@ -90,7 +110,6 @@ export default {
           return false
         }
         this.$noty[data.type](data.message)
-        this.$bvModal.hide('modal-assignment-group-weights')
       } catch (error) {
         this.$noty.error(error.message)
       }

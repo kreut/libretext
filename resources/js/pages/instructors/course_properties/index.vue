@@ -53,8 +53,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Assignment Groups',
-          route: 'course_properties.assignment_groups'
+          name: 'Assignment Group Weights',
+          route: 'course_properties.assignment_group_weights'
         }
       ]
     }
