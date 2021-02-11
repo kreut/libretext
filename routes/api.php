@@ -48,7 +48,7 @@ Route::get('jwt/init', 'JWTController@init');
 Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
 
-Route::group(['middleware' => 'auth:api'], function () {
+Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('logout', 'Auth\LoginController@logout');
 
     Route::get('/user', 'Auth\UserController@current');
@@ -95,7 +95,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::patch('/assignments/{course}/order', 'AssignmentsController@order');
 
     Route::post('/breadcrumbs', 'BreadcrumbController@index');
-
 
 
     Route::get('/assignmentGroupWeights/{course}', 'AssignmentGroupWeightController@index');
@@ -191,20 +190,17 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::get('/assignments/{assignment}/clicker-question', 'AssignmentSyncQuestionController@getClickerQuestion');
 
 
-
     Route::patch('/assignments/{assignment}/questions/{question}/update-open-ended-submission-type', 'AssignmentSyncQuestionController@updateOpenEndedSubmissionType');
     Route::patch('/assignments/{assignment}/questions/{question}/update-points', 'AssignmentSyncQuestionController@updatePoints');
     Route::patch('/assignments/{assignment}/questions/order', 'AssignmentSyncQuestionController@order');
 
 
-
-
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
 
 
-    Route::post('/submission-audios/audio-feedback/{user}/{assignment}/{question}','SubmissionAudioController@storeAudioFeedback');
-    Route::post('/submission-audios/{assignment}/{question}','SubmissionAudioController@store');
-    Route::post('/submission-audios/error','SubmissionAudioController@logError');
+    Route::post('/submission-audios/audio-feedback/{user}/{assignment}/{question}', 'SubmissionAudioController@storeAudioFeedback');
+    Route::post('/submission-audios/{assignment}/{question}', 'SubmissionAudioController@store');
+    Route::post('/submission-audios/error', 'SubmissionAudioController@logError');
 
 
     Route::get('/enrollments', 'EnrollmentController@index');
@@ -230,7 +226,6 @@ Route::group(['middleware' => 'auth:api'], function () {
     Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
 
 
-
     Route::post('/submission-files/score', 'SubmissionFileController@storeScore');
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
@@ -246,8 +241,7 @@ Route::group(['middleware' => 'auth:api'], function () {
 
 });
 
-Route::post('results', 'ResultController@store');
-Route::group(['middleware' => 'guest:api'], function () {
+Route::group(['middleware' => ['guest:api' ,'throttle:30,1']], function () {
 
     Route::post('login', 'Auth\LoginController@login');
     Route::post('register', 'Auth\RegisterController@register');
