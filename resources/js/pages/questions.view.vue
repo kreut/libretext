@@ -1978,6 +1978,7 @@ export default {
       if (!this.timerSetToGetLearningTreePoints && !this.questions[this.currentPage - 1].explored_learning_tree) {
         this.setTimerToGetLearningTreePoints()
       }
+      this.logVisitRemediationNode(library, pageId)
     },
     setTimerToGetLearningTreePoints () {
       this.timerSetToGetLearningTreePoints = true
@@ -2134,6 +2135,18 @@ export default {
         }
       }
       return questionExistsInAssignment
+    },
+    logVisitRemediationNode (library, pageId) {
+      try {
+        if (this.user.role === 3) {
+          axios.post('/api/logs', {
+            'action': 'visit-remediation-node',
+            'data': { 'library': library, 'page_id': pageId }
+          })
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     logVisitAssessment (assignmentId, questionId) {
       try {
