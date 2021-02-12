@@ -101,7 +101,7 @@
                 <b-card-text>
                   <p>
                     Perform a direct import of questions directly into your assignment from any library using a comma
-                    separate list of the form {libary}-{page id}.
+                    separated list of the form {libary}-{page id}.
                   </p>
                   <b-form-textarea
                     id="textarea"
