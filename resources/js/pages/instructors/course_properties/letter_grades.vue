@@ -279,7 +279,7 @@ export default {
         const { data } = await axios.patch(`/api/courses/${this.courseId}/students-can-view-weighted-average`,
           { 'students_can_view_weighted_average': this.studentsCanViewWeightedAverage })
         this.$noty[data.type](data.message)
-        if (data.error) {
+        if (data.type === 'error') {
           return false
         }
         this.studentsCanViewWeightedAverage = !this.studentsCanViewWeightedAverage

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentGroupWeight;
 use App\Http\Requests\updateLetterGrade;
 use App\FinalGrade;
 use App\Course;
@@ -41,7 +42,7 @@ class FinalGradeController extends Controller
         return $response;
     }
 
-    public function releaseLetterGrades(Request $request, Course $course, int $releaseLetterGrades, FinalGrade $FinalGrade)
+    public function releaseLetterGrades(Request $request, Course $course, int $releaseLetterGrades, FinalGrade $FinalGrade, AssignmentGroupWeight $assignmentGroupWeight)
     {
 
         $response['type'] = 'error';
@@ -52,6 +53,7 @@ class FinalGradeController extends Controller
             return $response;
         }
 
+        $assignmentGroupWeight->validateCourseWeights($course);
         try {
             $FinalGrade->updateOrCreate(
                 ['course_id' => $course->id],

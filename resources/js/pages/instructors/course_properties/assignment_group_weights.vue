@@ -13,9 +13,9 @@
         <b-card header="default" header-html="Assignment Group Weights">
           <b-card-text>
             <p>
-              Tell Adapt how you would like to weight your assignment groups so that it can compute a weighted average of
-              all scores.
+              Tell Adapt how you would like to weight your assignment groups which are currently associated with your assignments.
             </p>
+
             <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
               <template v-slot:cell(assignment_group_weight)="data">
                 <b-col lg="5">
@@ -35,8 +35,8 @@
               </b-form-invalid-feedback>
             </div>
           </b-card-text>
-          <b-button class="float-right" variant="primary" @click="submitAssignmentGroupWeights">
-            Submit
+          <b-button class="float-right" variant="primary" size="sm" @click="submitAssignmentGroupWeights">
+            Update Assignment Group Weights
           </b-button>
         </b-card>
       </div>
@@ -57,7 +57,6 @@ export default {
     Loading
   },
   data: () => ({
-
     course: {},
     isLoading: true,
     letterGradesReleased: false,

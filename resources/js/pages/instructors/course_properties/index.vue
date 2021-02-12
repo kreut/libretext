@@ -48,13 +48,13 @@ export default {
         },
         {
           icon: '',
-          name: 'Refresh Access Code',
-          route: 'course_properties.access_codes'
+          name: 'Assignment Group Weights',
+          route: 'course_properties.assignment_group_weights'
         },
         {
           icon: '',
-          name: 'Assignment Group Weights',
-          route: 'course_properties.assignment_group_weights'
+          name: 'Refresh Access Code',
+          route: 'course_properties.access_codes'
         }
       ]
     }

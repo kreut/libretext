@@ -176,12 +176,7 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            if ($assignmentGroupWeight->where('course_id', $course->id)
-                ->get()
-                ->isEmpty()) {
-                $response['message'] = "Please first set your assignment group weights.";
-                return $response;
-            }
+            $assignmentGroupWeight->validateCourseWeights($course);
             $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
             $course->save();
 
