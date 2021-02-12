@@ -99,7 +99,10 @@
             <b-col @click="resetSearchByTag">
               <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
                 <b-card-text>
-                  <p>Perform a direct import of questions directly into your assignment from any library using a comma separate list of the form {libary}-{page id}.</p>
+                  <p>
+                    Perform a direct import of questions directly into your assignment from any library using a comma
+                    separate list of the form {libary}-{page id}.
+                  </p>
                   <b-form-textarea
                     id="textarea"
                     v-model="directImport"
@@ -361,7 +364,17 @@ export default {
           this.chosenTags.push(this.query)
         }
       }
-      if ((this.query !== '') && this.tags.includes(this.query) && !this.chosenTags.includes(this.query)) {
+      if (this.query === '') {
+        this.$noty.error('You did not include a tag.')
+        return
+      }
+      if (!this.tags.includes(this.query)) {
+        this.$noty.error(`The tag <strong>${this.query}</strong> does not exist in our database.`)
+        this.$refs.queryTypeahead.inputValue = this.query = ''
+        return
+      }
+
+      if (!this.chosenTags.includes(this.query)) {
         this.chosenTags.push(this.query)
       }
       this.$refs.queryTypeahead.inputValue = this.query = '' // https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
