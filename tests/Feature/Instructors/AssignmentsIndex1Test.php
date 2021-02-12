@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Instructors;
 
+use App\AssignmentGroupWeight;
 use App\Course;
 use App\FinalGrade;
 use App\Grader;
@@ -62,11 +63,33 @@ class AssignmentsIndex1Test extends TestCase
 
     /** @test */
 
+    public function owner_cannot_release_letter_grades_if_assignment_weights_are_not_100()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/final-grades/{$this->course->id}/release-letter-grades/1")
+            ->assertJson(['message' => 'Please first update your Assignment Group Weights so that the total weighting is equal to 100.']);
+    }
+
+    /** @test */
+
+    public function owner_can_release_letter_grades()
+    {
+
+        AssignmentGroupWeight::create(['course_id' => $this->course->id,
+            'assignment_group_id' => $this->assignment_info['assignment_group_id'],
+            'assignment_group_weight' => 100]);
+        $this->actingAs($this->user)
+            ->patchJson("/api/final-grades/{$this->course->id}/release-letter-grades/1")
+            ->assertJson(['message' => 'The letter grades <strong>are not</strong> released.']);
+    }
+
+    /** @test */
+
     public function an_owner_is_warned_before_showing_scores_if_there_is_an_active_extension()
     {
-      Extension::create(['user_id' => $this->student_user->id,
-          'assignment_id' => $this->assignment->id,
-          'extension' => '2040-01-01 00:00:00']);
+        Extension::create(['user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'extension' => '2040-01-01 00:00:00']);
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/show-scores/0")
             ->assertJson(['message' => "Your students <strong>can</strong> view their scores.  <br><br>Please note that at least one of your students has an active extension and they can potentially view other students' scores and grader comments."]);
@@ -87,7 +110,6 @@ class AssignmentsIndex1Test extends TestCase
     }
 
 
-
     /** @test */
     public function non_owner_cannot_toggle_showing_assignments()
     {
@@ -104,7 +126,6 @@ class AssignmentsIndex1Test extends TestCase
             ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
             ->assertJson(['message' => 'Your students <strong>cannot</strong> see this assignment.']);
     }
-
 
 
     public function letter_grades_error_message()
@@ -220,14 +241,6 @@ class AssignmentsIndex1Test extends TestCase
             ->assertJson(['message' => 'You are not allowed do update whether letter grades are released.']);
     }
 
-    /** @test */
-
-    public function owner_can_release_letter_grades()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/final-grades/{$this->course->id}/release-letter-grades/1")
-            ->assertJson(['message' => 'The letter grades <strong>are not</strong> released.']);
-    }
 
     /** @test */
 

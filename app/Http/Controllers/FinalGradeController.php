@@ -53,7 +53,10 @@ class FinalGradeController extends Controller
             return $response;
         }
 
-        $assignmentGroupWeight->validateCourseWeights($course);
+        $response = $assignmentGroupWeight->validateCourseWeights($course);
+        if ($response['type'] === 'error'){
+            return $response;
+        }
         try {
             $FinalGrade->updateOrCreate(
                 ['course_id' => $course->id],

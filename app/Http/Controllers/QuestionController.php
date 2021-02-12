@@ -50,6 +50,10 @@ class QuestionController extends Controller
             $library_page_ids_not_added_to_assignment = [];
             $questions_to_add = [];
             foreach ($library_page_ids as $library_page_id) {
+                if (strpos($library_page_id, '-') === false){
+                    $response['message'] = "$library_page_id should be of the form {library}-{page id}.";
+                    return $response;
+                }
                 [$library, $page_id] = explode('-',$library_page_id);
                 if (!(is_numeric($page_id) && is_int(0+$page_id) &&  0+$page_id >0)){
                     $response['message'] = "$page_id should be a positive integer.";

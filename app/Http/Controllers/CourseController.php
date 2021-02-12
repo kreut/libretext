@@ -176,7 +176,10 @@ class CourseController extends Controller
             return $response;
         }
         try {
-            $assignmentGroupWeight->validateCourseWeights($course);
+            $response = $assignmentGroupWeight->validateCourseWeights($course);
+           if ($response['type'] === 'error'){
+               return $response;
+           }
             $course->students_can_view_weighted_average = !$request->students_can_view_weighted_average;
             $course->save();
 

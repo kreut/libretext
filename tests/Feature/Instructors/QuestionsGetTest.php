@@ -57,10 +57,10 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
-    public function non_owner_cannot_do_a_mass_import()
+    public function non_owner_cannot_do_a_direct_import()
     {
-        $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
-            ['mass_import' => "1860,1862"])
+        $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => "1860,1862"])
             ->assertJson(['message' => 'You are not allowed to update this assignment.']);
 
     }
@@ -68,31 +68,41 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function page_ids_must_be_valid()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
-            ['mass_import' => "blah blah"])
-            ->assertJson(['message' => 'blah blah should be a positive integer.']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => "library-zzz"])
+            ->assertJson(['message' => 'zzz should be a positive integer.']);
 
     }
 
     /** @test */
-    public function owner_can_mass_import()
+    public function owner_can_direct_import()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
-            ['mass_import' => "1860,1862"])
-            ->assertJson(['page_ids_added_to_assignment' => '1860, 1862']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => "query-1860,query-1862"])
+            ->assertJson(['page_ids_added_to_assignment' => 'query-1860, query-1862']);
 
     }
 
     /** @test */
-    public function mass_import_will_not_repeat_questions()
+    public function direct_import_will_not_repeat_questions()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
-            ['mass_import' => "1860,1862"]);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => 'query-1860,query-1862']);
 
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/mass-import-questions",
-            ['mass_import' => "1860,1862"])
-            ->assertJson(['page_ids_not_added_to_assignment' => '1860, 1862']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => 'query-1860,query-1862'])
+            ->assertJson(['page_ids_not_added_to_assignment' => 'query-1860, query-1862']);
+
+    }
+
+    /** @test */
+    public function direct_import_should_be_of_the_correct_form()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+            ['direct_import' => 'bad form,query-1862'])
+            ->assertJson(['message' => 'bad form should be of the form {library}-{page id}.']);
 
     }
 
