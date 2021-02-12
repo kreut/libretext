@@ -39,7 +39,7 @@ class MindTouchEventController extends Controller
                 ->first();
             if ($question) {
                 if ($request->action === 'updated_question' || $request->action === 'saved') {//backward compatible
-                    $Question->getQuestionIdsByPageId($request_library, $request_library, true);//possibly recreate non-technology piece
+                    $Question->getQuestionIdsByPageId($request->page_id, $request_library, true);//possibly recreate non-technology piece
                 } else if ($request->action === 'updated_title') {
                     $title = $libretext->getTitleByLibraryAndPageId($request_library, $request->page_id);
                     Question::where('library',$request_library)
