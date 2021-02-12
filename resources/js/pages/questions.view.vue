@@ -2141,7 +2141,7 @@ export default {
         if (this.user.role === 3) {
           axios.post('/api/logs', {
             'action': 'visit-remediation-node',
-            'data': { 'library': library, 'page_id': pageId }
+            'data': { 'library': library, 'page_id': pageId, 'assignment_id': this.assignmentId, 'question_id': this.questions[this.currentPage - 1].id }
           })
         }
       } catch (error) {
