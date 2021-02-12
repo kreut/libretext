@@ -42,6 +42,13 @@ class Libretext extends Model
     }
 
     /**
+     * @return string[]
+     */
+    public function libraries()
+    {
+        return   ['bio', 'biz', 'chem', 'eng', 'espanol', 'geo', 'human', 'k12', 'law', 'math', 'med', 'phys', 'query', 'socialsci', 'stats', 'workforce'];
+    }
+    /**
      * @param string $library
      * @param int $pageId
      * @return false|mixed|string

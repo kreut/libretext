@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Libretext;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -24,9 +25,10 @@ class UpdateNode extends FormRequest
      */
     public function rules()
     {
+        $libretext = new Libretext();
         return  [
             'page_id' => 'required|integer|min:0',
-            'library' => ['required', Rule::in(['bio','biz','chem','eng','espanol','geo','human','k12','law','math','med','phys','query','socialsci','stats','workforce'])]
+            'library' => ['required', Rule::in($libretext->libraries())]
         ];
 
     }

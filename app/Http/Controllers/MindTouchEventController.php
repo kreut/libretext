@@ -16,7 +16,7 @@ class MindTouchEventController extends Controller
 {
     public function update(Request $request, Question $Question, Libretext $libretext)
     {
-        $libraries = ['bio', 'biz', 'chem', 'eng', 'espanol', 'geo', 'human', 'k12', 'law', 'math', 'med', 'phys', 'query', 'socialsci', 'stats', 'workforce'];
+      $libraries = $libretext->libraries();
         try {
             $request_host = parse_url($request->headers->get('origin'), PHP_URL_HOST);
             $request_info = [

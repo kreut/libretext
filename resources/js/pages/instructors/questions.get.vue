@@ -46,20 +46,20 @@
           </b-row>
           <hr>
           <b-row>
-            <b-col cols="7" class="border-right" @click="resetMassImport()">
-              <b-card header-html="<span class='font-weight-bold'>Search By Page Id or Tag</span>" class="h-100">
+            <b-col cols="7" class="border-right" @click="resetdirectImport()">
+              <b-card header-html="<span class='font-weight-bold'>Search By Query Tag Or Page Id</span>" class="h-100">
                 <b-card-text>
                   <p>
-                    Search for questions by tag which can then be added to your assignment.
+                    Search for query questions by tag or page id which can then be added to your assignment.
                     <b-icon id="search-by-tag-tooltip"
                             v-b-tooltip.hover
                             class="text-muted"
                             icon="question-circle"
                     />
                     <b-tooltip target="search-by-tag-tooltip" triggers="hover">
-                      Using the search box you can find questions by tag.
+                      Using the search box you can find query questions by tag.
                       The tag can be a word associated with the question or can be the query library page id. To search
-                      by page id, please use the tag: id={id}. For example, id=112358.
+                      by page id, please use the tag: id={page id}. For example, id=112358.
                       Note that adding multiple tags will result in a search result which matches all of the conditions.
                     </b-tooltip>
                   </p>
@@ -68,7 +68,7 @@
                       ref="queryTypeahead"
                       v-model="query"
                       :data="tags"
-                      placeholder="Enter a tag or page id"
+                      placeholder="Enter a tag or id={page id}"
                     />
                   </div>
                   <div class="mt-3 d-flex flex-row">
@@ -99,17 +99,17 @@
             <b-col @click="resetSearchByTag">
               <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
                 <b-card-text>
-                  <p>Perform a direct import of questions directly into your assignment.</p>
+                  <p>Perform a direct import of questions directly into your assignment from any library using a comma separate list of the form {libary}-{page id}.</p>
                   <b-form-textarea
                     id="textarea"
-                    v-model="massImport"
-                    placeholder="Comma separated list of page id's from the Query Library"
+                    v-model="directImport"
+                    placeholder="Example. query-1023, chem-2213"
                     rows="4"
                     max-rows="5"
                   />
                   <div class="float-right mt-2">
-                    <b-button variant="success" class="mr-2" @click="massImportQuestions()">
-                      <b-spinner v-if="massImportingQuestions" small type="grow" />
+                    <b-button variant="success" class="mr-2" @click="directImportQuestions()">
+                      <b-spinner v-if="directImportingQuestions" small type="grow" />
                       Import Questions
                     </b-button>
                   </div>
@@ -215,8 +215,8 @@ export default {
   data: () => ({
     pageIdsNotAddedToAssignmentMessage: '',
     pageIdsAddedToAssignmentMessage: '',
-    massImportingQuestions: false,
-    massImport: '',
+    directImportingQuestions: false,
+    directImport: '',
     questionFilesAllowed: false,
     uploading: false,
     continueLoading: true,
@@ -255,29 +255,29 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
-    resetMassImport () {
+    resetdirectImport () {
       this.questions = []
       this.pageIdsAddedToAssignmentMessage = ''
       this.pageIdsNotAddedToAssignmentMessage = ''
-      this.massImport = ''
+      this.directImport = ''
     },
     resetSearchByTag () {
       this.showQuestions = false
       this.chosenTags = []
     },
-    async massImportQuestions () {
-      if (this.massImportingQuestions) {
-        let timeToProcess = Math.ceil(((this.massImport.match(/,/g) || []).length) / 3)
+    async directImportQuestions () {
+      if (this.directImportingQuestions) {
+        let timeToProcess = Math.ceil(((this.directImport.match(/,/g) || []).length) / 3)
         let message = `Please be patient.  Validating all of your page id's  will take about ${timeToProcess} seconds.`
         this.$noty.info(message)
         return false
       }
       this.pageIdsAddedToAssignmentMessage = ''
       this.pageIdsNotAddedToAssignmentMessage = ''
-      this.massImportingQuestions = true
+      this.directImportingQuestions = true
       try {
-        const { data } = await axios.post(`/api/questions/${this.assignmentId}/mass-import-questions`, { 'mass_import': this.massImport })
-        this.massImportingQuestions = false
+        const { data } = await axios.post(`/api/questions/${this.assignmentId}/direct-import-questions`, { 'direct_import': this.directImport })
+        this.directImportingQuestions = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -293,9 +293,9 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
-        this.massImportingQuestions = false
+        this.directImportingQuestions = false
       }
-      this.massImport = ''
+      this.directImport = ''
     },
     openUploadFileModal (questionId) {
       this.uploadFileForm.errors.clear(this.uploadFileType)

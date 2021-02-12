@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\Libretext;
 use App\Question;
 use Illuminate\Http\Request;
 use App\Solution;
@@ -26,7 +27,7 @@ class QuestionController extends Controller
     use LibretextFiles;
 
 
-    public function massImportQuestions(Request $request, Question $Question, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function directImportQuestions(Request $request, Question $Question, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion, Libretext $libretext)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -38,29 +39,35 @@ class QuestionController extends Controller
         }
 
         try {
-            $mass_import = $request->mass_import;
-            if (! $mass_import){
-                $response['message'] = "You didn't submit any page ids.";
+            $direct_import = $request->direct_import;
+            if (! $direct_import){
+                $response['message'] = "You didn't submit any library-page id's for direct import.";
                 return $response;
             }
-            $page_ids = explode(',', $mass_import);
+            $library_page_ids = explode(',', $direct_import);
 
-            $page_ids_added_to_assignment = [];
-            $page_ids_not_added_to_assignment = [];
+            $library_page_ids_added_to_assignment = [];
+            $library_page_ids_not_added_to_assignment = [];
             $questions_to_add = [];
-            foreach ($page_ids as $page_id) {
+            foreach ($library_page_ids as $library_page_id) {
+                [$library, $page_id] = explode('-',$library_page_id);
                 if (!(is_numeric($page_id) && is_int(0+$page_id) &&  0+$page_id >0)){
                     $response['message'] = "$page_id should be a positive integer.";
                     return $response;
                 }
-                $question_id = $Question->getQuestionIdsByPageId($page_id, 'query', true)[0];//returned as an array
-                $questions_to_add[ $question_id] = $page_id;
+                $library = trim(strtolower($library));
+                if (!in_array($library, $libretext->libraries())){
+                    $response['message'] = "$library is not a valid library.";
+                    return $response;
+                }
+                $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
+                $questions_to_add[ $question_id] = $library_page_id;
             }
 
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
             DB::beginTransaction();
-            foreach ($questions_to_add as $question_id => $page_id) {
+            foreach ($questions_to_add as $question_id => $library_page_id) {
                 if (!in_array($question_id, $assignment_questions)) {
                     DB::table('assignment_question')
                         ->insert([
@@ -69,22 +76,22 @@ class QuestionController extends Controller
                             'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                             'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
-                    array_push($page_ids_added_to_assignment, $page_id);
+                    array_push($library_page_ids_added_to_assignment, $library_page_id);
                 } else {
-                    array_push($page_ids_not_added_to_assignment, $page_id);
+                    array_push($library_page_ids_not_added_to_assignment, $library_page_id);
                 }
                 array_push($assignment_questions, $question_id);
 
 
             }
             DB::commit();
-            $response['page_ids_added_to_assignment'] = implode(', ', $page_ids_added_to_assignment);
-            $response['page_ids_not_added_to_assignment'] = implode(', ', $page_ids_not_added_to_assignment);
+            $response['page_ids_added_to_assignment'] = implode(', ', $library_page_ids_added_to_assignment);
+            $response['page_ids_not_added_to_assignment'] = implode(', ', $library_page_ids_not_added_to_assignment);
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error mass importing these questions.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error importing these questions.  Please try again or contact us for assistance.";
         }
         return $response;
 
