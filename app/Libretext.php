@@ -46,14 +46,32 @@ class Libretext extends Model
      */
     public function libraries()
     {
-        return   ['bio', 'biz', 'chem', 'eng', 'espanol', 'geo', 'human', 'k12', 'law', 'math', 'med', 'phys', 'query', 'socialsci', 'stats', 'workforce'];
+
+        return ['Biology' => 'bio',
+            'Business' => 'biz',
+            'Chemistry' => 'chem',
+            'English' => 'eng',
+            'Español' => 'espanol',
+            'Geology' => 'geo',
+            'Humanities' => 'human',
+            'K12' => 'k12',
+            'Law' => 'law',
+            'Mathematics' => 'math',
+            'Medicine' => 'med',
+            'Physics' => 'phys',
+            'Query' => 'query',
+            'Social Science' => 'socialsci',
+            'Statistics' => 'stats',
+            'Workforce' => 'workforce'];
     }
+
     /**
      * @param string $library
      * @param int $pageId
      * @return false|mixed|string
      */
-    public function getTitleByLibraryAndPageId(string $library, int $pageId){
+    public function getTitleByLibraryAndPageId(string $library, int $pageId)
+    {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
         $xml = simplexml_load_string($response->body());
         if (($pos = strpos($xml->attributes()->title[0], ":")) !== FALSE) {

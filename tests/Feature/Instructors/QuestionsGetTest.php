@@ -57,6 +57,19 @@ class QuestionsGetTest extends TestCase
     }
 
     /** @test */
+    public function with_default_library_just_need_page_id()
+    {
+        $this->actingAs($this->user)
+            ->disableCookieEncryption()
+            ->withCookie('default_import_library', 'chem')
+            ->post("/api/questions/{$this->assignment->id}/direct-import-questions",
+                ['direct_import' => "265531"]
+            )->assertJson(['page_ids_added_to_assignment' => 'chemistry-265531']);
+
+    }
+
+
+    /** @test */
     public function non_owner_cannot_do_a_direct_import()
     {
         $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
@@ -69,10 +82,11 @@ class QuestionsGetTest extends TestCase
     public function page_ids_must_be_valid()
     {
         $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => "library-zzz"])
+            ['direct_import' => "query-zzz"])
             ->assertJson(['message' => 'zzz should be a positive integer.']);
 
     }
+
 
     /** @test */
     public function owner_can_direct_import()

@@ -46,7 +46,7 @@
           </b-row>
           <hr>
           <b-row>
-            <b-col cols="7" class="border-right" @click="resetdirectImport()">
+            <b-col cols="6" class="border-right" @click="resetDirectImport()">
               <b-card header-html="<span class='font-weight-bold'>Search By Query Tag Or Page Id</span>" class="h-100">
                 <b-card-text>
                   <p>
@@ -103,10 +103,34 @@
                     Perform a direct import of questions directly into your assignment from any library using a comma
                     separated list of the form {libary}-{page id}.
                   </p>
+                  <b-form-group
+                    id="default_library"
+                    label-cols-sm="5"
+                    label-cols-lg="4"
+                    label-for="Default Library"
+                  >
+                    <template slot="label">
+                      Default Library <b-icon id="default-library-tooltip"
+                                              v-b-tooltip.hover
+                                              class="text-muted"
+                                              icon="question-circle"
+                      />
+                      <b-tooltip target="default-library-tooltip" triggers="hover">
+                        By setting the default library, you can just enter page ids.  As an example, choosing Query as the default
+                        library, you can then enter 123,chemistry-927,149 instead of query-123,chemistry-927,query-149.
+                      </b-tooltip>
+                    </template>
+                    <b-form-row>
+                      <b-form-select v-model="defaultImportLibrary"
+                                     :options="libraryOptions"
+                                     @change="setDefaultImportLibrary()"
+                      />
+                    </b-form-row>
+                  </b-form-group>
                   <b-form-textarea
                     id="textarea"
                     v-model="directImport"
-                    placeholder="Example. query-1023, chem-2213"
+                    placeholder="Example. query-1023, chemistry-2213"
                     rows="4"
                     max-rows="5"
                   />
@@ -208,6 +232,7 @@ import { downloadSolutionFile } from '~/helpers/DownloadFiles'
 import Form from 'vform'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import libraries from '~/helpers/Libraries'
 
 export default {
   components: {
@@ -216,6 +241,8 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    defaultImportLibrary: null,
+    libraryOptions: libraries,
     pageIdsNotAddedToAssignmentMessage: '',
     pageIdsAddedToAssignmentMessage: '',
     directImportingQuestions: false,
@@ -255,10 +282,28 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
+    this.getDefaultImportLibrary()
     this.getAssignmentInfo()
   },
   methods: {
-    resetdirectImport () {
+    async getDefaultImportLibrary () {
+      try {
+        const { data } = await axios.get('/api/questions/default-import-library')
+        console.log(data)
+        this.defaultImportLibrary = data.default_import_library
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async setDefaultImportLibrary () {
+      try {
+        const { data } = await axios.post('/api/questions/default-import-library', { 'default_import_library': this.defaultImportLibrary })
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    resetDirectImport () {
       this.questions = []
       this.pageIdsAddedToAssignmentMessage = ''
       this.pageIdsNotAddedToAssignmentMessage = ''
@@ -286,7 +331,7 @@ export default {
           return false
         }
         if (data.page_ids_added_to_assignment) {
-          let verb = data.page_ids_added_to_assignment.length > 1 ? 'were' : 'was'
+          let verb = data.page_ids_added_to_assignment.includes(',') ? 'were' : 'was'
           this.pageIdsAddedToAssignmentMessage = `${data.page_ids_added_to_assignment} ${verb} added to this assignment.`
         }
         if (data.page_ids_not_added_to_assignment) {

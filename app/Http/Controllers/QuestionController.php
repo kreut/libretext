@@ -26,7 +26,49 @@ class QuestionController extends Controller
     use IframeFormatter;
     use LibretextFiles;
 
+    /**
+     * @param Request $request
+     * @return array|string|null
+     */
+    public function getDefaultImportLibrary(Request $request)
+    {
+        $response['default_import_library'] = $request->cookie('default_import_library') ?? null;
+        return $response;
+    }
 
+    public function storeDefaultImportLibrary(Request $request, Libretext $libretext)
+    {
+        $response['type'] = 'error';
+        $libraries = $libretext->libraries();
+        $library = $request->default_import_library;
+        $cookie = cookie()->forever('default_import_library', null);
+        try {
+            if ($library === null || in_array($library, $libraries)) {
+                $cookie = cookie()->forever('default_import_library', $request->default_import_library);
+                $response['type'] = 'success';
+                $response['message'] = 'Your default import library has been updated.';
+            } else {
+                $response['message'] = 'That is not a valid library';
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your default import setting.  Please try again or contact us for assistance.";
+
+        }
+        return response($response)->withCookie($cookie);
+
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $Question
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Libretext $libretext
+     * @return array
+     * @throws Exception
+     */
     public function directImportQuestions(Request $request, Question $Question, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion, Libretext $libretext)
     {
         $response['type'] = 'error';
@@ -40,38 +82,56 @@ class QuestionController extends Controller
 
         try {
             $direct_import = $request->direct_import;
-            if (! $direct_import){
+            if (!$direct_import) {
                 $response['message'] = "You didn't submit any library-page id's for direct import.";
                 return $response;
             }
-            $library_page_ids = explode(',', $direct_import);
+            $library_text_page_ids = explode(',', $direct_import);
 
             $library_page_ids_added_to_assignment = [];
             $library_page_ids_not_added_to_assignment = [];
             $questions_to_add = [];
-            foreach ($library_page_ids as $library_page_id) {
-                if (strpos($library_page_id, '-') === false){
-                    $response['message'] = "$library_page_id should be of the form {library}-{page id}.";
+            $libraries = $libretext->libraries();
+            $library_texts = [];
+            foreach ($libraries as $library_text => $library) {
+                $library_texts[] = strtolower($library_text);
+            }
+
+            foreach ($library_text_page_ids as $library_text_page_id) {
+                $default_import_library = $request->cookie('default_import_library');
+                $library_text_exists = strpos($library_text_page_id, '-') !== false;
+                if (!$library_text_exists && !$default_import_library) {
+                    $response['message'] = "$library_text_page_id should be of the form {library}-{page id}.";
                     return $response;
                 }
-                [$library, $page_id] = explode('-',$library_page_id);
-                if (!(is_numeric($page_id) && is_int(0+$page_id) &&  0+$page_id >0)){
+
+                if ($default_import_library && !$library_text_exists) {
+                    $library = $default_import_library;
+                    $page_id = trim($library_text_page_id);
+                    $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library));
+                } else {
+                    [$library_text, $page_id] = explode('-', $library_text_page_id);
+                    $library_text = trim(strtolower($library_text));
+
+                    if (!in_array($library_text, $library_texts)) {
+                        $response['message'] = "$library_text is not a valid library.";
+                        return $response;
+                    }
+                    $library = $this->getLibraryFromLibraryText($libraries, $library_text);
+                }
+                if (!(is_numeric($page_id) && is_int(0 + $page_id) && 0 + $page_id > 0)) {
                     $response['message'] = "$page_id should be a positive integer.";
                     return $response;
                 }
-                $library = trim(strtolower($library));
-                if (!in_array($library, $libretext->libraries())){
-                    $response['message'] = "$library is not a valid library.";
-                    return $response;
-                }
+
                 $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
-                $questions_to_add[ $question_id] = $library_page_id;
+                $questions_to_add[$question_id] = "$library_text-$page_id";
             }
 
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
             DB::beginTransaction();
-            foreach ($questions_to_add as $question_id => $library_page_id) {
+            foreach ($questions_to_add as $question_id => $library_text_page_id) {
                 if (!in_array($question_id, $assignment_questions)) {
                     DB::table('assignment_question')
                         ->insert([
@@ -80,9 +140,9 @@ class QuestionController extends Controller
                             'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                             'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
-                    array_push($library_page_ids_added_to_assignment, $library_page_id);
+                    array_push($library_page_ids_added_to_assignment, $library_text_page_id);
                 } else {
-                    array_push($library_page_ids_not_added_to_assignment, $library_page_id);
+                    array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
                 }
                 array_push($assignment_questions, $question_id);
 
@@ -102,6 +162,37 @@ class QuestionController extends Controller
 
     }
 
+    /**
+     * @param $libraries
+     * @param $library_text
+     * @return false
+     */
+    public function getLibraryFromLibraryText($libraries, $library_text)
+    {
+        $response = false;
+        foreach ($libraries as $key => $library) {
+            if (strtolower($key) === $library_text) {
+                $response = $library;
+            }
+        }
+        return $response;
+    }
+
+    /**
+     * @param $libraries
+     * @param $library
+     * @return int|string
+     */
+    public function getLibraryTextFromLibrary($libraries, $library)
+    {
+        $response = $library;
+        foreach ($libraries as $library_text => $value) {
+            if ($value === $library){
+                $response = $library_text;
+            }
+        }
+        return $response;
+    }
 
     public function getQuestionsByTags(Request $request, Question $Question)
     {

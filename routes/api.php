@@ -150,6 +150,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
+    Route::post('/questions/default-import-library','QuestionController@storeDefaultImportLibrary');
+    Route::get('/questions/default-import-library','QuestionController@getDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
