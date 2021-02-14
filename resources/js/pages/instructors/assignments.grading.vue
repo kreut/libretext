@@ -118,7 +118,11 @@
                 last-number
                 limit="10"
                 @input="changePage(currentQuestionPage)"
-              />
+              >
+                <template v-slot:page="{ page, active }">
+                  {{ submissionFiles[page-1][currentStudentPage-1].order }}
+                </template>
+              </b-pagination>
             </div>
             <div class="text-center h5">
               Student
@@ -131,7 +135,7 @@
                 align="center"
                 first-number
                 last-number
-                limit="10"
+                limit="15"
                 @input="changePage()"
               />
             </div>

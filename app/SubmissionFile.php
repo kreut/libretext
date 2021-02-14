@@ -160,6 +160,7 @@ class SubmissionFile extends Model
 
         $points = [];
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
+
             foreach ($users as $key => $user) {
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
@@ -208,6 +209,7 @@ class SubmissionFile extends Model
                 $all_info['open_ended_submission_type'] = $open_ended_submission_type;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
+                $all_info['order'] = $question->order;
                 // $all_info['grader_name'] = $grader_name;
                 if ($this->inGradeView($all_info, $grade_view)) {
                     $user_and_submission_file_info[$question->question_id][$key] = $all_info;
