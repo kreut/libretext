@@ -56,7 +56,22 @@ class AssignmentController extends Controller
 
 
     }
-    public function importAssignment(Request $request, Course $course, Assignment $assignment, AssignmentGroup $assignmentGroup, AssignmentSyncQuestion $assignmentSyncQuestion )
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @param Assignment $assignment
+     * @param AssignmentGroup $assignmentGroup
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @return array
+     * @throws Exception
+     */
+    public function importAssignment(Request $request,
+                                     Course $course, Assignment $assignment,
+                                     AssignmentGroup $assignmentGroup,
+                                     AssignmentSyncQuestion $assignmentSyncQuestion,
+                                     AssignmentGroupWeight $assignmentGroupWeight)
     {
 
         $response['type'] = 'error';
@@ -91,6 +106,7 @@ class AssignmentController extends Controller
             DB::beginTransaction();
 
             $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($course, $assignment);
+            $assignmentGroupWeight->importAssignmentGroupWeightToCourse($assignment->course, $course, $imported_assignment_group_id, true);
             $imported_assignment = $assignment->replicate();
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
@@ -344,7 +360,7 @@ class AssignmentController extends Controller
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-                $total_points_by_assignment =$this->getTotalPointsByAssignment($course);
+                $total_points_by_assignment = $this->getTotalPointsByAssignment($course);
                 [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByCourse($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
@@ -430,31 +446,31 @@ class AssignmentController extends Controller
      * @param Course $course
      * @return array
      */
-function getTotalPointsByAssignment(Course $course){
+    function getTotalPointsByAssignment(Course $course)
+    {
         $total_points_by_assignment = [];
         $points_info = DB::table('assignment_question')
-            ->join('assignments','assignment_question.assignment_id','=','assignments.id')
-            ->where('assignments.course_id',$course->id)
-            ->where('assignments.shown',1)
+            ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+            ->where('assignments.course_id', $course->id)
+            ->where('assignments.shown', 1)
             ->groupBy('assignments.id')
             ->select(DB::raw('SUM(assignment_question.points) as total_points,assignments.id'))
             ->get();
-      foreach ($points_info as $value){
-          $total_points_by_assignment [$value->id] = rtrim(rtrim($value->total_points, "0"),".");
-      }
-      return  $total_points_by_assignment ;
+        foreach ($points_info as $value) {
+            $total_points_by_assignment [$value->id] = rtrim(rtrim($value->total_points, "0"), ".");
+        }
+        return $total_points_by_assignment;
 
 
-
-
-}
+    }
 
     function getDefaultPointsPerQuestion(array $data)
     {
         return $data['source'] === 'a' ? $data['default_points_per_question'] : null;
     }
 
-    function getDefaultClickerTimeToSubmit($assessment_type, $data){
+    function getDefaultClickerTimeToSubmit($assessment_type, $data)
+    {
         return $assessment_type === 'clicker' ? $data['default_clicker_time_to_submit'] : null;
 
     }
@@ -594,8 +610,8 @@ function getTotalPointsByAssignment(Course $course){
         }
         try {
             $assignment = Assignment::find($assignment->id);
-           $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
-                $response['assignment'] = [
+            $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
+            $response['assignment'] = [
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
@@ -842,7 +858,7 @@ function getTotalPointsByAssignment(Course $course){
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
-            $data['default_clicker_time_to_submit'] =  $this->getDefaultClickerTimeToSubmit($request->assessment_type,$data);
+            $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
             $data['final_submission_deadline'] = $this->getFinalSubmissionDeadline($request);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
@@ -912,11 +928,24 @@ function getTotalPointsByAssignment(Course $course){
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             $course = $assignment->course;
-            $assignments = $course->assignments->where('id','<>',$assignment->id)
-                                ->pluck('id')
-                                ->toArray();
+            $number_with_the_same_assignment_group_weight =DB::table('assignments')
+                ->where('course_id',$course->id)
+                ->where('assignment_group_id', $assignment->assignment_group_id)
+                ->select()
+                ->get();
+            if (count($number_with_the_same_assignment_group_weight) === 1){
+                DB::table('assignment_group_weights')
+                    ->where('course_id', $course->id)
+                    ->where('assignment_group_id', $assignment->assignment_group_id)
+                    ->delete();
+            }
+            $assignments = $course->assignments->where('id', '<>', $assignment->id)
+                ->pluck('id')
+                ->toArray();
             $assignment->orderAssignments($assignments, $course);
             $assignment->delete();
+
+
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>$assignment->name</strong> has been deleted.";

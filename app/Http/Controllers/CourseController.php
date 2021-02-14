@@ -30,6 +30,7 @@ class CourseController extends Controller
      * @param Request $request
      * @param Course $course
      * @param AssignmentGroup $assignmentGroup
+     * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
@@ -39,6 +40,7 @@ class CourseController extends Controller
     public function import(Request $request,
                            Course $course,
                            AssignmentGroup $assignmentGroup,
+                           AssignmentGroupWeight $assignmentGroupWeight,
                            AssignmentSyncQuestion $assignmentSyncQuestion,
                            Enrollment $enrollment,
                            FinalGrade $finalGrade)
@@ -60,6 +62,7 @@ class CourseController extends Controller
             $imported_course->save();
             foreach ($course->assignments as $assignment) {
                 $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
+                $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $imported_course, $imported_assignment_group_id, false);
                 $imported_assignment = $assignment->replicate();
                 $imported_assignment->course_id = $imported_course->id;
                 $imported_assignment->shown = 0;
