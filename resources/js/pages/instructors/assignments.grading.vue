@@ -89,8 +89,8 @@
             id="assignment_group"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="File Submission Group"
-            label-for="File Submission Group"
+            label="Submission Group"
+            label-for="Submission Group"
           >
             <b-form-row>
               <b-col lg="3">
@@ -120,7 +120,7 @@
                 @input="changePage(currentQuestionPage)"
               >
                 <template v-slot:page="{ page, active }">
-                  {{ submissionFiles[page-1][currentStudentPage-1].order }}
+                  {{ submissionFiles[page - 1][currentStudentPage - 1].order }}
                 </template>
               </b-pagination>
             </div>
@@ -157,6 +157,19 @@
                     Download Solution
                   </b-button>
                 </span>
+                <b-container>
+                  <b-row class="justify-content-md-center mt-2">
+                    <b-col lg="3">
+                      <vue-bootstrap-typeahead
+                        ref="queryTypeahead"
+                        v-model="jumpToStudent"
+                        :data="students"
+                        placeholder="Enter A Student's Name"
+                        @hit="setQuestionAndStudentByStudentName"
+                      />
+                    </b-col>
+                  </b-row>
+                </b-container>
               </div>
               <span v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] "
                     class="font-italic mt-2"
@@ -328,15 +341,17 @@
                 <div
                   v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url'] !== null)"
                 >
-                  <iframe v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] !== 'audio'"
-                          width="600"
-                          height="600"
-                          :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                  <iframe
+                    v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] !== 'audio'"
+                    width="600"
+                    height="600"
+                    :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
                   />
                   <b-card sub-title="Feedback">
-                    <audio-player v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] === 'audio'"
+                    <audio-player
+                      v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] === 'audio'"
 
-                                  :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                      :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
                     />
                   </b-card>
                   <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
@@ -369,6 +384,7 @@ import { downloadSubmissionFile, downloadSolutionFile } from '~/helpers/Download
 import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import Vue from 'vue'
 import { ToggleButton } from 'vue-js-toggle-button'
 
@@ -377,9 +393,12 @@ export default {
   middleware: 'auth',
   components: {
     Loading,
-    ToggleButton
+    ToggleButton,
+    VueBootstrapTypeahead
   },
   data: () => ({
+    jumpToStudent: '',
+    students: [],
     audioFeedbackDataType: '',
     audioFeedbackDataMessage: '',
     showAudioFeedbackMessage: false,
@@ -431,6 +450,16 @@ export default {
     this.getSubmissionFiles(this.gradeView)
   },
   methods: {
+    setQuestionAndStudentByStudentName () {
+      for (let j = 0; j < this.submissionFiles[this.currentQuestionPage - 1].length; j++) {
+        if (this.jumpToStudent === this.submissionFiles[this.currentQuestionPage - 1][j]['name']) {
+          this.currentStudentPage = j + 1
+          this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
+          this.$refs.queryTypeahead.inputValue = this.jumpToStudent = ''
+          return
+        }
+      }
+    },
     toggleFeedbackType () {
       this.feedbackTypeIsPdfImage = !this.feedbackTypeIsPdfImage
       let feedbackType = this.feedbackTypeIsPdfImage ? 'PDF/Image' : 'Audio'
@@ -613,7 +642,7 @@ export default {
     submissionUrlExists (currentStudentPage) {
       return (this.submissionFiles[currentStudentPage - 1]['submission_url'] !== null)
     },
-    setQuestionAndStudent (questionId, studentUserId) {
+    setQuestionAndStudentByQuestionIdAndStudentUserId (questionId, studentUserId) {
       console.log(questionId, studentUserId)
       for (let i = 0; i < this.submissionFiles.length; i++) {
         for (let j = 0; j < this.submissionFiles[i].length; j++) {
@@ -642,8 +671,12 @@ export default {
         }
 
         this.submissionFiles = data.user_and_submission_file_info
-
+        this.students = []
         this.numStudents = Object.keys(this.submissionFiles[0]).length
+        for (let i = 0; i < this.numStudents; i++) {
+          this.students.push(this.submissionFiles[0][i].name)
+          console.log(this.submissionFiles[0][i].name)
+        }
         console.log(this.submissionFiles)
         this.currentQuestionPage = 1
         this.currentStudentPage = 1
@@ -651,7 +684,7 @@ export default {
         // loop through questions, inner loop through students, if match, then set question and student)
         console.log(this.submissionFiles[0])
         if (this.$route.params.questionId && this.$route.params.studentUserId) {
-          this.setQuestionAndStudent(this.$route.params.questionId, this.$route.params.studentUserId)
+          this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
           this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
         } else {
           this.textFeedbackForm.textFeedback = this.submissionFiles[0][0]['text_feedback']
