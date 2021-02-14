@@ -11,6 +11,7 @@ use App\Rules\IsValidPeriodOfTime;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
+use Aws\S3\Exception\S3Exception;
 use Carbon\CarbonImmutable;
 use \Exception;
 

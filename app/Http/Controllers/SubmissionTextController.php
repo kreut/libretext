@@ -15,6 +15,7 @@ use Illuminate\Support\Facades\Gate;
 
 use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Storage;
 
 
 class SubmissionTextController extends Controller
@@ -58,9 +59,17 @@ class SubmissionTextController extends Controller
                 ->select('upload_count')
                 ->first();
             $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
+
+
+            $filename = md5(uniqid('', true)) . '.html';
+            $file_path = "assignments/{$assignment_id}/$filename";
+            Storage::disk('local')->put($file_path, $request->text_submission);
+            Storage::disk('s3')->put($file_path, $request->text_submission, ['StorageClass' => 'STANDARD_IA']);
+
+
             $submission_text_data = [
                 'original_filename' => '',
-                'submission' => $request->text_submission,
+                'submission' => $filename,
                 'type' => 'text',
                 'file_feedback' => null,
                 'text_feedback' => null,
