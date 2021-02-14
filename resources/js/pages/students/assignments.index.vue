@@ -104,7 +104,8 @@
             {{ data.item.due.is_extension ? '(Extension)' : '' }}
           </template>
           <template v-slot:cell(score)="data">
-            {{ data.item.score }}/{{ data.item.total_points }}
+            <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
+            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{ data.item.total_points }}</span>
           </template>
           <template v-slot:head(z_score)="data">
             Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
