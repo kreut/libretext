@@ -63,7 +63,7 @@
                       Note that adding multiple tags will result in a search result which matches all of the conditions.
                     </b-tooltip>
                   </p>
-                  <div class="col-5 p-0">
+                  <div class="col-7 p-0">
                     <vue-bootstrap-typeahead
                       ref="queryTypeahead"
                       v-model="query"
@@ -100,8 +100,8 @@
               <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
                 <b-card-text>
                   <p>
-                    Perform a direct import of questions directly into your assignment from any library using a comma
-                    separated list of the form {libary}-{page id}.
+                    Perform a direct import of questions directly into your assignment from any library.  Please enter your questions using a comma
+                    separated list of the form {library}-{page id}.
                   </p>
                   <b-form-group
                     id="default_library"
