@@ -21,7 +21,7 @@
                 <th scope="col">
                   Title
                 </th>
-                <th scope="col">
+                <th scope="col" style="width: 200px;">
                   Open Ended Submission Type
                 </th>
                 <th scope="col">

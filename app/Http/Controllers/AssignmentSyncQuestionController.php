@@ -241,7 +241,10 @@ class AssignmentSyncQuestionController extends Controller
                     $columns['title'] = $contents['@title'] ?? 'Private title: contact us';
                     Question::where('id', $value->question_id)->update(['title' => $columns['title']]);
                 }
-                $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? $value->open_ended_submission_type : 'N/A';
+                if ($value->open_ended_submission_type === 'text'){
+                    $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
+                }
+                $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? ucwords($value->open_ended_submission_type) : 'N/A';
                 $columns['points'] = $value->points;
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
                 $columns['order'] = $value->order;
@@ -318,9 +321,16 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             $data = $request->validated();
+            $open_ended_text_editor = null;
+            if ((strpos($data['open_ended_submission_type'],'text') !== false)){
+                $open_ended_text_editor = str_replace(' text', '',$data['open_ended_submission_type']);
+                $data['open_ended_submission_type'] = 'text';
+
+            }
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->update(['open_ended_submission_type' => $data['open_ended_submission_type']]);
+                ->update(['open_ended_submission_type' => $data['open_ended_submission_type'],
+                    'open_ended_text_editor'=> $open_ended_text_editor]);
             $response['type'] = 'success';
             $response['message'] = "The open-ended submission type has been updated.";
         } catch (Exception $e) {
@@ -673,6 +683,7 @@ class AssignmentSyncQuestionController extends Controller
             $submitted_but_did_not_explore_learning_tree = [];
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
+            $open_ended_text_editors = [];
             $clicker_status = [];
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
@@ -681,6 +692,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
+                $open_ended_text_editors[$question->question_id] = $question->open_ended_text_editor;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
@@ -805,6 +817,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
+                $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $show_solution = ($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
                     || ($assignment->assessment_type === 'real time' && $submission_count);
                 if ($show_solution) {

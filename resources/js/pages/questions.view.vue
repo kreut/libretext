@@ -184,7 +184,7 @@
         <div v-if="showSolutionTextForm">
           <div class="pt-3 pb-3">
             <ckeditor v-model="solutionTextForm.solution_text"
-                      :config="editorConfig"
+                      :config="richEditorConfig"
                       :class="{ 'is-invalid': solutionTextForm.errors.has('solution_text') }"
                       @keydown="solutionTextForm.errors.clear('solution_text')"
             />
@@ -336,382 +336,450 @@
     <div v-if="questions !==['init'] && !inIFrame">
       <PageTitle :title="title" />
     </div>
-    <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
-      <div
-        v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
-      >
-        <b-alert variant="warning" show>
-          <span class="alert-link">
-            Your question submission will be marked late.</span>
-        </b-alert>
+    <div class="vld-parent">
+      <loading :active.sync="isLoading"
+               :can-cancel="true"
+               :is-full-page="true"
+               :width="128"
+               :height="128"
+               color="#007BFF"
+               background="#FFFFFF"
+      />
+      <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
+        <div
+          v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
+        >
+          <b-alert variant="warning" show>
+            <span class="alert-link">
+              Your question submission will be marked late.</span>
+          </b-alert>
+        </div>
+        <div v-show="parseInt(questions[currentPage - 1].submission_count) > 0" class="text-center">
+          <b-alert variant="success" show>
+            <span class="font-weight-bold">
+              You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
+              <span v-if="showScores">  You received a score of {{ questions[currentPage - 1].submission_score }}</span>.</span>
+          </b-alert>
+        </div>
       </div>
-      <div v-show="parseInt(questions[currentPage - 1].submission_count) > 0" class="text-center">
-        <b-alert variant="success" show>
-          <span class="font-weight-bold">
-            You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
-            <span v-if="showScores">  You received a score of {{ questions[currentPage - 1].submission_score }}</span>.</span>
-        </b-alert>
-      </div>
-    </div>
-    <div v-if="user.role === 3 && showAssessmentClosedMessage">
-      <b-alert variant="info" show>
-        <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details.</span>
-      </b-alert>
-    </div>
-    <div v-if="questions.length && !initializing">
-      <div v-if="isLocked() && !presentationMode">
+      <div v-if="user.role === 3 && showAssessmentClosedMessage">
         <b-alert variant="info" show>
-          <strong>This problem is locked. Since students have already submitted responses, you cannot update the number
-            of points per question.</strong>
+          <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details.</span>
         </b-alert>
       </div>
-      <div v-if="questions.length">
-        <div :class="assignmentInformationMarginBottom">
-          <b-container>
-            <b-col>
-              <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
-                <h5>
-                  Presentation Mode:
-                  <toggle-button
-                    :width="60"
-                    class="mt-2"
-                    :value="presentationMode"
-                    :sync="true"
-                    size="lg"
-                    :font-size="14"
-                    :margin="4"
-                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                    :labels="{checked: 'On', unchecked: 'Off'}"
-                    @change="presentationMode = !presentationMode"
-                  />
-                </h5>
-                <b-button variant="success" @click="startClickerAssessment">
-                  GO!
-                </b-button>
-              </div>
-              <div v-if="source === 'a' && !inIFrame ">
-                <div v-if="!['clicker','learning tree'].includes(assessmentType)" class="text-center">
-                  <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
-                </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
-                     class="text-center"
-                >
+      <div v-if="questions.length && !initializing">
+        <div v-if="isLocked() && !presentationMode">
+          <b-alert variant="info" show>
+            <strong>This problem is locked. Since students have already submitted responses, you cannot update the number
+              of points per question.</strong>
+          </b-alert>
+        </div>
+        <div v-if="questions.length">
+          <div :class="assignmentInformationMarginBottom">
+            <b-container>
+              <b-col>
+                <div v-if="isInstructor() && assessmentType === 'clicker'" class="mb-2 text-center font-italic">
                   <h5>
-                    This question is worth
-                    {{ 1 * (questions[currentPage - 1].points) }}
-                    points.
+                    Presentation Mode:
+                    <toggle-button
+                      :width="60"
+                      class="mt-2"
+                      :value="presentationMode"
+                      :sync="true"
+                      size="lg"
+                      :font-size="14"
+                      :margin="4"
+                      :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                      :labels="{checked: 'On', unchecked: 'Off'}"
+                      @change="presentationMode = !presentationMode"
+                    />
                   </h5>
+                  <b-button variant="success" @click="startClickerAssessment">
+                    GO!
+                  </b-button>
                 </div>
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
-                     class="text-center"
-                >
-                  <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
-                    A penalty of
-                    {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
-                  </span>
-                  <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1" class="text-bold text-info">
-                    With the penalty, the maximum score that you can receive for this question is
-                    {{ parseFloat(questions[currentPage-1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count)-1))/100 }}
-                    points.</span>
-                </div>
-                <div
-                  v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
-                  class="text-center"
-                >
-                  <b-alert variant="warning" show>
-                    <span class="alert-link">
-                      This submission will be marked late.</span>
-                  </b-alert>
-                </div>
-                <div v-if="isInstructor() && !presentationMode" class="text-center">
-                  <b-form-row>
-                    <b-col />
-                    <h5 class="mt-1">
+                <div v-if="source === 'a' && !inIFrame ">
+                  <div v-if="!['clicker','learning tree'].includes(assessmentType)" class="text-center">
+                    <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
+                  </div>
+                  <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
+                       class="text-center"
+                  >
+                    <h5>
                       This question is worth
-                    </h5>
-                    <b-col lg="1">
-                      <b-form-input
-                        id="points"
-                        v-model="questionPointsForm.points"
-                        :value="questions[currentPage-1].points"
-                        type="text"
-                        placeholder=""
-                        :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
-                        @keydown="questionPointsForm.errors.clear('points')"
-                      />
-                      <has-error :form="questionPointsForm" field="points" />
-                    </b-col>
-                    <h5 class="mt-1">
+                      {{ 1 * (questions[currentPage - 1].points) }}
                       points.
                     </h5>
-                    <b-col>
-                      <div class="float-left">
-                        <b-button variant="primary"
-                                  size="sm"
-                                  class="m-1"
-                                  :disabled="isLocked()"
-                                  @click="updatePoints((questions[currentPage-1].id))"
-                        >
-                          Update Points
-                        </b-button>
-                      </div>
-                    </b-col>
-                  </b-form-row>
-                </div>
-              </div>
-            </b-col>
-            <b-row class="text-center font-italic">
-              <b-col>
-                <div v-if="assessmentType === 'learning tree'">
-                  <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
-                    <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                      questions[currentPage - 1].last_submitted
-                    }}</span>
                   </div>
-                  <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                    <span class="font-weight-bold">You had a late penalty of </span> {{
-                      questions[currentPage - 1].late_penalty_percent
-                    }}%
-                  </span>
-                </div>
-                <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
-                  <countdown :time="timeLeft" @end="cleanUpClickerCounter">
-                    <template slot-scope="props">
-                      <span v-html="getTimeLeftMessage(props, assessmentType)" />
-                    </template>
-                  </countdown>
-                </div>
-                <div v-if="isInstructor() && !presentationMode" class="mt-1">
-                  <b-button
-                    variant="info"
-                    size="sm"
-                    @click="openModalShare()"
+                  <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
+                       class="text-center"
                   >
-                    <b-icon icon="share" />
-                    Share
-                  </b-button>
-                </div>
-                <div class="font-italic font-weight-bold">
-                  <div v-if="user.role === 3 && showScores && isOpenEnded">
-                    <p>
-                      You achieved a total score of
-                      {{ questions[currentPage - 1].total_score * 1 }}
-                      out of a possible
-                      {{ questions[currentPage - 1].points * 1 }} points.
-                    </p>
+                    <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
+                      A penalty of
+                      {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
+                    </span>
+                    <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1" class="text-bold text-info">
+                      With the penalty, the maximum score that you can receive for this question is
+                      {{ parseFloat(questions[currentPage-1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count)-1))/100 }}
+                      points.</span>
                   </div>
-                </div>
-                <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
-                  <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
-                    View Question
-                    Statistics
-                  </b-button>
-                </div>
-                <div v-if="isInstructor() && !presentationMode">
-                  <b-button class="mt-1 mb-2 mr-2"
-                            variant="success"
-                            size="sm"
-                            @click="getAssessmentsForAssignment()"
+                  <div
+                    v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
+                    class="text-center"
                   >
-                    Add Questions
-                  </b-button>
+                    <b-alert variant="warning" show>
+                      <span class="alert-link">
+                        This submission will be marked late.</span>
+                    </b-alert>
+                  </div>
+                  <div v-if="isInstructor() && !presentationMode" class="text-center">
+                    <b-form-row>
+                      <b-col />
+                      <h5 class="mt-1">
+                        This question is worth
+                      </h5>
+                      <b-col lg="1">
+                        <b-form-input
+                          id="points"
+                          v-model="questionPointsForm.points"
+                          :value="questions[currentPage-1].points"
+                          type="text"
+                          placeholder=""
+                          :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
+                          @keydown="questionPointsForm.errors.clear('points')"
+                        />
+                        <has-error :form="questionPointsForm" field="points" />
+                      </b-col>
+                      <h5 class="mt-1">
+                        points.
+                      </h5>
+                      <b-col>
+                        <div class="float-left">
+                          <b-button variant="primary"
+                                    size="sm"
+                                    class="m-1"
+                                    :disabled="isLocked()"
+                                    @click="updatePoints((questions[currentPage-1].id))"
+                          >
+                            Update Points
+                          </b-button>
+                        </div>
+                      </b-col>
+                    </b-form-row>
+                  </div>
                 </div>
               </b-col>
-            </b-row>
-          </b-container>
-
-          <b-modal v-model="showAssignmentStatisticsModal" size="xl" title="Question Level Statistics">
-            <b-container>
-              <b-row v-if="showAssignmentStatistics && loaded && user.role === 3">
+              <b-row class="text-center font-italic">
                 <b-col>
-                  <b-card header="default" header-html="<h5>Summary</h5>">
-                    <b-card-text>
-                      <ul>
-                        <li>{{ scores.length }} student submissions</li>
-                        <li v-if="scores.length">
-                          Maximum score of {{ max }}
-                        </li>
-                        <li v-if="scores.length">
-                          Minimum score of {{ min }}
-                        </li>
-                        <li v-if="scores.length">
-                          Mean score of {{ mean }}
-                        </li>
-                        <li v-if="scores.length">
-                          Standard deviation of {{ stdev }}
-                        </li>
-                      </ul>
-                    </b-card-text>
-                  </b-card>
-                </b-col>
-                <b-col>
-                  <scores v-if="scores.length" class="border-1 border-info"
-                          :chartdata="chartdata"
-                          :height="300" :width="300"
-                  />
+                  <div v-if="assessmentType === 'learning tree'">
+                    <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
+                      <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
+                        questions[currentPage - 1].last_submitted
+                      }}</span>
+                    </div>
+                    <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                      <span class="font-weight-bold">You had a late penalty of </span> {{
+                        questions[currentPage - 1].late_penalty_percent
+                      }}%
+                    </span>
+                  </div>
+                  <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
+                    <countdown :time="timeLeft" @end="cleanUpClickerCounter">
+                      <template slot-scope="props">
+                        <span v-html="getTimeLeftMessage(props, assessmentType)" />
+                      </template>
+                    </countdown>
+                  </div>
+                  <div v-if="isInstructor() && !presentationMode" class="mt-1">
+                    <b-button
+                      variant="info"
+                      size="sm"
+                      @click="openModalShare()"
+                    >
+                      <b-icon icon="share" />
+                      Share
+                    </b-button>
+                  </div>
+                  <div class="font-italic font-weight-bold">
+                    <div v-if="user.role === 3 && showScores && isOpenEnded">
+                      <p>
+                        You achieved a total score of
+                        {{ questions[currentPage - 1].total_score * 1 }}
+                        out of a possible
+                        {{ questions[currentPage - 1].points * 1 }} points.
+                      </p>
+                    </div>
+                  </div>
+                  <div v-if="showScores && showAssignmentStatistics && !isInstructor()">
+                    <b-button variant="outline-primary" @click="openShowAssignmentStatisticsModal()">
+                      View Question
+                      Statistics
+                    </b-button>
+                  </div>
+                  <div v-if="isInstructor() && !presentationMode">
+                    <b-button class="mt-1 mb-2 mr-2"
+                              variant="success"
+                              size="sm"
+                              @click="getAssessmentsForAssignment()"
+                    >
+                      Add Questions
+                    </b-button>
+                  </div>
                 </b-col>
               </b-row>
             </b-container>
-          </b-modal>
-        </div>
-        <div class="overflow-auto">
-          <b-pagination
-            v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"
-            v-model="currentPage"
-            :total-rows="questions.length"
-            :per-page="perPage"
-            first-number
-            last-number
-            align="center"
-            @input="changePage(currentPage)"
-          />
-        </div>
-        <div v-if="assessmentType === 'learning tree'">
-          <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
-            <span class="font-weight-bold">You achieved a score of {{
-              questions[currentPage - 1].submission_score
-            }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
-          </b-alert>
-        </div>
-        <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
-          <div class="p-2">
-            <b-button class="mt-1 mb-2"
-                      variant="primary"
-                      size="sm"
-                      @click="editQuestionSource(currentPage)"
-            >
-              Edit Question Source
-            </b-button>
-            <b-button class="mt-1 mb-2"
-                      variant="danger"
-                      size="sm"
-                      @click="openRemoveQuestionModal()"
-            >
-              Remove Question
-            </b-button>
+
+            <b-modal v-model="showAssignmentStatisticsModal" size="xl" title="Question Level Statistics">
+              <b-container>
+                <b-row v-if="showAssignmentStatistics && loaded && user.role === 3">
+                  <b-col>
+                    <b-card header="default" header-html="<h5>Summary</h5>">
+                      <b-card-text>
+                        <ul>
+                          <li>{{ scores.length }} student submissions</li>
+                          <li v-if="scores.length">
+                            Maximum score of {{ max }}
+                          </li>
+                          <li v-if="scores.length">
+                            Minimum score of {{ min }}
+                          </li>
+                          <li v-if="scores.length">
+                            Mean score of {{ mean }}
+                          </li>
+                          <li v-if="scores.length">
+                            Standard deviation of {{ stdev }}
+                          </li>
+                        </ul>
+                      </b-card-text>
+                    </b-card>
+                  </b-col>
+                  <b-col>
+                    <scores v-if="scores.length" class="border-1 border-info"
+                            :chartdata="chartdata"
+                            :height="300" :width="300"
+                    />
+                  </b-col>
+                </b-row>
+              </b-container>
+            </b-modal>
           </div>
-          <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
-            <span class="font-italic">Open-Ended Submission Type:</span>
-            <b-form-select v-model="openEndedSubmissionType"
-                           :options="openEndedSubmissionTypeOptions"
-                           style="width:100px"
-                           size="sm"
-                           @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+          <div class="overflow-auto">
+            <b-pagination
+              v-if="!inIFrame && (assessmentType !== 'clicker' || (isInstructor() && !presentationMode) || pastDue)"
+              v-model="currentPage"
+              :total-rows="questions.length"
+              :per-page="perPage"
+              first-number
+              last-number
+              align="center"
+              @input="changePage(currentPage)"
             />
           </div>
-          <div class="p-2">
-            <b-button
-              class="mt-1 mb-2 ml-1"
-              variant="dark"
-              size="sm"
-              @click="openUploadSolutionModal(questions[currentPage-1])"
-            >
-              Upload Solution
-            </b-button>
-            <span v-if="questions[currentPage-1].solution">
-              <span v-if="!showUploadedAudioSolutionMessage">
-                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
-                                  :assignment-name="name"
-                />
-
-                <span v-if="showUploadedAudioSolutionMessage"
-                      :class="uploadedAudioSolutionDataType"
-                >
-                  {{ uploadedAudioSolutionDataMessage }}</span>
-              </span>
-              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
-            </span>
+          <div v-if="assessmentType === 'learning tree'">
+            <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
+              <span class="font-weight-bold">You achieved a score of {{
+                questions[currentPage - 1].submission_score
+              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+            </b-alert>
           </div>
-        </div>
-
-        <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
-        <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt" class="mb-2">
-          <b-row>
-            <b-col cols="4">
-              <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
-                Root Assessment
+          <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
+            <div class="p-2">
+              <b-button class="mt-1 mb-2"
+                        variant="primary"
+                        size="sm"
+                        @click="editQuestionSource(currentPage)"
+              >
+                Edit Question Source
               </b-button>
-              <toggle-button
-                :width="160"
-                class="mt-2"
-                :value="showPathwayNavigator"
-                :sync="true"
-                size="lg"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#467fd0', unchecked: '#28a745'}"
-                :labels="{checked: 'Pathway Navigator', unchecked: 'Learning Tree'}"
-                @change="togglePathwayNavigatorLearningTree"
+              <b-button class="mt-1 mb-2"
+                        variant="danger"
+                        size="sm"
+                        @click="openRemoveQuestionModal()"
+              >
+                Remove Question
+              </b-button>
+            </div>
+            <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
+              <span class="font-italic">Open-Ended Submission Type:</span>
+              <b-form-select v-model="openEndedSubmissionType"
+                             :options="openEndedSubmissionTypeOptions"
+                             style="width:100px"
+                             size="sm"
+                             @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
               />
-            </b-col>
-            <b-col>
-              <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                <span class="font-weight-bold">{{ submissionDataMessage }}</span>
-              </b-alert>
-              <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
-                <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
-                  <template slot-scope="props">
-                    <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                      props.seconds
-                    }} seconds, then re-submit.
-                    </span>
-                  </template>
-                </countdown>
-              </b-alert>
-              <b-alert variant="info" :show="!showSubmissionMessage &&
-                !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
-                !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
-                && (user.role === 3)"
+            </div>
+            <div class="p-2">
+              <b-button
+                class="mt-1 mb-2 ml-1"
+                variant="dark"
+                size="sm"
+                @click="openUploadSolutionModal(questions[currentPage-1])"
               >
-                <span class="font-weight-bold"> Try again and you will receive
-                  {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> just for exploring the Learning
-                  Tree.</span>
-              </b-alert>
-              <b-alert variant="info"
-                       :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
-              >
-                <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
-              </b-alert>
-            </b-col>
-          </b-row>
-        </b-container>
-        <b-container v-if="assessmentType === 'learning tree' && showLearningTree">
-          <iframe
-            allowtransparency="true"
-            frameborder="0"
-            :src="learningTreeSrc"
-            style="width: 1200px;min-width: 100%;height:800px"
-          />
-        </b-container>
-        <b-container v-if="!showLearningTree">
-          <b-row>
-            <b-col :cols="questionCol">
-              <div v-if="assessmentType === 'clicker'">
-                <b-alert show :variant="clickerMessageType">
-                  <span class="font-weight-bold">{{ clickerMessage }}</span>
-                </b-alert>
-              </div>
-
-              <div v-if="showQuestion">
-                <div class="border border-dark p-2 rounded">
-                  <div>
-                    <iframe v-show="questions[currentPage-1].non_technology"
-                            :id="`non-technology-iframe-${currentPage}`"
-                            allowtransparency="true"
-                            frameborder="0"
-                            :src="questions[currentPage-1].non_technology_iframe_src"
-                            style="width: 1px;min-width: 100%;"
-                    />
-                  </div>
-                  <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
-                       v-html="questions[currentPage-1].technology_iframe"
+                Upload Solution
+              </b-button>
+              <span v-if="questions[currentPage-1].solution">
+                <span v-if="!showUploadedAudioSolutionMessage">
+                  <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                                    :assignment-name="name"
                   />
-                </div>
+
+                  <span v-if="showUploadedAudioSolutionMessage"
+                        :class="uploadedAudioSolutionDataType"
+                  >
+                    {{ uploadedAudioSolutionDataMessage }}</span>
+                </span>
+                <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+              </span>
+            </div>
+          </div>
+
+          <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
+          <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt" class="mb-2">
+            <b-row>
+              <b-col cols="4">
+                <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
+                  Root Assessment
+                </b-button>
+                <toggle-button
+                  :width="160"
+                  class="mt-2"
+                  :value="showPathwayNavigator"
+                  :sync="true"
+                  size="lg"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#467fd0', unchecked: '#28a745'}"
+                  :labels="{checked: 'Pathway Navigator', unchecked: 'Learning Tree'}"
+                  @change="togglePathwayNavigatorLearningTree"
+                />
+              </b-col>
+              <b-col>
+                <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                  <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                </b-alert>
+                <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
+                  <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
+                    <template slot-scope="props">
+                      <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
+                        props.seconds
+                      }} seconds, then re-submit.
+                      </span>
+                    </template>
+                  </countdown>
+                </b-alert>
+                <b-alert variant="info" :show="!showSubmissionMessage &&
+                  !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
+                  !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
+                  && (user.role === 3)"
+                >
+                  <span class="font-weight-bold"> Try again and you will receive
+                    {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> just for exploring the Learning
+                    Tree.</span>
+                </b-alert>
+                <b-alert variant="info"
+                         :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
+                >
+                  <span class="font-weight-bold">Explore the Learning Tree, and then you can try again!</span>
+                </b-alert>
+              </b-col>
+            </b-row>
+          </b-container>
+          <b-container v-if="assessmentType === 'learning tree' && showLearningTree">
+            <iframe
+              allowtransparency="true"
+              frameborder="0"
+              :src="learningTreeSrc"
+              style="width: 1200px;min-width: 100%;height:800px"
+            />
+          </b-container>
+          <b-container v-if="!showLearningTree">
+            <b-row>
+              <b-col :cols="questionCol">
                 <div v-if="assessmentType === 'clicker'">
-                  <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
-                    <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                  <b-alert show :variant="clickerMessageType">
+                    <span class="font-weight-bold">{{ clickerMessage }}</span>
                   </b-alert>
                 </div>
+
+                <div v-if="showQuestion">
+                  <div class="border border-dark p-2 rounded">
+                    <div>
+                      <iframe v-show="questions[currentPage-1].non_technology"
+                              :id="`non-technology-iframe-${currentPage}`"
+                              allowtransparency="true"
+                              frameborder="0"
+                              :src="questions[currentPage-1].non_technology_iframe_src"
+                              style="width: 1px;min-width: 100%;"
+                      />
+                    </div>
+                    <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                         v-html="questions[currentPage-1].technology_iframe"
+                    />
+                  </div>
+                  <div v-if="assessmentType === 'clicker'">
+                    <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
+                      <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                    </b-alert>
+                  </div>
+                  <div>
+                    <div class="vld-parent">
+                      <loading
+                        :active.sync="isLoadingPieChart"
+                        :can-cancel="true"
+                        :is-full-page="false"
+                        :width="128"
+                        :height="128"
+                        color="#007BFF"
+                        background="#FFFFFF"
+                      />
+                      <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata" class="text-center">
+                        <hr>
+                        <h5 v-if="correctAnswer" class="font-italic">
+                          The correct answer is "{{ correctAnswer }}"
+                        </h5>
+                        <pie-chart :key="currentPage" :chartdata="piechartdata"
+                                   @pieChartLoaded="updateIsLoadingPieChart"
+                        />
+                      </div>
+                    </div>
+                    <div v-if="isOpenEndedTextSubmission && user.role === 3">
+                      <div class="mt-3">
+                        <ckeditor
+                          :key="questions[currentPage-1].id"
+                          v-model="textSubmissionForm.text_submission"
+                          :config="questions[currentPage-1].open_ended_text_editor === 'rich' ? richEditorConfig: plainEditorConfig"
+                          @ready="editorReady"
+                        />
+                      </div>
+                      <div class="mt-2 mb-3">
+                        <b-button variant="primary" class="float-right" @click="submitText">
+                          Submit
+                        </b-button>
+                      </div>
+                    </div>
+                    <div v-if="isOpenEndedAudioSubmission && user.role === 3">
+                      <audio-recorder
+                        ref="uploadRecorder"
+                        :key="questions[currentPage-1].id"
+                        class="m-auto"
+                        :upload-url="audioUploadUrl"
+                        :time="1"
+                        :successful-upload="submittedAudioUpload"
+                        :failed-upload="failedAudioUpload"
+                      />
+                    </div>
+                  </div>
+                </div>
+                <iframe
+                  v-if="!showQuestion" v-show="iframeLoaded"
+                  :id="remediationIframeId"
+                  allowtransparency="true"
+                  frameborder="0"
+                  :src="remediationSrc"
+                  style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+                />
+              </b-col>
+              <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
                 <div>
                   <div class="vld-parent">
                     <loading
@@ -723,320 +791,265 @@
                       color="#007BFF"
                       background="#FFFFFF"
                     />
-                    <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata" class="text-center">
-                      <hr>
-                      <h5 v-if="correctAnswer" class="font-italic">
-                        The correct answer is "{{ correctAnswer }}"
-                      </h5>
-                      <pie-chart :key="currentPage" :chartdata="piechartdata"
-                                 @pieChartLoaded="updateIsLoadingPieChart"
-                      />
-                    </div>
-                  </div>
-                  <div v-if="isOpenEndedTextSubmission && user.role === 3">
-                    <div>
-                      <ckeditor :key="questions[currentPage-1].id" v-model="textSubmissionForm.text_submission"
-                                :config="editorConfig"
-                      />
-                    </div>
-                    <div class="mt-2 mb-3">
-                      <b-button variant="primary" class="float-right" @click="submitText">
-                        Submit
-                      </b-button>
-                    </div>
-                  </div>
-                  <div v-if="isOpenEndedAudioSubmission && user.role === 3">
-                    <audio-recorder
-                      ref="uploadRecorder"
-                      :key="questions[currentPage-1].id"
-                      class="m-auto"
-                      :upload-url="audioUploadUrl"
-                      :time="1"
-                      :successful-upload="submittedAudioUpload"
-                      :failed-upload="failedAudioUpload"
-                    />
-                  </div>
-                </div>
-              </div>
-              <iframe
-                v-if="!showQuestion" v-show="iframeLoaded"
-                :id="remediationIframeId"
-                allowtransparency="true"
-                frameborder="0"
-                :src="remediationSrc"
-                style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
-              />
-            </b-col>
-            <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
-              <div>
-                <div class="vld-parent">
-                  <loading
-                    :active.sync="isLoadingPieChart"
-                    :can-cancel="true"
-                    :is-full-page="false"
-                    :width="128"
-                    :height="128"
-                    color="#007BFF"
-                    background="#FFFFFF"
-                  />
 
-                  <div v-if="!isLoadingPieChart" class="font-italic">
-                    <b-form-row v-if="!presentationMode">
-                      <b-form-group
-                        id="submission_time"
-                        label-cols-sm="4"
-                        label-cols-lg="5"
-                        label="Time To Submit:"
-                        label-for="Time To Submit"
-                      >
-                        <b-form-input
-                          id="time_to_submit"
-                          v-model="clickerTimeForm.time_to_submit"
-                          type="text"
-                          placeholder=""
-                          :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
-                          @keydown="clickerTimeForm.errors.clear('time_to_submit')"
-                        />
-                        <has-error :form="clickerTimeForm" field="time_to_submit" />
-                      </b-form-group>
-                      <b-col>
-                        <b-button variant="success" @click="startClickerAssessment">
-                          GO!
-                        </b-button>
-                      </b-col>
-                    </b-form-row>
-                    <div class="text-center">
-                      <hr>
-                      <h4>{{ responsePercent }}% of students have responded</h4>
-                      <h5 v-if="responsePercent">
-                        The correct answer is "{{ correctAnswer }}"
-                      </h5>
-                    </div>
-                  </div>
-                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
-                </div>
-              </div>
-            </b-col>
-            <b-col
-              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
-              cols="4"
-            >
-              <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
-                <b-card-text>
-                  <ul>
-                    <li>{{ scores.length }} student submissions</li>
-                    <li v-if="scores.length">
-                      Maximum score of {{ max }}
-                    </li>
-                    <li v-if="scores.length">
-                      Minimum score of {{ min }}
-                    </li>
-                    <li v-if="scores.length">
-                      Mean score of {{ mean }}
-                    </li>
-                    <li v-if="scores.length">
-                      Standard deviation of {{ stdev }}
-                    </li>
-                  </ul>
-                </b-card-text>
-              </b-card>
-              <scores v-if="scores.length" class="border-1 border-info"
-                      :chartdata="chartdata"
-                      :height="400"
-              />
-            </b-col>
-            <b-col
-              v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
-              cols="4"
-            >
-              <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt">
-                <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
-                  <b-card-text>
-                    <div v-if="previousNode.title">
-                      <b-row align-h="center" class="p-2">
-                        <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
-                          previousNode.title
-                        }}</a>
-                      </b-row>
-                      <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success" />
-                      </b-row>
-                    </div>
-                    <b-row align-h="center" class="p-2">
-                      <span class="font-weight-bold font-italic text-muted">{{
-                        activeNode.title
-                      }}</span>
-                    </b-row>
-                    <div v-if="futureNodes.length>0">
-                      <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success" />
-                      </b-row>
-                      <b-row class="p-2">
-                        <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id" class="border border-primary rounded m-1">
-                          <a href=""
-                             @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
-                          >{{ remediationObject.title }}</a>
+                    <div v-if="!isLoadingPieChart" class="font-italic">
+                      <b-form-row v-if="!presentationMode">
+                        <b-form-group
+                          id="submission_time"
+                          label-cols-sm="4"
+                          label-cols-lg="5"
+                          label="Time To Submit:"
+                          label-for="Time To Submit"
+                        >
+                          <b-form-input
+                            id="time_to_submit"
+                            v-model="clickerTimeForm.time_to_submit"
+                            type="text"
+                            placeholder=""
+                            :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
+                            @keydown="clickerTimeForm.errors.clear('time_to_submit')"
+                          />
+                          <has-error :form="clickerTimeForm" field="time_to_submit" />
+                        </b-form-group>
+                        <b-col>
+                          <b-button variant="success" @click="startClickerAssessment">
+                            GO!
+                          </b-button>
                         </b-col>
-                      </b-row>
-                    </div>
-                  </b-card-text>
-                </b-card>
-              </b-row>
-              <b-row v-if="assessmentType !== 'learning tree' && questions[currentPage-1].technology_iframe">
-                <b-card header="default"
-                        header-html="<h5>Question Submission Information</h5>" class="sidebar-card"
-                >
-                  <b-card-text>
-                    <span
-                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <span class="alert-link">
-                          Your question submission will be marked late.</span>
-                      </b-alert>
-                    </span>
-                    <span v-if="!questions[currentPage-1].open_ended_submission_type">
-                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
-                                                                                        :current-page="currentPage"
-                                                                                        :assignment-name="name"
-                      /><br>
-                    </span>
-
-                    <span v-if="assessmentType==='learning tree'">
-                      <span class="font-weight-bold">Number of attempts: </span>
-                      {{
-                        questions[currentPage - 1].submission_count
-                      }}<br></span>
-                    <span class="font-weight-bold">Last submitted:</span> {{
-                      questions[currentPage - 1].last_submitted
-                    }}<br>
-
-                    <span class="font-weight-bold">Last response:</span> {{
-                      questions[currentPage - 1].student_response
-                    }}<br>
-                    <div v-if="showScores">
-                      <span class="font-weight-bold">Score:</span> {{
-                        questions[currentPage - 1].submission_score
-                      }}<br>
-                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
-                    </div>
-                    <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                      <span class="font-weight-bold">Late Penalty:</span> {{
-                        questions[currentPage - 1].late_penalty_percent
-                      }}%<br>
-                    </div>
-                  </b-card-text>
-                </b-card>
-              </b-row>
-              <b-row v-if="isOpenEnded && (user.role === 3)"
-                     :class="{ 'mt-3': questions[currentPage-1].technology_iframe, 'mb-3': true }"
-              >
-                <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
-                  <b-card-text>
-                    <span
-                      v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                    >
-                      <b-alert variant="warning" show>
-                        <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
-                      </b-alert>
-                    </span>
-                    <span class="font-weight-bold">Solution: </span>
-                    <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
-                    <br>
-                    <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
-                      <strong> Uploaded file:</strong>
-                      <span v-if="questions[currentPage-1].submission_file_exists">
-                        <a
-                          :href="questions[currentPage-1].submission_file_url"
-                          target="”_blank”"
-                        >
-                          View Submission
-                        </a>
-                      </span>
-                      <span v-if="!questions[currentPage-1].submission_file_exists">
-                        No files have been uploaded
-                      </span><br>
-                    </span>
-                    <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
-                    <span v-if="showScores">
-                      <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
-                    </span>
-                    <span v-if="showScores">
-                      <span v-if="questions[currentPage-1].file_feedback">
-                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
-                        <a :href="questions[currentPage-1].file_feedback_url"
-                           target="”_blank”"
-                        >
-                          {{
-                            questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
-                          }}
-                        </a>
-                        <br>
-                      </span>
-                      <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
-
-                      <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                      <span v-if="questions[currentPage - 1].grader_id">
-                        <b-button size="sm" variant="outline-primary"
-                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                        >Contact Grader</b-button>
-                      </span>
-                      <br>
-                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
-                    </span>
-                    <div v-if="isOpenEndedFileSubmission">
-                      <hr>
-                      <div class="mt-2">
-                        <b-button variant="primary"
-                                  class="float-right mr-2"
-                                  @click="openUploadFileModal(questions[currentPage-1].id)"
-                        >
-                          Upload New File
-                        </b-button>
+                      </b-form-row>
+                      <div class="text-center">
+                        <hr>
+                        <h4>{{ responsePercent }}% of students have responded</h4>
+                        <h5 v-if="responsePercent">
+                          The correct answer is "{{ correctAnswer }}"
+                        </h5>
                       </div>
                     </div>
-                    <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
-                      <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
-                    </b-alert>
+                    <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                  </div>
+                </div>
+              </b-col>
+              <b-col
+                v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
+                cols="4"
+              >
+                <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
+                  <b-card-text>
+                    <ul>
+                      <li>{{ scores.length }} student submissions</li>
+                      <li v-if="scores.length">
+                        Maximum score of {{ max }}
+                      </li>
+                      <li v-if="scores.length">
+                        Minimum score of {{ min }}
+                      </li>
+                      <li v-if="scores.length">
+                        Mean score of {{ mean }}
+                      </li>
+                      <li v-if="scores.length">
+                        Standard deviation of {{ stdev }}
+                      </li>
+                    </ul>
                   </b-card-text>
                 </b-card>
-              </b-row>
-            </b-col>
-          </b-row>
-        </b-container>
-      </div>
-      <div v-else>
-        <div v-if="questions !== ['init']">
-          <div v-if="isInstructor()" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
-            <b-button variant="success">
-              Get More {{ capitalFormattedAssessmentType }}
-            </b-button>
+                <scores v-if="scores.length" class="border-1 border-info"
+                        :chartdata="chartdata"
+                        :height="400"
+                />
+              </b-col>
+              <b-col
+                v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
+                cols="4"
+              >
+                <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt">
+                  <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
+                    <b-card-text>
+                      <div v-if="previousNode.title">
+                        <b-row align-h="center" class="p-2">
+                          <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
+                            previousNode.title
+                          }}</a>
+                        </b-row>
+                        <b-row align-h="center">
+                          <b-icon icon="arrow-down-square-fill" variant="success" />
+                        </b-row>
+                      </div>
+                      <b-row align-h="center" class="p-2">
+                        <span class="font-weight-bold font-italic text-muted">{{
+                          activeNode.title
+                        }}</span>
+                      </b-row>
+                      <div v-if="futureNodes.length>0">
+                        <b-row align-h="center">
+                          <b-icon icon="arrow-down-square-fill" variant="success" />
+                        </b-row>
+                        <b-row class="p-2">
+                          <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id" class="border border-primary rounded m-1">
+                            <a href=""
+                               @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
+                            >{{ remediationObject.title }}</a>
+                          </b-col>
+                        </b-row>
+                      </div>
+                    </b-card-text>
+                  </b-card>
+                </b-row>
+                <b-row v-if="assessmentType !== 'learning tree' && questions[currentPage-1].technology_iframe">
+                  <b-card header="default"
+                          header-html="<h5>Question Submission Information</h5>" class="sidebar-card"
+                  >
+                    <b-card-text>
+                      <span
+                        v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                      >
+                        <b-alert variant="warning" show>
+                          <span class="alert-link">
+                            Your question submission will be marked late.</span>
+                        </b-alert>
+                      </span>
+                      <span v-if="!questions[currentPage-1].open_ended_submission_type">
+                        <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
+                                                                                          :current-page="currentPage"
+                                                                                          :assignment-name="name"
+                        /><br>
+                      </span>
+
+                      <span v-if="assessmentType==='learning tree'">
+                        <span class="font-weight-bold">Number of attempts: </span>
+                        {{
+                          questions[currentPage - 1].submission_count
+                        }}<br></span>
+                      <span class="font-weight-bold">Last submitted:</span> {{
+                        questions[currentPage - 1].last_submitted
+                      }}<br>
+
+                      <span class="font-weight-bold">Last response:</span> {{
+                        questions[currentPage - 1].student_response
+                      }}<br>
+                      <div v-if="showScores">
+                        <span class="font-weight-bold">Score:</span> {{
+                          questions[currentPage - 1].submission_score
+                        }}<br>
+                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
+                      </div>
+                      <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
+                        <span class="font-weight-bold">Late Penalty:</span> {{
+                          questions[currentPage - 1].late_penalty_percent
+                        }}%<br>
+                      </div>
+                    </b-card-text>
+                  </b-card>
+                </b-row>
+                <b-row v-if="isOpenEnded && (user.role === 3)"
+                       :class="{ 'mt-3': questions[currentPage-1].technology_iframe, 'mb-3': true }"
+                >
+                  <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
+                    <b-card-text>
+                      <span
+                        v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                      >
+                        <b-alert variant="warning" show>
+                          <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
+                        </b-alert>
+                      </span>
+                      <span class="font-weight-bold">Solution: </span>
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
+                      <br>
+                      <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
+                        <strong> Uploaded file:</strong>
+                        <span v-if="questions[currentPage-1].submission_file_exists">
+                          <a
+                            :href="questions[currentPage-1].submission_file_url"
+                            target="”_blank”"
+                          >
+                            View Submission
+                          </a>
+                        </span>
+                        <span v-if="!questions[currentPage-1].submission_file_exists">
+                          No files have been uploaded
+                        </span><br>
+                      </span>
+                      <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                      <span v-if="showScores">
+                        <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                      </span>
+                      <span v-if="showScores">
+                        <span v-if="questions[currentPage-1].file_feedback">
+                          <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
+                          <a :href="questions[currentPage-1].file_feedback_url"
+                             target="”_blank”"
+                          >
+                            {{
+                              questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
+                            }}
+                          </a>
+                          <br>
+                        </span>
+                        <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+
+                        <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                        <span v-if="questions[currentPage - 1].grader_id">
+                          <b-button size="sm" variant="outline-primary"
+                                    @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                          >Contact Grader</b-button>
+                        </span>
+                        <br>
+                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                      </span>
+                      <div v-if="isOpenEndedFileSubmission">
+                        <hr>
+                        <div class="mt-2">
+                          <b-button variant="primary"
+                                    class="float-right mr-2"
+                                    @click="openUploadFileModal(questions[currentPage-1].id)"
+                          >
+                            Upload New File
+                          </b-button>
+                        </div>
+                      </div>
+                      <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
+                        <span class="font-weight-bold">{{ openEndedSubmissionDataMessage }}</span>
+                      </b-alert>
+                    </b-card-text>
+                  </b-card>
+                </b-row>
+              </b-col>
+            </b-row>
+          </b-container>
+        </div>
+        <div v-else>
+          <div v-if="questions !== ['init']">
+            <div v-if="isInstructor()" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
+              <b-button variant="success">
+                Get More {{ capitalFormattedAssessmentType }}
+              </b-button>
+            </div>
           </div>
         </div>
       </div>
-    </div>
-    <div v-if="!initializing && !questions.length" class="mt-4">
-      <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
-        <b-button variant="success">
-          Add {{ capitalFormattedAssessmentType }}
-        </b-button>
-      </div>
+      <div v-if="!initializing && !questions.length" class="mt-4">
+        <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
+          <b-button variant="success">
+            Add {{ capitalFormattedAssessmentType }}
+          </b-button>
+        </div>
 
-      <b-alert show variant="warning" class="mt-3">
-        <span class="alert-link">
-          <span v-show="source === 'a'">This assignment currently has no assessments.</span>
-          <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
-        </span>
-      </b-alert>
-    </div>
-    <div v-if="showQuestionDoesNotExistMessage">
-      <b-alert show variant="warning" class="mt-3">
-        We could not find any questions associated with this assignment linked to:
-        <p class="text-center m-2">
-          <strong>{{ getWindowLocation() }}</strong>
-        </p>
-        Please ask your instructor to update this link so that it matches a question in the assignment.
-      </b-alert>
+        <b-alert show variant="warning" class="mt-3">
+          <span class="alert-link">
+            <span v-show="source === 'a'">This assignment currently has no assessments.</span>
+            <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
+          </span>
+        </b-alert>
+      </div>
+      <div v-if="showQuestionDoesNotExistMessage">
+        <b-alert show variant="warning" class="mt-3">
+          We could not find any questions associated with this assignment linked to:
+          <p class="text-center m-2">
+            <strong>{{ getWindowLocation() }}</strong>
+          </p>
+          Please ask your instructor to update this link so that it matches a question in the assignment.
+        </b-alert>
+      </div>
     </div>
   </div>
 </template>
@@ -1085,6 +1098,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    isLoading: true,
     answeredCorrectlyOnTheFirstAttempt: false,
     showPathwayNavigator: true,
     showLearningTree: false,
@@ -1132,7 +1146,10 @@ export default {
     iFrameAttribution: true,
     inIFrame: false,
     editorData: '<p>Content of the editor.</p>',
-    editorConfig: {
+    plainEditorConfig: { toolbar: [],
+      removePlugins: 'elementspath',
+      resize_enabled: false },
+    richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
         {
@@ -1157,7 +1174,8 @@ export default {
 
     responseText: '',
     openEndedSubmissionTypeOptions: [
-      { value: 'text', text: 'Text' },
+      { value: 'rich text', text: 'Rich Text' },
+      { value: 'plain text', text: 'Plain Text' },
       { value: 'file', text: 'File' },
       { value: 'audio', text: 'Audio' },
       { value: 0, text: 'None' }
@@ -1272,6 +1290,8 @@ export default {
     this.isLocked = isLocked
   },
   async mounted () {
+    this.isLoading = true
+
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
     this.uploadFileUrl = (this.user.role === 2) ? '/api/solution-files' : '/api/submission-files'
 
@@ -1280,6 +1300,7 @@ export default {
     this.shownSections = this.$route.params.shownSections
     this.canView = await this.getAssignmentInfo()
     if (!this.canView) {
+      this.isLoading = false
       return false
     }
     if (this.inIFrame) {
@@ -1320,6 +1341,11 @@ export default {
     }
   },
   methods: {
+    editorReady () {
+      if (this.questions[this.currentPage - 1].open_ended_text_editor === 'plain') {
+        document.getElementsByClassName('cke_top')[0].style.display = 'none'
+      }
+    },
     togglePathwayNavigatorLearningTree () {
       this.showPathwayNavigator = !this.showPathwayNavigator
       this.showLearningTree = !this.showPathwayNavigator
@@ -1866,6 +1892,7 @@ export default {
       this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
         this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission
+        this.openEndedSubmissionType = `${this.questions[currentPage - 1].open_ended_text_editor} text`
       }
       this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission || this.isOpenEndedAudioSubmission
 
@@ -1888,6 +1915,7 @@ export default {
       }
 
       this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
+      this.isLoading = false
     },
     async getLearningTree (learningTree) {
       // loop through and get all with parent = -1
@@ -2190,6 +2218,11 @@ export default {
   }
 }
 </script>
+<style scoped>
+#cke_bottom {
+  height: 9px;
+}
+</style>
 <style>
 div.ar-icon svg {
   vertical-align: top !important;

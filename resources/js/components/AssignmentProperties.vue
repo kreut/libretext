@@ -495,8 +495,11 @@
                             :disabled="isLocked()"
         >
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio value="text">
-            Text
+          <b-form-radio value="rich text">
+            Rich Text
+          </b-form-radio>
+          <b-form-radio value="plain text">
+            Plain Text
           </b-form-radio>
           <b-form-radio value="file">
             File

@@ -439,6 +439,9 @@ class AssignmentController extends Controller
         $editing_form_items['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
         $editing_form_items['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
         $editing_form_items['include_in_weighted_average'] = $assignment->include_in_weighted_average;
+        if ($assignment->default_open_ended_submission_type=== 'text'){
+            $editing_form_items['default_open_ended_submission_type'] = "{$assignment->default_open_ended_text_editor} text";
+        }
         return $editing_form_items;
     }
 
@@ -546,6 +549,7 @@ class AssignmentController extends Controller
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
+                    'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($data),
                     'late_policy' => $data['late_policy'],
                     'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
@@ -574,15 +578,28 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function getDefaultOpenEndedTextEditor($data){
+        if (strpos($data['default_open_ended_submission_type'], 'text') !== false){
+            return str_replace(' text','',$data['default_open_ended_submission_type']);
+        }
+        return null;
+
+    }
+    /**
+     * @param Request $request
+     * @param array $data
+     * @return int|mixed
+     */
     public function getDefaultOpenEndedSubmissionType(Request $request, array $data)
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
             return 0;
+        } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
+            return 'text';
         } else {
             return $data['default_open_ended_submission_type'];
 
         }
-
     }
 
     public function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
@@ -928,12 +945,12 @@ class AssignmentController extends Controller
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             $course = $assignment->course;
-            $number_with_the_same_assignment_group_weight =DB::table('assignments')
-                ->where('course_id',$course->id)
+            $number_with_the_same_assignment_group_weight = DB::table('assignments')
+                ->where('course_id', $course->id)
                 ->where('assignment_group_id', $assignment->assignment_group_id)
                 ->select()
                 ->get();
-            if (count($number_with_the_same_assignment_group_weight) === 1){
+            if (count($number_with_the_same_assignment_group_weight) === 1) {
                 DB::table('assignment_group_weights')
                     ->where('course_id', $course->id)
                     ->where('assignment_group_id', $assignment->assignment_group_id)
