@@ -33,7 +33,7 @@ class SubmissionFile extends Model
         if ($file_feedback) {
             $file_feedback_type = (pathinfo($file_feedback, PATHINFO_EXTENSION) === 'mpga') ? 'audio' : 'q';
         }
-        if ($open_ended_submission_type === 'text') {
+        if ($submission && $open_ended_submission_type === 'text') {
             try {
                 $submission = Storage::disk('s3')->get("assignments/{$assignment->id}/$submission");
             } catch (Exception $e) {
