@@ -189,6 +189,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/questions/{question}/get-clicker-status', 'AssignmentSyncQuestionController@getClickerStatus');
     Route::post('/assignments/{assignment}/questions/{question}/start-clicker-assessment', 'AssignmentSyncQuestionController@startClickerAssessment');
 
+    Route::patch('/assignments/{assignment}/questions/{question}/open-ended-default-text', 'AssignmentSyncQuestionController@storeOpenEndedDefaultText');
+
+
     Route::get('/assignments/{assignment}/clicker-question', 'AssignmentSyncQuestionController@getClickerQuestion');
 
 
@@ -221,8 +224,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::put('/solution-files', 'SolutionController@storeSolutionFile');
     Route::post('/solution-files/download', 'SolutionController@downloadSolutionFile');
 
-    Route::post('/submission-texts', 'SubmissionTextController@storeSubmissionText');
-
+    Route::post('/submission-texts', 'SubmissionTextController@store');
+    Route::delete('/submission-texts/{assignment}/{question}', 'SubmissionTextController@destroy');
 
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
     Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\Exceptions\Handler;
+use App\Question;
 use App\Submission;
 use \Exception;
 use App\SubmissionFile;
@@ -24,7 +25,48 @@ class SubmissionTextController extends Controller
 
     use DateFormatter;
 
-    public function storeSubmissionText(Request $request, SubmissionFile $submissionFile, Submission $submission)
+
+    public function destroy(Request $request, Assignment $assignment, Question $question, Submission $submission, SubmissionFile $submissionFile){
+        $response['type'] = 'error';
+        $assignment = Assignment::find($assignment->id);
+        $user = Auth::user();
+        $authorized = Gate::inspect('delete', [$submission, $assignment, $assignment->id, $question->id]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            //validator put here to be consistent with the file submissions
+
+            $submissionFile->where('user_id' , $user->id)
+                ->where('assignment_id', $assignment->id)
+                ->where( 'question_id', $question->id)
+                ->delete();
+
+            $response['type'] = 'success';
+            $response['message'] = 'Your submission was removed.';
+            $response['date_submitted'] = 'N/A';
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save your text submission.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+
+    }
+    /**
+     * @param Request $request
+     * @param SubmissionFile $submissionFile
+     * @param Submission $submission
+     * @return array
+     * @throws Exception
+     */
+    public function store(Request $request, SubmissionFile $submissionFile, Submission $submission)
     {
 
         $response['type'] = 'error';

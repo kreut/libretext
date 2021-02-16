@@ -139,7 +139,8 @@ class QuestionController extends Controller
                             'question_id' => $question_id,
                             'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                            'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
+                            'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                            'open_ended_text_editor' =>  $assignment->default_open_ended_text_editor]);
                     array_push($library_page_ids_added_to_assignment, $library_text_page_id);
                 } else {
                     array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);

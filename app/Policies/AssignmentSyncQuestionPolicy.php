@@ -22,6 +22,17 @@ class AssignmentSyncQuestionPolicy
 
     }
 
+    public function storeOpenEndedSubmissionDefaultText(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment, Question $question)
+    {
+        $authorized = $assignment->questions->contains($question->id) && ($user->id === ((int) $assignment->course->user_id));
+        $message = (!$assignment->questions->contains($question->id))
+            ? "You can't add default text to that  question since it's not in the assignment."
+            : 'You are not allowed to add default text to this assignment.';
+        return $authorized
+            ? Response::allow()
+            : Response::deny($message);
+
+    }
     /**
      * @param User $user
      * @param AssignmentSyncQuestion $assignmentSyncQuestion

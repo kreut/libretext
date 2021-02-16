@@ -73,6 +73,9 @@ class QuestionsViewTest extends TestCase
             'submission' => $this->submission_object
         ];
     }
+
+
+
     /** @test */
 
     public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
@@ -130,7 +133,7 @@ class QuestionsViewTest extends TestCase
             ->where('user_id', $this->student_user->id)
             ->first()
             ->score;
-        $this->assertEquals($assignment_score, .5* $question_points);
+        $this->assertEquals($assignment_score, .5 * $question_points);
 
     }
 
@@ -156,7 +159,6 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals($assignment_score, $question_points);
 
     }
-
 
 
     /** @test */
@@ -341,9 +343,6 @@ class QuestionsViewTest extends TestCase
         )->assertJsonValidationErrors('solution_text');
 
     }
-
-
-
 
 
     /** @test */
@@ -616,8 +615,6 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals($submission->score, $this->question_points * (1 - 2 * $this->assignment->late_deduction_percent / 100));
 
     }
-
-
 
 
     /** @test */
@@ -933,8 +930,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson([]);
 
     }
-
-
 
 
     /** @test */
@@ -1406,6 +1401,66 @@ class QuestionsViewTest extends TestCase
     {
 
 
+    }
+
+    /** @test */
+
+    public function non_owner_cannot_add_default_open_ended_text()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/open-ended-default-text", [
+        ])->assertJson(['message' => 'You are not allowed to add default text to this assignment.']);
+
+    }
+
+    /** @test */
+
+    public function owner_can_add_default_open_ended_text()
+    {
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/open-ended-default-text", [
+            'default_open_ended_text' => 'Some default text'])->assertJson(['message' => 'The default text has been updated.']);
+
+    }
+
+    /** @test */
+
+    public function non_owner_cannot_delete_a_submission()
+    {
+
+        $this->actingAs($this->student_user_3)->deleteJson("/api/submission-texts/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'You are not allowed to reset this text submission. No responses will be saved since the assignment is not part of your course.']);
+
+    }
+
+    /** @test */
+
+    public function owner_can_delete_a_submission()
+    {
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some text',
+            'date_submitted' => Carbon::now()]);
+
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question_2->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some more text',
+            'date_submitted' => Carbon::now()]);
+        $submission_files = SubmissionFile::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->get();
+
+        $this->assertEquals(2, count($submission_files));
+        $this->actingAs($this->student_user)->deleteJson("/api/submission-texts/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'Your submission was removed.']);
+        $submission_files = SubmissionFile::where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->get();
+        $this->assertEquals(1, count($submission_files));
     }
 
 }

@@ -22,6 +22,26 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+
+    <b-modal
+      id="modal-reset-to-default-text"
+      ref="modal"
+      title="Confirm Reset To Default Text"
+    >
+      <p>
+        By resetting to the default text, your current text submission will be removed.
+      </p>
+      <p><strong>Once the submission is removed, we will not be able to retrieve it!</strong></p>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" variant="primary" @click="close()">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="danger" @click="submitResetDefaultOpenEndedText">
+          Delete Submission And Reset Default Text
+        </b-button>
+      </template>
+    </b-modal>
+
     <b-modal
       id="modal-remove-question"
       ref="modal"
@@ -370,7 +390,8 @@
       <div v-if="questions.length && !initializing">
         <div v-if="isLocked() && !presentationMode">
           <b-alert variant="info" show>
-            <strong>This problem is locked. Since students have already submitted responses, you cannot update the number
+            <strong>This problem is locked. Since students have already submitted responses, you cannot update the
+              number
               of points per question.</strong>
           </b-alert>
         </div>
@@ -411,8 +432,9 @@
                       points.
                     </h5>
                   </div>
-                  <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
-                       class="text-center"
+                  <div
+                    v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
+                    class="text-center"
                   >
                     <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
                       A penalty of
@@ -420,7 +442,9 @@
                     </span>
                     <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1" class="text-bold text-info">
                       With the penalty, the maximum score that you can receive for this question is
-                      {{ parseFloat(questions[currentPage-1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count)-1))/100 }}
+                      {{
+                        parseFloat(questions[currentPage - 1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count) - 1)) / 100
+                      }}
                       points.</span>
                   </div>
                   <div
@@ -634,7 +658,10 @@
           </div>
 
           <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
-          <b-container v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt" class="mb-2">
+          <b-container
+            v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
+            class="mb-2"
+          >
             <b-row>
               <b-col cols="4">
                 <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
@@ -673,7 +700,9 @@
                   && (user.role === 3)"
                 >
                   <span class="font-weight-bold"> Try again and you will receive
-                    {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1">s</span> just for exploring the Learning
+                    {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
+                      v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
+                    >s</span> just for exploring the Learning
                     Tree.</span>
                 </b-alert>
                 <b-alert variant="info"
@@ -742,20 +771,58 @@
                         />
                       </div>
                     </div>
+                    <div v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2">
+                      <div class="mt-3">
+                        <b-card header-html="<h5>Default Text</h5>">
+                          <p>You can add default text for your students to see in their own text editors when they attempt this question.</p>
+                          <ckeditor
+                            :key="questions[currentPage-1].id"
+                            v-model="openEndedDefaultTextForm.open_ended_default_text"
+                            :config="richEditorConfig"
+                            :class="{ 'is-invalid': openEndedDefaultTextForm.errors.has('open_ended_default_text') }"
+                            @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
+                            @namespaceloaded="onCKEditorNamespaceLoaded"
+                          />
+                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text" />
+                        </b-card>
+                        <b-container class="mt-2">
+                          <b-row align-h="end">
+                            <b-button variant="primary" size="sm" @click="submitDefaultOpenEndedText">
+                              Update Default Text
+                            </b-button>
+                          </b-row>
+                        </b-container>
+                      </div>
+                    </div>
                     <div v-if="isOpenEndedTextSubmission && user.role === 3">
                       <div class="mt-3">
                         <ckeditor
+                          ref="textSubmissionEditor"
                           :key="questions[currentPage-1].id"
                           v-model="textSubmissionForm.text_submission"
                           :config="questions[currentPage-1].open_ended_text_editor === 'rich' ? richEditorConfig: plainEditorConfig"
                           @ready="editorReady"
+                          @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
                       </div>
-                      <div class="mt-2 mb-3">
-                        <b-button variant="primary" class="float-right" @click="submitText">
-                          Submit
-                        </b-button>
-                      </div>
+                      <b-container class="mt-2 mb-3">
+                        <b-row align-h="end">
+                          <b-button v-if="questions[currentPage-1].open_ended_default_text"
+                                    v-b-modal.modal-reset-to-default-text
+                                    variant="danger"
+                                    size="sm"
+                                    class="mr-2"
+                          >
+                            Reset Default Text
+                          </b-button>
+                          <b-button variant="primary"
+                                    size="sm"
+                                    @click="submitText"
+                          >
+                            Submit
+                          </b-button>
+                        </b-row>
+                      </b-container>
                     </div>
                     <div v-if="isOpenEndedAudioSubmission && user.role === 3">
                       <audio-recorder
@@ -861,12 +928,16 @@
                 v-if="(user.role === 3) && (assessmentType !== 'clicker') && showSubmissionInformation"
                 cols="4"
               >
-                <b-row v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt">
+                <b-row
+                  v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
+                >
                   <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
                     <b-card-text>
                       <div v-if="previousNode.title">
                         <b-row align-h="center" class="p-2">
-                          <a href="" @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)">{{
+                          <a href=""
+                             @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
+                          >{{
                             previousNode.title
                           }}</a>
                         </b-row>
@@ -884,7 +955,9 @@
                           <b-icon icon="arrow-down-square-fill" variant="success" />
                         </b-row>
                         <b-row class="p-2">
-                          <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id" class="border border-primary rounded m-1">
+                          <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
+                                 class="border border-primary rounded m-1"
+                          >
                             <a href=""
                                @click.prevent="explore(remediationObject.library, remediationObject.pageId, remediationObject.id)"
                             >{{ remediationObject.title }}</a>
@@ -1098,6 +1171,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    ckeditor: {},
     isLoading: true,
     answeredCorrectlyOnTheFirstAttempt: false,
     showPathwayNavigator: true,
@@ -1146,9 +1220,11 @@ export default {
     iFrameAttribution: true,
     inIFrame: false,
     editorData: '<p>Content of the editor.</p>',
-    plainEditorConfig: { toolbar: [],
+    plainEditorConfig: {
+      toolbar: [],
       removePlugins: 'elementspath',
-      resize_enabled: false },
+      resize_enabled: false
+    },
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
@@ -1229,6 +1305,9 @@ export default {
     }),
     solutionTextForm: new Form({
       solution_text: ''
+    }),
+    openEndedDefaultTextForm: new Form({
+      open_ended_default_text: 'Enter text that you would like to appear when your student sees the text submissions area.'
     }),
     textSubmissionForm: new Form({
       text_submission: '',
@@ -1341,6 +1420,41 @@ export default {
     }
   },
   methods: {
+    onCKEditorNamespaceLoaded (CKEDITOR) {
+      CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
+    },
+    async submitResetDefaultOpenEndedText () {
+      try {
+        let questionId = this.questions[this.currentPage - 1].id
+        const { data } = await axios.delete(`/api/submission-texts/${this.assignmentId}/${questionId}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+        this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission = this.questions[this.currentPage - 1].open_ended_default_text
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+      this.$bvModal.hide('modal-reset-to-default-text')
+    },
+    async submitDefaultOpenEndedText () {
+      try {
+        let questionId = this.questions[this.currentPage - 1].id
+        const { data } = await this.openEndedDefaultTextForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/open-ended-default-text`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.questions[this.currentPage - 1].submission = this.openEndedDefaultTextForm.open_ended_default_text
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     editorReady () {
       if (this.questions[this.currentPage - 1].open_ended_text_editor === 'plain') {
         document.getElementsByClassName('cke_top')[0].style.display = 'none'
@@ -1533,7 +1647,8 @@ export default {
       return word.charAt(0).toUpperCase() + word.slice(1)
     },
     getOpenEndedTitle () {
-      let capitalizedTitle = this.capitalize(this.openEndedSubmissionType)
+      let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
+      let capitalizedTitle = this.capitalize(openEndedSubmissionType)
       return `<h5>${capitalizedTitle} Submission Information</h5>`
     },
     async submitText () {
@@ -1891,8 +2006,12 @@ export default {
 
       this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
-        this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission
         this.openEndedSubmissionType = `${this.questions[currentPage - 1].open_ended_text_editor} text`
+        if (this.user.role === 2) {
+          this.openEndedDefaultTextForm.open_ended_default_text = this.questions[currentPage - 1].open_ended_default_text
+        } else {
+          this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission ? this.questions[currentPage - 1].submission : this.questions[currentPage - 1].open_ended_default_text
+        }
       }
       this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission || this.isOpenEndedAudioSubmission
 
@@ -2169,7 +2288,12 @@ export default {
         if (this.user.role === 3) {
           axios.post('/api/logs', {
             'action': 'visit-remediation-node',
-            'data': { 'library': library, 'page_id': pageId, 'assignment_id': this.assignmentId, 'question_id': this.questions[this.currentPage - 1].id }
+            'data': {
+              'library': library,
+              'page_id': pageId,
+              'assignment_id': this.assignmentId,
+              'question_id': this.questions[this.currentPage - 1].id
+            }
           })
         }
       } catch (error) {

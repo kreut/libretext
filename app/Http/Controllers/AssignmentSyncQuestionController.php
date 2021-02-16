@@ -7,11 +7,9 @@ use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Libretext;
-use App\Rules\IsValidPeriodOfTime;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
-use Aws\S3\Exception\S3Exception;
 use Carbon\CarbonImmutable;
 use \Exception;
 
@@ -53,9 +51,40 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
+
+    public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question,AssignmentSyncQuestion $assignmentSyncQuestion){
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('storeOpenEndedSubmissionDefaultText', [$assignmentSyncQuestion, $assignment, $question]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
+        try {
+           DB::table('assignment_question')
+               ->where('assignment_id', $assignment->id)
+               ->where('question_id', $question->id)
+               ->update(['open_ended_default_text'=> $request->open_ended_default_text]);
+            $response['message'] = 'The default text has been updated.';
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error saving the default open ended text.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+
+    }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
@@ -392,7 +421,8 @@ class AssignmentSyncQuestionController extends Controller
                     'question_id' => $question->id,
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type]);
+                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                    'open_ended_text_editor' =>  $assignment->default_open_ended_text_editor]);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.  ';
@@ -684,6 +714,7 @@ class AssignmentSyncQuestionController extends Controller
             $explored_learning_tree = [];
             $open_ended_submission_types = [];
             $open_ended_text_editors = [];
+            $open_ended_default_texts = [];
             $clicker_status = [];
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
@@ -693,6 +724,7 @@ class AssignmentSyncQuestionController extends Controller
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $open_ended_text_editors[$question->question_id] = $question->open_ended_text_editor;
+                $open_ended_default_texts[$question->question_id] = $question->open_ended_default_text;
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
@@ -818,6 +850,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['student_response'] = $student_response;
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
+                $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
                 $show_solution = ($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
                     || ($assignment->assessment_type === 'real time' && $submission_count);
                 if ($show_solution) {

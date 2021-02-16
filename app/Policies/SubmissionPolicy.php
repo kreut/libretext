@@ -33,6 +33,15 @@ class SubmissionPolicy
             : Response::deny($response['message']);
     }
 
+    public function delete(User $user, $submission, $assignment, int $assignment_id, int $question_id)
+    {
+        $response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id);
+        $has_access = $response['type'] === 'success';
+        return $has_access
+            ? Response::allow()
+            : Response::deny("You are not allowed to reset this text submission. {$response['message']}");
+    }
+
     public function submissionPieChartData(User $user, Submission $submission, Assignment $assignment, Question $question)
     {
 
