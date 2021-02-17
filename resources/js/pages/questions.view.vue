@@ -135,7 +135,7 @@
       <span class="font-weight-bold">Adapt ID:</span> {{
         assignmentId
       }}-{{ questions[currentPage - 1] ? questions[currentPage - 1].id : '' }}<br>
-      <span class="font-weight-bold">URL:</span> <span class="font-italic">{{ currentUrl }}</span>
+      <span class="font-weight-bold">Adapt URL:</span> <span class="font-italic">{{ currentUrl }}</span>
       <b-button v-clipboard:copy="currentUrl"
                 v-clipboard:success="onCopy"
                 v-clipboard:error="onError"
@@ -155,6 +155,8 @@
         Copy
       </b-button>
       <br>
+      <span v-if="questions[currentPage-1].technology" class="font-weight-bold">Technology URL:</span> {{
+        questions[currentPage - 1].technology_src }}<br>
     </b-modal>
 
     <b-modal

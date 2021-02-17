@@ -841,7 +841,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
-
+$technology_src = '';
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
@@ -1000,8 +1000,8 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['language'] = 'en';
                         $custom_claims['webwork']['outputformat'] = 'libretexts';
                         $custom_claims['webwork']['showCorrectButton'] = 0;
-                        $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($src, 'sourceFilePath');
+                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                        $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
                         $custom_claims['webwork']['answersSubmitted'] = '0';
                         $custom_claims['webwork']['displayMode'] = 'MathJax';
                         $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
@@ -1020,8 +1020,8 @@ class AssignmentSyncQuestionController extends Controller
 
                         $custom_claims['webwork'] = [];
                         $custom_claims['imathas'] = [];
-                        $src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($src, 'id');
+                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                        $custom_claims['imathas']['id'] = $this->getQueryParamFromSrc($technology_src, 'id');
 
                         $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'imathas');
                         $custom_claims['imathas']['seed'] = $seed;
@@ -1037,6 +1037,7 @@ class AssignmentSyncQuestionController extends Controller
                         //NOT USED FOR anything at the moment
                         $custom_claims = [];
                         $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         break;
                     case('text'):
                         $iframe_technology = false;
@@ -1051,6 +1052,8 @@ class AssignmentSyncQuestionController extends Controller
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
+                    $assignment->questions[$key]->technology_src =  Auth::user()->role === 2 ? $technology_src: '';
+
                 }
 
                 //Frankenstein type problems
