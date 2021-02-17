@@ -4,11 +4,39 @@
 namespace App\Traits;
 
 
+use App\Course;
 use Illuminate\Support\Facades\DB;
 
 trait Statistics
 {
-    function getMeanAndStdDev(string $table, string $whereInCol, array $whereInValue, string $groupBy)
+    /**
+     * @param Course $course
+     * @param int $user_id
+     * @return array
+     */
+    function getMeanAndStDevByCourse(Course $course, int $user_id = 0): array
+    {
+
+        $query = DB::table('scores')
+            ->join('assignments','scores.assignment_id','=','assignments.id')
+            ->select(DB::raw('AVG(score) as average'), DB::raw('STDDEV(score) as std_dev'))
+            ->where('show_scores',1)
+            ->where('course_id', $course->id);
+
+        $statistics = $user_id ? $query->where('user_id', $user_id)->first() : $query->first();
+        return [
+            'average' => $statistics->average,
+            'std_dev' => $statistics->std_dev];
+    }
+
+    /**
+     * @param string $table
+     * @param string $whereInCol
+     * @param array $whereInValue
+     * @param string $groupBy
+     * @return array
+     */
+    function getMeanAndStdDevByColumn(string $table, string $whereInCol, array $whereInValue, string $groupBy)
     {
         $statistics_by_groupBy = [];
         $statistics = DB::table($table)

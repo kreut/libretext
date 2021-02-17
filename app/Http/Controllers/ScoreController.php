@@ -16,12 +16,15 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Auth;
 
+use App\Traits\Statistics;
 use App\Exceptions\Handler;
 use \Exception;
 use Illuminate\Support\Facades\Validator;
 
 class ScoreController extends Controller
 {
+use Statistics;
+
 
     public function getTotalPointsByAssignmentId(array $assignment_ids)
     {
@@ -394,7 +397,11 @@ class ScoreController extends Controller
 
     }
 
-    public function getScoresByUser(Course $course)
+    /**
+     * @param Course $course
+     * @return array|false[]
+     */
+    public function getCourseScoresByUser(Course $course)
     {
 
 
@@ -423,12 +430,23 @@ class ScoreController extends Controller
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
         $scores = $course->scores->where('user_id', $user->id)->whereIn('assignment_id', $assignment_ids);
 
+        $mean_and_std_dev_by_course = $this->getMeanAndStDevByCourse($course);
+        $mean_and_std_dev_by_course_and_user = $this->getMeanAndStDevByCourse($course, $user->id);
+
+       $at_least_one_scores_released = DB::table('assignments')->whereIn('id', $assignment_ids)
+           ->where('show_scores',1)
+           ->first();
+        $z_score = $at_least_one_scores_released
+            ? $this->computeZScore($mean_and_std_dev_by_course_and_user['average'],  $mean_and_std_dev_by_course)
+            : null;
+
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
 
         $response['weighted_score'] = $course->students_can_view_weighted_average ? $rows[0][$weighted_score_assignment_id] : false;
         $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $rows[0][$letter_grade_assignment_id] : false;
-        $response['type'] = 'success';
+       $response['z_score'] = $z_score;
+       $response['type'] = 'success';
 
         return $response;
 

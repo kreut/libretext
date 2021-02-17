@@ -143,7 +143,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/scores/{course}', 'ScoreController@index');
-    Route::get('/scores/{course}/get-scores-by-user', 'ScoreController@getScoresByUser');
+    Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::get('/scores/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');

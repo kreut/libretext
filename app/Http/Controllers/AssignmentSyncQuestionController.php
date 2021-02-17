@@ -798,8 +798,8 @@ class AssignmentSyncQuestionController extends Controller
             }
 
 
-            $mean_and_std_dev_by_question_submissions = $this->getMeanAndStdDev('submissions', 'assignment_id', [$assignment->id], 'question_id');
-            $mean_and_std_dev_by_submission_files = $this->getMeanAndStdDev('submission_files', 'assignment_id', [$assignment->id], 'question_id');
+            $mean_and_std_dev_by_question_submissions = $this->getMeanAndStdDevByColumn('submissions', 'assignment_id', [$assignment->id], 'question_id');
+            $mean_and_std_dev_by_submission_files = $this->getMeanAndStdDevByColumn('submission_files', 'assignment_id', [$assignment->id], 'question_id');
 
 
             $seeds = DB::table('seeds')

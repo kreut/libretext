@@ -361,8 +361,9 @@ class AssignmentController extends Controller
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
                 $total_points_by_assignment = $this->getTotalPointsByAssignment($course);
-                [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByCourse($course, Auth::user());
+                [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByAssignment($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
+
 
             } else {
                 $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);

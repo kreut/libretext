@@ -87,22 +87,19 @@ class Score extends Model
 
     }
 
-    public function getUserScoresByCourse(Course $course, User $user)
+    public function getUserScoresByAssignment(Course $course, User $user)
     {
 
         $assignments = $course->assignments;
         $assignment_ids = [];
         $scores_released = [];
-        $scoring_types = [];
         $scores_by_assignment = [];
         $z_scores_by_assignment = [];
-
 
 //initialize
         foreach ($assignments as $assignment) {
             $assignment_ids[] = $assignment->id;
             $scores_released[$assignment->id] = $assignment->show_scores;
-            $scoring_types[$assignment->id] = $assignment->scoring_type;
             $z_scores_by_assignment[$assignment->id] = 'N/A';
             $scores_by_assignment[$assignment->id] = ($assignment->show_scores) ? 0 : 'Not yet released';
         }
@@ -111,11 +108,13 @@ class Score extends Model
             ->where('user_id', $user->id)
             ->get();
 
-        $mean_and_std_dev_by_assignment = $this->getMeanAndStdDev('scores', 'assignment_id', $assignment_ids, 'assignment_id');
+
+        $mean_and_std_dev_by_assignment = $this->getMeanAndStdDevByColumn('scores', 'assignment_id', $assignment_ids, 'assignment_id');
 
 
 //show the score for points only if the scores have been released
 //otherwise show the score
+
         foreach ($scores as $key => $value) {
             $assignment_id = $value->assignment_id;
             $score = $value->score;
@@ -123,13 +122,18 @@ class Score extends Model
                 $scores_by_assignment[$assignment_id] = $score;
                 $z_scores_by_assignment[$assignment_id] = $this->computeZScore($score, $mean_and_std_dev_by_assignment[$assignment_id]);
             }
-
         }
+
+
+
         return [$scores_by_assignment, $z_scores_by_assignment];
 
     }
 
-
+    /**
+     * @param array $assignment_question_scores_info
+     * @return int|mixed
+     */
     public function getAssignmentScoreFromQuestions(array $assignment_question_scores_info)
     {
 

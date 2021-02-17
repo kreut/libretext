@@ -84,6 +84,16 @@
             Your current weighted average
             is {{ weightedAverage }}.
           </p>
+          <p v-if="zScore" class="font-italic font-weight-bold">
+            Your current z-score for the course is {{ zScore }}. <b-icon id="course-z-score-tooltip"
+                                                                         v-b-tooltip.hover
+                                                                         class="text-muted"
+                                                                         icon="question-circle"
+            />
+            <b-tooltip target="course-z-score-tooltip" triggers="hover">
+              The z-score for the course is computed by using the total number of points possible for the course as compared to the total number of points which you've scored.  Note that relative number of points per assignment and weightings for the coruse are not taken into account. Therefore, this measurement is an approximation for how you're performing relative to your peers.
+            </b-tooltip>
+          </p>
         </div>
         <b-table striped hover :fields="fields" :items="assignments">
           <template v-slot:cell(name)="data">
@@ -171,6 +181,7 @@ export default {
     isLoading: true,
     studentsCanViewWeightedAverage: false,
     letterGradesReleased: false,
+    zScore: null,
     weightedAverage: '',
     letterGrade: '',
     title: '',
@@ -231,7 +242,7 @@ export default {
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         this.letterGradesReleased = Boolean(data.course.letter_grades_released)
         if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
-          const { data } = await axios.get(`/api/scores/${this.courseId}/get-scores-by-user`)
+          const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
           console.log(data)
           if (data.type === 'error') {
             this.$noty.error(data.message)
@@ -239,6 +250,7 @@ export default {
           }
           this.weightedAverage = data.weighted_score
           this.letterGrade = data.letter_grade
+          this.zScore = data.z_score
         }
       } catch (error) {
         this.$noty.error(error.message)
