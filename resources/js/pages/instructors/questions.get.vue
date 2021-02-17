@@ -47,10 +47,10 @@
           <hr>
           <b-row>
             <b-col cols="6" class="border-right" @click="resetDirectImport()">
-              <b-card header-html="<span class='font-weight-bold'>Search By Query Tag Or Page Id</span>" class="h-100">
+              <b-card header-html="<span class='font-weight-bold'>Search Query By Tag</span>" class="h-100">
                 <b-card-text>
                   <p>
-                    Search for query questions by tag or page id which can then be added to your assignment.
+                    Search for query questions by tag which can then be added to your assignment.
                     <b-icon id="search-by-tag-tooltip"
                             v-b-tooltip.hover
                             class="text-muted"
@@ -58,8 +58,6 @@
                     />
                     <b-tooltip target="search-by-tag-tooltip" triggers="hover">
                       Using the search box you can find query questions by tag.
-                      The tag can be a word associated with the question or can be the query library page id. To search
-                      by page id, please use the tag: id={page id}. For example, id=112358.
                       Note that adding multiple tags will result in a search result which matches all of the conditions.
                     </b-tooltip>
                   </p>
@@ -68,7 +66,7 @@
                       ref="queryTypeahead"
                       v-model="query"
                       :data="tags"
-                      placeholder="Enter a tag or id={page id}"
+                      placeholder="Enter a tag"
                     />
                   </div>
                   <div class="mt-3 d-flex flex-row">
@@ -400,29 +398,22 @@ export default {
     },
     addTag () {
       console.log(this.query)
-      if (this.query.includes('id=')) {
-        let id = this.query.replace('id=', '')
-        if (!((id >>> 0) === parseFloat(id))) {
-          this.$noty.error('Your page id should be a positive integer.')
-          return
-        } else {
-          this.chosenTags.push(this.query)
-        }
-      }
+
       if (this.query === '') {
         this.$noty.error('You did not include a tag.')
-        return
+        return false
       }
       if (!this.tags.includes(this.query)) {
         this.$noty.error(`The tag <strong>${this.query}</strong> does not exist in our database.`)
         this.$refs.queryTypeahead.inputValue = this.query = ''
-        return
+        return false
       }
 
       if (!this.chosenTags.includes(this.query)) {
         this.chosenTags.push(this.query)
       }
       this.$refs.queryTypeahead.inputValue = this.query = '' // https://github.com/alexurquhart/vue-bootstrap-typeahead/issues/22
+      return true
     },
     async getTags () {
       try {
@@ -468,7 +459,11 @@ export default {
       this.questions = []
       this.showQuestions = false
       this.gettingQuestions = true
-      this.addTag() // in case they didn't click
+      let validTag = this.addTag() // in case they didn't click
+      if (!validTag) {
+        this.gettingQuestions = false
+        return false
+      }
 
       try {
         if (this.chosenTags.length === 0) {

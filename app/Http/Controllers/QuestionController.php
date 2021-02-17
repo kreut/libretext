@@ -206,11 +206,8 @@ class QuestionController extends Controller
             return $response;
         }
 
-        $page_id = $this->validatePageId($request);
 
-
-        $question_ids = $page_id ? $Question->getQuestionIdsByPageId($page_id, 'query', false)
-            : $this->getQuestionIdsByWordTags($request);
+        $question_ids = $this->getQuestionIdsByWordTags($request);
 
         $questions = Question::select('id', 'page_id', 'technology_iframe', 'non_technology', 'library')
             ->whereIn('id', $question_ids)->get();
