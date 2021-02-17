@@ -127,36 +127,70 @@
         This information includes the name of the assignment, the question number in the assignment, and the time left
         in the assignment.
       </b-tooltip>
-      <br>
-
-      <span class="font-weight-bold">Library:</span> {{ libraryText }}<br>
-      <span class="font-weight-bold">Page ID:</span>
-      {{ questions[currentPage - 1] ? questions[currentPage - 1].page_id : '' }}<br>
-      <span class="font-weight-bold">Adapt ID:</span> {{
-        assignmentId
-      }}-{{ questions[currentPage - 1] ? questions[currentPage - 1].id : '' }}<br>
-      <span class="font-weight-bold">Adapt URL:</span> <span class="font-italic">{{ currentUrl }}</span>
-      <b-button v-clipboard:copy="currentUrl"
-                v-clipboard:success="onCopy"
-                v-clipboard:error="onError"
-                size="sm"
-                variant="outline-primary"
-      >
-        Copy
-      </b-button>
-      <br>
-      <span class="font-weight-bold">iframe:</span> <span class="font-italic">{{ embedCode }}</span>
-      <b-button v-clipboard:copy="embedCode"
-                v-clipboard:success="onCopy"
-                v-clipboard:error="onError"
-                size="sm"
-                variant="outline-primary"
-      >
-        Copy
-      </b-button>
-      <br>
-      <span v-if="questions[currentPage-1].technology" class="font-weight-bold">Technology URL:</span> {{
-        questions[currentPage - 1].technology_src }}<br>
+      <div class="mb-2">
+        <span class="font-weight-bold">Library:</span> {{ libraryText }} <b-button v-clipboard:copy="libraryText"
+                                                                                   v-clipboard:success="onCopy"
+                                                                                   v-clipboard:error="onError"
+                                                                                   size="sm"
+                                                                                   variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
+      <div class="mb-2">
+        <span class="font-weight-bold">Page ID:</span>  {{ pageId }} <b-button v-clipboard:copy="pageId"
+                                                                               v-clipboard:success="onCopy"
+                                                                               v-clipboard:error="onError"
+                                                                               size="sm"
+                                                                               variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
+      <div class="mb-2">
+        <span class="font-weight-bold">Adapt ID: </span>{{ adaptId }}
+        <b-button v-clipboard:copy="adaptId"
+                  v-clipboard:success="onCopy"
+                  v-clipboard:error="onError"
+                  size="sm"
+                  variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
+      <div class="mb-2">
+        <span class="font-weight-bold">Adapt URL:</span> <span class="font-italic">{{ currentUrl }}</span>
+        <b-button v-clipboard:copy="currentUrl"
+                  v-clipboard:success="onCopy"
+                  v-clipboard:error="onError"
+                  size="sm"
+                  variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
+      <div class="mb-2">
+        <span class="font-weight-bold">iframe:</span> <span class="font-italic">{{ embedCode }}</span>
+        <b-button v-clipboard:copy="embedCode"
+                  v-clipboard:success="onCopy"
+                  v-clipboard:error="onError"
+                  size="sm"
+                  variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
+      <div class="mb-2">
+        <span v-if="technologySrc" class="font-weight-bold">Technology URL:</span> <span class="font-italic">{{ technologySrc }}</span>
+        <b-button v-clipboard:copy="technologySrc"
+                  v-clipboard:success="onCopy"
+                  v-clipboard:error="onError"
+                  size="sm"
+                  variant="outline-primary"
+        >
+          Copy
+        </b-button>
+      </div>
     </b-modal>
 
     <b-modal
@@ -1172,6 +1206,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    technologySrc: '',
+    pageId: '',
+    adaptId: '',
     originalTitle: '',
     ckeditor: {},
     isLoading: true,
@@ -1605,6 +1642,9 @@ export default {
       this.currentUrl = this.getCurrentUrl()
       this.embedCode = this.getEmbedCode()
       this.libraryText = this.getLibraryText(this.questions[this.currentPage - 1].library)
+      this.adaptId = `${this.assignmentId}-${this.questions[this.currentPage - 1].id}`
+      this.pageId = this.questions[this.currentPage - 1].page_id
+      this.technologySrc = this.questions[this.currentPage - 1].technology_src
     },
     getLibraryText (library) {
       let text = library
