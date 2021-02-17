@@ -844,6 +844,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
+                $assignment->questions[$key]['title'] = $question->title;
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];

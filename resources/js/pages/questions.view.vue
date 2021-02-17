@@ -656,7 +656,6 @@
               </span>
             </div>
           </div>
-
           <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
           <b-container
             v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
@@ -1171,6 +1170,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    originalTitle: '',
     ckeditor: {},
     isLoading: true,
     answeredCorrectlyOnTheFirstAttempt: false,
@@ -1981,6 +1981,9 @@ export default {
       }
     },
     async changePage (currentPage) {
+      if (this.user.role === 2) {
+        this.title = `${this.originalTitle} - ${this.questions[currentPage - 1].title}`
+      }
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.showSolutionTextForm = false
       this.showAddTextToSupportTheAudioFile = false
@@ -2149,7 +2152,7 @@ export default {
           this.showAssessmentClosedMessage = true
           return false
         }
-        this.title = `${assignment.name} Assessments`
+        this.originalTitle = this.title = `${assignment.name} Assessments`
         this.name = assignment.name
         this.pastDue = assignment.past_due
         this.assessmentType = assignment.assessment_type
@@ -2181,7 +2184,7 @@ export default {
         } else {
           this.$noty.error(error.message)
         }
-        this.title = 'Assessments'
+        this.originalTitle = this.title = 'Assessments'
       }
       return true
     },
