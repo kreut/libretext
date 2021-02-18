@@ -197,7 +197,7 @@ use Statistics;
                 $columns = [];
                 $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
                 foreach ($assignments as $assignment) {
-                    $default_score = 0;
+                    $default_score = '-';
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
                     if (isset($extensions[$user_id][$assignment->id])) {
                         $score .= ' (E)';
