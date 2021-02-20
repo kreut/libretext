@@ -1044,7 +1044,7 @@ export default {
       this.form.due_time = '09:00:00'
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
-      this.form.default_open_ended_submission_type = 'text'
+      this.form.default_open_ended_submission_type = 'rich text'
       this.form.default_points_per_question = '10'
       this.form.scoring_type = 'p'
 
