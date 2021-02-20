@@ -321,14 +321,14 @@
                             stacked
                             :disabled="isLocked()"
         >
-          <span @click="!!isLocked() && showRealTimeOptions">
+          <span @click="showRealTimeOptions">
             <b-form-radio name="assessment_type" value="real time">
               Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
                 icon="question-circle"
               />
               </span></b-form-radio>
           </span>
-          <span @click="!!isLocked() && showDelayedOptions">
+          <span @click="showDelayedOptions">
             <b-form-radio name="assessment_type" value="delayed">
               Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
                 icon="question-circle"
@@ -759,7 +759,7 @@ export default {
       available_from_time: '09:00:00',
       due_date: '',
       due_time: '09:00:00',
-      default_open_ended_submission_type: 'text',
+      default_open_ended_submission_type: 0,
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
@@ -835,7 +835,7 @@ export default {
       this.form.final_submission_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     showDelayedOptions () {
-      this.form.default_open_ended_submission_type = 'text'
+      this.form.default_open_ended_submission_type = 'rich text'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
