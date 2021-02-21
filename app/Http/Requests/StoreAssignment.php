@@ -46,6 +46,7 @@ class StoreAssignment extends FormRequest
             'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
+            'instructions' => 'max:10000',
             'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'plain text','audio', 0]),
             'notifications' => Rule::in([0,1])
         ];

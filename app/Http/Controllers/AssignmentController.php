@@ -439,7 +439,7 @@ class AssignmentController extends Controller
         $editing_form_items['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
         $editing_form_items['has_submissions_or_file_submissions'] = $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty();//return as 0 or 1
         $editing_form_items['include_in_weighted_average'] = $assignment->include_in_weighted_average;
-        if ($assignment->default_open_ended_submission_type=== 'text'){
+        if ($assignment->default_open_ended_submission_type === 'text') {
             $editing_form_items['default_open_ended_submission_type'] = "{$assignment->default_open_ended_text_editor} text";
         }
         return $editing_form_items;
@@ -549,7 +549,7 @@ class AssignmentController extends Controller
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
-                    'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($data),
+                    'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
                     'late_policy' => $data['late_policy'],
                     'show_scores' => ($data['source'] === 'x' || ($data['source'] === 'a' && $request->assessment_type === 'delayed')) ? 0 : 1,
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
@@ -578,13 +578,19 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function getDefaultOpenEndedTextEditor($data){
-        if (strpos($data['default_open_ended_submission_type'], 'text') !== false){
-            return str_replace(' text','',$data['default_open_ended_submission_type']);
+    public function getDefaultOpenEndedTextEditor($request, $data)
+    {
+        if ($request->assessment_type !== 'delayed'){
+            return null;
+        } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
+            return str_replace(' text', '', $data['default_open_ended_submission_type']);
+        } else {
+            return null;
         }
-        return null;
+
 
     }
+
     /**
      * @param Request $request
      * @param array $data
@@ -874,6 +880,8 @@ class AssignmentController extends Controller
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
+            $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
+            $data['default_open_ended_text_editor'] = $default_open_ended_text_editor;
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
@@ -882,7 +890,6 @@ class AssignmentController extends Controller
             unset($data['available_from_date']);
             unset($data['available_from_time']);
             unset($data['open_ended_response']);
-
             //submissions exist so don't let them change the things below
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
             if ($assignment->hasFileOrQuestionSubmissions()) {

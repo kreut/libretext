@@ -685,7 +685,10 @@
             type="text"
             placeholder="(Optional)"
             rows="3"
+            :class="{ 'is-invalid': form.errors.has('instructions') }"
+            @keydown="form.errors.clear('instructions')"
           />
+          <has-error :form="form" field="instructions" />
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -937,7 +940,7 @@ export default {
     },
     resetOpenEndedResponsesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
-      this.form.default_open_ended_submission_type = 'text'
+      this.form.default_open_ended_submission_type = 'rich text'
       this.form.assessment_type = 'real time'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
