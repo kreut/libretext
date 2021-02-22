@@ -318,8 +318,10 @@ export default {
     },
     async getCourse (courseId) {
       const { data } = await axios.get(`/api/courses/${courseId}`)
+      console.log(data)
       this.course = data.course
       this.letterGradesReleased = Boolean(data.course.letter_grades_released)
+      this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
     }
   }
 }
