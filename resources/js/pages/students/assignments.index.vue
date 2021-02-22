@@ -84,7 +84,7 @@
             Your current weighted average
             is {{ weightedAverage }}.
           </p>
-          <p v-if="zScore" class="font-italic font-weight-bold">
+          <p v-if="zScore !== false" class="font-italic font-weight-bold">
             Your current z-score for the course is {{ zScore }}.
             <b-icon id="course-z-score-tooltip"
                     v-b-tooltip.hover

@@ -438,7 +438,7 @@ use Statistics;
            ->first();
         $z_score = $at_least_one_scores_released
             ? $this->computeZScore($mean_and_std_dev_by_course_and_user['average'],  $mean_and_std_dev_by_course)
-            : null;
+            : false;
 
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
