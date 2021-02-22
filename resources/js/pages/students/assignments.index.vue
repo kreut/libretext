@@ -85,13 +85,17 @@
             is {{ weightedAverage }}.
           </p>
           <p v-if="zScore" class="font-italic font-weight-bold">
-            Your current z-score for the course is {{ zScore }}. <b-icon id="course-z-score-tooltip"
-                                                                         v-b-tooltip.hover
-                                                                         class="text-muted"
-                                                                         icon="question-circle"
+            Your current z-score for the course is {{ zScore }}.
+            <b-icon id="course-z-score-tooltip"
+                    v-b-tooltip.hover
+                    class="text-muted"
+                    icon="question-circle"
             />
             <b-tooltip target="course-z-score-tooltip" triggers="hover">
-              The z-score for the course is computed by using the total number of points possible for the course as compared to the total number of points which you've scored.  Note that relative number of points per assignment and weightings for the coruse are not taken into account. Therefore, this measurement is an approximation for how you're performing relative to your peers.
+              The z-score for the course is computed by using the total number of points possible for the course as
+              compared to the total number of points which you've scored. Note that relative number of points per
+              assignment and weightings for the course are not taken into account. Therefore, this measurement is only an
+              approximation for how you're performing relative to your peers.
             </b-tooltip>
           </p>
         </div>
@@ -115,7 +119,9 @@
           </template>
           <template v-slot:cell(score)="data">
             <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
-            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{ data.item.total_points }}</span>
+            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
+              data.item.total_points
+            }}</span>
           </template>
           <template v-slot:head(z_score)="data">
             Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
@@ -241,20 +247,23 @@ export default {
         console.log(data)
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         this.letterGradesReleased = Boolean(data.course.letter_grades_released)
-        if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
-          const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
-          console.log(data)
-          if (data.type === 'error') {
-            this.$noty.error(data.message)
-            return false
-          }
-          this.weightedAverage = data.weighted_score
-          this.letterGrade = data.letter_grade
-          this.zScore = data.z_score
-        }
+        await this.getScoresByUser()
       } catch (error) {
         this.$noty.error(error.message)
       }
+    },
+    async getScoresByUser () {
+      const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
+      console.log(data)
+      if (data.type === 'error') {
+        this.$noty.error(data.message)
+        return false
+      }
+      if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
+        this.weightedAverage = data.weighted_score
+        this.letterGrade = data.letter_grade
+      }
+      this.zScore = data.z_score
     },
     downloadSubmissionFile (assignmentId, submission, originalFilename) {
       let data =

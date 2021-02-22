@@ -80,9 +80,9 @@ class CoursePolicy
 
     public function viewCourseScoresByUser(User $user, Course $course)
     {
-        return $course->enrollments->contains('user_id', $user->id) && ($course->students_can_view_weighted_average || $course->finalGrades->letter_grades_released)
+        return $course->enrollments->contains('user_id', $user->id)
             ? Response::allow()
-            : Response::deny('You are not allowed to view this score.');
+            : Response::deny('You are not allowed to view these scores.');
     }
 
     public function updateStudentsCanViewWeightedAverage(User $user, Course $course)
