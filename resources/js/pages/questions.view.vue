@@ -692,7 +692,6 @@
               </span>
             </div>
           </div>
-          <hr v-if="(assessmentType !== 'clicker') && showAssignmentInformation">
           <b-container
             v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
             class="mb-2"
@@ -766,7 +765,7 @@
                 </div>
 
                 <div v-if="showQuestion">
-                  <div class="border border-dark p-2 rounded">
+                  <div class="border border-dark p-0 rounded">
                     <div>
                       <iframe v-show="questions[currentPage-1].non_technology"
                               :id="`non-technology-iframe-${currentPage}`"
