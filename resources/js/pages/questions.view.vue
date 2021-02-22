@@ -2193,7 +2193,7 @@ export default {
           this.showAssessmentClosedMessage = true
           return false
         }
-        this.originalTitle = this.title = `${assignment.name} Assessments`
+        this.originalTitle = this.title = `${assignment.name}`
         this.name = assignment.name
         this.pastDue = assignment.past_due
         this.assessmentType = assignment.assessment_type
