@@ -241,8 +241,12 @@ class AssignmentSyncQuestionController extends Controller
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
-                ->select('assignment_question.*', 'questions.library', 'questions.page_id', 'questions.title', DB::raw('questions.id AS question_id'))
+                ->select('assignment_question.*',
+                    'questions.library',
+                    'questions.page_id',
+                    'questions.title', DB::raw('questions.id AS question_id'))
                 ->get();
+
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
                 $question_ids[] = $value->question_id;
@@ -280,6 +284,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
+                $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
                 $rows[] = $columns;
             }
 

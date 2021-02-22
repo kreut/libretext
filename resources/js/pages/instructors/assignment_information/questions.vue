@@ -21,8 +21,18 @@
                 <th scope="col">
                   Title
                 </th>
+                <th scope="col" style="width: 150px;">
+                  Adapt ID <b-icon id="adapt-id-tooltip"
+                                   v-b-tooltip.hover
+                                   class="text-muted"
+                                   icon="question-circle"
+                  />
+                  <b-tooltip target="adapt-id-tooltip" triggers="hover">
+                    This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                  </b-tooltip>
+                </th>
                 <th scope="col" style="width: 200px;">
-                  Open Ended Submission Type
+                  Open Ended Type
                 </th>
                 <th scope="col">
                   Points
@@ -39,6 +49,9 @@
                   {{ item.order }}
                 </td>
                 <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
+                <td>
+                  {{ item.assignment_id_question_id }}
+                </td>
                 <td>
                   {{ item.open_ended_submission_type }}
                 </td>
