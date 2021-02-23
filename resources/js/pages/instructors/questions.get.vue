@@ -98,7 +98,8 @@
               <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
                 <b-card-text>
                   <p>
-                    Perform a direct import of questions directly into your assignment from any library.  Please enter your questions using a comma
+                    Perform a direct import of questions directly into your assignment from any library. Please enter
+                    your questions using a comma
                     separated list of the form {library}-{page id}.
                   </p>
                   <b-form-group
@@ -108,13 +109,15 @@
                     label-for="Default Library"
                   >
                     <template slot="label">
-                      Default Library <b-icon id="default-library-tooltip"
-                                              v-b-tooltip.hover
-                                              class="text-muted"
-                                              icon="question-circle"
+                      Default Library
+                      <b-icon id="default-library-tooltip"
+                              v-b-tooltip.hover
+                              class="text-muted"
+                              icon="question-circle"
                       />
                       <b-tooltip target="default-library-tooltip" triggers="hover">
-                        By setting the default library, you can just enter page ids.  As an example, choosing Query as the default
+                        By setting the default library, you can just enter page ids. As an example, choosing Query as
+                        the default
                         library, you can then enter 123,chemistry-927,149 instead of query-123,chemistry-927,query-149.
                       </b-tooltip>
                     </template>
@@ -156,7 +159,6 @@
           <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
         </b-alert>
       </div>
-
       <div v-if="questions.length>0" class="overflow-auto">
         <b-pagination
           v-model="currentPage"
@@ -170,7 +172,7 @@
       </div>
       <div v-if="showQuestions">
         <b-container>
-          <b-row>
+          <b-row v-if="questions[currentPage-1]">
             <span v-if="!questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
                         variant="primary" @click="addQuestion(questions[currentPage-1])"
@@ -182,30 +184,11 @@
                         variant="danger" @click="removeQuestion(questions[currentPage-1])"
               >Remove Question
               </b-button>
-
-              <b-button v-if="false && questions[currentPage-1].inAssignment" v-b-modal.modal-upload-file
-                        class="mt-1 mb-2"
-                        variant="dark"
-                        @click="openUploadFileModal(questions[currentPage-1].id)"
-              >Upload Solution I'M HIDING THIS BUTTON AND IT'S JUST ON THE VIEW PAGE
-              </b-button>
-
-              <span v-if="questions[currentPage-1].solution">
-                Uploaded solution:
-                <a href=""
-                   @click.prevent="downloadSolutionFile('q', assignmentId, questions[currentPage - 1].id, questions[currentPage - 1].solution)"
-                >
-                  {{ questions[currentPage - 1].solution }}
-                </a>
-              </span>
-              <span
-                v-if="!questions[currentPage-1].solution"
-              >No solution uploaded.</span>
             </span>
           </b-row>
         </b-container>
         <div>
-          <iframe v-if="showQuestions && questions[currentPage-1].non_technology"
+          <iframe v-if="showQuestions && questions[currentPage-1] && questions[currentPage-1].non_technology"
                   id="non-technology-iframe"
                   allowtransparency="true"
                   frameborder="0"
@@ -213,7 +196,7 @@
                   style="width: 1px;min-width: 100%;"
           />
         </div>
-        <div v-html="questions[currentPage-1].technology_iframe" />
+        <div v-if="questions[currentPage-1]" v-html="questions[currentPage-1].technology_iframe" />
       </div>
     </div>
   </div>
@@ -394,13 +377,14 @@ export default {
     },
     removeTag (chosenTag) {
       this.chosenTags = _.without(this.chosenTags, chosenTag)
-      console.log(this.chosenTags)
+      this.questions = []
     },
     addTag () {
       if (this.chosenTags.length === 0 && this.query === '') {
         this.$noty.error('You did not include a tag.')
         return false
       }
+      console.log(this.chosenTags)
       if (!this.tags.includes(this.query)) {
         this.$noty.error(`The tag <strong>${this.query}</strong> does not exist in our database.`)
         this.$refs.queryTypeahead.inputValue = this.query = ''
@@ -457,12 +441,14 @@ export default {
       this.questions = []
       this.showQuestions = false
       this.gettingQuestions = true
-      let validTag = this.addTag() // in case they didn't click
-      if (!validTag) {
-        this.gettingQuestions = false
-        return false
+      if (this.query) {
+        // in case they didn't click
+        let validTag = this.addTag()
+        if (!validTag) {
+          this.gettingQuestions = false
+          return false
+        }
       }
-
       try {
         if (this.chosenTags.length === 0) {
           this.$noty.error('Please choose at least one tag.')
