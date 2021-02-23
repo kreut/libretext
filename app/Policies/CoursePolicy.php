@@ -92,6 +92,13 @@ class CoursePolicy
             : Response::deny('You are not allowed to update being able to view the weighted average.');
     }
 
+    public function updateShowZScores(User $user, Course $course)
+    {
+        return ($this->ownsCourseByUser($course, $user))
+            ? Response::allow()
+            : Response::deny('You are not allowed to update being able to view the z-scores.');
+    }
+
 
     /**
      * Determine whether the user can view the course.

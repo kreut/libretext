@@ -71,7 +71,7 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 /** @test */
-public function computes_the_correct_z_score_at_the_course_level(){
+/*public function computes_the_correct_z_score_at_the_course_level(){
     $this->assignment->assignment_group_id= 1;
     $this->assignment->save();
     $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1, 'assignment_group_id'=>1]);
@@ -117,7 +117,7 @@ public function computes_the_correct_z_score_at_the_course_level(){
    $this->assertEquals($z_score, $response['z_score']);
 
 }
-
+*/
     /** @test */
     public function correctly_computes_the_z_score_for_an_assignment()
     {

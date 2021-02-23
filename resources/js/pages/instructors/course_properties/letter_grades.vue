@@ -58,20 +58,19 @@
               to customize the letter grades.
             </p>
             <p>
-              <span class="font-italic">Release letter grades: </span>
+              <span class="font-italic">Show z-scores: </span>
               <toggle-button
                 class="mt-2"
                 :width="55"
-                :value="letterGradesReleased"
+                :value="showZScores"
                 :sync="true"
                 :font-size="14"
                 :margin="4"
                 :color="{checked: '#28a745', unchecked: '#6c757d'}"
                 :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitReleaseLetterGrades()"
+                @change="submitShowZScores()"
               />
               <br>
-
               <span class="font-italic">Release weighted averages: </span>
               <toggle-button
                 class="mt-2"
@@ -83,6 +82,19 @@
                 :color="{checked: '#28a745', unchecked: '#6c757d'}"
                 :labels="{checked: 'Yes', unchecked: 'No'}"
                 @change="submitShowWeightedAverage()"
+              />
+              <br>
+              <span class="font-italic">Release letter grades: </span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="letterGradesReleased"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitReleaseLetterGrades()"
               />
               <br>
               <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
@@ -125,6 +137,7 @@ export default {
     Loading
   },
   data: () => ({
+    showZScores: false,
     isLoading: true,
     letterGradeFields: [
       'letter_grade',
@@ -164,6 +177,19 @@ export default {
     this.getLetterGrades()
   },
   methods: {
+    async submitShowZScores () {
+      try {
+        const { data } = await axios.patch(`/api/courses/${this.courseId}/show-z-scores`,
+          { 'show_z_scores': this.showZScores })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.showZScores = !this.showZScores
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async submitReleaseLetterGrades () {
       try {
         const { data } = await axios.patch(`/api/final-grades/${this.courseId}/release-letter-grades/${Number(this.letterGradesReleased)}`)
@@ -322,6 +348,7 @@ export default {
       this.course = data.course
       this.letterGradesReleased = Boolean(data.course.letter_grades_released)
       this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
+      this.showZScores = Boolean(data.course.show_z_scores)
     }
   }
 }

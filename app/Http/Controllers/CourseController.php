@@ -98,6 +98,8 @@ class CourseController extends Controller
             $imported_course = $course->replicate();
             $imported_course->name = "$imported_course->name Import";
             $imported_course->shown = 0;
+            $imported_course->show_z_scores = 0;
+            $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
             $imported_course->save();
             foreach ($course->assignments as $assignment) {
@@ -210,6 +212,31 @@ class CourseController extends Controller
 
     }
 
+    public function updateShowZScores(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateShowZScores', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            $course->show_z_scores = !$request->show_z_scores;
+            $course->save();
+
+            $verb = $course->show_z_scores ? "can" : "cannot";
+            $response['type'] = $course->show_z_scores ? 'success' : 'info';
+            $response['message'] = "Students <strong>$verb</strong> view their z-scores.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the ability for students to view their z-scores.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $response['type'] = 'error';
@@ -253,6 +280,7 @@ class CourseController extends Controller
             $response['course'] = ['name' => $course->name,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
+                'show_z_scores' => $course->show_z_scores,
                 'graders' => $course->graderNamesAndIds,
                 'access_code' => $course->accessCodes->access_code ?? false,
                 'start_date' => $course->start_date,
