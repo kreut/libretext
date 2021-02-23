@@ -187,7 +187,7 @@ export default {
     isLoading: true,
     studentsCanViewWeightedAverage: false,
     letterGradesReleased: false,
-    zScore: null,
+    zScore: false,
     weightedAverage: '',
     letterGrade: '',
     title: '',
