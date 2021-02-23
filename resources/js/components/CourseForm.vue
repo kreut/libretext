@@ -3,7 +3,7 @@
     <b-tooltip target="public_tooltip"
                delay="250"
     >
-      Public courses can be imported by other instructors; non-public can only be imported by you.
+      Public courses can be imported by other instructors; non-public can only be imported by you.  Note that student grades will never be made public nor copied from a course.
     </b-tooltip>
     <b-form ref="form">
       <b-form-group
