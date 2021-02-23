@@ -397,9 +397,7 @@ export default {
       console.log(this.chosenTags)
     },
     addTag () {
-      console.log(this.query)
-
-      if (this.query === '') {
+      if (this.chosenTags.length === 0 && this.query === '') {
         this.$noty.error('You did not include a tag.')
         return false
       }
