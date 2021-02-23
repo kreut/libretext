@@ -3,6 +3,9 @@
 namespace Tests\Feature\Instructors;
 
 
+use App\Assignment;
+use App\AssignmentGroup;
+use App\AssignmentGroupWeight;
 use App\FinalGrade;
 use App\User;
 use App\Course;
@@ -18,15 +21,52 @@ class LetterGradesTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $finalGrade = new FinalGrade();
 
         FinalGrade::create(['course_id' => $this->course->id,
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
 
 
+    }
+
+
+    /** @test */
+    public function non_owner_cannot_toggle_students_can_view_weighted_average()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/students-can-view-weighted-average", ['students_can_view_weighted_average' => 1])
+            ->assertJson(['message' => 'You are not allowed to update being able to view the weighted average.']);
 
     }
-/** @test */
+
+    /** @test */
+    public function owner_cannot_toggle_students_can_view_weighted_average_if_weights_are_not_100()
+    {
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/students-can-view-weighted-average", ['students_can_view_weighted_average' => 1])
+            ->assertJson(['message' => 'Please first update your Assignment Group Weights so that the total weighting is equal to 100.']);
+
+    }
+
+    /** @test */
+    public function owner_can_toggle_students_can_view_weighted_average_if_weights_are_100()
+    {
+
+        $assignmentGroup = AssignmentGroup::create(['assignment_group' => 'My Group',
+            'course_id' => $this->course->id,
+            'user_id' => $this->user->id]);
+        AssignmentGroupWeight::create(['course_id' => $this->course->id,
+            'assignment_group_id' => $assignmentGroup->id,
+            'assignment_group_weight' => 100]);
+        $this->assignment->assignment_group_id = $assignmentGroup->id;
+        $this->assignment->save();
+
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/students-can-view-weighted-average", ['students_can_view_weighted_average' => 1])
+            ->assertJson(['message' => 'Students <strong>cannot</strong> view their weighted averages.']);
+
+    }
+
+
+    /** @test */
     public function non_owner_cannot_toggle_show_z_scores()
     {
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}/show-z-scores", ['show_z_scores' => 1])
@@ -174,7 +214,6 @@ class LetterGradesTest extends TestCase
             ->getJson("/api/final-grades/letter-grades/{$this->course->id}")
             ->assertJson($response);
     }
-
 
 
 }
