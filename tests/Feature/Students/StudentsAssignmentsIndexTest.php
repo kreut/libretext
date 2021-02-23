@@ -171,7 +171,7 @@ class StudentsAssignmentsIndexTest extends TestCase
 
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user_3)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user")
-            ->assertJson(['message' => 'You are not allowed to view this score.']);
+            ->assertJson(['message' => 'You are not allowed to view these scores.']);
 
     }
 
@@ -183,7 +183,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->course->save();
         $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user")
-            ->assertJson(['message' => 'You are not allowed to view this score.']);
+            ->assertJson(['weighted_score' => false]);
 
     }
 
