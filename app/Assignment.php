@@ -10,18 +10,19 @@ class Assignment extends Model
 {
     protected $guarded = [];
 
-    public function getNewAssignmentOrder(Course $course){
+    public function getNewAssignmentOrder(Course $course)
+    {
         $max_order = DB::table('assignments')
             ->where('course_id', $course->id)
             ->max('order');
-        return $max_order ? $max_order+1 : 1;
+        return $max_order ? $max_order + 1 : 1;
     }
 
     public function orderAssignments(array $ordered_assignments, Course $course)
     {
         foreach ($ordered_assignments as $key => $assignment_id) {
             DB::table('assignments')->where('course_id', $course->id)//validation step!
-                ->where('id', $assignment_id)
+            ->where('id', $assignment_id)
                 ->update(['order' => $key + 1]);
         }
     }
@@ -84,7 +85,7 @@ class Assignment extends Model
             ->join('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
             ->join('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
             ->where('assignment_id', $this->id)
-            ->select('learning_tree', 'question_id','learning_tree_id')
+            ->select('learning_tree', 'question_id', 'learning_tree_id')
             ->get();
         return collect($learningTrees);
     }
@@ -115,5 +116,7 @@ class Assignment extends Model
     {
         return $this->hasMany('App\Extension');
     }
+
+
 
 }

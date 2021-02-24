@@ -78,12 +78,21 @@ class AssignmentGroupWeightController extends Controller
     {
         $sum = 0;
         $response['form_error'] = true;
+        $extra_credit_id  = 0;
+
+        foreach ($course->assignmentGroupWeights() as $key=>$value){
+            if ($value->assignment_group === 'Extra Credit'){
+                $extra_credit_id = $value->id;
+            }
+        }
+
         if (count($course->assignmentGroupWeights()) !== count($request->all())) {
             $response['message'] = 'Every percentage weight should have a value.';
             echo json_encode($response);
             exit;
 
         }
+
         foreach ($request->all() as $key => $value) {
 
             if (!is_numeric($value)) {
@@ -98,10 +107,12 @@ class AssignmentGroupWeightController extends Controller
                 exit;
 
             }
-            $sum += $value;
+            if ($key !==  $extra_credit_id ) {
+                $sum += $value;
+            }
         }
         if ($sum !== 100) {
-            $response['message'] = 'The percentage weights should sum to 100.';
+            $response['message'] = 'The non-extra credit percentage weights should sum to 100.';
             echo json_encode($response);
             exit;
         }

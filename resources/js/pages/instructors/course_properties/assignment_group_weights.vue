@@ -13,10 +13,19 @@
         <b-card header="default" header-html="Assignment Group Weights">
           <b-card-text>
             <p>
-              Tell Adapt how you would like to weight your assignment groups which are currently associated with your assignments.
+              Tell Adapt how you would like to weight your assignment groups which are currently associated with your
+              assignments.
+            </p>
+            <p v-if="hasExtraCredit">
+              Your assignment weights must sum to 100. The Extra Credit will be applied after the score is computed
+              using the assignment weights. For example,
+              if a student has an average of 90 and you provide up to 3 points for extra credit, the student can receive
+              up to 93 points total for the course.
             </p>
 
-            <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights">
+            <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
+                     class="border border-1 rounded"
+            >
               <template v-slot:cell(assignment_group_weight)="data">
                 <b-col lg="5">
                   <b-form-input
@@ -29,6 +38,28 @@
                 </b-col>
               </template>
             </b-table>
+
+            <b-form-group v-if="extraCreditId>0"
+                          id="extra_credit"
+                          label-cols-sm="3"
+                          label-cols-lg="2"
+                          label-for="Extra Credit"
+            >
+              <template slot="label">
+                <b-icon-star-fill varient="info" variant="warning" />
+                Extra Credit
+              </template>
+              <b-col lg="2">
+                <b-form-input
+                  id="extra_credit"
+                  v-model="assignmentGroupWeightsForm[extraCreditId]"
+                  type="text"
+                  :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
+                  @keydown="assignmentGroupWeightsFormWeightError = ''"
+                />
+              </b-col>
+            </b-form-group>
+
             <div class="ml-5">
               <b-form-invalid-feedback :state="false">
                 {{ assignmentGroupWeightsFormWeightError }}
@@ -58,7 +89,9 @@ export default {
   },
   data: () => ({
     course: {},
+    extraCreditId: 0,
     isLoading: true,
+    hasExtraCredit: false,
     letterGradesReleased: false,
     assignmentGroupWeightsFormWeightError: '',
     assignmentGroupWeightsForm: {},
@@ -92,7 +125,15 @@ export default {
         this.assignmentGroupWeights = data.assignment_group_weights
         let formInputs = {}
         for (let i = 0; i < data.assignment_group_weights.length; i++) {
-          formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
+          if (data.assignment_group_weights[i]['assignment_group'] === 'Extra Credit') {
+            this.hasExtraCredit = true
+            this.extraCreditId = data.assignment_group_weights[i].id
+            formInputs[this.extraCreditId] = data.assignment_group_weights[i].assignment_group_weight
+            this.extraCreditInput = data.assignment_group_weights[i].assignment_group_weight
+            this.assignmentGroupWeights.splice(i, 1)
+          } else {
+            formInputs[data.assignment_group_weights[i].id] = data.assignment_group_weights[i].assignment_group_weight
+          }
         }
         console.log(this.assignmentGroupWeights)
         this.assignmentGroupWeightsForm = new Form(formInputs)

@@ -18,9 +18,9 @@ trait Statistics
     {
 
         $query = DB::table('scores')
-            ->join('assignments','scores.assignment_id','=','assignments.id')
+            ->join('assignments', 'scores.assignment_id', '=', 'assignments.id')
             ->select(DB::raw('AVG(score) as average'), DB::raw('STDDEV(score) as std_dev'))
-            ->where('show_scores',1)
+            ->where('show_scores', 1)
             ->where('course_id', $course->id);
 
         $statistics = $user_id ? $query->where('user_id', $user_id)->first() : $query->first();
@@ -53,10 +53,21 @@ trait Statistics
 
     }
 
+    /**
+     * @param array $array
+     * @return array
+     */
+    public function getMeanAndStDDevForArray(array $array): array
+    {
+        $average = array_sum($array) / count($array);
+        $std_dev = $this->stats_standard_deviation($array);
+        return ['average' => $average, 'std_dev' => $std_dev];
+
+    }
 
     public function computeZScore($score, array $mean_and_std_dev)
     {
-        if (in_array($score,[null,'N/A'])){
+        if (in_array($score, [null, 'N/A'])) {
             return 'N/A';
         }
         if ($mean_and_std_dev['std_dev'] > 0) {
@@ -78,11 +89,9 @@ trait Statistics
     {
         $n = count($a);
         if ($n === 0) {
-            trigger_error("The array has zero elements", E_USER_WARNING);
             return false;
         }
         if ($sample && $n === 1) {
-            trigger_error("The array has only 1 element", E_USER_WARNING);
             return false;
         }
         $mean = array_sum($a) / $n;

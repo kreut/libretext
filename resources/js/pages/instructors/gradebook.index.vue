@@ -17,7 +17,9 @@
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
                 straight average of all assignments within an assignment group. Finally, the averages by assignment
-                group are weighted by the assignment group weights.  If you prefer a different grading methodology, please download the scores and input them into a
+                group are weighted by the
+                <span><router-link :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}">
+                  assignment group weights</router-link></span>.  Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included in the score computation.  If you prefer a different grading methodology, please download the scores and input them into a
                 spreadsheet.
               </p>
               <ul>
@@ -55,6 +57,9 @@
                        :sort-desc.sync="sortDesc"
                        sort-icon-left
               >
+                <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
+                  <span v-html="data.field.label" />
+                </template>
                 <template v-slot:cell()="data">
                   <span @click="getStudentAction(data.value,data.item.userId, data.field.key)">{{ data.value }}
                   </span>
@@ -470,10 +475,14 @@ export default {
           // map the group_ids to specific colors
           // do the headers
           let assignmentGroups = data.assignment_groups
-          for (let i = 1; i < this.fields.length - 2; i++) {
+          for (let i = 1; i < this.fields.length - 4; i++) {
             let key = this.fields[i]['key']
             this.fields[i]['thStyle'] = this.getHeaderColor(key, assignmentGroups)
           }
+          for (let i = this.fields.length - 4; i < this.fields.length; i++) {
+            this.fields[i]['thStyle'] = { 'align': 'center', 'min-width': '100px' }
+          }
+
           this.downloadFields = data.download_fields
           this.downloadRows = data.download_rows
 
@@ -493,7 +502,7 @@ export default {
       for (let j = 0; j < assignmentGroups.length; j++) {
         if (assignmentGroups[j].includes(parseInt(key))) {
           percent = 95 - 7 * j
-          return { 'background-color': `hsla(197, 65%, ${percent}%, 0.69)`, 'align': 'center' }
+          return { 'background-color': `hsla(197, 65%, ${percent}%, 0.69)`, 'align': 'center', 'min-width': '150px' }
         }
       }
     }

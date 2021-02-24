@@ -31,7 +31,6 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1]);
 
 
-
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user_2 = factory(User::class)->create();
@@ -70,54 +69,35 @@ class StudentsAssignmentsIndexTest extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
-/** @test */
-/*public function computes_the_correct_z_score_at_the_course_level(){
-    $this->assignment->assignment_group_id= 1;
-    $this->assignment->save();
-    $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1, 'assignment_group_id'=>1]);
+    /** @test */
+    public function computes_the_correct_z_score_at_the_course_level()
+    {
+        $this->course->show_z_scores = 1;
+        $this->course->save();
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $user_score = 51.11;
+        $course_scores = [0, 0, 51.11];
+        $mean = array_sum($course_scores) / 3;
+        $std_dev = $this->stats_standard_deviation($course_scores);
+        $z_score = Round(($user_score - $mean) / $std_dev, 2);
 
-    AssignmentGroupWeight::create([
-        'course_id' => $this->course->id,
-        'assignment_group_id' => 1,
-        'assignment_group_weight' => 100
-    ]);
-    DB::table('assignment_question')->insert([
-        'assignment_id' => $this->assignment->id,
-        'question_id' => $this->question()->id,
-        'order' =>1,
-        'open_ended_submission_type' => 'none',
-        'points' => 2
-    ]);
-    DB::table('assignment_question')->insert([
-        'assignment_id' => $this->assignment_2->id,
-        'question_id' => $this->question()->id,
-        'order' =>1,
-        'open_ended_submission_type' => 'none',
-        'points' => 2
-    ]);
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user")
+            ->assertJson(['z_score' => '1.41']);
 
-    $scores = [80, 40, 36];
-    Score::create(['user_id' => $this->student_user->id, 'score' => $scores[0], 'assignment_id' => $this->assignment->id]);
-    Score::create(['user_id' => $this->student_user_2->id, 'score' => $scores[1], 'assignment_id' => $this->assignment->id]);
-    Score::create(['user_id' => $this->student_user_4->id, 'score' => $scores[2], 'assignment_id' => $this->assignment->id]);
+    }
 
-    $scores_2 =  [20, 40, 90];
-    Score::create(['user_id' => $this->student_user->id, 'score' => $scores_2[0], 'assignment_id' => $this->assignment_2->id]);
-    Score::create(['user_id' => $this->student_user_2->id, 'score' => $scores_2[1], 'assignment_id' => $this->assignment_2->id]);
-    Score::create(['user_id' => $this->student_user_4->id, 'score' => $scores_2[2], 'assignment_id' => $this->assignment_2->id]);
+    /** @test */
 
-    $all_scores = array_merge($scores, $scores_2);
-    $overall_mean = array_sum($all_scores) / count($all_scores);
-    $overall_std_dev = $this->stats_standard_deviation($all_scores);
-    $my_mean = ($scores[0]+$scores_2[0] )/ 2;
-    $z_score = Round(($my_mean - $overall_mean) / $overall_std_dev, 2);
+    public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
+    {
+        //4 assignments with 2 different weights
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user")
+            ->assertJson(['weighted_score' => '51.11%']);
 
-    $response = $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user");
+    }
 
-   $this->assertEquals($z_score, $response['z_score']);
 
-}
-*/
     /** @test */
     public function correctly_computes_the_z_score_for_an_assignment()
     {
@@ -143,16 +123,6 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assertEquals('N/A', $response['assignments'][0]['z_score']);
     }
 
-    /** @test */
-
-    public function correctly_computes_the_final_score_for_the_student_if_all_assignments_show_scores()
-    {
-        //4 assignments with 2 different weights
-        $this->createAssignmentGroupWeightsAndAssignments();
-        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->course->id}/get-course-scores-by-user")
-            ->assertJson(['weighted_score' => '51.11%']);
-
-    }
 
     /** @test */
     public function correctly_computes_the_final_score_for_the_student_if_not_all_assignments_are_included()

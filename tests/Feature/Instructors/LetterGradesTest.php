@@ -6,13 +6,16 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
+use App\Enrollment;
 use App\FinalGrade;
+use App\Traits\Test;
 use App\User;
 use App\Course;
 use Tests\TestCase;
 
 class LetterGradesTest extends TestCase
 {
+    use Test;
 
     public function setup(): void
     {
@@ -20,8 +23,15 @@ class LetterGradesTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
+
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'course_id' => $this->course->id
+        ]);
         $finalGrade = new FinalGrade();
 
         FinalGrade::create(['course_id' => $this->course->id,
@@ -75,8 +85,18 @@ class LetterGradesTest extends TestCase
     }
 
     /** @test */
+    public function cannot_toggle_show_z_scores_if_weights_do_not_equal_100()
+    {
+
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-z-scores", ['show_z_scores' => 1])
+            ->assertJson(['message' => 'Please first update your Assignment Group Weights so that the total weighting is equal to 100.']);
+
+    }
+
+    /** @test */
     public function owner_can_toggle_show_z_scores()
     {
+        $this->createAssignmentGroupWeightsAndAssignments();
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-z-scores", ['show_z_scores' => 1])
             ->assertJson(['message' => 'Students <strong>cannot</strong> view their z-scores.']);
 

@@ -220,6 +220,10 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $response = $assignmentGroupWeight->validateCourseWeights( $course);
+        if ($response['type'] === 'error'){
+            return $response;
+        }
         try {
 
             $course->show_z_scores = !$request->show_z_scores;

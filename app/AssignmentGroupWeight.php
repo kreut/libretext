@@ -35,7 +35,9 @@ class AssignmentGroupWeight extends Model
         $response['type'] = 'success';
         $total_weights = 0;
         foreach ($course->assignmentGroupWeights() as $key => $value) {
-            $total_weights += $value->assignment_group_weight;
+            if ($value->assignment_group !== 'Extra Credit'){
+                $total_weights += $value->assignment_group_weight;
+            }
         }
         if ($total_weights !== 100) {
             $response['message'] = "Please first update your Assignment Group Weights so that the total weighting is equal to 100.";

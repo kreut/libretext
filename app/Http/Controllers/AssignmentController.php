@@ -360,7 +360,7 @@ class AssignmentController extends Controller
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
-                $total_points_by_assignment = $this->getTotalPointsByAssignment($course);
+                $total_points_by_assignment = $this->getTotalPointsForShownAssignments($course);
                 [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByAssignment($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
@@ -450,7 +450,7 @@ class AssignmentController extends Controller
      * @param Course $course
      * @return array
      */
-    function getTotalPointsByAssignment(Course $course)
+    function getTotalPointsForShownAssignments(Course $course)
     {
         $total_points_by_assignment = [];
         $points_info = DB::table('assignment_question')
@@ -463,6 +463,17 @@ class AssignmentController extends Controller
         foreach ($points_info as $value) {
             $total_points_by_assignment [$value->id] = rtrim(rtrim($value->total_points, "0"), ".");
         }
+        $points_info = DB::table('assignments')
+            ->where('course_id', $course->id)
+            ->where('source', 'x')
+            ->where('shown', 1)
+            ->select('id','external_source_points')
+            ->get();
+        foreach ($points_info as $value) {
+            $total_points_by_assignment [$value->id] = $value->external_source_points;
+        }
+
+
         return $total_points_by_assignment;
 
 

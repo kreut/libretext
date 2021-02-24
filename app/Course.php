@@ -71,7 +71,8 @@ class Course extends Model
             'course_id', //foreign key on enrollments table
             'id', //foreign key on users table
             'id', //local key in courses table
-            'user_id'); //local key in enrollments table
+            'user_id')
+            ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
     public function extensions()

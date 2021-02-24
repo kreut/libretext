@@ -23,7 +23,7 @@ use Illuminate\Support\Facades\Validator;
 
 class ScoreController extends Controller
 {
-use Statistics;
+    use Statistics;
 
 
     public function getTotalPointsByAssignmentId(array $assignment_ids)
@@ -114,7 +114,9 @@ use Statistics;
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
     }
 
-    public function getFinalWeightedScoresAndLetterGrades(Course $course, array $proportion_scores_by_user_and_assignment_group, array $assignment_group_weights_info)
+    public function getFinalWeightedScoresAndLetterGrades(Course $course,
+                                                          array $proportion_scores_by_user_and_assignment_group,
+                                                          array $assignment_group_weights_info)
     {
         $letter_grades = explode(',', $course->finalGrades->letter_grades);
         $letter_grades_array = [];
@@ -130,14 +132,29 @@ use Statistics;
             $extra_credit[$value->user_id] = $value->extra_credit;
         }
 
+        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
+            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
+            : $course->enrolledUsers;
 
-        foreach ($course->enrolledUsers as $key => $user) {
+        $extra_credit_group_id = DB::table('assignment_groups')->where('assignment_group', 'Extra Credit')
+            ->pluck('id')
+            ->first();
+        $final_weighted_scores_without_extra_credit = [];
+
+        foreach ($enrolled_users as $key => $user) {
             $final_weighted_scores[$user->id] = 0;
+            $final_weighted_scores_without_extra_credit[$user->id] = 0;
             if (isset($proportion_scores_by_user_and_assignment_group[$user->id])) {
+
                 foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id => $group_score) {
                     $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['count']
                         ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count']
                         : 0;
+
+                    $final_weighted_scores_without_extra_credit[$user->id] += $assignment_group_weights_info[$group_id]['count'] && ($group_id !== $extra_credit_group_id)
+                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count']
+                        : 0;
+
                 }
             }
             if (!isset($extra_credit[$user->id])) {
@@ -147,12 +164,16 @@ use Statistics;
             $final_weighted_scores[$user->id] += $extra_credit[$user->id];
 
         }
-        foreach ($course->enrolledUsers as $key => $user) {
+
+        foreach ($enrolled_users as $key => $user) {
             $score = Round($final_weighted_scores[$user->id], 2);
+            $final_weighted_scores_without_extra_credit[$user->id] = Round($final_weighted_scores_without_extra_credit[$user->id], 2);
             $final_weighted_scores[$user->id] = $score . '%';
             $letter_grades[$user->id] = $this->getLetterGradeBasedOnScore($score, $letter_grades_array, $course->finalGrades->round_scores);
         }
+
         return ['final_weighted_scores' => $final_weighted_scores,
+            'final_weighted_scores_without_extra_credit' => $final_weighted_scores_without_extra_credit,
             'letter_grades' => $letter_grades,
             'extra_credit' => $extra_credit];
     }
@@ -184,12 +205,22 @@ use Statistics;
                                       array $extra_credit,
                                       array $final_weighted_scores,
                                       array $letter_grades,
-                                      array $scores_by_user_and_assignment)
+                                      array $final_weighted_scores_without_extra_credit,
+                                      array $scores_by_user_and_assignment,
+                                      array $total_points_by_assignment_id)
     {
         {
+
             $extra_credit_assignment_id = max($assignment_ids) + 1;
             $weighted_score_assignment_id = $extra_credit_assignment_id + 1;
-            $letter_grade_assignment_id = $weighted_score_assignment_id++;
+            $z_score_assignment_id = $weighted_score_assignment_id + 1;
+            $letter_grade_assignment_id = $z_score_assignment_id++;
+
+            $course_average = count($final_weighted_scores_without_extra_credit) ? array_sum($final_weighted_scores_without_extra_credit) / count($final_weighted_scores_without_extra_credit) : 0;
+            $course_std_dev = $this->stats_standard_deviation($final_weighted_scores_without_extra_credit);
+            $mean_and_std_dev_info = ['average' => $course_average, 'std_dev' => $course_std_dev];
+
+
             //now fill in the actual scores
             $rows = [];
             $download_rows = [];
@@ -213,6 +244,9 @@ use Statistics;
                 $columns[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
                 $download_row_data[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
 
+                $columns[$z_score_assignment_id] = $this->computeZScore($final_weighted_scores_without_extra_credit[$user_id], $mean_and_std_dev_info);
+                $download_row_data[$z_score_assignment_id] = $columns[$z_score_assignment_id];
+
                 $columns[$letter_grade_assignment_id] = $letter_grades[$user_id];
                 $download_row_data[$letter_grade_assignment_id] = $letter_grades[$user_id];
 
@@ -230,9 +264,15 @@ use Statistics;
                 'isRowHeader' => true]];
             $download_fields = new \stdClass();
             $download_fields->LastFirst = 'name';
+
+
             foreach ($assignments as $assignment) {
-                $field = ['key' => "$assignment->id", 'label' => $assignment->name];
-                $download_fields->{$assignment->name} = $assignment->id;
+                $points = 0 + ($total_points_by_assignment_id[$assignment->id] ?? 0);
+                $not_included = !$assignment->include_in_weighted_average ? "<span style='font-size: 12px;color:red'>*</span>" : '';
+                $name_and_points = "{$assignment->name}<br><span style='font-size: 12px'>($points points)</span>$not_included";
+                $field = ['key' => "$assignment->id",
+                    'label' => $name_and_points];
+                $download_fields->{$name_and_points} = $assignment->id;
                 array_push($fields, $field);
             }
             array_push($fields, ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit']);
@@ -241,9 +281,13 @@ use Statistics;
             array_push($fields, ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score']);
             $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
 
+            array_push($fields, ['key' => "$z_score_assignment_id", 'label' => 'Z-Score']);
+            $download_fields->{"Z-Score"} = $z_score_assignment_id;
+
+
             array_push($fields, ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade']);
             $download_fields->{"Letter Grade"} = $letter_grade_assignment_id;
-            return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id];
+            return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id];
 
         }
     }
@@ -416,8 +460,6 @@ use Statistics;
         }
 
         $user = Auth::user();
-        $enrolled_users[$user->id] = "$user->first_name $user->last_name";
-        $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
 
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
@@ -428,29 +470,44 @@ use Statistics;
 
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
-        $scores = $course->scores->where('user_id', $user->id)->whereIn('assignment_id', $assignment_ids);
-
-        $mean_and_std_dev_by_course = $this->getMeanAndStDevByCourse($course);
-        $mean_and_std_dev_by_course_and_user = $this->getMeanAndStDevByCourse($course, $user->id);
-
-       $at_least_one_scores_released = DB::table('assignments')->whereIn('id', $assignment_ids)
-           ->where('show_scores',1)
-           ->first();
-        /*$z_score = $at_least_one_scores_released
-            ? $this->computeZScore($mean_and_std_dev_by_course_and_user['average'],  $mean_and_std_dev_by_course)
-            : false;*/
+        $scores = $course->scores->whereIn('assignment_id', $assignment_ids);
 
 
+        $enrolled_users_last_first = [];
+        $enrolled_users_by_id = [];
+
+        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
+            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
+            : $course->enrolledUsers;
 
 
+        $weighted_score = false;
+        $letter_grade = false;
         $z_score = false;
+        if ($course->show_z_scores ||  $course->finalGrades->letter_grades_released  || $course->students_can_view_weighted_average) {
+            foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
+                $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
+                $enrolled_users_last_first[$enrolled_user->id] = "$enrolled_user->last_name, $enrolled_user->first_name ";
+            }
+            [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
 
 
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
-        $response['weighted_score'] = $course->students_can_view_weighted_average ? $rows[0][$weighted_score_assignment_id] : false;
-        $response['letter_grade'] = $course->finalGrades->letter_grades_released ? $rows[0][$letter_grade_assignment_id] : false;
-       $response['z_score'] = $z_score;
-       $response['type'] = 'success';
+            $z_score = false;
+
+
+            foreach ($rows as $row) {
+                if ($row['userId'] === $user->id) {
+                    $z_score = $course->show_z_scores ? $row[$z_score_assignment_id] : false;
+                    $letter_grade = $course->finalGrades->letter_grades_released ? $row[$letter_grade_assignment_id] : false;
+                    $weighted_score = $course->students_can_view_weighted_average ? $row[$weighted_score_assignment_id] : false;
+                    break;
+                }
+            }
+        }
+        $response['weighted_score'] = $weighted_score;
+        $response['letter_grade'] = $letter_grade;
+        $response['z_score'] = $z_score;
+        $response['type'] = 'success';
 
         return $response;
 
@@ -478,7 +535,7 @@ use Statistics;
         [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($assignments, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
             $assignment_ids,
             $enrolled_users,
             $enrolled_users_last_first,
@@ -487,9 +544,11 @@ use Statistics;
             $final_weighted_scores_and_letter_grades['extra_credit'],
             $final_weighted_scores_and_letter_grades['final_weighted_scores'],
             $final_weighted_scores_and_letter_grades['letter_grades'],
-            $scores_by_user_and_assignment);
+            $final_weighted_scores_and_letter_grades['final_weighted_scores_without_extra_credit'],
+            $scores_by_user_and_assignment,
+            $total_points_by_assignment_id);
 
-        return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id];
+        return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id];
 
 
     }
@@ -506,10 +565,13 @@ use Statistics;
         }
 
         //get all user_ids for the user enrolled in the course
-        $enrolled_users = [];
+        $enrolled_users_by_id = [];
         $enrolled_users_last_first = [];
-        foreach ($course->enrolledUsers as $key => $user) {
-            $enrolled_users[$user->id] = "$user->first_name $user->last_name";
+        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
+            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
+            : $course->enrolledUsers;
+        foreach ($enrolled_users as $key => $user) {
+            $enrolled_users_by_id[$user->id] = "$user->first_name $user->last_name";
             $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
         }
 
@@ -534,19 +596,21 @@ use Statistics;
 
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+
         $scores = $course->scores;
 
         $extensions = [];
         foreach ($course->extensions as $value) {
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
             'download_rows' => $download_rows,
             'extra_credit_assignment_id' => $extra_credit_assignment_id,
             'weighted_score_assignment_id' => $weighted_score_assignment_id,//needed for testing...
+            'z_score_assignment_id' => $z_score_assignment_id,
             'letter_grade_assignment_id' => $letter_grade_assignment_id,
             'assignment_groups' => array_values($assignment_groups)];//needed for testing...
     }

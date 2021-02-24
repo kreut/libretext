@@ -1,8 +1,70 @@
 <template>
   <div>
+    <b-modal
+      id="modal-upload-file"
+      ref="modal"
+      title="Upload File"
+      ok-title="Submit"
+      @ok="handleOk"
+      @hidden="resetModalForms"
+    >
+      <b-form ref="form">
+        <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
+        <b-form-file
+          ref="assignmentFileInput"
+          v-model="form.assignmentFile"
+          placeholder="Choose a file or drop it here..."
+          drop-placeholder="Drop file here..."
+          :accept="getAcceptedFileTypes()"
+        />
+        <div v-if="uploading">
+          <b-spinner small type="grow" />
+          Uploading file...
+        </div>
+        <input type="hidden" class="form-control is-invalid">
+        <div class="help-block invalid-feedback">
+          {{ form.errors.get('assignmentFile') }}
+        </div>
+      </b-form>
+    </b-modal>
+    <b-modal
+      id="modal-assignment-submission-feedback"
+      ref="modal"
+      size="xl"
+      title="Assignment Submission Feedback"
+      ok-only
+      ok-variant="primary"
+      ok-title="Close"
+      @ok="closeAssignmentSubmissionFeedbackModal"
+    >
+      <b-card title="Summary">
+        <b-card-text>
+          <p>
+            Submitted File:
+            <b-button variant="link" style="padding:0px; padding-bottom:3px"
+                      @click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)"
+            >
+              {{ assignmentFileInfo.original_filename }}
+            </b-button>
+            <br>
+            Score: {{ assignmentFileInfo.submission_file_score }}<br>
+            Date submitted: {{ assignmentFileInfo.date_submitted }}<br>
+            Date graded: {{ assignmentFileInfo.date_graded }}<br>
+            Text feedback: {{ assignmentFileInfo.text_feedback }}<br>
+          </p>
+          <hr>
+        </b-card-text>
+      </b-card>
+      <div v-if="assignmentFileInfo.file_feedback_url">
+        <div class="d-flex justify-content-center mt-5">
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+        </div>
+      </div>
+    </b-modal>
     <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
-      <loading :active.sync="isLoading"
+      <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
+      <loading :active.sync="loading"
                :can-cancel="true"
                :is-full-page="true"
                :width="128"
@@ -10,69 +72,7 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <b-modal
-        id="modal-upload-file"
-        ref="modal"
-        title="Upload File"
-        ok-title="Submit"
-        @ok="handleOk"
-        @hidden="resetModalForms"
-      >
-        <b-form ref="form">
-          <p>Accepted file types are: {{ getAcceptedFileTypes() }}.</p>
-          <b-form-file
-            ref="assignmentFileInput"
-            v-model="form.assignmentFile"
-            placeholder="Choose a file or drop it here..."
-            drop-placeholder="Drop file here..."
-            :accept="getAcceptedFileTypes()"
-          />
-          <div v-if="uploading">
-            <b-spinner small type="grow" />
-            Uploading file...
-          </div>
-          <input type="hidden" class="form-control is-invalid">
-          <div class="help-block invalid-feedback">
-            {{ form.errors.get('assignmentFile') }}
-          </div>
-        </b-form>
-      </b-modal>
-      <b-modal
-        id="modal-assignment-submission-feedback"
-        ref="modal"
-        size="xl"
-        title="Assignment Submission Feedback"
-        ok-only
-        ok-variant="primary"
-        ok-title="Close"
-        @ok="closeAssignmentSubmissionFeedbackModal"
-      >
-        <b-card title="Summary">
-          <b-card-text>
-            <p>
-              Submitted File:
-              <b-button variant="link" style="padding:0px; padding-bottom:3px"
-                        @click="downloadSubmissionFile(assignmentFileInfo.assignment_id, assignmentFileInfo.submission, assignmentFileInfo.original_filename)"
-              >
-                {{ assignmentFileInfo.original_filename }}
-              </b-button>
-              <br>
-              Score: {{ assignmentFileInfo.submission_file_score }}<br>
-              Date submitted: {{ assignmentFileInfo.date_submitted }}<br>
-              Date graded: {{ assignmentFileInfo.date_graded }}<br>
-              Text feedback: {{ assignmentFileInfo.text_feedback }}<br>
-            </p>
-            <hr>
-          </b-card-text>
-        </b-card>
-        <div v-if="assignmentFileInfo.file_feedback_url">
-          <div class="d-flex justify-content-center mt-5">
-            <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
-          </div>
-        </div>
-      </b-modal>
-
-      <div v-if="hasAssignments">
+      <div v-if="hasAssignments && !loading">
         <div class="text-center">
           <div class="text-center">
             <p v-show="letterGradesReleased" class="font-italic font-weight-bold">
@@ -92,10 +92,8 @@
                     icon="question-circle"
             />
             <b-tooltip target="course-z-score-tooltip" triggers="hover">
-              The z-score for the course is computed by using the total number of points possible for the course as
-              compared to the total number of points which you've scored. Note that relative number of points per
-              assignment and weightings for the course are not taken into account. Therefore, this measurement is only an
-              approximation for how you're performing relative to your peers.
+              The z-score for the course is computed using all assignments that are for credit, not including extra credit assignments.
+              Your overall weighted average is then compared with those of your peers in order to compute your relative standing in the course.
             </b-tooltip>
           </p>
         </div>
@@ -184,7 +182,7 @@ export default {
       placement: 'right',
       title: 'The z-score tells you how many standard deviations you are away from the mean.  A z-score of 0 tells you that your score was the exact mean of the distribution.  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean; z-scores outside of this range are considered atypical.'
     },
-    isLoading: true,
+    loading: true,
     studentsCanViewWeightedAverage: false,
     letterGradesReleased: false,
     zScore: false,
@@ -247,23 +245,32 @@ export default {
         console.log(data)
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
         this.letterGradesReleased = Boolean(data.course.letter_grades_released)
+        this.isLoading = true
         await this.getScoresByUser()
       } catch (error) {
         this.$noty.error(error.message)
+        this.isLoading = false
       }
     },
     async getScoresByUser () {
-      const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
-      console.log(data)
-      if (data.type === 'error') {
-        this.$noty.error(data.message)
-        return false
+      try {
+        const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.loading = false
+          return false
+        }
+        if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
+          this.weightedAverage = data.weighted_score
+          this.letterGrade = data.letter_grade
+        }
+        this.zScore = data.z_score
+      } catch (error) {
+        this.$noty.error(error.message)
       }
-      if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
-        this.weightedAverage = data.weighted_score
-        this.letterGrade = data.letter_grade
-      }
-      this.zScore = data.z_score
+
+      this.loading = false
     },
     downloadSubmissionFile (assignmentId, submission, originalFilename) {
       let data =
