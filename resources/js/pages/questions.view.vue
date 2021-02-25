@@ -765,7 +765,7 @@
                 </div>
 
                 <div v-if="showQuestion">
-                  <div class="border border-dark p-0 rounded">
+                  <div class="border border-gray p-0">
                     <div>
                       <iframe v-show="questions[currentPage-1].non_technology"
                               :id="`non-technology-iframe-${currentPage}`"
