@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
@@ -597,6 +598,16 @@ class AssignmentSyncQuestionController extends Controller
                 $original_filename = $solution->original_filename;
             }
         }
+        try {
+            session()->get('submission_id');
+            DataShop::where('session_id', session()->get('submission_id'))
+                ->update(['input' => $response_info['student_response']]);
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+
+        }
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
@@ -846,7 +857,7 @@ class AssignmentSyncQuestionController extends Controller
             foreach ($assignment->questions as $key => $question) {
 
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
-$technology_src = '';
+                $technology_src = '';
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
@@ -1057,7 +1068,7 @@ $technology_src = '';
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
-                    $assignment->questions[$key]->technology_src =  Auth::user()->role === 2 ? $technology_src: '';
+                    $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
 
                 }
 

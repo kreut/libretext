@@ -185,7 +185,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/learning-trees/info', 'LearningTreeController@storeLearningTreeInfo');
     Route::post('/learning-trees/info/{learningTree}', 'LearningTreeController@updateLearningTreeInfo');
 
-    Route::post('/logs', 'LogController@store');
+    Route::post('/store', 'DataShopController@store');
 
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateLearningTreeNode');
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\DataShop;
 use App\Http\Requests\StoreSubmission;
 use App\JWE;
 use App\LtiLaunch;
@@ -117,7 +118,7 @@ class JWTController extends Controller
             return $response;
         }
         $Submission = new Submission();
-        return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback());
+        return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop());
     }
 
 }

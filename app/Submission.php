@@ -29,7 +29,8 @@ class Submission extends Model
                           Assignment $Assignment,
                           Score $score,
                           LtiLaunch $ltiLaunch,
-                          LtiGradePassback $ltiGradePassback)
+                          LtiGradePassback $ltiGradePassback,
+                          DataShop $dataShop)
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -151,7 +152,7 @@ class Submission extends Model
                             $message = "Your total score was updated with a penalty of $learning_tree_percent_penalty% applied.";
                         } else {
                             $data['score'] = $learning_tree_points;
-                            $s =  $learning_tree_points !== 1 ? 's' : '';
+                            $s = $learning_tree_points !== 1 ? 's' : '';
                             $message = "Incorrect! But you're still receiving $learning_tree_points point$s for exploring the Learning Tree.";
                         }
                     } else {
@@ -197,11 +198,17 @@ class Submission extends Model
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $response['learning_tree_percent_penalty'] = "$learning_tree_percent_penalty%";
             $response['explored_learning_tree'] = $explored_learning_tree;
-            $log = new \App\Log();
-            $request->action = 'submit-question-response';
-            $request->data = ['assignment_id' => $data['assignment_id'],
-                'question_id' => $data['question_id']];
-            $log->store($request);
+
+            //don't really care if this gets messed up from the user perspective
+            try {
+                session()->put('submission_id',md5(uniqid('', true)) );
+                $dataShop->store($submission, $data);
+            } catch (Exception $e){
+                $h = new Handler(app());
+                $h->report($e);
+
+            }
+
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

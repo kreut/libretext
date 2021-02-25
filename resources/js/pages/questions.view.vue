@@ -1044,6 +1044,10 @@
                           questions[currentPage - 1].late_penalty_percent
                         }}%<br>
                       </div>
+
+                      <b-alert :variant="submissionDataType" :show="assessmentType!== 'learning tree' && showSubmissionMessage">
+                        <span class="font-weight-bold">{{ submissionDataMessage }}</span>
+                      </b-alert>
                     </b-card-text>
                   </b-card>
                 </b-row>
@@ -2080,8 +2084,6 @@ export default {
           this.$noty.error(error.message)
         }
       }
-
-      this.logVisitAssessment(this.assignmentId, this.questions[this.currentPage - 1].id)
       this.isLoading = false
     },
     async getLearningTree (learningTree) {
@@ -2332,33 +2334,7 @@ export default {
       return questionExistsInAssignment
     },
     logVisitRemediationNode (library, pageId) {
-      try {
-        if (this.user.role === 3) {
-          axios.post('/api/logs', {
-            'action': 'visit-remediation-node',
-            'data': {
-              'library': library,
-              'page_id': pageId,
-              'assignment_id': this.assignmentId,
-              'question_id': this.questions[this.currentPage - 1].id
-            }
-          })
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    logVisitAssessment (assignmentId, questionId) {
-      try {
-        if (this.user.role === 3) {
-          axios.post('/api/logs', {
-            'action': 'visit-assessment',
-            'data': { 'assignment_id': assignmentId, 'question_id': questionId }
-          })
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
+      console.log('To do!!!')
     },
     getAssessmentsForAssignment () {
       this.assessmentType === 'learning tree'

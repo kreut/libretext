@@ -17,7 +17,8 @@ class Kernel extends ConsoleKernel
         Commands\storeH5P::class,
         Commands\storeWebwork::class,
         Commands\DbBackup::class,
-        Commands\sendAssignmentDueReminderEmails::class
+        Commands\sendAssignmentDueReminderEmails::class,
+        Commands\dataShopToS3::class
 
     ];
 
@@ -33,6 +34,13 @@ class Kernel extends ConsoleKernel
             $schedule->command('db:backup')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
         }
+
+        if (env('APP_ENV') === 'production') {
+            $schedule->command('dataShop:toS3')->twiceDaily()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+        }
+
+
         $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
             ->emailOutputOnFailure('kreut@hotmail.com');
 
