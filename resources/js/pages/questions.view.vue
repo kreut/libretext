@@ -1438,6 +1438,10 @@ export default {
 
     if (this.source === 'a') {
       await this.getSelectedQuestions(this.assignmentId, this.questionId)
+      if (!this.questions.length) {
+        this.isLoading = false
+        return false
+      }
       this.showAssignmentStatistics = this.questions.length && (this.user.role === 2 || (this.user.role === 3 && this.students_can_view_assignment_statistics))
       if (this.showAssignmentStatistics) {
         this.getScoresSummary = getScoresSummary
