@@ -28,6 +28,7 @@ class LearningTreeController extends Controller
 
 
     }
+
     public function updateNode(UpdateNode $request, LearningTree $learningTree)
     {
         $response['type'] = 'error';
@@ -62,7 +63,9 @@ class LearningTreeController extends Controller
 
 
     }
-    public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree){
+
+    public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree)
+    {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('createLearningTreeFromTemplate', $learningTree);
@@ -86,9 +89,6 @@ class LearningTreeController extends Controller
             $response['message'] = "There was an error retrieving your learning trees.  Please try again or contact us for assistance.";
         }
         return $response;
-
-
-
 
 
     }
@@ -366,10 +366,10 @@ EOT;
 
 
     /**
-     * Display the specified resource.
-     *
-     * @param \App\LearningTree $learningTree
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
      */
     public function destroy(Request $request, LearningTree $learningTree)
     {
@@ -382,6 +382,29 @@ EOT;
             return $response;
         }
         try {
+            $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
+                ->first();
+            if ($assignment_learning_tree_info) {
+                $assignment_info = DB::table('assignment_question_learning_tree')
+                    ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
+                    ->join('assignments', 'assignment_id', '=', 'assignments.id')
+                    ->join('courses', 'course_id', '=', 'courses.id')
+                    ->join('users', 'user_id', '=', 'users.id')
+                    ->where('assignment_question_id', $assignment_learning_tree_info->assignment_question_id)
+                    ->select('users.id',
+                        DB::raw('assignments.name AS assignment'),
+                        DB::raw('courses.name AS course')
+                    )
+                    ->first();
+
+
+                $response['message'] =
+                    ($assignment_info->id === $request->user()->id)
+                        ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first delete it before deleting this Learning Tree."
+                        : "It looks like another instructor is using this Learing Tree so you won't be able to delete it.";
+                return $response;
+            }
+
             $learningTree->delete();
             $response['type'] = 'info';
             $response['message'] = "The Learning Tree has been deleted.";
