@@ -272,7 +272,7 @@ class ScoreController extends Controller
                 $name_and_points = "{$assignment->name}<br><span style='font-size: 12px'>($points points)</span>$not_included";
                 $field = ['key' => "$assignment->id",
                     'label' => $name_and_points];
-                $download_fields->{$name_and_points} = $assignment->id;
+                $download_fields->{$assignment->name} = $assignment->id;
                 array_push($fields, $field);
             }
             array_push($fields, ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit']);
