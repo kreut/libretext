@@ -17,7 +17,8 @@
       <b-tooltip target="notifications_tooltip"
                  delay="250"
       >
-        Students can optionally request to receive notifications for upcoming due dates.  You may want to turn this option
+        Students can optionally request to receive notifications for upcoming due dates. You may want to turn this
+        option
         off for Exams and Clicker assignments so your students don't receive unnecessary notifications.
       </b-tooltip>
       <b-tooltip target="late_deduction_application_period_tooltip"
@@ -242,19 +243,23 @@
           label="Source"
           label-for="Source"
         >
-          <b-form-radio-group v-model="form.source" stacked
-                              :disabled="isLocked()"
+          <b-form-radio-group
+            v-model="form.source"
+            stacked
+            :disabled="isLocked()"
+            @change="initInternalExternalSwitch()"
           >
-            <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-
-              <b-form-radio name="source" value="a">Internal <span id="internal" class="text-muted"><b-icon
+            <b-form-radio name="source" value="a">
+              Internal <span id="internal" class="text-muted"><b-icon
                 icon="question-circle"
-              /></span></b-form-radio>
-            </span>
+              /></span>
+            </b-form-radio>
+
             <b-form-radio name="source" value="x">
               External <span id="external" class="text-muted"><b-icon
                 icon="question-circle"
-              /></span>
+              />
+              </span>
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
@@ -320,37 +325,34 @@
         <b-form-radio-group v-model="form.assessment_type"
                             stacked
                             :disabled="isLocked()"
+                            @change="initAssessmentTypeSwitch"
         >
-          <span @click="showRealTimeOptions">
-            <b-form-radio name="assessment_type" value="real time">
-              Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
-                icon="question-circle"
-              />
-              </span></b-form-radio>
-          </span>
-          <span @click="showDelayedOptions">
-            <b-form-radio name="assessment_type" value="delayed">
-              Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
-            </b-form-radio>
-          </span>
-          <span @click="checkIfScoringTypeOfPoints">
-            <b-form-radio name="assessment_type" value="learning tree">
-              Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
-                icon="question-circle"
-              />
-              </span>
-            </b-form-radio>
-          </span>
-          <span @click="checkSourceAndLatePolicy; form.notifications=0">
-            <b-form-radio name="assessment_type" value="clicker">
-              Clicker Assessments <span id="clicker" class="text-muted"><b-icon
-                icon="question-circle"
-              />
-              </span>
-            </b-form-radio>
-          </span>
+          <b-form-radio name="assessment_type" value="real time">
+            Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
+              icon="question-circle"
+            />
+            </span>
+          </b-form-radio>
+
+          <b-form-radio name="assessment_type" value="delayed">
+            Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
+              icon="question-circle"
+            /></span>
+          </b-form-radio>
+
+          <b-form-radio name="assessment_type" value="learning tree">
+            Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
+              icon="question-circle"
+            />
+            </span>
+          </b-form-radio>
+
+          <b-form-radio name="assessment_type" value="clicker">
+            Clicker Assessments <span id="clicker" class="text-muted"><b-icon
+              icon="question-circle"
+            />
+            </span>
+          </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
       <div v-show="form.assessment_type === 'clicker'">
@@ -698,7 +700,7 @@
         label-for="notifications"
       >
         <template slot="label">
-          Notifications  <span id="notifications_tooltip" class="text-muted"><b-icon
+          Notifications <span id="notifications_tooltip" class="text-muted"><b-icon
             icon="question-circle"
           /></span>
         </template>
@@ -730,6 +732,7 @@ export default {
   middleware: 'auth',
   props: { 'courseId': { type: Number, default: 0 } },
   data: () => ({
+    originalAssignment: {},
     assignmentGroupForm: new Form({
       assignment_group: ''
     }),
@@ -798,7 +801,65 @@ export default {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
   },
+  form: function (newVal, oldVal) {
+    console.log('New value: ' + newVal + ', Old value: ' + oldVal)
+  },
   methods: {
+    async initAssessmentTypeSwitch () {
+      this.$nextTick(async function () {
+        try {
+          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
+            { 'assessment_type': this.form.assessment_type })
+
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            this.form.assessment_type = this.originalAssignment.assessment_type
+            return false
+          }
+
+          switch (this.form.assessment_type) {
+            case ('real time'):
+              this.showRealTimeOptions()
+              break
+            case ('delayed'):
+              this.showDelayedOptions()
+              break
+            case ('learning tree'):
+              this.checkIfScoringTypeOfPoints()
+              break
+            case ('clicker'):
+              this.checkSourceAndLatePolicy()
+              this.form.notifications = 0
+          }
+        } catch (error) {
+          this.form.assessment_type = this.originalAssignment.assessment_type
+          this.$noty.error(error.message)
+        }
+      })
+    },
+    async initInternalExternalSwitch () {
+      console.log(this.assignments)
+      this.$nextTick(async function () {
+        try {
+          const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
+            { 'assessment_type': this.form.assessment_type, 'source': this.form.source })
+          console.log(data)
+          console.log(this.form.source)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            this.form.source = this.originalAssignment.source
+            return false
+          }
+
+          if (this.form.source === 'a') {
+            this.resetOpenEndedResponsesAndPointsPerQuestion()
+          }
+        } catch (error) {
+          this.form.source = this.originalAssignment.source
+          this.$noty.error(error.message)
+        }
+      })
+    },
     checkSourceAndLatePolicy (event) {
       if (this.form.source === 'x') {
         event.preventDefault()
@@ -897,7 +958,7 @@ export default {
       this.assignmentGroups = [{ value: null, text: 'Please choose one' }]
       try {
         const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)
-        if (data.error) {
+        if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
@@ -949,6 +1010,8 @@ export default {
     },
     async editAssignment (assignment) {
       await this.getAssignmentGroups(this.courseId)
+      this.originalAssignment = assignment
+      console.log(assignment)
       this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
       this.solutionsReleased = assignment.solutions_released
       this.assignmentId = assignment.id

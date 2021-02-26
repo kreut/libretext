@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\LearningTree;
 use App\Traits\DateFormatter;
 use App\Course;
 use App\Solution;
@@ -28,6 +29,60 @@ use \Exception;
 class AssignmentController extends Controller
 {
     use DateFormatter;
+
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function validateAssessmentType(Request $request, Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $learning_tree = DB::table('assignment_question_learning_tree')
+                ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
+                ->where('assignment_id', $assignment->id)
+                ->select('question_id')
+                ->first();
+            $open_ended = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('open_ended_submission_type', '<>', '0')
+                ->select('assignment_id')
+                ->first();
+            $question = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->select('assignment_id')
+                ->first();
+            $assessment_type = $request->assessment_type;
+            $source = $request->source;
+
+            if ($source === 'x' && ($question || $learning_tree)) {
+                $response['message'] = "You can't switch to an external assignment until you remove all Adapt questions from the assignment.";
+                return $response;
+            }
+
+            if (in_array($assessment_type, ['real time', 'clicker']) && $open_ended !== null) {
+                $response['message'] = "You can't switch to a $assessment_type assessment type until you remove the open-ended questions from the assignment.";
+                return $response;
+            }
+            if (in_array($assessment_type, ['delayed', 'real time', 'clicker']) && $learning_tree !== null) {
+                $response['message'] = "You can't switch to a $assessment_type assessment type since this is not a learning tree assignment.";
+                return $response;
+            }
+            if ($assessment_type === 'learning tree' && $question !== null) {
+                $response['message'] = "You can't switch to a learning tree assessment type since this is not a learning tree assignment and you already have non-learning tree questions.";
+                return $response;
+            }
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment question information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
 
     public function order(Request $request, Course $course, Assignment $assignment)
     {
@@ -467,7 +522,7 @@ class AssignmentController extends Controller
             ->where('course_id', $course->id)
             ->where('source', 'x')
             ->where('shown', 1)
-            ->select('id','external_source_points')
+            ->select('id', 'external_source_points')
             ->get();
         foreach ($points_info as $value) {
             $total_points_by_assignment [$value->id] = $value->external_source_points;
@@ -592,7 +647,7 @@ class AssignmentController extends Controller
 
     public function getDefaultOpenEndedTextEditor($request, $data)
     {
-        if ($request->assessment_type !== 'delayed'){
+        if ($request->assessment_type !== 'delayed') {
             return null;
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return str_replace(' text', '', $data['default_open_ended_submission_type']);

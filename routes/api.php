@@ -20,7 +20,7 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
-Route::get('/lti/user','LTIController@getUser');
+Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
 Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
 Route::get('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
@@ -125,7 +125,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
     Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
     Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentNameAndLatePolicy');
-
+    Route::post('/assignments/{assignment}/validate-assessment-type', 'AssignmentController@validateAssessmentType');
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
     Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
@@ -162,8 +162,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/tags', 'TagController@index');
 
     Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
-    Route::post('/questions/default-import-library','QuestionController@storeDefaultImportLibrary');
-    Route::get('/questions/default-import-library','QuestionController@getDefaultImportLibrary');
+    Route::post('/questions/default-import-library', 'QuestionController@storeDefaultImportLibrary');
+    Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
@@ -258,7 +258,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 });
 
-Route::group(['middleware' => ['guest:api' ,'throttle:30,1']], function () {
+Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
 
     Route::post('login', 'Auth\LoginController@login');
     Route::post('register', 'Auth\RegisterController@register');
