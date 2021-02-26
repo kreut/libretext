@@ -400,8 +400,8 @@ EOT;
 
                 $response['message'] =
                     ($assignment_info->id === $request->user()->id)
-                        ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first delete it before deleting this Learning Tree."
-                        : "It looks like another instructor is using this Learing Tree so you won't be able to delete it.";
+                        ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first remove that question from the assignment before deleting this Learning Tree."
+                        : "It looks like another instructor is using this Learning Tree so you won't be able to delete it.";
                 return $response;
             }
 
