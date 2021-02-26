@@ -1900,7 +1900,7 @@ export default {
             const { data } = await axios.post('/api/submissions', submissionData)
             if (!data.message) {
               data.type = 'error'
-              data.message = 'The server did not fully to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
+              data.message = 'The server did not fully respond to this request and your submission may not have been saved.  Please refresh the page to verify the submission and contact support if the problem persists.'
             }
             await this.showResponse(data)
           } catch (error) {
