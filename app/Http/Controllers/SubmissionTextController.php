@@ -130,11 +130,6 @@ class SubmissionTextController extends Controller
             $response['message'] = 'Your text submission was saved.';
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
                 $user->time_zone, 'M d, Y g:i:s a');
-            $log = new \App\Log();
-            $request->action = 'submit-question-text';
-            $request->data = ['assignment_id' => $assignment->id,
-                'question_id' => $question_id];
-            $log->store($request);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

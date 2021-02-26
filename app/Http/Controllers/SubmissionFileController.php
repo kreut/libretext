@@ -339,11 +339,6 @@ class SubmissionFileController extends Controller
                 $response['message'] .= "  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             }
             $response['type'] = 'success';
-            $log = new \App\Log();
-            $request->action = 'submit-question-file';
-            $request->data = ['assignment_id' => $assignment_id,
-                'question_id' => $question_id];
-            $log->store($request);
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();
