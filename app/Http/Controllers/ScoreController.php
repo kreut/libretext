@@ -19,7 +19,10 @@ use Illuminate\Support\Facades\Auth;
 use App\Traits\Statistics;
 use App\Exceptions\Handler;
 use \Exception;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+
+ini_set('max_execution_time', 300);
 
 class ScoreController extends Controller
 {
@@ -94,23 +97,32 @@ class ScoreController extends Controller
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
+        $include_in_weighted_average_by_assignment_id = [];
+        foreach ($assignments as $assignment) {
 
-        foreach ($scores as $score) {
-            $scores_by_user_and_assignment[$score->user_id][$score->assignment_id] = $score->score;
-            $group_id = $assignment_groups_by_assignment_id[$score->assignment_id];
-            //init if needed
-            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] ?? 0;
-
-            $score_as_proportion = (($total_points_by_assignment_id[$score->assignment_id]) <= 0)//total_points_by_assignment can be 0.00
-                ? 0
-                : $score->score / $total_points_by_assignment_id[$score->assignment_id];
-            $proportion_scores_by_user_and_assignment_group[$score->user_id][$group_id] += $assignments->where('id', $score->assignment_id)
-                ->first()
-                ->include_in_weighted_average
-                ? $score_as_proportion
-                : 0;
+            $include_in_weighted_average_by_assignment_id[$assignment->id] = $assignment->include_in_weighted_average;
 
         }
+        $times = [];
+
+
+                foreach ($scores as $score) {
+                    $assignment_id = $score->assignment_id;
+                    $user_id = $score->user_id;
+                    $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
+                    $group_id = $assignment_groups_by_assignment_id[$assignment_id];
+                    //init if needed
+                    $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
+
+                    $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
+                        ? 0
+                        : $score->score / $total_points_by_assignment_id[$assignment_id];
+                    $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] += $include_in_weighted_average_by_assignment_id[$assignment_id]
+                        ? $score_as_proportion
+                        : 0;
+                }
+
+
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
     }
 
@@ -484,7 +496,7 @@ class ScoreController extends Controller
         $weighted_score = false;
         $letter_grade = false;
         $z_score = false;
-        if ($course->show_z_scores ||  $course->finalGrades->letter_grades_released  || $course->students_can_view_weighted_average) {
+        if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
             foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
                 $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
                 $enrolled_users_last_first[$enrolled_user->id] = "$enrolled_user->last_name, $enrolled_user->first_name ";
@@ -603,7 +615,10 @@ class ScoreController extends Controller
         foreach ($course->extensions as $value) {
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
+
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+
+
         return ['hasAssignments' => true,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
