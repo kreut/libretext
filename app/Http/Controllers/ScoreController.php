@@ -2,10 +2,13 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentGroup;
+use App\Extension;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\Score;
 use App\Course;
+use App\Solution;
 use App\SubmissionFile;
 use App\User;
 use App\Assignment;
@@ -106,21 +109,21 @@ class ScoreController extends Controller
         $times = [];
 
 
-                foreach ($scores as $score) {
-                    $assignment_id = $score->assignment_id;
-                    $user_id = $score->user_id;
-                    $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
-                    $group_id = $assignment_groups_by_assignment_id[$assignment_id];
-                    //init if needed
-                    $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
+        foreach ($scores as $score) {
+            $assignment_id = $score->assignment_id;
+            $user_id = $score->user_id;
+            $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
+            $group_id = $assignment_groups_by_assignment_id[$assignment_id];
+            //init if needed
+            $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
 
-                    $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
-                        ? 0
-                        : $score->score / $total_points_by_assignment_id[$assignment_id];
-                    $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] += $include_in_weighted_average_by_assignment_id[$assignment_id]
-                        ? $score_as_proportion
-                        : 0;
-                }
+            $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
+                ? 0
+                : $score->score / $total_points_by_assignment_id[$assignment_id];
+            $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] += $include_in_weighted_average_by_assignment_id[$assignment_id]
+                ? $score_as_proportion
+                : 0;
+        }
 
 
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
@@ -455,9 +458,19 @@ class ScoreController extends Controller
 
     /**
      * @param Course $course
+     * @param Extension $extension
+     * @param Score $Score
+     * @param Submission $Submission
+     * @param Solution $Solution
+     * @param AssignmentGroup $AssignmentGroup
      * @return array|false[]
      */
-    public function getCourseScoresByUser(Course $course)
+    public function getCourseScoresByUser(Course $course,
+                                          Extension $extension,
+                                          Score $Score,
+                                          Submission $Submission,
+                                          Solution $Solution,
+                                          AssignmentGroup $AssignmentGroup)
     {
 
 
@@ -474,6 +487,17 @@ class ScoreController extends Controller
         $user = Auth::user();
 
         //get all assignments in the course
+        $Assignment = new Assignment();
+        $assignments_info = $Assignment->getAssignmentsByCourse($course,
+            $extension,
+            $Score, $Submission,
+            $Solution,
+            $AssignmentGroup);
+
+        if ($assignments_info ['type'] === 'error') {
+            return $assignments_info;
+        }
+        //probably can refactor...
         $assignments = $course->assignments->sortBy('due');
 
         if ($assignments->isEmpty()) {
@@ -516,6 +540,13 @@ class ScoreController extends Controller
                 }
             }
         }
+
+        $response['assignments'] = $assignments_info['assignments'];
+        $response['course'] = [
+            'name' => $course->name,
+            'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
+            'letter_grades_released' => $course->finalGrades->letter_grades_released
+        ];
         $response['weighted_score'] = $weighted_score;
         $response['letter_grade'] = $letter_grade;
         $response['z_score'] = $z_score;
@@ -568,6 +599,7 @@ class ScoreController extends Controller
     public function index(Course $course)
     {
 
+
         $authorized = Gate::inspect('viewCourseScores', $course);
 
         if (!$authorized->allowed()) {
@@ -589,7 +621,6 @@ class ScoreController extends Controller
 
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
-
 
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];

@@ -154,40 +154,27 @@
               </b-col>
             </b-form-row>
           </b-form-group>
-          <div v-if="assignmentScoringType === 'p'">
-            <b-form-group
-              id="score"
-              label-cols-sm="4"
-              label-cols-lg="3"
-              label="Override Score"
-              label-for="Override Score"
-            >
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-input
-                    id="score"
-                    v-model="form.score"
-                    type="text"
-                    placeholder=""
-                    :class="{ 'is-invalid': form.errors.has('score') }"
-                    @keydown="form.errors.clear('score')"
-                  />
-                  <has-error :form="form" field="score" />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-          </div>
-          <div v-if="assignmentScoringType === 'c'">
-            <b-form-checkbox
-              id="score"
-              v-model="form.score"
-              name="score"
-              value="c"
-              unchecked-value="i"
-            >
-              Update this student's score to Completed.
-            </b-form-checkbox>
-          </div>
+          <b-form-group
+            id="score"
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label="Override Score"
+            label-for="Override Score"
+          >
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-input
+                  id="score"
+                  v-model="form.score"
+                  type="text"
+                  placeholder=""
+                  :class="{ 'is-invalid': form.errors.has('score') }"
+                  @keydown="form.errors.clear('score')"
+                />
+                <has-error :form="form" field="score" />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
         </b-form>
       </b-modal>
     </div>
@@ -223,7 +210,6 @@ export default {
       student_user_id: 0,
       course_id: 0
     }),
-    assignmentScoringType: null,
     sortBy: 'name',
     sortDesc: false,
     courseId: '',
@@ -238,34 +224,17 @@ export default {
     assignmentsArray: [],
     hasExtension: false,
     canViewScores: false,
-    assignmentScoringTypes: [],
     currentExtensionDate: '',
     currentExtensionTime: '',
     currentScore: null
   }),
   mounted () {
     this.courseId = this.$route.params.courseId
-    this.getAssignmentScoringTypes()
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.isLoading = true
     this.getScores()
   },
   methods: {
-    async getAssignmentScoringTypes () {
-      try {
-        const { data } = await axios.get(`/api/assignments/courses/${this.courseId}`)
-
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        for (let i = 0; i < data.assignments.length; i++) {
-          this.assignmentScoringTypes[data.assignments[i].id] = data.assignments[i].scoring_type
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
     submitUpdateExtensionOrOverrideByStudent (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
@@ -441,7 +410,6 @@ export default {
     },
     async openExtensionAndOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
-      this.assignmentScoringType = this.assignmentScoringTypes[this.assignmentId]
 
       try {
         await this.getScoreByAssignmentAndStudent()

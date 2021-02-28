@@ -230,28 +230,12 @@ export default {
     this.downloadFile = downloadFile
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
-    this.getAssignments = getAssignments
   },
   mounted () {
     this.courseId = this.$route.params.courseId
-    this.getCourseInfo()
-    this.getAssignments()
+    this.getScoresByUser()
   },
   methods: {
-    async getCourseInfo () {
-      try {
-        const { data } = await axios.get(`/api/courses/${this.courseId}`)
-        this.title = `${data.course.name} Assignments`
-        console.log(data)
-        this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
-        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
-        this.isLoading = true
-        await this.getScoresByUser()
-      } catch (error) {
-        this.$noty.error(error.message)
-        this.isLoading = false
-      }
-    },
     async getScoresByUser () {
       try {
         const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
@@ -261,6 +245,14 @@ export default {
           this.loading = false
           return false
         }
+        this.canViewAssignments = true
+        this.hasAssignments = data.assignments.length > 0
+        this.showNoAssignmentsAlert = !this.hasAssignments
+        this.assignments = data.assignments
+
+        this.title = `${data.course.name} Assignments`
+        this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
+        this.letterGradesReleased = Boolean(data.course.letter_grades_released)
         if (this.studentsCanViewWeightedAverage || this.letterGradesReleased) {
           this.weightedAverage = data.weighted_score
           this.letterGrade = data.letter_grade
