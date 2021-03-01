@@ -58,7 +58,7 @@
 
     <b-modal
       id="modal-share"
-      ref="modal"
+      ref="modal_share"
       title="Share"
       ok-title="OK"
       size="xl"
@@ -128,68 +128,40 @@
         in the assignment.
       </b-tooltip>
       <div class="mb-2">
-        <span class="font-weight-bold">Library:</span> {{ libraryText }} <b-button v-clipboard:copy="libraryText"
-                                                                                   v-clipboard:success="onCopy"
-                                                                                   v-clipboard:error="onError"
-                                                                                   size="sm"
-                                                                                   variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
+        <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')" />
+        </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Page ID:</span>  {{ pageId }} <b-button v-clipboard:copy="pageId"
-                                                                               v-clipboard:success="onCopy"
-                                                                               v-clipboard:error="onError"
-                                                                               size="sm"
-                                                                               variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span class="font-weight-bold">Page ID:</span> <span id="pageId">{{ pageId }}</span>
+        <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')" />
+        </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Adapt ID: </span>{{ adaptId }}
-        <b-button v-clipboard:copy="adaptId"
-                  v-clipboard:success="onCopy"
-                  v-clipboard:error="onError"
-                  size="sm"
-                  variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
+        <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')" />
+        </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Adapt URL:</span> <span class="font-italic">{{ currentUrl }}</span>
-        <b-button v-clipboard:copy="currentUrl"
-                  v-clipboard:success="onCopy"
-                  v-clipboard:error="onError"
-                  size="sm"
-                  variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span class="font-weight-bold">Adapt URL:</span> <span id="currentURL" class="font-italic">{{ currentUrl }}</span>
+        <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
+        </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">iframe:</span> <span class="font-italic">{{ embedCode }}</span>
-        <b-button v-clipboard:copy="embedCode"
-                  v-clipboard:success="onCopy"
-                  v-clipboard:error="onError"
-                  size="sm"
-                  variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span class="font-weight-bold">iframe:</span> <span id="embedCode" class="font-italic">{{ embedCode }}</span>
+        <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')" />
+        </span>
       </div>
       <div class="mb-2">
-        <span v-if="technologySrc" class="font-weight-bold">Technology URL:</span> <span class="font-italic">{{ technologySrc }}</span>
-        <b-button v-clipboard:copy="technologySrc"
-                  v-clipboard:success="onCopy"
-                  v-clipboard:error="onError"
-                  size="sm"
-                  variant="outline-primary"
-        >
-          Copy
-        </b-button>
+        <span v-if="technologySrc" class="font-weight-bold">Technology URL: <span id="technologySrc" class="font-italic">{{ technologySrc }}</span>
+          <span class="text-info"> <font-awesome-icon :icon="copyIcon" @click="doCopy('technologySrc')" />
+          </span>
+        </span>
       </div>
     </b-modal>
 
@@ -1192,6 +1164,9 @@ import SolutionFileHtml from '~/components/SolutionFileHtml'
 
 import libraries from '~/helpers/Libraries'
 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -1199,6 +1174,7 @@ Vue.prototype.$http = axios // needed for the audio player
 export default {
   middleware: 'auth',
   components: {
+    FontAwesomeIcon,
     EnrollInCourse,
     Scores,
     Email,
@@ -1209,6 +1185,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    copyIcon: faCopy,
     technologySrc: '',
     pageId: '',
     adaptId: '',
@@ -1466,6 +1443,21 @@ export default {
     }
   },
   methods: {
+    doCopy (copyId) {
+      try {
+        let copyText = document.getElementById(copyId)
+        let elem = document.createElement('input')
+        document.body.appendChild(elem)
+        elem.value = copyText.innerText
+        elem.select()
+        elem.focus()
+        document.execCommand('copy', false)
+        elem.remove()
+        this.$noty.success('The code to share has been copied to your clipboard.')
+      } catch (error) {
+        this.$noty.error(`We were not able to copy the code to your clipboard: ${error.message}`)
+      }
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     },
@@ -1782,12 +1774,6 @@ export default {
       } catch (error) {
         this.$noty.error(error.message)
       }
-    },
-    onCopy: function () {
-      this.$noty.success('The code to share has been copied to your clipboard.')
-    },
-    onError: function () {
-      this.$noty.error('There was a problem copying the embed code to your clipboard.')
     },
     getWindowLocation () {
       return window.location

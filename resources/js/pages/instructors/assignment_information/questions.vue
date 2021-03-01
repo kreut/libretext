@@ -93,7 +93,6 @@ export default {
     draggable
   },
   data: () => ({
-    message: 'sdfdfs',
     adaptId: 0,
     copyIcon: faCopy,
     currentOrderedQuestions: [],
