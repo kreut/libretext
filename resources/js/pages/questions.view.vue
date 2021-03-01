@@ -146,7 +146,9 @@
         </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Adapt URL:</span> <span id="currentURL" class="font-italic">{{ currentUrl }}</span>
+        <span class="font-weight-bold">Adapt URL:</span> <span id="currentURL" class="font-italic">{{
+          currentUrl
+        }}</span>
         <span class="text-info">
           <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
         </span>
@@ -157,11 +159,10 @@
           <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')" />
         </span>
       </div>
-      <div class="mb-2">
-        <span v-if="technologySrc" class="font-weight-bold">Technology URL: <span id="technologySrc" class="font-italic">{{ technologySrc }}</span>
-          <span class="text-info"> <font-awesome-icon :icon="copyIcon" @click="doCopy('technologySrc')" />
-          </span>
-        </span>
+      <div v-if="technologySrc" class="mb-2">
+        <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
+                                                                    v-html="technologySrc"
+        />
       </div>
     </b-modal>
 
@@ -780,7 +781,10 @@
                     <div v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2">
                       <div class="mt-3">
                         <b-card header-html="<h5>Default Text</h5>">
-                          <p>You can add default text for your students to see in their own text editors when they attempt this question.</p>
+                          <p>
+                            You can add default text for your students to see in their own text editors when they
+                            attempt this question.
+                          </p>
                           <ckeditor
                             :key="questions[currentPage-1].id"
                             v-model="openEndedDefaultTextForm.open_ended_default_text"
@@ -1017,7 +1021,9 @@
                         }}%<br>
                       </div>
 
-                      <b-alert :variant="submissionDataType" :show="assessmentType!== 'learning tree' && showSubmissionMessage">
+                      <b-alert :variant="submissionDataType"
+                               :show="assessmentType!== 'learning tree' && showSubmissionMessage"
+                      >
                         <span class="font-weight-bold">{{ submissionDataMessage }}</span>
                       </b-alert>
                     </b-card-text>
@@ -1642,7 +1648,31 @@ export default {
       this.libraryText = this.getLibraryText(this.questions[this.currentPage - 1].library)
       this.adaptId = `${this.assignmentId}-${this.questions[this.currentPage - 1].id}`
       this.pageId = this.questions[this.currentPage - 1].page_id
-      this.technologySrc = this.questions[this.currentPage - 1].technology_src
+
+      let text
+      this.technologySrc = ''
+      if (this.questions[this.currentPage - 1].technology_src) {
+        let url = new URL(this.questions[this.currentPage - 1].technology_src)
+        let urlParams = new URLSearchParams(url.search)
+
+        switch (this.questions[this.currentPage - 1].technology) {
+          case ('webwork'):
+            text = urlParams.get('sourceFilePath')
+            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" >webwork:${text}</a>`
+            break
+          case ('h5p'):
+            text = urlParams.get('id')
+            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" >h5p:${text}</a>`
+            break
+          case ('imathas'):
+            console.log(urlParams)
+            text = urlParams.get('id')
+            this.technologySrc = `<a href="${this.questions[this.currentPage - 1].technology_src}" target="”_blank”" >imathas:${text}</a>`
+            break
+          default:
+            this.technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${this.questions[this.currentPage - 1].technology}`
+        }
+      }
     },
     getLibraryText (library) {
       let text = library
@@ -2016,7 +2046,7 @@ export default {
     },
     async changePage (currentPage) {
       if (this.user.role === 2) {
-        this.title = `${this.questions[currentPage - 1].title}`
+        this.title = `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
       }
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.showSolutionTextForm = false
