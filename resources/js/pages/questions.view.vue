@@ -361,9 +361,6 @@
         {{ name }}: Assessment {{ currentPage }} of {{ questions.length }}
       </h5>
     </div>
-    <div v-if="questions !==['init'] && !inIFrame">
-      <PageTitle :title="title" />
-    </div>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -373,6 +370,9 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <div v-if="questions !==['init'] && !inIFrame">
+        <PageTitle :title="title" />
+      </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
           v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
@@ -1189,7 +1189,6 @@ export default {
     technologySrc: '',
     pageId: '',
     adaptId: '',
-    originalTitle: '',
     ckeditor: {},
     isLoading: true,
     answeredCorrectlyOnTheFirstAttempt: false,
@@ -2017,7 +2016,7 @@ export default {
     },
     async changePage (currentPage) {
       if (this.user.role === 2) {
-        this.title = `${this.originalTitle} - ${this.questions[currentPage - 1].title}`
+        this.title = `${this.questions[currentPage - 1].title}`
       }
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.showSolutionTextForm = false
@@ -2185,7 +2184,9 @@ export default {
           this.showAssessmentClosedMessage = true
           return false
         }
-        this.originalTitle = this.title = `${assignment.name}`
+        if (this.user.role === 3) {
+          this.title = `${assignment.name}`
+        }
         this.name = assignment.name
         this.pastDue = assignment.past_due
         this.assessmentType = assignment.assessment_type
@@ -2217,7 +2218,7 @@ export default {
         } else {
           this.$noty.error(error.message)
         }
-        this.originalTitle = this.title = 'Assessments'
+        this.title = 'Assessments'
       }
       return true
     },
