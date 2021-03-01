@@ -41,15 +41,15 @@
 
             <b-form-group v-if="extraCreditId>0"
                           id="extra_credit"
-                          label-cols-sm="3"
-                          label-cols-lg="2"
-                          label-for="Extra Credit"
+                          label-cols-sm="5"
+                          label-cols-lg="4"
+                          label-for="Extra Credit Weight"
             >
               <template slot="label">
                 <b-icon-star-fill varient="info" variant="warning" />
-                Extra Credit
+                Extra Credit Weight
               </template>
-              <b-col lg="2">
+              <b-col lg="3">
                 <b-form-input
                   id="extra_credit"
                   v-model="assignmentGroupWeightsForm[extraCreditId]"

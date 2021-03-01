@@ -8,6 +8,11 @@
               {{ tab.name }}
             </router-link>
           </li>
+          <li>
+            <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
+              Gradebook
+            </a>
+          </li>
         </ul>
       </card>
     </div>
@@ -29,6 +34,9 @@ export default {
     ...mapGetters({
       user: 'auth/user'
     }),
+    data: () => ({
+      courseId: 0
+    }),
     tabs () {
       return [
         {
@@ -43,8 +51,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Letter Grades',
-          route: 'course_properties.letter_grades'
+          name: 'Refresh Access Code',
+          route: 'course_properties.access_codes'
         },
         {
           icon: '',
@@ -53,11 +61,14 @@ export default {
         },
         {
           icon: '',
-          name: 'Refresh Access Code',
-          route: 'course_properties.access_codes'
+          name: 'Letter Grades',
+          route: 'course_properties.letter_grades'
         }
       ]
     }
+  },
+  created () {
+    this.courseId = this.$route.params.courseId
   },
   mounted () {
     if (this.user.role !== 2) {

@@ -16,10 +16,15 @@
             <div class="font-italic">
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
-                straight average of all assignments within an assignment group. Finally, the averages by assignment
+                straight average of all assignments within an assignment group. The averages by assignment
                 group are weighted by the
                 <span><router-link :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}">
-                  assignment group weights</router-link></span>.  Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included in the score computation.  If you prefer a different grading methodology, please download the scores and input them into a
+                  assignment group weights</router-link></span> which determine the <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">
+                  letter grades
+                </router-link> for the course. Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included in the score computation.
+              </p>
+              <p>
+                If you prefer a different grading methodology, please download the scores and input them into a
                 spreadsheet.
               </p>
               <ul>
