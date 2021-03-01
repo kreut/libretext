@@ -32,8 +32,8 @@
                     This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
                   </b-tooltip>
                 </th>
-                <th scope="col" style="width: 200px;">
-                  Open Ended Type
+                <th scope="col">
+                  Submission
                 </th>
                 <th scope="col">
                   Points
@@ -57,10 +57,10 @@
                   </span>
                 </td>
                 <td>
-                  {{ item.open_ended_submission_type }}
+                  {{ item.submission }}
                 </td>
                 <td>{{ item.points }}</td>
-                <td>{{ item.solution }}</td>
+                <td><span v-html="item.solution" /></td>
               </tr>
             </tbody>
           </table>

@@ -245,6 +245,8 @@ class AssignmentSyncQuestionController extends Controller
                 ->select('assignment_question.*',
                     'questions.library',
                     'questions.page_id',
+                    'questions.technology_iframe',
+                    'questions.technology',
                     'questions.title', DB::raw('questions.id AS question_id'))
                 ->get();
 
@@ -261,7 +263,8 @@ class AssignmentSyncQuestionController extends Controller
             $assignment_solutions_by_question_id = [];
             $rows = [];
             foreach ($assignment_solutions as $key => $value) {
-                $assignment_solutions_by_question_id[$value->question_id] = $value->original_filename;
+                $assignment_solutions_by_question_id[$value->question_id] = ['original_filename' => $value->original_filename,
+                    'file' => $value->file];
             }
 
             foreach ($assignment_questions as $key => $value) {
@@ -280,11 +283,22 @@ class AssignmentSyncQuestionController extends Controller
                 if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
                 }
-                $columns['open_ended_submission_type'] = $value->open_ended_submission_type ? ucwords($value->open_ended_submission_type) : 'N/A';
-                $columns['points'] = $value->points;
-                $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id] ?? 'None';
+                $submission = [];
+                if ($value->technology !== 'text') {
+                    $submission[] = $value->technology;
+                }
+                if ($value->open_ended_submission_type) {
+                    $submission[] = ucwords($value->open_ended_submission_type);
+                }
+                if (!$submission) {
+                    $submission = ['Nothing to submit'];
+                }
+                $columns['submission'] = implode(', ', $submission);
+                $columns['points'] = rtrim(rtrim($value->points, "0"), ".");
+                $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
+                $columns['technology'] = $value->technology;
                 $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
                 $rows[] = $columns;
             }
@@ -300,6 +314,13 @@ class AssignmentSyncQuestionController extends Controller
         }
         return $response;
 
+    }
+
+    private function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
+    {
+        return isset($assignment_solutions_by_question_id[$question_id]) ?
+            '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$assignment_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '">' . $assignment_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
+            : 'None';
     }
 
     public function getQuestionInfoByAssignment(Assignment $assignment)
@@ -649,8 +670,8 @@ class AssignmentSyncQuestionController extends Controller
                     if (isset($submission_object->result->response)) {
                         if (isset($submission_object->object->definition) && $submission_object->object->definition->interactionType === 'choice') {
                             $choices = $submission_object->object->definition->choices;
-                            foreach ($choices as $choice){
-                                if ((int) $choice->id === (int) $submission_object->result->response){
+                            foreach ($choices as $choice) {
+                                if ((int)$choice->id === (int)$submission_object->result->response) {
                                     $student_response = $choice->description->{'en-US'};
                                 }
                             }
