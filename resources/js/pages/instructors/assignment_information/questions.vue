@@ -22,10 +22,11 @@
                   Title
                 </th>
                 <th scope="col" style="width: 150px;">
-                  Adapt ID <b-icon id="adapt-id-tooltip"
-                                   v-b-tooltip.hover
-                                   class="text-muted"
-                                   icon="question-circle"
+                  Adapt ID
+                  <b-icon id="adapt-id-tooltip"
+                          v-b-tooltip.hover
+                          class="text-muted"
+                          icon="question-circle"
                   />
                   <b-tooltip target="adapt-id-tooltip" triggers="hover">
                     This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
@@ -51,6 +52,9 @@
                 <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
                 <td>
                   {{ item.assignment_id_question_id }}
+                  <span class="text-info">
+                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)" />
+                  </span>
                 </td>
                 <td>
                   {{ item.open_ended_submission_type }}
@@ -78,13 +82,20 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import draggable from 'vuedraggable'
 
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+
 export default {
   middleware: 'auth',
   components: {
+    FontAwesomeIcon,
     Loading,
     draggable
   },
   data: () => ({
+    message: 'sdfdfs',
+    adaptId: 0,
+    copyIcon: faCopy,
     currentOrderedQuestions: [],
     items: [],
     isLoading: true
@@ -101,6 +112,13 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
+    doCopy (adaptId) {
+      this.$copyText(adaptId).then((e) => {
+        this.$noty.success('The Adapt ID has been copied to your clipboard.')
+      }, function (e) {
+        this.$noty.error('We could not copy the Adapt ID to your clipboard.')
+      })
+    },
     async saveNewOrder () {
       let orderedQuestions = []
       for (let i = 0; i < this.items.length; i++) {
