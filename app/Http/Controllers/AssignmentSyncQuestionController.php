@@ -319,7 +319,7 @@ class AssignmentSyncQuestionController extends Controller
     private function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
     {
         return isset($assignment_solutions_by_question_id[$question_id]) ?
-            '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$assignment_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '">' . $assignment_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
+            '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$assignment_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '" target="_blank">' . $assignment_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
             : 'None';
     }
 
