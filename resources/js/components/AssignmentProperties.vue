@@ -806,6 +806,9 @@ export default {
   },
   methods: {
     async initAssessmentTypeSwitch () {
+      if (!this.assignmentId) {
+        return false
+      }
       this.$nextTick(async function () {
         try {
           const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
