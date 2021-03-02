@@ -58,6 +58,9 @@ Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
+
+    Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
+
     Route::post('logout', 'Auth\LoginController@logout');
 
     Route::get('/user', 'Auth\UserController@current');

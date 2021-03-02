@@ -557,12 +557,13 @@ class AssignmentController extends Controller
     }
 
     /**
+     * @param Request $request
      * @param Assignment $assignment
      * @param Score $score
      * @return array
      * @throws Exception
      */
-    public function viewQuestionsInfo(Assignment $assignment, Score $score)
+    public function viewQuestionsInfo(Request $request, Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
@@ -575,6 +576,7 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
+                'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view'): 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),

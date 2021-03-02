@@ -428,8 +428,22 @@
                     GO!
                   </b-button>
                 </div>
+                <div v-if="isInstructor() && assessmentType !== 'clicker'" class="mb-2 text-center font-italic">
+                  <span class="font-italic">Question View</span>
+                  <toggle-button
+                    :width="100"
+                    class="mt-2"
+                    :value="questionView === 'basic'"
+                    :sync="true"
+                    :font-size="14"
+                    :margin="4"
+                    :color="{checked: '#17a2b8', unchecked: '#6c757d'}"
+                    :labels="{checked: 'Basic', unchecked: 'Advanced'}"
+                    @change="toggleQuestionView()"
+                  />
+                </div>
                 <div v-if="source === 'a' && !inIFrame ">
-                  <div v-if="!['clicker','learning tree'].includes(assessmentType)" class="text-center">
+                  <div v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')" class="text-center">
                     <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                   </div>
                   <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
@@ -465,7 +479,7 @@
                         This submission will be marked late.</span>
                     </b-alert>
                   </div>
-                  <div v-if="isInstructor() && !presentationMode" class="text-center">
+                  <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' " class="text-center">
                     <b-form-row>
                       <b-col />
                       <h5 class="mt-1">
@@ -523,7 +537,7 @@
                       </template>
                     </countdown>
                   </div>
-                  <div v-if="isInstructor() && !presentationMode" class="mt-1">
+                  <div v-if="isInstructor() && !presentationMode && questionView !== 'basic'" class="mt-1">
                     <b-button
                       variant="info"
                       size="sm"
@@ -617,7 +631,8 @@
           </div>
           <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
             <div class="p-2">
-              <b-button class="mt-1 mb-2"
+              <b-button v-if="questionView !== 'basic'"
+                        class="mt-1 mb-2"
                         variant="primary"
                         size="sm"
                         @click="editQuestionSource(currentPage)"
@@ -637,11 +652,12 @@
               <b-form-select v-model="openEndedSubmissionType"
                              :options="openEndedSubmissionTypeOptions"
                              style="width:100px"
+                             class="mt-1"
                              size="sm"
                              @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
               />
             </div>
-            <div class="p-2">
+            <div v-if="questionView !== 'basic'" class="p-2">
               <b-button
                 class="mt-1 mb-2 ml-1"
                 variant="dark"
@@ -1191,6 +1207,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    questionView: 'basic',
     copyIcon: faCopy,
     technologySrc: '',
     pageId: '',
@@ -1448,6 +1465,19 @@ export default {
     }
   },
   methods: {
+    async toggleQuestionView () {
+      try {
+        console.log(this.questionView)
+        const { data } = await axios.patch(`/api/cookie/set-question-view/${this.questionView}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.questionView = (this.questionView === 'basic') ? 'expanded' : 'basic'
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     doCopy (copyId) {
       try {
         let copyText = document.getElementById(copyId)
@@ -2216,6 +2246,9 @@ export default {
         }
         if (this.user.role === 3) {
           this.title = `${assignment.name}`
+        }
+        if (this.user.role === 2) {
+          this.questionView = assignment.question_view
         }
         this.name = assignment.name
         this.pastDue = assignment.past_due
