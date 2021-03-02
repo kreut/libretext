@@ -841,7 +841,9 @@ export default {
       })
     },
     async initInternalExternalSwitch () {
-      console.log(this.assignments)
+      if (!this.assignmentId) {
+        return false
+      }
       this.$nextTick(async function () {
         try {
           const { data } = await axios.post(`/api/assignments/${this.assignmentId}/validate-assessment-type`,
