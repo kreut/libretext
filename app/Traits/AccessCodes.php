@@ -12,4 +12,8 @@ trait AccessCodes
     public function createGraderAccessCode() {
         return substr(sha1(mt_rand()), 17, 16);
     }
+
+    public function createSectionAccessCode() {
+        return substr(sha1(mt_rand()), 17, 12);
+    }
 }

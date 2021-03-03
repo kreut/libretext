@@ -17,6 +17,14 @@ class GraderPolicy
     use CommonPolicies;
 
 
+    public function update(User $user, Grader $Grader, Course $course)
+    {
+        return (int) $course->user_id === (int) $user->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to update the grader's sections.");
+    }
+
+
     public function store(User $user, Grader $Grader)
     {
         return (int) $user->role === 4

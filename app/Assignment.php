@@ -22,6 +22,7 @@ class Assignment extends Model
                                            Solution $Solution,
                                            AssignmentGroup $AssignmentGroup)
     {
+
         $response['type'] = 'error';
         try {
             if (Auth::user()->role === 3) {

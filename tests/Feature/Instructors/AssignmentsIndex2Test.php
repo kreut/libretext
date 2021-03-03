@@ -7,6 +7,7 @@ use App\FinalGrade;
 use App\Grader;
 use App\LearningTree;
 use App\Question;
+use App\Section;
 use App\User;
 use App\Assignment;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -25,6 +26,8 @@ class AssignmentsIndex2Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section= factory(Section::class)->create(['course_id' => $this->course->id]);
+
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order'=>2]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
@@ -52,7 +55,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
-        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
         $finalGrade = new FinalGrade();
 
         FinalGrade::create(['course_id' => $this->course->id,

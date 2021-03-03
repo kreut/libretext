@@ -4,6 +4,7 @@ namespace Tests\Feature\Instructors;
 
 use App\CourseAccessCode;
 use App\GraderAccessCode;
+use App\Section;
 use App\User;
 use App\Course;
 use App\Grader;
@@ -19,14 +20,19 @@ class CoursesIndexTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
+        $this->section_2 = factory(Section::class)->create(['course_id' => $this->course_2->id]);
+
         $this->course_3 = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section_3 = factory(Section::class)->create(['course_id' => $this->course_3->id]);
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
-        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
-        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course_2->id]);
-        GraderAccessCode::create(['course_id' => $this->course_3->id, 'access_code' => 'sdfsdOlwf']);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section_2->id]);
+        GraderAccessCode::create(['section_id' => $this->section_3->id, 'access_code' => 'sdfsdOlwf']);
 
     }
 
@@ -48,7 +54,7 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to import that course.']);
 
     }
-
+/** @test */
     public function instructor_can_import_a_course()
     {
 
@@ -69,7 +75,7 @@ class CoursesIndexTest extends TestCase
     public function an_owner_can_toggle_showing_a_course()
     {
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}/show-course/1")
-            ->assertJson(['message' => 'Your students <strong>cannot</strong> view this course.  In addition, the course access code has been revoked.']);
+            ->assertJson(['message' => 'Your students <strong>cannot</strong> view this course.  In addition, all course access codes have been revoked.']);
     }
 
 
@@ -94,14 +100,14 @@ class CoursesIndexTest extends TestCase
     }
 
     /** @test */
-    public function a_grader_with_a_valid_access_code_can_add_themselves_to_a_cousre()
+    public function a_grader_with_a_valid_access_code_can_add_themselves_to_a_course()
     {
 
         $this->course_3->name = "New Grader Course";
         $this->course_3->save();
         $this->actingAs($this->grader_user)->postJson("/api/graders",
             ['access_code' => 'sdfsdOlwf'])
-            ->assertJson(['message' => 'You have been added as a grader to <strong>New Grader Course</strong>.']);
+            ->assertJson(['message' => 'You have been added as a grader to <strong>New Grader Course - Section 1</strong>.']);
 
     }
 
@@ -133,17 +139,19 @@ class CoursesIndexTest extends TestCase
     /** @test */
     public function user_cannot_email_grader_invitation_without_a_valid_email()
     {
-        $this->actingAs($this->user)->postJson("/api/invitations/{$this->course->id}",
-            ['email' => 'some bad email'])
-            ->assertJsonValidationErrors(['email']);
+        $this->actingAs($this->user)->postJson("/api/invitations/grader",
+            ['course_id' => $this->course->id,
+                'email' => 'some bad email'])
+         ->assertJsonValidationErrors(['email']);
     }
 
 
     /** @test */
     public function user_cannot_email_grader_invitation_if_not_owner()
     {
-        $this->actingAs($this->user_2)->postJson("/api/invitations/{$this->course->id}",
-            ['email' => 'some@email.com'])
+        $this->actingAs($this->user_2)->postJson("/api/invitations/grader",
+            ['course_id' => $this->course->id,
+                'email' => 'some@email.com'])
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to invite users to this course.']);
     }
 
@@ -161,10 +169,7 @@ class CoursesIndexTest extends TestCase
     /** @test */
     public function grader_can_get_courses_for_which_they_grade()
     {
-        factory(CourseAccessCode::class)->create(['access_code' => 'wefk;IOE',
-            'course_id' => $this->course->id]);
-        factory(CourseAccessCode::class)->create(['access_code' => 'ssswefk;IOE',
-            'course_id' => $this->course_2->id]);
+
 
         $this->actingAs($this->grader_user)->getJson("/api/courses")
             ->assertJson(['courses' => [['name' => 'First Course'], ['name' => 'First Course']]]);
@@ -176,8 +181,6 @@ class CoursesIndexTest extends TestCase
     public function can_get_your_courses()
     {
 
-        factory(CourseAccessCode::class)->create(['access_code' => 'wefk;IOE',
-            'course_id' => $this->course->id]);
 
         $this->actingAs($this->user)->getJson("/api/courses")
             ->assertJson(['courses' => [['name' => 'First Course']]]);
@@ -228,6 +231,7 @@ class CoursesIndexTest extends TestCase
 
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
+            'section' =>'Some New Section',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'public' => 1

@@ -86,7 +86,26 @@
             </b-row>
           </b-container>
           <b-form-group
-            id="assignment_group"
+            v-if="hasMultipleSections"
+            id="sections"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Section View"
+            label-for="Section View"
+          >
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-select
+                  id="section-view"
+                  v-model="sectionId"
+                  :options="sections"
+                  @change="getSubmissionFiles"
+                />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="submission_group"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Submission Group"
@@ -365,6 +384,7 @@
               </div>
             </div>
           </div>
+          </b-form-group>
         </div>
         <div v-if="showNoFileSubmissionsExistAlert" class="mt-4">
           <b-alert show variant="warning">
@@ -397,6 +417,7 @@ export default {
     VueBootstrapTypeahead
   },
   data: () => ({
+    hasMultipleSections: false,
     jumpToStudent: '',
     students: [],
     audioFeedbackDataType: '',
@@ -409,6 +430,8 @@ export default {
     isOpenEndedAudioSubmission: false,
     isOpenEndedTextSubmission: false,
     openEndedType: '',
+    sections: [{ text: 'All Sections', value: 0 }],
+    sectionId: 0,
     gradeViews: [
       { text: 'All Students', value: 'allStudents' },
       { text: 'Ungraded Submissions', value: 'ungradedSubmissions' },
@@ -446,8 +469,8 @@ export default {
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
-    this.getAssignmentNameAndLatePolicy()
-    this.getSubmissionFiles(this.gradeView)
+    this.getAssignmentInfoForGrading()
+    this.getSubmissionFiles()
   },
   methods: {
     setQuestionAndStudentByStudentName () {
@@ -508,15 +531,23 @@ export default {
       console.log(url)
       window.open(url, '_blank')
     },
-    async getAssignmentNameAndLatePolicy () {
+    async getAssignmentInfoForGrading () {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/get-name`)
-        console.log(data)
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/get-info-for-grading`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
         let assignment = data.assignment
+        let sections = data.sections
+        this.hasMultipleSections = sections.length > 1
+        if (this.hasMultipleSections) {
+          for (let i = 0; i < sections.length; i++) {
+            let section = sections[i]
+            this.sections.push({ text: section.name, value: section.id })
+          }
+        }
+
         this.title = `Grade Open-Ended Submissions For ${assignment.name}`
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
@@ -643,7 +674,6 @@ export default {
       return (this.submissionFiles[currentStudentPage - 1]['submission_url'] !== null)
     },
     setQuestionAndStudentByQuestionIdAndStudentUserId (questionId, studentUserId) {
-      console.log(questionId, studentUserId)
       for (let i = 0; i < this.submissionFiles.length; i++) {
         for (let j = 0; j < this.submissionFiles[i].length; j++) {
           console.log(this.submissionFiles[i][j]['question_id'], this.submissionFiles[i][j]['user_id'])
@@ -656,9 +686,9 @@ export default {
         }
       }
     },
-    async getSubmissionFiles (gradeView) {
+    async getSubmissionFiles () {
       try {
-        const { data } = await axios.get(`/api/submission-files/${this.assignmentId}/${gradeView}`)
+        const { data } = await axios.get(`/api/submission-files/${this.assignmentId}/${parseInt(this.sectionId)}/${this.gradeView}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
@@ -675,14 +705,13 @@ export default {
         this.numStudents = Object.keys(this.submissionFiles[0]).length
         for (let i = 0; i < this.numStudents; i++) {
           this.students.push(this.submissionFiles[0][i].name)
-          console.log(this.submissionFiles[0][i].name)
         }
-        console.log(this.submissionFiles)
+
         this.currentQuestionPage = 1
         this.currentStudentPage = 1
 
         // loop through questions, inner loop through students, if match, then set question and student)
-        console.log(this.submissionFiles[0])
+
         if (this.$route.params.questionId && this.$route.params.studentUserId) {
           this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
           this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']

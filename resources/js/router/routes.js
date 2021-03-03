@@ -64,9 +64,9 @@ let general_paths  = [
     children: [
       { path: '', redirect: { name: 'course_properties.general_info' } },
       { path: 'details', name: 'course_properties.general_info', component: page('instructors/course_properties/general_info.vue') },
+      { path: 'sections', name: 'course_properties.sections', component: page('instructors/course_properties/sections.vue') },
       { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
       { path: 'assignment-group-weights', name: 'course_properties.assignment_group_weights', component: page('instructors/course_properties/assignment_group_weights.vue') },
-      { path: 'access-codes', name: 'course_properties.access_codes', component: page('instructors/course_properties/access_codes.vue') },
       { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') }
     ] },
   { path: '*', component: page('errors/404.vue') }

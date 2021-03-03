@@ -49,6 +49,25 @@
                 </b-button>
               </download-excel>
             </b-row>
+            <b-form-group
+              v-if="hasMultipleSections"
+              id="sections"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Section View"
+              label-for="Section View"
+            >
+              <b-form-row>
+                <b-col lg="3">
+                  <b-form-select
+                    id="section-view"
+                    v-model="sectionId"
+                    :options="sections"
+                    @change="getScores"
+                  />
+                </b-col>
+              </b-form-row>
+            </b-form-group>
             <b-row>
               <b-table striped
                        hover
@@ -66,7 +85,7 @@
                   <span v-html="data.field.label" />
                 </template>
                 <template v-slot:cell()="data">
-                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key)">{{ data.value }}
+                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)">{{ data.value }}
                   </span>
                 </template>
               </b-table>
@@ -119,7 +138,7 @@
       <b-modal
         id="modal-student-extension-and-override"
         ref="modal"
-        title="Update Student Extension And Override"
+        :title="`Update Extension And Override for ${studentName}`"
         ok-title="Submit"
         size="lg"
         @ok="submitUpdateExtensionOrOverrideByStudent"
@@ -200,6 +219,10 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    studentName: '',
+    sections: [{ text: 'All Sections', value: 0 }],
+    hasMultipleSections: false,
+    sectionId: 0,
     extensionWarning: '',
     weightedAverageAssignmentId: 0,
     extraCreditAssignmentId: 0,
@@ -328,7 +351,7 @@ export default {
       }
     },
     async getScoreByAssignmentAndStudent () {
-      const { data } = await axios.get(`/api/scores/${this.assignmentId}/${this.studentUserId}`)
+      const { data } = await axios.get(`/api/scores/assignment-user/${this.assignmentId}/${this.studentUserId}`)
       console.log(data)
       if (data.type === 'success') {
         this.currentScore = data.score
@@ -364,7 +387,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async getStudentAction (value, studentUserId, assignmentId) {
+    async getStudentAction (value, studentUserId, assignmentId, studentName) {
       // name shouldn't be clickable
 
       if (parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
@@ -374,6 +397,7 @@ export default {
         this.loginAsStudentInCourse(studentUserId)
       } else {
         this.studentUserId = studentUserId
+        this.studentName = studentName
         if (parseInt(assignmentId) === parseInt(this.extraCreditAssignmentId)) {
           await this.openExtraCreditModal()
           return false
@@ -426,13 +450,13 @@ export default {
       }
     },
     async fetchData () {
-      const { data } = await axios.get(`/api/scores/${this.courseId}`)
+      const { data } = await axios.get(`/api/scores/${this.courseId}/${this.sectionId}`)
       console.log(data)
       return data.download_rows.sort((a, b) => (a.name > b.name) - (a.name < b.name))// sort in ascending order
     },
     async getScores () {
       try {
-        const { data } = await axios.get(`/api/scores/${this.courseId}`)
+        const { data } = await axios.get(`/api/scores/${this.courseId}/${this.sectionId}`)
         this.isLoading = false
         console.log(data)
         if (data.type === 'error') {
@@ -441,6 +465,17 @@ export default {
         }
 
         if (data.hasAssignments) {
+          if (this.sections.length === 1) {
+            let sections = data.sections
+            this.hasMultipleSections = sections.length > 1
+
+            if (this.hasMultipleSections) {
+              for (let i = 0; i < sections.length; i++) {
+                let section = sections[i]
+                this.sections.push({ text: section.name, value: section.id })
+              }
+            }
+          }
           this.items = data.table.rows
           // console.log(this.items)
           this.fields = data.table.fields // Name

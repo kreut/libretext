@@ -28,6 +28,11 @@ class Course extends Model
         return $this->hasMany('App\ExtraCredit');
     }
 
+    public function sections()
+    {
+        return $this->hasMany('App\Section');
+    }
+
     public function assignmentGroups()
     {
 
@@ -64,14 +69,15 @@ class Course extends Model
 
     }
 
-    public function enrolledUsers()
-    {
+    public function enrolledUsers(){
+
         return $this->hasManyThrough('App\User',
             'App\Enrollment',
             'course_id', //foreign key on enrollments table
             'id', //foreign key on users table
             'id', //local key in courses table
             'user_id')
+            ->where('fake_student',0)
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
@@ -97,20 +103,64 @@ class Course extends Model
     {
         return $this->hasMany('App\Enrollment');
     }
-
-    public function accessCodes()
+    public function fakeStudent()
     {
-        return $this->hasOne('App\CourseAccessCode');
+        $fake_student_user_id = DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('course_id', $this->id)
+            ->where('fake_student', 1)
+            ->select('users.id')
+            ->pluck('id')
+            ->first();
+        return User::find($fake_student_user_id);
     }
+
+
 
     public function finalGrades()
     {
         return $this->hasOne('App\FinalGrade');
     }
 
-    public function graderNamesAndIds()
+    public function graderSections()
     {
-        return $this->hasManyThrough('App\User', 'App\Grader', 'course_id', 'id', 'id', 'user_id');
+        return DB::table('graders')->join('sections', 'graders.section_id', '=', 'sections.id')
+            ->where('sections.course_id', $this->id)
+            ->where('graders.user_id',Auth::user()->id)
+            ->select('sections.*')
+            ->get();
+
+
+    }
+
+    public function graderInfo()
+    {
+
+        $grader_info = DB::table('graders')
+            ->join('sections', 'graders.section_id', '=', 'sections.id')
+            ->join('users', 'graders.user_id', '=', 'users.id')
+            ->where('sections.course_id', $this->id)
+            ->select('users.id AS user_id',
+                DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS user_name"),
+                'email',
+                'sections.name AS section_name',
+                'sections.id as section_id')
+            ->get();
+        $graders = [];
+        foreach ($grader_info as $grader) {
+            if (!isset($graders[$grader->user_id])) {
+                $graders[$grader->user_id]['user_id'] = $grader->user_id;
+                $graders[$grader->user_id]['sections'] = [];
+                $graders[$grader->user_id]['name'] = $grader->user_name;
+                $graders[$grader->user_id]['email'] = $grader->email;
+            }
+            $graders[$grader->user_id]['sections'] [$grader->section_id] = $grader->section_name;
+        }
+        usort($graders, function ($a, $b) {
+            return $a['name'] <=> $b['name'];
+        });
+
+        return array_values($graders);
     }
 
     public function graders()
@@ -121,32 +171,38 @@ class Course extends Model
 
     /**
      * @param int $course_id
+     * @param int $section_id
      * @param Enrollment $enrollment
      */
-    public function enrollFakeStudent(int $course_id, Enrollment $enrollment)
+    public function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment)
     {
         $fake_student = new User();
         $fake_student->last_name = 'Student';
         $fake_student->first_name = 'Fake';
         $fake_student->time_zone = auth()->user()->time_zone;
+        $fake_student->fake_student = 1;
         $fake_student->role = 3;
         $fake_student->save();
 
         //enroll the fake student
-        $enrollment->create(['user_id' => $fake_student->id,
-            'course_id' => $course_id]);
+        $enrollment->user_id = $fake_student->id;
+        $enrollment->section_id = $section_id;
+        $enrollment->course_id = $course_id;
+        $enrollment->save();
+
 
     }
 
     public function isGrader()
     {
-        $tas = DB::table('graders')
+        $graders = DB::table('graders')
+            ->join('sections', 'graders.section_id', '=', 'sections.id')
+            ->where('sections.course_id', $this->id)
             ->select('user_id')
-            ->where('course_id', $this->id)
             ->get()
             ->pluck('user_id')
             ->toArray();
-        return (in_array(Auth::user()->id, $tas));
+        return (in_array(Auth::user()->id, $graders));
     }
 
 }

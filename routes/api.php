@@ -79,9 +79,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');
 
-
-    Route::patch('/course-access-codes', 'CourseAccessCodeController@update');
-
     Route::patch('/final-grades/letter-grades/{course}', 'FinalGradeController@update');
     Route::get('/final-grades/letter-grades/default', 'FinalGradeController@getDefaultLetterGrades');
     Route::get('/final-grades/letter-grades/{course}', 'FinalGradeController@getCourseLetterGrades');
@@ -127,7 +124,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
     Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
-    Route::get('/assignments/{assignment}/get-name', 'AssignmentController@getAssignmentNameAndLatePolicy');
+    Route::get('/assignments/{assignment}/get-info-for-grading', 'AssignmentController@getInfoForGrading');
     Route::post('/assignments/{assignment}/validate-assessment-type', 'AssignmentController@validateAssessmentType');
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
@@ -146,12 +143,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
-
-    Route::get('/scores/{course}', 'ScoreController@index');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
+    Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
+    Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
+
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
-    Route::get('/scores/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
+
     Route::get('/scores/assignment/{assignment}/get-assignment-questions-scores-by-user', 'ScoreController@getAssignmentQuestionScoresByUser');
 
 
@@ -191,6 +189,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/store', 'DataShopController@store');
 
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateLearningTreeNode');
+
+    Route::get('/sections/{course}', 'SectionController@index');
+    Route::post('/sections/{course}', 'SectionController@store');
+    Route::patch('/sections/{section}', 'SectionController@update');
+    Route::delete('/sections/{section}', 'SectionController@destroy');
+    Route::patch('/sections/refresh-access-code/{section}', 'SectionController@refreshAccessCode');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
@@ -232,7 +236,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
-    Route::get('/submission-files/{assignment}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
+    Route::get('/submission-files/{assignment}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
 
     Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');
@@ -252,11 +256,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
 
 
-    Route::post('/invitations/{course}', 'InvitationController@emailInvitation');
+    Route::post('/invitations/grader', 'InvitationController@emailGraderInvitation');
 
     Route::post('/graders/', 'GraderController@store');
     Route::get('/graders/{course}', 'GraderController@getGradersByCourse');
+    Route::patch('/graders/{user}', 'GraderController@update');
     Route::delete('/graders/{course}/{user}', 'GraderController@removeGraderFromCourse');
+
+
 
 
 });

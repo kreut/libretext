@@ -57,6 +57,7 @@ class Handler extends ExceptionHandler
         ]);
         $file = $exception->getTrace()[0]['file'] ?? 'None';
         $line = $exception->getTrace()[0]['line'] ?? 'None';
+        $method = request()->method();
         $endpoint = request()->path();
         $request = json_encode(request()->all());
         $dontReportFiles = in_array($file, ['dns-query']);
@@ -65,11 +66,12 @@ class Handler extends ExceptionHandler
         $dontReports = $logoutError || $dontReportException || $dontReportFiles || $dontReportEndpoints || $dontReportRequests;
 
         $error_info = sprintf(
-            "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
+            "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tMethod: '%s' \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
             get_class($exception),
             $exception->getMessage(),
             $file,
             $line,
+            $method,
             $endpoint,
             $request,
             request()->user() ? request()->user()->id : 'No user logged in'

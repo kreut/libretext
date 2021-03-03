@@ -5,10 +5,10 @@ namespace App\Http\Controllers;
 use App\AssignmentSyncQuestion;
 use App\Course;
 use App\FinalGrade;
-use App\User;
+use App\Http\Requests\UpdateCourse;
+use App\Section;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
-use App\CourseAccessCode;
 use App\Enrollment;
 use App\Http\Requests\StoreCourse;
 use Illuminate\Support\Facades\DB;
@@ -74,8 +74,9 @@ class CourseController extends Controller
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
+     * @param Section $section
      * @return array
-     * @throws Exception
+     * @throws Exception'
      */
     public function import(Request $request,
                            Course $course,
@@ -83,7 +84,8 @@ class CourseController extends Controller
                            AssignmentGroupWeight $assignmentGroupWeight,
                            AssignmentSyncQuestion $assignmentSyncQuestion,
                            Enrollment $enrollment,
-                           FinalGrade $finalGrade)
+                           FinalGrade $finalGrade,
+                         Section $section)
     {
         $response['type'] = 'error';
 
@@ -119,7 +121,11 @@ class CourseController extends Controller
                 $imported_assignment->save();
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
-            $course->enrollFakeStudent($imported_course->id, $enrollment);
+
+            $section->name = 'Main';
+            $section->course_id = $imported_course->id;
+            $section->save();
+            $course->enrollFakeStudent($imported_course->id,$section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($imported_course->id);
             DB::commit();
             $response['type'] = 'success';
@@ -220,8 +226,8 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $response = $assignmentGroupWeight->validateCourseWeights( $course);
-        if ($response['type'] === 'error'){
+        $response = $assignmentGroupWeight->validateCourseWeights($course);
+        if ($response['type'] === 'error') {
             return $response;
         }
         try {
@@ -241,6 +247,7 @@ class CourseController extends Controller
 
 
     }
+
     public function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $response['type'] = 'error';
@@ -280,18 +287,20 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+
         try {
             $response['course'] = ['name' => $course->name,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
+                'sections' => $course->sections,
                 'show_z_scores' => $course->show_z_scores,
-                'graders' => $course->graderNamesAndIds,
-                'access_code' => $course->accessCodes->access_code ?? false,
+                'graders' => $course->graderInfo(),
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
                 'public' => $course->public];
 
             $response['type'] = 'success';
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -304,12 +313,11 @@ class CourseController extends Controller
     /**
      * @param Request $request
      * @param Course $course
-     * @param CourseAccessCode $courseAccessCode
      * @param int $shown
      * @return array
      * @throws Exception
      */
-    public function showCourse(Request $request, Course $course, CourseAccessCode $courseAccessCode, int $shown)
+    public function showCourse(Request $request, Course $course, int $shown)
     {
 
         $response['type'] = 'error';
@@ -322,24 +330,16 @@ class CourseController extends Controller
 
         try {
             DB::beginTransaction();
+            $course->sections()->update(['access_code' => null]);
             $course->shown = !$shown;
             $course->save();
-            $access_code_message = 'In addition, the course access code has been ';
-            if (!$shown) {
-                $course_access_code = $courseAccessCode->refreshCourseAccessCode($course->id);
-                $access_code_message .= 'refreshed.';
-            } else {
-                $courseAccessCode->where(['course_id' => $course->id])->delete();
-                $course_access_code = 'None';
-                $access_code_message .= 'revoked.';
-            }
 
-            DB::commit();
             $response['type'] = !$shown ? 'success' : 'info';
             $shown_message = !$shown ? 'can' : 'cannot';
-            $response['course_access_code'] = $course_access_code;
-            $response['message'] = "Your students <strong>{$shown_message}</strong> view this course.  $access_code_message";
+            $access_code_message = !$shown ? '' : '  In addition, all course access codes have been revoked.';
 
+            $response['message'] = "Your students <strong>{$shown_message}</strong> view this course.{$access_code_message}";
+            DB::commit();
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
@@ -351,7 +351,7 @@ class CourseController extends Controller
 
     /**
      * @param $user
-     * @return \Illuminate\Support\Collection
+     * @return array|\Illuminate\Support\Collection
      */
     public function getCourses($user)
     {
@@ -359,35 +359,64 @@ class CourseController extends Controller
         switch ($user->role) {
             case(2):
                 return DB::table('courses')
-                    ->leftJoin('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
-                    ->select('courses.*', 'course_access_codes.access_code')
+                    ->select('*')
                     ->where('user_id', $user->id)->orderBy('start_date', 'desc')
                     ->get();
             case(4):
-                $courses = DB::table('graders')
+                $sections = DB::table('graders')
+                    ->join('sections', 'section_id', '=', 'sections.id')
                     ->where('user_id', $user->id)
                     ->get()
-                    ->pluck('course_id');
-                return DB::table('courses')
-                    ->leftJoin('course_access_codes', 'courses.id', '=', 'course_access_codes.course_id')
-                    ->select('courses.*', 'course_access_codes.access_code')
-                    ->whereIn('courses.id', $courses)->orderBy('start_date', 'desc')
+                    ->pluck('section_id');
+
+                $course_section_info = DB::table('courses')
+                    ->join('sections', 'courses.id', '=', 'sections.course_id')
+                    ->select('courses.id AS id',
+                        DB::raw('courses.id AS course_id'),
+                        'start_date',
+                        'end_date',
+                        DB::raw('courses.name AS course_name'),
+                        DB::raw('sections.name AS section_name')
+                    )
+                    ->whereIn('sections.id', $sections)->orderBy('start_date', 'desc')
                     ->get();
+
+                $course_sections = [];
+                foreach ($course_section_info as $course_section) {
+                    if (!isset($course_sections[$course_section->course_id])) {
+                        $course_sections[$course_section->course_id]['id'] = $course_section->course_id;
+                        $course_sections[$course_section->course_id]['name'] = $course_section->course_name;
+                        $course_sections[$course_section->course_id]['start_date'] = $course_section->start_date;
+                        $course_sections[$course_section->course_id]['end_date'] = $course_section->end_date;
+                        $course_sections[$course_section->course_id]['sections'] = [];
+                    }
+                    $course_sections[$course_section->course_id]['sections'][] = $course_section->section_name;
+                }
+
+                foreach ($course_sections as $key =>$course_section) {
+                    $course_sections[$key]['sections'] = implode(', ', $course_section['sections']);
+                }
+                $course_sections = array_values($course_sections);
+                return collect($course_sections);
+
         }
     }
 
     /**
-     *
-     * Store a newly created resource in storage.
-     *
      * @param StoreCourse $request
      * @param Course $course
-     * @param CourseAccessCode $course_access_code
-     * @return mixed
+     * @param Enrollment $enrollment
+     * @param FinalGrade $finalGrade
+     * @param Section $section
+     * @return array
      * @throws Exception
      */
 
-    public function store(StoreCourse $request, Course $course, CourseAccessCode $course_access_code, Enrollment $enrollment, FinalGrade $finalGrade)
+    public function store(StoreCourse $request,
+                          Course $course,
+                          Enrollment $enrollment,
+                          FinalGrade $finalGrade,
+                          Section $section)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -405,13 +434,16 @@ class CourseController extends Controller
             $data = $request->validated();
             $data['user_id'] = auth()->user()->id;
 
-
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
             $data['shown'] = 0;
             //create the course
             $new_course = $course->create($data);
-            $course->enrollFakeStudent($new_course->id, $enrollment);
+            //create the main section
+            $section->name = $data['section'];
+            $section->course_id = $new_course->id;
+            $section->save();
+            $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($new_course->id);
 
             DB::commit();
@@ -436,7 +468,7 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function update(StoreCourse $request, Course $course)
+    public function update(UpdateCourse $request, Course $course)
     {
         $response['type'] = 'error';
 
@@ -467,7 +499,6 @@ class CourseController extends Controller
      * Delete a course
      *
      * @param Course $course
-     * @param CourseAccessCode $course_access_code
      * @param Enrollment $enrollment
      * @return mixed
      * @throws Exception
@@ -485,7 +516,6 @@ class CourseController extends Controller
 
         try {
             DB::beginTransaction();
-            $course->accessCodes()->delete();
             foreach ($course->assignments as $assignment) {
                 $assignment_question_ids = DB::table('assignment_question')->where('assignment_id', $assignment->id)
                     ->get()
@@ -505,7 +535,11 @@ class CourseController extends Controller
             AssignmentGroupWeight::where('course_id', $course->id)->delete();
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
-            $course->graders()->delete();
+            foreach ($course->sections as $section){
+                $section->graders()->delete();
+                $section->delete();
+            }
+
             $course->finalGrades()->delete();
             $course->delete();
             DB::commit();

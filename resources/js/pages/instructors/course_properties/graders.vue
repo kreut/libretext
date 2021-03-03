@@ -1,5 +1,107 @@
 <template>
   <div>
+    <b-modal
+      id="modal-confirm-remove"
+      ref="modal"
+      title="Remove Grader"
+    >
+      <p>
+        Are you sure you would like to remove this grader?  Once removed, they will no longer be able to grade
+        for you unless you invite them back.
+      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="cancelRemoveGrader"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveGrader"
+        >
+          Yes, remove this grader!
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
+      id="modal-edit-sections"
+      ref="modal"
+      title="Edit Sections"
+    >
+      <b-form ref="form">
+        Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
+        <b-form-checkbox-group
+          v-model="sectionsForm.selected_sections"
+          :options="sectionOptions"
+          :class="{ 'is-invalid': sectionsForm.errors.has('selected_sections') }"
+          name="sections"
+          @keydown="sectionsForm.errors.clear('selected_sections')"
+        />
+        <has-error :form="sectionsForm" field="selected_sections" />
+      </b-form>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitEditSections"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
+      id="modal-invite-grader"
+      ref="modal"
+      title="Invite Grader"
+    >
+      <b-form ref="form">
+        <b-form-group
+          id="email"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Email"
+          label-for="email"
+        >
+          <b-form-input
+            id="email"
+            v-model="graderForm.email"
+            placeholder="Email Address"
+            type="text"
+            :class="{ 'is-invalid': graderForm.errors.has('email') }"
+            @keydown="graderForm.errors.clear('email')"
+          />
+          <has-error :form="graderForm" field="email" />
+        </b-form-group>
+        Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
+        <b-form-checkbox-group
+          v-model="graderForm.selected_sections"
+          :options="sectionOptions"
+          :class="{ 'is-invalid': graderForm.errors.has('selected_sections') }"
+          name="sections"
+          @keydown="graderForm.errors.clear('selected_sections')"
+        />
+        <has-error :form="graderForm" field="selected_sections" />
+      </b-form>
+      <template #modal-footer>
+        <span v-if="sendingEmail">
+          <b-spinner small type="grow" />
+          Sending Email..
+        </span>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitInviteGrader"
+        >
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -12,42 +114,30 @@
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Graders">
           <b-card-text>
-            <b-form ref="form">
-              <div v-if="course.graders.length">
-                Your current graders:<br>
-                <ol id="graders">
-                  <li v-for="grader in course.graders" :key="grader.id">
-                    {{ grader.first_name }} {{ grader.last_name }} {{ grader.email }}
-                    <b-icon icon="trash" @click="deleteGrader(grader.id)" />
-                  </li>
-                </ol>
-              </div>
-
-              <b-form-group
-                id="email"
-                label-cols-sm="3"
-                label-cols-lg="2"
-                label="New Grader"
-                label-for="email"
-              >
-                <b-form-input
-                  id="email"
-                  v-model="graderForm.email"
-                  placeholder="Email Address"
-                  type="text"
-                  :class="{ 'is-invalid': graderForm.errors.has('email') }"
-                  @keydown="graderForm.errors.clear('email')"
-                />
-                <has-error :form="graderForm" field="email" />
-              </b-form-group>
-              <b-button class="float-right" variant="primary" @click="submitInviteGrader">
+            <div>
+              <b-button class="float-right mb-2" variant="primary" size="sm" @click="initInviteGrader()">
                 Invite Grader
               </b-button>
-              <div v-if="sendingEmail" class="float-left">
-                <b-spinner small type="grow" />
-                Sending Email..
-              </div>
-            </b-form>
+            </div>
+            <div v-if="course.graders.length">
+              <b-table striped hover
+                       :fields="fields"
+                       :items="graders"
+              >
+                <template v-slot:cell(sections)="data">
+                  {{ formatSections(data.item.sections) }}
+                </template>
+                <template v-slot:cell(actions)="data">
+                  <b-icon icon="pencil" @click="initEditSections(data.item)" />
+                  <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)" />
+                </template>
+              </b-table>
+            </div>
+            <div v-else>
+              <b-alert show variant="info">
+                <span class="font-weight-bold">You currently have no graders associated with this course.</span>
+              </b-alert>
+            </div>
           </b-card-text>
         </b-card>
       </div>
@@ -68,12 +158,32 @@ export default {
     Loading
   },
   data: () => ({
+    graderToRemoveId: 0,
+    sectionOptions: [],
+    graderFormType: 'addGrader',
+    fields: [
+      'name',
+      'email',
+      {
+        key: 'sections',
+        label: 'Section(s)'
+      },
+      'actions'
+
+    ],
     sendingEmail: false,
     isLoading: true,
     graders: {},
     course: { graders: {} },
+    grader_user_id: 0,
+    sectionsForm: new Form({
+      selected_sections: [],
+      course_id: 0
+    }),
     graderForm: new Form({
-      email: ''
+      email: '',
+      selected_sections: [],
+      course_id: 0
     })
   }),
   computed: mapGetters({
@@ -84,54 +194,101 @@ export default {
     this.getCourse(this.courseId)
   },
   methods: {
-    async getCourse (courseId) {
-      const { data } = await axios.get(`/api/courses/${courseId}`)
-      this.course = data.course
-      this.graders = this.course.graders
-      this.isLoading = false
+    cancelRemoveGrader () {
+      this.$bvModal.hide('modal-confirm-remove')
     },
-    async inviteGrader (courseId) {
-      this.courseId = courseId
+    selectAllSections () {
+      let allSections = []
+      for (let i = 0; i < this.sectionOptions.length; i++) {
+        allSections.push(this.sectionOptions[i].value)
+      }
+
+      this.graderForm.selected_sections = allSections
+      this.sectionsForm.selected_sections = allSections
+    },
+    initInviteGrader () {
+      this.graderForm.selectedSections = []
+      this.graderForm.email = ''
+      this.$bvModal.show('modal-invite-grader')
+    },
+    initEditSections (graderInfo) {
+      console.log(graderInfo)
+      this.grader_user_id = graderInfo.user_id
+      this.sectionsForm.selected_sections = Object.keys(graderInfo.sections)
+      this.$bvModal.show('modal-edit-sections')
+    },
+    async submitEditSections (bvModalEvt) {
+      bvModalEvt.preventDefault()
       try {
-        const { data } = await axios.get(`/api/graders/${this.courseId}`)
-        this.graders = data.graders
-        console.log(data)
-        if (data.type === 'error') {
-          this.$noty.error('We were not able to retrieve your graders.')
+        this.sectionsForm.course_id = this.courseId
+        const { data } = await this.sectionsForm.patch(`/api/graders/${this.grader_user_id}`)
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
           return false
         }
+      }
+      this.$bvModal.hide('modal-edit-sections')
+      await this.getCourse(this.courseId)
+      this.sendingEmail = false
+    },
+    formatSections (sections) {
+      return Object.values(sections).join(', ')
+    },
+    async getCourse (courseId) {
+      try {
+        const { data } = await axios.get(`/api/courses/${courseId}`)
+        this.course = data.course
+        if (!this.sectionOptions.length) { // just do this on initializing
+          for (let i = 0; i < this.course.sections.length; i++) {
+            let section = this.course.sections[i]
+            this.sectionOptions.push({ text: section.name, value: section.id })
+          }
+        }
+        this.graders = this.course.graders
+        this.isLoading = false
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
-    async deleteGrader (userId) {
+    initRemoveGrader (userId) {
+      this.$bvModal.show('modal-confirm-remove')
+      this.graderToRemoveId = userId
+    },
+    async submitRemoveGrader () {
       try {
-        const { data } = await axios.delete(`/api/graders/${this.courseId}/${userId}`)
-
+        const { data } = await axios.delete(`/api/graders/${this.courseId}/${this.graderToRemoveId}`)
+        this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-confirm-remove')
         if (data.type === 'error') {
-          this.$noty.error('We were not able to remove the grader from the course.  Please try again or contact us for assistance.')
           return false
         }
-        this.$noty.success(data.message)
         // remove the grad
-        this.course.graders = this.course.graders.filter(grader => parseFloat(grader.id) !== parseFloat(userId))
+        await this.getCourse(this.courseId)
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
     async submitInviteGrader (bvModalEvt) {
+      bvModalEvt.preventDefault()
       if (this.sendingEmail) {
         this.$noty.info('Please be patient while we send the email.')
         return false
       }
-      bvModalEvt.preventDefault()
+
       try {
         this.sendingEmail = true
-        const { data } = await this.graderForm.post(`/api/invitations/${this.courseId}`)
+        this.graderForm.course_id = this.courseId
+        const { data } = await this.graderForm.post('/api/invitations/grader')
         this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.$bvModal.hide('modal-invite-grader')
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+          return false
         }
       }
       this.sendingEmail = false

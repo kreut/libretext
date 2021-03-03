@@ -7,6 +7,7 @@ use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
+use App\Section;
 use App\User;
 use App\Question;
 use App\SubmissionFile;
@@ -27,7 +28,17 @@ class QuestionsViewLearningTreesTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+
+
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
+            'course_id' => $this->course->id
+        ]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id,
             'solutions_released' => 0,
             'assessment_type' => 'learning tree',
@@ -45,18 +56,14 @@ class QuestionsViewLearningTreesTest extends TestCase
         ]);
 
 
-        $this->student_user = factory(User::class)->create();
-        $this->student_user->role = 3;
+
         $this->cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
 
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
 
-        factory(Enrollment::class)->create([
-            'user_id' => $this->student_user->id,
-            'course_id' => $this->course->id
-        ]);
+
         $this->correctSubmission= [
             'technology' => 'h5p',
             'assignment_id' => $this->assignment->id,

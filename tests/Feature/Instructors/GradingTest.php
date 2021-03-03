@@ -4,6 +4,7 @@ namespace Tests\Feature\Instructors;
 
 use App\Question;
 use App\Score;
+use App\Section;
 use App\Submission;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
@@ -24,18 +25,20 @@ class GradingTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-
-        //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
 
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
             'course_id' => $this->course->id
         ]);
+
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+
 
         $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
@@ -59,7 +62,7 @@ class GradingTest extends TestCase
     /** @test */
     public function cannot_get_assignment_files_if_not_owner()
     {
-        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/all_students")
+        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/{$this->section->id}/all_students")
             ->assertJson([
                 'type' => 'error',
                 'message' => 'You are not allowed to access these submissions for grading.'
@@ -176,7 +179,7 @@ class GradingTest extends TestCase
     public function can_get_assignment_files_if_owner()
     {
 
-        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/all_students")
+        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/{$this->section->id}/all_students")
             ->assertJson(['type' => 'success']);
 
     }

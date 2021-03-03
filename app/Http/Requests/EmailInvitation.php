@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidSections;
 use Illuminate\Foundation\Http\FormRequest;
 
 class EmailInvitation extends FormRequest
@@ -24,7 +25,8 @@ class EmailInvitation extends FormRequest
     public function rules()
     {
         return [
-            'email' => 'email'
+            'email' => 'email',
+            'selected_sections' => new IsValidSections($this->course_id)
         ];
     }
 }

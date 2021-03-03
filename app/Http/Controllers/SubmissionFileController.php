@@ -3,9 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Cutup;
+use App\Enrollment;
+use App\Grader;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use App\Score;
+use App\Section;
 use App\User;
 use App\AssignmentFile;
 use App\SubmissionFile;
@@ -38,12 +41,30 @@ class SubmissionFileController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
-    public function getSubmissionFilesByAssignment(Request $request, Assignment $assignment, string $gradeView, SubmissionFile $submissionFile, Extension $extension)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param int $sectionId
+     * @param string $gradeView
+     * @param Section $section
+     * @param Grader $grader
+     * @param SubmissionFile $submissionFile
+     * @return array
+     * @throws Exception
+     */
+    public function getSubmissionFilesByAssignment(Request $request,
+                                                   Assignment $assignment,
+                                                   int $sectionId,
+                                                   string $gradeView,
+                                                   Section $section,
+                                                   Grader $grader,
+                                                   SubmissionFile $submissionFile,
+    Enrollment $enrollment)
     {
 
         $response['type'] = 'error';
 
-        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment]);
+        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment, $sectionId]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
@@ -51,20 +72,25 @@ class SubmissionFileController extends Controller
         }
 
         try {
+            $course = $assignment->course;
+            $role = Auth::user()->role;
+           $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role ,$course,$sectionId);
 
             $response['type'] = 'success';
-            $response['user_and_submission_file_info'] = $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $assignment->course->enrolledUsers);
+            $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users) : [];
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
         }
+
         return $response;
 
     }
 
-    public function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
+    public
+    function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
@@ -83,7 +109,8 @@ class SubmissionFileController extends Controller
         }
     }
 
-    public function getTemporaryUrlFromRequest(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
+    public
+    function getTemporaryUrlFromRequest(Request $request, AssignmentFile $assignmentFile, Assignment $assignment)
     {
         $response['type'] = 'error';
 
@@ -106,7 +133,8 @@ class SubmissionFileController extends Controller
     }
 
 
-    public function storeTextFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
+    public
+    function storeTextFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
@@ -139,13 +167,14 @@ class SubmissionFileController extends Controller
 
     }
 
-    public function storeScore(StoreScore $request,
-                               AssignmentFile $assignmentFile,
-                               User $user,
-                               Assignment $Assignment,
-                               Score $score,
-                               LtiLaunch $ltiLaunch,
-                               LtiGradePassback $ltiGradePassback)
+    public
+    function storeScore(StoreScore $request,
+                        AssignmentFile $assignmentFile,
+                        User $user,
+                        Assignment $Assignment,
+                        Score $score,
+                        LtiLaunch $ltiLaunch,
+                        LtiGradePassback $ltiGradePassback)
     {
 
 
@@ -204,7 +233,8 @@ class SubmissionFileController extends Controller
 
     }
 
-    public function updateTextFeedbackOrScore(string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
+    public
+    function updateTextFeedbackOrScore(string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
     {
         DB::table('submission_files')
             ->where('user_id', $student_user_id)
@@ -215,7 +245,8 @@ class SubmissionFileController extends Controller
                 'grader_id' => Auth::user()->id]);
 
     }
-    //storeSubmission
+
+//storeSubmission
 
     /**
      * @param Request $request
@@ -226,7 +257,8 @@ class SubmissionFileController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function storeSubmissionFile(Request $request, Extension $extension, SubmissionFile $submissionFile, Cutup $cutup)
+    public
+    function storeSubmissionFile(Request $request, Extension $extension, SubmissionFile $submissionFile, Cutup $cutup)
     {
 
 
@@ -351,7 +383,8 @@ class SubmissionFileController extends Controller
     }
 
 
-    public function storeFileFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
+    public
+    function storeFileFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
 
         $response['type'] = 'error';

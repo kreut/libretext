@@ -3,6 +3,7 @@
 namespace Tests\Feature\Students;
 
 use App\FinalGrade;
+use App\Section;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -25,22 +26,24 @@ class StudentsAssignmentsSummaryTest extends TestCase
     {
         parent::setUp();
         $this->user = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id, 'students_can_view_weighted_average' => 1]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
+            'course_id' => $this->course->id
+        ]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1]);
 
-        //create a student and enroll in the class
-        $this->student_user = factory(User::class)->create();
+
         $this->student_user_2 = factory(User::class)->create();
 
 
-        $this->student_user->role = 3;
+
         $this->student_user_2->role = 3;
 
-
-        factory(Enrollment::class)->create([
-            'user_id' => $this->student_user->id,
-            'course_id' => $this->course->id
-        ]);
     }
 
     /** @test */

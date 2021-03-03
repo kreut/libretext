@@ -6,6 +6,7 @@ use App\AssignmentGroupWeight;
 use App\Course;
 use App\FinalGrade;
 use App\Grader;
+use App\Section;
 use App\User;
 use App\Assignment;
 use App\Extension;
@@ -24,6 +25,7 @@ class AssignmentsIndex1Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section= factory(Section::class)->create(['course_id' => $this->course->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
         $this->user_2 = factory(User::class)->create();
@@ -35,7 +37,7 @@ class AssignmentsIndex1Test extends TestCase
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
-        Grader::create(['user_id' => $this->grader_user->id, 'course_id' => $this->course->id]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
 
         $this->assignment_info = ['course_id' => $this->course->id,
             'name' => 'First Assignment',

@@ -9,9 +9,9 @@
     </div>
     <div v-if="hasEnrolledInCourses">
       <b-table striped hover :fields="fields" :items="enrolledInCourses">
-        <template v-slot:cell(name)="data">
+        <template v-slot:cell(course_section_name)="data">
           <div class="mb-0">
-            <a href="" @click.prevent="getAssignments(data.item.id)">{{ data.item.name }}</a>
+            <a href="" @click.prevent="getAssignments(data.item.id)">{{ data.item.course_section_name }}</a>
           </div>
         </template>
         <template v-slot:cell(start_date)="data">
@@ -46,8 +46,8 @@ export default {
   data: () => ({
     fields: [
       {
-        key: 'name',
-        label: 'Course'
+        key: 'course_section_name',
+        label: 'Course - Section'
       },
       'instructor',
       {

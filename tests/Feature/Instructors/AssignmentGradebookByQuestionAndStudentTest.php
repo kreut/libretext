@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Course;
 use App\Enrollment;
 use App\Question;
+use App\Section;
 use App\User;
 use App\Traits\Test;
 
@@ -27,8 +28,10 @@ class AssignmentGradebookByQuestionAndStudentTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
             'course_id' => $this->course->id
         ]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);

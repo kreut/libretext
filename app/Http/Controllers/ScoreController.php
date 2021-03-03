@@ -3,17 +3,21 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentGroup;
+use App\Enrollment;
 use App\Extension;
+use App\Grader;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\Score;
 use App\Course;
+use App\Section;
 use App\Solution;
 use App\SubmissionFile;
 use App\User;
 use App\Assignment;
 use App\Submission;
 use App\Question;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +110,6 @@ class ScoreController extends Controller
             $include_in_weighted_average_by_assignment_id[$assignment->id] = $assignment->include_in_weighted_average;
 
         }
-        $times = [];
 
 
         foreach ($scores as $score) {
@@ -130,6 +133,7 @@ class ScoreController extends Controller
     }
 
     public function getFinalWeightedScoresAndLetterGrades(Course $course,
+                                                          Collection $enrolled_users,
                                                           array $proportion_scores_by_user_and_assignment_group,
                                                           array $assignment_group_weights_info)
     {
@@ -147,9 +151,6 @@ class ScoreController extends Controller
             $extra_credit[$value->user_id] = $value->extra_credit;
         }
 
-        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
-            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
-            : $course->enrolledUsers;
 
         $extra_credit_group_id = DB::table('assignment_groups')->where('assignment_group', 'Extra Credit')
             ->pluck('id')
@@ -463,6 +464,7 @@ class ScoreController extends Controller
      * @param Submission $Submission
      * @param Solution $Solution
      * @param AssignmentGroup $AssignmentGroup
+     * @param Enrollment $enrollment
      * @return array|false[]
      */
     public function getCourseScoresByUser(Course $course,
@@ -470,7 +472,8 @@ class ScoreController extends Controller
                                           Score $Score,
                                           Submission $Submission,
                                           Solution $Solution,
-                                          AssignmentGroup $AssignmentGroup)
+                                          AssignmentGroup $AssignmentGroup,
+                                          Enrollment $enrollment)
     {
 
 
@@ -512,10 +515,7 @@ class ScoreController extends Controller
         $enrolled_users_last_first = [];
         $enrolled_users_by_id = [];
 
-        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
-            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
-            : $course->enrolledUsers;
-
+        $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
 
         $weighted_score = false;
         $letter_grade = false;
@@ -525,7 +525,7 @@ class ScoreController extends Controller
                 $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
                 $enrolled_users_last_first[$enrolled_user->id] = "$enrolled_user->last_name, $enrolled_user->first_name ";
             }
-            [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+            [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
 
 
             $z_score = false;
@@ -567,20 +567,21 @@ class ScoreController extends Controller
      * @param $scores
      * @param $extensions
      * @param $enrolled_users
+     * @param $enrolled_users_by_id
      * @param $enrolled_users_last_first
      * @param $total_points_by_assignment_id
      * @return array
      */
-    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_last_first, $total_points_by_assignment_id)
+    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id)
     {
 
         [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($assignments, $course->id);
         [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($assignments, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id);
-        $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
+        $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $enrolled_users, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
             $assignment_ids,
-            $enrolled_users,
+            $enrolled_users_by_id,
             $enrolled_users_last_first,
             $assignments,
             $extensions,
@@ -596,9 +597,8 @@ class ScoreController extends Controller
 
     }
 
-    public function index(Course $course)
+    public function index(Course $course, int $sectionId, Enrollment $enrollment)
     {
-
 
         $authorized = Gate::inspect('viewCourseScores', $course);
 
@@ -611,9 +611,10 @@ class ScoreController extends Controller
         //get all user_ids for the user enrolled in the course
         $enrolled_users_by_id = [];
         $enrolled_users_last_first = [];
-        $enrolled_users = (env('DB_DATABASE') !== "test_libretext") ?
-            $course->enrolledUsers->slice(1) //get rid of the test student for the live version
-            : $course->enrolledUsers;
+
+        $role = Auth::user()->role;
+        $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
+
         foreach ($enrolled_users as $key => $user) {
             $enrolled_users_by_id[$user->id] = "$user->first_name $user->last_name";
             $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
@@ -637,6 +638,11 @@ class ScoreController extends Controller
             $assignment_groups[$value->assignment_group_id][] = $value->id;
         }
 
+        $sections_info = (Auth::user()->role === 2) ? $course->sections : $course->graderSections();
+        $sections = [];
+        foreach ($sections_info as $key => $section) {
+            $sections[] = ['name' => $section->name, 'id' => $section->id];
+        }
         $assignment_ids = $this->getAssignmentIds($assignments);
         $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
 
@@ -647,10 +653,11 @@ class ScoreController extends Controller
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
 
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
 
 
         return ['hasAssignments' => true,
+            'sections' => $sections,
             'table' => compact('rows', 'fields') + ['hasAssignments' => true],
             'download_fields' => $download_fields,
             'download_rows' => $download_rows,

@@ -46,13 +46,13 @@ export default {
         },
         {
           icon: '',
-          name: 'People',
-          route: 'course_properties.graders'
+          name: 'Sections',
+          route: 'course_properties.sections'
         },
         {
           icon: '',
-          name: 'Refresh Access Code',
-          route: 'course_properties.access_codes'
+          name: 'People',
+          route: 'course_properties.graders'
         },
         {
           icon: '',

@@ -677,12 +677,19 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getAssignmentNameAndLatePolicy(Assignment $assignment)
+    public function getInfoForGrading(Assignment $assignment)
     {
 
         $response['type'] = 'error';
         try {
             $assignment = Assignment::find($assignment->id);
+            $sections = (Auth::user()->role === 2) ? $assignment->course->sections : $assignment->course->graderSections();
+
+            $response['sections'] = [];
+            foreach ($sections as $key => $section){
+                $response['sections'][]=['name'=>$section->name,'id'=>$section->id];
+            }
+
             $response['assignment'] = [
                 'name' => $assignment->name,
                 'late_policy' => $assignment->late_policy,

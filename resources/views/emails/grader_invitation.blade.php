@@ -9,7 +9,7 @@
 
   @include('beautymail::templates.sunny.contentStart')
 
-  <p>{{ $instructor  }} has just invited you to be a grader for <strong>{{  $course }}</strong>. Please sign
+  <p>{{ $instructor  }} has just invited you to be a grader for <strong>{{  $course_section_names }}</strong>. Please sign
     up below by using the access code <strong>{{ $access_code }}</strong>.</p>
 
   <p>Note: If you already have an account with us, then you can just <a href="{{$login_link}}">Log In</a> and then "Add Course".</p>

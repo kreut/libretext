@@ -87,9 +87,10 @@ class RegisterController extends Controller
      */
     protected function create(array $data)
     {
+
         try {
             DB::beginTransaction();
-            [$course_id, $role] = $this->setRole($data);
+            [$section_ids, $role] = $this->setRole($data);
             $user = new User;
             $user->first_name = $data['first_name'];
             $user->last_name = $data['last_name'];
@@ -99,8 +100,9 @@ class RegisterController extends Controller
             $user->role = $role;
             $user->save();
             if ($role === 4) {
-                $this->addGraderToCourse($user->id, $course_id);
+                $this->addGraderToCourse($user->id, $section_ids);
             }
+
             DB::commit();
 
             return $user;

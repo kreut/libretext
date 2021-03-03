@@ -47,6 +47,7 @@ class BreadcrumbController extends Controller
                                 'active' => true];
                             break;
                         case('course_properties.general_info'):
+                        case('course_properties.sections'):
                         case('course_properties.letter_grades'):
                         case('course_properties.graders'):
                         case('course_properties.access_codes'):

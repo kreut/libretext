@@ -73,6 +73,7 @@ class CoursePolicy
      */
     public function viewCourseScores(User $user, Course $course)
     {
+
         return ($course->isGrader() || $this->ownsCourseByUser($course, $user))
             ? Response::allow()
             : Response::deny('You are not allowed to view these scores.');

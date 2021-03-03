@@ -7,6 +7,7 @@ use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
+use App\Section;
 use App\Solution;
 use App\User;
 use App\Question;
@@ -30,8 +31,22 @@ class QuestionsViewTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
-        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id, 'solutions_released' => 0]);
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+
+        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id,
+            'course_id' => $this->course->id
+        ]);
+
+
+
+
+
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
         $this->question_points = 10;
@@ -50,8 +65,7 @@ class QuestionsViewTest extends TestCase
             'open_ended_submission_type' => 'file'
         ]);
 
-        $this->student_user = factory(User::class)->create();
-        $this->student_user->role = 3;
+
         $cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
 
@@ -61,10 +75,7 @@ class QuestionsViewTest extends TestCase
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
 
-        factory(Enrollment::class)->create([
-            'user_id' => $this->student_user->id,
-            'course_id' => $course->id
-        ]);
+
         $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
         $this->h5pSubmission = [
             'technology' => 'h5p',
@@ -659,7 +670,7 @@ class QuestionsViewTest extends TestCase
     {
         $this->assignment->due = "2020-12-10 09:00:00";
         $this->assignment->late_policy = 'marked late';
-        $this->assignment->final_submission_deadline = "2021-03-05 09:00:00";
+        $this->assignment->final_submission_deadline = "2029-03-05 09:00:00";
         $this->assignment->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)

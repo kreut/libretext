@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Section;
 use App\User;
 use App\Assignment;
 use App\SubmissionFile;
@@ -44,11 +45,20 @@ class SubmissionFilePolicy
             : Response::deny('You are not allowed to create a temporary URL.');
     }
 
-    public function viewAssignmentFilesByAssignment(User $user, SubmissionFile $submissionFile, Assignment $assignment)
+    public function viewAssignmentFilesByAssignment(User $user, SubmissionFile $submissionFile, Assignment $assignment, int $sectionId)
     {
         $message = '';
+        $has_access = false;
+        switch ($user->role) {
+            case(2):
+                $has_access = (int)$assignment->course->user_id === $user->id;
+                break;
+            case(4):
+                $has_access = $sectionId ? Section::find($sectionId)->isGrader()
+                    : $assignment->course->isGrader();
+                break;
+        }
 
-        $has_access = $assignment->course->isGrader() || ((int)$assignment->course->user_id === $user->id);
         if (!$has_access) {
             $message = 'You are not allowed to access these submissions for grading.';
         }

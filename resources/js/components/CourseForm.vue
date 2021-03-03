@@ -3,7 +3,8 @@
     <b-tooltip target="public_tooltip"
                delay="250"
     >
-      Public courses can be imported by other instructors; non-public can only be imported by you.  Note that student grades will never be made public nor copied from a course.
+      Public courses can be imported by other instructors; non-public can only be imported by you. Note that student
+      grades will never be made public nor copied from a course.
     </b-tooltip>
     <b-form ref="form">
       <b-form-group
@@ -22,7 +23,24 @@
         />
         <has-error :form="form" field="name" />
       </b-form-group>
-
+      <div v-if="'section' in form">
+        <b-form-group
+          id="section"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Section"
+          label-for="section"
+        >
+          <b-form-input
+            id="name"
+            v-model="form.section"
+            type="text"
+            :class="{ 'is-invalid': form.errors.has('section') }"
+            @keydown="form.errors.clear('section')"
+          />
+          <has-error :form="form" field="section" />
+        </b-form-group>
+      </div>
       <b-form-group
         id="start_date"
         label-cols-sm="4"
@@ -89,7 +107,6 @@ export default {
     form: { type: Object, default: null }
   },
   data: () => ({
-
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate())
   })
 }

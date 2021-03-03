@@ -193,8 +193,34 @@ export default {
       placement: 'right',
       title: 'Show or hide a course on the student\'s homepage.  If you are embedding assignments, please show/hide individual assignments; hiding the course won\'t hide the individually embedded assignments.'
     },
-    fields: [
-      {
+    fields: [],
+    courses: [],
+    course: null,
+    hasCourses: false,
+    courseId: false, // if there's a courseId if it's an update
+    showNoCoursesAlert: false,
+    canViewCourses: false,
+    modalHidden: false,
+    graderForm: new Form({
+      access_code: ''
+    }),
+    newCourseForm: new Form({
+      name: '',
+      section: '',
+      start_date: '',
+      end_date: '',
+      public: '1'
+    })
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
+  mounted () {
+    this.getCourses()
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
+    this.fields = (this.user.role === 2)
+      ? [{
         key: 'name',
         label: 'Course',
         sortable: true
@@ -213,31 +239,23 @@ export default {
         label: 'Access Code'
       },
       'actions'
-    ],
-    courses: [],
-    course: null,
-    hasCourses: false,
-    courseId: false, // if there's a courseId if it's an update
-    showNoCoursesAlert: false,
-    canViewCourses: false,
-    modalHidden: false,
-    graderForm: new Form({
-      access_code: ''
-    }),
-    newCourseForm: new Form({
-      name: '',
-      start_date: '',
-      end_date: '',
-      public: '1'
-    })
-  }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
-  mounted () {
-    this.getCourses()
-    this.getTooltipTarget = getTooltipTarget
-    initTooltips(this)
+      ]
+      : [{
+        key: 'name',
+        label: 'Course',
+        sortable: true
+      },
+      'sections',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
+      ]
   },
   methods: {
     async initImportCourse () {
@@ -298,8 +316,8 @@ export default {
       bvModalEvt.preventDefault()
       try {
         const { data } = await this.graderForm.post('/api/graders')
+        this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.$noty[data.type](data.message)
           this.resetAll('modal-course-grader-access-code')
         }
       } catch (error) {
