@@ -9,6 +9,7 @@ use \Exception;
 
 use App\Http\Requests\Send;
 use App\User;
+use Illuminate\Auth\Access\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Mail;
@@ -87,9 +88,8 @@ class EmailController extends Controller
     {
         $response['type'] = 'error';
         $to_user_id = $request->to_user_id;
-        $authorized = Gate::inspect('contactUs', [$email, $to_user_id]);
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
+        if ((int) $to_user_id !== 0) {
+            $response['message'] = 'You are not allowed to send that person an email.';
             return $response;
         }
         $data = $request->validated();

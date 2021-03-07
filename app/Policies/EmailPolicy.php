@@ -12,14 +12,6 @@ class EmailPolicy
 {
     use HandlesAuthorization;
 
-    public function contactUs(User $user, Email $email, int $to_user_id)
-    {
-
-        return $to_user_id === 0
-            ? Response::allow()
-            : Response::deny('You are not allowed to send that person an email.');
-
-    }
 
     public function contactGrader(User $user, Email $email, int $to_user_id, int $assignment_id, int $question_id)
     {
