@@ -3,9 +3,9 @@ FROM php:7.4-apache
 # Install packages
 RUN apt-get update && apt-get install -y \
     git \
-    zip \
     curl \
     sudo \
+    zip \
     unzip \
     libicu-dev \
     libbz2-dev \
@@ -30,7 +30,8 @@ RUN docker-php-ext-install \
     bcmath \
     opcache \
     calendar \
-    pdo_mysql
+    pdo_mysql \
+    zip
 
 # Ensure PHP logs are captured by the container
 ENV LOG_CHANNEL=stderr
