@@ -7,6 +7,7 @@ RUN apt-get update && apt-get install -y \
     sudo \
     zip \
     unzip \
+    libzip-dev \
     libicu-dev \
     libbz2-dev \
     libpng-dev \
@@ -40,13 +41,15 @@ ENV LOG_CHANNEL=stderr
 VOLUME /var/www/html
 
 # Copy code and run composer
-# TODO fix issue with FPDI
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . /var/www/tmp
-RUN cd /var/www/tmp && composer install --no-dev
+WORKDIR /var/www/tmp
+#RUN npm i npm@latest -g && npm i
+RUN composer install
 
 # Ensure the entrypoint file can be run
-RUN chmod +x /var/www/tmp/docker-entrypoint.sh
+RUN chmod +x docker-entrypoint.sh
+WORKDIR /var/www/html
 ENTRYPOINT ["/var/www/tmp/docker-entrypoint.sh"]
 
 # The default apache run command
