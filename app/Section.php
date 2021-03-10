@@ -13,21 +13,29 @@ class Section extends Model
         return $this->belongsTo('App\Course');
     }
 
-    public function enrolledUsers(){
+    public function enrolledUsers($include_fake = false)
+    {
 
-        return $this->hasManyThrough('App\User',
-            'App\Enrollment',
-            'section_id', //foreign key on enrollments table
-            'id', //foreign key on users table
-            'id', //local key in courses table
-            'user_id')
-            ->where('fake_student',0)
-            ->orderBy('enrollments.id'); //local key in enrollments table
+        return !$include_fake
+            ? $this->hasManyThrough('App\User',
+                'App\Enrollment',
+                'section_id', //foreign key on enrollments table
+                'id', //foreign key on users table
+                'id', //local key in courses table
+                'user_id')->where('fake_student', 0)
+            : $this->hasManyThrough('App\User',
+                'App\Enrollment',
+                'section_id', //foreign key on enrollments table
+                'id', //foreign key on users table
+                'id', //local key in courses table
+                'user_id');
+
     }
 
-    public function isGrader(){
-        $graders= DB::table('graders')
-            ->join('sections','graders.section_id','=','sections.id')
+    public function isGrader()
+    {
+        $graders = DB::table('graders')
+            ->join('sections', 'graders.section_id', '=', 'sections.id')
             ->where('sections.id', $this->id)
             ->select('user_id')
             ->get()
@@ -36,7 +44,8 @@ class Section extends Model
         return (in_array(Auth::user()->id, $graders));
     }
 
-    public function graders(){
-       return $this->hasMany('App\Grader');
+    public function graders()
+    {
+        return $this->hasMany('App\Grader');
     }
 }

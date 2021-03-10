@@ -22,6 +22,24 @@ class SectionController extends Controller
 {
     use AccessCodes;
 
+    public function realEnrolledUsers(Request $request, Section $section){
+
+        try {
+
+            $response['number_of_enrolled_users'] =count($section->enrolledUsers()->pluck('user_id'));
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the number of enrolled users.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+
+
+    }
     public function destroy(Request $request,
                             Section $section,
                             Enrollment $enrollment,
@@ -36,28 +54,31 @@ class SectionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+            DB::beginTransaction();
             $course = $section->course;
             $section_name = $section->name;
-            $enrolled_user_ids = $section->enrolledUsers()->pluck('user_id')->toArray();
+            $enrolled_user_ids = $section->enrolledUsers(true)->pluck('user_id')->toArray();
 
             foreach ($course->assignments as $assignment) {
                 $assignment->scores()->whereIn('user_id', $enrolled_user_ids)->delete();
                 $assignment->seeds()->whereIn('user_id', $enrolled_user_ids)->delete();
                 $submission->where('assignment_id', $assignment->id)
-                            ->whereIn('user_id', $enrolled_user_ids)
-                            ->delete();
+                    ->whereIn('user_id', $enrolled_user_ids)
+                    ->delete();
                 $submissionFile->where('assignment_id', $assignment->id)
                     ->whereIn('user_id', $enrolled_user_ids)
                     ->delete();
             }
             $enrollment->where('section_id', $section->id)->whereIn('user_id', $enrolled_user_ids)->delete();
+
             $section->graders()->delete();
+
             $section->delete();
             DB::commit();
             $response['message'] = "<strong>$section_name</strong> has been deleted.";
             $response['type'] = 'success';
         } catch (Exception $e) {
-
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error deleting the section.  Please try again or contact us for assistance.";
@@ -116,7 +137,10 @@ class SectionController extends Controller
         return $response;
     }
 
-    public function store(StoreSection $request, Course $course, Section $section)
+    public function store(StoreSection $request,
+                          Course $course,
+                          Section $section,
+                          Enrollment $enrollment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$section, $course]);
@@ -126,11 +150,15 @@ class SectionController extends Controller
             return $response;
         }
         $data = $request->validated();
+
         try {
+            DB::beginTransaction();
             $section->name = $data['name'];
             $section->course_id = $course->id;
             $section->access_code = $this->createSectionAccessCode();
             $section->save();
+            $course->enrollFakeStudent($course->id, $section->id, $enrollment);
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The section <strong>{$data['name']}</strong> has been created.";
         } catch (Exception $e) {

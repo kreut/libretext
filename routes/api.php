@@ -191,10 +191,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/learning-trees/validate-remediation/{library}/{pageId}', 'LearningTreeController@validateLearningTreeNode');
 
     Route::get('/sections/{course}', 'SectionController@index');
+    Route::get('/sections/real-enrolled-users/{section}', 'SectionController@realEnrolledUsers');
     Route::post('/sections/{course}', 'SectionController@store');
     Route::patch('/sections/{section}', 'SectionController@update');
     Route::delete('/sections/{section}', 'SectionController@destroy');
     Route::patch('/sections/refresh-access-code/{section}', 'SectionController@refreshAccessCode');
+
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');

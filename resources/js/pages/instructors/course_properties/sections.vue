@@ -7,13 +7,16 @@
       ok-title="Yes, delete section!"
       @ok="handleDeleteSection"
     >
-      <p>By deleting the selection, you will also delete:</p>
+      <p>By deleting the section, you will also delete:</p>
       <ol>
         <li>All assignments associated with the section</li>
         <li>All submitted student responses</li>
         <li>All student scores</li>
       </ol>
-      <p><strong>Once a section is deleted, it can not be retrieved!</strong></p>
+      <b-alert show variant="danger">
+        <span class="font-weight-bold">Warning! You are about to remove {{ numberOfEnrolledUsers }} students from this section along with all of their submission data and scores.  This action cannot be undone.
+        </span>
+      </b-alert>
     </b-modal>
 
     <b-modal id="modal-section"
@@ -116,6 +119,7 @@ export default {
     sectionForm: new Form({
       name: ''
     }),
+    numberOfEnrolledUsers: 0,
     sections: [],
     sectionId: false,
     isLoading: true,
@@ -142,7 +146,21 @@ export default {
   methods: {
     async confirmDeleteSection (sectionId) {
       this.sectionId = sectionId
-      this.$bvModal.show('modal-delete-section')
+      try {
+        const { data } = await axios.get(`/api/sections/real-enrolled-users/${this.sectionId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.numberOfEnrolledUsers = parseInt(data.number_of_enrolled_users)
+        this.numberOfEnrolledUsers > 0
+          ? this.$bvModal.show('modal-delete-section')
+          : await this.handleDeleteSection()
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
     },
     async handleDeleteSection () {
       try {
