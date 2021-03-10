@@ -15,6 +15,7 @@ jobs:
       mysql:
           image: mysql:5.7
           env:
+            MYSQL_ALLOW_EMPTY_PASSWORD: yes
             MYSQL_DATABASE: test_libretext
     steps:
     - uses: shivammathur/setup-php@b7d1d9c9a92d8d8463ce36d7f60da34d461724f8
@@ -33,3 +34,5 @@ jobs:
       run: chmod -R 777 storage bootstrap/cache
     - name: Execute tests (Unit and Feature tests) via PHPUnit
       run: vendor/bin/phpunit
+      env:
+        DB_PORT: ${{ job.services.mysql.ports[3306] }}
