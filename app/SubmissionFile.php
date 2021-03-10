@@ -33,13 +33,7 @@ class SubmissionFile extends Model
         if ($file_feedback) {
             $file_feedback_type = (pathinfo($file_feedback, PATHINFO_EXTENSION) === 'mpga') ? 'audio' : 'q';
         }
-        if ($submission && $open_ended_submission_type === 'text') {
-            try {
-                $submission = Storage::disk('s3')->get("assignments/{$assignment->id}/$submission");
-            } catch (Exception $e) {
-                $submission = "Error retrieving your text submission: " . $e->getMessage();
-            }
-        }
+
         return ['user_id' => $user->id,
             'name' => $user->first_name . ' ' . $user->last_name,
             'submission' => $submission,
@@ -53,8 +47,7 @@ class SubmissionFile extends Model
             'solution' => $solution,
             'file_feedback_type' => $file_feedback_type,
             'file_submission_score' => $file_submission_score,
-            'submission_url' => $submission ? $this->getTemporaryUrl($assignment->id, $submission) : null,
-            'file_feedback_url' => $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null];
+           'open_ended_submission_type' => $open_ended_submission_type];
 
     }
 
@@ -139,6 +132,7 @@ class SubmissionFile extends Model
                 $question_id = $question->question_id;
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
+                $text_feedback_editor = $questionFilesByUser[$question->question_id][$user->id]->text_feedback_editor ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $extension = isset($extensions[$user->user_id]) ? $extensions[$user->user_id] : null;
                 if ($submission && in_array($assignment->late_policy, ['marked late', 'deduction'])) {
@@ -176,6 +170,7 @@ class SubmissionFile extends Model
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
                 $all_info = $this->getAllInfo($user, $assignment, $solution, $open_ended_submission_type, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
+                $all_info['text_feedback_editor'] =  $text_feedback_editor;
                 $all_info['open_ended_submission_type'] = $open_ended_submission_type;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;

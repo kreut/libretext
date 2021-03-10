@@ -9,6 +9,39 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+      <b-modal
+        id="modal-edit-canned-responses"
+        ref="modal"
+        title="Edit Canned Responses"
+        size="lg"
+      >
+        <b-list-group-item
+          v-for="cannedResponse in cannedResponses"
+          :key="cannedResponse.id"
+          class="flex-column align-items-start"
+        >
+          {{ cannedResponse.canned_response }}
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
+        </b-list-group-item>
+        <b-input-group class="mt-4">
+          <b-form-input v-model="cannedResponseForm.canned_response"
+                        type="text"
+                        :class="{ 'is-invalid': cannedResponseForm.errors.has('canned_response') }"
+                        @keydown="cannedResponseForm.errors.clear('canned_response')"
+          />
+          <b-input-group-append>
+            <b-button variant="primary" size="sm" @click="submitCannedResponseForm">
+              Save Response
+            </b-button>
+          </b-input-group-append>
+          <has-error :form="cannedResponseForm" field="canned_response" />
+        </b-input-group>
+        <template #modal-footer="{ ok }">
+          <b-button size="sm" variant="success" @click="ok()">
+            OK
+          </b-button>
+        </template>
+      </b-modal>
 
       <b-modal
         id="modal-upload-file"
@@ -129,6 +162,7 @@
             </div>
             <div class="overflow-auto">
               <b-pagination
+                :key="currentQuestionPage"
                 v-model="currentQuestionPage"
                 :total-rows="submissionFiles.length"
                 :per-page="perPage"
@@ -196,7 +230,7 @@
                 You currently have no solution uploaded for this question.
               </span>
             </div>
-            <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null">
+            <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'] !== null">
               <hr>
               <b-container>
                 <b-row>
@@ -248,7 +282,7 @@
                                           @keydown="scoreForm.errors.clear('score')"
                             />
                             <b-input-group-append>
-                              <b-button variant="primary" @click="submitScoreForm">
+                              <b-button variant="primary" size="sm" @click="submitScoreForm">
                                 Save Score
                               </b-button>
                             </b-input-group-append>
@@ -267,7 +301,7 @@
                               </b-col>
                               <b-col>
                                 <b-button :disabled="viewSubmission"
-
+                                          size="sm"
                                           @click="toggleView(currentStudentPage)"
                                 >
                                   View Submission
@@ -283,10 +317,37 @@
                   <b-col>
                     <b-card header="default" :header-html="getGraderFeedbackTitle()" class="h-100">
                       <b-card-text>
+                        <b-row class="mb-2">
+                          <b-col>
+                            <b-form-select v-model="textFeedbackMode"
+                                           :options="textFeedbackModeOptions"
+                            />
+                          </b-col>
+                          <b-col>
+                            <b-button v-if="textFeedbackMode === 'canned_response'"
+                                      variant="info"
+                                      size="sm"
+                                      @click="openEditCannedResponsesModal"
+                            >
+                              Edit Responses
+                            </b-button>
+                          </b-col>
+                        </b-row>
                         <b-form ref="form">
+                          <ckeditor v-if="textFeedbackMode === 'rich_text'"
+                                    :key="`${currentQuestionPage}-${currentStudentPage}`"
+                                    v-model="richTextFeedback"
+                                    :config="richEditorConfig"
+                                    style="margin-bottom: 23px"
+                                    rows="4"
+                                    max-rows="4"
+                                    :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
+                                    @namespaceloaded="onCKEditorNamespaceLoaded"
+                          />
                           <b-form-textarea
+                            v-if="textFeedbackMode === 'plain_text'"
                             id="text_comments"
-                            v-model="textFeedbackForm.textFeedback"
+                            v-model="plainTextFeedback"
                             style="margin-bottom: 23px"
                             placeholder="Enter something..."
                             rows="4"
@@ -295,42 +356,51 @@
                             @keydown="textFeedbackForm.errors.clear('textFeedback')"
                           />
                           <has-error :form="textFeedbackForm" field="textFeedback" />
-                          <b-container>
-                            <b-row align-h="end" class="m-3">
-                              <b-button variant="primary" @click="submitTextFeedbackForm">
-                                Save Comments
-                              </b-button>
-                            </b-row>
-                            <hr>
-                            <b-row class="d-flex justify-content-around">
-                              <b-button
-                                v-b-modal.modal-upload-file
-                                variant="primary"
-                                @click="openUploadFileModal()"
-                              >
-                                Upload Feedback
-                              </b-button>
 
-                              <b-button
-                                :disabled="!viewSubmission"
-                                @click="toggleView(currentStudentPage)"
-                              >
-                                View Feedback
-                              </b-button>
-                            </b-row>
-                          </b-container>
+                          <b-form-select v-if="textFeedbackMode === 'canned_response'"
+                                         v-model="cannedResponse"
+                                         :options="cannedResponseOptions"
+                                         class="mb-5"
+                                         @change="submitTextFeedbackForm"
+                          />
+
+                          <b-row v-if="textFeedbackMode !== 'canned_response'" align-h="end" class="m-3">
+                            <b-button variant="primary" size="sm" @click="submitTextFeedbackForm">
+                              Save Comments
+                            </b-button>
+                          </b-row>
+                          <hr>
+                          <b-row class="d-flex justify-content-around">
+                            <b-button
+                              v-b-modal.modal-upload-file
+                              variant="primary"
+                              size="sm"
+                              @click="openUploadFileModal()"
+                            >
+                              Upload Feedback
+                            </b-button>
+
+                            <b-button
+                              :disabled="!viewSubmission"
+                              size="sm"
+                              @click="toggleView(currentStudentPage)"
+                            >
+                              View Feedback
+                            </b-button>
+                          </b-row>
                         </b-form>
                       </b-card-text>
                     </b-card>
                   </b-col>
                 </b-row>
               </b-container>
+
               <hr>
             </div>
-            <div class="row mt-4 d-flex justify-content-center" style="height:1000px">
+            <div v-show="retrievedFromS3" class="row mt-4 d-flex justify-content-center" style="height:1000px">
               <div v-show="viewSubmission">
                 <div
-                  v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] !== null)"
+                  v-if="(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'])"
                 >
                   <div v-if="isOpenEndedFileSubmission">
                     <iframe width="600" height="600"
@@ -344,15 +414,17 @@
                       />
                     </b-card>
                   </div>
-                  <div v-if="isOpenEndedTextSubmission">
-                    <b-card>
-                      <span class="font-weight-bold"
-                            v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']"
-                      />
-                    </b-card>
-                  </div>
                 </div>
-                <div v-else>
+                <div
+                  v-if="isOpenEndedTextSubmission && submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
+                >
+                  <b-card>
+                    <span class="font-weight-bold"
+                          v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
+                    />
+                  </b-card>
+                </div>
+                <div v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']">
                   <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }} has not submitted a file.</span>
                 </div>
               </div>
@@ -384,7 +456,6 @@
               </div>
             </div>
           </div>
-          </b-form-group>
         </div>
         <div v-if="showNoFileSubmissionsExistAlert" class="mt-4">
           <b-alert show variant="warning">
@@ -407,6 +478,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import Vue from 'vue'
 import { ToggleButton } from 'vue-js-toggle-button'
+import CKEditor from 'ckeditor4-vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -414,9 +486,36 @@ export default {
   components: {
     Loading,
     ToggleButton,
-    VueBootstrapTypeahead
+    VueBootstrapTypeahead,
+    ckeditor: CKEditor.component
   },
   data: () => ({
+    richTextFeedback: '',
+    plainTextFeedback: '',
+    cannedResponse: null,
+    cannedResponseOptions: [],
+    cannedResponseForm: new Form({
+      canned_response: ''
+    }),
+    cannedResponses: [],
+    richEditorConfig: {
+      toolbar: [
+        { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
+        {
+          name: 'basicstyles',
+          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript']
+        }
+      ],
+      removeButtons: '',
+      height: 100
+    },
+    textFeedbackMode: 'plain_text',
+    textFeedbackModeOptions: [
+      { text: 'Plain Text', value: 'plain_text' },
+      { text: 'Rich Text', value: 'rich_text' },
+      { text: 'Canned Response', value: 'canned_response' }
+    ],
+    retrievedFromS3: false,
     hasMultipleSections: false,
     jumpToStudent: '',
     students: [],
@@ -452,9 +551,7 @@ export default {
     perPage: 1,
     numStudents: 0,
     submissionFiles: [],
-    textFeedbackForm: new Form({
-      textFeedback: ''
-    }),
+    textFeedbackForm: new Form({}),
     fileFeedbackForm: new Form({
       fileFeedback: null
     }),
@@ -471,8 +568,84 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
     this.getSubmissionFiles()
+    this.getCannedResponses()
   },
   methods: {
+    onCKEditorNamespaceLoaded (CKEDITOR) {
+      CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
+    },
+    async removeCannedResponse (cannedResponseId) {
+      try {
+        const { data } = await this.cannedResponseForm.delete(`/api/canned-responses/${cannedResponseId}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          await this.getCannedResponses()
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitCannedResponseForm (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        const { data } = await this.cannedResponseForm.post('/api/canned-responses')
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.cannedResponseForm.canned_response = ''
+          await this.getCannedResponses()
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async getCannedResponses () {
+      try {
+        const { data } = await axios.get('/api/canned-responses')
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.cannedResponseOptions = [{ text: 'Please choose a response', value: null }]
+        for (let i = 0; i < data.canned_responses.length; i++) {
+          let cannedResponse = data.canned_responses[i]
+          let cannedResponseOption = { text: cannedResponse.canned_response, value: cannedResponse.id }
+          this.cannedResponseOptions.push(cannedResponseOption)
+        }
+        this.cannedResponses = data.canned_responses
+        return true
+      } catch (error) {
+        this.$noty.error(error.message)
+        return false
+      }
+    },
+    async openEditCannedResponsesModal () {
+      let success = await this.getCannedResponses()
+      if (success) {
+        this.$bvModal.show('modal-edit-canned-responses')
+      }
+    },
+    async getFilesFromS3 () {
+      try {
+        let current = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]
+        if (!current.got_files) {
+          const { data } = await axios.post(`/api/submission-files/get-files-from-s3/${this.assignmentId}/${current.question_id}/${current.user_id}`, { open_ended_submission_type: current.open_ended_submission_type })
+          console.log(data)
+          if (data.type === 'success') {
+            let files = data.files
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = files.file_feedback_url
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission_url = files.submission_url
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission_text = files.submission_text
+            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].got_files = true
+          } else {
+            this.$noty.error(`We could not retrieve the files for ${current.name}`)
+          }
+        }
+      } catch (error) {
+        this.$noty.error(`We could not retrieve the files for the student. ${error.message}`)
+      }
+    },
     setQuestionAndStudentByStudentName () {
       for (let j = 0; j < this.submissionFiles[this.currentQuestionPage - 1].length; j++) {
         if (this.jumpToStudent === this.submissionFiles[this.currentQuestionPage - 1][j]['name']) {
@@ -620,8 +793,34 @@ export default {
       }
       this.uploading = false
     },
+    getTextFeedback (textFeedbackMode) {
+      switch (textFeedbackMode) {
+        case ('rich_text'):
+          return this.richTextFeedback
+        case ('plain_text'):
+          return this.plainTextFeedback
+        case ('canned_response'):
+
+          for (let i = 0; i < this.cannedResponseOptions.length; i++) {
+            console.log(this.cannedResponseOptions[i].value)
+            console.log(this.cannedResponse)
+            if (this.cannedResponseOptions[i].value === this.cannedResponse) {
+              return this.cannedResponseOptions[i].text
+            }
+          }
+          break
+        default:
+          return false
+      }
+    },
     async submitTextFeedbackForm () {
       try {
+        this.textFeedbackForm.text_feedback_editor = (this.textFeedbackMode === 'rich_text') ? 'rich' : 'plain'
+        this.textFeedbackForm.textFeedback = this.getTextFeedback(this.textFeedbackMode)
+        if (this.textFeedbackForm.textFeedback === false) {
+          this.$noty.error('That is not a valid feedback mode.')
+          return false
+        }
         this.textFeedbackForm.assignment_id = this.assignmentId
         this.textFeedbackForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
         this.textFeedbackForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
@@ -629,6 +828,7 @@ export default {
         const { data } = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
+          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback_editor'] = this.textFeedbackForm.text_feedback_editor
           this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
         }
       } catch (error) {
@@ -637,20 +837,41 @@ export default {
         }
       }
     },
+    setTextFeedback (textFeedback) {
+      this.richTextFeedback = ''
+      this.plainTextFeedback = ''
+      this.textFeedbackMode = 'plain_text'
+      if (textFeedback) {
+        switch (this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback_editor']) {
+          case ('rich'):
+            this.richTextFeedback = textFeedback
+            this.textFeedbackMode = 'rich_text'
+            break
+          case ('plain'):
+            this.plainTextFeedback = textFeedback
+            this.textFeedbackMode = 'plain_text'
+            break
+          default:
+            this.plainTextFeedback = textFeedback
+            this.textFeedbackMode = 'plain_text'
+            break
+        }
+      }
+    },
     async changePage () {
+      this.retrievedFromS3 = false
       this.showAudioFeedbackMessage = false
-      console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
+      let textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
+      this.setTextFeedback(textFeedback)
       this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
+      console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
 
       this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
       this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
       this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
       this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
-      await this.getTemporaryUrl('file_feedback', this.currentQuestionPage, this.currentStudentPage)
-      if (this.isOpenEndedFileSubmission || this.isOpenEndedAudioSubmission) {
-        await this.getTemporaryUrl('submission', this.currentQuestionPage, this.currentStudentPage)
-      }
-      this.viewSubmission = true
+      await this.getFilesFromS3()
+      this.retrievedFromS3 = true
     },
     async getTemporaryUrl (file, currentQuestionPage, currentStudentPage) {
       if (this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][file] && !this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][`${file}_url`]) {
@@ -714,15 +935,17 @@ export default {
 
         if (this.$route.params.questionId && this.$route.params.studentUserId) {
           this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
-          this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
+          this.setTextFeedback(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback'])
         } else {
-          this.textFeedbackForm.textFeedback = this.submissionFiles[0][0]['text_feedback']
+          this.setTextFeedback(this.submissionFiles[0][0]['text_feedback'])
         }
 
         this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
         this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
         this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
         this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
+        await this.getFilesFromS3()
+        this.retrievedFromS3 = true
       } catch (error) {
         this.$noty.error(error.message)
       }

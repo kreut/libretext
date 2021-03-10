@@ -5,8 +5,10 @@ namespace App\Http\Controllers;
 use App\Cutup;
 use App\Enrollment;
 use App\Grader;
+use App\Http\Requests\StoreTextFeedback;
 use App\LtiLaunch;
 use App\LtiGradePassback;
+use App\Question;
 use App\Score;
 use App\Section;
 use App\User;
@@ -41,6 +43,69 @@ class SubmissionFileController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
+
+    public function getFilesFromS3(Request $request,
+                                   Assignment $assignment,
+                                   Question $question,
+                                   User $studentUser,
+                                   SubmissionFile $submissionFile,
+                                   Grader $grader)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('getFilesFromS3', [$submissionFile, $assignment, $studentUser, $grader]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $open_ended_submission_type = $request->open_ended_submission_type;
+
+        try {
+            $submission_file_info = $submissionFile->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('user_id', $studentUser->id)
+                ->first();
+
+            $response['files'] = ['submission_text' => null,
+                'submission_url' => null,
+                'submission' => null];
+            $file_feedback = null;
+
+            if ($submission_file_info) {
+                $submission = $submission_file_info['submission'];
+                $response['files']['submission'] = $submission;
+                $file_feedback = $submission_file_info['file_feedback'];
+                if ($open_ended_submission_type === 'text') {
+                    try {
+                        $submission_text = Storage::disk('s3')->get("assignments/{$assignment->id}/$submission");
+                    } catch (Exception $e) {
+                        $submission_text = "Error retrieving your text submission: " . $e->getMessage();
+                    }
+                    $response['files']['submission_text'] = $submission_text;
+                    $response['files']['submission_url'] = null;
+                } else {
+
+                    $response['files']['submission_url'] = $this->getTemporaryUrl($assignment->id, $submission);
+                    $response['files']['submission_text'] = null;
+
+
+                }
+            }
+            $response['files']['file_feedback_url'] = $file_feedback ? $this->getTemporaryUrl($assignment->id, $file_feedback) : null;
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+
+    }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -49,6 +114,7 @@ class SubmissionFileController extends Controller
      * @param Section $section
      * @param Grader $grader
      * @param SubmissionFile $submissionFile
+     * @param Enrollment $enrollment
      * @return array
      * @throws Exception
      */
@@ -59,7 +125,7 @@ class SubmissionFileController extends Controller
                                                    Section $section,
                                                    Grader $grader,
                                                    SubmissionFile $submissionFile,
-    Enrollment $enrollment)
+                                                   Enrollment $enrollment)
     {
 
         $response['type'] = 'error';
@@ -74,7 +140,7 @@ class SubmissionFileController extends Controller
         try {
             $course = $assignment->course;
             $role = Auth::user()->role;
-           $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role ,$course,$sectionId);
+            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
 
             $response['type'] = 'success';
             $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users) : [];
@@ -134,13 +200,12 @@ class SubmissionFileController extends Controller
 
 
     public
-    function storeTextFeedback(Request $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
+    function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
     {
         $response['type'] = 'error';
         $assignment_id = $request->assignment_id;
         $question_id = $request->question_id;
         $student_user_id = $request->user_id;
-
 
         $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
 
@@ -149,12 +214,19 @@ class SubmissionFileController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $data = $request->validated();
 
         try {
             $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
-            $this->updateTextFeedbackOrScore('text_feedback', $text_feedback, $student_user_id, $assignment_id, $question_id);
-
+            DB::table('submission_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->update(['text_feedback' => $text_feedback,
+                    'text_feedback_editor' => $data['text_feedback_editor'],
+                    'date_graded' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'grader_id' => Auth::user()->id]);
 
             $response['type'] = 'success';
             $response['message'] = $text_feedback ? 'Your comments have been saved.' : 'This student will not see any comments.';
@@ -214,8 +286,14 @@ class SubmissionFileController extends Controller
 
 
             DB::beginTransaction();
-
-            $this->updateTextFeedbackOrScore('score', $data['score'], $student_user_id, $assignment_id, $question_id);
+            DB::table('submission_files')
+                ->where('user_id', $student_user_id)
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->update(['score' => $data['score'],
+                    'date_graded' => Carbon::now(),
+                    'updated_at' => Carbon::now(),
+                    'grader_id' => Auth::user()->id]);
             $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type, $ltiLaunch, $ltiGradePassback);
             DB::commit();
             $response['type'] = 'success';
@@ -233,18 +311,6 @@ class SubmissionFileController extends Controller
 
     }
 
-    public
-    function updateTextFeedbackOrScore(string $column, string $value, int $student_user_id, int $assignment_id, $question_id)
-    {
-        DB::table('submission_files')
-            ->where('user_id', $student_user_id)
-            ->where('assignment_id', $assignment_id)
-            ->where('question_id', $question_id)
-            ->update([$column => $value,
-                'date_graded' => Carbon::now(),
-                'grader_id' => Auth::user()->id]);
-
-    }
 
 //storeSubmission
 

@@ -237,8 +237,15 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');
 
 
+    Route::get('/canned-responses', 'CannedResponseController@index');
+    Route::post('/canned-responses', 'CannedResponseController@store');
+    Route::delete('/canned-responses/{cannedResponse}', 'CannedResponseController@destroy');
+
+
+
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
+    Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}','SubmissionFileController@getFilesFromS3');
 
     Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');

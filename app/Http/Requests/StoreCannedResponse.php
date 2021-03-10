@@ -1,10 +1,10 @@
 <?php
 
 namespace App\Http\Requests;
-use Illuminate\Validation\Rule;
+
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreTextFeedback extends FormRequest
+class StoreCannedResponse extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,8 +24,7 @@ class StoreTextFeedback extends FormRequest
     public function rules()
     {
         return [
-                'text_feedback_editor' =>Rule::in(['rich','plain'])
-            ];
-
+            'canned_response' => 'required|unique:canned_responses,canned_response,'.$this->user()->id
+        ];
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Policies;
 
+use App\Grader;
 use App\Section;
 use App\User;
 use App\Assignment;
@@ -14,6 +15,31 @@ use Illuminate\Auth\Access\Response;
 class SubmissionFilePolicy
 {
     use HandlesAuthorization;
+
+    public function getFilesFromS3(User $user, SubmissionFile $submissionFile, Assignment $assignment, User $studentUser, Grader $grader)
+    {
+        $has_access = $assignment->course->enrollments->contains('user_id', $studentUser->id);
+
+
+        switch ($user->role) {
+            case(2):
+                $has_access = $has_access && $assignment->course->user_id === $user->id;
+                break;
+            case(4):
+                $section_id = $assignment->course->enrollments->where('user_id', $studentUser->id)->pluck('section_id')->first();
+                $grader_sections = $grader->where('user_id', $user->id)->select('section_id')->get();
+                $has_access = $has_access && $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray());
+                break;
+            default:
+                $has_access = false;
+
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to view that submission file.');
+
+
+    }
 
     public function downloadAssignmentFile(User $user, AssignmentFile $submissionFile, int $assignment_id, string $submission)
     {
@@ -31,8 +57,8 @@ class SubmissionFilePolicy
         }
 
 
-        return ((int)$user_id === $user->id) ?
-            Response::allow()
+        return ((int)$user_id === $user->id)
+            ? Response::allow()
             : Response::deny('You are not allowed to download that assignment file.');
 
     }

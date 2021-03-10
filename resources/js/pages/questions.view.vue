@@ -1090,7 +1090,7 @@
                           </a>
                           <br>
                         </span>
-                        <strong>Comments:</strong> {{ questions[currentPage - 1].text_feedback }}<br>
+                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback" /><br>
 
                         <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
                         <span v-if="questions[currentPage - 1].grader_id">

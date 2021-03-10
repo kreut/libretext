@@ -2,10 +2,13 @@
 
 namespace Tests\Feature\Instructors;
 
+use App\CannedResponse;
+use App\Grader;
 use App\Question;
 use App\Score;
 use App\Section;
 use App\Submission;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -36,8 +39,11 @@ class GradingTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->grader_user = factory(User::class)->create();
+        $this->grader_user->role = 4;
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
 
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
 
         $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
@@ -47,7 +53,7 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'open_ended_submission_type' => 'file',
-            'order' =>1,
+            'order' => 1,
             'points' => 10
         ]);
         $this->question_file = factory(SubmissionFile::class)->create([
@@ -56,9 +62,96 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id
         ]);
+        factory(CannedResponse::class)->create(['user_id' => $this->user->id]);
+
+        $data = [
+            'type' => 'q',
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+        SubmissionFile::create($data);
+        $this->getFilesFromS3Data=['open_ended_submission_type' => 'text'];
+    }
+
+    /** @test */
+
+public function non_owner_non_grader_cannot_get_s3_files(){
+
+    $this->actingAs($this->student_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+    ->assertJson(['message' => 'You are not allowed to view that submission file.']);
+
+}
+/** @test */
+    public function owner_can_get_s3_files(){
+        $response['files'] = ['submission' => 'fake_1.pdf'];
+        $this->actingAs($this->user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+            ->assertJson($response);
+
+    }
+
+    /** @test */
+    public function grader_can_get_s3_files(){
+        $response['files'] = ['submission' => 'fake_1.pdf'];
+        $this->actingAs($this->grader_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+            ->assertJson($response);
+
+    }
+    /** @test */
+
+    public function student_cannot_get_canned_responses()
+    {
+        $this->actingAs($this->student_user)->getJson("/api/canned-responses")
+            ->assertJson(['message' => 'You are not allowed to get canned responses.']);
 
 
     }
+
+    /** @test */
+    public function instructor_can_get_canned_responses()
+    {
+
+        $this->actingAs($this->user)->getJson("/api/canned-responses")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+    public function non_grader_instructor_cannot_store_canned_responses()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/canned-responses", ['canned_response' => 'blah blah'])
+            ->assertJson(['message' => 'You are not allowed to store a canned response.']);
+
+    }
+
+    /** @test */
+    public function grader_instructor_can_store_canned_responses()
+    {
+        $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => 'blah blah'])
+            ->assertJson(['message' => 'Your canned response has been saved.']);
+
+    }
+
+    /** @test */
+
+    public function canned_responses_should_be_unique_by_user()
+    {
+        $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => 'some canned response'])
+            ->assertJsonValidationErrors(['canned_response']);
+
+    }
+
+    /** @test */
+
+    public function canned_responses_should_be_non_empty()
+    {
+        $this->actingAs($this->user)->postJson("/api/canned-responses", ['canned_response' => ''])
+            ->assertJsonValidationErrors(['canned_response']);
+
+    }
+
     /** @test */
     public function cannot_get_assignment_files_if_not_owner()
     {
@@ -75,7 +168,6 @@ class GradingTest extends TestCase
     {
 
 
-
         $question_score = 5;
 
         $file_submission_score = 2.0;
@@ -83,7 +175,7 @@ class GradingTest extends TestCase
         Submission::create([
             'user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
-            'question_id'=> $this->question->id,
+            'question_id' => $this->question->id,
             'submission' => 'some other submission',
             'score' => $question_score,
             'answered_correctly_at_least_once' => 0,
@@ -96,8 +188,8 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'user_id' => $this->student_user->id,
-            'score' =>  $file_submission_score])
-            ->assertJson(['type'=> 'success']);
+            'score' => $file_submission_score])
+            ->assertJson(['type' => 'success']);
 
 
         $score = DB::table('scores')->where('user_id', $this->student_user->id)
@@ -105,12 +197,8 @@ class GradingTest extends TestCase
             ->first();
 
 
-
-
-        $this->assertEquals( (float) $score->score,$question_score + $file_submission_score);
+        $this->assertEquals((float)$score->score, $question_score + $file_submission_score);
     }
-
-
 
 
     /** @test */
@@ -121,7 +209,7 @@ class GradingTest extends TestCase
         $question_score = 5;
 
         $file_submission_score = 30;
-         DB::table('assignment_question')
+        DB::table('assignment_question')
             ->where('question_id', $this->question->id)
             ->where('assignment_id', $this->assignment->id)
             ->first();
@@ -129,7 +217,7 @@ class GradingTest extends TestCase
         Submission::create([
             'user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
-            'question_id'=> $this->question->id,
+            'question_id' => $this->question->id,
             'submission' => 'some other submission',
             'score' => $question_score,
             'answered_correctly_at_least_once' => 0,
@@ -142,11 +230,9 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'user_id' => $this->student_user->id,
-            'score' =>  $file_submission_score])
-        ->assertJson(['message'=>  'The total of your Question Submission Score and File Submission score can\'t be greater than the total number of points for this question.']);
+            'score' => $file_submission_score])
+            ->assertJson(['message' => 'The total of your Question Submission Score and File Submission score can\'t be greater than the total number of points for this question.']);
     }
-
-
 
 
     /** @test */
@@ -173,7 +259,6 @@ class GradingTest extends TestCase
     }
 
 
-
     /** @test */
 
     public function can_get_assignment_files_if_owner()
@@ -185,8 +270,6 @@ class GradingTest extends TestCase
     }
 
 
-
-
     /** @test */
     public function can_download_assignment_file_if_owner()
     {
@@ -195,23 +278,26 @@ class GradingTest extends TestCase
         );
 
     }
-/** @test */
 
-    public function can_download_assignment_file_if_grader(){
+    /** @test */
+
+    public function can_download_assignment_file_if_grader()
+    {
 
 
     }
+
     /** @test */
     public function cannot_download_assignment_file_if_not_owner()
     {
-  /*$this->actingAs($this->user_2)->postJson("/api/submission-files/download",
-            [
-                'assignment_id' => $this->assignment->id,
-                'submission' => $this->assignment_file->submission
-            ]
-        );*/
-     //NEED EXCEPTION
-            //->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);
+        /*$this->actingAs($this->user_2)->postJson("/api/submission-files/download",
+                  [
+                      'assignment_id' => $this->assignment->id,
+                      'submission' => $this->assignment_file->submission
+                  ]
+              );*/
+        //NEED EXCEPTION
+        //->assertJson(['type' => 'error', 'message' => 'You are not allowed to download that assignment file.']);
 
     }
 
@@ -251,6 +337,7 @@ class GradingTest extends TestCase
                 'assignment_id' => $this->assignment->id,
                 'user_id' => $this->student_user->id,
                 'type' => 'assignment',
+                'text_feedback_editor' => 'plain',
                 'textFeedback' => 'Some text feedback'
             ]
         )
