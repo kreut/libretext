@@ -36,7 +36,7 @@ jobs:
     - name: Directory Permissions
       run: chmod -R 777 storage bootstrap/cache
     - name: Execute tests (Unit and Feature tests) via PHPUnit
-      run: php artisan test --testsuite Feature
+      run: vendor/bin/phpunit
       env:
         DB_PORT: ${{ job.services.mysql.ports[3306] }}
         DB_USERNAME: root
