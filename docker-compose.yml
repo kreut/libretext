@@ -36,6 +36,20 @@ services:
             - sail
         healthcheck:
           test: ["CMD", "mysqladmin", "ping"]
+    mysql_test:
+      image: "mysql:8.0"
+      ports:
+        - '${FORWARD_DB_PORT:-3307}:3306'
+      environment:
+        MYSQL_ROOT_PASSWORD: "${TEST_DB_PASSWORD}"
+        MYSQL_DATABASE: "${TEST_DB_DATABASE}"
+        MYSQL_USER: "${TEST_DB_USERNAME}"
+        MYSQL_PASSWORD: "${TEST_DB_PASSWORD}"
+        MYSQL_ALLOW_EMPTY_PASSWORD: "yes"
+      links:
+        - "mysql:mysql"
+      networks:
+        - sail
     redis:
         image: 'redis:alpine'
         ports:

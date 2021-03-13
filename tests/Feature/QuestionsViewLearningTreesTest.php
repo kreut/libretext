@@ -83,8 +83,10 @@ class QuestionsViewLearningTreesTest extends TestCase
     public function incorrect_responses_still_get_learning_tree_points_as_the_score_if_explored_learning_tree()
     {
 
-        $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )->original['submission_id'];
-        $submission = Submission::find($submission_id);
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/submissions", $this->incorrectSubmission );
+        $submission = Submission::latest()->first();
         $submission->explored_learning_tree = 1;
         $submission->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )
@@ -120,8 +122,7 @@ class QuestionsViewLearningTreesTest extends TestCase
     /** @test */
     public function if_they_have_not_explored_the_learning_tree_and_they_did_not_get_the_question_correct_there_is_no_update()
     {
-        $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )->original['submission_id'];
-        $submission = Submission::find($submission_id);
+       $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission );
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )
             ->assertJson(['message' => 'You can resubmit after spending time exploring the Learning Tree.']);
@@ -134,8 +135,8 @@ class QuestionsViewLearningTreesTest extends TestCase
     public function correct_penalty_applied_based_on_penalty_percent_and_submission_count()
     {
         //no penalty
-        $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission )->original['submission_id'];
-        $submission = Submission::find($submission_id);
+       $this->actingAs($this->student_user)->postJson("/api/submissions", $this->incorrectSubmission );
+        $submission = Submission::latest()->first();
         $submission->explored_learning_tree = 1;
         $submission->save();
         //no penalty
@@ -164,8 +165,8 @@ class QuestionsViewLearningTreesTest extends TestCase
     {
 
         //submit correct submission;
-         $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission)->original['submission_id'];
-         $submission = Submission::find($submission_id);
+         $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission);
+         $submission = Submission::latest()->first();
         $submission->explored_learning_tree = 1;
          $submission->save();
 

@@ -36,7 +36,7 @@ class Email extends Model
                     'assignment' => $notification->assignment_name,
                     'course' => $notification->course_name,
                     'hours_until_due' => $notification->hours_until_due > 1 ? "{$notification->hours_until_due} hours" : "{$notification->hours_until_due} hour",
-                    'assignment_link' => env('APP_URL') . "/students/assignments/{$notification->assignment_id}/summary"
+                    'assignment_link' => config('app.url') . "/students/assignments/{$notification->assignment_id}/summary"
                 ];
 
                 $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);

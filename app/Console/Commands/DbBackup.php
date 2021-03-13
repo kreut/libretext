@@ -1,7 +1,10 @@
 <?php
+
 namespace App\Console\Commands;
+
 use Illuminate\Console\Command;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
 class DbBackup extends Command
@@ -18,6 +21,7 @@ class DbBackup extends Command
      * @var string
      */
     protected $description = 'Create Database Backup';
+
     /**
      * Create a new command instance.
      *
@@ -27,6 +31,7 @@ class DbBackup extends Command
     {
         parent::__construct();
     }
+
     /**
      * Execute the console command.
      *
@@ -34,15 +39,15 @@ class DbBackup extends Command
      */
     public function handle()
     {
-
-        $filename = env('DB_DATABASE') . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";
+        $database_name = DB::connection()->getDatabaseName();
+        $filename = $database_name . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";
         echo "Backing up $filename\r\n";
-        $command = "mysqldump ".env('DB_DATABASE'). " | gzip > " . storage_path() . "/db_backups/". $filename . ".gz";
+        $command = "mysqldump " . $database_name . " | gzip > " . storage_path() . "/db_backups/" . $filename . ".gz";
         $returnVar = NULL;
-        $output  = NULL;
+        $output = NULL;
         exec($command, $output, $returnVar);
-        $db_backup = file_get_contents(storage_path() . "/db_backups/". $filename . ".gz");
-        Storage::disk('s3')->put("db_backups/". $filename . ".gz", $db_backup, ['StorageClass' => 'STANDARD_IA']);
+        $db_backup = file_get_contents(storage_path() . "/db_backups/" . $filename . ".gz");
+        Storage::disk('s3')->put("db_backups/" . $filename . ".gz", $db_backup, ['StorageClass' => 'STANDARD_IA']);
 
         echo "Done.";
     }

@@ -246,7 +246,7 @@ class SolutionController extends Controller
             if (!$authorized->allowed()) {
                 //I don't actually return a message to the user if they're not authorized, I just log it
                 //for testing purposes I want to know why they weren't authorized
-                if (env('DB_DATABASE') === "test_libretext") {
+                if (\App::runningUnitTests()) {
                     return ['message' => $authorized->message()];
                 }
                 throw new Exception($authorized->message());

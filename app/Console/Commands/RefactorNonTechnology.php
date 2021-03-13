@@ -3,6 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Libretext;
+use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 use App\Question;

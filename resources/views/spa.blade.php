@@ -1,12 +1,14 @@
 @php
+
   $config = [
       'appName' => config('app.name'),
       'locale' => $locale = app()->getLocale(),
       'locales' => config('app.locales'),
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
-      'isMe' => env('IS_ME_COOKIE') === ($_COOKIE['IS_ME'] ?? 'no cookie present')
+      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present')
   ];
+
   if (!\Auth::user() && !session()->has('landing_page')){
       session(['landing_page' =>$_SERVER['REQUEST_URI']]);
   }

@@ -13,7 +13,7 @@ trait LibretextFiles
 
     public function getAppUrl(){
         //used for non-technology content.  Don't want to use localhost or you won't be able to get the assets
-       return  (env('APP_ENV') === 'local') ? 'https://dev.adapt.libretexts.org' : env('APP_URL');
+       return  (app()->environment('local')) ? 'https://dev.adapt.libretexts.org' : config('app.url');
     }
 
 

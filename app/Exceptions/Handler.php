@@ -76,7 +76,7 @@ class Handler extends ExceptionHandler
             $request,
             request()->user() ? request()->user()->id : 'No user logged in'
         );
-        (env('APP_ENV') === 'local') || !($dontReports) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
+        (app()->environment('local')) || !($dontReports) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
     }
 
     /**

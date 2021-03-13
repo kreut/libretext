@@ -190,7 +190,7 @@ class Submission extends Model
 
 
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);
-            if (env('DB_DATABASE') === "test_libretext") {
+            if (\App::runningUnitTests()) {
                 $response['submission_id'] = $submission->id;
             }
             $response['type'] = $score_not_updated ? 'info' : 'success';

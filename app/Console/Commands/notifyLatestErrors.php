@@ -50,7 +50,7 @@ class notifyLatestErrors extends Command
             $pos = strrpos($error_log, "[$date");
             $latest_error = substr($error_log, $pos);
             Telegram::sendMessage([
-                'chat_id' => env('TELEGRAM_CHANNEL_ID', ''),
+                'chat_id' => config('myconfig.telegram_channel_id'),
                 'parse_mode' => 'HTML',
                 'text' =>  $latest_error
             ]);

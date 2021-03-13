@@ -1134,7 +1134,7 @@ class AssignmentSyncQuestionController extends Controller
         $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
-        \JWTAuth::getJWTProvider()->setSecret(env('JWT_SECRET'));
+        \JWTAuth::getJWTProvider()->setSecret(config('app.jwt_secret'));
         $payload = auth()->payload();
 
         return $problemJWT;
@@ -1150,10 +1150,10 @@ class AssignmentSyncQuestionController extends Controller
         } else {
             switch ($technology) {
                 case('webwork'):
-                    $seed = env('WEBWORK_SEED');
+                    $seed = config('myconfig.webwork_seed');
                     break;
                 case('imathas'):
-                    $seed = env('IMATHAS_SEED');
+                    $seed = config('myconfig.imathas_seed');
                     break;
             }
             DB::table('seeds')->insert([
