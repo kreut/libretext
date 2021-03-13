@@ -241,7 +241,9 @@ class LearningTreeController extends Controller
 
 
             $learningTree->user_id = Auth::user()->id;
-            $learningTree->learning_tree = $this->getRootNode($validated_node['title'], $data['library'], $request->text, $request->color, $data['page_id']);
+
+            $shortened_title = strlen($validated_node['title']) < 29 ? $validated_node['title'] : substr($validated_node['title'],0,29) .  '...';
+            $learningTree->learning_tree = $this->getRootNode( $shortened_title , $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();
 
             $response['type'] = 'success';
