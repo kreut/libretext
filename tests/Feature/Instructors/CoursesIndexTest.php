@@ -2,16 +2,20 @@
 
 namespace Tests\Feature\Instructors;
 
-use App\CourseAccessCode;
+
+use App\Assignment;
+use App\Enrollment;
 use App\GraderAccessCode;
 use App\Section;
 use App\User;
 use App\Course;
 use App\Grader;
 use Tests\TestCase;
+use App\Traits\Test;
 
 class CoursesIndexTest extends TestCase
 {
+    use Test;
 
     public function setup(): void
     {
@@ -20,6 +24,15 @@ class CoursesIndexTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+        Enrollment::create(['course_id' => $this->course->id,
+            'user_id' => $this->student_user->id,
+            'section_id' => $this->section->id]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
@@ -54,7 +67,8 @@ class CoursesIndexTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to import that course.']);
 
     }
-/** @test */
+
+    /** @test */
     public function instructor_can_import_a_course()
     {
 
@@ -142,7 +156,7 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->postJson("/api/invitations/grader",
             ['course_id' => $this->course->id,
                 'email' => 'some bad email'])
-         ->assertJsonValidationErrors(['email']);
+            ->assertJsonValidationErrors(['email']);
     }
 
 
@@ -231,7 +245,7 @@ class CoursesIndexTest extends TestCase
 
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some New Course',
-            'section' =>'Some New Section',
+            'section' => 'Some New Section',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
             'public' => 1

@@ -4,7 +4,6 @@ namespace Tests\Feature\Instructors;
 
 use App\AssignmentGroupWeight;
 use App\Course;
-use App\FinalGrade;
 use App\Grader;
 use App\Section;
 use App\User;
@@ -14,9 +13,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
+use App\Traits\Test;
+
 class AssignmentsIndex1Test extends TestCase
 {
 
+    use Test;
     /**Still must test the stuff with the correct/completed and number**/
     /** Should test that only an instructor can create an assignment... */
     public function setup(): void
@@ -26,7 +28,6 @@ class AssignmentsIndex1Test extends TestCase
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section= factory(Section::class)->create(['course_id' => $this->course->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
         $this->user_2 = factory(User::class)->create();
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
@@ -38,6 +39,9 @@ class AssignmentsIndex1Test extends TestCase
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
         Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
+
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
 
         $this->assignment_info = ['course_id' => $this->course->id,
             'name' => 'First Assignment',

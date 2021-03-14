@@ -237,7 +237,7 @@ class Submission extends Model
                 $max_num_iterations = (int)floor(100 / $late_deduction_percent);
                 //Ex 100/52 = 1.92....use 1.  Makes sense since you won't deduct more than 100%
                 //Ex 100/50 = 2.
-                $due = Carbon::parse($assignment->due);
+                $due = Carbon::parse($assignment->assignToTimingByUser('due'));
                 for ($num_late_periods = 0; $num_late_periods < $max_num_iterations; $num_late_periods++) {
                     if ($due > $now) {
                         break;

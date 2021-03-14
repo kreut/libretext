@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Assignment;
+use App\AssignToTiming;
 use App\Course;
 use App\Enrollment;
 use App\Extension;
@@ -20,10 +21,12 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use App\Traits\Test;
 
 class QuestionsViewTest extends TestCase
 {
     use Statistics;
+    use Test;
 
     public function setup(): void
     {
@@ -43,10 +46,9 @@ class QuestionsViewTest extends TestCase
         ]);
 
 
-
-
-
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);
         $this->question_points = 10;
@@ -85,8 +87,6 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
-
-
     /** @test */
 
     public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
@@ -112,12 +112,18 @@ class QuestionsViewTest extends TestCase
         $this->assignment->late_policy = 'deduction';
         $this->assignment->late_deduction_application_period = 'once';
         $this->assignment->late_deduction_percent = 50;
-        $now = Carbon::now('UTC');
-        $this->assignment->due = $now->subHour(1)->toDateTimeString();//was due an hour ago.
-        $this->assignment->final_submission_deadline = $now->addHour(1)->toDateTimeString();
         $this->assignment->save();
+        $now = Carbon::now();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
 
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $assignToTiming->due = $now->subHour()->toDateTimeString();//was due an hour ago.
+        $assignToTiming->final_submission_deadline = $now->addHours(2)->toDateTimeString();
+        $assignToTiming->save();
+
+        $this->actingAs($this->student_user)
+            ->postJson("/api/submissions", $this->h5pSubmission);
+
+
         $submission = Submission::where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
             ->where('question_id', $this->question->id)
@@ -292,21 +298,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to start this clicker assessment.']);
     }
 
-    /** @test */
-
-    public function owner_can_start_a_clicker_assessment()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
-            ->assertJson(['message' => 'You students can begin submitting responses.']);
-    }
-
-    /** @test */
-
-    public function time_to_submit_a_clicker_assessment_must_be_valid()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 oogas'])
-            ->assertJsonValidationErrors(['time_to_submit']);
-    }
 
     /** @test */
     public function owner_can_submit_solution_text_attached_to_audio()
@@ -438,11 +429,15 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension_even_if_solutions_are_released()
     {
-        $this->assignment->due = "2001-03-05 09:00:00";
+
         $this->assignment->assessment_type = 'delayed';
         $this->assignment->show_scores = false;
         $this->assignment->solutions_released = true;
         $this->assignment->save();
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";
+        $assignToTiming->save();
 
         Extension::create(['user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
@@ -613,10 +608,13 @@ class QuestionsViewTest extends TestCase
         $this->assignment->late_policy = 'deduction';
         $this->assignment->late_deduction_application_period = '1 hour';
         $this->assignment->late_deduction_percent = 10;
-        $now = Carbon::now('UTC');
-        $this->assignment->due = $now->subHour(1)->subMinute(2)->toDateTimeString();//was due an hour and 2 minutes ago -- should penalize 20%
-        $this->assignment->final_submission_deadline = $now->addHour(5)->toDateTimeString();
         $this->assignment->save();
+        $now = Carbon::now();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = $now->subHour()->subMinutes(2)->toDateTimeString();//was due an hour and 2 minutes ago -- should penalize 20%
+        $assignToTiming->final_submission_deadline = $now->addHours(5)->toDateTimeString();
+        $assignToTiming->save();
+
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
         $submission = Submission::where('assignment_id', $this->assignment->id)
             ->where('user_id', $this->student_user->id)
@@ -656,9 +654,10 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function not_accepted_late_policy_will_not_accept_late_submissions()
     {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
 
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['message' => 'No responses will be saved since the due date for this assignment has passed.']);
@@ -668,10 +667,17 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function deduction_or_marked_late_policy_will_accept_past_the_due_date_and_before_the_final_submission_deadline()
     {
-        $this->assignment->due = "2020-12-10 09:00:00";
+
         $this->assignment->late_policy = 'marked late';
-        $this->assignment->final_submission_deadline = "2029-03-05 09:00:00";
         $this->assignment->save();
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2020-12-10 09:00:00";
+        $assignToTiming->final_submission_deadline = "2029-03-05 09:00:00";
+        $assignToTiming->save();
+
+
+
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['message' => 'Question submission saved. Your scored was updated.']);
@@ -686,10 +692,16 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function deduction_or_marked_late_policy_will_not_accept_past_the_due_date_and_after_the_final_submission_deadline()
     {
-        $this->assignment->due = "2020-12-10 09:00:00";
+
         $this->assignment->late_policy = 'marked late';
-        $this->assignment->final_submission_deadline = "2020-12-11 09:00:00";
         $this->assignment->save();
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2020-12-10 09:00:00";
+        $assignToTiming->final_submission_deadline = "2020-12-11 09:00:00";
+        $assignToTiming->save();
+
+
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['message' => 'No more late responses are being accepted.']);
@@ -705,8 +717,10 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_response_if_assignment_past_due_has_extension()
     {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";
+        $assignToTiming->save();
 
         Extension::create(['user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
@@ -762,7 +776,11 @@ class QuestionsViewTest extends TestCase
     public function student_cannot_create_cutups_if_the_assignment_is_past_due()
     {
         $this->createSubmissionFile();
-        $this->assignment->due = Carbon::yesterday();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = Carbon::yesterday();
+        $assignToTiming->save();
+
+
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
             ->assertJson(['message' => "No responses will be saved since the due date for this assignment has passed."]);
@@ -773,8 +791,10 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_no_extension()
     {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error', 'message' => 'No responses will be saved since the due date for this assignment has passed.']);
@@ -784,8 +804,9 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function with_a_late_assignment_policy_of_not_accepted_a_student_cannot_submit_response_if_assignment_past_due_and_past_extension()
     {
-        $this->assignment->due = "2001-03-05 09:00:00";
-        $this->assignment->save();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
 
         Extension::create(['user_id' => $this->student_user->id,
             'assignment_id' => $this->assignment->id,
@@ -1350,11 +1371,11 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
-    public function cannot_submit_response_if_user_not_enrolled_in_course()
+    public function cannot_submit_response_if_user_not_assigned_the_assignment()
     {
         $this->actingAs($this->student_user_2)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
-                'message' => 'No responses will be saved since the assignment is not part of your course.']);
+                'message' => 'No responses will be saved since you were not assigned to this assignment.']);
 
     }
 
@@ -1362,9 +1383,11 @@ class QuestionsViewTest extends TestCase
     /** @test */
     public function cannot_submit_response_if_assignment_not_yet_available()
     {
-        $this->assignment->available_from = "2035-03-05 09:00:00";
-        $this->assignment->save();
 
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->available_from = "2035-03-05 09:00:00";
+        $assignToTiming->save();
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['type' => 'error',
@@ -1438,7 +1461,7 @@ class QuestionsViewTest extends TestCase
     {
 
         $this->actingAs($this->student_user_3)->deleteJson("/api/submission-texts/{$this->assignment->id}/{$this->question->id}")
-            ->assertJson(['message' => 'You are not allowed to reset this text submission. No responses will be saved since the assignment is not part of your course.']);
+            ->assertJson(['message' => 'You are not allowed to reset this text submission. No responses will be saved since you were not assigned to this assignment.']);
 
     }
 
@@ -1473,5 +1496,22 @@ class QuestionsViewTest extends TestCase
             ->get();
         $this->assertEquals(1, count($submission_files));
     }
+
+    /** @test */
+
+    public function owner_can_start_a_clicker_assessment()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
+            ->assertJson(['message' => 'You students can begin submitting responses.']);
+    }
+
+    /** @test */
+
+    public function time_to_submit_a_clicker_assessment_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 oogas'])
+            ->assertJsonValidationErrors(['time_to_submit']);
+    }
+
 
 }

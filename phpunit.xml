@@ -31,6 +31,6 @@
         <server name="SESSION_DRIVER" value="array"/>
         <env name="DB_CONNECTION" value="mysql_test"/>
         <env name="DB_DATABASE" value="test_libretext"/>
-        <ini name="display_errors" value="true"/>
+        <ini name="display_errors" value="false"/>
     </php>
 </phpunit>

@@ -4,6 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignToGroup;
+use App\AssignToTiming;
+use App\AssignToUser;
+use App\Section;
 use App\Traits\DateFormatter;
 use App\Course;
 use App\Solution;
@@ -12,6 +16,7 @@ use App\Extension;
 use App\Submission;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -448,12 +453,18 @@ class AssignmentController extends Controller
 
     /**
      * @param StoreAssignment $request
+     * @param Assignment $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param Section $section
+     * @param User $user
      * @return array
      * @throws Exception
      */
 
-    public function store(StoreAssignment $request, Assignment $assignment, AssignmentGroupWeight $assignmentGroupWeight)
+    public function store(StoreAssignment $request, Assignment $assignment,
+                          AssignmentGroupWeight $assignmentGroupWeight,
+                          Section $section,
+                          User $user)
     {
         //Log::info('can log');
         $response['type'] = 'error';
@@ -469,14 +480,13 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-
+            $assign_tos = $request->assign_tos;
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
 
             $assignment = Assignment::create(
-                ['name' => $data['name'],
-                    'available_from' => $this->formatDateFromRequest($request->available_from_date, $request->available_from_time),
-                    'due' => $this->formatDateFromRequest($request->due_date, $request->due_time),
+                [
+                    'name' => $data['name'],
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
@@ -495,7 +505,6 @@ class AssignmentController extends Controller
                     'solutions_released' => ($data['source'] === 'a' && $request->assessment_type === 'real time') ? 1 : 0,
                     'show_points_per_question' => ($data['source'] === 'x' || $request->assessment_type === 'delayed') ? 0 : 1,
                     'late_deduction_percent' => $data['late_deduction_percent'] ?? null,
-                    'final_submission_deadline' => $this->getFinalSubmissionDeadline($request),
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
@@ -503,6 +512,8 @@ class AssignmentController extends Controller
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
+
+            $this->addAssignTos($assignment, $assign_tos, $section, $user);
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
 
@@ -516,6 +527,104 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error creating <strong>{$data['name']}</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+    }
+
+    public function addAssignTos(Assignment $assignment, array $assign_tos, Section $section, User $user)
+    {
+
+        $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
+        $assign_to_timings = AssignToTiming::where('assignment_id', $assignment->id)->get();
+        if ($assign_to_timings->isNotEmpty()) {
+            //remove the old ones
+            foreach ($assign_to_timings as $assign_to_timing) {
+                AssignToGroup::where('assign_to_timing_id', $assign_to_timing->id)->delete();
+                AssignToUser::where('assign_to_timing_id', $assign_to_timing->id)->delete();
+                $assign_to_timing->delete();
+            }
+        }
+
+        foreach ($assign_tos as $assign_to) {
+
+            $assignToTiming = new AssignToTiming();
+
+            $assignToTiming->assignment_id = $assignment->id;
+            $assignToTiming->available_from = $this->formatDateFromRequest($assign_to['available_from_date'], $assign_to['available_from_time']);
+            $assignToTiming->due = $this->formatDateFromRequest($assign_to['due_date'], $assign_to['due_time']);
+            $assignToTiming->final_submission_deadline = $assignment->late_policy !== 'not accepted'
+                ? $this->formatDateFromRequest($assign_to['final_submission_deadline_date'], $assign_to['final_submission_deadline_time'])
+                : null;
+
+
+            $assignToTiming->save();
+            $assigned_users = [];
+            foreach ($assign_to['groups'] as $value) {
+
+                $assignToGroup = new AssignToGroup();
+                if (strpos($value, ' --- ') !== false) {
+                    $user_info = explode(' --- ', $value);
+                    $email = $user_info[1];
+
+                    $assign_to_user = $user->where('email', $email)
+                        ->whereIn('id', $enrolled_users) //might be an issue for the fake user?
+                        ->first();
+                    if (in_array($assign_to_user->id, $assigned_users)) {
+                        continue;
+                    }
+                    $assignToGroup->group_id = $assign_to_user->id;
+                    $assignToGroup->group = 'user';
+
+                    $enrolled_users = User::find($assign_to_user->id);
+                    $assigned_users[] = $assign_to_user->id;
+
+                }
+
+                $assign_to_section = $section->where('name', $value)
+                    ->where('course_id', $assignment->course_id)
+                    ->first();
+
+                if ($assign_to_section) {
+                    $assignToGroup->group_id = $assign_to_section->id;
+                    $assignToGroup->group = 'section';
+
+                    $enrolled_users = $this->removeDuplicateUsers($assign_to_section->enrolledUsers, $assigned_users);
+                    if (!count($enrolled_users)) {
+                        continue;
+                    }
+                }
+                if (in_array($value, ['Everybody', 'Everybody else'])) {
+                    $assignToGroup->group = 'course';
+                    $assignToGroup->group_id = $assignment->course->id;
+                    $enrolled_users = $this->removeDuplicateUsers($assignment->course->enrollments, $assigned_users);
+                    if (!count($enrolled_users)) {
+                        continue;
+                    }
+
+                }
+
+                $assignToGroup->assign_to_timing_id = $assignToTiming->id;
+                $assignToGroup->save();
+
+                if ($enrolled_users) {
+                    foreach ($enrolled_users as $enrolled_user) {
+                        $assignToUser = new AssignToUser();
+                        $assignToUser->assign_to_timing_id = $assignToTiming->id;
+                        $assignToUser->user_id = $enrolled_user->id;
+                        $assignToUser->save();
+                    }
+                }
+            }
+        }
+
+    }
+
+    public function removeDuplicateUsers($enrolled_users, $assigned_users)
+    {
+        foreach ($enrolled_users as $key => $enrolled_user) {
+            if (in_array($enrolled_user->id, $assigned_users)) {
+                $enrolled_users->forget($key);
+            }
+        }
+        return $enrolled_users;
     }
 
     public function getDefaultOpenEndedTextEditor($request, $data)
@@ -576,13 +685,13 @@ class AssignmentController extends Controller
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
             $response['assignment'] = [
-                'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view'): 'basic',
+                'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
-                'time_left' => $this->getTimeLeft($assignment),
+                'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
-                'past_due' => time() > strtotime($assignment->due),
+                'past_due' =>  Auth::user()->role === 3 ? time() > strtotime($assignment->assignToTimingByUser('due')) : '',
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
@@ -686,8 +795,8 @@ class AssignmentController extends Controller
             $sections = (Auth::user()->role === 2) ? $assignment->course->sections : $assignment->course->graderSections();
 
             $response['sections'] = [];
-            foreach ($sections as $key => $section){
-                $response['sections'][]=['name'=>$section->name,'id'=>$section->id];
+            foreach ($sections as $key => $section) {
+                $response['sections'][] = ['name' => $section->name, 'id' => $section->id];
             }
 
             $response['assignment'] = [
@@ -735,18 +844,37 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'formatted_late_policy' => $this->formatLatePolicy($assignment),
-                'past_due' => time() > strtotime($assignment->due),
-                'due' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->due, Auth::user()->time_zone),
-                'available_on' => $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->available_from, Auth::user()->time_zone),
                 'number_of_questions' => count($assignment->questions)
             ];
+            if (auth()->user()->role === 3) {
+                $assign_to_timing = $assignment->assignToTimingByUser();
+
+                $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
+                $formatted_items['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone);
+                $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
+
+
+            } else {
+
+
+                $formatted_items['assign_tos'] = $assignment->assignToGroups();
+                foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
+                    $available_from = $assign_to['available_from'];
+                    $due = $assign_to['due'];
+                    $final_submission_deadline = $assign_to['final_submission_deadline'];
+                    $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
+                    $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                    $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                    $assignments_info['assign_tos']['assign_to']['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
+                    $assignments_info['assign_tos']['assign_to']['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
+                    $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                    $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                }
+            }
             foreach ($formatted_items as $key => $value) {
                 $response['assignment'][$key] = $value;
             }
-            $editing_form_items = $assignment->getEditingFormItems($assignment->available_from, $assignment->due, $assignment->final_submission_deadline, $assignment);
-            foreach ($editing_form_items as $key => $value) {
-                $response['assignment'][$key] = $value;
-            }
+
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -789,7 +917,7 @@ class AssignmentController extends Controller
     {
         $Extension = new Extension();
         $extensions_by_user = $Extension->getUserExtensionsByAssignment(Auth::user());
-        $due = $extensions_by_user[$assignment->id] ?? $assignment->due;
+        $due = $extensions_by_user[$assignment->id] ?? $assignment->assignToTimingByUser('due');
         $now = Carbon::now();
         return max($now->diffInMilliseconds(Carbon::parse($due), false), 0);
 
@@ -808,10 +936,16 @@ class AssignmentController extends Controller
      * @param StoreAssignment $request
      * @param Assignment $assignment
      * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param Section $section
+     * @param User $user
      * @return array
      * @throws Exception
      */
-    public function update(StoreAssignment $request, Assignment $assignment, AssignmentGroupWeight $assignmentGroupWeight)
+    public function update(StoreAssignment $request,
+                           Assignment $assignment,
+                           AssignmentGroupWeight $assignmentGroupWeight,
+                           Section $section,
+                           User $user)
     {
 
         $response['type'] = 'error';
@@ -826,18 +960,18 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
+            $assign_tos = $request->assign_tos;
+
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
-            $data['available_from'] = $this->formatDateFromRequest($request->available_from_date, $request->available_from_time);
             $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
             $data['default_open_ended_text_editor'] = $default_open_ended_text_editor;
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
-            $data['due'] = $this->formatDateFromRequest($request->due_date, $request->due_time);
-            $data['final_submission_deadline'] = $this->getFinalSubmissionDeadline($request);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             unset($data['available_from_date']);
             unset($data['available_from_time']);
+            unset($data['final_submission_deadline']);
             unset($data['open_ended_response']);
             //submissions exist so don't let them change the things below
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
@@ -847,11 +981,21 @@ class AssignmentController extends Controller
                 unset($data['submission_files']);
                 unset($data['assessment_type']);
             }
+            foreach ($assign_tos as $key => $assign_to) {
+                unset($data['groups_' . $key]);
+                unset($data['due_' . $key]);
+                unset($data['final_submission_deadline_' . $key]);
+                unset($data['available_from_date_' . $key]);
+                unset($data['available_from_time_' . $key]);
+                unset($data['final_submission_deadline_date' . $key]);
+                unset($data['final_submission_deadline_time_' . $key]);
+            }
 
             DB::beginTransaction();
             $assignment->update($data);
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+            $this->addAssignTos($assignment, $assign_tos, $section, $user);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
@@ -874,7 +1018,8 @@ class AssignmentController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Assignment $assignment)
+    public
+    function destroy(Assignment $assignment, AssignToTiming $assignToTiming)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('delete', $assignment);
@@ -901,6 +1046,8 @@ class AssignmentController extends Controller
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
+            $assignToTiming->deleteTimingsGroupsUsers($assignment);
+
             $course = $assignment->course;
             $number_with_the_same_assignment_group_weight = DB::table('assignments')
                 ->where('course_id', $course->id)
@@ -932,12 +1079,9 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function getFinalSubmissionDeadline($request)
-    {
-        return $request->late_policy !== 'not accepted' ? $this->convertLocalMysqlFormattedDateToUTC($request->final_submission_deadline_date . ' ' . $request->final_submission_deadline_time, Auth::user()->time_zone) : null;
-    }
 
-    public function formatDateFromRequest($date, $time)
+    public
+    function formatDateFromRequest($date, $time)
     {
         return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
     }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignToUser;
 use App\Enrollment;
 use App\Course;
 
@@ -70,8 +71,8 @@ class EnrollmentController extends Controller
         }
 
         try {
-
-            $data = $request->validated();;
+            DB::beginTransaction();
+            $data = $request->validated();
             $section = $Section->where('access_code', '=', $data['access_code'])->first();
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
@@ -91,14 +92,53 @@ class EnrollmentController extends Controller
                 $response['type'] = 'error';
                 $response['message'] = "You are already enrolled in <strong>$course_section_name</strong>.";
             } else {
+
                 $enrollment->user_id = $request->user()->id;
                 $enrollment->section_id = $section_id;
                 $enrollment->course_id = $course_id;
                 $enrollment->save();
+                //get the assignments
+                $assignments = $section->course->assignments;
+
+                $assign_to_timing_ids = [];
+                foreach ($assignments as $assignment) {
+                    $assignToTimings = $assignment->assignToTimings;
+                    foreach ($assignToTimings as $assignToTiming) {
+                        foreach ($assignToTiming->assignToGroups as $assignToGroup) {
+                            //for everyone in the course
+
+                            if ($assignToGroup->group === 'section') {
+                                if (in_array($assignToTiming->id, $assign_to_timing_ids)) {
+                                    continue;
+                                }
+                                $assignToUser = new AssignToUser();
+                                $assignToUser->assign_to_timing_id = $assignToTiming->id;
+                                $assignToUser->user_id = $enrollment->user_id;
+                                $assignToUser->save();
+                                $assign_to_timing_ids[] = $assignToTiming->id;
+                            }
+                            if ($assignToGroup->group === 'course') {
+                                if (in_array($assignToTiming->id, $assign_to_timing_ids)) {
+                                    continue;
+                                }
+                                $assignToUser = new AssignToUser();
+                                $assignToUser->assign_to_timing_id = $assignToTiming->id;
+                                $assignToUser->user_id = $enrollment->user_id;
+                                $assign_to_timing_ids[] = $assignToTiming->id;
+                                $assignToUser->save();
+                            }
+                        }
+                    }
+                }
+
+
                 $response['type'] = 'success';
+                DB::commit();
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
             }
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error enrolling you in the course.  Please try again or contact us for assistance.";

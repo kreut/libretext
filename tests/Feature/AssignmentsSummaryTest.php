@@ -5,15 +5,17 @@ namespace Tests\Feature;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
-use App\Grader;
 use App\Section;
 use App\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
 
+use App\Traits\Test;
+
 class AssignmentsSummaryTest extends TestCase
 {
+    use Test;
 
     public function setup(): void
     {
@@ -31,14 +33,23 @@ class AssignmentsSummaryTest extends TestCase
         ]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
 
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
 
     }
 
-    /** @test **/
+    /** @test * */
+    public function user_can_get_summary_info_if_enrolled_in_course()
+    {
+
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/summary")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test * */
     public function student_cannot_get_scores_info_if_students_can_view_assignment_statistics_is_false()
     {
 
@@ -48,17 +59,17 @@ class AssignmentsSummaryTest extends TestCase
 
     }
 
-    /** @test **/
+    /** @test * */
     public function student_can_get_scores_info_if_students_can_view_assignment_statistics_is_true()
     {
-$this->assignment->students_can_view_assignment_statistics = 1;
-$this->assignment->save();
+        $this->assignment->students_can_view_assignment_statistics = 1;
+        $this->assignment->save();
         $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/scores-info")
             ->assertJson(['type' => 'success']);
 
     }
 
-    /** @test **/
+    /** @test * */
     public function user_cannot_get_summary_info_if_not_enrolled_in_course()
     {
 
@@ -68,16 +79,8 @@ $this->assignment->save();
 
     }
 
-    /** @test **/
-    public function user_can_get_summary_info_if_not_enrolled_in_course()
-    {
 
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/summary")
-            ->assertJson(['type' => 'success']);
-
-    }
-
-    /** @test **/
+    /** @test * */
     public function owner_can_get_summary_info_if_not_enrolled_in_course()
     {
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")

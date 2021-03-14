@@ -60,6 +60,26 @@ class ScoresIndexTest extends TestCase
     }
 
     /** @test */
+
+    public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()
+    {
+
+        //3 assignments with 2 different weights
+        //don't include the first assignment in the scoring
+        $this->assignment->include_in_weighted_average = 0;
+        $this->assignment->save();
+        $this->createAssignmentGroupWeightsAndAssignments();
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+
+
+        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+        dd($response);
+        $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
+        $this->assertEquals('49.17%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
+
+    }
+
+    /** @test */
     public function can_update_assignment_score_if_grader_in_section()
     {
         $this->actingAs($this->grader_user)->patchJson("/api/scores/{$this->assignment->id}/{$this->student_user->id}",
@@ -200,22 +220,7 @@ class ScoresIndexTest extends TestCase
             ->assertJsonValidationErrors(['extra_credit']);
     }
 
-    /** @test */
 
-    public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()
-    {
-
-        //3 assignments with 2 different weights
-        //don't include the first assignment in the scoring
-        $this->assignment->include_in_weighted_average = 0;
-        $this->assignment->save();
-        $this->createAssignmentGroupWeightsAndAssignments();
-
-        $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
-        $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
-        $this->assertEquals('49.17%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
-
-    }
 
 
     /** @test */

@@ -5,7 +5,6 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Course;
 use App\Enrollment;
-use App\Grader;
 use App\LearningTree;
 use App\Question;
 use App\Section;
@@ -14,9 +13,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use App\Traits\Test;
 
 class AssignmentPropertiesTest extends TestCase
 {
+  use Test;
 
     public function setup(): void
     {
@@ -35,7 +36,7 @@ class AssignmentPropertiesTest extends TestCase
         ]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
 
 
         $this->student_user_2 = factory(User::class)->create();
@@ -126,33 +127,8 @@ class AssignmentPropertiesTest extends TestCase
             ->assertJson(['message' => "You can't switch to a learning tree assessment type since this is not a learning tree assignment and you already have non-learning tree questions."]);
     }
 
-    /** @test * */
-    public function the_correct_formatted_late_policy_is_retrieved_for_one_deduction_per_period()
-    {
-        $this->assignment->late_policy = 'deduction';
-        $this->assignment->late_deduction_application_period = '2 hours';
-        $this->assignment->late_deduction_percent = 20;
-        $this->assignment->final_submission_deadline = '2027-06-12 02:00:00';
-        $this->assignment->save();
 
-        $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied every 2 hours to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
-            ->assertJson($response);
-    }
 
-    /** @test * */
-    public function the_correct_formatted_late_policy_is_retrieved_for_once_deduction()
-    {
-        $this->assignment->late_policy = 'deduction';
-        $this->assignment->late_deduction_application_period = 'once';
-        $this->assignment->late_deduction_percent = 20;
-        $this->assignment->final_submission_deadline = '2027-06-12 02:00:00';
-        $this->assignment->save();
-
-        $response['assignment'] = ['formatted_late_policy' => "A deduction of 20% is applied once to any late assignment.  Students cannot submit assessments later than June 11, 2027 7:00:00 pm."];
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
-            ->assertJson($response);
-    }
 
     /** @test * */
     public function the_correct_formatted_late_policy_is_retrieved_for_not_accepted()

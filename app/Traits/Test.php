@@ -5,12 +5,39 @@ namespace App\Traits;
 
 use App\Assignment;
 use App\AssignmentGroupWeight;
+use App\AssignToGroup;
+use App\AssignToTiming;
+use App\AssignToUser;
 use App\Question;
 use App\Score;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
 trait Test
 {
+
+    public function assignUserToAssignment(int $assignment_id, int $course_id, int $student_user_id = 0)
+    {
+        $assignToTiming = new AssignToTiming();
+        $assignToTiming->assignment_id = $assignment_id;
+        $assignToTiming->available_from = Carbon::now();
+        $assignToTiming->due = Carbon::now()->addHours(1);
+        $assignToTiming->save();
+
+        $assignToGroup = new AssignToGroup();
+        $assignToGroup->group = 'course';
+        $assignToGroup->group_id = $course_id;
+        $assignToGroup->assign_to_timing_id = $assignToTiming->id;
+        $assignToGroup->save();
+
+        if ($student_user_id) {
+            $assignToUser = new AssignToUser();
+            $assignToUser->user_id = $student_user_id;
+            $assignToUser->assign_to_timing_id = $assignToTiming->id;
+            $assignToUser->save();
+        }
+    }
+
     function question()
     {
         return $question = factory(Question::class)->create(['page_id' => rand(1, 1000000000)]);
@@ -39,7 +66,7 @@ trait Test
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question()->id,
-            'order' =>1,
+            'order' => 1,
             'open_ended_submission_type' => 'none',
             'points' => 2
         ]);
@@ -66,7 +93,7 @@ trait Test
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order' =>1,
+            'order' => 1,
             'points' => 10
         ]);
 
@@ -74,7 +101,7 @@ trait Test
             'assignment_id' => $this->assignment_1->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order' =>1,
+            'order' => 1,
             'points' => 20
         ]);
 
@@ -99,7 +126,7 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order' =>1,
+            'order' => 1,
             'points' => 1
         ]);
 
@@ -107,7 +134,7 @@ trait Test
             'assignment_id' => $this->assignment_2->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order'=>1,
+            'order' => 1,
             'points' => 2
         ]);
 
@@ -133,7 +160,7 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order' =>1,
+            'order' => 1,
             'points' => 50
         ]);
 
@@ -142,7 +169,7 @@ trait Test
             'assignment_id' => $this->assignment_3->id,
             'question_id' => $this->question()->id,
             'open_ended_submission_type' => 'none',
-            'order'=>1,
+            'order' => 1,
             'points' => 50
         ]);
 
@@ -175,8 +202,6 @@ trait Test
         //Leaving out $this->assignment
         ////10*(( 5/30 + 2/3)/2)+90*(.5*(25/100 + 75/100))=49.17%
     }
-
-
 
 
 }

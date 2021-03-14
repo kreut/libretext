@@ -38,13 +38,13 @@ class moveStudentsToNewSections extends Command
      */
     public function handle()
     {
-        $enrollments = Enrollment::where('course_id', 2)->get();
+        $enrollments = Enrollment::where('course_id', 16)->get();
         foreach ($enrollments as $enrollment) {
             if ($enrollment->id % 3 === 1) {
-                $enrollment->section_id = 32;
+                $enrollment->section_id = 36;
             }
             if ( $enrollment->id % 3 === 2) {
-                $enrollment->section_id = 33;
+                $enrollment->section_id = 37;
             }
             $enrollment->save();
 
