@@ -61,6 +61,13 @@
         Scores and solutions are released in real time, providing students with immediate feedback.
       </b-tooltip>
 
+      add_assign_to_tooltip
+      <b-tooltip target="add_assign_to_tooltip"
+                 delay="250"
+      >
+        When adding new "assign tos", we first assign at the user level, then section level, and finally at the course level.  So, if you
+        assign one set of dates to everybody and another to a specific user, that user's dates will override those at the course level.
+      </b-tooltip>
       <b-tooltip target="default_clicker_time_to_submit_tooltip"
                  delay="250"
       >
@@ -131,62 +138,7 @@
                 :class="{ 'is-invalid': form.errors.has('name') }"
                 @keydown="form.errors.clear('name')"
               />
-              <has-error :form="form" field="name" />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          id="available_from"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Available on"
-          label-for="Available on"
-        >
-          <b-form-row>
-            <b-col lg="7">
-              <b-form-datepicker
-                v-model="form.available_from_date"
-                :min="min"
-                :class="{ 'is-invalid': form.errors.has('available_from_date') }"
-                @shown="form.errors.clear('available_from_date')"
-              />
-              <has-error :form="form" field="available_from_date" />
-            </b-col>
-            <b-col>
-              <b-form-timepicker v-model="form.available_from_time"
-                                 locale="en"
-                                 :class="{ 'is-invalid': form.errors.has('available_from_time') }"
-                                 @shown="form.errors.clear('available_from_time')"
-              />
-              <has-error :form="form" field="available_from_time" />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-
-        <b-form-group
-          id="due"
-          label-cols-sm="4"
-          label-cols-lg="3"
-          label="Due Date"
-          label-for="Due Date"
-        >
-          <b-form-row>
-            <b-col lg="7">
-              <b-form-datepicker
-                v-model="form.due_date"
-                :min="min"
-                :class="{ 'is-invalid': form.errors.has('due') }"
-                @shown="form.errors.clear('due')"
-              />
-              <has-error :form="form" field="due" />
-            </b-col>
-            <b-col>
-              <b-form-timepicker v-model="form.due_time"
-                                 locale="en"
-                                 :class="{ 'is-invalid': form.errors.has('due_time') }"
-                                 @shown="form.errors.clear('due_time')"
-              />
-              <has-error :form="form" field="due_time" />
+              <has-error :form="form" field="name"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -204,7 +156,7 @@
                              :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                              @change="checkGroupId(form.assignment_group_id)"
               />
-              <has-error :form="form" field="assignment_group_id" />
+              <has-error :form="form" field="assignment_group_id"/>
             </b-col>
             <b-modal
               id="modal-create-assignment-group"
@@ -230,7 +182,7 @@
                     :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
                     @keydown="assignmentGroupForm.errors.clear('assignment_group')"
                   />
-                  <has-error :form="assignmentGroupForm" field="assignment_group" />
+                  <has-error :form="assignmentGroupForm" field="assignment_group"/>
                 </b-form-group>
               </b-form-row>
             </b-modal>
@@ -251,14 +203,14 @@
           >
             <b-form-radio name="source" value="a">
               Internal <span id="internal" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
+              icon="question-circle"
+            /></span>
             </b-form-radio>
 
             <b-form-radio name="source" value="x">
               External <span id="external" class="text-muted"><b-icon
-                icon="question-circle"
-              />
+              icon="question-circle"
+            />
               </span>
             </b-form-radio>
           </b-form-radio-group>
@@ -307,7 +259,7 @@
                   :disabled="isLocked()"
                   @keydown="form.errors.clear('default_points_per_question')"
                 />
-                <has-error :form="form" field="default_points_per_question" />
+                <has-error :form="form" field="default_points_per_question"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -329,28 +281,28 @@
         >
           <b-form-radio name="assessment_type" value="real time">
             Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
-              icon="question-circle"
-            />
+            icon="question-circle"
+          />
             </span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="delayed">
             Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
-              icon="question-circle"
-            /></span>
+            icon="question-circle"
+          /></span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="learning tree">
             Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
-              icon="question-circle"
-            />
+            icon="question-circle"
+          />
             </span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="clicker">
             Clicker Assessments <span id="clicker" class="text-muted"><b-icon
-              icon="question-circle"
-            />
+            icon="question-circle"
+          />
             </span>
           </b-form-radio>
         </b-form-radio-group>
@@ -366,21 +318,21 @@
           <template slot="label">
             Default Clicker Time To Submit <span id="default_clicker_time_to_submit_tooltip"
                                                  class="text-muted"
-            ><b-icon
-              icon="question-circle"
-            /></span>
+          ><b-icon
+            icon="question-circle"
+          /></span>
           </template>
           <b-form-row>
             <b-col lg="3">
               <b-form-input
-                id="default_points_per_question"
+                id="default_clicker_time_to_submit"
                 v-model="form.default_clicker_time_to_submit"
                 type="text"
                 placeholder=""
                 :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
                 @keydown="form.errors.clear('default_clicker_time_to_submit')"
               />
-              <has-error :form="form" field="default_clicker_time_to_submit" />
+              <has-error :form="form" field="default_clicker_time_to_submit"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -399,9 +351,9 @@
             />
             Minimum Number of Minutes Exploring Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
                                                                     class="text-muted"
-            ><b-icon
-              icon="question-circle"
-            /></span>
+          ><b-icon
+            icon="question-circle"
+          /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -414,7 +366,7 @@
                 :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
                 @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
               />
-              <has-error :form="form" field="min_time_needed_in_learning_tree" />
+              <has-error :form="form" field="min_time_needed_in_learning_tree"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -431,9 +383,9 @@
             />
             Percent Earned For Exploring Learning Tree <span id="percent_earned_for_exploring_learning_tree_tooltip"
                                                              class="text-muted"
-            ><b-icon
-              icon="question-circle"
-            /></span>
+          ><b-icon
+            icon="question-circle"
+          /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -446,7 +398,7 @@
                 :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
                 @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
               />
-              <has-error :form="form" field="percent_earned_for_exploring_learning_tree" />
+              <has-error :form="form" field="percent_earned_for_exploring_learning_tree"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -461,8 +413,8 @@
               icon="tree" variant="success"
             />
             Submission Count Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
-              icon="question-circle"
-            /></span>
+            icon="question-circle"
+          /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -475,7 +427,7 @@
                 :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
                 @keydown="form.errors.clear('submission_count_percent_decrease')"
               />
-              <has-error :form="form" field="submission_count_percent_decrease" />
+              <has-error :form="form" field="submission_count_percent_decrease"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -491,7 +443,7 @@
         <template slot="label">
           Default Open-ended Submission Type
           <span id="default_open_ended_submission_type_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
         <b-form-radio-group v-model="form.default_open_ended_submission_type" stacked
                             :disabled="isLocked()"
@@ -557,7 +509,7 @@
                 :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
                 @keydown="form.errors.clear('late_deduction_percent')"
               />
-              <has-error :form="form" field="late_deduction_percent" />
+              <has-error :form="form" field="late_deduction_percent"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -592,45 +544,15 @@
                     :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
                     @keydown="form.errors.clear('late_deduction_application_period')"
                   />
-                  <has-error :form="form" field="late_deduction_application_period" />
+                  <has-error :form="form" field="late_deduction_application_period"/>
                 </b-col>
                 <span id="late_deduction_application_period_tooltip">
-                  <b-icon class="text-muted" icon="question-circle" /></span>
+                  <b-icon class="text-muted" icon="question-circle"/></span>
               </b-row>
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
       </div>
-      <b-form-group
-        v-if="form.late_policy !== 'not accepted'"
-        id="last"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label="Final Submission Deadline"
-        label-for="Final Policy Deadline"
-      >
-        <b-form-row>
-          <b-col lg="7">
-            <b-form-datepicker
-              v-model="form.final_submission_deadline_date"
-              :min="min"
-              :class="{ 'is-invalid': form.errors.has('final_submission_deadline') }"
-              :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-              @shown="form.errors.clear('final_submission_deadline')"
-            />
-            <has-error :form="form" field="final_submission_deadline" />
-          </b-col>
-          <b-col>
-            <b-form-timepicker v-model="form.final_submission_deadline_time"
-                               locale="en"
-                               :class="{ 'is-invalid': form.errors.has('final_submission_deadline_time') }"
-                               :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                               @shown="form.errors.clear('final_submission_deadline_time')"
-            />
-            <has-error :form="form" field="final_submission_deadline_time" />
-          </b-col>
-        </b-form-row>
-      </b-form-group>
       <b-form-group
         id="include_in_weighted_average"
         label-cols-sm="4"
@@ -667,7 +589,7 @@
               :class="{ 'is-invalid': form.errors.has('external_source_points') }"
               @keydown="form.errors.clear('external_source_points')"
             />
-            <has-error :form="form" field="external_source_points" />
+            <has-error :form="form" field="external_source_points"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -690,7 +612,7 @@
             :class="{ 'is-invalid': form.errors.has('instructions') }"
             @keydown="form.errors.clear('instructions')"
           />
-          <has-error :form="form" field="instructions" />
+          <has-error :form="form" field="instructions"/>
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -701,8 +623,8 @@
       >
         <template slot="label">
           Notifications <span id="notifications_tooltip" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-radio-group v-model="form.notifications" stacked>
           <b-form-radio name="notifications" value="1">
@@ -713,6 +635,138 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <div v-for="assignTo in form.assign_tos"
+           :key="assignTo.key"
+      >
+        <b-form-group
+          id="assign_to"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assign to"
+          label-for="Assign to"
+        >
+          <b-form-row>
+            <b-col lg="5">
+              <vue-bootstrap-typeahead
+                ref="queryTypeahead"
+                v-model="assignTo.selectedGroup"
+                placeholder="Everybody, Section, Student"
+                :data="assignToGroups"
+                :class="{ 'is-invalid': form.errors.has(`groups_${assignTo.key}`) }"
+                @shown="form.errors.clear(`groups_${assignTo.key}`)"
+                @hit="updateAssignTos(assignTo)"
+              />
+              <has-error :form="form" :field="`groups_${assignTo.key}`"/>
+            </b-col>
+            <b-col>
+              <ul
+                v-for="group in assignTo.groups"
+                :key="group"
+                class="flex-column align-items-start"
+              >
+                <li>{{ group }}
+                  <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"></b-icon>
+                </li>
+              </ul>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          :id="`available_from_${assignTo.key}`"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Available on"
+          label-for="Available on"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.available_from_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`available_from_date_${assignTo.key}`) }"
+                @shown="form.errors.clear(`available_from_date_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`available_from_date_${assignTo.key}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.available_from_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`available_from_time_${assignTo.key}`) }"
+                                 @shown="form.errors.clear(`available_from_time_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`available_from_time_${assignTo.key}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
+        <b-form-group
+          id="due"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Due Date"
+          label-for="Due Date"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.due_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`due_${assignTo.key}`) }"
+                @shown="form.errors.clear(`due_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`due_${assignTo.key}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.due_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`due_time_${assignTo.key}`) }"
+                                 @shown="form.errors.clear(`due_time_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`due_time_${assignTo.key}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-if="form.late_policy !== 'not accepted'"
+          id="last"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Final Submission Deadline"
+          label-for="Final Policy Deadline"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.final_submission_deadline_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${assignTo.key}`) }"
+                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                @shown="form.errors.clear(`final_submission_deadline_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`final_submission_deadline_${assignTo.key}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${assignTo.key}`) }"
+                                 :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                                 @shown="form.errors.clear(`final_submission_deadline_time_${assignTo.key}`)"
+              />
+              <has-error :form="form" :field="`final_submission_deadline_time_${assignTo.key}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <div v-if="form.assign_tos.length>1">
+          <b-row align-h="end">
+            <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">Remove Assign
+              to
+            </b-button>
+          </b-row>
+          <hr>
+        </div>
+      </div>
+      <b-button variant="outline-primary" size="sm" @click="addAssignTo">Add Assign to</b-button>
+      <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
     </b-modal>
   </div>
 </template>
@@ -723,15 +777,19 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments'
 
 import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
+  components: {
+    VueBootstrapTypeahead
+  },
   middleware: 'auth',
   props: { 'courseId': { type: Number, default: 0 } },
   data: () => ({
+    selectedAssignTo: '',
     originalAssignment: {},
     assignmentGroupForm: new Form({
       assignment_group: ''
@@ -754,23 +812,16 @@ export default {
     ],
     form: new Form({
       name: '',
-      available_from: '',
-      due: '',
+      assign_tos: [],
       assessment_type: 'real time',
       min_time_needed_in_learning_tree: null,
       percent_earned_for_exploring_learning_tree: null,
       submission_count_percent_decrease: null,
-      available_from_date: '',
       assignment_group_id: null,
-      available_from_time: '09:00:00',
-      due_date: '',
-      due_time: '09:00:00',
       default_open_ended_submission_type: 0,
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
-      final_submission_deadline_date: '',
-      final_submission_deadline_time: '09:00:00',
       late_deduction_application_period: null,
       type_of_submission: 'correct',
       source: 'a',
@@ -786,25 +837,101 @@ export default {
     has_submissions_or_file_submissions: false,
     min: '',
     canViewAssignments: false,
-    showNoAssignmentsAlert: false
+    showNoAssignmentsAlert: false,
+    assignToGroups: []
   }),
   computed: mapGetters({
     user: 'auth/user'
   }),
   created () {
+    this.form.assign_tos.push(this.defaultAssignTos())
     this.getAssignments = getAssignments
     this.isLocked = isLocked
     this.isLockedMessage = isLockedMessage
   },
-  mounted () {
+  async mounted () {
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
+    this.assignToGroups = this.getAssignToGroups()
   },
   form: function (newVal, oldVal) {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
+    removeAssignTo (assignTo) {
+      this.form.assign_tos = this.form.assign_tos.filter(e => e !== assignTo)
+    },
+    defaultAssignTos () {
+      return {
+        key: 0,
+        groups: [],
+        selectedGroup: '',
+        available_from_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        available_from_time: '09:00:00',
+        due_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        due_time: '09:00:00',
+        final_submission_deadline_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        final_submission_deadline_time: '09:00:00'
+      }
+    },
+    addAssignTo () {
+      let newAssignTo = this.defaultAssignTos()
+      console.log(newAssignTo)
+      newAssignTo.key = `${[this.form.assign_tos.length]}`
+      console.log(newAssignTo)
+      this.form.assign_tos.push(newAssignTo)
+    },
+    updateAssignTos (assignTo) {
+
+      if (assignTo.groups.includes(assignTo.selectedGroup)) {
+        this.$noty.info(`${assignTo.selectedGroup} is already selected.`)
+        return false
+      }
+      assignTo.groups.push(assignTo.selectedGroup)
+      assignTo.selectedGroup = ''
+      this.$refs.queryTypeahead[0].inputValue = ''
+      this.fixEverybodyAndEveryBodyElse('add')
+    },
+    fixEverybodyAndEveryBodyElse (action) {
+      let groupToRemove = (action === 'add') ? 'Everybody' : 'Everybody else'
+      let groupToAdd = (action === 'add') ? 'Everybody else' : 'Everybody'
+      let allSelected = []
+      let iEverybody = 0
+      let jEverybody = 0
+      for (let i = 0; i < this.form.assign_tos.length; i++) {
+        for (let j = 0; j < this.form.assign_tos[i]['groups'].length; j++) {
+          allSelected.push(this.form.assign_tos[i]['groups'][j])
+          if (this.form.assign_tos[i]['groups'][j] === groupToRemove) {
+            iEverybody = i
+            jEverybody = j
+          }
+        }
+      }
+      console.log(action, allSelected.length)
+      if ((action === 'add' && allSelected.length > 1) || (action === 'remove' && allSelected.length === 2)) {
+        this.form.assign_tos[iEverybody]['groups'][jEverybody] = groupToAdd
+      }
+    },
+    removeAssignToGroup (assignTo, group) {
+      if (assignTo.groups.length === 1) {
+        this.$noty.error('You have to assign it to at least one person or section.')
+        return false
+      }
+      console.log(assignTo.groups)
+      console.log(group)
+      this.fixEverybodyAndEveryBodyElse('remove')
+      assignTo.groups = assignTo.groups.filter(e => e !== group)
+    },
+    async getAssignToGroups () {
+      try {
+        const { data } = await axios.get(`/api/assign-to-groups/${this.courseId}`)
+        this.assignToGroups = data.assign_to_groups
+        console.log(this.assignToGroups)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async initAssessmentTypeSwitch () {
       if (!this.assignmentId) {
         return false
@@ -898,10 +1025,6 @@ export default {
       this.form.late_deduction_percent = null
       this.form.late_deduction_applied_once = 1
       this.form.late_deduction_application_period = null
-      this.form.final_submission_deadline_date = this.form.due_date
-      let start = this.$moment(this.$moment(this.form.due_date + ' ' + this.form.due_time), 'YYYY-MM-DD HH:mm:SS')
-      start = start.add(this.$moment.duration(20, 'minutes'))
-      this.form.final_submission_deadline_time = this.$moment(start, 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
     },
     showDelayedOptions () {
       this.form.default_open_ended_submission_type = 'rich text'
@@ -986,9 +1109,7 @@ export default {
       this.has_submissions_or_file_submissions = 0
       this.solutionsReleased = 0
       this.form.assignment_group_id = null
-      this.form.available_from_date = this.form.due_date = this.form.final_submission_deadline_date = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
-      this.form.available_from_time = this.form.due_time = this.form.final_submission_deadline_time = this.$moment(this.$moment(), 'YYYY-MM-DD HH:mm:SS').format('HH:mm:00')
-
+      this.form.assign_tos = [this.defaultAssignTos()]
       this.form.late_policy = 'not accepted'
       this.form.late_deduction_percent = null
       this.form.late_deduction_applied_once = 1
@@ -1024,18 +1145,16 @@ export default {
       this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
       this.form.name = assignment.name
       this.form.assessment_type = this.assessmentType = assignment.assessment_type
-      this.form.available_from_date = assignment.available_from_date
-      this.form.available_from_time = assignment.available_from_time
-      this.form.due_date = assignment.due_date
+
+      this.form.assign_tos = assignment.assign_tos
+
       this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
       this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
       this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
-      this.form.due_time = assignment.due_time
+
       this.form.late_policy = assignment.late_policy
       this.form.late_deduction_applied_once = +(assignment.late_deduction_application_period === 'once')
       this.form.late_deduction_application_period = !this.form.late_deduction_applied_once ? assignment.late_deduction_application_period : ''
-      this.form.final_submission_deadline_time = assignment.final_submission_deadline_time
-      this.form.final_submission_deadline_date = assignment.final_submission_deadline_date
       this.form.late_deduction_percent = assignment.late_deduction_percent
       this.form.assignment_group_id = assignment.assignment_group_id
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
@@ -1055,9 +1174,21 @@ export default {
       // Prevent modal from closing
       bvModalEvt.preventDefault()
       // Trigger submit handler
-      this.form.available_from = this.form.available_from_date + ' ' + this.form.available_from_time
-      this.form.due = this.form.due_date + ' ' + this.form.due_time
-      this.form.final_submission_deadline = this.form.final_submission_deadline_date + ' ' + this.form.final_submission_deadline_time
+      let assignTos = JSON.parse(JSON.stringify(this.form.assign_tos))
+      console.log(assignTos)
+      for (let i = 0; i < this.form.assign_tos.length; i++) {
+        this.form[`groups_${i}`] = assignTos[i].groups
+        this.form[`available_from_date_${i}`] = assignTos[i].available_from_date
+        this.form[`available_from_time_${i}`] = assignTos[i].available_from_time
+        this.form[`available_from_${i}`] = assignTos[i].available_from_date + ' ' + assignTos[i].available_from_time
+        this.form[`final_submission_deadline_date_${i}`] = assignTos[i].final_submission_deadline_date
+        this.form[`final_submission_deadline_time_${i}`] = assignTos[i].final_submission_deadline_time
+        this.form[`final_submission_deadline_${i}`] = assignTos[i].final_submission_deadline_date + ' ' + assignTos[i].final_submission_deadline_time
+        this.form[`due_date_${i}`] = assignTos[i].due_date
+        this.form[`due_time_${i}`] = assignTos[i].due_time
+        this.form[`due_${i}`] = assignTos[i].due_date + ' ' + assignTos[i].due_time
+      }
+      console.log(this.form)
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
     },
     async updateAssignment () {

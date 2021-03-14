@@ -13,22 +13,14 @@ class Section extends Model
         return $this->belongsTo('App\Course');
     }
 
-    public function enrolledUsers($include_fake = false)
+    public function enrolledUsers()
     {
-
-        return !$include_fake
-            ? $this->hasManyThrough('App\User',
-                'App\Enrollment',
-                'section_id', //foreign key on enrollments table
-                'id', //foreign key on users table
-                'id', //local key in courses table
-                'user_id')->where('fake_student', 0)
-            : $this->hasManyThrough('App\User',
-                'App\Enrollment',
-                'section_id', //foreign key on enrollments table
-                'id', //foreign key on users table
-                'id', //local key in courses table
-                'user_id');
+        return $this->hasManyThrough('App\User',
+            'App\Enrollment',
+            'section_id', //foreign key on enrollments table
+            'id', //foreign key on users table
+            'id', //local key in courses table
+            'user_id');
 
     }
 

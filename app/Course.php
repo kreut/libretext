@@ -69,7 +69,8 @@ class Course extends Model
 
     }
 
-    public function enrolledUsers(){
+    public function enrolledUsers()
+    {
 
         return $this->hasManyThrough('App\User',
             'App\Enrollment',
@@ -77,7 +78,7 @@ class Course extends Model
             'id', //foreign key on users table
             'id', //local key in courses table
             'user_id')
-            ->where('fake_student',0)
+            ->where('fake_student', 0)
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
@@ -94,7 +95,7 @@ class Course extends Model
     public function assignments()
     {
         return Auth::user()->role === 3
-            ? $this->hasMany('App\Assignment')->orderBy('due')
+            ? $this->hasMany('App\Assignment')
             : $this->hasMany('App\Assignment')->orderBy('order');
     }
 
@@ -103,6 +104,7 @@ class Course extends Model
     {
         return $this->hasMany('App\Enrollment');
     }
+
     public function fakeStudent()
     {
         $fake_student_user_id = DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
@@ -116,7 +118,6 @@ class Course extends Model
     }
 
 
-
     public function finalGrades()
     {
         return $this->hasOne('App\FinalGrade');
@@ -126,7 +127,7 @@ class Course extends Model
     {
         return DB::table('graders')->join('sections', 'graders.section_id', '=', 'sections.id')
             ->where('sections.course_id', $this->id)
-            ->where('graders.user_id',Auth::user()->id)
+            ->where('graders.user_id', Auth::user()->id)
             ->select('sections.*')
             ->get();
 
@@ -203,6 +204,22 @@ class Course extends Model
             ->pluck('user_id')
             ->toArray();
         return (in_array(Auth::user()->id, $graders));
+    }
+
+    public function assignedToAssignmentsByUser()
+    {
+        $assigned_assignments = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
+            ->where('assignments.course_id', $this->id)
+            ->where('assign_to_users.user_id', auth()->user()->id)
+            ->get();
+        $assigned_assignments_by_id = [];
+        foreach ($assigned_assignments as $assignment) {
+            $assigned_assignments_by_id[$assignment->assignment_id] = $assignment;
+        }
+
+        return $assigned_assignments_by_id;
     }
 
 }

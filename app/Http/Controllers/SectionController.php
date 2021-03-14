@@ -57,7 +57,7 @@ class SectionController extends Controller
             DB::beginTransaction();
             $course = $section->course;
             $section_name = $section->name;
-            $enrolled_user_ids = $section->enrolledUsers(true)->pluck('user_id')->toArray();
+            $enrolled_user_ids = $section->enrolledUsers()->pluck('user_id')->toArray();
 
             foreach ($course->assignments as $assignment) {
                 $assignment->scores()->whereIn('user_id', $enrolled_user_ids)->delete();

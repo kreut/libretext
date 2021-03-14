@@ -14,9 +14,11 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
+use App\Traits\Test;
 
 class AssignmentsIndex2Test extends TestCase
 {
+    use Test;
 
     /**Still must test the stuff with the correct/completed and number**/
     /** Should test that only an instructor can create an assignment... */
@@ -26,10 +28,13 @@ class AssignmentsIndex2Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->section= factory(Section::class)->create(['course_id' => $this->course->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order'=>2]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id);
+
+
+        $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order' => 2]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->original_assignment_question_id = DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
@@ -64,12 +69,29 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->assignment_info = ['course_id' => $this->course->id,
             'name' => 'First Assignment',
+            'assign_tos' => [
+            [
+            'groups' => ['Everybody'],
+            'available_from' => '2020-06-10 09:00:00',
             'available_from_date' => '2020-06-10',
             'available_from_time' => '09:00:00',
-            'available_from' => '2020-06-10 09:00:00',
+            'due' => '2020-06-12 09:00:00',
             'due_date' => '2020-06-12',
             'due_time' => '09:00:00',
-            'due' => '2020-06-12 09:00:00',
+            'final_submission_deadline' => '2021-06-12 09:00:00',
+            'final_submission_deadline_date' => '2021-06-12',
+            'final_submission_deadline_time' => '09:00:00'
+                ]
+            ],
+            'groups_0' => ['Everybody'],
+            'due_0' => '2020-06-12 09:00:00',
+            'due_date_0' => '2020-06-12',
+            'due_time_0' => '09:00:00',
+            'available_from_0' => '2020-06-10',
+            'available_from_date_0' => '2020-06-12',
+            'available_from_time_0' => '09:00:00',
+            'final_submission_deadline_date_0' => '2021-06-12',
+            'final_submission_deadline_time_0' => '09:00:00',
             'scoring_type' => 'p',
             'source' => 'a',
             'default_points_per_question' => 2,
@@ -82,6 +104,10 @@ class AssignmentsIndex2Test extends TestCase
             'notifications' => 1,
             'assignment_group_id' => 1];
     }
+
+
+
+
 
     /** @test */
 
@@ -367,13 +393,6 @@ class AssignmentsIndex2Test extends TestCase
             ->assertJson(['type' => 'success']);
     }
 
-    /** @test */
-    public function cannot_update_an_assignment_if_you_are_not_the_owner()
-    {
-        $this->assignment_info['name'] = "some other name";
-        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}",
-            $this->assignment_info)->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this assignment.']);
-    }
 
     /** @test */
     public function can_create_an_assignment()
@@ -407,9 +426,9 @@ class AssignmentsIndex2Test extends TestCase
     public function must_include_valid_available_on_date()
     {
 
-        $this->assignment_info['available_from_date'] = "not a date";
+        $this->assignment_info['available_from_date_0'] = "not a date";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['available_from_date']);
+            ->assertJsonValidationErrors(['available_from_date_0']);
 
     }
 
@@ -439,37 +458,36 @@ class AssignmentsIndex2Test extends TestCase
     /** @test */
     public function must_include_valid_due_date()
     {
-        $this->assignment_info['due_date'] = "not a date";
-        $this->assignment_info['due'] = "not a date";
+        $this->assignment_info['due_date_0'] = "not a date";
+        $this->assignment_info['due_0'] = "not a date";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due']);
+            ->assertJsonValidationErrors(['due_0']);
     }
 
 
     /** @test */
     public function must_include_valid_due_time()
     {
-        $this->assignment_info['due_time'] = "not a time";
-        $this->assignment_info['due'] = "not a time";
+        $this->assignment_info['due_time_0'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due']);
+            ->assertJsonValidationErrors(['due_time_0']);
     }
 
     /** @test */
     public function due_date_must_be_after_available_date()
     {
-        $this->assignment_info['due'] = "1982-06-06";
+        $this->assignment_info['due_0'] = "1982-06-06";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due']);
+            ->assertJsonValidationErrors(['due_0']);
     }
 
     /** @test */
     public function must_include_valid_available_from_time()
     {
 
-        $this->assignment_info['available_from_time'] = "not a time";
+        $this->assignment_info['available_from_time_0'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
-            ->assertJsonValidationErrors(['due']);
+            ->assertJsonValidationErrors(['available_from_time_0']);
     }
 
 

@@ -20,13 +20,18 @@ trait GeneralSubmissionPolicy
         $response['type'] = 'error';
         $response['message'] = '';
 
-        if ($assignment->assessment_type === 'clicker'){
+        $assign_to_timing = $assignment->assignToTimingByUser();
+        if (!$assign_to_timing) {
+            $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
+            return $response;
+        }
+        if ($assignment->assessment_type === 'clicker') {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment_id)
                 ->where('question_id', $question_id)
                 ->select()
-                ->first(['clicker_start','clicker_end']);
-            if (!$assignment_question->clicker_start || (!(time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end)))){
+                ->first(['clicker_start', 'clicker_end']);
+            if (!$assignment_question->clicker_start || (!(time() >= strtotime($assignment_question->clicker_start) && time() <= strtotime($assignment_question->clicker_end)))) {
                 $response['message'] = "This question is currently not open for submission.";
                 return $response;
             }
@@ -38,11 +43,11 @@ trait GeneralSubmissionPolicy
         }
 
         if (!$assignment->course->enrollments->contains('user_id', $user->id)) {
-            $response['message'] = 'No responses will be saved since the assignment is not part of your course.';
+            $response['message'] = 'No responses will be saved since the assignment is `not` part of your course.';
             return $response;
         }
 
-        if (strtotime($assignment->available_from) > time()) {
+        if (strtotime($assign_to_timing->available_from) > time()) {
             $response['message'] = 'No responses will be saved since this assignment is not yet available.';
             return $response;
         }
@@ -54,7 +59,7 @@ trait GeneralSubmissionPolicy
             ->select('date_graded')
             ->first();
 
-        if ($file_submission && $file_submission->date_graded){
+        if ($file_submission && $file_submission->date_graded) {
             $response['message'] = 'Your submission has already been graded and may not be re-submitted.';
             return $response;
         }
@@ -65,7 +70,7 @@ trait GeneralSubmissionPolicy
             ->where('assignment_id', $assignment_id)
             ->where('user_id', $user->id)
             ->first('extension');
-        $past_due = time() > strtotime($assignment->due);
+        $past_due = time() > strtotime($assign_to_timing->due);
         //check to see if the instructor accidentally released scores (which will have comments) or released solutions
         switch ($past_due) {
             case(false):
@@ -99,7 +104,7 @@ trait GeneralSubmissionPolicy
                 if (in_array($assignment->late_policy, ['deduction', 'marked late'])) {
                     //now let's check the late policy deadline
                     //if past policy deadline
-                    if (strtotime($assignment->final_submission_deadline) < time()) {
+                    if (strtotime($assign_to_timing->final_submission_deadline) < time()) {
                         $response['message'] = 'No more late responses are being accepted.';
                         return $response;
                     }

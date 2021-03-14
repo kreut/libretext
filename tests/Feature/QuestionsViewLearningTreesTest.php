@@ -19,8 +19,11 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
+use App\Traits\Test;
+
 class QuestionsViewLearningTreesTest extends TestCase
 {
+    use Test;
 
     public function setup(): void
     {
@@ -34,6 +37,8 @@ class QuestionsViewLearningTreesTest extends TestCase
 
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+
+
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
             'section_id' => $this->section->id,
@@ -44,6 +49,7 @@ class QuestionsViewLearningTreesTest extends TestCase
             'assessment_type' => 'learning tree',
             'submission_count_percent_decrease' => 10,
             'percent_earned_for_exploring_learning_tree' => 50]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
 
 
@@ -107,7 +113,7 @@ class QuestionsViewLearningTreesTest extends TestCase
     {
 
         $this->actingAs($this->student_user_2)->patchJson("api/submissions/{$this->assignment->id}/{$this->question->id}/explored-learning-tree")
-            ->assertJson(['message' => 'No responses will be saved since the assignment is not part of your course.']);
+            ->assertJson(['message' => 'No responses will be saved since you were not assigned to this assignment.']);
     }
 
     /** @test */
@@ -165,7 +171,8 @@ class QuestionsViewLearningTreesTest extends TestCase
     {
 
         //submit correct submission;
-         $submission_id = $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission);
+
+       $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission);
          $submission = Submission::latest()->first();
         $submission->explored_learning_tree = 1;
          $submission->save();

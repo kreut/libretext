@@ -121,18 +121,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-    /** @test */
-    public function will_receive_a_warning_if_you_add_question_while_its_available()
-    {
-        $this->assignment->available_from = Carbon::now()->subHour();
-        $this->assignment->due = Carbon::now()->addHour();
-        $this->assignment->save();
-
-
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['message' => "The question has been added to the assignment.  Since this assignment is open, please let your students know that you've added a question."]);
-    }
-
 
     /** @test */
     public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()

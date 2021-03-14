@@ -14,7 +14,33 @@ use App\Traits\DateFormatter;
 class Assignment extends Model
 {
     use DateFormatter;
+
     protected $guarded = [];
+
+    public function assignToTimings()
+    {
+        return $this->hasMany(AssignToTiming::class);
+    }
+
+    public function assignToTimingByUser($key = '')
+    {
+        $assign_to_timing = $this->assignToUsers
+            ->where('user_id', auth()->user()->id)
+            ->first();
+        if (!$assign_to_timing){
+            return false;
+        }
+        $assign_to_timing_id = $assign_to_timing->assign_to_timing_id;
+        $assign_to_timing = $this->assignToTimings->where('id', $assign_to_timing_id)->first();
+
+        return $key ? $assign_to_timing[$key] : $assign_to_timing;
+
+    }
+
+    public function assignToUsers()
+    {
+        return $this->hasManyThrough(AssignToUser::class, AssignToTiming::class);
+    }
 
     public function getAssignmentsByCourse(Course $course,
                                            Extension $extension,
@@ -24,29 +50,41 @@ class Assignment extends Model
     {
 
         $response['type'] = 'error';
+        $assigned_assignment_ids = [];
+        $assigned_assignments = [];
         try {
             if (Auth::user()->role === 3) {
                 $solutions_by_assignment = $Solution->getSolutionsByAssignment($course);
+                $assigned_assignments = $course->assignedToAssignmentsByUser();
+                $assigned_assignment_ids = array_keys($assigned_assignments);
                 $extensions_by_assignment = $extension->getUserExtensionsByAssignment(Auth::user());
                 $total_points_by_assignment = $this->getTotalPointsForShownAssignments($course);
                 [$scores_by_assignment, $z_scores_by_assignment] = $Score->getUserScoresByAssignment($course, Auth::user());
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
-
             } else {
                 $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
+
+                $assign_to_groups = $this->assignToGroupsByCourse($course);
             }
 
+            $course_assignments = $course->assignments;
 
-            $assignments = $course->assignments;
             $assignments_info = [];
-            foreach ($assignments as $key => $assignment) {
+
+            foreach ($course_assignments as $key => $assignment) {
+
+                if (Auth::user()->role === 3 && !in_array($assignment->id, $assigned_assignment_ids)) {
+                    continue;
+                }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
-                $available_from = $assignment['available_from'];
+
+
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
-                    $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assignment['due'];
+                    $available_from = $assigned_assignments[$assignment->id]->available_from;
+                    $due = $is_extension ? $extensions_by_assignment[$assignment->id] : $assigned_assignments[$assignment->id]->due;
                     $assignments[$key]['is_extension'] = isset($extensions_by_assignment[$assignment->id]);
 
                     $assignments_info[$key]['due'] = [
@@ -63,27 +101,43 @@ class Assignment extends Model
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                     $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
+                    $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
+                    $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
+                    foreach ($assignments_info[$key]['assign_tos'] as $assign_to_key => $assign_to) {
+                        $available_from = $assign_to['available_from'];
+                        $due = $assign_to['due'];
+                        $final_submission_deadline = $assign_to['final_submission_deadline'];
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['status'] = $this->getStatus($available_from, $due);
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
 
-                    $due = $assignment['due'];
-                    $final_submission_deadline = $assignment['final_submission_deadline'];
+
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = ($assignment->late_policy !== 'not accepted')
+                            ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone)
+                            : null;
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['final_submission_deadline_time'] = ($assignment->late_policy !== 'not accepted')
+                            ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone)
+                            : null;
+
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                    }
+
 
                     $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
-                    $assignments_info[$key]['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($due, Auth::user()->time_zone);
-                    //for the editing form
-                    $editing_form_items = $this->getEditingFormItems($available_from, $due, $final_submission_deadline, $assignment);
-                    foreach ($editing_form_items as $editing_form_key => $value) {
-                        $assignments_info[$key][$editing_form_key] = $value;
-                    }
+
                 }
 //same regardless of whether you're a student
+
                 $assignments_info[$key]['show_points_per_question'] = $assignment->show_points_per_question;
                 $assignments_info[$key]['assessment_type'] = $assignment->assessment_type;
                 $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
-                $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
+
                 if (Auth::user()->role === 3 && !$assignments_info[$key]['shown']) {
                     unset($assignments_info[$key]);
                 }
+
             }
             $response['assignments'] = array_values($assignments_info);//fix the unset
             $response['type'] = 'success';
@@ -96,6 +150,130 @@ class Assignment extends Model
         }
         return $response;
     }
+
+    function assignToGroups()
+    {
+        $assign_to_groups_by_course = $this->assignToGroupsByCourse($this->course);
+        foreach ($assign_to_groups_by_course as $assignment_id => $assign_to_group) {
+            if ($assignment_id === $this->id)
+                return array_values($assign_to_group);
+        }
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     */
+    function assignToGroupsByCourse(Course $course)
+    {
+        $assignment_ids = $course->assignments->pluck('id')->toArray();
+
+        $assign_to_groups_info = DB::table('assignments')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+            ->select('assignments.id AS assignment_id',
+                'assign_to_timings.id AS assign_to_timing_id',
+                'assign_to_groups.group',
+                'assign_to_groups.group_id',
+                'assign_to_timings.available_from',
+                'assign_to_timings.due',
+                'assign_to_timings.final_submission_deadline')
+            ->where('assignments.course_id', $course->id)
+            ->get();
+
+        $section_ids = [];
+        $user_ids = [];
+        foreach ($assign_to_groups_info as $assign_to_group) {
+            if ($assign_to_group->group === 'section') {
+                $section_ids[] = $assign_to_group->group_id;
+            }
+            if ($assign_to_group->group === 'user') {
+                $user_ids[] = $assign_to_group->group_id;
+            }
+        }
+
+        $sections_info = DB::table('sections')
+            ->whereIn('id', $section_ids)
+            ->select('id', 'name')
+            ->get();
+        $users_info = DB::table('users')
+            ->whereIn('id', $user_ids)
+            ->select('id', DB::raw('CONCAT(first_name, " ", last_name) AS name'))
+            ->get();
+        $sections_by_id = [];
+        $users_by_id = [];
+        foreach ($sections_info as $section) {
+            $sections_by_id[$section->id] = $section->name;
+        }
+        foreach ($users_info as $user) {
+            $users_by_id[$user->id] = $user->name;
+        }
+
+
+        $assign_to_groups_by_assignment_id = [];
+        foreach ($assign_to_groups_info as $assign_to_group) {
+            $assignment_id = $assign_to_group->assignment_id;
+            $assign_to_timing_id = $assign_to_group->assign_to_timing_id;
+
+            if (!isset($assign_to_groups_by_assignment_id[$assignment_id])) {
+                $assign_to_groups_by_assignment_id[$assignment_id] = [];
+            }
+            if (!isset($assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id])) {
+                $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id] = [
+                    'available_from' => $assign_to_group->available_from,
+                    'due' => $assign_to_group->due,
+                    'final_submission_deadline' => $assign_to_group->final_submission_deadline];
+                $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['groups'] = [];
+            }
+
+
+            $group = 'Everybody';
+            if ($assign_to_group->group === 'section') {
+                $group = $sections_by_id[$assign_to_group->group_id];
+            } else if ($assign_to_group->group === 'user') {
+                $group = $users_by_id[$assign_to_group->group_id];
+            }
+            $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['groups'][] = $group;
+        }
+
+        return $assign_to_groups_by_assignment_id;
+
+    }
+
+    function assignToGroupsByCourseAndUser(Course $course)
+    {
+        $assignment_ids = $course->assignments->pluck('id')->toArray();
+        $assign_tos = DB::table('assign_tos')->whereIn('assignment_id', $assignment_ids)
+            ->get();
+        $assign_tos_by_assignment_id_and_user = [];
+
+        foreach ($assign_tos as $assign_to) {
+            $assignment_id = $assign_to->assignment_id;
+            $assign_to_data = ['available_from' => $assign_to->available_from,
+                'due' => $assign_to->due];
+            if ($assign_to->course_id) {
+                $enrollments = $course->enrollments()->pluck('user_id')->toArray();
+                foreach ($enrollments as $enrollment) {
+                    $assign_tos_by_assignment_id_and_user[$assignment_id][$enrollment] = $assign_to_data;
+                }
+
+            } else if ($assign_to->section_id) {
+
+                echo "Do section ids";
+            } else if ($assign_to->user_id) {
+
+                echo "Do user ids";
+            } else {
+                echo "need to do this.";
+            }
+
+        }
+
+        return $assign_tos_by_assignment_id_and_user;
+
+    }
+
     /**
      * @param Course $course
      * @return array
@@ -140,6 +318,7 @@ class Assignment extends Model
         }
         return 'Closed';
     }
+
     public function getEditingFormItems(string $available_from, string $due, $final_submission_deadline, Assignment $assignment)
     {
         $editing_form_items = [];
@@ -263,6 +442,21 @@ class Assignment extends Model
     public function extensions()
     {
         return $this->hasMany('App\Extension');
+    }
+
+    public function assignTosByUser()
+    {
+        $assign_tos = DB::table('assign_tos')->where('assignment_id', $this->id)->get();
+        $enrollments = $this->course->enrollments;
+        foreach ($assign_tos as $assign_to) {
+            if ($assign_to->course_id) {
+
+
+            }
+
+
+        }
+
     }
 
 

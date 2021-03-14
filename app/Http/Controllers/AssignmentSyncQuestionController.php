@@ -173,10 +173,13 @@ class AssignmentSyncQuestionController extends Controller
                 'clicker_start' => null,
                 'clicker_end' => null
             ]);
+
+            //update individual due dates
             if (strtotime($clicker_end) > strtotime($assignment->due)) {
-                DB::table('assignments')->where('id', $assignment->id)
+                DB::table('assign_to_timings')->where('id', $assignment->id)
                     ->update(['due' => $clicker_end]);
             }
+
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->update([
@@ -454,11 +457,7 @@ class AssignmentSyncQuestionController extends Controller
                     'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
             DB::commit();
             $response['type'] = 'success';
-            $response['message'] = 'The question has been added to the assignment.  ';
-            $open_assignment = time() > strtotime($assignment->available_from) && time() < strtotime($assignment->due);
-            if ($open_assignment) {
-                $response['message'] .= "Since this assignment is open, please let your students know that you've added a question.";
-            }
+            $response['message'] = 'The question has been added to the assignment.';
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
@@ -733,10 +732,10 @@ class AssignmentSyncQuestionController extends Controller
 
             //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
-            $due_date_considering_extension = $assignment->due;
+            $due_date_considering_extension = $assignment->assignToTimingByUser('due');
 
             if ($extension) {
-                if (Carbon::parse($extension) > Carbon::parse($assignment->due)) {
+                if (Carbon::parse($extension) > Carbon::parse($assignment->assignToTimingByUser('due'))) {
                     $due_date_considering_extension = $extension;
                 }
             }
