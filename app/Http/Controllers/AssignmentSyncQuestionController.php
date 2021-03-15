@@ -1134,7 +1134,7 @@ class AssignmentSyncQuestionController extends Controller
         $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
-        \JWTAuth::getJWTProvider()->setSecret(config('app.jwt_secret'));
+        \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
         $payload = auth()->payload();
 
         return $problemJWT;

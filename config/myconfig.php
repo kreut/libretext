@@ -4,4 +4,5 @@ return [
     'telegram_channel_id' => env('TELEGRAM_CHANNEL_ID', 'no telegram channel id'),
     'webwork_seed' =>env('WEBWORK_SEED', 'no webwork seed'),
     'imathas_seed' =>env('IMATHAS_SEED_SEED', 'no imathas seed'),
+    'jwt_secret' => env('JWT_SECRET',null)
 ];
