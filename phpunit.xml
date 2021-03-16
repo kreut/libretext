@@ -29,8 +29,8 @@
         <server name="MAIL_MAILER" value="array"/>
         <server name="QUEUE_CONNECTION" value="sync"/>
         <server name="SESSION_DRIVER" value="array"/>
-        <env name="DB_CONNECTION" value="mysql_test"/>
-        <env name="DB_DATABASE" value="test_libretext"/>
+        <env name="DB_CONNECTION" value="mysql"/>
+        <env name="DB_DATABASE" value="libretext-2021-03-11"/>
         <ini name="display_errors" value="true"/>
     </php>
 </phpunit>
