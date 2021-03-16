@@ -10433,7 +10433,7 @@
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {
-        "php": "^8.0.3",
+        "php": "^7.2.5",
         "ext-curl": "*",
         "ext-dom": "*",
         "ext-json": "*",
