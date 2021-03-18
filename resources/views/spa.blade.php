@@ -8,7 +8,10 @@
       'libretextsAuth' => config('services.libretexts.client_id'),
       'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present')
   ];
-
+session()->put('test','session');
+if (session()->has('test')){
+    dd('hello!');
+}
   if (!\Auth::user() && !session()->has('landing_page')){
       session(['landing_page' =>$_SERVER['REQUEST_URI']]);
   }
