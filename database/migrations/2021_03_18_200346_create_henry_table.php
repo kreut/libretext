@@ -15,6 +15,7 @@ class CreateHenryTable extends Migration
     {
         Schema::create('henry', function (Blueprint $table) {
             $table->id();
+
             $table->timestamps();
         });
     }
