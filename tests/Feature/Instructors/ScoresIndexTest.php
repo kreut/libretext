@@ -73,7 +73,6 @@ class ScoresIndexTest extends TestCase
 
 
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
-        dd($response);
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
         $this->assertEquals('49.17%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above
 

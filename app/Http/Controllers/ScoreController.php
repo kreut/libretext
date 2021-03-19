@@ -76,29 +76,23 @@ class ScoreController extends Controller
         }
 
         $assignment_group_weights = DB::table('assignments')
-            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
-            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
             ->join('assignment_group_weights', 'assignments.assignment_group_id', '=', 'assignment_group_weights.assignment_group_id')
+            ->where('assignment_group_weights.course_id', $course_id)
             ->where('assignments.course_id', $course_id)
-            ->select('assignments.id',
-                'assignments.assignment_group_id',
-                'assignment_group_weights.assignment_group_weight',
-                'assign_to_users.user_id')
+            ->select('assignments.id', 'assignments.assignment_group_id', 'assignment_group_weights.assignment_group_weight')
             ->get();
-
+//create arrays for assignment_group_ids, weights, and counts
+//dd( $include_in_weighted_average);
 
         foreach ($assignment_group_weights as $key => $value) {
             $assignment_groups_by_assignment_id[$value->id] = $value->assignment_group_id;
             if (isset($assignment_group_weights_info[$value->assignment_group_id])) {
-                if (!isset($assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id])) {
-                    $assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id] = 0;
-                }
-                $assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id] = $include_in_weighted_average[$value->id]
-                    ? $assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id] + 1
-                    : $assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id];
+                $assignment_group_weights_info[$value->assignment_group_id]['count'] = $include_in_weighted_average[$value->id]
+                    ? $assignment_group_weights_info[$value->assignment_group_id]['count'] + 1
+                    : $assignment_group_weights_info[$value->assignment_group_id]['count'];
             } else {
                 $assignment_group_weights_info[$value->assignment_group_id]['weight'] = $value->assignment_group_weight;
-                $assignment_group_weights_info[$value->assignment_group_id]['count'][$value->user_id] = $include_in_weighted_average[$value->id] ? 1 : 0;
+                $assignment_group_weights_info[$value->assignment_group_id]['count'] = $include_in_weighted_average[$value->id] ? 1 : 0;
             }
         }
         return [$assignment_group_weights_info, $assignment_groups_by_assignment_id];
@@ -116,9 +110,9 @@ class ScoreController extends Controller
             $include_in_weighted_average_by_assignment_id[$assignment->id] = $assignment->include_in_weighted_average;
 
         }
-        \Log::info(print_r($assignment_groups_by_assignment_id, true));
+
+
         foreach ($scores as $score) {
-            \Log::info('Assignment id-User Id' . $score->assignment_id . ' ' . $score->user_id);
             $assignment_id = $score->assignment_id;
             $user_id = $score->user_id;
             $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
@@ -169,12 +163,12 @@ class ScoreController extends Controller
             if (isset($proportion_scores_by_user_and_assignment_group[$user->id])) {
 
                 foreach ($proportion_scores_by_user_and_assignment_group[$user->id] as $group_id => $group_score) {
-                    $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['count'][$user->id]
-                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count'][$user->id]
+                    $final_weighted_scores[$user->id] += $assignment_group_weights_info[$group_id]['count']
+                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count']
                         : 0;
 
-                    $final_weighted_scores_without_extra_credit[$user->id] += $assignment_group_weights_info[$group_id]['count'][$user->id] && ($group_id !== $extra_credit_group_id)
-                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count'][$user->id]
+                    $final_weighted_scores_without_extra_credit[$user->id] += $assignment_group_weights_info[$group_id]['count'] && ($group_id !== $extra_credit_group_id)
+                        ? $assignment_group_weights_info[$group_id]['weight'] * $group_score / $assignment_group_weights_info[$group_id]['count']
                         : 0;
 
                 }
@@ -526,7 +520,6 @@ class ScoreController extends Controller
         $weighted_score = false;
         $letter_grade = false;
         $z_score = false;
-
         if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
             foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
                 $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
@@ -621,7 +614,7 @@ class ScoreController extends Controller
 
         $role = Auth::user()->role;
         $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
-        \Log::info("Enrolled users: " . $enrolled_users->pluck('id'));
+
         foreach ($enrolled_users as $key => $user) {
             $enrolled_users_by_id[$user->id] = "$user->first_name $user->last_name";
             $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
@@ -630,21 +623,21 @@ class ScoreController extends Controller
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
 
-
         if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
         }
         $assignments = $assignments->sortBy(function ($assignment) {
             return [
-                $assignment->assignment_group_id
+                $assignment->assignment_group_id,
+                $assignment->due
             ];
         });
-        \Log::info("Assignments: " . $assignments->pluck('id'));
+
         $assignment_groups = [];
         foreach ($assignments as $key => $value) {
             $assignment_groups[$value->assignment_group_id][] = $value->id;
         }
-        \Log::info("Assignment groups by assignment group id: " . print_r($assignment_groups, true));
+
         $sections_info = (Auth::user()->role === 2) ? $course->sections : $course->graderSections();
         $sections = [];
         foreach ($sections_info as $key => $section) {

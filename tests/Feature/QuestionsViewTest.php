@@ -87,6 +87,23 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+
+    /** @test */
+
+    public function owner_can_start_a_clicker_assessment()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
+            ->assertJson(['message' => 'You students can begin submitting responses.']);
+    }
+
+    /** @test */
+
+    public function time_to_submit_a_clicker_assessment_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 oogas'])
+            ->assertJsonValidationErrors(['time_to_submit']);
+    }
+
     /** @test */
 
     public function students_cannot_email_users_if_the_user_did_not_grade_their_question()
@@ -1495,22 +1512,6 @@ class QuestionsViewTest extends TestCase
             ->where('user_id', $this->student_user->id)
             ->get();
         $this->assertEquals(1, count($submission_files));
-    }
-
-    /** @test */
-
-    public function owner_can_start_a_clicker_assessment()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
-            ->assertJson(['message' => 'You students can begin submitting responses.']);
-    }
-
-    /** @test */
-
-    public function time_to_submit_a_clicker_assessment_must_be_valid()
-    {
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 oogas'])
-            ->assertJsonValidationErrors(['time_to_submit']);
     }
 
 

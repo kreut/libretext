@@ -41,6 +41,7 @@ class StudentsAssignmentsIndexTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'show_scores' => 1]);
 
 
+
         //create a student and enroll in the class
 
         $this->student_user_2 = factory(User::class)->create();
@@ -78,6 +79,25 @@ class StudentsAssignmentsIndexTest extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
+
+    /** @test */
+    public function correctly_computes_the_z_score_for_an_assignment()
+    {
+        $scores = [80, 40, 36];
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user_2->id);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user_4->id);
+
+        Score::create(['user_id' => $this->student_user->id, 'score' => $scores[0], 'assignment_id' => $this->assignment->id]);
+        Score::create(['user_id' => $this->student_user_2->id, 'score' => $scores[1], 'assignment_id' => $this->assignment->id]);
+        Score::create(['user_id' => $this->student_user_4->id, 'score' => $scores[2], 'assignment_id' => $this->assignment->id]);
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/courses/{$this->course->id}");
+
+        $this->assertEquals($z_score, $response['assignments'][0]['z_score']);
+    }
 
     /** @test */
 
@@ -185,19 +205,6 @@ class StudentsAssignmentsIndexTest extends TestCase
     }
 
 
-    /** @test */
-    public function correctly_computes_the_z_score_for_an_assignment()
-    {
-        $scores = [80, 40, 36];
-        Score::create(['user_id' => $this->student_user->id, 'score' => $scores[0], 'assignment_id' => $this->assignment->id]);
-        Score::create(['user_id' => $this->student_user_2->id, 'score' => $scores[1], 'assignment_id' => $this->assignment->id]);
-        Score::create(['user_id' => $this->student_user_4->id, 'score' => $scores[2], 'assignment_id' => $this->assignment->id]);
-        $mean = array_sum($scores) / count($scores);
-        $std_dev = $this->stats_standard_deviation($scores);
-        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/courses/{$this->course->id}");
-        $this->assertEquals($z_score, $response['assignments'][0]['z_score']);
-    }
 
     /** @test */
     public function correctly_computes_the_z_score_for_an_assignment_if_nothing_submitted()
@@ -205,8 +212,12 @@ class StudentsAssignmentsIndexTest extends TestCase
         $scores = [40, 36];
         Score::create(['user_id' => $this->student_user_2->id, 'score' => $scores[0], 'assignment_id' => $this->assignment->id]);
         Score::create(['user_id' => $this->student_user_4->id, 'score' => $scores[1], 'assignment_id' => $this->assignment->id]);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user_2->id);
+        $this->assignUserToAssignment($this->assignment->id, $this->course->id,$this->student_user_4->id);
 
         $response = $this->actingAs($this->student_user)->getJson("/api/assignments/courses/{$this->course->id}");
+
         $this->assertEquals('N/A', $response['assignments'][0]['z_score']);
     }
 
