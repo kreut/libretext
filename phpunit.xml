@@ -32,6 +32,5 @@
         <env name="DB_CONNECTION" value="mysql"/>
         <env name="DB_DATABASE" value="libretext-2021-03-11"/>
         <ini name="display_errors" value="true"/>
-
     </php>
 </phpunit>

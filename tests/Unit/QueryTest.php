@@ -30,7 +30,7 @@ class QueryTest extends TestCase
     public function can_save_a_public_query_technology_to_the_database()
     {
         $this->actingAs($this->user)->postJson('/api/questions/getQuestionsByTags',[
-            'tags' => ['id=102682']
+            'tags' => ['drag text']
         ])->assertJson(['type' => 'success']);
 
         $Question = new Question();
@@ -41,7 +41,7 @@ class QueryTest extends TestCase
     public function can_save_a_private_query_technology_to_the_database()
     {
         $this->actingAs($this->user)->postJson('/api/questions/getQuestionsByTags',[
-            'tags' => ['id=102654']
+            'tags' => ['drag text']
         ])->assertJson(['type' => 'success']);
 
         $Question = new Question();

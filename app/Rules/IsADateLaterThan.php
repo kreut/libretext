@@ -23,6 +23,7 @@ class IsADateLaterThan implements Rule
         $this->earlier_date = $earlier_date;
         $this->earlier_date_name = $earlier_date_name;
         $this->later_date_name = $later_date_name;
+
     }
 
     /**
@@ -35,6 +36,7 @@ class IsADateLaterThan implements Rule
     public function passes($attribute, $value)
     {
         try {
+
             return Carbon::parse($value) > Carbon::parse($this->earlier_date);
         } catch (Exception $e) {
             return false;

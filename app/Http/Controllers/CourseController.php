@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignToTiming;
 use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\UpdateCourse;
@@ -25,6 +27,7 @@ class CourseController extends Controller
 {
 
     use DateFormatter;
+
 
     public function getCoursesAndAssignments(Request $request)
     {
@@ -85,7 +88,7 @@ class CourseController extends Controller
                            AssignmentSyncQuestion $assignmentSyncQuestion,
                            Enrollment $enrollment,
                            FinalGrade $finalGrade,
-                         Section $section)
+                           Section $section)
     {
         $response['type'] = 'error';
 
@@ -125,7 +128,7 @@ class CourseController extends Controller
             $section->name = 'Main';
             $section->course_id = $imported_course->id;
             $section->save();
-            $course->enrollFakeStudent($imported_course->id,$section->id, $enrollment);
+            $course->enrollFakeStudent($imported_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($imported_course->id);
             DB::commit();
             $response['type'] = 'success';
@@ -393,7 +396,7 @@ class CourseController extends Controller
                     $course_sections[$course_section->course_id]['sections'][] = $course_section->section_name;
                 }
 
-                foreach ($course_sections as $key =>$course_section) {
+                foreach ($course_sections as $key => $course_section) {
                     $course_sections[$key]['sections'] = implode(', ', $course_section['sections']);
                 }
                 $course_sections = array_values($course_sections);
@@ -499,11 +502,11 @@ class CourseController extends Controller
      * Delete a course
      *
      * @param Course $course
-     * @param Enrollment $enrollment
+     * @param AssignToTiming $assignToTiming
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course)
+    public function destroy(Course $course, AssignToTiming $assignToTiming)
     {
 
         $response['type'] = 'error';
@@ -524,7 +527,7 @@ class CourseController extends Controller
                 DB::table('assignment_question_learning_tree')
                     ->whereIn('assignment_question_id', $assignment_question_ids)
                     ->delete();
-
+                $assignToTiming->deleteTimingsGroupsUsers($assignment);
                 $assignment->questions()->detach();
                 $assignment->scores()->delete();
                 $assignment->seeds()->delete();
@@ -535,7 +538,7 @@ class CourseController extends Controller
             AssignmentGroupWeight::where('course_id', $course->id)->delete();
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups
             $course->enrollments()->delete();
-            foreach ($course->sections as $section){
+            foreach ($course->sections as $section) {
                 $section->graders()->delete();
                 $section->delete();
             }

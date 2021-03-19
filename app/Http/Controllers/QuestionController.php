@@ -275,7 +275,8 @@ class QuestionController extends Controller
             ->whereIn('tag', $request->get('tags'))
             ->get()
             ->pluck('id');
-        if (!$chosen_tags) {
+
+        if ($chosen_tags->isEmpty()) {
             echo json_encode([
                 'type' => 'error',
                 'message' => 'We could not find the tags in our database.']);
