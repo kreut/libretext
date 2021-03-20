@@ -1,15 +1,14 @@
 <template>
   <div>
-
     <b-modal
-      v-bind:id="id"
+      :id="id"
       ref="modal"
-      v-bind:title="title"
-      @ok="submitSendEmail"
+      :title="title"
       ok-title="Submit"
       type="type"
-      extraParams="extraParams"
+      extra-params="extraParams"
       size="lg"
+      @ok="submitSendEmail"
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
@@ -19,19 +18,16 @@
           label-cols-lg="2"
           label="Name"
           label-for="name"
-
         >
           <b-form-input
-            class="col-6"
             id="name"
             v-model="sendEmailForm.name"
+            class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
             @keydown="sendEmailForm.errors.clear('name')"
-          >
-          </b-form-input>
-          <has-error :form="sendEmailForm" field="name"></has-error>
-
+          />
+          <has-error :form="sendEmailForm" field="name" />
         </b-form-group>
         <b-form-group
           id="email"
@@ -41,15 +37,14 @@
           label-for="email"
         >
           <b-form-input
-            class="col-6"
             id="name"
             v-model="sendEmailForm.email"
+            class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
             @keydown="sendEmailForm.errors.clear('email')"
-          >
-          </b-form-input>
-          <has-error :form="sendEmailForm" field="email"></has-error>
+          />
+          <has-error :form="sendEmailForm" field="email" />
         </b-form-group>
         <b-form-group
           id="subject"
@@ -60,14 +55,13 @@
         >
           <b-form-input
             id="subject"
-            class="col-8"
             v-model="sendEmailForm.subject"
+            class="col-8"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
             @keydown="sendEmailForm.errors.clear('subject')"
-          >
-          </b-form-input>
-          <has-error :form="sendEmailForm" field="subject"></has-error>
+          />
+          <has-error :form="sendEmailForm" field="subject" />
         </b-form-group>
         <b-form-group
           id="message"
@@ -84,11 +78,11 @@
             max-rows="6"
             :class="{ 'is-invalid': sendEmailForm.errors.has('text') }"
             @keydown="sendEmailForm.errors.clear('text')"
-          ></b-form-textarea>
-          <has-error :form="sendEmailForm" field="text"></has-error>
+          />
+          <has-error :form="sendEmailForm" field="text" />
         </b-form-group>
         <div v-if="sendingEmail" class="float-right">
-          <b-spinner small type="grow"></b-spinner>
+          <b-spinner small type="grow" />
           Sending Email...
         </div>
       </b-form>
@@ -97,8 +91,7 @@
 </template>
 <script>
 
-import Form from "vform"
-
+import Form from 'vform'
 
 export default {
   props: ['fromUser', 'title', 'subject', 'id', 'extraEmailModalText', 'type'],
@@ -113,13 +106,13 @@ export default {
     sendingEmail: false
   }),
   methods: {
-    resetSendEmailModal() {
+    resetSendEmailModal () {
       this.sendEmailForm.name = this.fromUser ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
       this.sendEmailForm.email = this.fromUser ? this.fromUser.email : ''
       this.sendEmailForm.text = ''
       this.sendEmailForm.errors.clear()
     },
-    openSendEmailModal(toUserId = 0) {
+    openSendEmailModal (toUserId = 0) {
       this.showSendEmailModal = true
       this.resetSendEmailModal()
       this.sendEmailForm.to_user_id = toUserId
@@ -127,10 +120,10 @@ export default {
       this.sendEmailForm.type = this.type
       this.$bvModal.show(this.id)
     },
-    setExtraParams(extraParams){
+    setExtraParams (extraParams) {
       this.sendEmailForm.extraParams = extraParams
     },
-    async submitSendEmail(bvModalEvt) {
+    async submitSendEmail (bvModalEvt) {
       bvModalEvt.preventDefault()
       if (this.sendingEmail) {
         this.$noty.info('Please be patient while we send the email.')
@@ -138,20 +131,18 @@ export default {
       }
       this.sendingEmail = true
       try {
-        const {data} = await this.sendEmailForm.post('/api/email/send')
+        const { data } = await this.sendEmailForm.post('/api/email/send')
         console.log(data)
         if (data.type === 'success') {
           this.$bvModal.hide(this.id)
         }
         this.$noty[data.type](data.message)
-
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
       }
       this.sendingEmail = false
-
     }
   }
 }

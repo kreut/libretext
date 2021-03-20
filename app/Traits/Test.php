@@ -16,7 +16,7 @@ use Illuminate\Support\Facades\DB;
 trait Test
 {
 
-    public function assignUserToAssignment(int $assignment_id, int $course_id, int $student_user_id = 0)
+    public function assignUserToAssignment(int $assignment_id, string $group, int $group_id, int $student_user_id = 0)
     {
         $assignToTiming = new AssignToTiming();
         $assignToTiming->assignment_id = $assignment_id;
@@ -25,8 +25,8 @@ trait Test
         $assignToTiming->save();
 
         $assignToGroup = new AssignToGroup();
-        $assignToGroup->group = 'course';
-        $assignToGroup->group_id = $course_id;
+        $assignToGroup->group = $group;
+        $assignToGroup->group_id = $group_id;
         $assignToGroup->assign_to_timing_id = $assignToTiming->id;
         $assignToGroup->save();
 

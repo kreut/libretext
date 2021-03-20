@@ -33,7 +33,7 @@ class AssignmentsSummaryTest extends TestCase
         ]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;

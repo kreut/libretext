@@ -31,7 +31,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id);
 
 
         $this->assignment_3 = factory(Assignment::class)->create(['course_id' => $this->course->id, 'order' => 2]);

@@ -101,17 +101,20 @@ class ScoreController extends Controller
         return [$assignment_group_weights_info, $assignment_groups_by_assignment_id];
     }
 
-    public function getScoresByUserIdAndAssignment( $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id)
+    public function getScoresByUserIdAndAssignment(Course $course, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id)
     {
 
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
 
-
+       $fake_student_ids = $course->fakeStudentIds();
         foreach ($scores as $score) {
-            $assignment_id = $score->assignment_id;
             $user_id = $score->user_id;
+            if (in_array($user_id, $fake_student_ids)){
+                continue;
+            }
+            $assignment_id = $score->assignment_id;
             $scores_by_user_and_assignment[$user_id][$assignment_id] = $score->score;
             $group_id = $assignment_groups_by_assignment_id[$assignment_id];
             //init if needed
@@ -583,7 +586,7 @@ class ScoreController extends Controller
 
 
         [$assignment_group_weights_info, $assignment_groups_by_assignment_id] = $this->getAssignmentGroupWeights($enrolled_user_ids, $course->id, $include_in_weighted_average_by_assignment_id_and_user_id);
-        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id, $include_in_weighted_average_by_assignment_id_and_user_id);
+        [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group] = $this->getScoresByUserIdAndAssignment($course, $scores, $assignment_groups_by_assignment_id, $total_points_by_assignment_id, $include_in_weighted_average_by_assignment_id_and_user_id);
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $enrolled_users, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(

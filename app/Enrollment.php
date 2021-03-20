@@ -3,12 +3,23 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\DB;
 
 class Enrollment extends Model
 {
 
     protected $guarded = [];
 
+    public function fakeStudent($section_id)
+    {
+        return DB::table('enrollments')
+            ->join('users', 'enrollments.user_id', '=','users.id')
+            ->where('enrollments.section_id', $section_id)
+            ->where('users.fake_student',1)
+            ->select('users.id')
+            ->first()
+            ->id;
+    }
     public function enrolledUsers()
     {
         return $this->hasMany('App\User');

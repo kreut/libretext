@@ -31,7 +31,7 @@ class CoursesIndexTest extends TestCase
         Enrollment::create(['course_id' => $this->course->id,
             'user_id' => $this->student_user->id,
             'section_id' => $this->section->id]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 

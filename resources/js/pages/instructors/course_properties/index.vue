@@ -51,8 +51,13 @@ export default {
         },
         {
           icon: '',
-          name: 'People',
+          name: 'Graders',
           route: 'course_properties.graders'
+        },
+        {
+          icon: '',
+          name: 'Students',
+          route: 'course_properties.students'
         },
         {
           icon: '',

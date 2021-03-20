@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
+use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
@@ -140,7 +141,8 @@ class SectionController extends Controller
     public function store(StoreSection $request,
                           Course $course,
                           Section $section,
-                          Enrollment $enrollment)
+                          Enrollment $enrollment,
+                          AssignToUser $assignToUser)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$section, $course]);
@@ -158,6 +160,8 @@ class SectionController extends Controller
             $section->access_code = $this->createSectionAccessCode();
             $section->save();
             $course->enrollFakeStudent($course->id, $section->id, $enrollment);
+            $assignments = $course->assignments;
+            $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The section <strong>{$data['name']}</strong> has been created.";

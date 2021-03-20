@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewScores" title="Gradebook" />
+    <PageTitle v-if="canViewScores" title="Gradebook"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -18,10 +18,15 @@
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
                 straight average of all assignments within an assignment group. The averages by assignment
                 group are weighted by the
-                <span><router-link :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}">
-                  assignment group weights</router-link></span> which determine the <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">
+                <span><router-link
+                  :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}"
+                >
+                  assignment group weights</router-link></span> which determine the
+                <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">
                   letter grades
-                </router-link> for the course. Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included in the score computation.
+                </router-link>
+                for the course. Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included
+                in the score computation.
               </p>
               <p>
                 If you prefer a different grading methodology, please download the scores and input them into a
@@ -29,7 +34,8 @@
               </p>
               <ul>
                 <li>
-                  Click on any student name to log in as them and get a better understanding of that student's performance
+                  Click on any student name to log in as them and get a better understanding of that student's
+                  performance
                 </li>
                 <li>Click on any item in the Gradebook if you need to offer an extension or enter a score override</li>
               </ul>
@@ -82,10 +88,11 @@
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span v-html="data.field.label" />
+                  <span v-html="data.field.label"/>
                 </template>
                 <template v-slot:cell()="data">
-                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)">{{ data.value }}
+                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
+                  >{{ data.value }}
                   </span>
                 </template>
               </b-table>
@@ -107,7 +114,7 @@
         @hidden="resetModalForms"
       >
         <p>
-          Extra Credit is applied after the final weighted average is computed.  As an example, if the final weighted
+          Extra Credit is applied after the final weighted average is computed. As an example, if the final weighted
           average is 82% and you give your student extra credit of 5%, their final average will be 87%.
         </p>
         <b-form ref="form">
@@ -128,7 +135,7 @@
                   :class="{ 'is-invalid': extraCreditForm.errors.has('extra_credit') }"
                   @keydown="extraCreditForm.errors.clear('extra_credit')"
                 />
-                <has-error :form="extraCreditForm" field="extra_credit" />
+                <has-error :form="extraCreditForm" field="extra_credit"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -166,7 +173,7 @@
                   :class="{ 'is-invalid': form.errors.has('extension_date') }"
                   @shown="form.errors.clear('extension_date')"
                 />
-                <has-error :form="form" field="extension_date" />
+                <has-error :form="form" field="extension_date"/>
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.extension_time"
@@ -174,7 +181,7 @@
                                    :class="{ 'is-invalid': form.errors.has('extension_time') }"
                                    @shown="form.errors.clear('extension_time')"
                 />
-                <has-error :form="form" field="extension_time" />
+                <has-error :form="form" field="extension_time"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -195,7 +202,7 @@
                   :class="{ 'is-invalid': form.errors.has('score') }"
                   @keydown="form.errors.clear('score')"
                 />
-                <has-error :form="form" field="score" />
+                <has-error :form="form" field="score"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -209,6 +216,7 @@ import axios from 'axios'
 import Form from 'vform'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -257,6 +265,7 @@ export default {
     currentScore: null
   }),
   mounted () {
+    this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.isLoading = true
@@ -359,32 +368,6 @@ export default {
       } else {
         this.$noty.error(data.message)
         return false
-      }
-    },
-    async loginAsStudentInCourse (studentUserId) {
-      try {
-        const { data } = await axios.post('/api/user/login-as-student-in-course',
-          {
-            course_id: this.courseId,
-            student_user_id: studentUserId
-          })
-
-        if (data.type === 'success') {
-          // Save the token.
-          this.$store.dispatch('auth/saveToken', {
-            token: data.token,
-            remember: false
-          })
-
-          // Fetch the user.
-          await this.$store.dispatch('auth/fetchUser')
-          // Redirect to the correct home page
-          this.$router.push({ name: 'students.assignments.index' })
-        } else {
-          this.$noty.error(data.message)// no access
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     async getStudentAction (value, studentUserId, assignmentId, studentName) {

@@ -8,6 +8,7 @@ use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
+use Illuminate\Support\Facades\DB;
 use Tymon\JWTAuth\Contracts\JWTSubject;
 
 class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
@@ -20,7 +21,7 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
      * @var array
      */
     protected $fillable = [
-        'first_name', 'last_name', 'email', 'password', 'time_zone','role'
+        'first_name', 'last_name', 'email', 'password', 'time_zone', 'role'
     ];
 
     /**
@@ -102,6 +103,23 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
     public function learningTrees()
     {
         return $this->hasMany('App\LearningTree');
+    }
+
+    public function assignmentsAndAssignToTimingsByCourse(int $course_id)
+    {
+        $assignments_info= DB::table('assign_to_timings')
+            ->join('assignments', 'assign_to_timings.assignment_id', '=', 'assignments.id')
+            ->where('assignments.course_id', $course_id)
+            ->select('assignments.id AS assignment_id', 'assign_to_timings.id AS assign_to_timing_id')
+            ->get();
+        $assignments = [];
+        if ($assignments_info->isNotEmpty()){
+            foreach ($assignments_info as $value){
+                $assignments[] = ['assignment_id' => $value->assignment_id,
+                'assign_to_timing_id' => $value->assign_to_timing_id];
+            }
+        }
+        return $assignments;
     }
 
 }

@@ -134,6 +134,7 @@ class CourseController extends Controller
             $section->course_id = $imported_course->id;
             $section->save();
             $course->enrollFakeStudent($imported_course->id, $section->id, $enrollment);
+
             $finalGrade->setDefaultLetterGrades($imported_course->id);
             DB::commit();
             $response['type'] = 'success';

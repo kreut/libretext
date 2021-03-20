@@ -71,7 +71,7 @@ class ScoresIndexTest extends TestCase
         $this->createAssignmentGroupWeightsAndAssignments();
         $assignments = Assignment::all();
         foreach ($assignments as $assignment) {
-            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+            $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
         }
 
 
@@ -237,7 +237,7 @@ class ScoresIndexTest extends TestCase
 
         $assignments = Assignment::all();
         foreach ($assignments as $assignment) {
-            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+            $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
         }
 
         ExtraCredit::create(['course_id' => $this->course->id,
@@ -258,7 +258,7 @@ class ScoresIndexTest extends TestCase
         $this->createAssignmentGroupWeightsAndAssignments();
         $assignments = Assignment::all();
         foreach ($assignments as $assignment) {
-            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+            $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
         }
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];

@@ -47,7 +47,7 @@ class QuestionsViewTest extends TestCase
 
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
         $this->question = factory(Question::class)->create(['page_id' => 1]);
         $this->question_2 = factory(Question::class)->create(['page_id' => 2]);

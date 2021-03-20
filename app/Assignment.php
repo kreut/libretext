@@ -459,6 +459,26 @@ class Assignment extends Model
         return $this->hasMany('App\Extension');
     }
 
+    public function removeUserInfo(User $user,
+                                   $assignments_to_remove_ids,
+                                   $assign_to_timings_to_remove_ids,
+                                   Submission $submission,
+                                   SubmissionFile $submissionFile,
+                                   Score $score,
+                                   AssignToUser $assignToUser,
+                                   Extension $extension,
+                                   LtiGradePassback $ltiGradePassback,
+                                   Seed $seed)
+    {
+        $submission->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        $submissionFile->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        $score->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id',$assign_to_timings_to_remove_ids)->delete();
+        $extension->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        $ltiGradePassback->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+        $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
+    }
+
     public function assignTosByUser()
     {
         $assign_tos = DB::table('assign_tos')->where('assignment_id', $this->id)->get();

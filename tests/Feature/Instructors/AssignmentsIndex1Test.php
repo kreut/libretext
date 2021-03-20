@@ -41,7 +41,7 @@ class AssignmentsIndex1Test extends TestCase
         Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
         $this->assignment_info = ['course_id' => $this->course->id,
             'name' => 'First Assignment',

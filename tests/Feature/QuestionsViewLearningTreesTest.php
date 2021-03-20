@@ -49,7 +49,7 @@ class QuestionsViewLearningTreesTest extends TestCase
             'assessment_type' => 'learning tree',
             'submission_count_percent_decrease' => 10,
             'percent_earned_for_exploring_learning_tree' => 50]);
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
 
 

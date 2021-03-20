@@ -50,6 +50,7 @@ class BreadcrumbController extends Controller
                         case('course_properties.sections'):
                         case('course_properties.letter_grades'):
                         case('course_properties.graders'):
+                        case('course_properties.students'):
                         case('course_properties.access_codes'):
                         case('course_properties.assignment_group_weights'):
                             $breadcrumbs[] = ['text' => $course->name,

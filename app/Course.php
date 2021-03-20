@@ -117,6 +117,18 @@ class Course extends Model
         return User::find($fake_student_user_id);
     }
 
+    public function fakeStudentIds()
+    {
+       return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
+            ->join('users', 'enrollments.user_id', '=', 'users.id')
+            ->where('course_id', $this->id)
+            ->where('fake_student', 1)
+            ->select('users.id')
+            ->get()
+           ->pluck('id')
+            ->toArray();
+    }
+
 
     public function finalGrades()
     {
@@ -190,6 +202,7 @@ class Course extends Model
         $enrollment->section_id = $section_id;
         $enrollment->course_id = $course_id;
         $enrollment->save();
+        return $enrollment;
 
 
     }
