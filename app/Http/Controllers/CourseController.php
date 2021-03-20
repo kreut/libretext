@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\AssignToGroup;
 use App\AssignToTiming;
 use App\Course;
 use App\FinalGrade;
@@ -22,6 +23,7 @@ use \Illuminate\Http\Request;
 
 use App\Exceptions\Handler;
 use \Exception;
+use Illuminate\Support\Facades\Log;
 
 class CourseController extends Controller
 {
@@ -78,8 +80,10 @@ class CourseController extends Controller
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
      * @param Section $section
+     * @param AssignToTiming $assignToTiming
+     * @param AssignToGroup $assignToGroup
      * @return array
-     * @throws Exception'
+     * @throws Exception '
      */
     public function import(Request $request,
                            Course $course,
@@ -122,6 +126,7 @@ class CourseController extends Controller
                 $imported_assignment->students_can_view_assignment_statistics = 0;
                 $imported_assignment->assignment_group_id = $imported_assignment_group_id;
                 $imported_assignment->save();
+                $assignment->saveAssignmentTimingAndGroup($imported_assignment);
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
 

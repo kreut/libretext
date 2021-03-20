@@ -17,6 +17,21 @@ class Assignment extends Model
 
     protected $guarded = [];
 
+    function saveAssignmentTimingAndGroup(Assignment $new_assignment)
+    {
+        $assignToTiming = new AssignToTiming();
+        $assignToTiming->assignment_id = $new_assignment->id;
+        $assignToTiming->available_from = Carbon::now();
+        $assignToTiming->due = Carbon::now();
+        $assignToTiming->save();
+
+        $assignToGroup = new AssignToGroup();
+        $assignToGroup->assign_to_timing_id = $assignToTiming->id;
+        $assignToGroup->group = 'course';
+        $assignToGroup->group_id = $new_assignment->course_id;
+        $assignToGroup->save();
+    }
+
     public function assignToTimings()
     {
         return $this->hasMany(AssignToTiming::class);
@@ -27,7 +42,7 @@ class Assignment extends Model
         $assign_to_timing = $this->assignToUsers
             ->where('user_id', auth()->user()->id)
             ->first();
-        if (!$assign_to_timing){
+        if (!$assign_to_timing) {
             return false;
         }
         $assign_to_timing_id = $assign_to_timing->assign_to_timing_id;

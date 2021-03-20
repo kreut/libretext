@@ -122,14 +122,20 @@ class AssignmentController extends Controller
      * @param AssignmentGroup $assignmentGroup
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param AssignmentGroupWeight $assignmentGroupWeight
+     * @param AssignToTiming $assignToTiming
+     * @param AssignToGroup $assignToGroup
      * @return array
      * @throws Exception
      */
     public function importAssignment(Request $request,
-                                     Course $course, Assignment $assignment,
+                                     Course $course,
+                                     Assignment $assignment,
                                      AssignmentGroup $assignmentGroup,
                                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                                     AssignmentGroupWeight $assignmentGroupWeight)
+                                     AssignmentGroupWeight $assignmentGroupWeight,
+                                     AssignToTiming $assignToTiming,
+                                     AssignToGroup $assignToGroup
+    )
     {
 
         $response['type'] = 'error';
@@ -169,7 +175,9 @@ class AssignmentController extends Controller
             $imported_assignment->name = "$imported_assignment->name Import";
             $imported_assignment->course_id = $course->id;
             $imported_assignment->assignment_group_id = $imported_assignment_group_id;
+
             $imported_assignment->save();
+            $assignment->saveAssignmentTimingAndGroup($imported_assignment);
 
             if ($level === 'properties_and_questions') {
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment_id, $imported_assignment->id);
@@ -190,7 +198,8 @@ class AssignmentController extends Controller
     }
 
 
-    public function getImportableAssignmentsByUser(Request $request, Course $course)
+    public function getImportableAssignmentsByUser(Request $request,
+                                                   Course $course)
     {
 
         $response['type'] = 'error';
@@ -218,7 +227,10 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function createAssignmentFromTemplate(Request $request, Assignment $assignment)
+    public function createAssignmentFromTemplate(Request $request,
+                                                 Assignment $assignment,
+                                                 AssignToTiming $assignToTiming,
+                                                 AssignToGroup $assignToGroup)
     {
 
         $response['type'] = 'error';
@@ -230,13 +242,18 @@ class AssignmentController extends Controller
         }
 
         try {
+            DB::beginTransaction();
             $assignments = Assignment::find($assignment->id);
             $new_assignment = $assignments->replicate();
             $new_assignment->name = $new_assignment->name . " copy";
             $new_assignment->save();
+            $assignment->saveAssignmentTimingAndGroup($new_assignment);
+
+            DB::commit();
             $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
             $response['type'] = 'success';
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error creating an assignment from {$assignment->name}.  Please try again or contact us for assistance.";
@@ -691,7 +708,7 @@ class AssignmentController extends Controller
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
-                'past_due' =>  Auth::user()->role === 3 ? time() > strtotime($assignment->assignToTimingByUser('due')) : '',
+                'past_due' => Auth::user()->role === 3 ? time() > strtotime($assignment->assignToTimingByUser('due')) : '',
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
@@ -987,6 +1004,7 @@ class AssignmentController extends Controller
                 unset($data['final_submission_deadline_' . $key]);
                 unset($data['available_from_date_' . $key]);
                 unset($data['available_from_time_' . $key]);
+                unset($data['due_time_' . $key]);
                 unset($data['final_submission_deadline_date' . $key]);
                 unset($data['final_submission_deadline_time_' . $key]);
             }

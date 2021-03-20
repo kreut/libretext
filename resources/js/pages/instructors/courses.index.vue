@@ -234,10 +234,6 @@ export default {
         key: 'end_date',
         sortable: true
       },
-      {
-        key: 'access_code',
-        label: 'Access Code'
-      },
       'actions'
       ]
       : [{
