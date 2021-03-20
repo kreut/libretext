@@ -69,7 +69,10 @@ class ScoresIndexTest extends TestCase
         $this->assignment->include_in_weighted_average = 0;
         $this->assignment->save();
         $this->createAssignmentGroupWeightsAndAssignments();
-        $this->assignUserToAssignment($this->assignment->id, $this->course->id, $this->student_user->id);
+        $assignments = Assignment::all();
+        foreach ($assignments as $assignment) {
+            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+        }
 
 
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
@@ -231,6 +234,12 @@ class ScoresIndexTest extends TestCase
         $without_extra_credit = 51.11;
         $extra_credit = 10;
         $this->createAssignmentGroupWeightsAndAssignments();
+
+        $assignments = Assignment::all();
+        foreach ($assignments as $assignment) {
+            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+        }
+
         ExtraCredit::create(['course_id' => $this->course->id,
             'user_id' => $this->student_user->id,
             'extra_credit' => $extra_credit]);
@@ -247,6 +256,10 @@ class ScoresIndexTest extends TestCase
 
         //4 assignments with 2 different weights
         $this->createAssignmentGroupWeightsAndAssignments();
+        $assignments = Assignment::all();
+        foreach ($assignments as $assignment) {
+            $this->assignUserToAssignment($assignment->id, $this->course->id, $this->student_user->id);
+        }
         $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
         $weighted_score_assignment_id = $response->baseResponse->original['weighted_score_assignment_id'];
         $this->assertEquals('51.11%', $response->baseResponse->original['table']['rows'][0][$weighted_score_assignment_id]);//see computation above

@@ -206,6 +206,19 @@ class Course extends Model
         return (in_array(Auth::user()->id, $graders));
     }
 
+    public function assignTosByAssignmentAndUser(){
+        $assigned_assignments = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
+            ->where('assignments.course_id', $this->id)
+            ->select('assignments.id AS assignment_id', 'assign_to_users.user_id AS user_id')
+            ->get();
+        $assigned_assignments_by_assignment_and_user_id = [];
+        foreach ($assigned_assignments as $assignment) {
+            $assigned_assignments_by_assignment_and_user_id[$assignment->assignment_id][] = $assignment->user_id;
+        }
+        return   $assigned_assignments_by_assignment_and_user_id;
+}
     public function assignedToAssignmentsByUser()
     {
         $assigned_assignments = DB::table('assignments')
