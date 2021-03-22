@@ -535,11 +535,16 @@ class CourseController extends Controller
                     ->delete();
                 $assignToTiming->deleteTimingsGroupsUsers($assignment);
                 $assignment->questions()->detach();
+                $assignment->submissions()->delete();
+                $assignment->fileSubmissions()->delete();
                 $assignment->scores()->delete();
+                $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
 
             }
+            $course->extensions()->delete();
             $course->assignments()->delete();
+
 
             AssignmentGroupWeight::where('course_id', $course->id)->delete();
             AssignmentGroup::where('course_id', $course->id)->where('user_id', Auth::user()->id)->delete();//get rid of the custom assignment groups

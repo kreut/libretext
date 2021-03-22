@@ -57,6 +57,12 @@ class Assignment extends Model
         return $this->hasManyThrough(AssignToUser::class, AssignToTiming::class);
     }
 
+    public function cutUps() {
+        return $this->hasMany(Cutup::class);
+    }
+
+
+
     public function getAssignmentsByCourse(Course $course,
                                            Extension $extension,
                                            Score $Score, Submission $Submission,
