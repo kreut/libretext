@@ -236,7 +236,7 @@ class EnrollmentController extends Controller
             }
             $enrollments = [];
             foreach ($enrollments_info as $enrollment) {
-                $enrollment->enrollment_date = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($enrollment->enrollment_date, $request->user()->time_zone);
+                $enrollment->enrollment_date = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($enrollment->enrollment_date, $request->user()->time_zone, 'F d, Y');
                 $enrollments[] = $enrollment;
             }
             $response['sections'] = $sections;

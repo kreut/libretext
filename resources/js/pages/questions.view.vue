@@ -13,7 +13,7 @@
         </div>
       </b-alert>
     </div>
-    <EnrollInCourse />
+    <EnrollInCourse/>
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -130,19 +130,19 @@
       <div class="mb-2">
         <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')" />
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')"/>
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Page ID:</span> <span id="pageId">{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')" />
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')"/>
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')" />
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')"/>
         </span>
       </div>
       <div class="mb-2">
@@ -150,19 +150,19 @@
           currentUrl
         }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')"/>
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">iframe:</span> <span id="embedCode" class="font-italic">{{ embedCode }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')" />
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')"/>
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
                                                                     v-html="technologySrc"
-        />
+      />
       </div>
     </b-modal>
 
@@ -217,10 +217,11 @@
                       :class="{ 'is-invalid': solutionTextForm.errors.has('solution_text') }"
                       @keydown="solutionTextForm.errors.clear('solution_text')"
             />
-            <has-error :form="solutionTextForm" field="solution_text" />
+            <has-error :form="solutionTextForm" field="solution_text"/>
           </div>
           <div>
-            <span class="float-right"><b-button variant="primary" @click="submitSolutionText">Save Text</b-button></span>
+            <span class="float-right"><b-button variant="primary" @click="submitSolutionText"
+            >Save Text</b-button></span>
           </div>
         </div>
       </div>
@@ -278,7 +279,7 @@
                       :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
                       @keydown="cutupsForm.errors.clear('chosen_cutups')"
                     />
-                    <has-error :form="cutupsForm" field="chosen_cutups" />
+                    <has-error :form="cutupsForm" field="chosen_cutups"/>
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -289,7 +290,7 @@
                         <span v-if="user.role !== 2">Question File Submission</span>
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow" />
+                        <b-spinner small type="grow"/>
                         Processing...
                       </span>
                     </b-row>
@@ -335,7 +336,7 @@
               :accept="getSolutionUploadTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -372,7 +373,7 @@
                background="#FFFFFF"
       />
       <div v-if="questions !==['init'] && !inIFrame">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
@@ -443,7 +444,10 @@
                   />
                 </div>
                 <div v-if="source === 'a' && !inIFrame ">
-                  <div v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')" class="text-center">
+                  <div
+                    v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')"
+                    class="text-center"
+                  >
                     <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                   </div>
                   <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
@@ -481,7 +485,7 @@
                   </div>
                   <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' " class="text-center">
                     <b-form-row>
-                      <b-col />
+                      <b-col/>
                       <h5 class="mt-1">
                         This question is worth
                       </h5>
@@ -495,7 +499,7 @@
                           :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                           @keydown="questionPointsForm.errors.clear('points')"
                         />
-                        <has-error :form="questionPointsForm" field="points" />
+                        <has-error :form="questionPointsForm" field="points"/>
                       </b-col>
                       <h5 class="mt-1">
                         points.
@@ -521,8 +525,8 @@
                   <div v-if="assessmentType === 'learning tree'">
                     <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
                       <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                        questions[currentPage - 1].last_submitted
-                      }}</span>
+                          questions[currentPage - 1].last_submitted
+                        }}</span>
                     </div>
                     <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                       <span class="font-weight-bold">You had a late penalty of </span> {{
@@ -533,7 +537,7 @@
                   <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
                     <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                       <template slot-scope="props">
-                        <span v-html="getTimeLeftMessage(props, assessmentType)" />
+                        <span v-html="getTimeLeftMessage(props, assessmentType)"/>
                       </template>
                     </countdown>
                   </div>
@@ -543,7 +547,7 @@
                       size="sm"
                       @click="openModalShare()"
                     >
-                      <b-icon icon="share" />
+                      <b-icon icon="share"/>
                       Share
                     </b-button>
                   </div>
@@ -625,8 +629,8 @@
           <div v-if="assessmentType === 'learning tree'">
             <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
               <span class="font-weight-bold">You achieved a score of {{
-                questions[currentPage - 1].submission_score
-              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+                  questions[currentPage - 1].submission_score
+                }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
             </b-alert>
           </div>
           <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
@@ -711,8 +715,8 @@
                   <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                     <template slot-scope="props">
                       <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                        props.seconds
-                      }} seconds, then re-submit.
+                          props.seconds
+                        }} seconds, then re-submit.
                       </span>
                     </template>
                   </countdown>
@@ -809,7 +813,7 @@
                             @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
                             @namespaceloaded="onCKEditorNamespaceLoaded"
                           />
-                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text" />
+                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
                         </b-card>
                         <b-container class="mt-2">
                           <b-row align-h="end">
@@ -902,7 +906,7 @@
                             :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
                             @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                           />
-                          <has-error :form="clickerTimeForm" field="time_to_submit" />
+                          <has-error :form="clickerTimeForm" field="time_to_submit"/>
                         </b-form-group>
                         <b-col>
                           <b-button variant="success" @click="startClickerAssessment">
@@ -918,7 +922,7 @@
                         </h5>
                       </div>
                     </div>
-                    <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
+                    <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart"/>
                   </div>
                 </div>
               </b-col>
@@ -964,21 +968,21 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                            previousNode.title
-                          }}</a>
+                              previousNode.title
+                            }}</a>
                         </b-row>
                         <b-row align-h="center">
-                          <b-icon icon="arrow-down-square-fill" variant="success" />
+                          <b-icon icon="arrow-down-square-fill" variant="success"/>
                         </b-row>
                       </div>
                       <b-row align-h="center" class="p-2">
                         <span class="font-weight-bold font-italic text-muted">{{
-                          activeNode.title
-                        }}</span>
+                            activeNode.title
+                          }}</span>
                       </b-row>
                       <div v-if="futureNodes.length>0">
                         <b-row align-h="center">
-                          <b-icon icon="arrow-down-square-fill" variant="success" />
+                          <b-icon icon="arrow-down-square-fill" variant="success"/>
                         </b-row>
                         <b-row class="p-2">
                           <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
@@ -1010,7 +1014,7 @@
                         <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
                                                                                           :current-page="currentPage"
                                                                                           :assignment-name="name"
-                        /><br>
+                      /><br>
                       </span>
 
                       <span v-if="assessmentType==='learning tree'">
@@ -1058,7 +1062,7 @@
                         </b-alert>
                       </span>
                       <span class="font-weight-bold">Solution: </span>
-                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
                       <br>
                       <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                         <strong> Uploaded file:</strong>
@@ -1090,7 +1094,7 @@
                           </a>
                           <br>
                         </span>
-                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback" /><br>
+                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback"/><br>
 
                         <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
                         <span v-if="questions[currentPage - 1].grader_id">
@@ -1174,6 +1178,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
 import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
+import { doCopy } from '~/helpers/Copy'
 
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
@@ -1397,6 +1402,7 @@ export default {
     user: 'auth/user'
   }),
   created () {
+    this.doCopy = doCopy
     try {
       this.inIFrame = window.self !== window.top
     } catch (e) {
@@ -1476,21 +1482,6 @@ export default {
         this.questionView = (this.questionView === 'basic') ? 'expanded' : 'basic'
       } catch (error) {
         this.$noty.error(error.message)
-      }
-    },
-    doCopy (copyId) {
-      try {
-        let copyText = document.getElementById(copyId)
-        let elem = document.createElement('input')
-        document.body.appendChild(elem)
-        elem.value = copyText.innerText
-        elem.select()
-        elem.focus()
-        document.execCommand('copy', false)
-        elem.remove()
-        this.$noty.success('The code to share has been copied to your clipboard.')
-      } catch (error) {
-        this.$noty.error(`We were not able to copy the code to your clipboard: ${error.message}`)
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {

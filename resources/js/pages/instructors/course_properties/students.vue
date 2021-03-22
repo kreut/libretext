@@ -126,6 +126,12 @@
                 <template v-slot:cell(name)="data">
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
                 </template>
+                <template v-slot:cell(email)="data">
+
+                  <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span> <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy(`email-${data.item.id}}`)"/>
+        </span>
+                </template>
                 <template v-slot:cell(actions)="data">
                   <b-icon v-show="sectionOptions.length>1" icon="truck" @click="initMoveStudent(data.item)"/>
                   <b-icon icon="trash" @click="initUnenrollStudent(data.item)"/>
@@ -151,13 +157,19 @@ import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { doCopy } from '~/helpers/Copy'
 
 export default {
+  copyIcon: faCopy,
   middleware: 'auth',
   components: {
-    Loading
+    Loading,
+    FontAwesomeIcon
   },
   data: () => ({
+    copyIcon: faCopy,
     studentToUnenroll: {},
     unenrollStudentForm: new Form({
       confirmation: ''
@@ -192,6 +204,7 @@ export default {
     user: 'auth/user'
   }),
   created () {
+    this.doCopy = doCopy
     this.loginAsStudentInCourse = loginAsStudentInCourse
   },
   mounted () {
