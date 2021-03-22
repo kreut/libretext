@@ -6,7 +6,7 @@
       title="Remove Grader"
     >
       <p>
-        Are you sure you would like to remove this grader?  Once removed, they will no longer be able to grade
+        Are you sure you would like to remove this grader? Once removed, they will no longer be able to grade
         for you unless you invite them back.
       </p>
       <template #modal-footer>
@@ -41,7 +41,7 @@
           name="sections"
           @keydown="sectionsForm.errors.clear('selected_sections')"
         />
-        <has-error :form="sectionsForm" field="selected_sections" />
+        <has-error :form="sectionsForm" field="selected_sections"/>
       </b-form>
       <template #modal-footer>
         <b-button
@@ -75,7 +75,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('email') }"
             @keydown="graderForm.errors.clear('email')"
           />
-          <has-error :form="graderForm" field="email" />
+          <has-error :form="graderForm" field="email"/>
         </b-form-group>
         Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
         <b-form-checkbox-group
@@ -85,11 +85,11 @@
           name="sections"
           @keydown="graderForm.errors.clear('selected_sections')"
         />
-        <has-error :form="graderForm" field="selected_sections" />
+        <has-error :form="graderForm" field="selected_sections"/>
       </b-form>
       <template #modal-footer>
         <span v-if="sendingEmail">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Sending Email..
         </span>
         <b-button
@@ -114,12 +114,14 @@
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Graders">
           <b-card-text>
-            <div>
-              <b-button class="float-right mb-2" variant="primary" size="sm" @click="initInviteGrader()">
+            <b-container>
+              <b-row align-h="end">
+              <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
                 Invite Grader
               </b-button>
-            </div>
-            <div v-if="course.graders.length">
+              </b-row>
+            </b-container>
+            <div v-show="course.graders.length">
               <b-table striped hover
                        :fields="fields"
                        :items="graders"
@@ -128,12 +130,12 @@
                   {{ formatSections(data.item.sections) }}
                 </template>
                 <template v-slot:cell(actions)="data">
-                  <b-icon icon="pencil" @click="initEditSections(data.item)" />
-                  <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)" />
+                  <b-icon icon="pencil" @click="initEditSections(data.item)"/>
+                  <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)"/>
                 </template>
               </b-table>
             </div>
-            <div v-else>
+            <div v-show="!course.graders.length" class="clearfix">
               <b-alert show variant="info">
                 <span class="font-weight-bold">You currently have no graders associated with this course.</span>
               </b-alert>

@@ -61,12 +61,19 @@
         Scores and solutions are released in real time, providing students with immediate feedback.
       </b-tooltip>
 
-      add_assign_to_tooltip
       <b-tooltip target="add_assign_to_tooltip"
                  delay="250"
       >
-        When adding new "assign tos", we first assign at the user level, then section level, and finally at the course level.  So, if you
-        assign one set of dates to everybody and another to a specific user, that user's dates will override those at the course level.
+        When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
+        level. So, if you
+        assign one set of dates to everybody and another to a specific user, that user's dates will override those at
+        the course level.
+      </b-tooltip>
+
+      <b-tooltip target="assign_to_tooltip"
+                 delay="250"
+      >
+        You can assign to Everybody, a particular section (search by name) or student (search by name or email).
       </b-tooltip>
       <b-tooltip target="default_clicker_time_to_submit_tooltip"
                  delay="250"
@@ -635,16 +642,19 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
-      <div v-for="assignTo in form.assign_tos"
-           :key="assignTo.key"
+      <div v-for="(assignTo,index) in form.assign_tos"
+           :key="index"
       >
+
         <b-form-group
           id="assign_to"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Assign to"
           label-for="Assign to"
         >
+          <template slot="label">
+            Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+          </template>
           <b-form-row>
             <b-col lg="5">
               <vue-bootstrap-typeahead
@@ -652,11 +662,11 @@
                 v-model="assignTo.selectedGroup"
                 placeholder="Everybody, Section, Student"
                 :data="assignToGroups"
-                :class="{ 'is-invalid': form.errors.has(`groups_${assignTo.key}`) }"
-                @shown="form.errors.clear(`groups_${assignTo.key}`)"
+                :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
+                @shown="form.errors.clear(`groups_${index}`)"
                 @hit="updateAssignTos(assignTo)"
               />
-              <has-error :form="form" :field="`groups_${assignTo.key}`"/>
+              <has-error :form="form" :field="`groups_${index}`"/>
             </b-col>
             <b-col>
               <ul
@@ -672,7 +682,7 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
-          :id="`available_from_${assignTo.key}`"
+          :id="`available_from_${index}`"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Available on"
@@ -683,18 +693,16 @@
               <b-form-datepicker
                 v-model="assignTo.available_from_date"
                 :min="min"
-                :class="{ 'is-invalid': form.errors.has(`available_from_date_${assignTo.key}`) }"
-                @shown="form.errors.clear(`available_from_date_${assignTo.key}`)"
+                :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
               />
-              <has-error :form="form" :field="`available_from_date_${assignTo.key}`"/>
+              <has-error :form="form" :field="`available_from_date_${index}`"/>
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.available_from_time"
                                  locale="en"
-                                 :class="{ 'is-invalid': form.errors.has(`available_from_time_${assignTo.key}`) }"
-                                 @shown="form.errors.clear(`available_from_time_${assignTo.key}`)"
+                                 :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
               />
-              <has-error :form="form" :field="`available_from_time_${assignTo.key}`"/>
+              <has-error :form="form" :field="`available_from_time_${index}`"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -711,18 +719,18 @@
               <b-form-datepicker
                 v-model="assignTo.due_date"
                 :min="min"
-                :class="{ 'is-invalid': form.errors.has(`due_${assignTo.key}`) }"
-                @shown="form.errors.clear(`due_${assignTo.key}`)"
+                :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
+                @shown="form.errors.clear(`due_${index}`)"
               />
-              <has-error :form="form" :field="`due_${assignTo.key}`"/>
+              <has-error :form="form" :field="`due_${index}`"/>
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.due_time"
                                  locale="en"
-                                 :class="{ 'is-invalid': form.errors.has(`due_time_${assignTo.key}`) }"
-                                 @shown="form.errors.clear(`due_time_${assignTo.key}`)"
+                                 :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                                 @shown="form.errors.clear(`due_time_${index}`)"
               />
-              <has-error :form="form" :field="`due_time_${assignTo.key}`"/>
+              <has-error :form="form" :field="`due_time_${index}`"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -739,20 +747,20 @@
               <b-form-datepicker
                 v-model="assignTo.final_submission_deadline_date"
                 :min="min"
-                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${assignTo.key}`) }"
+                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
                 :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                @shown="form.errors.clear(`final_submission_deadline_${assignTo.key}`)"
+                @shown="form.errors.clear(`final_submission_deadline_${index}`)"
               />
-              <has-error :form="form" :field="`final_submission_deadline_${assignTo.key}`"/>
+              <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
                                  locale="en"
-                                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${assignTo.key}`) }"
+                                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
                                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                                 @shown="form.errors.clear(`final_submission_deadline_time_${assignTo.key}`)"
+                                 @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
               />
-              <has-error :form="form" :field="`final_submission_deadline_time_${assignTo.key}`"/>
+              <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -864,7 +872,6 @@ export default {
     },
     defaultAssignTos () {
       return {
-        key: 0,
         groups: [],
         selectedGroup: '',
         available_from_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
@@ -877,9 +884,6 @@ export default {
     },
     addAssignTo () {
       let newAssignTo = this.defaultAssignTos()
-      console.log(newAssignTo)
-      newAssignTo.key = `${[this.form.assign_tos.length]}`
-      console.log(newAssignTo)
       this.form.assign_tos.push(newAssignTo)
     },
     updateAssignTos (assignTo) {
@@ -889,39 +893,13 @@ export default {
         return false
       }
       assignTo.groups.push(assignTo.selectedGroup)
+      this.assignToGroups = this.assignToGroups.filter(e => e !== assignTo.selectedGroup)
       assignTo.selectedGroup = ''
       this.$refs.queryTypeahead[0].inputValue = ''
-      this.fixEverybodyAndEveryBodyElse('add')
-    },
-    fixEverybodyAndEveryBodyElse (action) {
-      let groupToRemove = (action === 'add') ? 'Everybody' : 'Everybody else'
-      let groupToAdd = (action === 'add') ? 'Everybody else' : 'Everybody'
-      let allSelected = []
-      let iEverybody = 0
-      let jEverybody = 0
-      for (let i = 0; i < this.form.assign_tos.length; i++) {
-        for (let j = 0; j < this.form.assign_tos[i]['groups'].length; j++) {
-          allSelected.push(this.form.assign_tos[i]['groups'][j])
-          if (this.form.assign_tos[i]['groups'][j] === groupToRemove) {
-            iEverybody = i
-            jEverybody = j
-          }
-        }
-      }
-      console.log(action, allSelected.length)
-      if ((action === 'add' && allSelected.length > 1) || (action === 'remove' && allSelected.length === 2)) {
-        this.form.assign_tos[iEverybody]['groups'][jEverybody] = groupToAdd
-      }
     },
     removeAssignToGroup (assignTo, group) {
-      if (assignTo.groups.length === 1) {
-        this.$noty.error('You have to assign it to at least one person or section.')
-        return false
-      }
-      console.log(assignTo.groups)
-      console.log(group)
-      this.fixEverybodyAndEveryBodyElse('remove')
       assignTo.groups = assignTo.groups.filter(e => e !== group)
+      this.assignToGroups.push(group)
     },
     async getAssignToGroups () {
       try {
@@ -1146,6 +1124,12 @@ export default {
       this.form.name = assignment.name
       this.form.assessment_type = this.assessmentType = assignment.assessment_type
 
+      for (let i = 0; i < assignment.assign_tos.length; i++) {
+        assignment.assign_tos[i]['selectedGroup'] = ''
+        for (let j = 0; j < assignment.assign_tos[i]['groups'].length; j++) {
+          this.assignToGroups = this.assignToGroups.filter(e => e !== assignment.assign_tos[i]['groups'][j])
+        }
+      }
       this.form.assign_tos = assignment.assign_tos
 
       this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
@@ -1175,7 +1159,7 @@ export default {
       bvModalEvt.preventDefault()
       // Trigger submit handler
       let assignTos = JSON.parse(JSON.stringify(this.form.assign_tos))
-      console.log(assignTos)
+
       for (let i = 0; i < this.form.assign_tos.length; i++) {
         this.form[`groups_${i}`] = assignTos[i].groups
         this.form[`available_from_date_${i}`] = assignTos[i].available_from_date
@@ -1189,6 +1173,7 @@ export default {
         this.form[`due_${i}`] = assignTos[i].due_date + ' ' + assignTos[i].due_time
       }
       console.log(this.form)
+      console.log('submitting')
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
     },
     async updateAssignment () {

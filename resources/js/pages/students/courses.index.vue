@@ -26,8 +26,8 @@
       <br>
       <div class="mt-4">
         <b-alert :show="showNoEnrolledInCoursesAlert" variant="warning">
-          <a href="#" class="alert-link">You currently are
-            not enrolled in any courses.
+          <a href="#" class="alert-link">Either you are currently not enrolled in any courses or
+            the only courses for which you are enrolled are currently unpublished.
           </a>
         </b-alert>
       </div>

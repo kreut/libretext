@@ -501,43 +501,42 @@ class ScoreController extends Controller
         }
         //probably can refactor...
         $assignments = $course->assignments->sortBy('due');
-
-        if ($assignments->isEmpty()) {
-            return ['hasAssignments' => false];
-        }
-
-        $assignment_ids = $this->getAssignmentIds($assignments);
-        $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
-        $scores = $course->scores->whereIn('assignment_id', $assignment_ids);
-
-
-        $enrolled_users_last_first = [];
-        $enrolled_users_by_id = [];
-
-        $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
-
         $weighted_score = false;
         $letter_grade = false;
         $z_score = false;
-        if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
-            foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
-                $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
-                $enrolled_users_last_first[$enrolled_user->id] = "$enrolled_user->last_name, $enrolled_user->first_name ";
-            }
-            [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+        if (!$assignments->isEmpty()) {
+            $assignment_ids = $this->getAssignmentIds($assignments);
+            $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+            $scores = $course->scores->whereIn('assignment_id', $assignment_ids);
 
 
-            $z_score = false;
+            $enrolled_users_last_first = [];
+            $enrolled_users_by_id = [];
+
+            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
 
 
-            foreach ($rows as $row) {
-                if ($row['userId'] === $user->id) {
-                    $z_score = $course->show_z_scores ? $row[$z_score_assignment_id] : false;
-                    $letter_grade = $course->finalGrades->letter_grades_released ? $row[$letter_grade_assignment_id] : false;
-                    $weighted_score = $course->students_can_view_weighted_average ? $row[$weighted_score_assignment_id] : false;
-                    break;
+            if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
+                foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
+                    $enrolled_users_by_id[$enrolled_user->id] = "$enrolled_user->first_name $enrolled_user->last_name";
+                    $enrolled_users_last_first[$enrolled_user->id] = "$enrolled_user->last_name, $enrolled_user->first_name ";
+                }
+                [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+
+
+                $z_score = false;
+
+
+                foreach ($rows as $row) {
+                    if ($row['userId'] === $user->id) {
+                        $z_score = $course->show_z_scores ? $row[$z_score_assignment_id] : false;
+                        $letter_grade = $course->finalGrades->letter_grades_released ? $row[$letter_grade_assignment_id] : false;
+                        $weighted_score = $course->students_can_view_weighted_average ? $row[$weighted_score_assignment_id] : false;
+                        break;
+                    }
                 }
             }
+
         }
 
         $response['assignments'] = $assignments_info['assignments'];

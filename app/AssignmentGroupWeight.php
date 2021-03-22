@@ -3,6 +3,7 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 
 class AssignmentGroupWeight extends Model
 {
@@ -11,7 +12,7 @@ class AssignmentGroupWeight extends Model
     /**
      * @param Course $from_course
      * @param Course $to_course
-     * @param int $from_assignment_group_id
+     * @param int $imported_assignment_group_id
      * @param bool $set_weight_to_zero
      */
     public function importAssignmentGroupWeightToCourse(Course $from_course,
@@ -22,7 +23,8 @@ class AssignmentGroupWeight extends Model
         $from_assignment_group_weight = $this->where('course_id', $from_course->id)
             ->where('assignment_group_id', $imported_assignment_group_id)
             ->first();
-        $assignment_group_weight = $set_weight_to_zero ? 0 : $from_assignment_group_weight->assignment_group_weight;
+        $assignment_group_weight = $set_weight_to_zero || ! $from_assignment_group_weight  ? 0 : $from_assignment_group_weight->assignment_group_weight;
+
         $this->firstOrCreate(['assignment_group_id' => $imported_assignment_group_id,
             'course_id' => $to_course->id],
             ['assignment_group_weight' =>  $assignment_group_weight]);

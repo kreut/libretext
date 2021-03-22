@@ -2,7 +2,9 @@
 
 namespace Tests\Feature\Instructors;
 
+use App\AssignToUser;
 use App\Course;
+use App\Enrollment;
 use App\FinalGrade;
 use App\Grader;
 use App\LearningTree;
@@ -28,6 +30,12 @@ class AssignmentsIndex2Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+
+        $this->student_user_2 = factory(User::class)->create();
+        $this->student_user_2->role = 3;
+        $this->student_user_ids = [$this->student_user->id, $this->student_user_2->id];
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -67,31 +75,24 @@ class AssignmentsIndex2Test extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
 
 
+
+        $this->assign_tos = [
+            [
+                'groups' => ['Everybody'],
+                'available_from' => '2020-06-10 09:00:00',
+                'available_from_date' => '2020-06-10',
+                'available_from_time' => '09:00:00',
+                'due' => '2020-06-12 09:00:00',
+                'due_date' => '2020-06-12',
+                'due_time' => '09:00:00',
+                'final_submission_deadline' => '2021-06-12 09:00:00',
+                'final_submission_deadline_date' => '2021-06-12',
+                'final_submission_deadline_time' => '09:00:00'
+            ]
+        ];
         $this->assignment_info = ['course_id' => $this->course->id,
             'name' => 'First Assignment',
-            'assign_tos' => [
-            [
-            'groups' => ['Everybody'],
-            'available_from' => '2020-06-10 09:00:00',
-            'available_from_date' => '2020-06-10',
-            'available_from_time' => '09:00:00',
-            'due' => '2020-06-12 09:00:00',
-            'due_date' => '2020-06-12',
-            'due_time' => '09:00:00',
-            'final_submission_deadline' => '2021-06-12 09:00:00',
-            'final_submission_deadline_date' => '2021-06-12',
-            'final_submission_deadline_time' => '09:00:00'
-                ]
-            ],
-            'groups_0' => ['Everybody'],
-            'due_0' => '2020-06-12 09:00:00',
-            'due_date_0' => '2020-06-12',
-            'due_time_0' => '09:00:00',
-            'available_from_0' => '2020-06-10',
-            'available_from_date_0' => '2020-06-12',
-            'available_from_time_0' => '09:00:00',
-            'final_submission_deadline_date_0' => '2021-06-12',
-            'final_submission_deadline_time_0' => '09:00:00',
+            'assign_tos' => $this->assign_tos,
             'scoring_type' => 'p',
             'source' => 'a',
             'default_points_per_question' => 2,
@@ -103,6 +104,45 @@ class AssignmentsIndex2Test extends TestCase
             'instructions' => 'Some instructions',
             'notifications' => 1,
             'assignment_group_id' => 1];
+
+        foreach ($this->assign_tos[0]['groups'] as $key => $group) {
+            $group_info = ["groups_$key" => ['Everybody'],
+                "due_$key" => '2020-06-12 09:00:00',
+                "due_date_$key" => '2020-06-12',
+                "due_time_$key" => '09:00:00',
+                "available_from_$key" => '2020-06-10',
+                "available_from_date_$key" => '2020-06-12',
+                "available_from_time_$key" => '09:00:00',
+                "final_submission_deadline_date_$key" => '2021-06-12',
+                "final_submission_deadline_time_$key" => '09:00:00'];
+            foreach ($group_info as $info_key => $info_value) {
+                $this->assignment_info[$info_key] = $info_value;
+            }
+        }
+
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
+        Enrollment::create(['course_id' => $this->course->id,
+            'section_id' => $this->section->id,
+            'user_id' => $this->student_user->id]);
+
+        $this->student_user_2 = factory(User::class)->create();
+        $this->student_user_2->role = 3;
+        $this->section_1 = $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        Enrollment::create(['course_id' => $this->course->id,
+            'section_id' => $this->section_1->id,
+            'user_id' => $this->student_user_2->id]);
+
+    }
+
+    /** @test */
+    public
+    function the_correct_user_is_assigned_an_assignment_with_everybody()
+    {
+      $student_user_ids = [$this->student_user->id, $this->student_user_2->id];
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(count($student_user_ids), AssignToUser::whereIn('user_id', $student_user_ids)->get()->count());
     }
 
 
@@ -110,8 +150,69 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
+    public
+    function the_correct_user_is_assigned_an_assignment_with_sections()
+    {
 
-    public function non_owner_cannot_reorder_assignments()
+        $assignment_info = $this->assignment_info;
+
+
+        $assign_tos= [
+            [
+                'groups' => [$this->section->name],
+                'available_from' => '2020-06-10 09:00:00',
+                'available_from_date' => '2020-06-10',
+                'available_from_time' => '09:00:00',
+                'due' => '2020-06-12 09:00:00',
+                'due_date' => '2020-06-12',
+                'due_time' => '09:00:00',
+                'final_submission_deadline' => '2021-06-12 09:00:00',
+                'final_submission_deadline_date' => '2021-06-12',
+                'final_submission_deadline_time' => '09:00:00'
+            ]
+        ];
+        $assignment_info['assign_tos'] = $assign_tos;
+        foreach ( $assignment_info['assign_tos'][0]['groups'] as $key => $group) {
+            $group_info = ["groups_$key" => [$this->section->name],
+                "due_$key" => '2020-06-12 09:00:00',
+                "due_date_$key" => '2020-06-12',
+                "due_time_$key" => '09:00:00',
+                "available_from_$key" => '2020-06-10',
+                "available_from_date_$key" => '2020-06-12',
+                "available_from_time_$key" => '09:00:00',
+                "final_submission_deadline_date_$key" => '2021-06-12',
+                "final_submission_deadline_time_$key" => '09:00:00'];
+            foreach ($group_info as $info_key => $info_value) {
+                $assignment_info[$info_key] = $info_value;
+            }
+        }
+
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');
+
+    }
+
+
+    /** @test */
+    public
+    function the_correct_user_is_assigned_an_assignment_with_different_sections()
+    {
+        foreach ($this->student_user_ids as $student_user_id) {
+            Enrollment::create(['course_id' => $this->course->id,
+                'section_id' => $this->section->id,
+                'user_id' => $student_user_id]);
+        }
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(count($this->student_user_ids), AssignToUser::whereIn('user_id', $this->student_user_ids)->get()->count());
+    }
+
+
+    /** @test */
+
+    public
+    function non_owner_cannot_reorder_assignments()
     {
         $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->course->id}/order", [
             'ordered_assignments' => [$this->assignment_2->id, $this->assignment->id]
@@ -120,7 +221,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function owner_can_reorder_assignments()
+    public
+    function owner_can_reorder_assignments()
     {
         //dd($this->assignment->order . ' ' . $this->assignment_2->order);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->course->id}/order", [
@@ -137,7 +239,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function owner_of_assignment_can_import_properties_and_questions()
+    public
+    function owner_of_assignment_can_import_properties_and_questions()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_3->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
@@ -153,7 +256,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function owner_of_assignment_can_import_properties_and_learning_trees()
+    public
+    function owner_of_assignment_can_import_properties_and_learning_trees()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_3->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
@@ -186,7 +290,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function owner_of_assignment_can_import_just_properties()
+    public
+    function owner_of_assignment_can_import_just_properties()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
@@ -198,7 +303,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function importing_must_include_a_valid_level()
+    public
+    function importing_must_include_a_valid_level()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course->id}",
             ['course_assignment' => "{$this->course->name} --- {$this->assignment->name}",
@@ -209,7 +315,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function non_owner_of_assignment_cannot_import_it_to_their_course()
+    public
+    function non_owner_of_assignment_cannot_import_it_to_their_course()
     {
 
         $this->actingAs($this->user)->postJson("/api/assignments/import/{$this->course_2->id}", [
@@ -219,7 +326,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function non_owner_of_assignment_cannot_create_it_from_template()
+    public
+    function non_owner_of_assignment_cannot_create_it_from_template()
     {
 
         $this->actingAs($this->user_2)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template")
@@ -227,7 +335,8 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function owner_of_assignment_can_create_it_from_template()
+    public
+    function owner_of_assignment_can_create_it_from_template()
     {
 
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/create-assignment-from-template")
@@ -236,7 +345,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function must_include_a_valid_default_open_ended_submission_type()
+    public
+    function must_include_a_valid_default_open_ended_submission_type()
     {
 
         $this->assignment_info['default_open_ended_submission_type'] = "7";
@@ -247,7 +357,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function complete_incomplete_scoring_type_cannot_be_learning_trees_assessment_types()
+    public
+    function complete_incomplete_scoring_type_cannot_be_learning_trees_assessment_types()
     {
         $this->assignment_info['scoring_type'] = 'c';
         $this->assignment_info['assessment_type'] = 'learning tree';
@@ -258,7 +369,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function complete_incomplete_scoring_type_must_have_a_late_policy_of_not_accepted()
+    public
+    function complete_incomplete_scoring_type_must_have_a_late_policy_of_not_accepted()
     {
         $this->assignment_info['scoring_type'] = 'c';
         $this->assignment_info['late_policy'] = 'deduction';
@@ -269,7 +381,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function min_time_needed_in_learning_tree_must_be_valid()
+    public
+    function min_time_needed_in_learning_tree_must_be_valid()
     {
         $this->assignment_info['assessment_type'] = 'learning tree';
         $this->assignment_info['percent_earned_for_exploring_learning_tree'] = 150;
@@ -279,7 +392,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function percent_earned_for_exploring_learning_tree_must_be_valid()
+    public
+    function percent_earned_for_exploring_learning_tree_must_be_valid()
     {
         $this->assignment_info['assessment_type'] = 'learning tree';
         //$this->assignment_info['min_time_needed_in_learning_tree'] = 10;
@@ -292,7 +406,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function final_submission_deadline_must_be_valid()
+    public
+    function final_submission_deadline_must_be_valid()
     {
 
 
@@ -300,15 +415,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function for_real_time_assessments_students_must_be_shown_scores()
-    {
-//todo
-
-    }
-
-    /** @test */
-
-    public function for_real_time_assessments_students_must_be_shown_solutions()
+    public
+    function for_real_time_assessments_students_must_be_shown_scores()
     {
 //todo
 
@@ -316,7 +424,17 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function for_real_time_assessments_students_must_be_shown_question_points()
+    public
+    function for_real_time_assessments_students_must_be_shown_solutions()
+    {
+//todo
+
+    }
+
+    /** @test */
+
+    public
+    function for_real_time_assessments_students_must_be_shown_question_points()
     {
 //todo
 
@@ -325,7 +443,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function submission_count_percent_decrease_must_be_valid()
+    public
+    function submission_count_percent_decrease_must_be_valid()
     {
 //todo
 
@@ -333,14 +452,16 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function can_only_toggle_show_scores_for_a_delayed_assignment()
+    public
+    function can_only_toggle_show_scores_for_a_delayed_assignment()
     {
 //todo
 
     }
 
     /** @test */
-    public function can_only_toggle_show_points_per_question_for_a_delayed_assignment()
+    public
+    function can_only_toggle_show_points_per_question_for_a_delayed_assignment()
     {
 //todo
 
@@ -348,20 +469,23 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function a_valid_late_policy_is_submitted()
+    public
+    function a_valid_late_policy_is_submitted()
     {
 //todo
     }
 
     /** @test */
-    public function a_valid_late_percent_is_submitted()
+    public
+    function a_valid_late_percent_is_submitted()
     {
 
         //todo
     }
 
     /** @test */
-    public function a_valid_late_deduction_application_period_is_submitted()
+    public
+    function a_valid_late_deduction_application_period_is_submitted()
     {
         //test once as well as with a time
         //todo
@@ -370,7 +494,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function non_owner_cannot_toggle_show_points_per_question()
+    public
+    function non_owner_cannot_toggle_show_points_per_question()
     {
         $this->actingAs($this->user_2)
             ->patchJson("/api/assignments/{$this->assignment->id}/show-points-per-question/1")
@@ -378,14 +503,16 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function owner_can_toggle_show_points_per_question()
+    public
+    function owner_can_toggle_show_points_per_question()
     {
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/show-points-per-question/1")
             ->assertJson(['message' => 'Your students <strong>cannot</strong> view the points per question.']);
     }
 
-    public function can_update_an_assignment_if_you_are_the_owner()
+    public
+    function can_update_an_assignment_if_you_are_the_owner()
     {
         $this->assignment_info['name'] = 'Some new name';
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}",
@@ -395,7 +522,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function can_create_an_assignment()
+    public
+    function can_create_an_assignment()
     {
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJson(['type' => 'success']);
@@ -404,7 +532,8 @@ class AssignmentsIndex2Test extends TestCase
 
     /** @test */
 
-    public function must_be_of_a_valid_source()
+    public
+    function must_be_of_a_valid_source()
     {
         $this->assignment_info['source'] = "";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
@@ -414,7 +543,8 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function must_include_an_assignment_name()
+    public
+    function must_include_an_assignment_name()
     {
         $this->assignment_info['name'] = "";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
@@ -423,7 +553,8 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function must_include_valid_available_on_date()
+    public
+    function must_include_valid_available_on_date()
     {
 
         $this->assignment_info['available_from_date_0'] = "not a date";
@@ -434,7 +565,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function must_include_valid_default_points_per_question()
+    public
+    function must_include_valid_default_points_per_question()
     {
 
         $this->assignment_info['default_points_per_question'] = "";
@@ -456,7 +588,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function must_include_valid_due_date()
+    public
+    function must_include_valid_due_date()
     {
         $this->assignment_info['due_date_0'] = "not a date";
         $this->assignment_info['due_0'] = "not a date";
@@ -466,7 +599,8 @@ class AssignmentsIndex2Test extends TestCase
 
 
     /** @test */
-    public function must_include_valid_due_time()
+    public
+    function must_include_valid_due_time()
     {
         $this->assignment_info['due_time_0'] = "not a time";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
@@ -474,7 +608,8 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function due_date_must_be_after_available_date()
+    public
+    function due_date_must_be_after_available_date()
     {
         $this->assignment_info['due_0'] = "1982-06-06";
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
@@ -482,7 +617,8 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
-    public function must_include_valid_available_from_time()
+    public
+    function must_include_valid_available_from_time()
     {
 
         $this->assignment_info['available_from_time_0'] = "not a time";

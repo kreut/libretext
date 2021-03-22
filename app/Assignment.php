@@ -19,12 +19,15 @@ class Assignment extends Model
 
     function saveAssignmentTimingAndGroup(Assignment $new_assignment)
     {
+
         $assignToTiming = new AssignToTiming();
         $assignToTiming->assignment_id = $new_assignment->id;
-        $assignToTiming->available_from = Carbon::now();
-        $assignToTiming->due = Carbon::now();
+        $assignToTiming->available_from = Carbon::now()->startOfMinute()->toDateTimeString();
+        $assignToTiming->due = Carbon::now()->startOfMinute()->toDateTimeString();
+        if ($new_assignment->late_policy !== 'not accepted'){
+            $assignToTiming->final_submission_deadline = Carbon::now()->startOfMinute()->toDateTimeString();
+        }
         $assignToTiming->save();
-
         $assignToGroup = new AssignToGroup();
         $assignToGroup->assign_to_timing_id = $assignToTiming->id;
         $assignToGroup->group = 'course';

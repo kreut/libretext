@@ -97,7 +97,7 @@ class StoreAssignment extends FormRequest
             $messages["groups_{$key}.required"] = 'The assign to field is required.';
             $messages["available_from_date_{$key}.required"] = 'This date is required.';
             $messages["available_from_time_{$key}.required"] = 'This time is required: H:i:00';
-            $messages["due_time_{$key}"] = 'This time is required: H:i:00';
+            $messages["due_time_{$key}.required"] = 'This time is required: H:i:00';
         }
         return $messages;
     }

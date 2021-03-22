@@ -549,7 +549,7 @@ class AssignmentController extends Controller
     public function addAssignTos(Assignment $assignment, array $assign_tos, Section $section, User $user)
     {
 
-        $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
+
         $assign_to_timings = AssignToTiming::where('assignment_id', $assignment->id)->get();
         if ($assign_to_timings->isNotEmpty()) {
             //remove the old ones
@@ -559,74 +559,62 @@ class AssignmentController extends Controller
                 $assign_to_timing->delete();
             }
         }
-
+        $assign_to_timings = [];
         foreach ($assign_tos as $assign_to) {
-
             $assignToTiming = new AssignToTiming();
-
             $assignToTiming->assignment_id = $assignment->id;
             $assignToTiming->available_from = $this->formatDateFromRequest($assign_to['available_from_date'], $assign_to['available_from_time']);
             $assignToTiming->due = $this->formatDateFromRequest($assign_to['due_date'], $assign_to['due_time']);
             $assignToTiming->final_submission_deadline = $assignment->late_policy !== 'not accepted'
                 ? $this->formatDateFromRequest($assign_to['final_submission_deadline_date'], $assign_to['final_submission_deadline_time'])
                 : null;
-
-
             $assignToTiming->save();
-            $assigned_users = [];
+            $assign_to_timings[] = $assignToTiming->id;
+        }
+        $assigned_users = [];
+        $enrolled_users_by_course = $assignment->course->enrolledUsersWithFakeStudent->pluck('id')->toArray();
+        foreach ($assign_tos as $key => $assign_to) {
             foreach ($assign_to['groups'] as $value) {
-
-                $assignToGroup = new AssignToGroup();
                 if (strpos($value, ' --- ') !== false) {
                     $user_info = explode(' --- ', $value);
                     $email = $user_info[1];
-
                     $assign_to_user = $user->where('email', $email)
-                        ->whereIn('id', $enrolled_users) //might be an issue for the fake user?
+                        ->whereIn('id', $enrolled_users_by_course) //might be an issue for the fake user?
                         ->first();
-                    if (in_array($assign_to_user->id, $assigned_users)) {
-                        continue;
-                    }
-                    $assignToGroup->group_id = $assign_to_user->id;
-                    $assignToGroup->group = 'user';
-
-                    $enrolled_users = User::find($assign_to_user->id);
+                    $this->saveAssignToGroup('user', $assign_to_user->id, $assign_to_timings[$key]);
+                    $this->saveAssignToUser($assign_to_user->id, $assign_to_timings[$key]);
                     $assigned_users[] = $assign_to_user->id;
-
                 }
+            }
+        }
 
+        foreach ($assign_tos as $key => $assign_to) {
+            foreach ($assign_to['groups'] as $value) {
                 $assign_to_section = $section->where('name', $value)
                     ->where('course_id', $assignment->course_id)
                     ->first();
-
                 if ($assign_to_section) {
-                    $assignToGroup->group_id = $assign_to_section->id;
-                    $assignToGroup->group = 'section';
-
-                    $enrolled_users = $this->removeDuplicateUsers($assign_to_section->enrolledUsers, $assigned_users);
-                    if (!count($enrolled_users)) {
-                        continue;
+                    $this->saveAssignToGroup('section', $assign_to_section->id, $assign_to_timings[$key]);
+                    $enrolled_users_by_section = $assign_to_section->enrolledUsers;
+                    foreach ($enrolled_users_by_section as $enrolled_user) {
+                        if (!in_array($enrolled_user->id, $assigned_users)) {
+                            $this->saveAssignToUser($enrolled_user->id, $assign_to_timings[$key]);
+                            $assigned_users[] = $enrolled_user->id;
+                        }
                     }
                 }
-                if (in_array($value, ['Everybody', 'Everybody else'])) {
-                    $assignToGroup->group = 'course';
-                    $assignToGroup->group_id = $assignment->course->id;
-                    $enrolled_users = $this->removeDuplicateUsers($assignment->course->enrollments, $assigned_users);
-                    if (!count($enrolled_users)) {
-                        continue;
-                    }
+            }
+        }
 
-                }
-
-                $assignToGroup->assign_to_timing_id = $assignToTiming->id;
-                $assignToGroup->save();
-
-                if ($enrolled_users) {
-                    foreach ($enrolled_users as $enrolled_user) {
-                        $assignToUser = new AssignToUser();
-                        $assignToUser->assign_to_timing_id = $assignToTiming->id;
-                        $assignToUser->user_id = $enrolled_user->id;
-                        $assignToUser->save();
+        foreach ($assign_tos as $key => $assign_to) {
+            foreach ($assign_to['groups'] as $value) {
+                if ($value === 'Everybody') {
+                    $this->saveAssignToGroup('course', $assignment->course->id, $assign_to_timings[$key]);
+                    foreach ($enrolled_users_by_course as $enrolled_user_id) {
+                        if (!in_array( $enrolled_user_id, $assigned_users)) {
+                            $this->saveAssignToUser( $enrolled_user_id, $assign_to_timings[$key]);
+                            $assigned_users[] =  $enrolled_user_id;
+                        }
                     }
                 }
             }
@@ -634,10 +622,27 @@ class AssignmentController extends Controller
 
     }
 
+    function saveAssignToUser(int $user_id, int $assign_to_timing_id)
+    {
+        $assignToUser = new AssignToUser();
+        $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+        $assignToUser->user_id = $user_id;
+        $assignToUser->save();
+    }
+
+    function saveAssignToGroup(string $group, int $group_id, int $assign_to_timing_id)
+    {
+        $assignToGroup = new AssignToGroup();
+        $assignToGroup->group_id = $group_id;
+        $assignToGroup->group = $group;
+        $assignToGroup->assign_to_timing_id = $assign_to_timing_id;
+        $assignToGroup->save();
+    }
+
     public function removeDuplicateUsers($enrolled_users, $assigned_users)
     {
         foreach ($enrolled_users as $key => $enrolled_user) {
-            if (in_array($enrolled_user->id, $assigned_users)) {
+            if (in_array($enrolled_user->user_id, $assigned_users)) {
                 $enrolled_users->forget($key);
             }
         }

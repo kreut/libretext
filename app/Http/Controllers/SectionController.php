@@ -23,11 +23,12 @@ class SectionController extends Controller
 {
     use AccessCodes;
 
-    public function realEnrolledUsers(Request $request, Section $section){
-
+    public function realEnrolledUsers(Request $request, Section $section)
+    {
+        $response['has_enrolled_users'] = true;
         try {
-
-            $response['number_of_enrolled_users'] =count($section->enrolledUsers()->pluck('user_id'));
+            $response['number_of_enrolled_users'] = count($section->enrolledUsers()->pluck('user_id'));
+            $response['has_enrolled_users'] = $response['number_of_enrolled_users'] > 1;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -41,6 +42,7 @@ class SectionController extends Controller
 
 
     }
+
     public function destroy(Request $request,
                             Section $section,
                             Enrollment $enrollment,

@@ -152,8 +152,9 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.numberOfEnrolledUsers = parseInt(data.number_of_enrolled_users)
-        this.numberOfEnrolledUsers > 0
+
+        this.numberOfEnrolledUsers = data.number_of_enrolled_users
+        data.hasEnrolledUsers
           ? this.$bvModal.show('modal-delete-section')
           : await this.handleDeleteSection()
       } catch (error) {
