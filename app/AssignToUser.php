@@ -2,7 +2,7 @@
 
 namespace App;
 
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -10,7 +10,7 @@ use Illuminate\Support\Facades\DB;
 
 class AssignToUser extends Model
 {
-    use HasFactory;
+
 
     public function assignToTimingsAndAssignmentsByAssignmentIdByCourse(int $course_id)
     {
