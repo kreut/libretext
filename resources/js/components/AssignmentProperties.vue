@@ -93,6 +93,14 @@
       >
         Instructors manually open and close these real-time graded assessments.
       </b-tooltip>
+      <b-tooltip target="final_submission_deadline_tooltip"
+                 delay="250"
+      >
+        For assessments where you allow late submissions (either marked late or with penalty), this is the latest
+        possible date for which you'll accept a submission.  If your solutions are released, you will not be able to
+        change this field.
+      </b-tooltip>
+
       <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
                  delay="250"
       >
@@ -739,9 +747,15 @@
           id="last"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Final Submission Deadline"
-          label-for="Final Policy Deadline"
+          label-for="Final Submission Deadline"
         >
+          <template slot="label">
+            Final Submission Deadline <span id="final_submission_deadline_tooltip"
+                                                 class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
+          </template>
           <b-form-row>
             <b-col lg="7">
               <b-form-datepicker
