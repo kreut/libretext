@@ -488,20 +488,17 @@ class Assignment extends Model
         $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
     }
 
-    public function assignTosByUser()
+    public function assignToTimingsByUser()
     {
-        $assign_tos = DB::table('assign_tos')->where('assignment_id', $this->id)->get();
-        $enrollments = $this->course->enrollments;
-        foreach ($assign_tos as $assign_to) {
-            if ($assign_to->course_id) {
-
-
-            }
-
-
-        }
-
+        $assign_to_timings_by_user = [];
+        $assign_to_timings = DB::table('assign_to_timings')
+            ->join('assign_to_users', 'assign_to_timings.id','=', 'assign_to_users.assign_to_timing_id')
+            ->where('assign_to_timings.assignment_id', $this->id)
+            ->get();
+      foreach ($assign_to_timings as $key => $assign_to_timing){
+          $assign_to_timings_by_user[$assign_to_timing->user_id]=$assign_to_timing;
+      }
+      return   $assign_to_timings_by_user;
     }
-
 
 }

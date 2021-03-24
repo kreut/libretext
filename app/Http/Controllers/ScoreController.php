@@ -631,14 +631,13 @@ class ScoreController extends Controller
 
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
-
-        if ($assignments->isEmpty()) {
+        if ($assignments->isEmpty()) {;
             return ['hasAssignments' => false];
         }
         $assignments = $assignments->sortBy(function ($assignment) {
             return [
                 $assignment->assignment_group_id,
-                $assignment->due
+                $assignment->order
             ];
         });
 

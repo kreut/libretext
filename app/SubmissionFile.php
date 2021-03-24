@@ -122,6 +122,7 @@ class SubmissionFile extends Model
         }
 
         $points = [];
+       $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
 
             foreach ($users as $key => $user) {
@@ -136,7 +137,7 @@ class SubmissionFile extends Model
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
                 $extension = isset($extensions[$user->user_id]) ? $extensions[$user->user_id] : null;
                 if ($submission && in_array($assignment->late_policy, ['marked late', 'deduction'])) {
-                    $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assignment->due, $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
+                    $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
                 }
 
                 $solution = $solutions_by_question_id[$question->question_id] ?? false;

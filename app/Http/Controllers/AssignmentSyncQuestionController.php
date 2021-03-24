@@ -175,10 +175,11 @@ class AssignmentSyncQuestionController extends Controller
             ]);
 
             //update individual due dates
+            /*TODO: do this for individuals?
             if (strtotime($clicker_end) > strtotime($assignment->due)) {
                 DB::table('assign_to_timings')->where('id', $assignment->id)
                     ->update(['due' => $clicker_end]);
-            }
+            }*/
 
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
