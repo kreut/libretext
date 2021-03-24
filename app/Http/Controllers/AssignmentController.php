@@ -873,7 +873,7 @@ class AssignmentController extends Controller
                 $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
                 $formatted_items['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone);
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
-                
+
             } else {
 
 
@@ -881,6 +881,7 @@ class AssignmentController extends Controller
                 foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
                     $available_from = $assign_to['available_from'];
                     $due = $assign_to['due'];
+                    $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
                     $final_submission_deadline = $assign_to['final_submission_deadline'];
                     $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
                     $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
@@ -905,11 +906,12 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function formatLatePolicy($assignment, $assign_to_user)
+    public function formatLatePolicy($assignment, $assign_to_timing)
     {
+        //$assign_to_timing will be appropriate for students
         $late_policy = '';
-        $final_submission_deadline = ($assignment->late_policy !== 'not accepted')
-            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_user->final_submission_deadline, Auth::user()->time_zone)
+        $final_submission_deadline = ($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)
+            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->final_submission_deadline, Auth::user()->time_zone)
             : '';
         switch ($assignment->late_policy) {
             case('not accepted'):
@@ -926,7 +928,7 @@ class AssignmentController extends Controller
                 }
                 break;
         }
-        if ($assignment->late_policy !== 'not accepted') {
+        if (($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)){
             $late_policy .= "  Students cannot submit assessments later than $final_submission_deadline.";
         }
 
