@@ -14,28 +14,32 @@ class AssignToGroupController extends Controller
     {
         $response['type'] = 'error';
         try {
-            $courses_and_sections_info = DB::table('sections')
+            $sections_info = DB::table('sections')
+                ->where('course_id', $course->id)
+                ->select('name', 'id')
+                ->orderBy('name')
+                ->get();
+
+            $user_info = DB::table('sections')
                 ->join('enrollments', 'sections.id', '=', 'enrollments.section_id')
                 ->join('users', 'enrollments.user_id', '=', 'users.id')
                 ->where('sections.course_id', $course->id)
-                ->select(DB::raw("CONCAT(users.first_name, ' ', users.last_name, ' --- ', email) AS user"), DB::raw('sections.name AS section'))
-                ->orderBy('user')
+                ->where('fake_student',0)
+                ->select(DB::raw("CONCAT(users.first_name, ' ', users.last_name, ' (', email,')') AS name"), 'users.id as id')
+                ->orderBy('name')
                 ->get();
-
-            $users = [];
             $sections = [];
-            foreach ($courses_and_sections_info as $info) {
-                if ($info->user && !in_array($info->user, $users)) {
-                    $users[] = $info->user;
-                }
-                if ($info->section && !in_array($info->section, $sections)) {
-                    $sections[] = $info->section;
-                }
+            foreach ($sections_info as $section) {
+                array_push($sections, ['value' => ['section_id' => $section->id], 'text' => $section->name]);
             }
-            sort($sections);
-            $response['assign_to_groups'] = array_merge(['Everybody'],
-                $sections,
-                $users);
+            $users = [];
+            foreach ($user_info as $user){
+                array_push($users, ['value' => ['user_id' => $user->id], 'text' => $user->name]);
+            }
+
+            $response['course'] =  ['value' => ['course_id' => $course->id], 'text' => 'Everybody'];
+            $response['sections'] = $sections;
+            $response['users']= $users;
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();

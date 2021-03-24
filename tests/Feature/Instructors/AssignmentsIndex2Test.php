@@ -78,7 +78,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $this->assign_tos = [
             [
-                'groups' => ['Everybody'],
+                'groups' => [['value' => ['course_id' => $this->course->id],'text'=>'Everybody']],
                 'available_from' => '2020-06-10 09:00:00',
                 'available_from_date' => '2020-06-10',
                 'available_from_time' => '09:00:00',
@@ -159,7 +159,7 @@ class AssignmentsIndex2Test extends TestCase
 
         $assign_tos= [
             [
-                'groups' => [$this->section->name],
+                'groups' =>  [['value' => ['section_id' => $this->section->id],'text'=>$this->section->name]],
                 'available_from' => '2020-06-10 09:00:00',
                 'available_from_date' => '2020-06-10',
                 'available_from_time' => '09:00:00',
@@ -173,7 +173,7 @@ class AssignmentsIndex2Test extends TestCase
         ];
         $assignment_info['assign_tos'] = $assign_tos;
         foreach ( $assignment_info['assign_tos'][0]['groups'] as $key => $group) {
-            $group_info = ["groups_$key" => [$this->section->name],
+            $group_info = ["groups_$key" => [['value' => ['section_id' => $this->section->id],'text'=>$this->section->name]],
                 "due_$key" => '2020-06-12 09:00:00',
                 "due_date_$key" => '2020-06-12',
                 "due_time_$key" => '09:00:00',

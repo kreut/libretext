@@ -97,7 +97,7 @@
                  delay="250"
       >
         For assessments where you allow late submissions (either marked late or with penalty), this is the latest
-        possible date for which you'll accept a submission.  If your solutions are released, you will not be able to
+        possible date for which you'll accept a submission. If your solutions are released, you will not be able to
         change this field.
       </b-tooltip>
 
@@ -665,24 +665,20 @@
           </template>
           <b-form-row>
             <b-col lg="5">
-              <vue-bootstrap-typeahead
-                ref="queryTypeahead"
-                v-model="assignTo.selectedGroup"
-                placeholder="Everybody, Section, Student"
-                :data="assignToGroups"
-                :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
-                @shown="form.errors.clear(`groups_${index}`)"
-                @hit="updateAssignTos(assignTo)"
-              />
+              <b-form-select v-model="assignTo.selectedGroup"
+                             :options="assignToGroups"
+                             :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
+                             @change="updateAssignTos(assignTo)"
+              ></b-form-select>
               <has-error :form="form" :field="`groups_${index}`"/>
             </b-col>
             <b-col>
               <ul
-                v-for="group in assignTo.groups"
-                :key="group"
+                v-for="(group,group_index) in assignTo.groups"
+                :key="group_index"
                 class="flex-column align-items-start"
               >
-                <li>{{ group }}
+                <li>{{ group.text }}
                   <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"></b-icon>
                 </li>
               </ul>
@@ -751,7 +747,7 @@
         >
           <template slot="label">
             Final Submission Deadline <span id="final_submission_deadline_tooltip"
-                                                 class="text-muted"
+                                            class="text-muted"
           ><b-icon
             icon="question-circle"
           /></span>
@@ -799,18 +795,17 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments'
 
 import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
-  components: {
-    VueBootstrapTypeahead
-  },
   middleware: 'auth',
   props: { 'courseId': { type: Number, default: 0 } },
   data: () => ({
+    assignToCourse: [],
+    assignToSections: [],
+    assignToUsers: [],
     selectedAssignTo: '',
     originalAssignment: {},
     assignmentGroupForm: new Form({
@@ -875,7 +870,7 @@ export default {
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
-    this.assignToGroups = this.getAssignToGroups()
+    await this.getAssignToGroups()
   },
   form: function (newVal, oldVal) {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
@@ -887,7 +882,7 @@ export default {
     defaultAssignTos () {
       return {
         groups: [],
-        selectedGroup: '',
+        selectedGroup: null,
         available_from_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
         available_from_time: '09:00:00',
         due_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
@@ -901,24 +896,59 @@ export default {
       this.form.assign_tos.push(newAssignTo)
     },
     updateAssignTos (assignTo) {
-
+      for (let i = 0; i < this.form.assign_tos.length; i++) {
+        for (let j = 0; j < this.form.assign_tos[i].groups.length; j++) {
+          console.log(this.form.assign_tos[i].groups[j].value)
+          console.log(assignTo)
+        }
+      }
       if (assignTo.groups.includes(assignTo.selectedGroup)) {
         this.$noty.info(`${assignTo.selectedGroup} is already selected.`)
         return false
       }
-      assignTo.groups.push(assignTo.selectedGroup)
-      this.assignToGroups = this.assignToGroups.filter(e => e !== assignTo.selectedGroup)
-      assignTo.selectedGroup = ''
-      this.$refs.queryTypeahead[0].inputValue = ''
+
+      if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
+        for (let i = 0; i < this.assignToUsers.length; i++) {
+          if (assignTo.selectedGroup.user_id === this.assignToUsers[i].value.user_id) {
+            assignTo.groups.push(this.assignToUsers[i])
+          }
+        }
+      }
+      if (assignTo.selectedGroup.hasOwnProperty('section_id')) {
+        for (let i = 0; i < this.assignToSections.length; i++) {
+          if (assignTo.selectedGroup.section_id === this.assignToSections[i].value.section_id) {
+            assignTo.groups.push(this.assignToSections[i])
+          }
+        }
+      }
+
+      if (assignTo.selectedGroup.hasOwnProperty('course_id')) {
+        assignTo.groups.push(this.assignToCourse)
+      }
     },
     removeAssignToGroup (assignTo, group) {
-      assignTo.groups = assignTo.groups.filter(e => e !== group)
-      this.assignToGroups.push(group)
+      for (let i = 0; i < assignTo.groups.length; i++) {
+        if (assignTo.groups[i].text === group.text) {
+          console.log(assignTo.groups[i].text)
+          console.log(group.text)
+          assignTo.groups.splice(i, 1)
+          return
+        }
+      }
     },
     async getAssignToGroups () {
       try {
         const { data } = await axios.get(`/api/assign-to-groups/${this.courseId}`)
-        this.assignToGroups = data.assign_to_groups
+        this.assignToSections = data.sections
+        this.assignToUsers = data.users
+        this.assignToCourse = data.course
+        console.log(data)
+        this.assignToGroups = [{ value: null, text: 'Please select a group' }]
+        this.assignToGroups.push(data.course)
+        this.assignToGroups.push({ label: 'Sections', options: data.sections })
+        if (data.users.length) {
+          this.assignToGroups.push({ label: 'Students', options: data.users })
+        }
         console.log(this.assignToGroups)
       } catch (error) {
         this.$noty.error(error.message)
@@ -1115,6 +1145,7 @@ export default {
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
       this.form.notifications = 1
+      this.form.assign_tos.selectedGroup = null
       this.$bvModal.show('modal-assignment-properties')
     },
     resetOpenEndedResponsesAndPointsPerQuestion () {
@@ -1137,15 +1168,13 @@ export default {
       this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
       this.form.name = assignment.name
       this.form.assessment_type = this.assessmentType = assignment.assessment_type
-      this.assignToGroups = this.getAssignToGroups()
-      for (let i = 0; i < assignment.assign_tos.length; i++) {
-        assignment.assign_tos[i]['selectedGroup'] = ''
-        for (let j = 0; j < assignment.assign_tos[i]['groups'].length; j++) {
-          this.assignToGroups = this.assignToGroups.filter(e => e !== assignment.assign_tos[i]['groups'][j])
-        }
-      }
-      this.form.assign_tos = assignment.assign_tos
 
+      this.form.assign_tos = assignment.assign_tos
+      console.log(assignment.assign_tos)
+      for (let i = 0; i < assignment.assign_tos.length; i++) {
+        this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
+        this.form.assign_tos[i].selectedGroup = null
+      }
       this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
       this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
       this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease

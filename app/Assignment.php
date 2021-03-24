@@ -88,7 +88,6 @@ class Assignment extends Model
 
             } else {
                 $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
-
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
             }
 
@@ -253,12 +252,16 @@ class Assignment extends Model
 
 
             $group = 'Everybody';
+            $formatted_group =   [ "value"=> ["course_id"=> $course->id], "text"=>'Everybody' ];
             if ($assign_to_group->group === 'section') {
                 $group = $sections_by_id[$assign_to_group->group_id];
+                $formatted_group =    [ "value"=> ["section_id"=> $assign_to_group->group_id], "text"=>$group ] ;
             } else if ($assign_to_group->group === 'user') {
                 $group = $users_by_id[$assign_to_group->group_id];
+                $formatted_group =    [ "value"=> ["user_id"=> $assign_to_group->group_id], "text"=>$group ] ;
             }
             $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['groups'][] = $group;
+            $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['formatted_groups'][] = $formatted_group;
         }
 
         return $assign_to_groups_by_assignment_id;

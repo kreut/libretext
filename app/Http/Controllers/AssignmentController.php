@@ -576,26 +576,24 @@ class AssignmentController extends Controller
         $assigned_users = [];
         $enrolled_users_by_course = $assignment->course->enrolledUsersWithFakeStudent->pluck('id')->toArray();
         foreach ($assign_tos as $key => $assign_to) {
-            foreach ($assign_to['groups'] as $value) {
-                if (strpos($value, ' --- ') !== false) {
-                    $user_info = explode(' --- ', $value);
-                    $email = $user_info[1];
-                    $assign_to_user = $user->where('email', $email)
-                        ->whereIn('id', $enrolled_users_by_course) //might be an issue for the fake user?
-                        ->first();
-                    $this->saveAssignToGroup('user', $assign_to_user->id, $assign_to_timings[$key]);
-                    $this->saveAssignToUser($assign_to_user->id, $assign_to_timings[$key]);
-                    $assigned_users[] = $assign_to_user->id;
+
+            foreach ($assign_to['groups'] as $group) {
+                if (isset($group['value']['user_id'])) {
+                    Log::info($group);
+                    $user_id = $group['value']['user_id'];
+                    $this->saveAssignToGroup('user', $user_id, $assign_to_timings[$key]);
+                    $this->saveAssignToUser($user_id, $assign_to_timings[$key]);
+                    $assigned_users[] = $user_id;
                 }
             }
         }
 
         foreach ($assign_tos as $key => $assign_to) {
-            foreach ($assign_to['groups'] as $value) {
-                $assign_to_section = $section->where('name', $value)
-                    ->where('course_id', $assignment->course_id)
-                    ->first();
-                if ($assign_to_section) {
+            foreach ($assign_to['groups'] as $group) {
+                if (isset($group['value']['section_id'])) {
+                    Log::info($group);
+                    $section_id = $group['value']['section_id'];
+                    $assign_to_section = Section::find($section_id);
                     $this->saveAssignToGroup('section', $assign_to_section->id, $assign_to_timings[$key]);
                     $enrolled_users_by_section = $assign_to_section->enrolledUsers;
                     foreach ($enrolled_users_by_section as $enrolled_user) {
@@ -609,8 +607,9 @@ class AssignmentController extends Controller
         }
 
         foreach ($assign_tos as $key => $assign_to) {
-            foreach ($assign_to['groups'] as $value) {
-                if ($value === 'Everybody') {
+            foreach ($assign_to['groups'] as $group) {
+                if (isset($group['value']['course_id'])) {
+                    Log::info($group);
                     $this->saveAssignToGroup('course', $assignment->course->id, $assign_to_timings[$key]);
                     foreach ($enrolled_users_by_course as $enrolled_user_id) {
                         if (!in_array($enrolled_user_id, $assigned_users)) {
@@ -621,17 +620,7 @@ class AssignmentController extends Controller
                 }
             }
         }
-        $assign_to_groups = DB::table('assignments')
-            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
-            ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
-            ->where('assignments.id', $assignment->id)
-            ->get();
-        if ($assign_to_groups->isEmpty()) {
-            $response['type'] = 'error';
-            $response['message'] = "We were unable to update this group of assign to's.  Please contact us for assistance.";
-            echo json_encode($response);
-            exit;
-        }
+
     }
 
     function saveAssignToUser(int $user_id, int $assign_to_timing_id)

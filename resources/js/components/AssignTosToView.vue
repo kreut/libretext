@@ -31,7 +31,7 @@
         {{ $moment(assignTo.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
         {{ $moment(assignTo.due_time, 'HH:mm:ss A').format('h:mm A') }}
       </td>
-      <td>
+      <td v-if="assignTosToView[0].final_submission_deadline">
         {{ $moment(assignTo.final_submission_deadline_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
         {{ $moment(assignTo.final_submission_deadline_time, 'HH:mm:ss A').format('h:mm A') }}
       </td>
