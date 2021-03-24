@@ -10,29 +10,31 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Assignment Summary" />
+        <PageTitle title="Assignment Summary"/>
 
-        <AssignmentProperties ref="assignmentProperties" :course-id="Number(courseId)" />
+        <AssignmentProperties ref="assignmentProperties" :course-id="Number(courseId)"/>
         <b-modal
           id="modal-assign-tos-to-view"
           ref="modal"
           title="Assigned To"
           size="lg"
         >
-          <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView" />
+          <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
         </b-modal>
         <b-container>
           <b-row align-h="end" class="pb-2">
             <b-button size="sm" variant="primary" @click="initEditAssignment()">
-              <b-icon icon="gear" />
+              <b-icon icon="gear"/>
               Edit Assignment
             </b-button>
           </b-row>
 
           <b-card :header="assignment.name" class="h-100">
             <b-card-text>
-              <span class="font-weight-bold">Instructions: </span><span class="font-italic">{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
-              <span class="font-weight-bold">Late Policy: </span><span class="font-italic">{{ assignment.formatted_late_policy }}</span><br>
+              <span class="font-weight-bold">Instructions: </span><span class="font-italic"
+            >{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
+              <span class="font-weight-bold">Late Policy: </span><span class="font-italic"
+            >{{ assignment.formatted_late_policy }}</span><br>
             </b-card-text>
           </b-card>
           <b-table
@@ -43,7 +45,8 @@
           >
             <template v-slot:cell(value)="data">
               <span v-if="data.item.property ==='Assigned To'">
-                <b-button variant="primary" size="sm" @click="viewAssignTos">View Assigned To</b-button>
+                <span v-if="assignment.assign_tos.length ===1">{{ assignment.assign_tos[0].groups.toString() }}</span>
+                <b-button v-if="assignment.assign_tos.length > 1" variant="primary" size="sm" @click="viewAssignTos">View Assigned To</b-button>
               </span>
               <span v-if="data.item.property !=='Assigned To'">
                 {{ data.item.value }}
@@ -110,23 +113,28 @@ export default {
         }
         this.assignment = data.assignment
         this.courseId = this.assignment.course_id
-        this.items = this.assignment.assign_tos[0] === 1
-          ? [{
-            property: 'Assigned To',
-            value: this.assignment.assign_tos[0].groups.toString()
-          },
-          {
-            property: 'Available On',
-            value: this.$moment(this.assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
-          },
-          {
-            property: 'npm install --g eslintDue',
+        this.items = [{
+          property: 'Assigned To',
+          value: ''
+        }]
+        if (this.assignment.assign_tos.length === 1) {
+          this.items.push(
+            {
+              property: 'Available On',
+              value: this.$moment(this.assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+            })
+          this.items.push({
+            property: 'Due',
             value: this.$moment(this.assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
-          }]
-          : [{
-            property: 'Assigned To',
-            value: ''
-          }]
+          })
+          if (this.assignment.late_policy !== 'not accepted') {
+            this.items.push({
+              property: 'Final Submission Deadline',
+              value: this.$moment(this.assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+            })
+          }
+        }
+
         this.items.push(
           { property: 'Assessment Type', value: this.assignment.assessment_type },
           {

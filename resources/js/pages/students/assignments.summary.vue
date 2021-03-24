@@ -1,4 +1,5 @@
-n<template>
+n
+<template>
   <div>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -10,11 +11,11 @@ n<template>
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="name" />
+        <PageTitle :title="name"/>
         <b-container>
           <div v-if="assessmentType !== 'clicker' || pastDue">
             <b-row align-h="end">
-              <b-button class="ml-3 mb-2" variant="primary" @click="getStudentView(assignmentId)">
+              <b-button class="ml-3 mb-2" variant="primary" size="sm" @click="getStudentView(assignmentId)">
                 View Assessments
               </b-button>
             </b-row>
@@ -25,11 +26,15 @@ n<template>
               <span class="font-weight-bold">Please wait for your instructor to open up this assignment.</span>
             </b-alert>
           </div>
-          <b-card v-if="instructions.length" class="mb-2" header="default" header-html="<h5>Instructions</h5>">
-            {{ instructions }}
-          </b-card>
 
-          <AssignmentStatistics />
+          <b-row v-if="instructions.length" class="mb-2">
+            <span class="font-weight-bold">Instructions:</span> {{ instructions }}
+          </b-row>
+          <b-row class="mb-5">
+            <span class="font-weight-bold">Late Policy: &nbsp;</span>
+             {{ formattedLatePolicy }}
+          </b-row>
+          <AssignmentStatistics/>
         </b-container>
       </div>
     </div>
@@ -55,6 +60,7 @@ export default {
     isLoading: true,
     name: '',
     instructions: '',
+    formattedLatePolicy: '',
     canViewAssignmentStatistics: false,
     assignmentInfo: {}
   }),
@@ -106,6 +112,7 @@ export default {
         }
         let assignment = data.assignment
         this.instructions = assignment.instructions
+        this.formattedLatePolicy = assignment.formatted_late_policy
         this.assessmentType = assignment.assessment_type
         this.name = assignment.name
         this.pastDue = assignment.past_due
