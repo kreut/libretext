@@ -26,11 +26,15 @@ class StoreCourse extends FormRequest
     {
        return  [
             'name' => ['required', 'max:255'],
-            'section' => ['required', 'max:255'],
+            'section' => ['required', 'max:255','regex:/^((?!---).)*$/'],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'public' => Rule::in([0,1])
         ];
 
+    }
+
+    public function messages() {
+        return ['section.regex' => "The section name can't contain '---'."];
     }
 }
