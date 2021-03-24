@@ -559,7 +559,9 @@ class AssignmentController extends Controller
                 $assign_to_timing->delete();
             }
         }
+
         $assign_to_timings = [];
+
         foreach ($assign_tos as $assign_to) {
             $assignToTiming = new AssignToTiming();
             $assignToTiming->assignment_id = $assignment->id;
@@ -611,15 +613,25 @@ class AssignmentController extends Controller
                 if ($value === 'Everybody') {
                     $this->saveAssignToGroup('course', $assignment->course->id, $assign_to_timings[$key]);
                     foreach ($enrolled_users_by_course as $enrolled_user_id) {
-                        if (!in_array( $enrolled_user_id, $assigned_users)) {
-                            $this->saveAssignToUser( $enrolled_user_id, $assign_to_timings[$key]);
-                            $assigned_users[] =  $enrolled_user_id;
+                        if (!in_array($enrolled_user_id, $assigned_users)) {
+                            $this->saveAssignToUser($enrolled_user_id, $assign_to_timings[$key]);
+                            $assigned_users[] = $enrolled_user_id;
                         }
                     }
                 }
             }
         }
-
+        $assign_to_groups = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_groups', 'assign_to_timings.id', '=', 'assign_to_groups.assign_to_timing_id')
+            ->where('assignments.id', $assignment->id)
+            ->get();
+        if ($assign_to_groups->isEmpty()) {
+            $response['type'] = 'error';
+            $response['message'] = "We were unable to update this group of assign to's.  Please contact us for assistance.";
+            echo json_encode($response);
+            exit;
+        }
     }
 
     function saveAssignToUser(int $user_id, int $assign_to_timing_id)
@@ -928,7 +940,7 @@ class AssignmentController extends Controller
                 }
                 break;
         }
-        if (($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)){
+        if (($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)) {
             $late_policy .= "  Students cannot submit assessments later than $final_submission_deadline.";
         }
 

@@ -1137,7 +1137,7 @@ export default {
       this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
       this.form.name = assignment.name
       this.form.assessment_type = this.assessmentType = assignment.assessment_type
-
+      this.assignToGroups = this.getAssignToGroups()
       for (let i = 0; i < assignment.assign_tos.length; i++) {
         assignment.assign_tos[i]['selectedGroup'] = ''
         for (let j = 0; j < assignment.assign_tos[i]['groups'].length; j++) {
