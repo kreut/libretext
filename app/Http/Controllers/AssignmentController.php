@@ -483,7 +483,6 @@ class AssignmentController extends Controller
                           Section $section,
                           User $user)
     {
-        //Log::info('can log');
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
         $authorized = Gate::inspect('createCourseAssignment', $course);
@@ -585,7 +584,6 @@ class AssignmentController extends Controller
 
             foreach ($assign_to['groups'] as $group) {
                 if (isset($group['value']['user_id'])) {
-                    Log::info($group);
                     $user_id = $group['value']['user_id'];
                     $this->saveAssignToGroup('user', $user_id, $assign_to_timings[$key]);
                     $this->saveAssignToUser($user_id, $assign_to_timings[$key]);
@@ -597,7 +595,6 @@ class AssignmentController extends Controller
         foreach ($assign_tos as $key => $assign_to) {
             foreach ($assign_to['groups'] as $group) {
                 if (isset($group['value']['section_id'])) {
-                    Log::info($group);
                     $section_id = $group['value']['section_id'];
                     $assign_to_section = Section::find($section_id);
                     $this->saveAssignToGroup('section', $assign_to_section->id, $assign_to_timings[$key]);
@@ -615,7 +612,6 @@ class AssignmentController extends Controller
         foreach ($assign_tos as $key => $assign_to) {
             foreach ($assign_to['groups'] as $group) {
                 if (isset($group['value']['course_id'])) {
-                    Log::info($group);
                     $this->saveAssignToGroup('course', $assignment->course->id, $assign_to_timings[$key]);
                     foreach ($enrolled_users_by_course as $enrolled_user_id) {
                         if (!in_array($enrolled_user_id, $assigned_users)) {
@@ -850,7 +846,6 @@ class AssignmentController extends Controller
         $message = null;
         foreach ($assign_tos as $assign_to) {
             foreach ($assign_to['groups'] as $group) {
-                Log::info($group);
                 if (in_array($group, $used_groups)) {
                     $message = "{$group['text']} was chosen twice as an assign to.";
                 }
