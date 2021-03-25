@@ -1213,10 +1213,10 @@ export default {
     async updateAssignment () {
       try {
         const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-
-        console.log(data)
         this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-properties')
+        if (data.type === 'success') {
+          await this.resetAll('modal-assignment-properties')
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
