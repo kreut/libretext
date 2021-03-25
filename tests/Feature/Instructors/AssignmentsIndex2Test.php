@@ -75,10 +75,9 @@ class AssignmentsIndex2Test extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
 
 
-
         $this->assign_tos = [
             [
-                'groups' => [['value' => ['course_id' => $this->course->id],'text'=>'Everybody']],
+                'groups' => [['value' => ['course_id' => $this->course->id], 'text' => 'Everybody']],
                 'available_from' => '2020-06-10 09:00:00',
                 'available_from_date' => '2020-06-10',
                 'available_from_time' => '09:00:00',
@@ -136,18 +135,28 @@ class AssignmentsIndex2Test extends TestCase
     }
 
     /** @test */
+
+    public function cannot_repeat_assign_tos()
+    {
+        $assignment_info = $this->assignment_info;
+        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name],
+            ['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
+        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
+
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJson(['message' => "{$this->section->name} was chosen twice as an assign to."]);
+
+    }
+
+    /** @test */
     public
     function the_correct_user_is_assigned_an_assignment_with_everybody()
     {
-      $student_user_ids = [$this->student_user->id, $this->student_user_2->id];
+        $student_user_ids = [$this->student_user->id, $this->student_user_2->id];
         $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
             ->assertJson(['type' => 'success']);
         $this->assertEquals(count($student_user_ids), AssignToUser::whereIn('user_id', $student_user_ids)->get()->count());
     }
-
-
-
-
 
     /** @test */
     public
@@ -155,37 +164,9 @@ class AssignmentsIndex2Test extends TestCase
     {
 
         $assignment_info = $this->assignment_info;
+        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
+        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
 
-
-        $assign_tos= [
-            [
-                'groups' =>  [['value' => ['section_id' => $this->section->id],'text'=>$this->section->name]],
-                'available_from' => '2020-06-10 09:00:00',
-                'available_from_date' => '2020-06-10',
-                'available_from_time' => '09:00:00',
-                'due' => '2020-06-12 09:00:00',
-                'due_date' => '2020-06-12',
-                'due_time' => '09:00:00',
-                'final_submission_deadline' => '2021-06-12 09:00:00',
-                'final_submission_deadline_date' => '2021-06-12',
-                'final_submission_deadline_time' => '09:00:00'
-            ]
-        ];
-        $assignment_info['assign_tos'] = $assign_tos;
-        foreach ( $assignment_info['assign_tos'][0]['groups'] as $key => $group) {
-            $group_info = ["groups_$key" => [['value' => ['section_id' => $this->section->id],'text'=>$this->section->name]],
-                "due_$key" => '2020-06-12 09:00:00',
-                "due_date_$key" => '2020-06-12',
-                "due_time_$key" => '09:00:00',
-                "available_from_$key" => '2020-06-10',
-                "available_from_date_$key" => '2020-06-12',
-                "available_from_time_$key" => '09:00:00',
-                "final_submission_deadline_date_$key" => '2021-06-12',
-                "final_submission_deadline_time_$key" => '09:00:00'];
-            foreach ($group_info as $info_key => $info_value) {
-                $assignment_info[$info_key] = $info_value;
-            }
-        }
 
         $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
             ->assertJson(['type' => 'success']);

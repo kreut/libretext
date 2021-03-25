@@ -498,6 +498,12 @@ class AssignmentController extends Controller
 
             $data = $request->validated();
             $assign_tos = $request->assign_tos;
+
+            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+            if ($repeated_groups) {
+                $response['message'] = $repeated_groups;
+                return $response;
+            }
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
 
@@ -838,6 +844,21 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function groupsMustNotRepeat($assign_tos)
+    {
+        $used_groups = [];
+        $message = null;
+        foreach ($assign_tos as $assign_to) {
+            foreach ($assign_to['groups'] as $group) {
+                Log::info($group);
+                if (in_array($group, $used_groups)) {
+                    $message = "{$group['text']} was chosen twice as an assign to.";
+                }
+                $used_groups[] = $group;
+            }
+        }
+        return $message;
+    }
 
     /**
      * @param Assignment $assignment
@@ -984,6 +1005,11 @@ class AssignmentController extends Controller
 
             $data = $request->validated();
             $assign_tos = $request->assign_tos;
+            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+            if ($repeated_groups) {
+                $response['message'] = $repeated_groups;
+                return $response;
+            }
 
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';

@@ -16,6 +16,39 @@ use Illuminate\Support\Facades\DB;
 trait Test
 {
 
+    public function createAssignTosFromGroups($assignment_info, $groups){
+        $assign_tos= [
+            [
+                'groups' =>  $groups,
+                'available_from' => '2020-06-10 09:00:00',
+                'available_from_date' => '2020-06-10',
+                'available_from_time' => '09:00:00',
+                'due' => '2020-06-12 09:00:00',
+                'due_date' => '2020-06-12',
+                'due_time' => '09:00:00',
+                'final_submission_deadline' => '2021-06-12 09:00:00',
+                'final_submission_deadline_date' => '2021-06-12',
+                'final_submission_deadline_time' => '09:00:00'
+            ]
+        ];
+        $assignment_info['assign_tos'] = $assign_tos;
+        foreach ( $assignment_info['assign_tos'][0]['groups'] as $key => $group) {
+            $group_info = ["groups_$key" => [$groups],
+                "due_$key" => '2020-06-12 09:00:00',
+                "due_date_$key" => '2020-06-12',
+                "due_time_$key" => '09:00:00',
+                "available_from_$key" => '2020-06-10',
+                "available_from_date_$key" => '2020-06-12',
+                "available_from_time_$key" => '09:00:00',
+                "final_submission_deadline_date_$key" => '2021-06-12',
+                "final_submission_deadline_time_$key" => '09:00:00'];
+            foreach ($group_info as $info_key => $info_value) {
+                $assignment_info[$info_key] = $info_value;
+            }
+        }
+        return $assignment_info;
+    }
+
     public function assignUserToAssignment(int $assignment_id, string $group, int $group_id, int $student_user_id = 0)
     {
         $assignToTiming = new AssignToTiming();

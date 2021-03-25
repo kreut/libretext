@@ -896,16 +896,6 @@ export default {
       this.form.assign_tos.push(newAssignTo)
     },
     updateAssignTos (assignTo) {
-      for (let i = 0; i < this.form.assign_tos.length; i++) {
-        for (let j = 0; j < this.form.assign_tos[i].groups.length; j++) {
-          console.log(this.form.assign_tos[i].groups[j].value)
-          console.log(assignTo)
-        }
-      }
-      if (assignTo.groups.includes(assignTo.selectedGroup)) {
-        this.$noty.info(`${assignTo.selectedGroup} is already selected.`)
-        return false
-      }
 
       if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
         for (let i = 0; i < this.assignToUsers.length; i++) {
@@ -925,6 +915,7 @@ export default {
       if (assignTo.selectedGroup.hasOwnProperty('course_id')) {
         assignTo.groups.push(this.assignToCourse)
       }
+      assignTo.selectedGroup = null
     },
     removeAssignToGroup (assignTo, group) {
       for (let i = 0; i < assignTo.groups.length; i++) {
@@ -1237,7 +1228,9 @@ export default {
         this.form.course_id = this.courseId
         const { data } = await this.form.post(`/api/assignments`)
         this.$noty[data.type](data.message)
-        this.resetAll('modal-assignment-properties')
+        if (data.type === 'success') {
+          await this.resetAll('modal-assignment-properties')
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
