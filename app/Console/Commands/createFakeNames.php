@@ -48,6 +48,7 @@ class createFakeNames extends Command
                 $faker = \Faker\Factory::create();
                 $user->first_name = $faker->firstName;
                 $user->last_name = $faker->lastName;
+                $user->email = $faker->email;
                 $user->save();
             }
         }
