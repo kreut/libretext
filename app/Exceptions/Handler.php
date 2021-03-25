@@ -2,9 +2,11 @@
 
 namespace App\Exceptions;
 
+use Carbon\Carbon;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -76,7 +78,16 @@ class Handler extends ExceptionHandler
             $request,
             request()->user() ? request()->user()->id : 'No user logged in'
         );
-        (app()->environment('local')) || !($dontReports) ? Log::error($error_info) : file_put_contents(storage_path() . "/logs/unreported-errors.log", $error_info);
+        if (app()->environment('local')) {
+            Log::error($error_info);
+        } else {
+            $date = Carbon::now()->format('Y-m-d');
+            $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
+            $contents = Storage::disk('s3')->exists("$log_file")
+                ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
+                : $error_info;
+            Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+        }
     }
 
     /**

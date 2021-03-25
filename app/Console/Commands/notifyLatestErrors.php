@@ -6,6 +6,7 @@ use App\Mail\EmailError;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
+use Illuminate\Support\Facades\Storage;
 use Telegram\Bot\Laravel\Facades\Telegram;
 
 ;
@@ -37,16 +38,14 @@ class notifyLatestErrors extends Command
     }
 
     /**
-     * Execute the console command.
-     *
-     * @return mixed
+     * @throws \Illuminate\Contracts\Filesystem\FileNotFoundException
      */
     public function handle()
     {
         $date = Carbon::now()->format('Y-m-d');
-        $log_file = storage_path() . "/logs/laravel-$date.log";
-        if (file_exists($log_file) && time() - filemtime($log_file) < 60 * 5) {
-            $error_log = file_get_contents(storage_path() . "/logs/laravel-$date.log");
+        $log_file = "logs/laravel-$date.log";
+        if (Storage::disk('s3')->exists($log_file) && time() - Storage::disk('s3')->lastModified($log_file) < 60 * 5) {
+            $error_log = Storage::disk('s3')->get("$log_file");
             $pos = strrpos($error_log, "[$date");
             $latest_error = substr($error_log, $pos);
             Telegram::sendMessage([
