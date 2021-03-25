@@ -341,7 +341,7 @@ class EnrollmentController extends Controller
 
                 //add the assign tos
                 $assignments = $section->course->assignments;
-                $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id);
+                $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
 
 
                 $response['type'] = 'success';

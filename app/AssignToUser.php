@@ -22,15 +22,17 @@ class AssignToUser extends Model
             ->get();
     }
 
-    public function assignToUserForAssignments( Collection $assignments, int $user_id)
+    public function assignToUserForAssignments( Collection $assignments, int $user_id, int $section_id)
     {
+
         $assign_to_timing_ids = [];
+
         foreach ($assignments as $assignment) {
             $assignToTimings = $assignment->assignToTimings;
             foreach ($assignToTimings as $assignToTiming) {
                 foreach ($assignToTiming->assignToGroups as $assignToGroup) {
 
-                    if ($assignToGroup->group === 'section') {
+                    if ($assignToGroup->group === 'section' && $assignToGroup->group_id === $section_id) {
                         if (in_array($assignToTiming->id, $assign_to_timing_ids)) {
                             continue;
                         }

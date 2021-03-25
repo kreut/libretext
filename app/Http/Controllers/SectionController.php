@@ -163,7 +163,7 @@ class SectionController extends Controller
             $section->save();
             $course->enrollFakeStudent($course->id, $section->id, $enrollment);
             $assignments = $course->assignments;
-            $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id);
+            $assignToUser->assignToUserForAssignments($assignments, $enrollment->user_id, $section->id);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The section <strong>{$data['name']}</strong> has been created.";
