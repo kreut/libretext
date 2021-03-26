@@ -104,9 +104,6 @@
               Group
             </th>
             <th scope="col">
-              Assign To
-            </th>
-            <th scope="col">
               Available On
             </th>
             <th scope="col">
@@ -165,9 +162,6 @@
               />
             </td>
             <td>{{ assignment.assignment_group }}</td>
-            <td>
-              <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].groups.toString() }}</span>
-            </td>
             <td>
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
