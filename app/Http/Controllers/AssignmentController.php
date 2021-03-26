@@ -258,6 +258,7 @@ class AssignmentController extends Controller
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id);
             }
 
+
             if ((int)$request->assign_to_groups === 1) {
                 $this->copyAssignTos($assignment, $new_assignment);
 
@@ -579,7 +580,6 @@ class AssignmentController extends Controller
     public
     function copyAssignTos(Assignment $assignment, Assignment $new_assignment)
     {
-
 
         foreach ($assignment->assignToTimings as $assignToTiming) {
             $newAssignToTiming = new AssignToTiming();

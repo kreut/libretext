@@ -2,6 +2,8 @@
 
 namespace Tests\Feature\Instructors;
 
+use App\AssignToGroup;
+use App\AssignToTiming;
 use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
@@ -133,6 +135,34 @@ class AssignmentsIndex2Test extends TestCase
             'user_id' => $this->student_user_2->id]);
 
     }
+
+    /** @test */
+    public
+    function owner_of_assignment_can_create_it_from_template_and_copy_assign_to_groups()
+    {
+
+
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJson(['type' => 'success']);
+
+
+        $assignment_id = DB::table('assignments')->select('id')
+            ->orderBy('id', 'desc')
+            ->first()
+            ->id;
+
+        $assign_to_timing_ids = AssignToTiming::where('assignment_id', $assignment_id)->pluck('id')->toArray();
+        $num_assign_to_users = AssignToUser::whereIn('assign_to_timing_id', $assign_to_timing_ids)->get()->count();
+
+        $this->actingAs($this->user)->postJson("/api/assignments/$assignment_id/create-assignment-from-template",
+            ['assign_to_groups' => 1])
+            ->assertJson(['message' => "<strong>{$this->assignment->name} copy</strong> is using the same template as <strong>{$this->assignment->name}</strong>. Don't forget to add questions and update the assignment's dates."]);
+
+            $this->assertequals(2 * $num_assign_to_users,
+                AssignToUser::all()->count(),
+                'The number of assign to users should double since they were copied.');
+    }
+
 
     /** @test */
 
