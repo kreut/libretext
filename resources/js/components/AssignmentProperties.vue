@@ -460,26 +460,30 @@
           <span id="default_open_ended_submission_type_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
-        <b-form-radio-group v-model="form.default_open_ended_submission_type" stacked
+        <b-form-radio-group v-model="form.default_open_ended_submission_type"
+                            stacked
                             :disabled="isLocked()"
-        >
-          <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio value="rich text">
-            Rich Text
-          </b-form-radio>
-          <b-form-radio value="plain text">
-            Plain Text
-          </b-form-radio>
-          <b-form-radio value="file">
-            File
-          </b-form-radio>
-          <b-form-radio value="audio">
-            Audio
-          </b-form-radio>
-          <b-form-radio value="0">
-            None
-          </b-form-radio>
-        </b-form-radio-group>
+                            :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
+                            @keydown="form.errors.clear('default_open_ended_submission_type')"
+        />
+
+        <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+        <b-form-radio value="rich text">
+          Rich Text
+        </b-form-radio>
+        <b-form-radio value="plain text">
+          Plain Text
+        </b-form-radio>
+        <b-form-radio value="file">
+          File
+        </b-form-radio>
+        <b-form-radio value="audio">
+          Audio
+        </b-form-radio>
+        <b-form-radio value="0">
+          None
+        </b-form-radio>
+        <has-error :form="form" field="default_open_ended_submission_type"/>
       </b-form-group>
       <b-form-group
         v-show="form.source === 'a'"
@@ -1209,8 +1213,7 @@ export default {
         this.form[`due_time_${i}`] = assignTos[i].due_time
         this.form[`due_${i}`] = assignTos[i].due_date + ' ' + assignTos[i].due_time
       }
-      console.log(this.form)
-      console.log('submitting')
+
       !this.assignmentId ? this.createAssignment() : this.updateAssignment()
     },
     async updateAssignment () {
