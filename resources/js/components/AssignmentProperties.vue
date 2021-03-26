@@ -1,5 +1,118 @@
 <template>
   <div>
+
+    <b-modal
+      id="modal-assign-to-presets"
+      ref="modal"
+      title="Assign To Presets"
+      ok-title="Submit"
+      size="lg"
+    >
+      <toggle-button
+        class="mt-1"
+        :width="105"
+        :value="assignToPresetApply"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#28a745', unchecked: '#6c757d'}"
+        :labels="{checked: 'Apply', unchecked: 'Create'}"
+        @change="toggleAssignToPresetView()"
+      />
+      <div v-show="assignToPresetApply">
+        <b-table striped hover :fields="assignToPresetFields" :items="assignToPresets">
+          <template v-slot:cell(groups)="data">
+            {{ assignToPresetGroups(data.item.groups) }}
+          </template>
+
+          <template v-slot:cell(day_of_week)="data">
+            {{ assignToPresetDayOfWeek(data.item.day_of_week) }}
+          </template>
+        </b-table>
+      </div>
+
+      <div v-show="!assignToPresetApply">
+        <b-form-group
+          id="assign_to_preset_groups"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="Assign to"
+          label="Assign To"
+        >
+          <b-form-row>
+            <b-col lg="5">
+              <b-form-select v-model="assignToPresetForm.selectedGroup"
+                             :options="assignToGroups"
+                             @change="updateAssignTos(assignToPresetForm)"
+              ></b-form-select>
+            </b-col>
+            <b-col>
+              <ul
+                v-for="(group,group_index) in assignToPresetForm.groups"
+                :key="group_index"
+                class="flex-column align-items-start"
+              >
+                <li>{{ group.text }}
+                  <b-icon icon="trash" @click="removeAssignToGroup(assignToPresetForm, group)"></b-icon>
+                </li>
+              </ul>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="assign_to_preset_day_of_week"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="Day of week"
+          label="Day of week"
+        >
+          <b-form-row>
+            <b-col lg="5">
+              <b-form-select v-model="assignToPresetForm.day_of_week"
+                             :options="weekdays"
+              ></b-form-select>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="assign_to_presets_due_time"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Due Time"
+          label-for="Due Time"
+        >
+          <b-form-row>
+            <b-col lg="5">
+              <b-form-timepicker v-model="assignToPresetForm.due_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': assignToPresetForm.errors.has('due_time') }"
+                                 @shown="assignToPresetForm.errors.clear(`due_time`)"
+              />
+              <has-error :form="assignToPresetForm" field="due_time"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+      </div>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="submitAssignToPreset"
+        >
+          Submit
+        </b-button>
+      </template>
+
+    </b-modal>
+
+
     <b-modal
       id="modal-assignment-properties"
       ref="modal"
@@ -780,6 +893,9 @@
         </b-form-group>
         <div v-if="form.assign_tos.length>1">
           <b-row align-h="end">
+            <b-button variant="outline-primary" class="mr-4" size="sm" @click="initAssignToPresetModal(assignTo)">Assign
+              To Presets
+            </b-button>
             <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">Remove Assign
               to
             </b-button>
@@ -803,13 +919,47 @@ import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments
 
 import 'vue-loading-overlay/dist/vue-loading.css'
 
+import { ToggleButton } from 'vue-js-toggle-button'
+
 export default {
+  components: {
+    ToggleButton
+  },
   middleware: 'auth',
   props: {
     courseId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' }
   },
   data: () => ({
+    assignToPresets: [],
+    assignToPresetFields: [
+      {
+        key: 'groups',
+        label: 'Assign to groups'
+      },
+      {
+        key: 'day_of_week',
+        label: 'Due Day'
+      },
+      'due_time'
+    ],
+    assignToPresetApply: true,
+    assignToPresetForm: new Form({
+      groups: [],
+      day_of_week: null,
+      selectedGroup: null,
+      due_time: '09:00:00'
+    }),
+    weekdays: [
+      { value: null, text: 'Please choose a weekday' },
+      { value: 0, text: 'Sunday' },
+      { value: 1, text: 'Monday' },
+      { value: 2, text: 'Tuesday' },
+      { value: 3, text: 'Wednesday' },
+      { value: 4, text: 'Thursday' },
+      { value: 5, text: 'Friday' },
+      { value: 6, text: 'Saturday' }
+    ],
     assignToCourse: [],
     assignToSections: [],
     assignToUsers: [],
@@ -883,6 +1033,48 @@ export default {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
+    assignToPresetDayOfWeek (dayOfWeek) {
+      for (let i = 0; i < this.weekdays.length; i++) {
+        console.log(this.weekdays[i].value +  ' ' + dayOfWeek)
+        if (parseInt(this.weekdays[i].value) === parseInt(dayOfWeek)) {
+          return this.weekdays[i].text
+        }
+      }
+    },
+    assignToPresetGroups (groups) {
+
+      let groupsText = []
+      for (let i = 0; i < groups.length; i++) {
+        groupsText.push(groups[i].text)
+      }
+      return groupsText.join(', ')
+    },
+    toggleAssignToPresetView () {
+      this.assignToPresetApply = !this.assignToPresetApply
+    },
+    async submitAssignToPreset () {
+      try {
+        const { data } = await this.assignToPresetForm.post(`/api/assign-to-presets/${this.courseId}`)
+        console.log(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async initAssignToPresetModal (assignTo) {
+      try {
+        const { data } = await axios.get(`/api/assign-to-presets/${this.courseId}`)
+        console.log(data)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignToPresets = data.assign_to_presets
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$bvModal.show('modal-assign-to-presets')
+    },
     removeAssignTo (assignTo) {
       this.form.assign_tos = this.form.assign_tos.filter(e => e !== assignTo)
     },

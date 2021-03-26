@@ -33,7 +33,15 @@ class Course extends Model
         return $this->hasMany('App\Section');
     }
 
-    public function assignmentGroups()
+    public function assignToPresetTimings()
+    {
+        return $this->hasMany('App\AssignToPresetTiming');
+    }
+
+
+
+    public
+    function assignmentGroups()
     {
 
         $default_assignment_groups = AssignmentGroup::where('user_id', 0)->select()->get();
@@ -57,7 +65,8 @@ class Course extends Model
         return collect($assignment_groups);
     }
 
-    public function assignmentGroupWeights()
+    public
+    function assignmentGroupWeights()
     {
         return DB::table('assignments')
             ->join('assignment_groups', 'assignments.assignment_group_id', '=', 'assignment_groups.id')
@@ -69,7 +78,8 @@ class Course extends Model
 
     }
 
-    public function enrolledUsers()
+    public
+    function enrolledUsers()
     {
 
         return $this->hasManyThrough('App\User',
@@ -82,7 +92,8 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
-    public function enrolledUsersWithFakeStudent()
+    public
+    function enrolledUsersWithFakeStudent()
     {
 
         return $this->hasManyThrough('App\User',
@@ -94,7 +105,8 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
-    public function extensions()
+    public
+    function extensions()
     {
         return $this->hasManyThrough('App\Extension',
             'App\Assignment',
@@ -104,7 +116,8 @@ class Course extends Model
             'id'); //local key in assignments table
     }
 
-    public function assignments()
+    public
+    function assignments()
     {
         return Auth::user()->role === 3
             ? $this->hasMany('App\Assignment')
@@ -112,12 +125,14 @@ class Course extends Model
     }
 
 
-    public function enrollments()
+    public
+    function enrollments()
     {
         return $this->hasMany('App\Enrollment');
     }
 
-    public function fakeStudent()
+    public
+    function fakeStudent()
     {
         $fake_student_user_id = DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->join('users', 'enrollments.user_id', '=', 'users.id')
@@ -129,25 +144,28 @@ class Course extends Model
         return User::find($fake_student_user_id);
     }
 
-    public function fakeStudentIds()
+    public
+    function fakeStudentIds()
     {
-       return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
+        return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->join('users', 'enrollments.user_id', '=', 'users.id')
             ->where('course_id', $this->id)
             ->where('fake_student', 1)
             ->select('users.id')
             ->get()
-           ->pluck('id')
+            ->pluck('id')
             ->toArray();
     }
 
 
-    public function finalGrades()
+    public
+    function finalGrades()
     {
         return $this->hasOne('App\FinalGrade');
     }
 
-    public function graderSections()
+    public
+    function graderSections()
     {
         return DB::table('graders')->join('sections', 'graders.section_id', '=', 'sections.id')
             ->where('sections.course_id', $this->id)
@@ -158,7 +176,8 @@ class Course extends Model
 
     }
 
-    public function graderInfo()
+    public
+    function graderInfo()
     {
 
         $grader_info = DB::table('graders')
@@ -188,7 +207,8 @@ class Course extends Model
         return array_values($graders);
     }
 
-    public function graders()
+    public
+    function graders()
     {
         return $this->hasMany('App\Grader');
 
@@ -199,7 +219,8 @@ class Course extends Model
      * @param int $section_id
      * @param Enrollment $enrollment
      */
-    public function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment)
+    public
+    function enrollFakeStudent(int $course_id, int $section_id, Enrollment $enrollment)
     {
         $fake_student = new User();
         $fake_student->last_name = 'Student';
@@ -219,7 +240,8 @@ class Course extends Model
 
     }
 
-    public function isGrader()
+    public
+    function isGrader()
     {
         $graders = DB::table('graders')
             ->join('sections', 'graders.section_id', '=', 'sections.id')
@@ -231,7 +253,9 @@ class Course extends Model
         return (in_array(Auth::user()->id, $graders));
     }
 
-    public function assignTosByAssignmentAndUser(){
+    public
+    function assignTosByAssignmentAndUser()
+    {
         $assigned_assignments = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
             ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
@@ -242,9 +266,11 @@ class Course extends Model
         foreach ($assigned_assignments as $assignment) {
             $assigned_assignments_by_assignment_and_user_id[$assignment->assignment_id][] = $assignment->user_id;
         }
-        return   $assigned_assignments_by_assignment_and_user_id;
-}
-    public function assignedToAssignmentsByUser()
+        return $assigned_assignments_by_assignment_and_user_id;
+    }
+
+    public
+    function assignedToAssignmentsByUser()
     {
         $assigned_assignments = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')

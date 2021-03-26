@@ -141,6 +141,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/show-assignment/{shown}', 'AssignmentController@showAssignment');
 
 
+    Route::post('/assign-to-presets/{course}', 'AssignToPresetController@store');
+    Route::get('/assign-to-presets/{course}', 'AssignToPresetController@index');
+
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
