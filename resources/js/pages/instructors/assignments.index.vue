@@ -10,7 +10,10 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <AssignmentProperties ref="assignmentProperties" :course-id="parseInt(courseId)"/>
+      <AssignmentProperties ref="assignmentProperties"
+                            :course-id="parseInt(courseId)"
+                            :course-end-date="courseEndDate"
+      />
 
       <b-modal
         id="modal-assign-tos-to-view"
@@ -321,6 +324,7 @@ export default {
     draggable
   },
   data: () => ({
+    courseEndDate: '',
     assignTosToView: [],
     currentOrderedAssignments: [],
     importAssignmentForm: new Form({
@@ -461,6 +465,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
+        this.courseEndDate = data.course.end_date
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

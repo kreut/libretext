@@ -12,7 +12,9 @@
       <div v-if="!isLoading">
         <PageTitle title="Assignment Summary"/>
 
-        <AssignmentProperties ref="assignmentProperties" :course-id="Number(courseId)"/>
+        <AssignmentProperties ref="assignmentProperties"
+                              :course-id="Number(courseId)"
+                              :course-end-date="courseEndDate"/>
         <b-modal
           id="modal-assign-tos-to-view"
           ref="modal"
@@ -75,6 +77,7 @@ export default {
     AssignTosToView
   },
   data: () => ({
+    courseEndDate: '',
     assignTosToView: [],
     assignmentId: 0,
     courseId: 0,
@@ -113,6 +116,7 @@ export default {
         }
         this.assignment = data.assignment
         this.courseId = this.assignment.course_id
+        this.courseEndDate= this.assignment.course_end_date
         this.items = [{
           property: 'Assigned To',
           value: ''

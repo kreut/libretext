@@ -801,7 +801,10 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   middleware: 'auth',
-  props: { 'courseId': { type: Number, default: 0 } },
+  props: {
+    courseId: { type: Number, default: 0 },
+    courseEndDate: { type: String, default: '' }
+  },
   data: () => ({
     assignToCourse: [],
     assignToSections: [],
@@ -887,7 +890,7 @@ export default {
         available_from_time: '09:00:00',
         due_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
         due_time: '09:00:00',
-        final_submission_deadline_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        final_submission_deadline_date: this.$moment(this.courseEndDate).format('YYYY-MM-DD'),
         final_submission_deadline_time: '09:00:00'
       }
     },
