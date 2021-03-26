@@ -25,6 +25,55 @@
       </b-modal>
 
       <b-modal
+        id="modal-create-assignment-from-template"
+        ref="modal"
+        title="Create Assignment From Template"
+        ok-title="Yes, copy assignment!"
+        @ok="handleCreateAssignmentFromTemplate"
+      >
+        <b-form-group
+          id="create_assignment_from_template_level"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Level"
+          label-for="Level"
+        >
+
+          <b-form-radio-group
+            v-model="createAssignmentFromTemplateForm.level"
+            stacked
+          >
+            <b-form-radio value="properties_and_questions">
+              Properties and questions
+            </b-form-radio>
+            <b-form-radio value="properties_and_not_questions">
+              Just the properties
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+
+        <b-form-group
+          id="create_assignment_from_template_assign_to_groups"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Assign To's"
+          label-for="Assign To's"
+        >
+
+          <b-form-radio-group
+            v-model="createAssignmentFromTemplateForm.assign_to_groups"
+            stacked
+          >
+            <b-form-radio value="1">
+              Copy groups and associated times
+            </b-form-radio>
+            <b-form-radio value="0">
+              Don't copy groups and associated times
+            </b-form-radio>
+          </b-form-radio-group>
+        </b-form-group>
+      </b-modal>
+      <b-modal
         id="modal-import-assignment"
         ref="modal"
         title="Import Assignment"
@@ -171,8 +220,7 @@
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
               <span v-if="assignment.assign_tos.length > 1">
-                  <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)"
-                  >View</b-button>
+                  <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                 </span>
             </td>
             <td style="width:200px">
@@ -263,7 +311,7 @@
                     >
                       Create Assignment From Template
                     </b-tooltip>
-                    <span class="pr-1" @click="createAssignmentFromTemplate(assignment.id)">
+                    <span class="pr-1" @click="initCreateAssignmentFromTemplate(assignment.id)">
                       <b-icon :id="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
                               icon="clipboard-check"
                       />
@@ -324,6 +372,11 @@ export default {
     draggable
   },
   data: () => ({
+    createAssignmentFromTemplateForm: new Form({
+      level: 'properties_and_questions',
+      assign_to_groups: 1
+    }),
+    createAssignmentFromTemplateAssignmentId: 0,
     courseEndDate: '',
     assignTosToView: [],
     currentOrderedAssignments: [],
@@ -442,9 +495,13 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async createAssignmentFromTemplate (assignmentId) {
+    initCreateAssignmentFromTemplate (assignmentId) {
+      this.createAssignmentFromTemplateAssignmentId = assignmentId
+      this.$bvModal.show('modal-create-assignment-from-template')
+    },
+    async handleCreateAssignmentFromTemplate () {
       try {
-        const { data } = await axios.post(`/api/assignments/${assignmentId}/create-assignment-from-template`)
+        const { data } = await this.createAssignmentFromTemplateForm.post(`/api/assignments/${this.createAssignmentFromTemplateAssignmentId}/create-assignment-from-template`)
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.getAssignments()

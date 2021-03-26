@@ -227,10 +227,16 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public function createAssignmentFromTemplate(Request $request,
                                                  Assignment $assignment,
-                                                 AssignToTiming $assignToTiming,
-                                                 AssignToGroup $assignToGroup)
+                                                 AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -243,11 +249,21 @@ class AssignmentController extends Controller
 
         try {
             DB::beginTransaction();
-            $assignments = Assignment::find($assignment->id);
-            $new_assignment = $assignments->replicate();
+            $assignment = Assignment::find($assignment->id);
+            $new_assignment = $assignment->replicate();
             $new_assignment->name = $new_assignment->name . " copy";
             $new_assignment->save();
-            $assignment->saveAssignmentTimingAndGroup($new_assignment);
+
+            if ($request->level === 'properties_and_questions') {
+                $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $new_assignment->id);
+            }
+
+            if ((int)$request->assign_to_groups === 1) {
+                $this->copyAssignTos($assignment, $new_assignment);
+
+            } else {
+                $assignment->saveAssignmentTimingAndGroup($new_assignment);
+            }
 
             DB::commit();
             $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
@@ -261,7 +277,8 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)
+    public
+    function solutionsReleased(Request $request, Assignment $assignment, int $solutionsReleased)
     {
 
         $response['type'] = 'error';
@@ -290,7 +307,8 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function showAssignment(Request $request, Assignment $assignment, int $shown)
+    public
+    function showAssignment(Request $request, Assignment $assignment, int $shown)
     {
 
         $response['type'] = 'error';
@@ -315,7 +333,8 @@ class AssignmentController extends Controller
     }
 
 
-    public function showScores(Request $request, Assignment $assignment, int $showScores)
+    public
+    function showScores(Request $request, Assignment $assignment, int $showScores)
     {
 
         $response['type'] = 'error';
@@ -347,7 +366,8 @@ class AssignmentController extends Controller
      * @param string $type
      * @return string
      */
-    public function getActiveExtensionMessage(Assignment $assignment, string $type)
+    public
+    function getActiveExtensionMessage(Assignment $assignment, string $type)
     {
 
         if ($assignment->extensions->isNotEmpty()) {
@@ -361,7 +381,8 @@ class AssignmentController extends Controller
         return '';
     }
 
-    public function showPointsPerQuestion(Request $request, Assignment $assignment, int $showPointsPerQuestion)
+    public
+    function showPointsPerQuestion(Request $request, Assignment $assignment, int $showPointsPerQuestion)
     {
 
         $response['type'] = 'error';
@@ -386,7 +407,8 @@ class AssignmentController extends Controller
     }
 
 
-    public function showAssignmentStatistics(Request $request, Assignment $assignment, int $showAssignmentStatistics)
+    public
+    function showAssignmentStatistics(Request $request, Assignment $assignment, int $showAssignmentStatistics)
     {
 
         $response['type'] = 'error';
@@ -420,12 +442,13 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return array
      */
-    public function index(Course $course,
-                          Extension $extension,
-                          Score $Score, Submission $Submission,
-                          Solution $Solution,
-                          AssignmentGroup $AssignmentGroup,
-                          Assignment $assignment)
+    public
+    function index(Course $course,
+                   Extension $extension,
+                   Score $Score, Submission $Submission,
+                   Solution $Solution,
+                   AssignmentGroup $AssignmentGroup,
+                   Assignment $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -452,7 +475,8 @@ class AssignmentController extends Controller
     }
 
 
-    public function addAssignmentGroupWeight(Assignment $assignment, int $assignment_group_id, AssignmentGroupWeight $assignmentGroupWeight)
+    public
+    function addAssignmentGroupWeight(Assignment $assignment, int $assignment_group_id, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $assignment_group_weight_exists = AssignmentGroupWeight::where('course_id', $assignment->course->id)
             ->where('assignment_group_id', $assignment->assignment_group_id)
@@ -478,10 +502,11 @@ class AssignmentController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreAssignment $request, Assignment $assignment,
-                          AssignmentGroupWeight $assignmentGroupWeight,
-                          Section $section,
-                          User $user)
+    public
+    function store(StoreAssignment $request, Assignment $assignment,
+                   AssignmentGroupWeight $assignmentGroupWeight,
+                   Section $section,
+                   User $user)
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -551,7 +576,39 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function addAssignTos(Assignment $assignment, array $assign_tos, Section $section, User $user)
+    public
+    function copyAssignTos(Assignment $assignment, Assignment $new_assignment)
+    {
+
+
+        foreach ($assignment->assignToTimings as $assignToTiming) {
+            $newAssignToTiming = new AssignToTiming();
+            $newAssignToTiming->assignment_id = $new_assignment->id;
+            $newAssignToTiming->available_from = $assignToTiming->available_from;
+            $newAssignToTiming->due = $assignToTiming->due;
+            $newAssignToTiming->final_submission_deadline = $assignToTiming->final_submission_deadline;
+            $newAssignToTiming->save();
+            $assign_to_groups = $assignToTiming->assignToGroups;
+            foreach ($assign_to_groups as $assign_to_group) {
+                $newAssignToGroup = new AssignToGroup();
+                $newAssignToGroup->group = $assign_to_group->group;
+                $newAssignToGroup->group_id = $assign_to_group->group_id;
+                $newAssignToGroup->assign_to_timing_id = $newAssignToTiming->id;
+                $newAssignToGroup->save();
+            }
+            foreach ($assignToTiming->assignToUsers as $assignToUser){
+                $newAssignToUser = new AssignToUser();
+                $newAssignToUser->assign_to_timing_id = $newAssignToTiming->id;
+                $newAssignToUser->user_id = $assignToUser->user_id;
+                $newAssignToUser->save();
+            }
+        }
+
+
+    }
+
+    public
+    function addAssignTos(Assignment $assignment, array $assign_tos, Section $section, User $user)
     {
 
 
@@ -642,7 +699,8 @@ class AssignmentController extends Controller
         $assignToGroup->save();
     }
 
-    public function removeDuplicateUsers($enrolled_users, $assigned_users)
+    public
+    function removeDuplicateUsers($enrolled_users, $assigned_users)
     {
         foreach ($enrolled_users as $key => $enrolled_user) {
             if (in_array($enrolled_user->user_id, $assigned_users)) {
@@ -652,7 +710,8 @@ class AssignmentController extends Controller
         return $enrolled_users;
     }
 
-    public function getDefaultOpenEndedTextEditor($request, $data)
+    public
+    function getDefaultOpenEndedTextEditor($request, $data)
     {
         if ($request->assessment_type !== 'delayed') {
             return null;
@@ -670,7 +729,8 @@ class AssignmentController extends Controller
      * @param array $data
      * @return int|mixed
      */
-    public function getDefaultOpenEndedSubmissionType(Request $request, array $data)
+    public
+    function getDefaultOpenEndedSubmissionType(Request $request, array $data)
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
             return 0;
@@ -682,7 +742,8 @@ class AssignmentController extends Controller
         }
     }
 
-    public function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
+    public
+    function getLateDeductionApplicationPeriod(StoreAssignment $request, array $data)
     {
         if ($request->late_deduction_applied_once) {
             return 'once';
@@ -697,7 +758,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function viewQuestionsInfo(Request $request, Assignment $assignment, Score $score)
+    public
+    function viewQuestionsInfo(Request $request, Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
@@ -751,7 +813,8 @@ class AssignmentController extends Controller
      * @param Assignment $assignment
      * @return Assignment
      */
-    public function getQuestionsInfo(Assignment $assignment)
+    public
+    function getQuestionsInfo(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -784,7 +847,8 @@ class AssignmentController extends Controller
     * @param Assignment $assignment
     * @return Assignment
     */
-    public function scoresInfo(Assignment $assignment, Score $score)
+    public
+    function scoresInfo(Assignment $assignment, Score $score)
     {
 
         $response['type'] = 'error';
@@ -811,7 +875,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getInfoForGrading(Assignment $assignment)
+    public
+    function getInfoForGrading(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -840,7 +905,8 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function groupsMustNotRepeat($assign_tos)
+    public
+    function groupsMustNotRepeat($assign_tos)
     {
         $used_groups = [];
         $message = null;
@@ -862,7 +928,8 @@ class AssignmentController extends Controller
      * @throws Exception
      */
 
-    public function getAssignmentSummary(Assignment $assignment, AssignmentGroup $assignmentGroup)
+    public
+    function getAssignmentSummary(Assignment $assignment, AssignmentGroup $assignmentGroup)
     {
 
         $response['type'] = 'error';
@@ -923,7 +990,8 @@ class AssignmentController extends Controller
         return $response;
     }
 
-    public function formatLatePolicy($assignment, $assign_to_timing)
+    public
+    function formatLatePolicy($assignment, $assign_to_timing)
     {
         //$assign_to_timing will be appropriate for students
         $late_policy = '';
@@ -952,7 +1020,8 @@ class AssignmentController extends Controller
         return $late_policy;
     }
 
-    public function getTimeLeft(Assignment $assignment)
+    public
+    function getTimeLeft(Assignment $assignment)
     {
         $Extension = new Extension();
         $extensions_by_user = $Extension->getUserExtensionsByAssignment(Auth::user());
@@ -962,7 +1031,8 @@ class AssignmentController extends Controller
 
     }
 
-    public function getTotalPoints(Assignment $assignment)
+    public
+    function getTotalPoints(Assignment $assignment)
     {
         return DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
@@ -980,11 +1050,12 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function update(StoreAssignment $request,
-                           Assignment $assignment,
-                           AssignmentGroupWeight $assignmentGroupWeight,
-                           Section $section,
-                           User $user)
+    public
+    function update(StoreAssignment $request,
+                    Assignment $assignment,
+                    AssignmentGroupWeight $assignmentGroupWeight,
+                    Section $section,
+                    User $user)
     {
 
         $response['type'] = 'error';
