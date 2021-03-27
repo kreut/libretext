@@ -27,11 +27,7 @@ class StoreSection extends FormRequest
         return [
             'name' => ['required',
                 'max:255',
-                'unique:sections,name,NULL,id,course_id,' . $course_id
-            , 'regex:/^((?!---).)*$/']
+                'unique:sections,name,NULL,id,course_id,' . $course_id]
         ];
-    }
-    public function messages() {
-        return ['name.regex' => "The section name can't contain '---'."];
     }
 }
