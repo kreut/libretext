@@ -12,7 +12,8 @@
       />
       <AssignmentProperties ref="assignmentProperties"
                             :course-id="parseInt(courseId)"
-                            :course-end-date="courseEndDate"
+                            :course-start-date="course.start_date"
+                            :course-end-date="course.end_date"
       />
 
       <b-modal
@@ -377,7 +378,7 @@ export default {
       assign_to_groups: 1
     }),
     createAssignmentFromTemplateAssignmentId: 0,
-    courseEndDate: '',
+    course: '',
     assignTosToView: [],
     currentOrderedAssignments: [],
     importAssignmentForm: new Form({
@@ -522,7 +523,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
-        this.courseEndDate = data.course.end_date
+        this.course = data.course
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

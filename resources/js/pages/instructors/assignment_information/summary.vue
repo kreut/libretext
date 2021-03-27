@@ -14,7 +14,9 @@
 
         <AssignmentProperties ref="assignmentProperties"
                               :course-id="Number(courseId)"
-                              :course-end-date="courseEndDate"/>
+                              :course-end-date="courseEndDate"
+                              :course-start-date="courseStartDate"
+                              />
         <b-modal
           id="modal-assign-tos-to-view"
           ref="modal"
@@ -77,7 +79,7 @@ export default {
     AssignTosToView
   },
   data: () => ({
-    courseEndDate: '',
+    course: {},
     assignTosToView: [],
     assignmentId: 0,
     courseId: 0,
@@ -116,7 +118,8 @@ export default {
         }
         this.assignment = data.assignment
         this.courseId = this.assignment.course_id
-        this.courseEndDate= this.assignment.course_end_date
+        this.courseEndDate = this.assignment.course_end_date
+        this.courseStartDate = this.assignment.course_start_date
         this.items = [{
           property: 'Assigned To',
           value: ''

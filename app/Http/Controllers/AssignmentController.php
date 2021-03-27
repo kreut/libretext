@@ -961,6 +961,7 @@ class AssignmentController extends Controller
             } else {
 
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
+                $formatted_items['course_start_date'] = $assignment->course->start_date;
                 $formatted_items['assign_tos'] = $assignment->assignToGroups();
                 foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
                     $available_from = $assign_to['available_from'];

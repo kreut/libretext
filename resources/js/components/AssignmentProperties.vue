@@ -468,23 +468,23 @@
                             @keydown="form.errors.clear('default_open_ended_submission_type')"
         >
 
-        <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-        <b-form-radio value="rich text">
-          Rich Text
-        </b-form-radio>
-        <b-form-radio value="plain text">
-          Plain Text
-        </b-form-radio>
-        <b-form-radio value="file">
-          File
-        </b-form-radio>
-        <b-form-radio value="audio">
-          Audio
-        </b-form-radio>
-        <b-form-radio value="0">
-          None
-        </b-form-radio>
-        <has-error :form="form" field="default_open_ended_submission_type"/>
+          <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+          <b-form-radio value="rich text">
+            Rich Text
+          </b-form-radio>
+          <b-form-radio value="plain text">
+            Plain Text
+          </b-form-radio>
+          <b-form-radio value="file">
+            File
+          </b-form-radio>
+          <b-form-radio value="audio">
+            Audio
+          </b-form-radio>
+          <b-form-radio value="0">
+            None
+          </b-form-radio>
+          <has-error :form="form" field="default_open_ended_submission_type"/>
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
@@ -809,7 +809,8 @@ export default {
   middleware: 'auth',
   props: {
     courseId: { type: Number, default: 0 },
-    courseEndDate: { type: String, default: '' }
+    courseEndDate: {type: String, default: ''},
+    courseStartDate: { type: String, default: ''}
   },
   data: () => ({
     assignToCourse: [],
@@ -892,7 +893,7 @@ export default {
       return {
         groups: [],
         selectedGroup: null,
-        available_from_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
+        available_from_date: this.$moment(this.courseStartDate).format('YYYY-MM-DD'),
         available_from_time: '09:00:00',
         due_date: this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD'),
         due_time: '09:00:00',
