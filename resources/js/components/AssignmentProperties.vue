@@ -292,7 +292,7 @@
         <b-form-radio-group v-model="form.assessment_type"
                             stacked
                             :disabled="isLocked()"
-                            @change="initAssessmentTypeSwitch"
+                            @change="initAssessmentTypeSwitch($event)"
         >
           <b-form-radio name="assessment_type" value="real time">
             Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
@@ -463,9 +463,10 @@
         <b-form-radio-group v-model="form.default_open_ended_submission_type"
                             stacked
                             :disabled="isLocked()"
+                            name="default_open_ended_submission_type"
                             :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
                             @keydown="form.errors.clear('default_open_ended_submission_type')"
-        />
+        >
 
         <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
         <b-form-radio value="rich text">
@@ -484,6 +485,7 @@
           None
         </b-form-radio>
         <has-error :form="form" field="default_open_ended_submission_type"/>
+        </b-form-radio-group>
       </b-form-group>
       <b-form-group
         v-show="form.source === 'a'"
@@ -952,8 +954,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async initAssessmentTypeSwitch () {
+    async initAssessmentTypeSwitch (assessmentType) {
       if (!this.assignmentId) {
+        this.switchAssessmentType(assessmentType)
         return false
       }
       this.$nextTick(async function () {
@@ -966,26 +969,28 @@ export default {
             this.form.assessment_type = this.originalAssignment.assessment_type
             return false
           }
-
-          switch (this.form.assessment_type) {
-            case ('real time'):
-              this.showRealTimeOptions()
-              break
-            case ('delayed'):
-              this.showDelayedOptions()
-              break
-            case ('learning tree'):
-              this.checkIfScoringTypeOfPoints()
-              break
-            case ('clicker'):
-              this.checkSourceAndLatePolicy()
-              this.form.notifications = 0
-          }
+          this.switchAssessmentType(assessmentType)
         } catch (error) {
           this.form.assessment_type = this.originalAssignment.assessment_type
           this.$noty.error(error.message)
         }
       })
+    },
+    switchAssessmentType (assessmentType) {
+      switch (assessmentType) {
+        case ('real time'):
+          this.showRealTimeOptions()
+          break
+        case ('delayed'):
+          this.showDelayedOptions()
+          break
+        case ('learning tree'):
+          this.checkIfScoringTypeOfPoints()
+          break
+        case ('clicker'):
+          this.checkSourceAndLatePolicy()
+          this.form.notifications = 0
+      }
     },
     async initInternalExternalSwitch () {
       if (!this.assignmentId) {
