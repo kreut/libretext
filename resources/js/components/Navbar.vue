@@ -32,10 +32,23 @@
         </router-link>
       </span>
     </div>
+
     <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
            style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
     >
-      <span v-if="oneBreadcrumb && (user !== null)"
+      <toggle-button
+        v-if="showLearningTreeCourseToggle()"
+        class="mt-2"
+        :width="155"
+        :value="isInstructorsMyCoursesView"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#007Bff', unchecked: '#28a745'}"
+        :labels="{checked: 'My Courses', unchecked: 'My Learning Trees'}"
+        @change="toggleCourseLearningTreeView()"
+      />
+      <span v-if="oneBreadcrumb && (user !== null) && !showLearningTreeCourseToggle()"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
       <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
@@ -49,11 +62,11 @@
               <em>Hi, {{ user.first_name }}!</em>
             </template>
             <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-              <fa icon="cog" fixed-width />
+              <fa icon="cog" fixed-width/>
               {{ $t('settings') }}
             </router-link>
             <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-              <fa icon="sign-out-alt" fixed-width />
+              <fa icon="sign-out-alt" fixed-width/>
               {{ $t('logout') }}
             </a>
           </b-nav-item-dropdown>
@@ -111,6 +124,7 @@ export default {
   },
 
   data: () => ({
+    isInstructorsMyCoursesView: true,
     showToggleStudentView: false,
     originalRole: 0,
     isInstructorView: false,
@@ -148,7 +162,7 @@ export default {
         this.assignmentId = to.params.assignmentId
       }
       this.canToggleStudentView = Boolean(this.assignmentId + this.courseId)
-
+      this.isInstructorsMyCoursesView = to.name === 'instructors.courses.index'
       this.isLearningTreesEditor = (to.name === 'instructors.learning_trees.editor') ? 'color:#E9ECEF !important;' : ''
       if (this.user) {
         this.getBreadcrumbs(this.$router.history.current)
@@ -161,6 +175,15 @@ export default {
     }
   },
   methods: {
+    showLearningTreeCourseToggle () {
+      return (this.user !== null) &&
+        this.user.role === 2 &&
+        ['instructors.learning_trees.index', 'instructors.courses.index'].includes(this.currentRouteName)
+    },
+    toggleCourseLearningTreeView () {
+      this.isInstructorsMyCoursesView ? this.$router.push({ name: 'instructors.learning_trees.index' })
+        : this.$router.push({ name: 'instructors.courses.index' })
+    },
     async getSession () {
       console.log(this.user)
       if (this.user !== null) {

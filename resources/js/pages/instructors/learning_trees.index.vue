@@ -3,7 +3,10 @@
     <div v-if="canViewLearningTrees">
       <PageTitle title="My Learning Trees" />
       <div class="float-right mb-2">
-        <b-button v-b-modal.modal-assignment-details class="mr-1" variant="primary"
+        <b-button v-b-modal.modal-assignment-details
+                  class="mr-1"
+                  size="sm"
+                  variant="primary"
                   @click="createLearningTree"
         >
           Create Learning Tree
