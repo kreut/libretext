@@ -169,7 +169,7 @@
                 align="center"
                 first-number
                 last-number
-                limit="10"
+                limit="20"
                 @input="changePage(currentQuestionPage)"
               >
                 <template v-slot:page="{ page, active }">
@@ -188,7 +188,7 @@
                 align="center"
                 first-number
                 last-number
-                limit="15"
+                limit="20"
                 @input="changePage()"
               />
             </div>
