@@ -135,6 +135,13 @@
           >
             Import Assignment
           </b-button>
+          <b-col lg="3">
+            <b-form-select v-if="assignmentGroupOptions.length>1"
+                           v-model="chosenAssignmentGroup"
+                           :options="assignmentGroupOptions"
+                           @change="updateAssignmentGroupFilter()"
+            ></b-form-select>
+          </b-col>
           <b-button class="mr-1"
                     size="sm"
                     @click="getGradeBook()"
@@ -183,7 +190,10 @@
           </tr>
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
-          <tr v-for="assignment in assignments" :key="assignment.id">
+          <tr v-for="assignment in assignments"
+              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+              :key="assignment.id"
+          >
             <td style="width:300px">
               <b-icon icon="list"/>
               <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
@@ -373,6 +383,9 @@ export default {
     draggable
   },
   data: () => ({
+    chosenAssignmentGroupText: null,
+    chosenAssignmentGroup: null,
+    assignmentGroupOptions: [],
     createAssignmentFromTemplateForm: new Form({
       level: 'properties_and_questions',
       assign_to_groups: 1
@@ -434,9 +447,28 @@ export default {
       }
       await this.getAssignments()
       this.currentOrderedAssignments = this.assignments
+      let assignmentGroupTexts = []
+      this.assignmentGroupOptions = [{ value: null, text: 'All assignment groups' }]
+      let numAssignmentGroups = 1
+      for (let i = 0; i < this.assignments.length; i++) {
+        let text = this.assignments[i].assignment_group
+        let assignmentGroup = { value: numAssignmentGroups, text: text }
+        if (!assignmentGroupTexts.includes(text)) {
+          numAssignmentGroups++
+          this.assignmentGroupOptions.push(assignmentGroup)
+          assignmentGroupTexts.push(text)
+        }
+      }
     }
   },
   methods: {
+    updateAssignmentGroupFilter () {
+      for (let i = 0; i < this.assignmentGroupOptions.length; i++) {
+        if (this.assignmentGroupOptions[i].value === this.chosenAssignmentGroup) {
+          this.chosenAssignmentGroupText = this.assignmentGroupOptions[i].text
+        }
+      }
+    },
     viewAssignTos (assignTosToView) {
       this.assignTosToView = assignTosToView
       this.$bvModal.show('modal-assign-tos-to-view')
