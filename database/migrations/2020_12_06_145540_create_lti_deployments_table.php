@@ -14,8 +14,7 @@ class CreateLtiDeploymentsTable extends Migration
     public function up()
     {
         Schema::create('lti_deployments', function (Blueprint $table) {
-            $table->increments('lit_deployment_id');
-            $table->string('id');
+            $table->string('id')->primary();
             $table->unsignedBigInteger('registration_id');
             $table->foreign('registration_id')->references('id')->on('lti_registrations');
             $table->timestamps();
