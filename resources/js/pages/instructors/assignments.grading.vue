@@ -21,7 +21,7 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input v-model="cannedResponseForm.canned_response"
@@ -34,7 +34,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -74,7 +74,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -104,7 +104,7 @@
         </div>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="submissionFiles.length>0">
           <b-container>
             <b-row>
@@ -271,7 +271,7 @@
                           <strong>Total Score For This Question:</strong>
                           {{
                             (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
-                              + (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)
+                            + (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)
                           }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }}
                           <br>
                           <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
@@ -286,7 +286,7 @@
                                 Save Score
                               </b-button>
                             </b-input-group-append>
-                            <has-error :form="scoreForm" field="score" />
+                            <has-error :form="scoreForm" field="score"/>
                           </b-input-group>
                           <hr>
                           <b-container>
@@ -355,7 +355,7 @@
                             :class="{ 'is-invalid': textFeedbackForm.errors.has('textFeedback') }"
                             @keydown="textFeedbackForm.errors.clear('textFeedback')"
                           />
-                          <has-error :form="textFeedbackForm" field="textFeedback" />
+                          <has-error :form="textFeedbackForm" field="textFeedback"/>
 
                           <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                          v-model="cannedResponse"
@@ -363,7 +363,7 @@
                                          class="mb-5"
                           />
 
-                          <b-row  align-h="end" class="m-3">
+                          <b-row align-h="end" class="m-3">
                             <b-button variant="primary" size="sm" @click="submitTextFeedbackForm">
                               Save Comments
                             </b-button>
@@ -813,6 +813,11 @@ export default {
       }
     },
     async submitTextFeedbackForm () {
+      if (this.textFeedbackMode === 'canned_response' && this.cannedResponse === null) {
+        this.$noty.error('You need to choose a response.')
+        return false
+      }
+
       try {
         this.textFeedbackForm.text_feedback_editor = (this.textFeedbackMode === 'rich_text') ? 'rich' : 'plain'
         this.textFeedbackForm.textFeedback = this.getTextFeedback(this.textFeedbackMode)
@@ -839,8 +844,8 @@ export default {
     setTextFeedback (textFeedback) {
       this.richTextFeedback = ''
       this.plainTextFeedback = ''
-      this.textFeedbackMode = 'plain_text'
       if (textFeedback) {
+        this.textFeedbackMode = 'plain_text'
         switch (this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback_editor']) {
           case ('rich'):
             this.richTextFeedback = textFeedback
