@@ -620,6 +620,7 @@
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
+              limit="25"
               first-number
               last-number
               align="center"
