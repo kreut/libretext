@@ -361,10 +361,9 @@
                                          v-model="cannedResponse"
                                          :options="cannedResponseOptions"
                                          class="mb-5"
-                                         @change="submitTextFeedbackForm"
                           />
 
-                          <b-row v-if="textFeedbackMode !== 'canned_response'" align-h="end" class="m-3">
+                          <b-row  align-h="end" class="m-3">
                             <b-button variant="primary" size="sm" @click="submitTextFeedbackForm">
                               Save Comments
                             </b-button>
