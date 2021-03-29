@@ -19,6 +19,7 @@ use App\Seed;
 use App\Submission;
 use App\SubmissionFile;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -27,6 +28,7 @@ use App\Exceptions\Handler;
 use \Exception;
 
 use App\Traits\DateFormatter;
+use Illuminate\Support\Facades\Storage;
 use IMSGlobal\LTI\LTI_Grade;
 use phpDocumentor\Reflection\Types\Collection;
 
@@ -61,6 +63,10 @@ class EnrollmentController extends Controller
          }
 
         $data = $request->validated();
+        $date = Carbon::now()->format('Y-m-d');
+        $log_file =  "logs/laravel-$date.log";
+        $contents = "Moving student:" . $user->id  . " to " . print_r($request->all(),true);
+        Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
 
         $new_section_id = $data['section_id'];
         $section_name = $section->find($new_section_id)->name;
@@ -69,9 +75,9 @@ class EnrollmentController extends Controller
                                             ->where('user_id', $user->id)
                                             ->first()
                                             ->section_id;
-            $current_section_fake_student_id = $enrollment->fakeStudent($current_section_id);
+            $current_section_fake_student_id = $enrollment->firstNonFakeStudent($current_section_id);
 
-            $new_section_fake_student_id = $enrollment->fakeStudent($new_section_id);
+            $new_section_fake_student_id = $enrollment->firstNonFakeStudent($new_section_id);
             $current_assignments_info = User::find($current_section_fake_student_id)
                 ->assignmentsAndAssignToTimingsByCourse($course->id);
 

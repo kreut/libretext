@@ -47,9 +47,10 @@ class StudentsTest extends TestCase
             'course_id' => $this->course->id
         ]);
 
+
         $this->fake_student_user_2 = factory(User::class)->create();
         $this->fake_student_user_2->role = 3;
-        $this->fake_student_user_2->fake_student = 1;
+        $this->fake_student_user_2->fake_student = 0;
         $this->fake_student_user_2->save();
 
         factory(Enrollment::class)->create([
@@ -80,7 +81,11 @@ class StudentsTest extends TestCase
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
+        $this->student_user->fake_student = 0;
         $this->student_user->save();
+
+
+
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
         $this->student_user_2->save();

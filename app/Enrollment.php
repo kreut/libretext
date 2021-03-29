@@ -10,6 +10,18 @@ class Enrollment extends Model
 
     protected $guarded = [];
 
+    public function firstNonFakeStudent($section_id)
+    {
+        return DB::table('enrollments')
+            ->join('users', 'enrollments.user_id', '=','users.id')
+            ->where('enrollments.section_id', $section_id)
+            ->where('users.fake_student',0)
+            ->select('users.id')
+            ->first()
+            ->id;
+    }
+
+
     public function fakeStudent($section_id)
     {
         return DB::table('enrollments')
