@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
 use App\Enrollment;
@@ -55,26 +56,26 @@ class EnrollmentController extends Controller
 
         $response['type'] = 'error';
 
-         $authorized = Gate::inspect('update', [$enrollment, $course, $user]);
+        $authorized = Gate::inspect('update', [$enrollment, $course, $user]);
 
-         if (!$authorized->allowed()) {
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         $data = $request->validated();
         $date = Carbon::now()->format('Y-m-d');
-        $log_file =  "logs/laravel-$date.log";
-        $contents = "Moving student:" . $user->id  . " to " . print_r($request->all(),true);
+        $log_file = "logs/laravel-$date.log";
+        $contents = "Moving student:" . $user->id . " to " . print_r($request->all(), true);
         Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
 
         $new_section_id = $data['section_id'];
         $section_name = $section->find($new_section_id)->name;
         try {
             $current_section_id = $enrollment->where('course_id', $course->id)
-                                            ->where('user_id', $user->id)
-                                            ->first()
-                                            ->section_id;
+                ->where('user_id', $user->id)
+                ->first()
+                ->section_id;
             $current_section_fake_student_id = $enrollment->firstNonFakeStudent($current_section_id);
 
             $new_section_fake_student_id = $enrollment->firstNonFakeStudent($new_section_id);
@@ -124,10 +125,15 @@ class EnrollmentController extends Controller
                 ->update(['section_id' => $new_section_id]);
 
             foreach ($new_assign_to_timing_ids as $assign_to_timing_id) {
-                $assignToUser = new AssignToUser();
-                $assignToUser->user_id = $user->id;
-                $assignToUser->assign_to_timing_id = $assign_to_timing_id;
-                $assignToUser->save();
+                $assign_to_group = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)->first();
+                if ($assign_to_group->group === 'course' ||
+                    ($assign_to_group->group === 'section' && $assign_to_group->group_id === $new_section_id)
+                ) {
+                    $assignToUser = new AssignToUser();
+                    $assignToUser->user_id = $user->id;
+                    $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+                    $assignToUser->save();
+                }
             }
             DB::commit();
             $response['type'] = 'success';
@@ -307,7 +313,7 @@ class EnrollmentController extends Controller
     function store(StoreEnrollment $request,
                    Enrollment $enrollment,
                    Section $Section,
-                    AssignToUser $assignToUser)
+                   AssignToUser $assignToUser)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
