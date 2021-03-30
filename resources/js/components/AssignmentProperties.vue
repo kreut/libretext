@@ -767,7 +767,7 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
-          v-if="form.late_policy !== 'not accepted'"
+          v-show="form.late_policy !== 'not accepted'"
           id="last"
           label-cols-sm="4"
           label-cols-lg="3"
