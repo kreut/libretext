@@ -638,6 +638,27 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
+        v-show="form.source === 'a'"
+        id="instructions"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Instructions"
+        label-for="instructions"
+      >
+        <b-form-row>
+          <b-form-textarea
+            id="instructions"
+            v-model="form.instructions"
+            type="text"
+            placeholder="(Optional)"
+            rows="3"
+            :class="{ 'is-invalid': form.errors.has('instructions') }"
+            @keydown="form.errors.clear('instructions')"
+          />
+          <has-error :form="form" field="instructions"/>
+        </b-form-row>
+      </b-form-group>
+      <b-form-group
         id="notifications"
         label-cols-sm="4"
         label-cols-lg="3"
