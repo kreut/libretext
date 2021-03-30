@@ -67,7 +67,7 @@ class ScoreController extends Controller
      * @param $include_in_weighted_average_by_assignment_id_and_user_id
      * @return array[]
      */
-    public function getAssignmentGroupWeights( $enrolled_user_ids, int $course_id, $include_in_weighted_average_by_assignment_id_and_user_id)
+    public function getAssignmentGroupWeights($enrolled_user_ids, int $course_id, $include_in_weighted_average_by_assignment_id_and_user_id)
     {
         $assignment_groups_by_assignment_id = [];
         $assignment_group_weights_info = [];
@@ -84,9 +84,9 @@ class ScoreController extends Controller
         foreach ($assignment_group_weights as $key => $value) {
             foreach ($enrolled_user_ids as $user_id) {
                 $assignment_groups_by_assignment_id[$value->id] = $value->assignment_group_id;
-              if (!isset($assignment_group_weights_info[$value->assignment_group_id])){
-                  $assignment_group_weights_info[$value->assignment_group_id]= [];
-              }
+                if (!isset($assignment_group_weights_info[$value->assignment_group_id])) {
+                    $assignment_group_weights_info[$value->assignment_group_id] = [];
+                }
                 if (isset($assignment_group_weights_info[$value->assignment_group_id][$user_id])) {
                     $assignment_group_weights_info[$value->assignment_group_id][$user_id]['count'] = $include_in_weighted_average_by_assignment_id_and_user_id[$value->id][$user_id]
                         ? $assignment_group_weights_info[$value->assignment_group_id][$user_id]['count'] + 1
@@ -108,10 +108,10 @@ class ScoreController extends Controller
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
 
-       $fake_student_ids = $course->fakeStudentIds();
+        $fake_student_ids = $course->fakeStudentIds();
         foreach ($scores as $score) {
             $user_id = $score->user_id;
-            if (in_array($user_id, $fake_student_ids)){
+            if (in_array($user_id, $fake_student_ids)) {
                 continue;
             }
             $assignment_id = $score->assignment_id;
@@ -578,7 +578,7 @@ class ScoreController extends Controller
         $enrolled_user_ids = array_keys($enrolled_users_by_id);
 
         foreach ($assignments as $assignment) {
-            foreach ($enrolled_user_ids  as $user_id) {
+            foreach ($enrolled_user_ids as $user_id) {
                 $include_in_weighted_average_by_assignment_id_and_user_id[$assignment->id][$user_id] = $assignment->include_in_weighted_average * isset($assign_tos[$assignment->id]) && in_array($user_id, $assign_tos[$assignment->id]);
             }
         }
@@ -622,8 +622,13 @@ class ScoreController extends Controller
         $enrolled_users_last_first = [];
 
         $role = Auth::user()->role;
-        $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
+        $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
+        $viewable_users_by_id = [];
 
+        foreach ($viewable_users as $viewable_user) {
+            $viewable_users_by_id[] = $viewable_user->id;
+        }
+        $enrolled_users = $course->enrolledUsers;
         foreach ($enrolled_users as $key => $user) {
             $enrolled_users_by_id[$user->id] = "$user->first_name $user->last_name";
             $enrolled_users_last_first[$user->id] = "$user->last_name, $user->first_name ";
@@ -631,7 +636,7 @@ class ScoreController extends Controller
 
         //get all assignments in the course
         $assignments = $course->assignments->sortBy('due');
-        if ($assignments->isEmpty()) {;
+        if ($assignments->isEmpty()) {
             return ['hasAssignments' => false];
         }
         $assignments = $assignments->sortBy(function ($assignment) {
@@ -663,12 +668,22 @@ class ScoreController extends Controller
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
 
+        $viewable_rows = [];
+        $viewable_download_rows = [];
 
+        foreach ($rows as $key => $row) {
+            if (in_array($row['userId'], $viewable_users_by_id)) {
+                $viewable_rows[] = $row;
+                $viewable_download_rows[] = $download_rows[$key];
+            }
+        }
         return ['hasAssignments' => true,
             'sections' => $sections,
-            'table' => compact('rows', 'fields') + ['hasAssignments' => true],
+            'table' => ['rows' => $viewable_rows,
+                'fields' => $fields,
+                'hasAssignments' => true],
             'download_fields' => $download_fields,
-            'download_rows' => $download_rows,
+            'download_rows' => $viewable_download_rows,
             'extra_credit_assignment_id' => $extra_credit_assignment_id,
             'weighted_score_assignment_id' => $weighted_score_assignment_id,//needed for testing...
             'z_score_assignment_id' => $z_score_assignment_id,
