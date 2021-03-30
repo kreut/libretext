@@ -510,7 +510,7 @@
                                     size="sm"
                                     class="m-1"
                                     :disabled="isLocked()"
-                                    @click="updatePoints((questions[currentPage-1].id))"
+                                    @click="updatePoints(questions[currentPage-1].id)"
                           >
                             Update Points
                           </b-button>
@@ -1991,6 +1991,12 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].points = this.questionPointsForm.points
+          if (data.update_points){
+            for (let i=0; i<this.questions.length;i++){
+              this.questions[i].points = this.questionPointsForm.points
+            }
+
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -2399,7 +2405,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.$noty.info('The question has been removed from the assignment.')
+        this.$noty.info(data.message)
         this.questions.splice(this.currentPage - 1, 1)
         if (this.currentPage !== 1) {
           this.currentPage = this.currentPage - 1

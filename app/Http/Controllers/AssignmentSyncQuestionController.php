@@ -10,9 +10,11 @@ use App\JWE;
 use App\Libretext;
 use App\LtiLaunch;
 use App\LtiGradePassback;
+use App\RandomizedAssignmentQuestion;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
+use App\User;
 use Carbon\CarbonImmutable;
 use \Exception;
 
@@ -298,7 +300,7 @@ class AssignmentSyncQuestionController extends Controller
                     $submission = ['Nothing to submit'];
                 }
                 $columns['submission'] = implode(', ', $submission);
-                $columns['points'] = rtrim(rtrim($value->points, "0"), ".");
+                $columns['points'] = $this->formatDecimals($value->points);
                 $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
@@ -349,6 +351,8 @@ class AssignmentSyncQuestionController extends Controller
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
                     //for getQuestionsByAssignment (internal)
+                    $question_info->points = $this->formatDecimals($question_info->points);
+
                     $response['questions'][$question_info->question_id] = $question_info;
                     //for the axios call from questions.get.vue
                     $response['question_ids'][] = $question_info->question_id;
@@ -418,12 +422,26 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         try {
+            $is_randomized_assignment = $assignment->number_of_randomized_assessments;
 
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->update(['points' => $data['points']]);
+            if ($is_randomized_assignment) {
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->update(['points' => $data['points']]);
+                $assignment->default_points_per_question = $data['points'];
+                $assignment->save();
+                $message = 'Since this is a randomized assignment, all question points have been updated to the same value.';
+            } else {
+                DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->update(['points' => $data['points']]);
+                $message = 'The number of points have been updated.';
+
+            }
             $response['type'] = 'success';
-            $response['message'] = 'The number of points have been updated.';
+            $response['message'] = $message;
+            $response['update_points'] = $is_randomized_assignment;
 
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -483,9 +501,50 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             DB::beginTransaction();
+            if ($assignment->number_of_randomized_assessments) {
+                $assignment_questions = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->get();
+                if ($assignment_questions->count() === $assignment->number_of_randomized_assessments + 1) {
+                    $response['message'] = "You can't remove a question because there wouldn't be enough questions left to randomize from.";
+                    return $response;
+                }
+                $question_ids = $assignment->questions->pluck('id')->toArray();
+                $randomized_assignment_questions = RandomizedAssignmentQuestion::where('assignment_id', $assignment->id)->get();
+                $randomized_assignment_questions_by_user_id = [];
+                foreach ($randomized_assignment_questions as $randomized_assignment_question) {
+                    if (!isset($randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id])) {
+                        $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id] = [];
+                    }
+                    $randomized_assignment_questions_by_user_id[$randomized_assignment_question->user_id][] = $randomized_assignment_question->question_id;
+                }
+
+                foreach ($randomized_assignment_questions_by_user_id as $user_id => $user_question_ids) {
+                    if (in_array($question->id, $user_question_ids)) {
+                        $other_question_id = $this->getOtherRandomizedQuestionId($user_question_ids, $question_ids, $question->id);
+                        if (!$other_question_id) {
+                            $response['message'] = "We were unable to remove the question due to an issue with re-configuring the randomizations.  Please contact support.";
+                            return $response;
+                        }
+                        $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion();
+                        $randomizedAssignmentQuestion->assignment_id = $assignment->id;
+                        $randomizedAssignmentQuestion->question_id = $other_question_id;
+                        $randomizedAssignmentQuestion->user_id = $user_id;
+                        $randomizedAssignmentQuestion->save();
+                    }
+
+                }
+
+                ///get all assignment questions
+                /// get all students for which this affects
+                /// add a different question
+
+
+                $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
+            }
+
             $this->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
@@ -502,6 +561,9 @@ class AssignmentSyncQuestionController extends Controller
                 ->delete();
             DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
+                ->delete();
+            DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
                 ->delete();
             $currently_ordered_questions = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
@@ -633,7 +695,7 @@ class AssignmentSyncQuestionController extends Controller
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'submission_score' => rtrim(rtrim($response_info['submission_score'], "0"), "."),
+            'submission_score' => $this->$response_info['submission_score'],
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
@@ -888,9 +950,18 @@ class AssignmentSyncQuestionController extends Controller
             $domd = new \DOMDocument();
             $JWE = new JWE();
 
+            $randomly_chosen_questions = [];
+            if ($assignment->number_of_randomized_assessments && $request->user()->role == 3) {
+                $randomly_chosen_questions = $this->getRandomlyChosenQuestions($assignment, $request->user());
+            }
 
             foreach ($assignment->questions as $key => $question) {
-
+                if ($assignment->number_of_randomized_assessments
+                    && $request->user()->role == 3
+                    && !in_array($question->id, $randomly_chosen_questions)) {
+                    $assignment->questions->forget($key);
+                    continue;
+                }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $technology_src = '';
                 $assignment->questions[$key]['library'] = $question->library;
@@ -906,7 +977,7 @@ class AssignmentSyncQuestionController extends Controller
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
                 $answered_correctly_at_least_once = $response_info['answered_correctly_at_least_once'];
-                $submission_score = rtrim(rtrim($response_info['submission_score'], "0"), ".");
+                $submission_score = $this->formatDecimals($response_info['submission_score']);
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
@@ -1116,7 +1187,7 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             $response['type'] = 'success';
-            $response['questions'] = $assignment->questions;
+            $response['questions'] = $assignment->questions->values();
 
 
         } catch (Exception $e) {
@@ -1142,6 +1213,32 @@ class AssignmentSyncQuestionController extends Controller
 
         return $problemJWT;
 
+    }
+
+    function getRandomlyChosenQuestions(Assignment $assignment, User $user)
+    {
+        $randomly_chosen_questions = RandomizedAssignmentQuestion::where('assignment_id', $assignment->id)
+            ->where('user_id', $user->id)
+            ->select('question_id')
+            ->get()
+            ->pluck('question_id')
+            ->toArray();
+        if (!$randomly_chosen_questions) {
+            $numbers = range(0, count($assignment->questions) - 1);
+            shuffle($numbers);
+            $randomly_chosen_question_keys = array_slice($numbers, 0, $assignment->number_of_randomized_assessments);
+            $question_ids = $assignment->questions->pluck('id')->toArray();
+            foreach ($randomly_chosen_question_keys as $randomly_chosen_question_key) {
+                $question_id = $question_ids[$randomly_chosen_question_key];
+                $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion();
+                $randomizedAssignmentQuestion->assignment_id = $assignment->id;
+                $randomizedAssignmentQuestion->question_id = $question_id;
+                $randomizedAssignmentQuestion->user_id = $user->id;
+                $randomizedAssignmentQuestion->save();
+                $randomly_chosen_questions[] = $question_id;
+            }
+        }
+        return $randomly_chosen_questions;
     }
 
     public
@@ -1170,6 +1267,26 @@ class AssignmentSyncQuestionController extends Controller
 
         }
         return $seed;
+    }
+
+    /**
+     * @param $value_with_decimal
+     * @return string
+     */
+    function formatDecimals($value_with_decimal)
+    {
+        return rtrim(rtrim($value_with_decimal, "0"), ".");
+    }
+
+    function getOtherRandomizedQuestionId(array $user_question_ids, array $question_ids, int $question_id_to_remove)
+    {
+        foreach ($question_ids as $question_id) {
+            if (($question_id !== $question_id_to_remove) && !in_array($question_id, $user_question_ids)) {
+                return $question_id;
+            }
+        }
+        return false;
+
     }
 
 

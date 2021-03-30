@@ -155,7 +155,8 @@ export default {
             value: this.assignment.include_in_weighted_average ? 'Yes' : 'No'
           },
           { property: 'Total Points', value: this.assignment.total_points },
-          { property: 'Number Of Questions', value: this.assignment.number_of_questions }
+          { property: 'Number Of Questions', value: this.assignment.number_of_questions },
+          { property: 'Number Of Randomized Questions Chosen', value: this.assignment.number_of_randomized_questions_chosen }
         )
         if (this.assignment.assessment_type === 'clicker') {
           this.items.splice(2, 0, {

@@ -319,7 +319,12 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        if ($assignment->number_of_randomized_assessments && !$shown){
+            if ($assignment->questions->count() <= $assignment->number_of_randomized_assessments){
+                $response['message'] = "Before you can show this assignment, please make sure that the number of chosen assessments ({$assignment->questions->count()}) is greater than the number of randomized assessments ({$assignment->number_of_randomized_assessments}).";
+           return $response;
+            }
+        }
         try {
             $assignment->update(['shown' => !$shown]);
             $response['type'] = !$shown ? 'success' : 'info';
@@ -541,6 +546,7 @@ class AssignmentController extends Controller
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
+                    'number_of_randomized_assessments' => $data['number_of_randomized_assessments'] ?? null,
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
@@ -596,7 +602,7 @@ class AssignmentController extends Controller
                 $newAssignToGroup->assign_to_timing_id = $newAssignToTiming->id;
                 $newAssignToGroup->save();
             }
-            foreach ($assignToTiming->assignToUsers as $assignToUser){
+            foreach ($assignToTiming->assignToUsers as $assignToUser) {
                 $newAssignToUser = new AssignToUser();
                 $newAssignToUser->assign_to_timing_id = $newAssignToTiming->id;
                 $newAssignToUser->user_id = $assignToUser->user_id;
@@ -949,7 +955,9 @@ class AssignmentController extends Controller
                 'assignment_groups' => $assignmentGroup->assignmentGroupsByCourse($assignment->course->id),
                 'total_points' => $this->getTotalPoints($assignment),
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
-                'number_of_questions' => count($assignment->questions)
+                'number_of_questions' => count($assignment->questions),
+                'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
+                                    ? $assignment->number_of_randomized_assessments : "none"
             ];
             if (auth()->user()->role === 3) {
                 $assign_to_timing = $assignment->assignToTimingByUser();
@@ -1035,9 +1043,11 @@ class AssignmentController extends Controller
     public
     function getTotalPoints(Assignment $assignment)
     {
-        return DB::table('assignment_question')
-            ->where('assignment_id', $assignment->id)
-            ->sum('points');
+        return $assignment->number_of_randomized_assessments
+            ? $assignment->number_of_randomized_assessments * $assignment->default_points_per_question
+            : DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->sum('points');
 
     }
 
@@ -1085,6 +1095,7 @@ class AssignmentController extends Controller
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
+            $data['number_of_randomized_assessments'] = $data['number_of_randomized_assessments'] ?? null;
             unset($data['available_from_date']);
             unset($data['available_from_time']);
             unset($data['final_submission_deadline']);

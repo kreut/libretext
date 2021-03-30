@@ -36,8 +36,15 @@ class ScoreController extends Controller
     use Statistics;
 
 
-    public function getTotalPointsByAssignmentId(array $assignment_ids)
+    public function getTotalPointsByAssignmentId($assignments, array $assignment_ids)
     {
+
+
+        foreach ($assignments as $assignment) {
+            if ($assignment->number_of_randomized_assessments) {
+                $randomized_assignment_total_points[$assignment->id] = $assignment->default_points_per_question * $assignment->number_of_randomized_assessments;
+            }
+        }
         $total_points_by_assignment_id = [];
         $adapt_total_points = DB::table('assignment_question')
             ->selectRaw('assignment_id, sum(points) as sum')
@@ -50,7 +57,9 @@ class ScoreController extends Controller
             ->get();
 
         foreach ($adapt_total_points as $key => $value) {
-            $total_points_by_assignment_id[$value->assignment_id] = $value->sum;
+            $total_points_by_assignment_id[$value->assignment_id] = isset($randomized_assignment_total_points[$value->assignment_id])
+                ? $randomized_assignment_total_points[$value->assignment_id]
+                : $value->sum;
         }
         foreach ($external_total_points as $key => $value) {
             $total_points_by_assignment_id[$value->id] = $value->external_source_points;
@@ -59,9 +68,7 @@ class ScoreController extends Controller
         return $total_points_by_assignment_id;
     }
 
-    /** get the counts and the weights for each group
-     *
-     * @param $assignments
+    /**
      * @param $enrolled_user_ids
      * @param int $course_id
      * @param $include_in_weighted_average_by_assignment_id_and_user_id
@@ -506,7 +513,7 @@ class ScoreController extends Controller
         $z_score = false;
         if (!$assignments->isEmpty()) {
             $assignment_ids = $this->getAssignmentIds($assignments);
-            $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+            $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignments, $assignment_ids);
             $scores = $course->scores->whereIn('assignment_id', $assignment_ids);
 
 
@@ -657,7 +664,7 @@ class ScoreController extends Controller
             $sections[] = ['name' => $section->name, 'id' => $section->id];
         }
         $assignment_ids = $this->getAssignmentIds($assignments);
-        $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignment_ids);
+        $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignments, $assignment_ids);
 
         $scores = $course->scores;
 

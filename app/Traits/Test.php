@@ -16,6 +16,13 @@ use Illuminate\Support\Facades\DB;
 trait Test
 {
 
+    public function headers(){
+        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
+        return [
+            'Accept' => 'application/json',
+            'AUTHORIZATION' => 'Bearer ' . $token
+        ];
+    }
     public function createAssignTosFromGroups($assignment_info, $groups){
         $assign_tos= [
             [

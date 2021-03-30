@@ -11,6 +11,7 @@ use App\FinalGrade;
 use App\Grader;
 use App\LearningTree;
 use App\Question;
+use App\RandomizedAssignmentQuestion;
 use App\Section;
 use App\User;
 use App\Assignment;
@@ -103,6 +104,7 @@ class AssignmentsIndex2Test extends TestCase
             'assessment_type' => 'delayed',
             'default_open_ended_submission_type' => 'file',
             'instructions' => 'Some instructions',
+            "number_of_randomized_assessments" => null,
             'notifications' => 1,
             'assignment_group_id' => 1];
 
@@ -136,6 +138,35 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
+    /** @test * */
+
+    public function cannot_change_the_number_of_randomized_assessments_if_a_student_has_randomizations()
+    {
+        $randomizedAssignmentQuestion = new RandomizedAssignmentQuestion ();
+        $randomizedAssignmentQuestion->user_id = $this->student_user->id;
+        $randomizedAssignmentQuestion->question_id = $this->question->id;
+        $randomizedAssignmentQuestion->assignment_id = $this->assignment->id;
+        $randomizedAssignmentQuestion->save();
+
+        $this->assignment_info['randomizations'] = 1;
+        $this->assignment_info['number_of_randomized_assessments'] = 5;
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('number_of_randomized_assessments');
+
+
+    }
+
+    /** @test */
+
+    public function number_of_randomized_assessments_must_be_a_valid_number()
+    {
+        $this->assignment_info['randomizations'] = 1;
+        $this->assignment_info['number_of_randomized_assessments'] = -3;
+        $this->actingAs($this->user)->postJson("/api/assignments", $this->assignment_info)
+            ->assertJsonValidationErrors('number_of_randomized_assessments');
+    }
+
     /** @test */
     public
     function owner_of_assignment_can_create_it_from_template_and_copy_assign_to_groups()
@@ -158,9 +189,9 @@ class AssignmentsIndex2Test extends TestCase
             ['assign_to_groups' => 1])
             ->assertJson(['message' => "<strong>{$this->assignment->name} copy</strong> is using the same template as <strong>{$this->assignment->name}</strong>. Don't forget to add questions and update the assignment's dates."]);
 
-            $this->assertequals(2 * $num_assign_to_users,
-                AssignToUser::all()->count(),
-                'The number of assign to users should double since they were copied.');
+        $this->assertequals(2 * $num_assign_to_users,
+            AssignToUser::all()->count(),
+            'The number of assign to users should double since they were copied.');
     }
 
 

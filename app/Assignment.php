@@ -24,7 +24,7 @@ class Assignment extends Model
         $assignToTiming->assignment_id = $new_assignment->id;
         $assignToTiming->available_from = Carbon::now()->startOfMinute()->toDateTimeString();
         $assignToTiming->due = Carbon::now()->startOfMinute()->toDateTimeString();
-        if ($new_assignment->late_policy !== 'not accepted'){
+        if ($new_assignment->late_policy !== 'not accepted') {
             $assignToTiming->final_submission_deadline = Carbon::now()->startOfMinute()->toDateTimeString();
         }
         $assignToTiming->save();
@@ -60,10 +60,10 @@ class Assignment extends Model
         return $this->hasManyThrough(AssignToUser::class, AssignToTiming::class);
     }
 
-    public function cutUps() {
+    public function cutUps()
+    {
         return $this->hasMany(Cutup::class);
     }
-
 
 
     public function getAssignmentsByCourse(Course $course,
@@ -124,6 +124,10 @@ class Assignment extends Model
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                     $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
+                    $assignments_info[$key]['number_of_questions']  = $assignment->number_of_randomized_assessments
+                                                                    ? $assignment->number_of_randomized_assessments
+                                                                    : count($assignment->questions);
+
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
@@ -148,7 +152,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     }
 
-
+                    $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
                     $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
 
                 }
@@ -156,7 +160,7 @@ class Assignment extends Model
 
                 $assignments_info[$key]['show_points_per_question'] = $assignment->show_points_per_question;
                 $assignments_info[$key]['assessment_type'] = $assignment->assessment_type;
-                $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
+
 
                 if (Auth::user()->role === 3 && !$assignments_info[$key]['shown']) {
                     unset($assignments_info[$key]);
@@ -253,13 +257,13 @@ class Assignment extends Model
 
 
             $group = 'Everybody';
-            $formatted_group =   [ "value"=> ["course_id"=> $course->id], "text"=>'Everybody' ];
+            $formatted_group = ["value" => ["course_id" => $course->id], "text" => 'Everybody'];
             if ($assign_to_group->group === 'section') {
                 $group = $sections_by_id[$assign_to_group->group_id];
-                $formatted_group =    [ "value"=> ["section_id"=> $assign_to_group->group_id], "text"=>$group ] ;
+                $formatted_group = ["value" => ["section_id" => $assign_to_group->group_id], "text" => $group];
             } else if ($assign_to_group->group === 'user') {
                 $group = $users_by_id[$assign_to_group->group_id];
-                $formatted_group =    [ "value"=> ["user_id"=> $assign_to_group->group_id], "text"=>$group ] ;
+                $formatted_group = ["value" => ["user_id" => $assign_to_group->group_id], "text" => $group];
             }
             $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['groups'][] = $group;
             $assign_to_groups_by_assignment_id[$assignment_id][$assign_to_timing_id]['formatted_groups'][] = $formatted_group;
@@ -309,10 +313,22 @@ class Assignment extends Model
     function getTotalPointsForShownAssignments(Course $course)
     {
         $total_points_by_assignment = [];
+        $randomized_point_info = $points_info = DB::table('assignments')
+            ->where('assignments.course_id', $course->id)
+            ->where('assignments.shown', 1)
+            ->whereNotNull('assignments.number_of_randomized_assessments')
+            ->select(DB::raw('number_of_randomized_assessments * default_points_per_question AS total_points'), 'id')
+            ->get();
+
+        foreach ($randomized_point_info as $value) {
+            $total_points_by_assignment [$value->id] = $value->total_points;
+        }
+
         $points_info = DB::table('assignment_question')
             ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
             ->where('assignments.course_id', $course->id)
             ->where('assignments.shown', 1)
+            ->whereNull('assignments.number_of_randomized_assessments')
             ->groupBy('assignments.id')
             ->select(DB::raw('SUM(assignment_question.points) as total_points,assignments.id'))
             ->get();
@@ -486,7 +502,7 @@ class Assignment extends Model
         $submission->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $submissionFile->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $score->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
-        $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id',$assign_to_timings_to_remove_ids)->delete();
+        $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id', $assign_to_timings_to_remove_ids)->delete();
         $extension->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $ltiGradePassback->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $seed->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
@@ -496,13 +512,13 @@ class Assignment extends Model
     {
         $assign_to_timings_by_user = [];
         $assign_to_timings = DB::table('assign_to_timings')
-            ->join('assign_to_users', 'assign_to_timings.id','=', 'assign_to_users.assign_to_timing_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
             ->where('assign_to_timings.assignment_id', $this->id)
             ->get();
-      foreach ($assign_to_timings as $key => $assign_to_timing){
-          $assign_to_timings_by_user[$assign_to_timing->user_id]=$assign_to_timing;
-      }
-      return   $assign_to_timings_by_user;
+        foreach ($assign_to_timings as $key => $assign_to_timing) {
+            $assign_to_timings_by_user[$assign_to_timing->user_id] = $assign_to_timing;
+        }
+        return $assign_to_timings_by_user;
     }
 
 }

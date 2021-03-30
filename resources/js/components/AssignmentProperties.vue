@@ -93,6 +93,12 @@
       >
         Instructors manually open and close these real-time graded assessments.
       </b-tooltip>
+      <b-tooltip target="number_of_randomized_assessments_tooltip"
+                 delay="250"
+      >
+        Adapt will randomly choose a subset of assessments from the total that you provide
+      </b-tooltip>
+
       <b-tooltip target="final_submission_deadline_tooltip"
                  delay="250"
       >
@@ -153,7 +159,7 @@
                 :class="{ 'is-invalid': form.errors.has('name') }"
                 @keydown="form.errors.clear('name')"
               />
-              <has-error :form="form" field="name"/>
+              <has-error :form="form" field="name" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -171,7 +177,7 @@
                              :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                              @change="checkGroupId(form.assignment_group_id)"
               />
-              <has-error :form="form" field="assignment_group_id"/>
+              <has-error :form="form" field="assignment_group_id" />
             </b-col>
             <b-modal
               id="modal-create-assignment-group"
@@ -197,7 +203,7 @@
                     :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
                     @keydown="assignmentGroupForm.errors.clear('assignment_group')"
                   />
-                  <has-error :form="assignmentGroupForm" field="assignment_group"/>
+                  <has-error :form="assignmentGroupForm" field="assignment_group" />
                 </b-form-group>
               </b-form-row>
             </b-modal>
@@ -218,14 +224,14 @@
           >
             <b-form-radio name="source" value="a">
               Internal <span id="internal" class="text-muted"><b-icon
-              icon="question-circle"
-            /></span>
+                icon="question-circle"
+              /></span>
             </b-form-radio>
 
             <b-form-radio name="source" value="x">
               External <span id="external" class="text-muted"><b-icon
-              icon="question-circle"
-            />
+                icon="question-circle"
+              />
               </span>
             </b-form-radio>
           </b-form-radio-group>
@@ -274,7 +280,7 @@
                   :disabled="isLocked()"
                   @keydown="form.errors.clear('default_points_per_question')"
                 />
-                <has-error :form="form" field="default_points_per_question"/>
+                <has-error :form="form" field="default_points_per_question" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -296,28 +302,28 @@
         >
           <b-form-radio name="assessment_type" value="real time">
             Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+              icon="question-circle"
+            />
             </span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="delayed">
             Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+              icon="question-circle"
+            /></span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="learning tree">
             Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+              icon="question-circle"
+            />
             </span>
           </b-form-radio>
 
           <b-form-radio name="assessment_type" value="clicker">
             Clicker Assessments <span id="clicker" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+              icon="question-circle"
+            />
             </span>
           </b-form-radio>
         </b-form-radio-group>
@@ -333,9 +339,9 @@
           <template slot="label">
             Default Clicker Time To Submit <span id="default_clicker_time_to_submit_tooltip"
                                                  class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+            ><b-icon
+              icon="question-circle"
+            /></span>
           </template>
           <b-form-row>
             <b-col lg="3">
@@ -347,7 +353,7 @@
                 :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
                 @keydown="form.errors.clear('default_clicker_time_to_submit')"
               />
-              <has-error :form="form" field="default_clicker_time_to_submit"/>
+              <has-error :form="form" field="default_clicker_time_to_submit" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -366,9 +372,9 @@
             />
             Minimum Number of Minutes Exploring Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
                                                                     class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+            ><b-icon
+              icon="question-circle"
+            /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -381,7 +387,7 @@
                 :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
                 @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
               />
-              <has-error :form="form" field="min_time_needed_in_learning_tree"/>
+              <has-error :form="form" field="min_time_needed_in_learning_tree" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -398,9 +404,9 @@
             />
             Percent Earned For Exploring Learning Tree <span id="percent_earned_for_exploring_learning_tree_tooltip"
                                                              class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+            ><b-icon
+              icon="question-circle"
+            /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -413,7 +419,7 @@
                 :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
                 @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
               />
-              <has-error :form="form" field="percent_earned_for_exploring_learning_tree"/>
+              <has-error :form="form" field="percent_earned_for_exploring_learning_tree" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -428,8 +434,8 @@
               icon="tree" variant="success"
             />
             Submission Count Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+              icon="question-circle"
+            /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -442,7 +448,7 @@
                 :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
                 @keydown="form.errors.clear('submission_count_percent_decrease')"
               />
-              <has-error :form="form" field="submission_count_percent_decrease"/>
+              <has-error :form="form" field="submission_count_percent_decrease" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -458,7 +464,7 @@
         <template slot="label">
           Default Open-ended Submission Type
           <span id="default_open_ended_submission_type_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <b-form-radio-group v-model="form.default_open_ended_submission_type"
                             stacked
@@ -531,7 +537,7 @@
                 :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
                 @keydown="form.errors.clear('late_deduction_percent')"
               />
-              <has-error :form="form" field="late_deduction_percent"/>
+              <has-error :form="form" field="late_deduction_percent" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -566,10 +572,10 @@
                     :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
                     @keydown="form.errors.clear('late_deduction_application_period')"
                   />
-                  <has-error :form="form" field="late_deduction_application_period"/>
+                  <has-error :form="form" field="late_deduction_application_period" />
                 </b-col>
                 <span id="late_deduction_application_period_tooltip">
-                  <b-icon class="text-muted" icon="question-circle"/></span>
+                  <b-icon class="text-muted" icon="question-circle" /></span>
               </b-row>
             </b-form-radio>
           </b-form-radio-group>
@@ -611,7 +617,7 @@
               :class="{ 'is-invalid': form.errors.has('external_source_points') }"
               @keydown="form.errors.clear('external_source_points')"
             />
-            <has-error :form="form" field="external_source_points"/>
+            <has-error :form="form" field="external_source_points" />
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -634,28 +640,54 @@
             :class="{ 'is-invalid': form.errors.has('instructions') }"
             @keydown="form.errors.clear('instructions')"
           />
-          <has-error :form="form" field="instructions"/>
+          <has-error :form="form" field="instructions" />
         </b-form-row>
       </b-form-group>
       <b-form-group
         v-show="form.source === 'a'"
-        id="instructions"
+        id="randomizations"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Instructions"
-        label-for="instructions"
+        label="Randomizations"
+        label-for="Randomizations"
       >
+        <b-form-radio-group v-model="form.randomizations" stacked
+                            :disabled="isLocked()"
+        >
+          <b-form-radio value="0" @change="resetRandomizations">
+            No
+          </b-form-radio>
+
+          <b-form-radio value="1">
+            Yes
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-show="form.source === 'a' && parseInt(form.randomizations) === 1"
+        id="number_of_randomized_assessments"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Number of randomized assessments"
+        label-for="number_of_randomized_assessments"
+      >
+        <template slot="label">
+          Number of randomized assessments <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
+            icon="question-circle"
+          /></span>
+        </template>
         <b-form-row>
-          <b-form-textarea
-            id="instructions"
-            v-model="form.instructions"
-            type="text"
-            placeholder="(Optional)"
-            rows="3"
-            :class="{ 'is-invalid': form.errors.has('instructions') }"
-            @keydown="form.errors.clear('instructions')"
-          />
-          <has-error :form="form" field="instructions"/>
+          <b-col lg="2">
+            <b-form-input
+              id="number_of_randomized_assessments"
+              v-model="form.number_of_randomized_assessments"
+              type="text"
+              :disabled="isLocked()"
+              :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
+              @keydown="form.errors.clear('number_of_randomized_assessments')"
+            />
+            <has-error :form="form" field="number_of_randomized_assessments" />
+          </b-col>
         </b-form-row>
       </b-form-group>
       <b-form-group
@@ -666,8 +698,8 @@
       >
         <template slot="label">
           Notifications <span id="notifications_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-radio-group v-model="form.notifications" stacked>
           <b-form-radio name="notifications" value="1">
@@ -681,7 +713,6 @@
       <div v-for="(assignTo,index) in form.assign_tos"
            :key="index"
       >
-
         <b-form-group
           id="assign_to"
           label-cols-sm="4"
@@ -689,7 +720,7 @@
           label-for="Assign to"
         >
           <template slot="label">
-            Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+            Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle" /></span>
           </template>
           <b-form-row>
             <b-col lg="5">
@@ -697,8 +728,8 @@
                              :options="assignToGroups"
                              :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
                              @change="updateAssignTos(assignTo)"
-              ></b-form-select>
-              <has-error :form="form" :field="`groups_${index}`"/>
+              />
+              <has-error :form="form" :field="`groups_${index}`" />
             </b-col>
             <b-col>
               <ul
@@ -706,8 +737,9 @@
                 :key="group_index"
                 class="flex-column align-items-start"
               >
-                <li>{{ group.text }}
-                  <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"></b-icon>
+                <li>
+                  {{ group.text }}
+                  <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)" />
                 </li>
               </ul>
             </b-col>
@@ -727,14 +759,14 @@
                 :min="min"
                 :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
               />
-              <has-error :form="form" :field="`available_from_date_${index}`"/>
+              <has-error :form="form" :field="`available_from_date_${index}`" />
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.available_from_time"
                                  locale="en"
                                  :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
               />
-              <has-error :form="form" :field="`available_from_time_${index}`"/>
+              <has-error :form="form" :field="`available_from_time_${index}`" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -754,7 +786,7 @@
                 :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
                 @shown="form.errors.clear(`due_${index}`)"
               />
-              <has-error :form="form" :field="`due_${index}`"/>
+              <has-error :form="form" :field="`due_${index}`" />
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.due_time"
@@ -762,7 +794,7 @@
                                  :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
                                  @shown="form.errors.clear(`due_time_${index}`)"
               />
-              <has-error :form="form" :field="`due_time_${index}`"/>
+              <has-error :form="form" :field="`due_time_${index}`" />
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -776,9 +808,9 @@
           <template slot="label">
             Final Submission Deadline <span id="final_submission_deadline_tooltip"
                                             class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+            ><b-icon
+              icon="question-circle"
+            /></span>
           </template>
           <b-form-row>
             <b-col lg="7">
@@ -789,7 +821,7 @@
                 :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                 @shown="form.errors.clear(`final_submission_deadline_${index}`)"
               />
-              <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
+              <has-error :form="form" :field="`final_submission_deadline_${index}`" />
             </b-col>
             <b-col>
               <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
@@ -798,21 +830,24 @@
                                  :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                  @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
               />
-              <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
+              <has-error :form="form" :field="`final_submission_deadline_time_${index}`" />
             </b-col>
           </b-form-row>
         </b-form-group>
         <div v-if="form.assign_tos.length>1">
           <b-row align-h="end">
-            <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">Remove Assign
+            <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
+              Remove Assign
               to
             </b-button>
           </b-row>
           <hr>
         </div>
       </div>
-      <b-button variant="outline-primary" size="sm" @click="addAssignTo">Add Assign to</b-button>
-      <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+      <b-button variant="outline-primary" size="sm" @click="addAssignTo">
+        Add Assign to
+      </b-button>
+      <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle" /></span>
     </b-modal>
   </div>
 </template>
@@ -873,6 +908,8 @@ export default {
       late_deduction_applied_once: 1,
       late_deduction_application_period: null,
       type_of_submission: 'correct',
+      randomizations: 0,
+      number_of_randomized_assessments: null,
       source: 'a',
       scoring_type: 'p',
       include_in_weighted_average: 1,
@@ -908,6 +945,9 @@ export default {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
+    resetRandomizations () {
+      this.form.number_of_randomized_assessments = null
+    },
     removeAssignTo (assignTo) {
       this.form.assign_tos = this.form.assign_tos.filter(e => e !== assignTo)
     },
@@ -928,7 +968,6 @@ export default {
       this.form.assign_tos.push(newAssignTo)
     },
     updateAssignTos (assignTo) {
-
       if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
         for (let i = 0; i < this.assignToUsers.length; i++) {
           if (assignTo.selectedGroup.user_id === this.assignToUsers[i].value.user_id) {
@@ -1040,14 +1079,16 @@ export default {
         }
       })
     },
-    checkSourceAndLatePolicy (event) {
+    checkSourceAndLatePolicy () {
       if (this.form.source === 'x') {
-        event.preventDefault()
         this.$noty.info('Clicker assessments must have a Source of "Internal".')
       }
       if (this.form.late_policy !== 'not accepted') {
-        event.preventDefault()
-        this.$noty.info('Click assessments must have a Late Policy of "Do not accept late".')
+        this.$noty.info('Clicker assessments must have a Late Policy of "Do not accept late".')
+      }
+      if (this.form.number_of_randomized_assessments) {
+        this.$noty.info("Clicker assessments can't be randomized.")
+        this.form.number_of_randomized_assessments = null
       }
     },
     checkIfScoringTypeOfPoints (event) {
@@ -1167,6 +1208,8 @@ export default {
       this.form.default_clicker_time_to_submit = ''
       this.form.instructions = ''
       this.form.assessment_type = 'real time'
+      this.form.number_of_randomized_assessments = null
+      this.form.randomizations = 0
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
@@ -1213,6 +1256,8 @@ export default {
       this.form.include_in_weighted_average = assignment.include_in_weighted_average
       this.form.source = assignment.source
       this.form.instructions = assignment.instructions
+      this.form.number_of_randomized_assessments = assignment.number_of_randomized_assessments
+      this.form.randomizations = assignment.number_of_randomized_assessments !== null ? 1 : 0
       this.form.type_of_submission = assignment.type_of_submission
       this.form.default_open_ended_submission_type = assignment.default_open_ended_submission_type
       if (assignment.default_open_ended_text_editor) {

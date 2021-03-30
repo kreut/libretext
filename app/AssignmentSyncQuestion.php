@@ -40,11 +40,19 @@ class AssignmentSyncQuestion extends Model
             ->max('order');
         return $max_order ? $max_order+1 : 1;
     }
-    public function getQuestionCountByAssignmentIds(Collection $assignment_ids)
+    public function getQuestionCountByAssignmentIds(Collection $assignments)
     {
         $questions_count_by_assignment_id = [];
+        foreach ($assignments as $assignment){
+            if ($assignment->number_of_randomized_assessments){
+                $questions_count_by_assignment_id[$assignment->id] = $assignment->number_of_randomized_assessments;
+            } else {
+                $non_randomized_assignment_ids[] = $assignment->id;
+            }
+        }
+
         $questions_count = DB::table('assignment_question')
-            ->whereIn('assignment_id', $assignment_ids)
+            ->whereIn('assignment_id', $non_randomized_assignment_ids)
             ->groupBy('assignment_id')
             ->select(DB::raw('count(*) as num_questions'), 'assignment_id')
             ->get();

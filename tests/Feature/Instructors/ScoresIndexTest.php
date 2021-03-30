@@ -3,10 +3,12 @@
 namespace Tests\Feature\Instructors;
 
 use App\Assignment;
+use App\AssignmentGroupWeight;
 use App\Course;
 use App\Enrollment;
 use App\FinalGrade;
 use App\Grader;
+use App\Score;
 use App\Section;
 use App\User;
 use App\ExtraCredit;
@@ -15,6 +17,7 @@ use App\Traits\Test;
 
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class ScoresIndexTest extends TestCase
@@ -59,6 +62,54 @@ class ScoresIndexTest extends TestCase
             'letter_grades' => $finalGrade->defaultLetterGrades()]);
     }
 
+    /** @test */
+
+public function correctly_computes_the_final_score_with_randomized_assessment_assignments(){
+    AssignmentGroupWeight::create([
+        'course_id' => $this->course->id,
+        'assignment_group_id' => 1,
+        'assignment_group_weight' => 100
+    ]);
+
+    $this->assignment->default_points_per_question = 10;
+    $this->assignment->number_of_randomized_assessments = 1;
+    $this->assignment->save();
+
+
+    DB::table('assignment_question')->insert([
+        'assignment_id' => $this->assignment->id,
+        'question_id' => $this->question()->id,
+        'order' => 1,
+        'open_ended_submission_type' => 'none',
+        'points' => 10
+    ]);
+
+    DB::table('assignment_question')->insert([
+        'assignment_id' => $this->assignment->id,
+        'question_id' => $this->question()->id,
+        'order' => 1,
+        'open_ended_submission_type' => 'none',
+        'points' => 10
+    ]);
+
+    Score::create([
+        'user_id' => $this->student_user->id,
+        'assignment_id' => $this->assignment->id,
+        'open_ended_submission_type' => 'none',
+        'score' => 8
+    ]);
+
+    $assignments = Assignment::all();
+    foreach ($assignments as $assignment) {
+        $this->assignUserToAssignment($assignment->id, 'course', $this->course->id, $this->student_user->id);
+    }
+
+    $response = $this->actingAs($this->user)->getJson("/api/scores/{$this->course->id}/{$this->section->id}");
+
+    //only 1 assessment so 10 points.  And, the student got 8 out of 10
+    $this->assertEquals('80%', array_values($response['table']['rows'][0])[2]);
+
+}
     /** @test */
 
     public function correctly_computes_the_final_scores_if_not_all_assignments_are_included_in_the_final_score()

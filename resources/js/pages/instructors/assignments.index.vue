@@ -118,9 +118,17 @@
       </b-modal>
 
       <b-container>
-        <b-row v-if="canViewAssignments" align-h="end" class="mb-4">
+        <b-row v-if="canViewAssignments" class="mb-4" align-h="between">
+          <b-col lg="3">
+            <b-form-select v-if="assignmentGroupOptions.length>1"
+                           v-model="chosenAssignmentGroup"
+                           :options="assignmentGroupOptions"
+                           @change="updateAssignmentGroupFilter()"
+            ></b-form-select>
+          </b-col>
+          <b-col lg="5">
           <b-button v-if="(user && user.role === 2)"
-                    class="mr-1"
+                    class="ml-5 mr-1"
                     size="sm"
                     variant="primary"
                     @click="initAddAssignment"
@@ -135,19 +143,13 @@
           >
             Import Assignment
           </b-button>
-          <b-col lg="3">
-            <b-form-select v-if="assignmentGroupOptions.length>1"
-                           v-model="chosenAssignmentGroup"
-                           :options="assignmentGroupOptions"
-                           @change="updateAssignmentGroupFilter()"
-            ></b-form-select>
-          </b-col>
-          <b-button class="mr-1"
+          <b-button
                     size="sm"
                     @click="getGradeBook()"
           >
             Gradebook
           </b-button>
+          </b-col>
         </b-row>
       </b-container>
       <div v-show="hasAssignments" class="table-responsive">

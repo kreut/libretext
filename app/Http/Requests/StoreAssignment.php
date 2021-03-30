@@ -3,6 +3,9 @@
 namespace App\Http\Requests;
 
 
+use App\Assignment;
+use App\Rules\HasNoRandomizedAssignmentQuestions;
+use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidSubmissionCountPercentDecrease;
@@ -31,6 +34,7 @@ class StoreAssignment extends FormRequest
      */
     public function rules()
     {
+
         $rules = [
             'name' => ['required', 'max:255'],
             'source' => Rule::in(['a', 'x']),
@@ -58,6 +62,20 @@ class StoreAssignment extends FormRequest
         switch ($this->source) {
             case('a'):
                 $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
+                if ((int)($this->randomizations) === 1) {
+                    $rules['number_of_randomized_assessments'] = ['required',
+                        'integer',
+                        'gt:0',
+                        new IsNotClickerAssessment($this->assessment_type),
+                    ];
+                    if ($this->route()->getActionMethod() === 'update') {
+                        $assignment_id = $this->route()->parameters()['assignment']->id;
+                        if ( Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
+                            $rules['number_of_randomized_assessments'][] = new HasNoRandomizedAssignmentQuestions($assignment_id);
+                        }
+                    }
+
+                }
                 break;
             case('x'):
                 $rules['external_source_points'] = 'required|integer|min:0|max:200';

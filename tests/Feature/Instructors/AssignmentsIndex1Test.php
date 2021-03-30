@@ -19,6 +19,7 @@ class AssignmentsIndex1Test extends TestCase
 {
 
     use Test;
+
     /**Still must test the stuff with the correct/completed and number**/
     /** Should test that only an instructor can create an assignment... */
     public function setup(): void
@@ -27,7 +28,7 @@ class AssignmentsIndex1Test extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->section= factory(Section::class)->create(['course_id' => $this->course->id]);
+        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->user_2 = factory(User::class)->create();
         $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
@@ -61,6 +62,17 @@ class AssignmentsIndex1Test extends TestCase
             'assignment_group_id' => 1];
 
     }
+
+    /** @test */
+    public function cannot_toggle_showing_assignments_if_number_assessments_less_than_number_randomized_assessments()
+    {
+        $this->assignment->number_of_randomized_assessments = 10;
+        $this->assignment->save();
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/0")
+            ->assertJson(['message' => "Before you can show this assignment, please make sure that the number of chosen assessments (0) is greater than the number of randomized assessments ({$this->assignment->number_of_randomized_assessments })."]);
+    }
+
 
     /** @test */
 
@@ -127,8 +139,6 @@ class AssignmentsIndex1Test extends TestCase
             ->patchJson("/api/assignments/{$this->assignment->id}/show-assignment/1")
             ->assertJson(['message' => 'Your students <strong>cannot</strong> see this assignment.']);
     }
-
-
 
 
     /** @test */

@@ -90,6 +90,32 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
+    public function students_get_correct_number_of_points_for_randomized_assignment()
+    {
+
+        $this->assignment->number_of_randomized_assessments = 1;
+        $this->assignment->save();
+        $response = $this->actingAs($this->student_user)
+            ->getJson("/api/assignments/{$this->assignment->id}}/view-questions-info", $this->headers());
+        $this->assertEquals($response['assignment']['total_points'], $this->assignment->number_of_randomized_assessments * $this->assignment->default_points_per_question);
+    }
+
+
+    /** @test */
+
+    public function students_get_correct_number_of_questions_for_randomized_assignment()
+    {
+
+        $this->assignment->number_of_randomized_assessments = 1;
+        $this->assignment->save();
+        $response = $this->actingAs($this->student_user)
+            ->getJson("/api/assignments/{$this->assignment->id}}/questions/view", $this->headers());
+        $this->assertEquals(count($response['questions']), $this->assignment->number_of_randomized_assessments);
+
+    }
+
+    /** @test */
+
     public function owner_can_start_a_clicker_assessment()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
@@ -295,14 +321,9 @@ class QuestionsViewTest extends TestCase
         $mean = array_sum($scores) / count($scores);
         $std_dev = $this->stats_standard_deviation($scores);
         $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
-        //need the token....
-        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
-        $headers = [
-            'Accept' => 'application/json',
-            'AUTHORIZATION' => 'Bearer ' . $token
-        ];
 
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
         $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
 
     }
@@ -512,13 +533,8 @@ class QuestionsViewTest extends TestCase
         $std_dev = $this->stats_standard_deviation($scores);
         $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
         //need the token....
-        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
-        $headers = [
-            'Accept' => 'application/json',
-            'AUTHORIZATION' => 'Bearer ' . $token
-        ];
 
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
         $this->assertEquals('N/A', $response['questions'][0]['submission_file_z_score']);
 
     }
@@ -574,14 +590,9 @@ class QuestionsViewTest extends TestCase
         $mean = array_sum($scores) / count($scores);
         $std_dev = $this->stats_standard_deviation($scores);
         $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
-        //need the token....
-        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
-        $headers = [
-            'Accept' => 'application/json',
-            'AUTHORIZATION' => 'Bearer ' . $token
-        ];
 
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers);
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
         $this->assertEquals('N/A', $response['questions'][0]['submission_z_score']);
 
     }
@@ -694,8 +705,6 @@ class QuestionsViewTest extends TestCase
         $assignToTiming->save();
 
 
-
-
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
             ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
 
@@ -717,7 +726,6 @@ class QuestionsViewTest extends TestCase
         $assignToTiming->due = "2020-12-10 09:00:00";
         $assignToTiming->final_submission_deadline = "2020-12-11 09:00:00";
         $assignToTiming->save();
-
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
@@ -1003,12 +1011,8 @@ class QuestionsViewTest extends TestCase
 
         //needed because the token wasn't being passed through
         //https://laracasts.com/discuss/channels/testing/laravel-testcase-not-sending-authorization-headers
-        $token = \Tymon\JWTAuth\Facades\JWTAuth::fromUser($this->student_user);
-        $headers = [
-            'Accept' => 'application/json',
-            'AUTHORIZATION' => 'Bearer ' . $token
-        ];
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $headers)
+
+        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers())
             ->assertJson(['type' => 'success']);
 
     }
@@ -1513,6 +1517,5 @@ class QuestionsViewTest extends TestCase
             ->get();
         $this->assertEquals(1, count($submission_files));
     }
-
 
 }
