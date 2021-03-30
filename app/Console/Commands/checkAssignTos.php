@@ -55,7 +55,7 @@ class checkAssignTos extends Command
             $problem_users = [];
             foreach ($assign_to_by_users as $user_id => $user_count) {
                 if ($count !== $user_count) {
-                    $problem_users[] = ['user_id' => $user_id, 'user_count' => $user_count];
+                    $problem_users = ['user_id' => $user_id, 'user_count' => $user_count];
                 }
             }
             if ($problem_users){
