@@ -467,25 +467,26 @@
                             :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
                             @keydown="form.errors.clear('default_open_ended_submission_type')"
         >
-
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio value="rich text">
+          <b-form-radio name="default_open_ended_submission_type" value="rich text">
             Rich Text
           </b-form-radio>
-          <b-form-radio value="plain text">
+          <b-form-radio name="default_open_ended_submission_type" value="plain text">
             Plain Text
           </b-form-radio>
-          <b-form-radio value="file">
+          <b-form-radio name="default_open_ended_submission_type" value="file">
             File
           </b-form-radio>
-          <b-form-radio value="audio">
+          <b-form-radio name="default_open_ended_submission_type" value="audio">
             Audio
           </b-form-radio>
-          <b-form-radio value="0">
+          <b-form-radio name="default_open_ended_submission_type" value="0">
             None
           </b-form-radio>
-          <has-error :form="form" field="default_open_ended_submission_type"/>
         </b-form-radio-group>
+        <div v-if="form.errors.has('default_open_ended_submission_type')" class="help-block invalid-feedback">
+          The selected default open ended submission type is invalid.
+        </div>
       </b-form-group>
       <b-form-group
         v-show="form.source === 'a'"
@@ -809,8 +810,8 @@ export default {
   middleware: 'auth',
   props: {
     courseId: { type: Number, default: 0 },
-    courseEndDate: {type: String, default: ''},
-    courseStartDate: { type: String, default: ''}
+    courseEndDate: { type: String, default: '' },
+    courseStartDate: { type: String, default: '' }
   },
   data: () => ({
     assignToCourse: [],
@@ -1193,6 +1194,9 @@ export default {
       this.form.instructions = assignment.instructions
       this.form.type_of_submission = assignment.type_of_submission
       this.form.default_open_ended_submission_type = assignment.default_open_ended_submission_type
+      if (assignment.default_open_ended_text_editor) {
+        this.form.default_open_ended_submission_type = assignment.default_open_ended_text_editor + ' ' + assignment.default_open_ended_submission_type
+      }
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
