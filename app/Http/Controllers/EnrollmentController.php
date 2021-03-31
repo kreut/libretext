@@ -64,11 +64,13 @@ class EnrollmentController extends Controller
         }
 
         $data = $request->validated();
-        $date = Carbon::now()->format('Y-m-d');
-        $log_file = "logs/laravel-$date.log";
-        $contents = "Moving student:" . $user->id . " to " . print_r($request->all(), true);
-        Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
 
+        if (!app()->environment('testing')) {
+            $date = Carbon::now()->format('Y-m-d');
+            $log_file = "logs/laravel-$date.log";
+            $contents = "Moving student:" . $user->id . " to " . print_r($request->all(), true);
+            Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
+        }
         $new_section_id = $data['section_id'];
         $section_name = $section->find($new_section_id)->name;
         try {
@@ -96,7 +98,7 @@ class EnrollmentController extends Controller
             }
 
             DB::beginTransaction();
-            $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id',$assign_to_timings_to_remove_ids)->delete();
+            $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id', $assign_to_timings_to_remove_ids)->delete();
             $enrollment->where('course_id', $course->id)
                 ->where('user_id', $user->id)
                 ->update(['section_id' => $new_section_id]);
