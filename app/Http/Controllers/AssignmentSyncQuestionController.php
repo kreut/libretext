@@ -1061,8 +1061,8 @@ class AssignmentSyncQuestionController extends Controller
                         $custom_claims['webwork']['showHints'] = 0;
                         $custom_claims['webwork']['showSolution'] = 0;
                         $custom_claims['webwork']['showDebug'] = 0;
-                        $custom_claims['webwork']['showScoreSummary'] = 0;
-                        $custom_claims['webwork']['showAnswerTable'] = 0;
+                        $custom_claims['webwork']['showScoreSummary'] = $assignment->solutions_released;
+                        $custom_claims['webwork']['showAnswerTable'] = $assignment->solutions_released;
 
 
                         $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
