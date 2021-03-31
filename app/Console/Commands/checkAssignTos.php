@@ -51,6 +51,7 @@ class checkAssignTos extends Command
                     $assign_to_by_users[$count->user_id]++;
                 }
             }
+
             $count = $assign_to_by_users[$count->user_id];
             $problem_users = [];
             foreach ($assign_to_by_users as $user_id => $user_count) {

@@ -82,10 +82,6 @@ class EnrollmentController extends Controller
             $current_assignments_info = User::find($current_section_fake_student_id)
                 ->assignmentsAndAssignToTimingsByCourse($course->id);
 
-            $current_assignment_ids = [];
-            foreach ($current_assignments_info as $value) {
-                $current_assignment_ids[] = $value['assignment_id'];
-            }
             $assign_to_timings_to_remove_ids = [];
             foreach ($current_assignments_info as $value) {
                 $assign_to_timings_to_remove_ids[] = $value['assign_to_timing_id'];
@@ -99,27 +95,8 @@ class EnrollmentController extends Controller
                 $new_assign_to_timing_ids[] = $value['assign_to_timing_id'];
             }
 
-            $new_assignment_ids = [];
-            foreach ($new_assignments_info as $value) {
-                $new_assignment_ids[] = $value['assignment_id'];
-            }
-
-            $assignments_to_remove_ids = array_diff($current_assignment_ids, $new_assignment_ids);
-
             DB::beginTransaction();
-
-            $assignment->removeUserInfo($user,
-                $assignments_to_remove_ids,
-                $assign_to_timings_to_remove_ids,
-                $submission,
-                $submissionFile,
-                $score,
-                $assignToUser,
-                $extension,
-                $ltiGradePassback,
-                $seed);
-
-
+            $assignToUser->where('user_id', $user->id)->whereIn('assign_to_timing_id',$assign_to_timings_to_remove_ids)->delete();
             $enrollment->where('course_id', $course->id)
                 ->where('user_id', $user->id)
                 ->update(['section_id' => $new_section_id]);
