@@ -112,7 +112,7 @@ class Submission extends Model
                 ->get();
             $learning_tree_percent_penalty = 0;
             $explored_learning_tree = 0;
-            $message = 'Question submission saved. Your scored was updated.';
+            $message = 'Question submission saved. Your score was updated.';
 
             if ($submission) {
                 if ($assignment->assessment_type === 'real time') {

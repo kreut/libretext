@@ -341,7 +341,7 @@
             </div>
             <input type="hidden" class="form-control is-invalid">
             <div class="help-block invalid-feedback">
-              {{ uploadFileForm.errors.get(this.uploadFileType) }}
+              {{ uploadFileForm.errors.get(uploadFileType) }}
             </div>
             <b-container>
               <hr>
@@ -2020,7 +2020,13 @@ export default {
       this.uploading = true
 
       try {
-        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
+        let response = await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
+        if (response === 'status code 413') {
+          let message = 'The maximum size allowed is 10MB.  If you\'re trying to upload a PDF, you can use an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
+          this.uploadFileForm.errors.set(this.uploadFileType, message)
+          this.uploading = false
+          return false
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

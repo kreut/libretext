@@ -49,7 +49,7 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
     }
   } catch (error) {
     if (error.message.includes('status code 413')) {
-      error.message = 'The maximum size allowed is 10MB.'
+      return 'status code 413'
     }
     noty.error(error.message)
   }

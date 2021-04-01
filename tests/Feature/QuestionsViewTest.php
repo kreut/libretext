@@ -697,12 +697,12 @@ class QuestionsViewTest extends TestCase
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'Question submission saved. Your scored was updated.']);
+            ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
 
         $this->assignment->late_policy = 'delayed';
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'Question submission saved. Your scored was updated.']);
+            ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
 
     }
 
