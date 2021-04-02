@@ -79,6 +79,10 @@ class Handler extends ExceptionHandler
             request()->user() ? request()->user()->id : 'No user logged in'
         );
 
+        if (app()->environment('staging')) {
+            Log::error($error_info);
+        }
+
         if (app()->environment('local')) {
             Log::error($error_info);
         } else if (app()->environment('testing')) {
@@ -86,7 +90,9 @@ class Handler extends ExceptionHandler
                 Log::error($error_info);
             }
         } else {
-            $date = Carbon::now()->format('Y-m-d');
+            $date = Carbon::now('America/Los_Angeles')->format('Y-m-d');
+            $date_time = Carbon::now('America/Los_Angeles');
+            $error_info = "[$date_time] " . app()->environment() . " $error_info";
             $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
             $contents = Storage::disk('s3')->exists("$log_file")
                 ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"

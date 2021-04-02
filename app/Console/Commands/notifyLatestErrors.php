@@ -42,7 +42,7 @@ class notifyLatestErrors extends Command
      */
     public function handle()
     {
-        $date = Carbon::now()->format('Y-m-d');
+        $date = Carbon::now('America/Los_Angeles')->format('Y-m-d');
         $log_file = "logs/laravel-$date.log";
         if (Storage::disk('s3')->exists($log_file) && time() - Storage::disk('s3')->lastModified($log_file) < 60 * 5) {
             $error_log = Storage::disk('s3')->get("$log_file");
