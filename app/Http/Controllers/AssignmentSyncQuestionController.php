@@ -695,7 +695,7 @@ class AssignmentSyncQuestionController extends Controller
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
-            'submission_score' => $this->$response_info['submission_score'],
+            'submission_score' => $response_info['submission_score'],
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
