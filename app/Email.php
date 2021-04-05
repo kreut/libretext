@@ -17,43 +17,84 @@ class Email extends Model
     public function sendAssignmentDueReminders()
     {
 
-        $notifications = DB::table('notifications')
+        $assignment_notifications = DB::table('notifications')
             ->join('users', 'notifications.user_id', '=', 'users.id')
-            ->join('enrollments', 'users.id', '=', 'enrollments.user_id')
-            ->join('assignments', 'enrollments.course_id', '=', 'assignments.course_id')
+            ->join('assign_to_users', 'users.id', '=', 'assign_to_users.user_id')
+            ->join('assign_to_timings', 'assign_to_users.assign_to_timing_id', '=', 'assign_to_timings.id')
+            ->join('assignments', 'assign_to_timings.assignment_id', '=', 'assignments.id')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
-            ->where('assignments.due', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
-            ->where('assignments.notifications',1)
-            ->select('users.first_name', 'users.last_name', 'users.email',
-                DB::raw('assignments.name AS assignment_name'), DB::raw('assignments.id AS assignment_id'),
-                DB::raw('courses.name AS course_name'),
+            ->where('assign_to_timings.due', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
+            ->where('assignments.notifications', 1)
+            ->select('users.id AS user.id', 'users.first_name', 'users.last_name', 'users.email',
+                'assignments.name AS assignment_name', 'assignments.id AS assignment_id',
+                'courses.name AS course_name',
                 'notifications.hours_until_due')
             ->get();
-        foreach ($notifications as $notification) {
+
+        $extension_notifications = DB::table('notifications')
+            ->join('users', 'notifications.user_id', '=', 'users.id')
+            ->join('extensions', 'users.id', '=', 'extensions.user_id')
+            ->join('assignments', 'extensions.assignment_id', '=', 'assignments.id')
+            ->join('courses', 'assignments.course_id', '=', 'courses.id')
+            ->where('extensions.extension', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
+            ->where('assignments.notifications', 1)
+            ->select('users.id AS user.id', 'users.first_name', 'users.last_name', 'users.email',
+                'assignments.name AS assignment_name', 'assignments.id AS assignment_id',
+                'courses.name AS course_name',
+                'notifications.hours_until_due')
+            ->get();
+
+        $sent_emails = [];
+//extensions override the other ones
+        foreach ($extension_notifications as $notification) {
             try {
-                $mail_info = [
-                    'student_first_name' => $notification->first_name,
-                    'assignment' => $notification->assignment_name,
-                    'course' => $notification->course_name,
-                    'hours_until_due' => $notification->hours_until_due > 1 ? "{$notification->hours_until_due} hours" : "{$notification->hours_until_due} hour",
-                    'assignment_link' => config('app.url') . "/students/assignments/{$notification->assignment_id}/summary"
-                ];
-
-                $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
-                $beautymail->send('emails.assignment_due_reminder', $mail_info, function ($message)
-                use ($notification) {
-                    $message->from('adapt@libretexts.org')
-                        ->to($notification->email, $notification->first_name)
-                        ->subject('An Upcoming Assignment Is Due');
-                });
-
+                Log::info('Extension reminder:' . $notification->assignment_id . ' ' . $notification->user_id);
+                $this->processAssignmentDueReminders($notification);
+                if (!isset($sent_emails[$notification->assignment_id])) {
+                    $sent_emails[$notification->assignment_id] = [];
+                }
+                $sent_emails[$notification->assignment_id][] = $notification->user_id;
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
             }
         }
 
-
+        foreach ($assignment_notifications as $notification) {
+            try {
+                if (isset($sent_emails[$notification->assignment_id]) && in_array($notification->user_id, $sent_emails[$notification->assignment_id])) {
+                    continue;
+                }
+                $this->processAssignmentDueReminders($notification);
+                if (!isset($sent_emails[$notification->assignment_id])) {
+                    $sent_emails[$notification->assignment_id] = [];
+                }
+                $sent_emails[$notification->assignment_id][] = $notification->user_id;
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
+        }
     }
+
+    function processAssignmentDueReminders($notification)
+    {
+        $mail_info = [
+            'student_first_name' => $notification->first_name,
+            'assignment' => $notification->assignment_name,
+            'course' => $notification->course_name,
+            'hours_until_due' => $notification->hours_until_due > 1 ? "{$notification->hours_until_due} hours" : "{$notification->hours_until_due} hour",
+            'assignment_link' => config('app.url') . "/students/assignments/{$notification->assignment_id}/summary"
+        ];
+        Log::info('Regular assignment reminder:' . $notification->assignment_id . ' ' . $notification->user_id);
+        /*  $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+          $beautymail->send('emails.assignment_due_reminder', $mail_info, function ($message)
+          use ($notification) {
+              $message->from('adapt@libretexts.org')
+                  ->to($notification->email, $notification->first_name)
+                  ->subject('An Upcoming Assignment Is Due');
+          });*/
+    }
+
 
 }
