@@ -1110,11 +1110,19 @@ class AssignmentSyncQuestionController extends Controller
 
                     case('webwork'):
 
-                        $webwork_url = 'webwork.libretexts.org';
+                        // $webwork_url = 'webwork.libretexts.org';
                         //$webwork_url = 'demo.webwork.rochester.edu';
+                        // $webwork_base_url = '';
+
+                        $webwork_url = 'https://prod.adapt.libretexts.org';
+                        $webwork_base_url = '/webwork';
 
                         $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
+						// TODO make dynamic
+                        $custom_claims['iss'] = 'https://dev.adapt.libretexts.org';
+
+                        $custom_claims['aud'] = $webwork_url;
                         $custom_claims['webwork']['problemSeed'] = $seed;
                         switch ($webwork_url) {
                             case('demo.webwork.rochester.edu'):
@@ -1128,27 +1136,55 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
+                        if ($webwork_url === 'https://prod.adapt.libretexts.org') {
 
-                        $custom_claims['webwork']['showSummary'] = 1;
-                        $custom_claims['webwork']['displayMode'] = 'MathJax';
-                        $custom_claims['webwork']['language'] = 'en';
-                        $custom_claims['webwork']['outputformat'] = 'libretexts';
-                        $custom_claims['webwork']['showCorrectButton'] = 0;
-                        $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-                        $custom_claims['webwork']['answersSubmitted'] = '0';
-                        $custom_claims['webwork']['displayMode'] = 'MathJax';
-                        $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
-                        $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
-                        $custom_claims['webwork']['language'] = 'en';
-                        $custom_claims['webwork']['showHints'] = 0;
-                        $custom_claims['webwork']['showSolution'] = 0;
-                        $custom_claims['webwork']['showDebug'] = 0;
-                        $custom_claims['webwork']['showScoreSummary'] = $assignment->solutions_released;
-                        $custom_claims['webwork']['showAnswerTable'] = $assignment->solutions_released;
+                            $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
+                            $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
+                            $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
+                            // $custom_claims['webwork']['answerOutputFormat'] = 'static';
+                            $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                            $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+
+                            //TODO replace sourceFilePath with this. Currently has problems with image rendering
+                            //TODO make this a conditional. If does not startWith http, append "https://webwork.libretexts.org/pgfiles/"
+                            // $custom_claims['webwork']['problemSourceURL'] = "https://webwork.libretexts.org/pgfiles/".$this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+
+                            //TODO make into a host-based variable
+                            $custom_claims['webwork']['JWTanswerURL'] = "https://dev.adapt.libretexts.org/api/jwt/process-answer-jwt";
+
+                            $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
+                            $custom_claims['webwork']['language'] = 'en';
+                            $custom_claims['webwork']['showHints'] = 0;
+                            $custom_claims['webwork']['showSolution'] = 0;
+                            $custom_claims['webwork']['showDebug'] = 0;
+
+                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?" width="100%"></iframe>';
+                        }
+                        else {
+                            $custom_claims['webwork']['showSummary'] = 1;
+                            $custom_claims['webwork']['displayMode'] = 'MathJax';
+                            $custom_claims['webwork']['language'] = 'en';
+                            $custom_claims['webwork']['outputformat'] = 'libretexts';
+                            $custom_claims['webwork']['showCorrectButton'] = 0;
+                            $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                            $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['answersSubmitted'] = '0';
+                            $custom_claims['webwork']['displayMode'] = 'MathJax';
+                            $custom_claims['webwork']['form_action_url'] = "https://$webwork_url/webwork2/html2xml";
+                            $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
+                            $custom_claims['webwork']['language'] = 'en';
+                            $custom_claims['webwork']['showHints'] = 0;
+                            $custom_claims['webwork']['showSolution'] = 0;
+                            $custom_claims['webwork']['showDebug'] = 0;
+                            $custom_claims['webwork']['showScoreSummary'] = $assignment->solutions_released;
+                            $custom_claims['webwork']['showAnswerTable'] = $assignment->solutions_released;
+
+                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
+                        }
 
 
-                        $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
+
+
 
                         $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
 
