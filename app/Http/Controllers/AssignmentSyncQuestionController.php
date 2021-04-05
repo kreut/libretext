@@ -1119,8 +1119,7 @@ class AssignmentSyncQuestionController extends Controller
 
                         $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
-						// TODO make dynamic
-                        $custom_claims['iss'] = 'https://dev.adapt.libretexts.org';
+                        $custom_claims['iss'] = $request->getSchemeAndHttpHost();//made host dynamic
 
                         $custom_claims['aud'] = $webwork_url;
                         $custom_claims['webwork']['problemSeed'] = $seed;
@@ -1143,14 +1142,14 @@ class AssignmentSyncQuestionController extends Controller
                             $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                             $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                            $custom_claims['webwork']['sourceFilePath'] = $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
 
-                            //TODO replace sourceFilePath with this. Currently has problems with image rendering
-                            //TODO make this a conditional. If does not startWith http, append "https://webwork.libretexts.org/pgfiles/"
-                            // $custom_claims['webwork']['problemSourceURL'] = "https://webwork.libretexts.org/pgfiles/".$this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['sourceFilePath'] =  $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['sourceFilePath']= (substr($custom_claims['webwork']['sourceFilePath'],0, 4 ) !== "http")
+                                ? "https://webwork.libretexts.org/pgfiles/"
+                                : '';
+                             $custom_claims['webwork']['problemSourceURL'] = "https://webwork.libretexts.org/pgfiles/".$this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
 
-                            //TODO make into a host-based variable
-                            $custom_claims['webwork']['JWTanswerURL'] = "https://dev.adapt.libretexts.org/api/jwt/process-answer-jwt";
+                            $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() ."/api/jwt/process-answer-jwt";
 
                             $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                             $custom_claims['webwork']['language'] = 'en';
