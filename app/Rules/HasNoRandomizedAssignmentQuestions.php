@@ -29,6 +29,7 @@ class HasNoRandomizedAssignmentQuestions implements Rule
        $is_empty=  DB::table('randomized_assignment_questions')
             ->join('users', 'randomized_assignment_questions.user_id','=', 'users.id')
             ->where('users.fake_student',0)
+           ->where('assignment_id', $this->assignment_id)
             ->get()
             ->isEmpty();
        if ($is_empty){
