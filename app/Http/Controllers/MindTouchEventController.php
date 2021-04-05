@@ -46,7 +46,7 @@ class MindTouchEventController extends Controller
                         ->where('page_id', $request->page_id)
                         ->update(['title' => $title]);
                 } else {
-                    Log::warning('unknown_request_action' . date('Y-m-d_H:i:s'), $request->action );
+                    Log::warning('unknown_request_action' . date('Y-m-d_H:i:s'), $request_info );
                 }
             }
         } catch (Exception $e) {
