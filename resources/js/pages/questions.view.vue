@@ -1991,8 +1991,8 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].points = this.questionPointsForm.points
-          if (data.update_points){
-            for (let i=0; i<this.questions.length;i++){
+          if (data.update_points) {
+            for (let i = 0; i < this.questions.length; i++) {
               this.questions[i].points = this.questionPointsForm.points
             }
 
@@ -2111,7 +2111,9 @@ export default {
         if (this.user.role === 2) {
           this.openEndedDefaultTextForm.open_ended_default_text = this.questions[currentPage - 1].open_ended_default_text
         } else {
-          this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission ? this.questions[currentPage - 1].submission : this.questions[currentPage - 1].open_ended_default_text
+          this.textSubmissionForm.text_submission = this.questions[currentPage - 1].submission
+            ? await this.getTextFromS3(this.questions[currentPage - 1])
+            : this.questions[currentPage - 1].open_ended_default_text
         }
       }
       this.isOpenEnded = this.isOpenEndedFileSubmission || this.isOpenEndedTextSubmission || this.isOpenEndedAudioSubmission
@@ -2134,6 +2136,19 @@ export default {
         }
       }
       this.isLoading = false
+    },
+    async getTextFromS3 (question) {
+      try {
+        const { data } = await axios.post(`/api/submission-files/get-files-from-s3/${this.assignmentId}/${question.id}/${this.user.id}`,
+          { open_ended_submission_type: 'text' })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        return data.files.submission_text
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async getLearningTree (learningTree) {
       // loop through and get all with parent = -1

@@ -31,6 +31,9 @@ class GradingTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
 
+        $this->student_user_2 = factory(User::class)->create();
+        $this->student_user->role = 3;
+
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
@@ -77,14 +80,6 @@ class GradingTest extends TestCase
     }
 
     /** @test */
-
-public function non_owner_non_grader_cannot_get_s3_files(){
-
-    $this->actingAs($this->student_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
-    ->assertJson(['message' => 'You are not allowed to view that submission file.']);
-
-}
-/** @test */
     public function owner_can_get_s3_files(){
         $response['files'] = ['submission' => 'fake_1.pdf'];
         $this->actingAs($this->user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
@@ -99,6 +94,26 @@ public function non_owner_non_grader_cannot_get_s3_files(){
             ->assertJson($response);
 
     }
+
+
+    /** @test */
+
+public function student_can_get_their_own_s3_files(){
+    $response['files'] = ['submission' => 'fake_1.pdf'];
+    $this->actingAs($this->student_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+    ->assertJson($response);
+
+}
+
+    /** @test */
+
+    public function student_cannot_get_someone_elses_s3_files(){
+
+        $this->actingAs($this->student_user_2)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+            ->assertJson(['message' => 'You are not allowed to view that submission file.']);
+
+    }
+
     /** @test */
 
     public function student_cannot_get_canned_responses()

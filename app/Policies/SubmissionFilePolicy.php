@@ -18,17 +18,19 @@ class SubmissionFilePolicy
 
     public function getFilesFromS3(User $user, SubmissionFile $submissionFile, Assignment $assignment, User $studentUser, Grader $grader)
     {
-        $has_access = $assignment->course->enrollments->contains('user_id', $studentUser->id);
-
+        $is_student_in_course = $assignment->course->enrollments->contains('user_id', $studentUser->id);
 
         switch ($user->role) {
             case(2):
-                $has_access = $has_access && $assignment->course->user_id === $user->id;
+                $has_access =  $is_student_in_course  && $assignment->course->user_id === $user->id;
+                break;
+            case(3):
+                $has_access =  $user->id === $studentUser->id;
                 break;
             case(4):
                 $section_id = $assignment->course->enrollments->where('user_id', $studentUser->id)->pluck('section_id')->first();
                 $grader_sections = $grader->where('user_id', $user->id)->select('section_id')->get();
-                $has_access = $has_access && $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray());
+                $has_access =  $is_student_in_course  && $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray());
                 break;
             default:
                 $has_access = false;
