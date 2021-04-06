@@ -1983,7 +1983,8 @@ export default {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
-      } else if (body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
+        //TODO: Error will occur here on production!
+      } else if (body.includes('prod.adapt.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
         technology = 'webwork'
       } else {
         technology = false
