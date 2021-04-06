@@ -18,7 +18,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -57,11 +57,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -92,8 +92,10 @@
                     icon="question-circle"
             />
             <b-tooltip target="course-z-score-tooltip" triggers="hover">
-              The z-score for the course is computed using all assignments that are for credit, not including extra credit assignments.
-              Your overall weighted average is then compared with those of your peers in order to compute your relative standing in the course.
+              The z-score for the course is computed using all assignments that are for credit, not including extra
+              credit assignments.
+              Your overall weighted average is then compared with those of your peers in order to compute your relative
+              standing in the course.
             </b-tooltip>
           </p>
         </div>
@@ -122,14 +124,14 @@
             }}</span>
           </template>
           <template v-slot:head(z_score)="data">
-            Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
+            Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle"/></span>
           </template>
           <template v-slot:cell(files)="data">
             <div v-if="data.item.submission_files === 'a'">
               <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
                       @click="openUploadAssignmentFileModal(data.item.id)"
               />
-              <b-icon icon="pencil-square" @click="getAssignmentFileInfo(data.item.id)" />
+              <b-icon icon="pencil-square" @click="getAssignmentFileInfo(data.item.id)"/>
             </div>
             <div v-else>
               N/A
@@ -337,13 +339,7 @@ export default {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
         return false
       }
-
-      if (assignment.assessment_type === 'clicker' || assignment.instructions || (assignment.show_scores && assignment.students_can_view_assignment_statistics)) {
-        this.$router.push(`/students/assignments/${assignment.id}/summary`)
-        return false
-      }
-
-      this.$router.push(`/assignments/${assignment.id}/questions/view`)
+      this.$router.push(`/students/assignments/${assignment.id}/summary`)
     },
     metaInfo () {
       return { title: this.$t('home') }
