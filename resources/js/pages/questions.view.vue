@@ -1921,7 +1921,12 @@ export default {
         }
 
         if (serverSideSubmit) {
-          await this.showResponse(JSON.parse(event.data))
+          let data = JSON.parse(event.data)
+          if (technology === 'webwork' && data.status) {
+            data.type = data.status < 400 ? 'success' : 'error'
+            data = {...data, ...JSON.parse(data.message)}
+          }
+          await this.showResponse(data)
         }
         if (clientSideSubmit) {
           let submissionData = {
