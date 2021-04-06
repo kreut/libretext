@@ -1143,12 +1143,13 @@ class AssignmentSyncQuestionController extends Controller
                             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                             $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
 
-                            $custom_claims['webwork']['sourceFilePath'] =  $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-                            $custom_claims['webwork']['sourceFilePath']= (substr($custom_claims['webwork']['sourceFilePath'],0, 4 ) !== "http")
+                            // $custom_claims['webwork']['sourceFilePath'] =  $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['problemSourceURL']= (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'),0, 4 ) !== "http")
                                 ? "https://webwork.libretexts.org/pgfiles/"
                                 : '';
-                             $custom_claims['webwork']['problemSourceURL'] = "https://webwork.libretexts.org/pgfiles/".$this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
 
+                            
                             $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() ."/api/jwt/process-answer-jwt";
 
                             $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
