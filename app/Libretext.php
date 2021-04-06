@@ -74,12 +74,7 @@ class Libretext extends Model
     {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
         $xml = simplexml_load_string($response->body());
-        if (($pos = strpos($xml->attributes()->title[0], ":")) !== FALSE) {
-            $title = substr($xml->attributes()->title[0], $pos + 1);
-        } else {
-            $title = $xml->attributes()->title[0];
-        }
-        return $title;
+        return  $xml->attributes()->title[0];
     }
 
     public function import()
