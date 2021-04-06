@@ -40,9 +40,10 @@ class DbBackup extends Command
     public function handle()
     {
         $database_name = DB::connection()->getDatabaseName();
+        $database_host = config('myconfig.db_host');
         $filename = $database_name . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";
         echo "Backing up $filename\r\n";
-        $command = "mysqldump " . $database_name . " | gzip > " . storage_path() . "/db_backups/" . $filename . ".gz";
+        $command = "mysqldump -h $database_host --port=25060 --set-gtid-purged=OFF production_libretexts | gzip > " . storage_path() . "/db_backups/" . $filename . ".gz";
         $returnVar = NULL;
         $output = NULL;
         exec($command, $output, $returnVar);
