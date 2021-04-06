@@ -128,11 +128,11 @@ export default {
           this.items.push(
             {
               property: 'Available On',
-              value: this.$moment(this.assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+              value: this.$moment(this.assignment.assign_tos[0].available_from_date + this.assignment.assign_tos[0].available_from_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
             })
           this.items.push({
             property: 'Due',
-            value: this.$moment(this.assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+            value: this.$moment(this.assignment.assign_tos[0].due_date + this.assignment.assign_tos[0].due_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
           })
           if (this.assignment.late_policy !== 'not accepted') {
             this.items.push({
