@@ -76,20 +76,29 @@ class JWTController extends Controller
         $secret = $JWE->getSecret($technology);
         \JWTAuth::getJWTProvider()->setSecret($secret);
         $content = $request->getContent();
-        $response = $this->validateToken($content);
-        if ($response['type'] === 'error') {
-            return json_encode($response);
-        }
-
+        Log::info('Content:' . $content);
         $answerJWT = $this->getPayload($content);
-//if the token isn't formed correctly return a message
+        //TODO: Verify anwserJWT:  submit a question, verify the signature then check problem JWT (shared secret)
+        Log::info('Answer JWT:' . json_encode($answerJWT));
         if (!isset($answerJWT->problemJWT)) {
             $message = "You are missing the problemJWT in your answerJWT!";
             return json_encode(['type' => 'error', 'message' => $message]);
         }
-        $jwe = new JWE();
-        $problemJWT = json_decode($jwe->decrypt($answerJWT->problemJWT, $technology));
 
+        $jwe = new JWE();
+        $problemJWT = $jwe->decrypt($answerJWT->problemJWT, $technology);
+      //  Log::info('Problem JWT:' .json_encode($problemJWT));
+        $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
+        Log::info($token);
+        $response = $this->validateToken($token);
+        if ($response['type'] === 'error') {
+            return json_encode($response);
+        }
+
+
+//if the token isn't formed correctly return a message
+
+        $problemJWT = json_decode($problemJWT);
         $missing_properties = !(
             isset($problemJWT->adapt) &&
             isset($problemJWT->adapt->assignment_id) &&
