@@ -57,6 +57,7 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
+
     public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
@@ -752,20 +753,22 @@ class AssignmentSyncQuestionController extends Controller
                     if (isset($submission_object->platform) && $submission_object->platform === 'standaloneRenderer')
                     {
                         $answers_arr = json_decode(json_encode($submission_object->score->answers),true);
-                        //AnSwEr0003
-                        foreach ( $answers_arr as $answer_key => $value){
-                            $numeric_key = (int) ltrim(str_replace('AnSwEr', '',$answer_key),0);
-                            $student_response_arr[ $numeric_key ]= $value['original_student_ans'];
-                        }
+                            //AnSwEr0003
+                            foreach ( $answers_arr as $answer_key => $value){
+                                $numeric_key = (int) ltrim(str_replace('AnSwEr', '',$answer_key),0);
+                                $student_response_arr[ $numeric_key ]= $value['original_student_ans'];
+                            }
 
                     } else {
-                        $session_JWT = $this->getPayload($submission_object->sessionJWT);
+                        $JWE = new JWE();
+                        $session_JWT = $this->getPayload($submission_object->sessionJWT, $JWE->getSecret('webwork'));
                         //session_JWT will be null for bad submissions
                         if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
                             $answer_template = (array)$session_JWT->answerTemplate;
+                            Log::info(print_r($answer_template,true));
                             foreach ($answer_template as $key => $value) {
                                 if (is_numeric($key)) {
-                                    $student_response_arr[$key] = $value->answer->student_ans;
+                                    $student_response_arr[$key] = $value['answer']['original_student_ans'];
                                 }
                             }
                         }
@@ -774,7 +777,6 @@ class AssignmentSyncQuestionController extends Controller
                         ksort($student_response_arr);//order by keys
                         $student_response = implode(',', $student_response_arr);
                     }
-
                     break;
                 case('imathas'):
                     $tks = explode('.', $submission_object->state);
@@ -1145,11 +1147,11 @@ class AssignmentSyncQuestionController extends Controller
 
                             // $custom_claims['webwork']['sourceFilePath'] =  $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
                             $custom_claims['webwork']['problemSourceURL']= (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'),0, 4 ) !== "http")
-                                ? "https://webwork.libretexts.org/pgfiles/"
+                                ? "https://webwork.libretexts.org:8443/pgfiles/"
                                 : '';
                             $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
 
-                            
+
                             $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() ."/api/jwt/process-answer-jwt";
 
                             $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
