@@ -4,12 +4,14 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\DataShop;
+use App\Exceptions\Handler;
 use App\Http\Requests\StoreSubmission;
 use App\JWE;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use App\Score;
 use App\Submission;
+use Exception;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
@@ -48,7 +50,7 @@ class JWTController extends Controller
         var_dump(auth()->user());
     }
 
-    public function validateToken(string $content)
+    public function authenticateUserFromValidatedToken(string $content)
     {
         //Webwork should post the answerJWT with Authorization using the Adapt JWT
         $response['type'] = 'error';
@@ -65,69 +67,114 @@ class JWTController extends Controller
         return $response;
     }
 
+    function base64UrlEncode($text)
+    {
+        return str_replace(
+            ['+', '/', '='],
+            ['-', '_', ''],
+            base64_encode($text)
+        );
+    }
+
+    /**
+     * @param $content
+     * @param $secret
+     * @return bool
+     */
+    public function validateSignature($content, $secret): bool
+    {
+        //https://developer.okta.com/blog/2019/02/04/create-and-verify-jwts-in-php
+        //verify
+        // split the token
+        $tokenParts = explode('.', $content);
+        $header = base64_decode($tokenParts[0]);
+        $payload = base64_decode($tokenParts[1]);
+        $signatureProvided = $tokenParts[2];
+        $base64UrlHeader = $this->base64UrlEncode($header);
+        $base64UrlPayload = $this->base64UrlEncode($payload);
+        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
+        $base64UrlSignature = $this->base64UrlEncode($signature);
+
+        // verify it matches the signature provided in the token
+        return ($base64UrlSignature === $signatureProvided);
+        //
+    }
 
     public function processAnswerJWT(Request $request)
     {
 
-        $JWE = new JWE();
-        //$referer = $request->headers->get('referer');//will use this to determine the technology
-        $technology = 'webwork';
+        try {
+            $JWE = new JWE();
+            //$referer = $request->headers->get('referer');//will use this to determine the technology
+            $technology = 'webwork';
 
-        $secret = $JWE->getSecret($technology);
-        \JWTAuth::getJWTProvider()->setSecret($secret);
-        $content = $request->getContent();
-        Log::info('Content:' . $content);
-        $answerJWT = $this->getPayload($content);
-        //TODO: Verify anwserJWT:  submit a question, verify the signature then check problem JWT (shared secret)
-        Log::info('Answer JWT:' . json_encode($answerJWT));
-        if (!isset($answerJWT->problemJWT)) {
-            $message = "You are missing the problemJWT in your answerJWT!";
-            return json_encode(['type' => 'error', 'message' => $message]);
-        }
+            $secret = $JWE->getSecret($technology);
+            \JWTAuth::getJWTProvider()->setSecret($secret);
+            $content = $request->getContent();
 
-        $jwe = new JWE();
-        $problemJWT = $jwe->decrypt($answerJWT->problemJWT, $technology);
-      //  Log::info('Problem JWT:' .json_encode($problemJWT));
-        $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
-        Log::info($token);
-        $response = $this->validateToken($token);
-        if ($response['type'] === 'error') {
-            return json_encode($response);
-        }
+            Log::info('Content:' . $content);
+            if (!$this->validateSignature($content, $secret)){
+                $message = "Your JWT does not have a valid signature.";
+                return json_encode(['type' => 'error', 'message' => $message]);
+            }
+            $answerJWT = $this->getPayload($content);
+            //Log::info('Answer JWT:' . json_encode($answerJWT));
+            if (!isset($answerJWT->problemJWT)) {
+                $message = "You are missing the problemJWT in your answerJWT!";
+                return json_encode(['type' => 'error', 'message' => $message]);
+            }
+
+            $jwe = new JWE();
+            $problemJWT = $jwe->decrypt($answerJWT->problemJWT, $technology);
+            //  Log::info('Problem JWT:' .json_encode($problemJWT));
+            $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
+            //Log::info($token);
+            $response = $this->authenticateUserFromValidatedToken($token);
+            if ($response['type'] === 'error') {
+                return json_encode($response);
+            }
 
 
 //if the token isn't formed correctly return a message
 
-        $problemJWT = json_decode($problemJWT);
-        $missing_properties = !(
-            isset($problemJWT->adapt) &&
-            isset($problemJWT->adapt->assignment_id) &&
-            isset($problemJWT->adapt->question_id) &&
-            isset($problemJWT->adapt->technology));
-        if ($missing_properties) {
-            $message = "The problemJWT has an incorrect structure.  Please contact us for assistance.";
-            return json_encode(['type' => 'error', 'message' => $message]);
-        }
+            $problemJWT = json_decode($problemJWT);
+            $missing_properties = !(
+                isset($problemJWT->adapt) &&
+                isset($problemJWT->adapt->assignment_id) &&
+                isset($problemJWT->adapt->question_id) &&
+                isset($problemJWT->adapt->technology));
+            if ($missing_properties) {
+                $message = "The problemJWT has an incorrect structure.  Please contact us for assistance.";
+                return json_encode(['type' => 'error', 'message' => $message]);
+            }
 
-        if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
-            $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
-            return json_encode(['type' => 'error', 'message' => $message]);
-        }
+            if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
+                $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
+                return json_encode(['type' => 'error', 'message' => $message]);
+            }
 
-        //good to go!
-        $request = new storeSubmission();
-        $request['assignment_id'] = $problemJWT->adapt->assignment_id;
-        $request['question_id'] = $problemJWT->adapt->question_id;
-        $request['technology'] = $problemJWT->adapt->technology;
-        $request['submission'] = $answerJWT;
+            //good to go!
+            $request = new storeSubmission();
+            $request['assignment_id'] = $problemJWT->adapt->assignment_id;
+            $request['question_id'] = $problemJWT->adapt->question_id;
+            $request['technology'] = $problemJWT->adapt->technology;
+            $request['submission'] = $answerJWT;
 
-        if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
-            $response['message'] = 'Score field was null.';
+            if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
+                $response['message'] = 'Score field was null.';
+                $response['type'] = 'error';
+                return $response;
+            }
+            $Submission = new Submission();
+            return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop());
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
             $response['type'] = 'error';
+            $response['message'] = "There was an error with this submission.  " . $e->getMessage();
             return $response;
         }
-        $Submission = new Submission();
-        return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop());
     }
 
 }
