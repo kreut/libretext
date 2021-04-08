@@ -50,22 +50,6 @@ class JWTController extends Controller
         var_dump(auth()->user());
     }
 
-    public function authenticateUserFromValidatedToken(string $content)
-    {
-        //Webwork should post the answerJWT with Authorization using the Adapt JWT
-        $response['type'] = 'error';
-        try {
-            if (!auth()->setToken($content)->getPayload()) {
-                $response['message'] = 'User not found';
-            } else {
-                $response['type'] = 'success';
-            }
-
-        } catch (\Exception $e) {
-            $response['message'] = $e->getMessage();
-        }
-        return $response;
-    }
 
     function base64UrlEncode($text)
     {
@@ -83,6 +67,7 @@ class JWTController extends Controller
      */
     public function validateSignature($content, $secret): bool
     {
+        return false;
         //https://developer.okta.com/blog/2019/02/04/create-and-verify-jwts-in-php
         //verify
         // split the token
@@ -116,15 +101,13 @@ class JWTController extends Controller
             $content = $request->getContent();
 
             Log::info('Content:' . $content);
-            if (!$this->validateSignature($content, $secret)){
-                $message = "Your JWT does not have a valid signature.";
-                return json_encode(['type' => 'error', 'message' => $message]);
+            if (!$this->validateSignature($content, $secret)) {
+                throw new Exception("Your JWT does not have a valid signature.");
             }
             $answerJWT = $this->getPayload($content);
             //Log::info('Answer JWT:' . json_encode($answerJWT));
             if (!isset($answerJWT->problemJWT)) {
-                $message = "You are missing the problemJWT in your answerJWT!";
-                return json_encode(['type' => 'error', 'message' => $message]);
+               throw new Exception("You are missing the problemJWT in your answerJWT!");
             }
 
             $jwe = new JWE();
@@ -132,11 +115,9 @@ class JWTController extends Controller
             //  Log::info('Problem JWT:' .json_encode($problemJWT));
             $token = \JWTAuth::getJWTProvider()->encode(json_decode($problemJWT, true));
             //Log::info($token);
-            $response = $this->authenticateUserFromValidatedToken($token);
-            if ($response['type'] === 'error') {
-                return json_encode($response);
+            if (!auth()->setToken($token)->getPayload()) {
+                throw new Exception('User not found');
             }
-
 
 //if the token isn't formed correctly return a message
 
@@ -147,13 +128,11 @@ class JWTController extends Controller
                 isset($problemJWT->adapt->question_id) &&
                 isset($problemJWT->adapt->technology));
             if ($missing_properties) {
-                $message = "The problemJWT has an incorrect structure.  Please contact us for assistance.";
-                return json_encode(['type' => 'error', 'message' => $message]);
+                throw new Exception("The problemJWT has an incorrect structure.  Please contact us for assistance.");
             }
 
             if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
-                $message = $problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.";
-                return json_encode(['type' => 'error', 'message' => $message]);
+                throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
 
             //good to go!
@@ -164,9 +143,7 @@ class JWTController extends Controller
             $request['submission'] = $answerJWT;
 
             if (($request['technology'] === 'webwork') && $answerJWT->score === null) {
-                $response['message'] = 'Score field was null.';
-                $response['type'] = 'error';
-                return $response;
+                throw new Exception('Score field was null.');
             }
             $Submission = new Submission();
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop());
@@ -175,7 +152,7 @@ class JWTController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['type'] = 'error';
-            $response['message'] = "There was an error with this submission.  " . $e->getMessage();
+            $response['message'] = "There was an error with this submission:  " . $e->getMessage();
             return $response;
         }
     }
