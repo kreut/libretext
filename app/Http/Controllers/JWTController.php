@@ -87,6 +87,9 @@ class JWTController extends Controller
         //verify
         // split the token
         $tokenParts = explode('.', $content);
+        if (!(isset($tokenParts[0]) && isset($tokenParts[1]) && isset($tokenParts[2]))){
+            return false;
+        }
         $header = base64_decode($tokenParts[0]);
         $payload = base64_decode($tokenParts[1]);
         $signatureProvided = $tokenParts[2];
