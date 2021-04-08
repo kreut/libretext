@@ -1922,6 +1922,7 @@ export default {
 
         if (serverSideSubmit) {
           let data = JSON.parse(event.data)
+          console.log(data)
           if (technology === 'webwork' && data.status) {
             data.type = data.status < 400 ? 'success' : 'error'
             data = {...data, ...JSON.parse(data.message)}
