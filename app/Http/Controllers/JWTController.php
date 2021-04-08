@@ -13,6 +13,7 @@ use App\Score;
 use App\Submission;
 use Exception;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Log;
 use App\Traits\JWT;
 
@@ -67,7 +68,7 @@ class JWTController extends Controller
      */
     public function validateSignature($content, $secret): bool
     {
-        return false;
+
         //https://developer.okta.com/blog/2019/02/04/create-and-verify-jwts-in-php
         //verify
         // split the token
@@ -78,7 +79,7 @@ class JWTController extends Controller
         $header = base64_decode($tokenParts[0]);
         $payload = base64_decode($tokenParts[1]);
         $signatureProvided = $tokenParts[2];
-        $base64UrlHeader = $this->base64UrlEncode($header);
+        $base64UrlHeader = base64_encode($header);
         $base64UrlPayload = $this->base64UrlEncode($payload);
         $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
         $base64UrlSignature = $this->base64UrlEncode($signature);
@@ -152,6 +153,7 @@ class JWTController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['type'] = 'error';
+            $response['status'] = 400;
             $response['message'] = "There was an error with this submission:  " . $e->getMessage();
             return $response;
         }
