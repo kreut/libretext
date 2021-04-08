@@ -1925,7 +1925,11 @@ export default {
           console.log(data)
           if (technology === 'webwork' && data.status) {
             data.type = data.status < 400 ? 'success' : 'error'
-            data = {...data, ...JSON.parse(data.message)}
+            try {
+              data = { ...data, ...JSON.parse(data.message) }
+            } catch (error) {
+
+            }
           }
           await this.showResponse(data)
         }
@@ -1984,8 +1988,7 @@ export default {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
-        //TODO: Error will occur here on production!
-      } else if (body.includes('prod.adapt.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
+      } else if (body.includes('adapt.libretexts.org') || body.includes('webwork.libretexts.org') || (body.includes('demo.webwork.rochester.edu'))) {
         technology = 'webwork'
       } else {
         technology = false
