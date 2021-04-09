@@ -82,8 +82,15 @@ class Submission extends Model
             case('webwork'):
                 // Log::info('case webwork');
                 $submission = $data['submission'];
-                Log::info('Submission:' . json_encode($submission));
-                $proportion_correct = floatval($submission->score->result);
+                //json_encode($submission, )
+                #Log::info('Submission:' . json_encode($submission));
+                #Log::info('Submission Score:' . json_encode($submission->score));
+                //$submission_score = json_decode(json_encode($submission->score));
+
+
+                $submission_score = (object) $submission->score; //
+                Log::info( $submission_score->result);
+                $proportion_correct = floatval($submission_score->result);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
                     : $this->computeScoreForCompletion($assignment_question);

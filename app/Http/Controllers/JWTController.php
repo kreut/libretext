@@ -73,7 +73,7 @@ class JWTController extends Controller
         //verify
         // split the token
         $tokenParts = explode('.', $content);
-        if (!(isset($tokenParts[0]) && isset($tokenParts[1]) && isset($tokenParts[2]))){
+        if (!(isset($tokenParts[0]) && isset($tokenParts[1]) && isset($tokenParts[2]))) {
             return false;
         }
         $header = $tokenParts[0];
@@ -98,15 +98,15 @@ class JWTController extends Controller
             \JWTAuth::getJWTProvider()->setSecret($secret);
             $content = $request->getContent();
 
-            Log::info('Content:' . $content);
-           if (!$this->validateSignature($content, $secret)) {
+            // Log::info('Content:' . $content);
+            if (!$this->validateSignature($content, $secret)) {
                 throw new Exception("Your JWT does not have a valid signature.");
             }
-            $answerJWT = $this->getPayload($content);
+            $answerJWT = $this->getPayload($content, $secret);
 
             if (!isset($answerJWT->problemJWT)) {
                 Log::info('Answer JWT:' . json_encode($answerJWT));
-               throw new Exception("You are missing the problemJWT in your answerJWT!");
+                throw new Exception("You are missing the problemJWT in your answerJWT!");
             }
 
             $jwe = new JWE();
@@ -133,7 +133,14 @@ class JWTController extends Controller
             if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
                 throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
-
+            if ($problemJWT->adapt->technology === 'webwork') {
+                $answers = $answerJWT->score['answers'];
+                foreach ($answers as $key => $value) {
+                    if ($answers[$key]['error_message']) {
+                        throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
+                    }
+                }
+            }
             //good to go!
             $request = new storeSubmission();
             $request['assignment_id'] = $problemJWT->adapt->assignment_id;
@@ -158,4 +165,3 @@ class JWTController extends Controller
     }
 
 }
-

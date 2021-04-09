@@ -62,7 +62,7 @@ class JWE extends Model
             $this->compressionMethodManager
         );
 
-        $payload = json_encode($this->getPayload($jwt),JSON_UNESCAPED_SLASHES);
+        $payload = json_encode($this->getPayload($jwt, $this->getSecret($technology)),JSON_UNESCAPED_SLASHES);
 
         $jwe = $jweBuilder
             ->create()              // We want to create a new JWE
