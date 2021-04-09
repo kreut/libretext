@@ -76,12 +76,10 @@ class JWTController extends Controller
         if (!(isset($tokenParts[0]) && isset($tokenParts[1]) && isset($tokenParts[2]))){
             return false;
         }
-        $header = base64_decode($tokenParts[0]);
-        $payload = base64_decode($tokenParts[1]);
+        $header = $tokenParts[0];
+        $payload = $tokenParts[1];
         $signatureProvided = $tokenParts[2];
-        $base64UrlHeader = base64_encode($header);
-        $base64UrlPayload = $this->base64UrlEncode($payload);
-        $signature = hash_hmac('sha256', $base64UrlHeader . "." . $base64UrlPayload, $secret, true);
+        $signature = hash_hmac('sha256', $header . "." . $payload, $secret, true);
         $base64UrlSignature = $this->base64UrlEncode($signature);
 
         // verify it matches the signature provided in the token
@@ -91,7 +89,6 @@ class JWTController extends Controller
 
     public function processAnswerJWT(Request $request)
     {
-
         try {
             $JWE = new JWE();
             //$referer = $request->headers->get('referer');//will use this to determine the technology
@@ -102,12 +99,13 @@ class JWTController extends Controller
             $content = $request->getContent();
 
             Log::info('Content:' . $content);
-            if (!$this->validateSignature($content, $secret)) {
+           if (!$this->validateSignature($content, $secret)) {
                 throw new Exception("Your JWT does not have a valid signature.");
             }
             $answerJWT = $this->getPayload($content);
-            //Log::info('Answer JWT:' . json_encode($answerJWT));
+
             if (!isset($answerJWT->problemJWT)) {
+                Log::info('Answer JWT:' . json_encode($answerJWT));
                throw new Exception("You are missing the problemJWT in your answerJWT!");
             }
 
