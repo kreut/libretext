@@ -748,13 +748,25 @@ class AssignmentSyncQuestionController extends Controller
                 case('webwork'):
                     $student_response = 'N/A';
                     $student_response_arr = [];
-                    $session_JWT = $this->getPayload($submission_object->sessionJWT);
-                    //session_JWT will be null for bad submissions
-                    if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
-                        $answer_template = (array)$session_JWT->answerTemplate;
-                        foreach ($answer_template as $key => $value) {
-                            if (is_numeric($key)) {
-                                $student_response_arr[$key] = $value->answer->student_ans;
+
+                    if (isset($submission_object->platform) && $submission_object->platform === 'standaloneRenderer')
+                    {
+                        $answers_arr = json_decode(json_encode($submission_object->score->answers),true);
+                        //AnSwEr0003
+                        foreach ( $answers_arr as $answer_key => $value){
+                            $numeric_key = (int) ltrim(str_replace('AnSwEr', '',$answer_key),0);
+                            $student_response_arr[ $numeric_key ]= $value['original_student_ans'];
+                        }
+
+                    } else {
+                        $session_JWT = $this->getPayload($submission_object->sessionJWT);
+                        //session_JWT will be null for bad submissions
+                        if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
+                            $answer_template = (array)$session_JWT->answerTemplate;
+                            foreach ($answer_template as $key => $value) {
+                                if (is_numeric($key)) {
+                                    $student_response_arr[$key] = $value->answer->student_ans;
+                                }
                             }
                         }
                     }
