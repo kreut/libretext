@@ -89,7 +89,7 @@ class Submission extends Model
 
 
                 $submission_score = (object) $submission->score; //
-                Log::info( $submission_score->result);
+                //Log::info( $submission_score->result);
                 $proportion_correct = floatval($submission_score->result);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
