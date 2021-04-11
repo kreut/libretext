@@ -133,7 +133,7 @@ class JWTController extends Controller
             if (!in_array($problemJWT->adapt->technology, ['webwork', 'imathas'])) {
                 throw new Exception($problemJWT->adapt->technology . " is not an accepted technology.  Please contact us for assistance.");
             }
-            if ($problemJWT->adapt->technology === 'webwork') {
+            if ($problemJWT->adapt->technology === 'webwork' && isset($answerJWT->score['answers'])) {
                 $answers = $answerJWT->score['answers'];
                 foreach ($answers as $key => $value) {
                     if ($answers[$key]['error_message']) {
