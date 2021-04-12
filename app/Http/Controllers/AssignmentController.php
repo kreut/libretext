@@ -964,6 +964,7 @@ class AssignmentController extends Controller
                 $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, $assign_to_timing);
                 $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
                 $formatted_items['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone);
+                $formatted_items['formatted_due'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone,'F d, Y \a\t g:i a');
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
@@ -1005,7 +1006,7 @@ class AssignmentController extends Controller
         //$assign_to_timing will be appropriate for students
         $late_policy = '';
         $final_submission_deadline = ($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)
-            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->final_submission_deadline, Auth::user()->time_zone)
+            ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->final_submission_deadline, Auth::user()->time_zone, 'F d, Y \a\t g:i a')
             : '';
         switch ($assignment->late_policy) {
             case('not accepted'):

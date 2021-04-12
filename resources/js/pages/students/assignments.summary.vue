@@ -32,8 +32,12 @@ mounted
                 <span class="font-weight-bold">Instructions: </span> {{ instructions }}
               </p>
               <p>
+                <span class="font-weight-bold">Due Date: </span>
+                This assignment is due {{ formattedDue }}.
+              </p>
+              <p>
                 <span class="font-weight-bold">Late Policy: &nbsp;</span>
-                {{ formattedLatePolicy }}
+                {{ formattedLatePolicy }}art
               </p>
             </b-card-text>
           </b-card>
@@ -86,6 +90,7 @@ export default {
     name: '',
     instructions: '',
     formattedLatePolicy: '',
+    formattedDue: '',
     canViewAssignmentStatistics: false,
     assignmentInfo: {}
   }),
@@ -148,6 +153,7 @@ export default {
         let assignment = data.assignment
         this.instructions = assignment.instructions
         this.formattedLatePolicy = assignment.formatted_late_policy
+        this.formattedDue = assignment.formatted_due
         this.assessmentType = assignment.assessment_type
         this.name = assignment.name
         this.pastDue = assignment.past_due
