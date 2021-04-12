@@ -306,6 +306,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['question_id'] = $value->question_id;
                 $columns['technology'] = $value->technology;
                 $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
+                $columns['mind_touch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
                 $rows[] = $columns;
             }
 

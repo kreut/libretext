@@ -41,6 +41,9 @@
                 <th scope="col">
                   Solution
                 </th>
+                <th scope="col">
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody is="draggable" v-model="items" tag="tbody" @end="saveNewOrder">
@@ -61,6 +64,10 @@
                 </td>
                 <td>{{ item.points }}</td>
                 <td><span v-html="item.solution" /></td>
+                <td>
+                  <b-icon icon="pencil" @click="editQuestionSource(item.mind_touch_url)" />
+                  <b-icon icon="trash" @click="initRemoveQuestion(item)" />
+                </td>
               </tr>
             </tbody>
           </table>
@@ -111,6 +118,9 @@ export default {
     this.getAssignmentInfo()
   },
   methods: {
+    editQuestionSource (mindTouchUrl) {
+      window.open(mindTouchUrl)
+    },
     doCopy (adaptId) {
       this.$copyText(adaptId).then((e) => {
         this.$noty.success('The Adapt ID has been copied to your clipboard.')
