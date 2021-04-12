@@ -81,6 +81,11 @@ class ExtensionController extends Controller
             return $response;
         }
         try {
+            $assign_to_user = DB::table('assign_to_users')
+                ->join('assign_to_timings', 'assign_to_users.assign_to_timing_id', '=', 'assign_to_timings.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $user->id)
+                ->first();
             $extension = DB::table('extensions')
                 ->where('assignment_id', $assignment->id)
                 ->where('user_id', $user->id)
@@ -88,6 +93,7 @@ class ExtensionController extends Controller
             $response['type'] = 'success';
             $response['extension_date'] = '';
             $response['extension_time'] = '';
+            $response['originally_due'] =  $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_user->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a');
             $response['extension_warning'] = '';
             if ($assignment->show_scores) {
                 $response['extension_warning'] .= "The assignment scores have been released.  ";

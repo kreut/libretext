@@ -4,6 +4,8 @@ namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\AssignmentGroupWeight;
+use App\AssignToTiming;
+use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
 use App\FinalGrade;
@@ -15,6 +17,7 @@ use App\ExtraCredit;
 use App\Extension;
 use App\Traits\Test;
 
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -47,6 +50,17 @@ class ScoresIndexTest extends TestCase
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         //enroll a student in that course
+        $assignToTiming = new AssignToTiming();
+        $assignToTiming->assignment_id = $this->assignment->id;
+        $assignToTiming->available_from = Carbon::now();
+        $assignToTiming->due = Carbon::now()->addDay();
+        $assignToTiming->save();
+
+        $assignToUser = new AssignToUser();
+        $assignToUser->assign_to_timing_id = $assignToTiming->id;
+        $assignToUser->user_id = $this->student_user->id;
+
+        $assignToUser->save();
 
 
         $this->student_user_2 = factory(User::class)->create();//not enrolled

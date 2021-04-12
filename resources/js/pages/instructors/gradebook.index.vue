@@ -157,6 +157,7 @@
             <span class="font-weight-bold">{{ extensionWarning }}</span>
           </b-alert>
         </div>
+        <p><span class="font-italic">This assignment was originally due at {{ originalDueDateTime }}.</span></p>
         <b-form ref="form" @submit="updateExtensionOrOverrideByStudent">
           <b-form-group
             id="extension"
@@ -262,6 +263,7 @@ export default {
     canViewScores: false,
     currentExtensionDate: '',
     currentExtensionTime: '',
+    originalDueDateTime: '',
     currentScore: null
   }),
   mounted () {
@@ -349,6 +351,7 @@ export default {
       if (data.type === 'success') {
         this.currentExtensionDate = data.extension_date
         this.currentExtensionTime = data.extension_time
+        this.originalDueDateTime = data.originally_due
         if (data.extension_date) {
           this.form.extension_date = data.extension_date
           this.form.extension_time = data.extension_time
