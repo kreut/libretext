@@ -90,6 +90,7 @@ class JWTController extends Controller
     public function processAnswerJWT(Request $request)
     {
         try {
+            $log_exception = true;
             $JWE = new JWE();
             //$referer = $request->headers->get('referer');//will use this to determine the technology
             $technology = 'webwork';
@@ -137,6 +138,7 @@ class JWTController extends Controller
                 $answers = $answerJWT->score['answers'];
                 foreach ($answers as $key => $value) {
                     if ($answers[$key]['error_message']) {
+                        $log_exception = false;
                         throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
                     }
                 }
@@ -155,8 +157,10 @@ class JWTController extends Controller
             return $Submission->store($request, new Submission(), new Assignment(), new Score(), new LtiLaunch(), new LtiGradePassback(), new DataShop());
 
         } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
+            if ($log_exception) {
+                $h = new Handler(app());
+                $h->report($e);
+            }
             $response['type'] = 'error';
             $response['status'] = 400;
             $response['message'] = "There was an error with this submission:  " . $e->getMessage();
