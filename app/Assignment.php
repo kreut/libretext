@@ -87,12 +87,11 @@ class Assignment extends Model
                 $number_of_submissions_by_assignment = $Submission->getNumberOfUserSubmissionsByCourse($course, Auth::user());
 
             } else {
-                $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
             }
 
             $course_assignments = $course->assignments;
-
+            $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
 
             foreach ($course_assignments as $key => $assignment) {
@@ -153,11 +152,11 @@ class Assignment extends Model
                     }
 
                     $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
-                    $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
+
 
                 }
 //same regardless of whether you're a student
-
+                $assignments_info[$key]['assignment_group'] = $assignment_groups_by_assignment[$assignment->id];
                 $assignments_info[$key]['show_points_per_question'] = $assignment->show_points_per_question;
                 $assignments_info[$key]['assessment_type'] = $assignment->assessment_type;
 

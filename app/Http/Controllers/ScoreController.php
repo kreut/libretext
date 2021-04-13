@@ -503,11 +503,15 @@ class ScoreController extends Controller
             $Solution,
             $AssignmentGroup);
 
+        usort($assignments_info['assignments'], function($a, $b) {
+            return $a['due']['due_date'] <=> $b['due']['due_date'];
+        });
         if ($assignments_info ['type'] === 'error') {
             return $assignments_info;
         }
         //probably can refactor...
-        $assignments = $course->assignments->sortBy('due');
+        $assignments = $course->assignments;
+
         $weighted_score = false;
         $letter_grade = false;
         $z_score = false;

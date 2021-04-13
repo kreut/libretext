@@ -99,58 +99,113 @@
             </b-tooltip>
           </p>
         </div>
-        <b-table striped hover :fields="fields" :items="assignments">
-          <template v-slot:cell(name)="data">
-            <div class="mb-0">
-              <div v-show="data.item.is_available">
-                <a href="" @click.prevent="getAssignmentSummaryView(data.item)">{{ data.item.name }}</a>
-              </div>
-              <div v-show="!data.item.is_available">
-                {{ data.item.name }}
-              </div>
-            </div>
-          </template>
-          <template v-slot:cell(available_from)="data">
-            {{ $moment(data.item.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
-          </template>
-          <template v-slot:cell(due)="data">
-            {{ $moment(data.item.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
-            {{ data.item.due.is_extension ? '(Extension)' : '' }}
-          </template>
-          <template v-slot:cell(score)="data">
-            <span v-if="data.item.score === 'Not yet released'">Not yet released</span>
-            <span v-if="data.item.score !== 'Not yet released'"> {{ data.item.score }}/{{
-              data.item.total_points
-            }}</span>
-          </template>
-          <template v-slot:head(z_score)="data">
-            Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle"/></span>
-          </template>
-          <template v-slot:cell(files)="data">
-            <div v-if="data.item.submission_files === 'a'">
-              <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
-                      @click="openUploadAssignmentFileModal(data.item.id)"
+        <b-container>
+          <b-row class="mb-4">
+            <b-col lg="3">
+              <b-form-select v-if="assignmentGroupOptions.length>1"
+                             v-model="chosenAssignmentGroup"
+                             :options="assignmentGroupOptions"
+                             @change="updateAssignmentGroupFilter()"
               />
-              <b-icon icon="pencil-square" @click="getAssignmentFileInfo(data.item.id)"/>
-            </div>
-            <div v-else>
-              N/A
-            </div>
-          </template>
+            </b-col>
+          </b-row>
+        </b-container>
+        <table class="table table-striped">
+          <thead>
+          <tr>
+            <th scope="col">
+              Assignment Name
+            </th>
+            <th scope="col">
+              Group
+            </th>
+            <th scope="col">
+              Available From
+            </th>
+            <th scope="col">
+              Due
+            </th>
+            <th scope="col">
+              Submitted
+            </th>
+            <th scope="col">
+              Score
+            </th>
+            <th scope="col">
+              Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle"/></span>
+            </th>
+            <th scope="col">
+              Files
+            </th>
+            <th scope="col">
+              Solution Key
+            </th>
+          </tr>
+          </thead>
+          <b-tbody v-model="assignments">
+            <tr v-for="assignment in assignments"
+                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+                :key="assignment.id"
+            >
+              <td>
+                <div v-show="assignment.is_available">
+                  <a href="" @click.prevent="getAssignmentSummaryView(assignment)">{{ assignment.name }}</a>
+                </div>
+                <div v-show="!assignment.is_available">
+                  {{ assignment.name }}
+                </div>
+              </td>
+              <td>
+                {{ assignment.assignment_group }}
+              </td>
+              <td>
+                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+                {{ $moment(assignment.available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+              </td>
+              <td>
+                {{ $moment(assignment.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }} <br>
+                {{ $moment(assignment.due.due_date, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
+                {{ assignment.due.is_extension ? '(Extension)' : '' }}
+              </td>
+              <td>
+                <span v-if="assignment.score === 'Not yet released'">Not yet released</span>
+                <span v-if="assignment.score !== 'Not yet released'"> {{ assignment.score }}/{{
+                    assignment.total_points
+                  }}</span>
+              </td>
+              <td>
+                {{ assignment.z_score }}
+              </td>
+              <td>
+                {{ assignment.number_submitted }}
+              </td>
+              <td>
+                <div v-if="assignment.submission_files === 'a'">
+                  <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
+                          @click="openUploadAssignmentFileModal(assignment.id)"
+                  />
+                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)"/>
+                </div>
+                <div v-else>
+                  N/A
+                </div>
+              </td>
 
-          <template v-slot:cell(solution_key)="data">
-            <div v-if="data.item.solution_key">
-              <b-button variant="outline-primary"
-                        @click="downloadSolutionFile('a', data.item.id, null, `${data.item.name}.pdf`)"
-              >
-                Download
-              </b-button>
-            </div>
-            <div v-else>
-              N/A
-            </div>
-          </template>
-        </b-table>
+              <td>
+                <div v-if="assignment.solution_key">
+                  <b-button variant="outline-primary"
+                            @click="downloadSolutionFile('a', assignment.id, null, `${assignment.name}.pdf`)"
+                  >
+                    Download
+                  </b-button>
+                </div>
+                <div v-else>
+                  N/A
+                </div>
+              </td>
+            </tr>
+          </b-tbody>
+        </table>
       </div>
       <div v-else>
         <b-alert :show="showNoAssignmentsAlert" variant="warning">
@@ -169,9 +224,9 @@ import Form from 'vform'
 import { downloadFile, downloadSolutionFile } from '~/helpers/DownloadFiles'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
 
-import { getAssignments } from '../../helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import { initAssignmentGroupOptions, updateAssignmentGroupFilter } from '~/helpers/Assignments'
 
 export default {
   components: {
@@ -179,6 +234,9 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentGroupOptions: [],
+    chosenAssignmentGroupText: null,
+    chosenAssignmentGroup: null,
     showZScoreTooltip: {
       fallbackPlacement: ['right'],
       placement: 'right',
@@ -203,6 +261,10 @@ export default {
       {
         key: 'name',
         sortable: true
+      },
+      {
+        key: 'assignment_group',
+        label: 'Group'
       },
       {
         key: 'available_from',
@@ -232,12 +294,19 @@ export default {
     this.downloadFile = downloadFile
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
+    this.initAssignmentGroupOptions = initAssignmentGroupOptions
+    this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
   mounted () {
     this.courseId = this.$route.params.courseId
     this.getScoresByUser()
   },
   methods: {
+    showRow (assignment, type) {
+      return this.chosenAssignmentGroup === null || assignment.assignment_group === this.chosenAssignmentGroupText
+        ? ''
+        : 'is-hidden'
+    },
     async getScoresByUser () {
       try {
         const { data } = await axios.get(`/api/scores/${this.courseId}/get-course-scores-by-user`)
@@ -251,6 +320,7 @@ export default {
         this.hasAssignments = data.assignments.length > 0
         this.showNoAssignmentsAlert = !this.hasAssignments
         this.assignments = data.assignments
+        this.initAssignmentGroupOptions(this.assignments)
 
         this.title = `${data.course.name} Assignments`
         this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)

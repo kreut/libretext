@@ -39,7 +39,6 @@
           label="Level"
           label-for="Level"
         >
-
           <b-form-radio-group
             v-model="createAssignmentFromTemplateForm.level"
             stacked
@@ -60,7 +59,6 @@
           label="Assign To's"
           label-for="Assign To's"
         >
-
           <b-form-radio-group
             v-model="createAssignmentFromTemplateForm.assign_to_groups"
             stacked
@@ -124,31 +122,32 @@
                            v-model="chosenAssignmentGroup"
                            :options="assignmentGroupOptions"
                            @change="updateAssignmentGroupFilter()"
-            ></b-form-select>
+            />
           </b-col>
           <b-col lg="5">
-          <b-button v-if="(user && user.role === 2)"
-                    class="ml-5 mr-1"
-                    size="sm"
-                    variant="primary"
-                    @click="initAddAssignment"
-          >
-            Add Assignment
-          </b-button>
-          <b-button v-if="(user && user.role === 2)"
-                    class="mr-1"
-                    size="sm"
-                    variant="outline-primary"
-                    @click="initImportAssignment"
-          >
-            Import Assignment
-          </b-button>
-          <b-button
-                    size="sm"
-                    @click="getGradeBook()"
-          >
-            Gradebook
-          </b-button>
+            <b-button v-if="(user && user.role === 2)"
+                      class="ml-5 mr-1"
+                      size="sm"
+                      variant="primary"
+                      @click="initAddAssignment"
+            >
+              Add Assignment
+            </b-button>
+            <b-button v-if="(user && user.role === 2)"
+                      class="mr-1"
+                      size="sm"
+                      variant="outline-primary"
+                      @click="initImportAssignment"
+            >
+              Import Assignment
+            </b-button>
+            <b-button
+              :class="(user && user.role === 4) ? 'float-right' : ''"
+              size="sm"
+              @click="getGradeBook()"
+            >
+              Gradebook
+            </b-button>
           </b-col>
         </b-row>
       </b-container>
@@ -365,7 +364,13 @@ import { mapGetters } from 'vuex'
 import { ToggleButton } from 'vue-js-toggle-button'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
-import { isLocked, getAssignments, isLockedMessage } from '~/helpers/Assignments'
+import {
+  isLocked,
+  getAssignments,
+  isLockedMessage,
+  initAssignmentGroupOptions,
+  updateAssignmentGroupFilter
+} from '~/helpers/Assignments'
 
 import AssignmentProperties from '~/components/AssignmentProperties'
 import AssignTosToView from '~/components/AssignTosToView'
@@ -433,6 +438,8 @@ export default {
     this.getAssignments = getAssignments
     this.isLocked = isLocked
     this.isLockedMessage = isLockedMessage
+    this.initAssignmentGroupOptions = initAssignmentGroupOptions
+    this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
   async mounted () {
     this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
@@ -449,28 +456,10 @@ export default {
       }
       await this.getAssignments()
       this.currentOrderedAssignments = this.assignments
-      let assignmentGroupTexts = []
-      this.assignmentGroupOptions = [{ value: null, text: 'All assignment groups' }]
-      let numAssignmentGroups = 1
-      for (let i = 0; i < this.assignments.length; i++) {
-        let text = this.assignments[i].assignment_group
-        let assignmentGroup = { value: numAssignmentGroups, text: text }
-        if (!assignmentGroupTexts.includes(text)) {
-          numAssignmentGroups++
-          this.assignmentGroupOptions.push(assignmentGroup)
-          assignmentGroupTexts.push(text)
-        }
-      }
+      this.initAssignmentGroupOptions(this.assignments)
     }
   },
   methods: {
-    updateAssignmentGroupFilter () {
-      for (let i = 0; i < this.assignmentGroupOptions.length; i++) {
-        if (this.assignmentGroupOptions[i].value === this.chosenAssignmentGroup) {
-          this.chosenAssignmentGroupText = this.assignmentGroupOptions[i].text
-        }
-      }
-    },
     viewAssignTos (assignTosToView) {
       this.assignTosToView = assignTosToView
       this.$bvModal.show('modal-assign-tos-to-view')
