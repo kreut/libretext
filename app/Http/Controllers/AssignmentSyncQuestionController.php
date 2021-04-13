@@ -57,7 +57,6 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
-
     public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
@@ -750,14 +749,13 @@ class AssignmentSyncQuestionController extends Controller
                     $student_response = 'N/A';
                     $student_response_arr = [];
 
-                    if (isset($submission_object->platform) && $submission_object->platform === 'standaloneRenderer')
-                    {
-                        $answers_arr = json_decode(json_encode($submission_object->score->answers),true);
-                            //AnSwEr0003
-                            foreach ( $answers_arr as $answer_key => $value){
-                                $numeric_key = (int) ltrim(str_replace('AnSwEr', '',$answer_key),0);
-                                $student_response_arr[ $numeric_key ]= $value['original_student_ans'];
-                            }
+                    if (isset($submission_object->platform) && $submission_object->platform === 'standaloneRenderer') {
+                        $answers_arr = json_decode(json_encode($submission_object->score->answers), true);
+                        //AnSwEr0003
+                        foreach ($answers_arr as $answer_key => $value) {
+                            $numeric_key = (int)ltrim(str_replace('AnSwEr', '', $answer_key), 0);
+                            $student_response_arr[$numeric_key] = $value['original_student_ans'];
+                        }
 
                     } else {
                         $JWE = new JWE();
@@ -765,9 +763,9 @@ class AssignmentSyncQuestionController extends Controller
                         //session_JWT will be null for bad submissions
                         if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
                             $answer_template = (array)$session_JWT->answerTemplate;
-                            Log::info(print_r($answer_template,true));
+                            Log::info(print_r($answer_template, true));
                             foreach ($answer_template as $key => $value) {
-                                if (is_numeric($key)) {
+                                if (is_numeric($key) && isset($value->answer->student_ans)) {
                                     $student_response_arr[$key] = $value['answer']['original_student_ans'];
                                 }
                             }
@@ -1146,13 +1144,13 @@ class AssignmentSyncQuestionController extends Controller
                             $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
 
                             // $custom_claims['webwork']['sourceFilePath'] =  $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-                            $custom_claims['webwork']['problemSourceURL']= (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'),0, 4 ) !== "http")
+                            $custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
                                 ? "https://webwork.libretexts.org:8443/pgfiles/"
                                 : '';
                             $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
 
 
-                            $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() ."/api/jwt/process-answer-jwt";
+                            $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() . "/api/jwt/process-answer-jwt";
 
                             $custom_claims['webwork']['problemUUID'] = rand(1, 1000);
                             $custom_claims['webwork']['language'] = 'en';
@@ -1161,8 +1159,7 @@ class AssignmentSyncQuestionController extends Controller
                             $custom_claims['webwork']['showDebug'] = 0;
 
                             $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?" width="100%"></iframe>';
-                        }
-                        else {
+                        } else {
                             $custom_claims['webwork']['showSummary'] = 1;
                             $custom_claims['webwork']['displayMode'] = 'MathJax';
                             $custom_claims['webwork']['language'] = 'en';
@@ -1183,9 +1180,6 @@ class AssignmentSyncQuestionController extends Controller
 
                             $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
                         }
-
-
-
 
 
                         $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
