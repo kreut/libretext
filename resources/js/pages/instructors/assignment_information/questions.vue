@@ -1,5 +1,14 @@
 <template>
   <div>
+    <b-modal
+      id="modal-remove-question"
+      ref="modal"
+      title="Confirm Remove Question"
+      ok-title="Yes, remove question"
+      @ok="submitRemoveQuestion"
+    >
+      <RemoveQuestion />
+    </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -65,8 +74,22 @@
                 <td>{{ item.points }}</td>
                 <td><span v-html="item.solution" /></td>
                 <td>
-                  <b-icon icon="pencil" @click="editQuestionSource(item.mind_touch_url)" />
-                  <b-icon icon="trash" @click="initRemoveQuestion(item)" />
+                  <span class="pr-1" @click="editQuestionSource(item.mind_touch_url)">
+                    <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
+                               delay="500"
+                    >
+                      Edit question source
+                    </b-tooltip>
+                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil" />
+                  </span>
+                  <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
+                    <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                               delay="500"
+                    >
+                      Remove the question from the assignment
+                    </b-tooltip>
+                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash" />
+                  </span>
                 </td>
               </tr>
             </tbody>
@@ -92,19 +115,24 @@ import draggable from 'vuedraggable'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
+import RemoveQuestion from '~/components/RemoveQuestion'
+import { getTooltipTarget, initTooltips } from '../../../helpers/Tooptips'
+
 export default {
   middleware: 'auth',
   components: {
     FontAwesomeIcon,
     Loading,
-    draggable
+    draggable,
+    RemoveQuestion
   },
   data: () => ({
     adaptId: 0,
     copyIcon: faCopy,
     currentOrderedQuestions: [],
     items: [],
-    isLoading: true
+    isLoading: true,
+    questionId: 0
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -114,10 +142,29 @@ export default {
       this.$noty.error('You do not have access to the assignment questions page.')
       return false
     }
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
   },
   methods: {
+    async submitRemoveQuestion () {
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questionId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.$noty.info(data.message)
+        await this.getAssignmentInfo()
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+    openRemoveQuestionModal (questionId) {
+      this.questionId = questionId
+      this.$bvModal.show('modal-remove-question')
+    },
     editQuestionSource (mindTouchUrl) {
       window.open(mindTouchUrl)
     },

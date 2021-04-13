@@ -49,11 +49,7 @@
       ok-title="Yes, remove question"
       @ok="submitRemoveQuestion"
     >
-      <p>
-        By removing the question, you will also delete all student submissions for this question. In addition,
-        the scores will be re-computed.
-      </p>
-      <p><strong>Once a question is removed, the scores cannot be reverted!</strong></p>
+      <RemoveQuestion/>
     </b-modal>
 
     <b-modal
@@ -1169,6 +1165,8 @@ import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
 
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+
 import { ToggleButton } from 'vue-js-toggle-button'
 
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
@@ -1195,6 +1193,8 @@ import libraries from '~/helpers/Libraries'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
+import RemoveQuestion from '~/components/RemoveQuestion'
+
 import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
@@ -1210,6 +1210,7 @@ export default {
     ToggleButton,
     SolutionFileHtml,
     PieChart,
+    RemoveQuestion,
     ckeditor: CKEditor.component
   },
   data: () => ({
