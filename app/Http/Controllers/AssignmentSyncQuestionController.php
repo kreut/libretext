@@ -763,9 +763,8 @@ class AssignmentSyncQuestionController extends Controller
                         //session_JWT will be null for bad submissions
                         if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
                             $answer_template = (array)$session_JWT->answerTemplate;
-                            Log::info(print_r($answer_template, true));
                             foreach ($answer_template as $key => $value) {
-                                if (is_numeric($key) && isset($value->answer->student_ans)) {
+                                if (is_numeric($key) && isset($value['answer']) && isset($value['answer']['original_student_ans'])) {
                                     $student_response_arr[$key] = $value['answer']['original_student_ans'];
                                 }
                             }
