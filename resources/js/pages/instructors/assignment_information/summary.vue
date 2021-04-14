@@ -16,7 +16,7 @@
                               :course-id="Number(courseId)"
                               :course-end-date="courseEndDate"
                               :course-start-date="courseStartDate"
-                              />
+        />
         <b-modal
           id="modal-assign-tos-to-view"
           ref="modal"
@@ -35,10 +35,14 @@
 
           <b-card :header="assignment.name" class="h-100">
             <b-card-text>
-              <span class="font-weight-bold">Instructions: </span><span class="font-italic"
-            >{{ assignment.instructions ? assignment.instructions : 'None provided.' }}</span><br>
-              <span class="font-weight-bold">Late Policy: </span><span class="font-italic"
-            >{{ assignment.formatted_late_policy }}</span><br>
+              <p>
+                <span class="font-weight-bold">Instructions: </span>
+                <span v-html="getInstructions(assignment)"/>
+              </p>
+              <p>
+                <span class="font-weight-bold">Late Policy: </span>
+                <span class="font-italic">{{ assignment.formatted_late_policy }}</span>
+              </p>
             </b-card-text>
           </b-card>
           <b-table
@@ -102,6 +106,9 @@ export default {
     this.getAssignmentSummary()
   },
   methods: {
+    getInstructions (assignment) {
+      return assignment.instructions ? assignment.instructions : 'None provided.'
+    },
     viewAssignTos () {
       this.assignTosToView = this.assignment.assign_tos
       this.$bvModal.show('modal-assign-tos-to-view')
@@ -156,7 +163,10 @@ export default {
           },
           { property: 'Total Points', value: this.assignment.total_points },
           { property: 'Number Of Questions', value: this.assignment.number_of_questions },
-          { property: 'Number Of Randomized Questions Chosen', value: this.assignment.number_of_randomized_questions_chosen }
+          {
+            property: 'Number Of Randomized Questions Chosen',
+            value: this.assignment.number_of_randomized_questions_chosen
+          }
         )
         if (this.assignment.assessment_type === 'clicker') {
           this.items.splice(2, 0, {

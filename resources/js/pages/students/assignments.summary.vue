@@ -29,7 +29,7 @@ mounted
           <b-card header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
               <p v-if="instructions.length" class="mb-2">
-                <span class="font-weight-bold">Instructions: </span> {{ instructions }}
+                <span class="font-weight-bold">Instructions: </span> <span v-html="instructions"/>
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
