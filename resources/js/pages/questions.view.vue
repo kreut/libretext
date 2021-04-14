@@ -580,7 +580,7 @@
               <b-container>
                 <b-row v-if="showAssignmentStatistics && loaded && user.role === 3">
                   <b-col>
-                    <b-card header="default" header-html="<h5>Summary</h5>">
+                    <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Summary</h6>">
                       <b-card-text>
                         <ul>
                           <li>{{ scores.length }} student submissions</li>
@@ -797,7 +797,7 @@
                     </div>
                     <div v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2">
                       <div class="mt-3">
-                        <b-card header-html="<h5>Default Text</h5>">
+                        <b-card header-html="<h6 class=&quot;font-weight-bold&quot;>Default Text</h6>">
                           <p>
                             You can add default text for your students to see in their own text editors when they
                             attempt this question.
@@ -927,7 +927,7 @@
                 v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
                 cols="4"
               >
-                <b-card header="default" header-html="<h5>Question Statistics</h5>" class="mb-2">
+                <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>" class="mb-2">
                   <b-card-text>
                     <ul>
                       <li>{{ scores.length }} student submissions</li>
@@ -958,7 +958,7 @@
                 <b-row
                   v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
                 >
-                  <b-card header="default" header-html="<h5>Pathway Navigator</h5>" class="sidebar-card mb-2">
+                  <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Pathway Navigator</h6>" class="sidebar-card mb-2">
                     <b-card-text>
                       <div v-if="previousNode.title">
                         <b-row align-h="center" class="p-2">
@@ -996,7 +996,7 @@
                 </b-row>
                 <b-row v-if="assessmentType !== 'learning tree' && questions[currentPage-1].technology_iframe">
                   <b-card header="default"
-                          header-html="<h5>Question Submission Information</h5>" class="sidebar-card"
+                          header-html="<h6 class=&quot;font-weight-bold&quot;>Auto-Graded Submission Information</h6>" class="sidebar-card"
                   >
                     <b-card-text>
                       <span
@@ -1742,7 +1742,7 @@ export default {
     getOpenEndedTitle () {
       let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
       let capitalizedTitle = this.capitalize(openEndedSubmissionType)
-      return `<h5>${capitalizedTitle} Submission Information</h5>`
+      return `<h6 class="font-weight-bold">${capitalizedTitle} Submission Information</h6>`
     },
     async submitText () {
       try {

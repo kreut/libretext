@@ -53,6 +53,18 @@ mounted
               <template #cell(question_number)="data">
                 <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">{{ data.item.question_number }}</a>
               </template>
+              <template v-slot:head(last_question_submission)="data">
+                Last Auto Graded Submission <span v-b-tooltip="showAutoGradedSubmissionTooltip"><b-icon
+                class="text-muted" icon="question-circle"
+              /></span>
+              </template>
+
+              <template v-slot:head(last_open_ended_submission)="data">
+                Last Open Ended Submission <span v-b-tooltip="showOpenEndedSubmissionTooltip"><b-icon
+                class="text-muted" icon="question-circle"
+              /></span>
+              </template>
+
               <template #cell(solution_file_url)="data">
                 <span v-html="getSolutionFileLink(data.item)"></span>
               </template>
@@ -80,6 +92,16 @@ export default {
   components: { AssignmentStatistics, Loading },
   middleware: 'auth',
   data: () => ({
+    showAutoGradedSubmissionTooltip: {
+      fallbackPlacement: ['right'],
+      placement: 'right',
+      title: 'Auto graded questions are questions which can be graded automatically by Adapt.  Some examples are multiple choice, true false, numeric based and matching.'
+    },
+    showOpenEndedSubmissionTooltip: {
+      fallbackPlacement: ['right'],
+      placement: 'right',
+      title: 'Open ended questions are questions which will require a grader.  Some examples are file uploads, text based responses, and audio uploads.'
+    },
     fields: [],
     items: [],
     pastDue: false,
@@ -159,15 +181,11 @@ export default {
         this.pastDue = assignment.past_due
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics
         this.fields = [
-          'question_number',
           {
-            key: 'last_question_submission',
-            label: 'Date of Last Question Submission'
+            key: 'question_number',
+            label: 'Number'
           },
-          {
-            key: 'last_open_ended_submission',
-            label: 'Date Of Last Open Ended Submission'
-          },
+          'last_question_submission',
           'last_open_ended_submission']
         if (assignment.show_points_per_question) {
           this.fields.push({
