@@ -293,7 +293,7 @@
                             <b-row>
                               <b-col v-if="isOpenEndedFileSubmission">
                                 <b-button variant="outline-primary"
-
+                                          size="smç"
                                           @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
                                 >
                                   Open File Submission
@@ -414,15 +414,21 @@
                     </b-card>
                   </div>
                 </div>
-                <div
-                  v-if="isOpenEndedTextSubmission && submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
+                <b-container
+                  v-if="isOpenEndedTextSubmission
+                  && submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']"
                 >
+
                   <b-card>
-                    <span class="font-weight-bold"
-                          v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
-                    />
+                    <b-card-body>
+                      <b-card-text>
+                        <span class="font-weight-bold"
+                              v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
+                        />
+                      </b-card-text>
+                    </b-card-body>
                   </b-card>
-                </div>
+                </b-container>
                 <div v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']">
                   <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }} has not submitted a file.</span>
                 </div>
