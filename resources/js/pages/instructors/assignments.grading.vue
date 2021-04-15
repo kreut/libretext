@@ -414,6 +414,8 @@
                     </b-card>
                   </div>
                 </div>
+                {{submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']}}
+                {{isOpenEndedTextSubmission}}
                 <b-container
                   v-if="isOpenEndedTextSubmission
                   && submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']"
@@ -636,7 +638,7 @@ export default {
         let current = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]
         if (!current.got_files) {
           const { data } = await axios.post(`/api/submission-files/get-files-from-s3/${this.assignmentId}/${current.question_id}/${current.user_id}`, { open_ended_submission_type: current.open_ended_submission_type })
-          console.log(data)
+          console.log('getting files')
           if (data.type === 'success') {
             let files = data.files
             this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = files.file_feedback_url
@@ -647,9 +649,11 @@ export default {
             this.$noty.error(`We could not retrieve the files for ${current.name}`)
           }
         }
+        console.log(current)
       } catch (error) {
         this.$noty.error(`We could not retrieve the files for the student. ${error.message}`)
       }
+
     },
     setQuestionAndStudentByStudentName () {
       for (let j = 0; j < this.submissionFiles[this.currentQuestionPage - 1].length; j++) {
@@ -956,6 +960,7 @@ export default {
         this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
         await this.getFilesFromS3()
         this.retrievedFromS3 = true
+        this.$forceUpdate()
       } catch (error) {
         this.$noty.error(error.message)
       }
