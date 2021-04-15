@@ -1010,21 +1010,22 @@ class AssignmentController extends Controller
             : '';
         switch ($assignment->late_policy) {
             case('not accepted'):
-                $late_policy = "No late assignments are accepted.";
+                $late_policy = "No late submissions are accepted.";
                 break;
             case('marked late'):
-                $late_policy = "Late assignments are marked late.  It is up to the instructor's discretion whether to apply a late penalty.";
+                $late_policy = "Late submissions are marked late.  It is up to the instructor's discretion whether to apply a late penalty.";
                 break;
             case('deduction'):
                 if ($assignment->late_deduction_application_period === 'once') {
-                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied once to any late assignment.";
+                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied once to any late submission.  ";
                 } else {
-                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied every {$assignment->late_deduction_application_period} to any late assignment.";
+                    $late_policy = "A deduction of {$assignment->late_deduction_percent}% is applied every {$assignment->late_deduction_application_period} to any late submission.  ";
                 }
+                $late_policy .= "This penalty is applied to the latest submission up until the final submission deadline.";
                 break;
         }
         if (($assignment->late_policy !== 'not accepted') && ($assign_to_timing !== null)) {
-            $late_policy .= "  Students cannot submit assessments later than $final_submission_deadline.";
+            $late_policy .= "  Students cannot submit responses later than $final_submission_deadline.";
         }
 
         return $late_policy;

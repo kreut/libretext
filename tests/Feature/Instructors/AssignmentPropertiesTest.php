@@ -52,7 +52,7 @@ class AssignmentPropertiesTest extends TestCase
     {
         $this->assignment->late_policy = 'not accepted';
         $this->assignment->save();
-        $response['assignment'] = ['formatted_late_policy' => "No late assignments are accepted."];
+        $response['assignment'] = ['formatted_late_policy' => "No late submissions are accepted."];
         $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/summary")
             ->assertJson($response);
 

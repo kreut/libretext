@@ -33,11 +33,11 @@ mounted
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
-                This assignment is due {{ formattedDue }}.
+                <span class="font-italic">This assignment is due {{ formattedDue }}.</span>
               </p>
               <p>
-                <span class="font-weight-bold">Late Policy: &nbsp;</span>
-                {{ formattedLatePolicy }}art
+                <span class="font-weight-bold">Late Policy: </span>
+                <span class="font-italic"> {{ formattedLatePolicy }}</span>
               </p>
             </b-card-text>
           </b-card>
