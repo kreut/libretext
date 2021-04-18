@@ -23,7 +23,17 @@ trait S3
 
     public function audioFileValidator()
     {
-        return ['required', 'mimes:mpga', 'max:500000'];//update in UploadFiles.js
+        return ['required', 'mimes:mpga,mp3', 'max:500000'];//update in UploadFiles.js
+    }
+
+    public function bytesToHuman($bytes)
+    {
+        $units = ['B', 'KB', 'MB', 'GiB', 'TB', 'PB'];
+
+        for ($i = 0; $bytes > 1024; $i++) {
+            $bytes /= 1024;
+        }
+        return round($bytes, 2) . ' ' . $units[$i];
     }
 
 

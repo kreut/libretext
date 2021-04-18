@@ -287,7 +287,7 @@
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
                         <b-spinner small type="grow"/>
-                        Processing...
+                        Processing your file...
                       </span>
                     </b-row>
                   </b-col>
@@ -323,33 +323,66 @@
             </b-row>
           </b-container>
           <div v-show="uploadLevel === 'question' || !showCutups">
-            <p>Accepted file types are: {{ getSolutionUploadTypes() }}.</p>
-            <b-form-file
-              ref="questionFileInput"
-              v-model="uploadFileForm[`${uploadFileType}File`]"
-              placeholder="Choose a file or drop it here..."
-              drop-placeholder="Drop file here..."
-              :accept="getSolutionUploadTypes()"
-            />
-            <div v-if="uploading">
-              <b-spinner small type="grow"/>
-              Uploading file...
+            <div class="example-drag">
+              <div class="upload mt-3">
+                <ul v-if="files.length && (preSignedURL !== '')">
+                  <li v-for="file in files" :key="file.id">
+                    <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
+                        file.name
+                      }}</span> -
+                    <span>{{ formatFileSize(file.size) }} </span>
+                    <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
+                    <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
+                    <span v-else-if="file.active" class="ml-2">
+                      <b-spinner small type="grow"/>
+                      Uploading File...
+                    </span>
+                    <span v-if="processingFile">
+                      <b-spinner small type="grow"/>
+                      Processing file...
+                    </span>
+                    <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
+                              variant="success"
+                              size="sm"
+                              style="vertical-align: top"
+                              @click.prevent="$refs.upload.active = true"
+                    >
+                      Start Upload
+                    </b-button>
+                  </li>
+                </ul>
+              </div>
+
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">
+                {{ uploadFileForm.errors.get(uploadFileType) }}
+              </div>
+              <b-container>
+                <hr>
+                <b-row align-h="end">
+                  <div style="vertical-align: bottom">
+                    <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
+                        getSolutionUploadTypes()
+                      }}.</span>
+                  </div>
+                  <file-upload
+                    ref="upload"
+                    :key="fileUploadKey"
+                    v-model="files"
+                    put-action="/put.method"
+                    @input-file="inputFile"
+                    @input-filter="inputFilter"
+                  >
+                    <b-button variant="primary" class="mr-3">
+                      Select file
+                    </b-button>
+                  </file-upload>
+                  <b-button class="mr-2" @click="handleCancel">
+                    Cancel
+                  </b-button>
+                </b-row>
+              </b-container>
             </div>
-            <input type="hidden" class="form-control is-invalid">
-            <div class="help-block invalid-feedback">
-              {{ uploadFileForm.errors.get(uploadFileType) }}
-            </div>
-            <b-container>
-              <hr>
-              <b-row align-h="end">
-                <b-button class="mr-2" @click="handleCancel">
-                  Cancel
-                </b-button>
-                <b-button variant="primary" @click="handleOk">
-                  Submit
-                </b-button>
-              </b-row>
-            </b-container>
           </div>
         </b-form>
       </div>
@@ -927,7 +960,9 @@
                 v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
                 cols="4"
               >
-                <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>" class="mb-2">
+                <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>"
+                        class="mb-2"
+                >
                   <b-card-text>
                     <ul>
                       <li>{{ scores.length }} student submissions</li>
@@ -958,7 +993,9 @@
                 <b-row
                   v-if="assessmentType === 'learning tree' && learningTreeAsList.length && !answeredCorrectlyOnTheFirstAttempt"
                 >
-                  <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Pathway Navigator</h6>" class="sidebar-card mb-2">
+                  <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Pathway Navigator</h6>"
+                          class="sidebar-card mb-2"
+                  >
                     <b-card-text>
                       <div v-if="previousNode.title">
                         <b-row align-h="center" class="p-2">
@@ -996,7 +1033,8 @@
                 </b-row>
                 <b-row v-if="assessmentType !== 'learning tree' && questions[currentPage-1].technology_iframe">
                   <b-card header="default"
-                          header-html="<h6 class=&quot;font-weight-bold&quot;>Auto-Graded Submission Information</h6>" class="sidebar-card"
+                          header-html="<h6 class=&quot;font-weight-bold&quot;>Auto-Graded Submission Information</h6>"
+                          class="sidebar-card"
                   >
                     <b-card-text>
                       <span
@@ -1199,6 +1237,9 @@ import Vue from 'vue'
 
 Vue.prototype.$http = axios // needed for the audio player
 
+const VueUploadComponent = require('vue-upload-component')
+Vue.component('file-upload', VueUploadComponent)
+
 export default {
   middleware: 'auth',
   components: {
@@ -1211,9 +1252,15 @@ export default {
     SolutionFileHtml,
     PieChart,
     RemoveQuestion,
-    ckeditor: CKEditor.component
+    ckeditor: CKEditor.component,
+    FileUpload: VueUploadComponent
   },
   data: () => ({
+    handledOK: false,
+    fileUploadKey: 1,
+    preSignedURL: '',
+    files: [],
+    s3Key: '',
     questionView: 'basic',
     copyIcon: faCopy,
     technologySrc: '',
@@ -1347,7 +1394,7 @@ export default {
     submissionDataType: 'danger',
     submissionDataMessage: '',
     showSubmissionMessage: false,
-    uploading: false,
+    processingFile: false,
     clickerTimeForm: new Form({
       time_to_submit: ''
     }),
@@ -1459,6 +1506,8 @@ export default {
       }
       if (this.questionId) {
         this.currentPage = this.getInitialCurrentPage(this.questionId)
+      } else {
+        this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
       await this.getCutups(this.assignmentId)
@@ -1473,6 +1522,90 @@ export default {
     }
   },
   methods: {
+    formatFileSize (size) {
+      let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
+      for (let i = 1; i < sizes.length; i++) {
+        if (size < Math.pow(1024, i)) return (Math.round((size / Math.pow(1024, i - 1)) * 100) / 100) + sizes[i - 1]
+      }
+      return size
+    },
+    inputFile (newFile, oldFile) {
+      if (newFile && oldFile && !newFile.active && oldFile.active) {
+        // Get response data
+
+        if (newFile.xhr) {
+          //  Get the response status code
+          console.log('status', newFile.xhr.status)
+          if (newFile.xhr.status === 200) {
+            if (!this.handledOK) {
+              this.handledOK = true
+              console.log(this.handledOK)
+              this.handleOK()
+            }
+          } else {
+            this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
+          }
+        } else {
+          this.$noty.error('We were not able to save your file to our server.  Please try again or contact us if the problem persists.')
+        }
+      }
+    },
+
+    async inputFilter (newFile, oldFile, prevent) {
+      this.uploadFileForm.errors.clear()
+      if (newFile && !oldFile) {
+        // Filter non-image file
+        if (parseInt(newFile.size) > 20000000) {
+          let message = '20 MB max allowed.  Your file is too large.  '
+          if (/\.(pdf)$/i.test(newFile.name)) {
+            message += 'You might want to try an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
+          }
+          this.uploadFileForm.errors.set(this.uploadFileType, message)
+          return prevent()
+        }
+        let validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
+
+        let validExtension = this.uploadLevel === 'question'
+          ? /\.(pdf|text|png|jpeg|jpg)$/i.test(newFile.name)
+          : /\.(pdf)$/i.test(newFile.name)
+
+        if (!validExtension) {
+          this.uploadFileForm.errors.set(this.uploadFileType, validUploadTypesMessage)
+
+          return prevent()
+        } else {
+          try {
+            this.preSignedURL = ''
+            let uploadFileData = {
+              assignment_id: this.assignmentId,
+              upload_file_type: this.uploadFileType,
+              file_name: newFile.name
+            }
+            const { data } = await axios.post('/api/s3/pre-signed-url', uploadFileData)
+            if (data.type === 'error') {
+              this.$noty.error(data.message)
+              return false
+            }
+            this.preSignedURL = data.preSignedURL
+            newFile.putAction = this.preSignedURL
+            this.fileUploadKey++
+            this.s3Key = data.s3_key
+            this.originalFilename = newFile.name
+            this.handledOK = false
+          } catch (error) {
+            this.$noty.error(error.message)
+            return false
+          }
+        }
+      }
+
+      // Create a blob field
+      newFile.blob = ''
+      let URL = window.URL || window.webkitURL
+      if (URL && URL.createObjectURL) {
+        newFile.blob = URL.createObjectURL(newFile.file)
+      }
+    },
     async toggleQuestionView () {
       try {
         console.log(this.questionView)
@@ -2006,7 +2139,6 @@ export default {
             for (let i = 0; i < this.questions.length; i++) {
               this.questions[i].points = this.questionPointsForm.points
             }
-
           }
         }
       } catch (error) {
@@ -2015,7 +2147,22 @@ export default {
         }
       }
     },
-    openUploadFileModal (questionId) {
+    async openUploadFileModal (questionId) {
+      if (this.uploadFileType === 'submission') {
+        try {
+          const { data } = await axios.post('/api/submission-files/can-submit-file-submission', {
+            assignmentId: this.assignmentId,
+            questionId: this.questionId
+          })
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+        } catch (error) {
+          this.$noty.error(error.message)
+          return false
+        }
+      }
       this.$bvModal.show('modal-upload-file')
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
@@ -2024,24 +2171,25 @@ export default {
       this.cutupsForm.question_num = this.currentPage
       this.currentCutup = 1
     },
-    async handleOk (bvModalEvt) {
+    async handleOK () {
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.uploadLevel = this.uploadLevel
+      this.uploadFileForm.s3_key = this.s3Key
+      this.uploadFileForm.original_filename = this.originalFilename
       // Prevent modal from closing
-      bvModalEvt.preventDefault()
       // Trigger submit handler
       if (this.uploading) {
         this.$noty.info('Please be patient while the file is uploading.')
         return false
       }
-      this.uploading = true
+      this.processingFile = true
 
       try {
         let response = await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
         if (response === 'status code 413') {
           let message = 'The maximum size allowed is 10MB.  If you\'re trying to upload a PDF, you can use an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
           this.uploadFileForm.errors.set(this.uploadFileType, message)
-          this.uploading = false
+          this.processingFile = false
           return false
         }
       } catch (error) {
@@ -2057,9 +2205,13 @@ export default {
         this.$bvModal.hide(`modal-upload-file`)
       }
 
-      this.uploading = false
+      this.processingFile = false
+      this.files = []
     },
     handleCancel () {
+      this.$refs.upload.active = false
+      this.files = []
+      this.processingFile = false
       this.$bvModal.hide(`modal-upload-file`)
     },
     viewOriginalQuestion () {
@@ -2449,6 +2601,37 @@ export default {
 <style scoped>
 #cke_bottom {
   height: 9px;
+}
+
+.example-drag label.btn {
+  margin-bottom: 0;
+  margin-right: 1rem;
+}
+
+.example-drag .drop-active {
+  top: 0;
+  bottom: 0;
+  right: 0;
+  left: 0;
+  position: fixed;
+  z-index: 9999;
+  opacity: .6;
+  text-align: center;
+  background: #000;
+}
+
+.example-drag .drop-active h3 {
+  margin: -.5em 0 0;
+  position: absolute;
+  top: 50%;
+  left: 0;
+  right: 0;
+  -webkit-transform: translateY(-50%);
+  -ms-transform: translateY(-50%);
+  transform: translateY(-50%);
+  font-size: 40px;
+  color: #fff;
+  padding: 0;
 }
 </style>
 <style>

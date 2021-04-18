@@ -28,6 +28,18 @@ class QuestionsViewTest extends TestCase
     use Statistics;
     use Test;
 
+    private $upload_file_data;
+    private $assignment;
+    private $student_user;
+    /**
+     * @var array
+     */
+    private $upload_solution_data;
+    /**
+     * @var array
+     */
+    private $upload_file_submission_data;
+
     public function setup(): void
     {
 
@@ -85,6 +97,75 @@ class QuestionsViewTest extends TestCase
             'question_id' => $this->question->id,
             'submission' => $this->submission_object
         ];
+        $this->upload_solution_data =
+            ['assignment_id' => $this->assignment->id,
+                'upload_file_type' => 'solution',
+                'file_name' => 'blah.pdf'
+            ];
+
+        $this->upload_file_submission_data =
+            ['assignment_id' => $this->assignment->id,
+                'upload_file_type' => 'submission',
+                'file_name' => 'blah.pdf'
+            ];
+    }
+
+    /** @test */
+    public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()
+    {
+
+
+    }
+
+    /** @test */
+    public function cannot_store_a_file_if_the_size_of_the_file_exceeds_the_max_size_permitted()
+    {
+
+    }
+
+
+    /** @test */
+
+    public function non_instructor_cannot_get_pre_signed_url_for_solutions()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/s3/pre-signed-url", $this->upload_solution_data)
+            ->assertJson(['message' => 'You are not allowed to upload solution files.']);
+
+
+    }
+
+
+    /** @test */
+    public function instructor_can_get_pre_signed_url_for_solutions()
+    {
+        $this->actingAs($this->user)->postJson("/api/s3/pre-signed-url", $this->upload_solution_data)
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+
+    public function non_enrolled_student_cannot_get_pre_signed_url_for_submissions()
+    {
+        $this->actingAs($this->student_user_2)->postJson("/api/s3/pre-signed-url", $this->upload_file_submission_data)
+            ->assertJson(['message' => 'You are not allowed to upload submission files.']);
+
+    }
+
+    /** @test */
+
+    public function enrolled_student_can_get_pre_signed_url_for_submissions()
+    {
+        $this->actingAs($this->student_user)->postJson("/api/s3/pre-signed-url", $this->upload_file_submission_data)
+            ->assertJson(['type' => 'success']);
+
+    }
+
+
+    public function cannot_store_a_question_file_if_it_is_not_in_the_assignment()
+    {
+        /** tested for regular submissions */
+
     }
 
 
@@ -1305,26 +1386,6 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-
-    /** @test */
-    public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()
-    {
-
-    }
-
-    /** @test */
-    public function cannot_store_a_file_if_the_size_of_the_file_exceeds_the_max_size_permitted()
-    {
-
-    }
-
-    /** @test */
-
-    public function cannot_store_a_question_file_if_it_is_not_in_the_assignment()
-    {
-
-
-    }
 
     /** @test */
 

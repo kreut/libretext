@@ -144,6 +144,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}', 'AssignmentController@update');
     Route::delete('/assignments/{assignment}', 'AssignmentController@destroy');
 
+    Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
+
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
     Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
@@ -251,7 +253,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
-    Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}','SubmissionFileController@getFilesFromS3');
+    Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
+    Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
+
 
     Route::post('/solutions/text/{assignment}/{question}', 'SolutionController@storeText');
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');
@@ -277,8 +281,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/graders/{course}', 'GraderController@getGradersByCourse');
     Route::patch('/graders/{user}', 'GraderController@update');
     Route::delete('/graders/{course}/{user}', 'GraderController@removeGraderFromCourse');
-
-
 
 
 });

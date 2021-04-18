@@ -136,22 +136,17 @@ class SolutionController extends Controller
                 return $response;
             }
 
-            $validator = Validator::make($request->all(), [
-                "solutionFile" => $this->fileValidator()
-            ]);
 
-            if ($validator->fails()) {
-                $response['message'] = $validator->errors()->first('solutionFile');
-                return $response;
-            }
             $assignment_id = $request->assignmentId;
             $question_id = $request->questionId;
             $user_id = Auth::user()->id;
-            $file = $request->file("solutionFile")->store("solutions/$user_id", 'local');
-            $solutionContents = Storage::disk('local')->get($file);
-            Storage::disk('s3')->put($file, $solutionContents, ['StorageClass' => 'STANDARD_IA']);
-            $original_filename = $request->file("solutionFile")->getClientOriginalName();
-            $basename = basename($file);
+
+            $solution = $request->s3_key;
+            $original_filename = $request->original_filename;
+            $s3_file_contents = Storage::disk('s3')->get($request->s3_key);
+            Storage::disk('local')->put($solution, $s3_file_contents);
+
+            $basename = basename($solution);
             $file_data = [
                 'file' => $basename,
                 'original_filename' => $original_filename,
@@ -210,7 +205,7 @@ class SolutionController extends Controller
                     );
 
                     //add the cutups
-                    $cutup->cutUpPdf($file, "solutions/$user_id", $assignment_id, $user_id);
+                    $cutup->cutUpPdf($solution, "solutions/$user_id", $assignment_id, $user_id);
 
 
                     $response['type'] = 'success';

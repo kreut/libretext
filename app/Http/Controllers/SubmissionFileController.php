@@ -43,7 +43,31 @@ class SubmissionFileController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
+    /**
+     * @var int
+     */
+    private $max_number_of_uploads_allowed;
+    /**
+     * @var int
+     */
+    private $max_file_size;
 
+    public function __construct()
+    {
+        $this->max_number_of_uploads_allowed = 15;
+        $this->max_file_size = 24000000;///really just 20MB but extra wiggle room
+    }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param User $studentUser
+     * @param SubmissionFile $submissionFile
+     * @param Grader $grader
+     * @return array
+     * @throws Exception
+     */
     public function getFilesFromS3(Request $request,
                                    Assignment $assignment,
                                    Question $question,
@@ -312,34 +336,20 @@ class SubmissionFileController extends Controller
     }
 
 
-//storeSubmission
-
     /**
      * @param Request $request
-     * @param AssignmentFile $assignmentFile
-     * @param Extension $extension
-     * @param SubmissionFile $submissionFile
-     * @param Cutup $cutup
-     * @return mixed
+     * @return array
      * @throws Exception
      */
-    public
-    function storeSubmissionFile(Request $request, Extension $extension, SubmissionFile $submissionFile, Cutup $cutup)
+    public function canSubmitFileSubmission(Request $request)
     {
-
-
-        $response['type'] = 'error';
-        $max_number_of_uploads_allowed = 15;//number allowed per question/assignment
-        $assignment_id = $request->assignmentId;
-        $question_id = $request->questionId;
-        $upload_level = $request->uploadLevel;
-        $user = Auth::user();
-        $user_id = $user->id;
-
-        $assignment = Assignment::find($assignment_id);
-
-
         try {
+            $assignment_id = $request->assignmentId;
+            $assignment = Assignment::find($assignment_id);
+            $question_id = $request->questionId;
+            $user = Auth::user();
+            $user_id = $user->id;
+            $response['type'] = 'error';
             //validator put here because I wasn't using vform so had to manually handle errors
 
             if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
@@ -360,28 +370,81 @@ class SubmissionFileController extends Controller
             $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
 
 
-            if ($upload_count + 1 > $max_number_of_uploads_allowed) {
+            if ($upload_count + 1 > $this->max_number_of_uploads_allowed) {
                 $response['message'] = 'You have exceeded the number of times that you can re-upload a file submission.';
                 return $response;
 
             }
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to validate permission to upload this file. Please try again or contact us for assistance.";
+        }
+        return $response;
 
-            $validator = Validator::make($request->all(), [
-                "submissionFile" => $this->fileValidator()
-            ]);
 
-            if ($validator->fails()) {
-                $response['message'] = $validator->errors()->first(`submissionFile`);
-                return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Extension $extension
+     * @param SubmissionFile $submissionFile
+     * @param Cutup $cutup
+     * @return array
+     * @throws Exception
+     */
+
+
+    function storeSubmissionFile(Request $request, Extension $extension, SubmissionFile $submissionFile, Cutup $cutup)
+    {
+
+        $response['type'] = 'error';
+
+        if (!$request->s3_key) {
+            $response['message'] = "It looks like you might be using an outdated file uploader.  Please refresh the page in your Browser to get Adapt's most up-to-date version then try again.";
+            return $response;
+        }
+
+        $assignment_id = $request->assignmentId;
+        $question_id = $request->questionId;
+        $upload_level = $request->uploadLevel;
+        $user = Auth::user();
+        $user_id = $user->id;
+
+        $can_submit_response = $this->canSubmitFileSubmission($request);
+        if ($can_submit_response['type'] === 'error') {
+            $response['message'] = $can_submit_response['message'];
+            return $response;
+        }
+
+
+        try {
+
+            $file_size = Storage::disk('s3')->size($request->s3_key);
+            if ($file_size > $this->max_file_size) {
+                $response['message'] = 'Your file is ' . $this->bytesToHuman($file_size) . ' and has exceeded the ' . $this->bytesToHuman($this->max_file_size) . '  limit.';
+           return $response;
             }
+            $assignment = Assignment::find($assignment_id);
+            //validator put here because I wasn't using vform so had to manually handle errors
+
+            $latest_submission = DB::table('submission_files')
+                ->where('type', 'q') //not needed but for completeness
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->where('user_id', $user_id)
+                ->select('upload_count')
+                ->first();
+
+            $upload_count = is_null($latest_submission) ? 0 : $latest_submission->upload_count;
 
 
-            //save locally and to S3
-
-            $submission = $request->file("submissionFile")->store("assignments/$assignment_id", 'local');
-            $submissionContents = Storage::disk('local')->get($submission);
-            Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
-            $original_filename = $request->file("submissionFile")->getClientOriginalName();
+            $submission = $request->s3_key;
+            $original_filename = $request->original_filename;
+            $s3_file_contents = Storage::disk('s3')->get($request->s3_key);
+            Storage::disk('local')->put($submission, $s3_file_contents);
 
 
             $submission_file_data = ['type' => $upload_level[0],
@@ -429,12 +492,9 @@ class SubmissionFileController extends Controller
                     break;
             }
             $response['message'] = "Your file submission has been saved.";
-
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
-
-
-            if (($upload_count >= $max_number_of_uploads_allowed - 3)) {
-                $response['message'] .= "  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
+            if (($upload_count >= $this->max_number_of_uploads_allowed - 3)) {
+                $response['message'] .= "  You may resubmit " . ($this->max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             }
             $response['type'] = 'success';
             DB::commit();
@@ -442,7 +502,7 @@ class SubmissionFileController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to save your file submission.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to save your file submission due to the error '" . $e->getMessage() . "'.  Please try again and if the problem persists, contact us.";
         }
         return $response;
 

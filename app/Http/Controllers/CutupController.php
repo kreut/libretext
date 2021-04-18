@@ -22,6 +22,7 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 
 
+
 class CutupController extends Controller
 {
 
@@ -58,6 +59,8 @@ class CutupController extends Controller
                     ];
                 }
             }
+
+            $response['cutups'] = $cutups;
             $response['type'] = 'success';
             $response['cutups'] = $cutups;
         } catch (Exception $e) {
