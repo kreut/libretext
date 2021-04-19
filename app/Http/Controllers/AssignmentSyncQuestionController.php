@@ -1134,7 +1134,7 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
-                        if ($webwork_url === 'https://prod.adapt.libretexts.org' || $webwork_url === 'https://wwrenderer.libretexts.org') {
+                        if ($webwork_url === 'https://wwrenderer.libretexts.org') {
 
                             $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
                             $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
