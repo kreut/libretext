@@ -1113,8 +1113,8 @@ class AssignmentSyncQuestionController extends Controller
                         //$webwork_url = 'demo.webwork.rochester.edu';
                         // $webwork_base_url = '';
 
-                        $webwork_url = 'https://prod.adapt.libretexts.org';
-                        $webwork_base_url = '/webwork';
+                        $webwork_url = 'https://wwrenderer.libretexts.org';
+                        $webwork_base_url = '';
 
                         $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
@@ -1134,7 +1134,7 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
-                        if ($webwork_url === 'https://prod.adapt.libretexts.org') {
+                        if ($webwork_url === 'https://prod.adapt.libretexts.org' || $webwork_url === 'https://wwrenderer.libretexts.org') {
 
                             $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
                             $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
