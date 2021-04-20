@@ -23,3 +23,7 @@ table th {
     text-align: center;
     color:black
 }
+
+.mt-style-conditional.style-wrap {
+    display: none;
+}
