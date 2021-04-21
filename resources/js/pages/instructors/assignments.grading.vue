@@ -182,6 +182,7 @@
             </div>
             <div class="overflow-auto">
               <b-pagination
+                :key="currentStudentPage"
                 v-model="currentStudentPage"
                 :total-rows="numStudents"
                 :per-page="perPage"
@@ -414,8 +415,6 @@
                     </b-card>
                   </div>
                 </div>
-                {{submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']}}
-                {{isOpenEndedTextSubmission}}
                 <b-container
                   v-if="isOpenEndedTextSubmission
                   && submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']"
