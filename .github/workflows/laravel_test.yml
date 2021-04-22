@@ -26,7 +26,7 @@ jobs:
     steps:
       - uses: shivammathur/setup-php@b7d1d9c9a92d8d8463ce36d7f60da34d461724f8
         with:
-          php-version: '8.0.3'
+          php-version: '7.4'
       - uses: actions/checkout@v2
       - name: Copy .env
         run: php -r "copy('.env.example', '.env');"
@@ -41,16 +41,11 @@ jobs:
       - name: Execute tests (Unit and Feature tests) via PHPUnit
         run: vendor/bin/phpunit --stop-on-failure
         env:
-          DB_PORT: ${{ job.services.mysql.ports[3306] }}
-          DB_USERNAME: ${{ secrets.DB_USERNAME }}
-          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          DB_DATABASE: ${{ secrets.DB_DATABASE }}
-          DB_HOST: ${{ secrets.DB_HOST }}
-          TEST_DB_HOST: ${{ secrets.TEST_DB_HOST }}
-          TEST_DB_PORT:  ${{ secrets.TEST_DB_PORT }}
-          TEST_DB_DATABASE:  ${{ secrets.TEST_DB_DATABASE }}
-          TEST_DB_USERNAME:  ${{ secrets.TEST_DB_USERNAME }}
-          TEST_DB_PASSWORD:  ${{ secrets.TEST_DB_PASSWORD }}
+          DB_CONNECTION: mysql
+          DB_PORT: ${{ job.services.mysql_dat.ports[3306] }}
+          DB_USERNAME: root
+          DB_PASSWORD: ""
+          DB_DATABASE: test_libretext
           APP_NAME: ${{ secrets.APP_NAME }}
           APP_ENV: ${{ secrets.APP_ENV }}
           APP_KEY: ${{ secrets.APP_KEY }}
