@@ -147,7 +147,7 @@ class QuestionsViewTest extends TestCase
         $this->assignment->save();
         $response = $this->actingAs($this->student_user)
             ->getJson("/api/assignments/{$this->assignment->id}}/questions/view", $this->headers());
-        print_r($response);
+        $this->assertEquals(count($response['questions']), $this->assignment->number_of_randomized_assessments);
 
     }
 
