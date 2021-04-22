@@ -2,9 +2,13 @@ name: Laravel
 
 on:
   push:
-    branches: [staging]
+    branches:
+      - staging
+      - bugfix/composer.json
   pull_request:
-    branches: [staging]
+    branches:
+      - staging
+      - bugfix/composer.json
   workflow_dispatch:
 jobs:
   laravel-tests:
