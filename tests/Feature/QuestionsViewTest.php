@@ -87,6 +87,43 @@ class QuestionsViewTest extends TestCase
         ];
     }
 
+    /** @test */
+    public function correctly_computes_the_z_score_for_a_file_submission()
+    {
+
+        $scores = [80, 40, 36];
+
+
+        //create fake submissions --- I just care about the scores.
+        $this->assignment->show_scores = 1;
+        $this->assignment->save();
+
+        $this->question->technology = 'h5p';
+        $this->question->save();
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'date_submitted' => Carbon::now()];
+
+        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
+        foreach ($user_ids as $key => $user_id) {
+            $data['score'] = $scores[$key];
+            $data['user_id'] = $user_ids[$key];
+            SubmissionFile::create($data);
+        }
+
+        $mean = array_sum($scores) / count($scores);
+        $std_dev = $this->stats_standard_deviation($scores);
+        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
+
+
+        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
+        $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
+
+    }
 
     /** @test */
 
@@ -290,43 +327,7 @@ class QuestionsViewTest extends TestCase
 
     }
 
-    /** @test */
-    public function correctly_computes_the_z_score_for_a_file_submission()
-    {
 
-        $scores = [80, 40, 36];
-
-
-        //create fake submissions --- I just care about the scores.
-        $this->assignment->show_scores = 1;
-        $this->assignment->save();
-
-        $this->question->technology = 'h5p';
-        $this->question->save();
-        $data = [
-            'type' => 'q',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'fake_1.pdf',
-            'original_filename' => 'orig_fake_1.pdf',
-            'date_submitted' => Carbon::now()];
-
-        $user_ids = [$this->student_user->id, $this->student_user_2->id, $this->student_user_3->id];
-        foreach ($user_ids as $key => $user_id) {
-            $data['score'] = $scores[$key];
-            $data['user_id'] = $user_ids[$key];
-            SubmissionFile::create($data);
-        }
-
-        $mean = array_sum($scores) / count($scores);
-        $std_dev = $this->stats_standard_deviation($scores);
-        $z_score = Round(($scores[0] - $mean) / $std_dev, 2);
-
-
-        $response = $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/questions/view", $this->headers());
-        $this->assertEquals($z_score, $response['questions'][0]['submission_file_z_score']);
-
-    }
 
     /** @test */
 

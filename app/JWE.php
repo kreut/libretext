@@ -41,6 +41,9 @@ class JWE extends Model
     public function getSecret(string $technology){
         switch($technology){
             case('webwork'):
+                if (app()->environment('testing')){
+                    return '7q3Fu7C9PKUhxTQO0kjRU7JazTL4MSkp9aLSGFAIlB7ucxu+uhDDRigk2P6vkKmazYnqO423uH/r9knya1iSGRcXjg5jmHYhdkOZEe+yseLRX2t2rAwKgrCYqxgOw9c5oxnfnpDNJ4wbC2twnyqcYhgPJgNIiPsDjTWRg6Eux4dP3Wlzl9/owq3zp09Jp7Fq3DDrr8HHauRTlSLiKOlOwp6+D/BkWDjqCsLnhfHVtv0CntF7YrhGQoi8j7/n8PDolytOvDd9EAstKYQ/yUIloD8FKPWQDJlmb0DiFl3tm7bfc0HslcxfhTTmJYI6OFwvDIPf/3lW4TD/89yb9Fw9XmIPhDKlMUiVIqQtfl3AOdEpt/ORk3ndrW+h0Hav8egnwE4aYYG0BKC/g9R/QSssMJ1Jk+iWubZMWtOKX4T5aPL+qxnBLRR6CpJBJi287HSHWx86lryjOADz57cwu/F+BjC/TY5P1kq09t3g7v4PtAKuOTN8ZkfXIi/NWWGtEMwEJF97mCqN/e2f9ff/yBI3sXOt17aHpJouvA4EMOaPFklJu+lOsnzqzmWa7IbDveYwNd1wQyz042/EoIkc5zh+7SZzNH+O2/Qd5aMxScLtjooxReT+BT6YPvymRKplQwRnSfDn1zamymbMiYvCK4PQ9Np5SvmKEy7hZG9bpBqQMhhY7sfRnLo1ICuin+2V6Sc49jYs+g+L+Y3cWNjQB7nNY5A1orjuAGXKKSKW4CnBkZ8g787bsLn7K6we/OuuOwQTcEckSrSma76z4YE7BhHdfZwi+hcblI/kaUbrUMVkqNr4xcHjna0ImzfRg/1HB3Q1V3KnuXPwkyx2TxHp1UqpsYE2b5HEvHx5Wmgp8UNwcGGsh9FgeHsohT2L7/+aS2+dPPMreDPgIAIs3rjstitxlrOOtcExKCbPRd5+7zZGdsH5IaX5josqdp/LltyRta6fkgWLDdmBp4B1pp7gjqGUU3YZ+nSeBasaHpxuuF2Wlr8n5GMrOEkHbPMbYmNKB/Pl';
+                }
                 return file_get_contents(base_path() . '/JWE/webwork');
                 break;
             default:
