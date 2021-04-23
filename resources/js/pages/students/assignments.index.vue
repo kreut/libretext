@@ -18,7 +18,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -57,11 +57,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -112,35 +112,35 @@
         </b-container>
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Assignment Name
-            </th>
-            <th scope="col">
-              Group
-            </th>
-            <th scope="col">
-              Available From
-            </th>
-            <th scope="col">
-              Due
-            </th>
-            <th scope="col">
-              Submitted
-            </th>
-            <th scope="col">
-              Score
-            </th>
-            <th scope="col">
-              Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle"/></span>
-            </th>
-            <th scope="col">
-              Files
-            </th>
-            <th scope="col">
-              Solution Key
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Assignment Name
+              </th>
+              <th scope="col">
+                Group
+              </th>
+              <th scope="col">
+                Available From
+              </th>
+              <th scope="col">
+                Due
+              </th>
+              <th scope="col">
+                Submitted
+              </th>
+              <th scope="col">
+                Score
+              </th>
+              <th scope="col">
+                Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
+              </th>
+              <th scope="col">
+                Files
+              </th>
+              <th scope="col">
+                Solution Key
+              </th>
+            </tr>
           </thead>
           <b-tbody v-model="assignments">
             <tr v-for="assignment in assignments"
@@ -168,23 +168,23 @@
                 {{ assignment.due.is_extension ? '(Extension)' : '' }}
               </td>
               <td>
+                {{ assignment.number_submitted }}
+              </td>
+              <td>
                 <span v-if="assignment.score === 'Not yet released'">Not yet released</span>
                 <span v-if="assignment.score !== 'Not yet released'"> {{ assignment.score }}/{{
-                    assignment.total_points
-                  }}</span>
+                  assignment.total_points
+                }}</span>
               </td>
               <td>
                 {{ assignment.z_score }}
-              </td>
-              <td>
-                {{ assignment.number_submitted }}
               </td>
               <td>
                 <div v-if="assignment.submission_files === 'a'">
                   <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
                           @click="openUploadAssignmentFileModal(assignment.id)"
                   />
-                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)"/>
+                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)" />
                 </div>
                 <div v-else>
                   N/A
@@ -279,9 +279,7 @@ export default {
         label: 'Submitted'
       },
       'score',
-      {
-        key: 'z_score'
-      },
+      'z_score',
       'files',
       'solution_key'
     ],

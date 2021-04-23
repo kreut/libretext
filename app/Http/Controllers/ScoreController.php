@@ -503,7 +503,7 @@ class ScoreController extends Controller
             $Solution,
             $AssignmentGroup);
 
-        usort($assignments_info['assignments'], function($a, $b) {
+        usort($assignments_info['assignments'], function($b, $a) {
             return $a['due']['due_date'] <=> $b['due']['due_date'];
         });
         if ($assignments_info ['type'] === 'error') {
