@@ -795,7 +795,7 @@ class AssignmentSyncQuestionController extends Controller
 
     public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
-echo "made it";
+
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $assignment);
 
@@ -804,11 +804,10 @@ echo "made it";
             return $response;
         }
         try {
-echo "a";
+
             //determine "true" due date to see if submissions were late
             $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
             $due_date_considering_extension = $assignment->assignToTimingByUser('due');
-            echo "b";
 
             if ($extension) {
                 if (Carbon::parse($extension) > Carbon::parse($assignment->assignToTimingByUser('due'))) {
@@ -858,7 +857,7 @@ echo "a";
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
 
-echo "c";
+
             foreach ($assignment_question_info['questions'] as $question) {
                 $question_ids[$question->question_id] = $question->question_id;
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
@@ -867,7 +866,6 @@ echo "c";
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
-                echo "c";
                 if (!$question->clicker_start) {
                     $clicker_time_left[$question->question_id] = 0;
                 } else {
@@ -881,14 +879,13 @@ echo "c";
                 }
 
             }
-            echo "e";
+
             $question_info = DB::table('questions')
                 ->whereIn('id', $question_ids)
                 ->get();
 
             $question_technologies = [];
             foreach ($question_info as $key => $question) {
-                echo "f";
                 $question_technologies[$question->id] = $question->technology;
             }
 
@@ -907,7 +904,7 @@ echo "c";
                     $submissions_by_question_id[$value->question_id] = $value;
                 }
             }
-echo "g";
+
             //if they've already explored the learning tree, then we can let them view it right at the start
             if ($assignment->assessment_type === 'learning tree') {
                 foreach ($assignment->learningTrees() as $value) {
@@ -950,7 +947,7 @@ echo "g";
                     ->whereIn('question_id', $question_ids)
                     ->where('user_id', $assignment->course->user_id)
                     ->get();
-echo "j";
+
                 if ($solutions) {
                     foreach ($solutions as $key => $value) {
                         $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
@@ -964,7 +961,7 @@ echo "j";
 
             $domd = new \DOMDocument();
             $JWE = new JWE();
-echo "k";
+
             $randomly_chosen_questions = [];
             if ($assignment->number_of_randomized_assessments && $request->user()->role == 3) {
                 $randomly_chosen_questions = $this->getRandomlyChosenQuestions($assignment, $request->user());
@@ -1014,7 +1011,7 @@ echo "k";
                         ? $this->computeZScore($submission_score, $mean_and_std_dev_by_question_submissions[$question->id])
                         : 'N/A';
                 }
-echo "m";
+
                 if ($assignment->assessment_type === 'learning tree') {
                     $assignment->questions[$key]['percent_penalty'] = $learning_tree_penalties_by_question_id[$question->id];
                     $assignment->questions[$key]['learning_tree'] = $learning_trees_by_question_id[$question->id];
@@ -1042,7 +1039,7 @@ echo "m";
 
 
                 $submission_file = $submission_files_by_question_id[$question->id] ?? false;
-echo "n";
+
 
                 if ($submission_file) {
 
@@ -1059,7 +1056,7 @@ echo "n";
                         ?
                         Carbon::parse($submission_file['date_submitted'])->greaterThan(Carbon::parse($due_date_considering_extension))
                         : false;
-echo "o";
+
                     if ($assignment->show_scores) {
                         $submission_files_score = $formatted_submission_file_info['submission_file_score'];
                         $assignment->questions[$key]['date_graded'] = $formatted_submission_file_info['date_graded'];
@@ -1097,7 +1094,6 @@ echo "o";
                 $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
                 $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
                 //set up the problemJWT
-                echo "start jwt";
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
@@ -1120,10 +1116,9 @@ echo "o";
 
                         $webwork_url = 'https://wwrenderer.libretexts.org';
                         $webwork_base_url = '';
-echo "before seed";
+
                         $seed = $this->getAssignmentQuestionSeed($assignment, $question, $questions_for_which_seeds_exist, $seeds_by_question_id, 'webwork');
 
-                        echo "after seed";
                         $custom_claims['iss'] = $request->getSchemeAndHttpHost();//made host dynamic
 
                         $custom_claims['aud'] = $webwork_url;
@@ -1186,9 +1181,9 @@ echo "before seed";
                             $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="https://' . $webwork_url . '/webwork2/html2xml?" width="100%"></iframe>';
                         }
 
-echo 'before create problem';
+
                         $problemJWT = $this->createProblemJWT($JWE, $custom_claims, 'webwork');
-echo 'after problem';
+
                         break;
                     case('imathas'):
 
@@ -1222,7 +1217,7 @@ echo 'after problem';
                         exit;
 
                 }
-echo "sdfdsdsffds";
+
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
                     $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
@@ -1231,7 +1226,7 @@ echo "sdfdsdsffds";
                 }
 
                 //Frankenstein type problems
-echo 'iipip';
+
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
             }
 
@@ -1251,20 +1246,13 @@ echo 'iipip';
     public
     function createProblemJWT(JWE $JWE, array $custom_claims, string $technology)
     {
-        echo "before payload";
         $payload = auth()->payload();
-        echo "after payload";
         $secret = $JWE->getSecret($technology);
-        echo "secret $secret";
         \JWTAuth::getJWTProvider()->setSecret($secret); //change the secret
-        echo "sdfsdf";
         $token = \JWTAuth::getJWTProvider()->encode(array_merge($custom_claims, $payload->toArray())); //create the token
-       echo "made token";
-       $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
+        $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
-        echo "made problem jwt";
         \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
-        echo "jwt right here";
         $payload = auth()->payload();
 
         return $problemJWT;
@@ -1306,9 +1294,7 @@ echo 'iipip';
         } else {
             switch ($technology) {
                 case('webwork'):
-                    echo "right before";
                     $seed = config('myconfig.webwork_seed');
-                    echo "right after";
                     break;
                 case('imathas'):
                     $seed = config('myconfig.imathas_seed');
