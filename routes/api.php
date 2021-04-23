@@ -121,6 +121,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
+    Route::get('/assignments/{assignment}/{question}/get-auto-graded-submissions', 'AssignmentController@getAutoGradedSubmissions');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
@@ -239,7 +240,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');
 
-
+    Route::patch('/submissions/{assignment}/{question}/scores', 'SubmissionController@updateScores');
     Route::patch('/submissions/{assignment}/{question}/explored-learning-tree', 'SubmissionController@exploredLearningTree');
     Route::post('/submissions', 'SubmissionController@store');
     Route::get('/submissions/{assignment}/questions/{question}/pie-chart-data', 'SubmissionController@submissionPieChartData');

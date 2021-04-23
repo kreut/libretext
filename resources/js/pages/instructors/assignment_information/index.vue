@@ -64,6 +64,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Auto-Graded Submissions',
+          route: 'instructors.assignments.auto_graded_submissions'
+        },
+        {
+          icon: '',
           name: 'Summary',
           route: 'instructors.assignments.summary'
         },

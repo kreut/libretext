@@ -7,7 +7,7 @@
       ok-title="Yes, remove question"
       @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion />
+      <RemoveQuestion/>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -19,86 +19,86 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Questions" />
+        <PageTitle title="Questions"/>
         <div v-if="items.length">
           <table class="table table-striped">
             <thead>
-              <tr>
-                <th scope="col">
-                  Order
-                </th>
-                <th scope="col">
-                  Title
-                </th>
-                <th scope="col" style="width: 150px;">
-                  Adapt ID
-                  <b-icon id="adapt-id-tooltip"
-                          v-b-tooltip.hover
-                          class="text-muted"
-                          icon="question-circle"
-                  />
-                  <b-tooltip target="adapt-id-tooltip" triggers="hover">
-                    This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
-                  </b-tooltip>
-                </th>
-                <th scope="col">
-                  Submission
-                </th>
-                <th scope="col">
-                  Points
-                </th>
-                <th scope="col">
-                  Solution
-                </th>
-                <th scope="col">
-                  Actions
-                </th>
-              </tr>
+            <tr>
+              <th scope="col">
+                Order
+              </th>
+              <th scope="col">
+                Title
+              </th>
+              <th scope="col" style="width: 150px;">
+                Adapt ID
+                <b-icon id="adapt-id-tooltip"
+                        v-b-tooltip.hover
+                        class="text-muted"
+                        icon="question-circle"
+                />
+                <b-tooltip target="adapt-id-tooltip" triggers="hover">
+                  This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                </b-tooltip>
+              </th>
+              <th scope="col">
+                Submission
+              </th>
+              <th scope="col">
+                Points
+              </th>
+              <th scope="col">
+                Solution
+              </th>
+              <th scope="col">
+                Actions
+              </th>
+            </tr>
             </thead>
             <tbody is="draggable" v-model="items" tag="tbody" @end="saveNewOrder">
-              <tr v-for="item in items" :key="item.id">
-                <td>
-                  <b-icon icon="list" />
-                  {{ item.order }}
-                </td>
-                <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
-                <td>
-                  {{ item.assignment_id_question_id }}
-                  <span class="text-info">
-                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)" />
+            <tr v-for="item in items" :key="item.id">
+              <td>
+                <b-icon icon="list"/>
+                {{ item.order }}
+              </td>
+              <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
+              <td>
+                {{ item.assignment_id_question_id }}
+                <span class="text-info">
+                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)"/>
                   </span>
-                </td>
-                <td>
-                  {{ item.submission }}
-                </td>
-                <td>{{ item.points }}</td>
-                <td><span v-html="item.solution" /></td>
-                <td>
+              </td>
+              <td>
+                {{ item.submission }}
+              </td>
+              <td>{{ item.points }}</td>
+              <td><span v-html="item.solution"/></td>
+              <td>
                   <span class="pr-1" @click="editQuestionSource(item.mind_touch_url)">
                     <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                                delay="500"
                     >
                       Edit question source
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil" />
+                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil"/>
                   </span>
-                  <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
+                <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
                     <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                                delay="500"
                     >
                       Remove the question from the assignment
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash" />
+                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash"/>
                   </span>
-                </td>
-              </tr>
+              </td>
+            </tr>
             </tbody>
           </table>
         </div>
         <div v-else>
           <b-alert variant="warning" show>
             <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-            <strong />
+            <strong/>
           </b-alert>
         </div>
       </div>
@@ -116,7 +116,8 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
 import RemoveQuestion from '~/components/RemoveQuestion'
-import { getTooltipTarget, initTooltips } from '../../../helpers/Tooptips'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+import { viewQuestion, doCopy } from '~/helpers/Questions'
 
 export default {
   middleware: 'auth',
@@ -143,6 +144,8 @@ export default {
       return false
     }
     this.getTooltipTarget = getTooltipTarget
+    this.viewQuestion = viewQuestion
+    this.doCopy = doCopy
     initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
@@ -167,13 +170,6 @@ export default {
     },
     editQuestionSource (mindTouchUrl) {
       window.open(mindTouchUrl)
-    },
-    doCopy (adaptId) {
-      this.$copyText(adaptId).then((e) => {
-        this.$noty.success('The Adapt ID has been copied to your clipboard.')
-      }, function (e) {
-        this.$noty.error('We could not copy the Adapt ID to your clipboard.')
-      })
     },
     async saveNewOrder () {
       let orderedQuestions = []
@@ -203,10 +199,6 @@ export default {
         this.$noty.error(error.message)
       }
       this.isLoading = false
-    },
-    viewQuestion (questionId) {
-      this.$router.push({ path: `/assignments/${this.assignmentId}/questions/view/${questionId}` })
-      return false
     },
     async getAssignmentInfo () {
       try {

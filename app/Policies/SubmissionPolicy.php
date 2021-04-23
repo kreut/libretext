@@ -19,6 +19,62 @@ class SubmissionPolicy
     /**
      * @param User $user
      * @param Submission $submission
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function getAutoGradedSubmissionsSubmissions(User $user, Submission $submission, Assignment $assignment, Question $question){
+
+        $has_access = true;
+        $message = '';
+
+        if ($has_access && !in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+            $message = "You can't get the scores for a question that is not in one of your assignments.";
+            $has_access = false;
+        }
+
+        if ($has_access && $assignment->course->user_id !== $user->id) {
+            $message = "You can't get the scores for an assignment that is not in one of your courses.";
+            $has_access = false;
+        }
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
+
+    }
+    public function updateScores(User $user, Submission $submission, Assignment $assignment, Question $question, array $user_ids)
+    {
+
+        $has_access = true;
+        $message = '';
+        $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
+        foreach ($user_ids as $user_id) {
+            if (!in_array($user_id,  $enrolled_users )) {
+                $has_access = false;
+
+                $message = "You can't update scores for students not enrolled in your course.";
+            }
+        }
+
+        if ($has_access && !in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+            $message = "You can't update the scores for a question that is not in one of your assignments.";
+            $has_access = false;
+        }
+
+        if ($has_access && $assignment->course->user_id !== $user->id) {
+            $message = "You can't update the scores for an assignment not in one of your courses.";
+            $has_access = false;
+        }
+
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
+    }
+
+    /**
+     * @param User $user
+     * @param Submission $submission
      * @param $assignment
      * @param int $assignment_id
      * @param int $question_id
@@ -46,9 +102,9 @@ class SubmissionPolicy
     {
 
         $question_in_assignment = DB::table('assignment_question')
-                                    ->where('assignment_id',$assignment->id)
-                                    ->where('question_id', $question->id)
-                                    ->first();
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
 
         switch ($user->role) {
             case(2):

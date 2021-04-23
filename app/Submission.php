@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use App\Traits\JWT;
 use \Exception;
 
 use App\Http\Requests\StoreSubmission;
@@ -20,6 +21,7 @@ class Submission extends Model
 {
 
     use DateFormatter;
+    use JWT;
 
     protected $guarded = [];
 
@@ -262,6 +264,78 @@ class Submission extends Model
         return $late_deduction_percent;
     }
 
+    /**
+     * @param object $submission
+     * @param string $technology
+     * @return false|string
+     * @throws Exception
+     */
+    public function getStudentResponse(object $submission, string $technology){
+
+        $submission_object = json_decode($submission->submission);
+        $student_response = '';
+        switch ($technology) {
+            case('h5p'):
+                //Log::info(json_encode($submission_object->result));
+                $student_response = 'N/A';
+                if (isset($submission_object->result->response)) {
+                    if (isset($submission_object->object->definition) && $submission_object->object->definition->interactionType === 'choice') {
+                        $choices = $submission_object->object->definition->choices;
+                        foreach ($choices as $choice) {
+                            if ((int)$choice->id === (int)$submission_object->result->response) {
+                                $student_response = $choice->description->{'en-US'};
+                            }
+                        }
+                    } else {
+                        $student_response = $submission_object->result->response;
+                    }
+
+                }
+
+                //$correct_response = $submission_object->object->definition->correctResponsesPattern;
+                break;
+            case('webwork'):
+                $student_response = 'N/A';
+                $student_response_arr = [];
+
+                if (isset($submission_object->platform) && $submission_object->platform === 'standaloneRenderer') {
+                    $answers_arr = json_decode(json_encode($submission_object->score->answers), true);
+                    //AnSwEr0003
+                    foreach ($answers_arr as $answer_key => $value) {
+                        $numeric_key = (int)ltrim(str_replace('AnSwEr', '', $answer_key), 0);
+                        $student_response_arr[$numeric_key] = $value['original_student_ans'];
+                    }
+
+                } else {
+                    $JWE = new JWE();
+                    $session_JWT = $this->getPayload($submission_object->sessionJWT, $JWE->getSecret('webwork'));
+                    //session_JWT will be null for bad submissions
+                    if (is_object($session_JWT) && $session_JWT->answersSubmitted) {
+                        $answer_template = (array)$session_JWT->answerTemplate;
+                        foreach ($answer_template as $key => $value) {
+                            if (is_numeric($key) && isset($value['answer']) && isset($value['answer']['original_student_ans'])) {
+                                $student_response_arr[$key] = $value['answer']['original_student_ans'];
+                            }
+                        }
+                    }
+                }
+                if ($student_response_arr) {
+                    ksort($student_response_arr);//order by keys
+                    $student_response = implode(',', $student_response_arr);
+                }
+                break;
+            case('imathas'):
+                $tks = explode('.', $submission_object->state);
+                list($headb64, $bodyb64, $cryptob64) = $tks;
+                $state = json_decode(base64_decode($bodyb64));
+
+                $student_response = json_encode($state->stuanswers);
+                //$correct_response = 'N/A';
+                break;
+
+        }
+        return $student_response;
+    }
     public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
     {
         $last_submitted_by_user = [];

@@ -7,6 +7,7 @@ use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\Question;
 use App\Section;
 use App\Traits\DateFormatter;
 use App\Course;
@@ -86,6 +87,73 @@ class AssignmentController extends Controller
 
 
     }
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws \Throwable
+     */
+    public function getAutoGradedSubmissions(Request $request,
+                                             Assignment $assignment,
+                                             Question $question,
+                                             Submission $Submission)
+    {
+
+        $response['type'] = 'error';
+          $authorized = Gate::inspect('getAutoGradedSubmissionsSubmissions', [$Submission, $assignment, $question]);
+
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }
+
+        try {
+            //get enrolled students
+            //get all questions, need to be able to see the question
+            //get auto-graded and submission file if needed (just auto-graded?)
+            $enrolled_users = $assignment->course->enrolledUsers;
+            $question = $assignment->questions->where('id', $question->id)->first();
+
+            $submissions = $assignment->submissions->where('question_id', $question->id);
+            $submissions_by_user = [];
+
+            foreach ($submissions as $submission) {
+                $submissions_by_user[$submission->user_id] = $submission;
+            }
+
+            $auto_graded_submission_info_by_user = [];
+
+            foreach ($enrolled_users as $enrolled_user) {
+                if (isset($submissions_by_user[$enrolled_user->id])) {
+                    $submission = $submissions_by_user[$enrolled_user->id];
+                    $auto_graded_submission_info_by_user[] = [
+                        'user_id' => $enrolled_user->id,
+                        'question_id' => $question->id,
+                        'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
+                        'email' => $enrolled_user->email,
+                        'submission' => $Submission->getStudentResponse($submission, $question->technology),
+                        'submission_count' => $submission->submission_count,
+                        'score' => $submission->score];
+                }
+
+            }
+            usort($auto_graded_submission_info_by_user, function ($a, $b) {
+                return $a['name'] <=> $b['name'];
+            });
+
+
+            $response['auto_graded_submission_info_by_user'] = array_values($auto_graded_submission_info_by_user);
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the auto-graded submissions for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 
     public function order(Request $request, Course $course, Assignment $assignment)
     {
@@ -319,10 +387,10 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        if ($assignment->number_of_randomized_assessments && !$shown){
-            if ($assignment->questions->count() <= $assignment->number_of_randomized_assessments){
+        if ($assignment->number_of_randomized_assessments && !$shown) {
+            if ($assignment->questions->count() <= $assignment->number_of_randomized_assessments) {
                 $response['message'] = "Before you can show this assignment, please make sure that the number of chosen assessments ({$assignment->questions->count()}) is greater than the number of randomized assessments ({$assignment->number_of_randomized_assessments}).";
-           return $response;
+                return $response;
             }
         }
         try {
@@ -957,14 +1025,14 @@ class AssignmentController extends Controller
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
-                                    ? $assignment->number_of_randomized_assessments : "none"
+                    ? $assignment->number_of_randomized_assessments : "none"
             ];
             if (auth()->user()->role === 3) {
                 $assign_to_timing = $assignment->assignToTimingByUser();
                 $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, $assign_to_timing);
                 $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
                 $formatted_items['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone);
-                $formatted_items['formatted_due'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone,'F d, Y \a\t g:i a');
+                $formatted_items['formatted_due'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a');
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {

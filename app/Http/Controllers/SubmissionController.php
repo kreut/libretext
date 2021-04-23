@@ -5,19 +5,19 @@ namespace App\Http\Controllers;
 use App\AssignmentSyncQuestion;
 use App\DataShop;
 use App\Exceptions\Handler;
+use App\Http\Requests\UpdateScoresRequest;
 use App\LtiLaunch;
 use App\LtiGradePassback;
-use Carbon\Carbon;
-use Carbon\CarbonImmutable;
 use \Exception;
 use App\Submission;
 use App\Score;
 use App\Assignment;
 use App\Question;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Db;
+use Illuminate\Support\Facades\DB;
 
 use App\Http\Requests\StoreSubmission;
 
@@ -25,7 +25,60 @@ use App\Http\Requests\StoreSubmission;
 class SubmissionController extends Controller
 {
 
-    public function store(StoreSubmission $request, Assignment $Assignment, Score $score)
+    public function updateScores(UpdateScoresRequest $request,
+                                 Assignment $assignment,
+                                 Question $question,
+                                 Submission $submission)
+    {
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('updateScores', [$submission, $assignment, $question, $request->user_ids]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $data = $request->validated();
+        try {
+            $apply_to = $request->apply_to;
+            $new_score = $data['new_score'];
+            DB::beginTransaction();
+            $submissions = $apply_to
+                ? $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereIn('user_id', $request->user_ids)
+                    ->get()
+                : $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereNotIn('user_id', $request->user_ids)
+                    ->get();
+
+            foreach ($submissions as $submission) {
+                $adjustment = $new_score - $submission->score;
+                $submission->score = $new_score;
+                $submission->save();
+                $score = new Score();
+                $assignment_score = $score->where('assignment_id', $assignment->id)
+                    ->where('user_id', $submission->user_id)
+                    ->first();
+                $assignment_score->score += $adjustment;
+                $assignment_score->save();
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The scores have been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the scores.  Please refresh the page and try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    public
+    function store(StoreSubmission $request, Assignment $Assignment, Score $score)
     {
         $Submission = new Submission();
         return $Submission->store($request, new Submission(), $Assignment, $score, new LtiLaunch(), new LtiGradePassback(), new DataShop());
@@ -40,7 +93,8 @@ class SubmissionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function submissionPieChartData(Assignment $assignment, Question $question, Submission $submission, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $response['redirect_question'] = false;
@@ -58,7 +112,7 @@ class SubmissionController extends Controller
                 ->where('question_id', $question->id)
                 ->first();
             $past_due = time() > strtotime($assignment->assignToTimingByUser('due'));
-            if (Auth::user()->role === 3 && !$question_info->clicker_start && !$past_due){
+            if (Auth::user()->role === 3 && !$question_info->clicker_start && !$past_due) {
                 $clicker_question = DB::table('assignment_question')
                     ->where('assignment_id', $assignment->id)
                     ->whereNotNull('clicker_start')
@@ -71,7 +125,7 @@ class SubmissionController extends Controller
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
 
             if (Auth::user()->role === 3) {
-                $due= DB::table('assignments')
+                $due = DB::table('assignments')
                     ->where('id', $assignment->id)
                     ->select('due')
                     ->first()
@@ -82,12 +136,12 @@ class SubmissionController extends Controller
                 }
 
             }
-            $number_enrolled = count($assignment->course->enrollments)-1;//don't include Fake Student
+            $number_enrolled = count($assignment->course->enrollments) - 1;//don't include Fake Student
 
-            $fake_student_user_id= DB::table('enrollments')->where('course_id', $assignment->course->id)
-                                                        ->orderBy('user_id')
-                                                        ->first()
-                                                        ->user_id;
+            $fake_student_user_id = DB::table('enrollments')->where('course_id', $assignment->course->id)
+                ->orderBy('user_id')
+                ->first()
+                ->user_id;
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
                 ->where('submissions.assignment_id', $assignment->id)
@@ -162,7 +216,7 @@ class SubmissionController extends Controller
             }
             $response['pie_chart_data']['datasets']['data'] = $counts;
             $number_submission_results = count($submission_results); //don't include Fake
-            $response['response_percent'] = $number_enrolled ? Round(100 *  $number_submission_results  / $number_enrolled, 1) : 0;
+            $response['response_percent'] = $number_enrolled ? Round(100 * $number_submission_results / $number_enrolled, 1) : 0;
             $response['type'] = 'success';
 
 
@@ -174,7 +228,8 @@ class SubmissionController extends Controller
         return $response;
     }
 
-    public function getChoices($technology, $object)
+    public
+    function getChoices($technology, $object)
     {
         $choices = [];
         switch ($technology) {
@@ -188,7 +243,8 @@ class SubmissionController extends Controller
         return $choices;
     }
 
-    public function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
+    public
+    function exploredLearningTree(Assignment $assignment, Question $question, Submission $submission)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $question->id]);
