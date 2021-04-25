@@ -100,7 +100,10 @@ class SubmissionFileController extends Controller
                 $submission = $submission_file_info['submission'];
                 $response['files']['submission'] = $submission;
                 $file_feedback = $submission_file_info['file_feedback'];
-                if ($open_ended_submission_type === 'text') {
+                $is_text = ($request->user()->role === 3)
+                    ? $open_ended_submission_type === 'text'
+                    : pathinfo($submission, PATHINFO_EXTENSION) === 'html';
+                if ($is_text) {
                     try {
                         $submission_text = Storage::disk('s3')->get("assignments/{$assignment->id}/$submission");
                     } catch (Exception $e) {
@@ -425,7 +428,7 @@ class SubmissionFileController extends Controller
             $file_size = Storage::disk('s3')->size($request->s3_key);
             if ($file_size > $this->max_file_size) {
                 $response['message'] = 'Your file is ' . $this->bytesToHuman($file_size) . ' and has exceeded the ' . $this->bytesToHuman($this->max_file_size) . '  limit.';
-           return $response;
+                return $response;
             }
             $assignment = Assignment::find($assignment_id);
             //validator put here because I wasn't using vform so had to manually handle errors

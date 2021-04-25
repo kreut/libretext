@@ -880,10 +880,17 @@ export default {
       console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
 
       this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
-      this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
-      this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
-      this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
       await this.getFilesFromS3()
+
+      let submission = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission
+      if (submission !== null && submission.split('.').pop() === 'pdf') {
+        this.isOpenEndedFileSubmission = true
+      } else {
+        this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
+        this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
+        this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
+      }
+
       this.retrievedFromS3 = true
     },
     async getTemporaryUrl (file, currentQuestionPage, currentStudentPage) {
