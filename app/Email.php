@@ -25,7 +25,7 @@ class Email extends Model
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->where('assign_to_timings.due', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
             ->where('assignments.notifications', 1)
-            ->select('users.id AS user.id', 'users.first_name', 'users.last_name', 'users.email',
+            ->select('users.id AS user_id', 'users.first_name', 'users.last_name', 'users.email',
                 'assignments.name AS assignment_name', 'assignments.id AS assignment_id',
                 'courses.name AS course_name',
                 'notifications.hours_until_due')
@@ -38,7 +38,7 @@ class Email extends Model
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
             ->where('extensions.extension', DB::raw("DATE_FORMAT(DATE_ADD(UTC_TIMESTAMP(), INTERVAL notifications.hours_until_due HOUR), '%Y-%m-%d %H:%i:00')"))
             ->where('assignments.notifications', 1)
-            ->select('users.id AS user.id', 'users.first_name', 'users.last_name', 'users.email',
+            ->select('users.id as user_id', 'users.first_name', 'users.last_name', 'users.email',
                 'assignments.name AS assignment_name', 'assignments.id AS assignment_id',
                 'courses.name AS course_name',
                 'notifications.hours_until_due')
@@ -87,13 +87,13 @@ class Email extends Model
             'assignment_link' => config('app.url') . "/students/assignments/{$notification->assignment_id}/summary"
         ];
         Log::info('Regular assignment reminder:' . $notification->assignment_id . ' ' . $notification->user_id);
-        /*  $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
-          $beautymail->send('emails.assignment_due_reminder', $mail_info, function ($message)
-          use ($notification) {
-              $message->from('adapt@libretexts.org')
-                  ->to($notification->email, $notification->first_name)
-                  ->subject('An Upcoming Assignment Is Due');
-          });*/
+        $beautymail = app()->make(\Snowfire\Beautymail\Beautymail::class);
+        $beautymail->send('emails.assignment_due_reminder', $mail_info, function ($message)
+        use ($notification) {
+            $message->from('adapt@libretexts.org')
+                ->to($notification->email, $notification->first_name)
+                ->subject('An Upcoming Assignment Is Due');
+        });
     }
 
 
