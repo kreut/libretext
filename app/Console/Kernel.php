@@ -40,7 +40,7 @@ class Kernel extends ConsoleKernel
                 ->emailOutputOnFailure('kreut@hotmail.com');
         }
 
-        $schedule->command('check:AssignTos')->everyMinute()
+        $schedule->command('check:AssignTos')->twiceDaily()
             ->emailOutputOnFailure('kreut@hotmail.com');
 
      /*   $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
