@@ -45,6 +45,7 @@ class JWTController extends Controller
 
         //set the same secret for encoding
         $secret = file_get_contents(base_path() . '/JWE/webwork');
+
         \JWTAuth::getJWTProvider()->setSecret($secret);
         //$decoded = \JWTAuth::getJWTProvider()->decode($token);
         auth()->setToken($token)->getPayload();
