@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\Users\id_5;
 
 use App\Score;
 use App\Submission;
