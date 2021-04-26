@@ -35,6 +35,7 @@
     "laravel/ui": "^2.0",
     "league/flysystem": "^1.1",
     "league/flysystem-aws-s3-v3": "^1.0",
+    "predis/predis": "^1.1",
     "setasign/fpdf": "1.8.*",
     "setasign/fpdi": "^2.0",
     "setasign/fpdi_pdf-parser": "^2.0",
