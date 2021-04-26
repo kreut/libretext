@@ -34,6 +34,7 @@ RUN docker-php-ext-install \
     opcache \
     calendar \
     pdo_mysql \
+    gd \
     zip
 
 # Ensure PHP logs are captured by the container
