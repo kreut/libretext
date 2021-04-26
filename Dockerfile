@@ -3,6 +3,8 @@ FROM php:7.4-apache
 # Install packages
 RUN apt-get update && apt-get install -y \
     git \
+    nodejs \
+    npm \
     curl \
     sudo \
     zip \
@@ -42,6 +44,12 @@ ENV LOG_CHANNEL=stderr
 COPY --from=composer:latest /usr/bin/composer /usr/bin/composer
 COPY . /var/www/tmp
 RUN cd /var/www/tmp && composer install --no-dev
+
+# Build Vue files
+WORKDIR /var/www/tmp
+RUN npm install npm@latest -g --silent
+RUN npm install
+RUN npm run production
 
 
 # Ensure the entrypoint file can be run
