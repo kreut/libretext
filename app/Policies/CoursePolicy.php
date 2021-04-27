@@ -13,6 +13,12 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    public function getAssignmentsAndUsers(User $user, Course $course){
+
+        return ((int)$course->user_id === (int)$user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to download the assignments and users.');
+    }
     public function import(User $user, Course $course)
     {
 

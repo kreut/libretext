@@ -27,6 +27,7 @@ use App\Traits\Statistics;
 use App\Exceptions\Handler;
 use \Exception;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Validator;
 
 ini_set('max_execution_time', 300);
@@ -35,6 +36,108 @@ class ScoreController extends Controller
 {
     use Statistics;
 
+    function csvToArray($filename = '', $delimiter = ',')
+    {
+        if (!file_exists($filename) || !is_readable($filename))
+            return false;
+        $header = null;
+        $data = array();
+        if (($handle = fopen($filename, 'r')) !== false) {
+            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
+                if (!$header)
+                    $header = $row;
+                else
+                    $data[] = array_combine($header, $row);
+            }
+            fclose($handle);
+        }
+        return $data;
+    }
+
+    public function overrideScores(Request $request, Assignment $assignment, Score $score)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('overrideScores', [$score, $assignment, $request->overrideScores]);
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $override_scores = $request->overrideScores;
+
+            DB::beginTransaction();
+            $score = new Score();
+            foreach ($override_scores as $override_score) {
+                if ($override_score['override_score'] !== null) {
+                    Score::updateOrCreate(
+                        ['assignment_id' => $assignment->id,
+                            'user_id' => $override_score['user_id']],
+                        ['score' => $override_score['override_score']]);
+                }
+            }
+            $response['type'] = 'success';
+            $response['message'] = 'The scores have been updated.';
+            DB::commit();
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error overriding these assignment scores.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function uploadOverrideScores(Request $request, Assignment $assignment, Score $score)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $overrideScores = $request->file('overrideScoresFile')->store("override-scores/$assignment->id", 'local');
+            $csv_file = Storage::disk('local')->path($overrideScores);
+            $current_scores = $score->where('assignment_id', $assignment->id)->get();
+
+            foreach ($current_scores as $current_score) {
+                $current_scores_by_user_id[$current_score->user_id] = $current_score->score;
+            }
+            $override_scores = $this->csvToArray($csv_file);
+            $override_score_errors = [];
+            foreach ($override_scores as $override_score) {
+                $score = $this->fixCSV($override_score['Score']);
+                if ($score !== '' && !is_numeric($score) || $score < 0) {
+                    $override_score_errors[] = $override_score['Name'];
+                }
+            }
+            if ($override_score_errors) {
+                $response['override_score_errors'] = $override_score_errors;
+                return $response;
+            }
+            foreach ($override_scores as $override_score) {
+                $user_id = $this->fixCSV($override_score['User-id']);
+                $from_to_scores[] = ['user_id' => $this->fixCSV($override_score['User-id']),
+                    'name' => $this->fixCSV($override_score['Name']),
+                    'override_score' => $this->fixCSV($override_score['Score']),
+                    'current_score' => $current_scores_by_user_id[$user_id] ?? '-'];
+            }
+            $response['from_to_scores'] = $from_to_scores;
+            $response['message'] = 'Your scores have been uploaded.';
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error uploading your scores.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public function fixCSV($value)
+    {
+        return str_replace(['"', '='], ['', ''], $value);
+    }
 
     public function getTotalPointsByAssignmentId($assignments, array $assignment_ids)
     {
@@ -248,7 +351,7 @@ class ScoreController extends Controller
             $download_rows = [];
             foreach ($enrolled_users as $user_id => $name) {
                 $columns = [];
-                $download_row_data = ['name' => $enrolled_users_last_first[$user_id]];
+                $download_row_data = ['name' => $name];
                 foreach ($assignments as $assignment) {
                     $default_score = '-';
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
@@ -285,7 +388,7 @@ class ScoreController extends Controller
                 'stickyColumn' => true,
                 'isRowHeader' => true]];
             $download_fields = new \stdClass();
-            $download_fields->LastFirst = 'name';
+            $download_fields->name = 'name';
 
 
             foreach ($assignments as $assignment) {
@@ -503,7 +606,7 @@ class ScoreController extends Controller
             $Solution,
             $AssignmentGroup);
 
-        usort($assignments_info['assignments'], function($b, $a) {
+        usort($assignments_info['assignments'], function ($b, $a) {
             return $a['due']['due_date'] <=> $b['due']['due_date'];
         });
         if ($assignments_info ['type'] === 'error') {

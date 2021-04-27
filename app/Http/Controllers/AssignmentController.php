@@ -34,6 +34,44 @@ class AssignmentController extends Controller
 {
     use DateFormatter;
 
+
+    public function getAssignmentsAndUsers(Request $request, Course $course){
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAssignmentsAndUsers', $course);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignments = $course->assignments;
+            $assignments_by_id[0] = ['value'=>0, 'text'=>'Please choose an assignment'];
+            foreach ($assignments as $assignment){
+                $assignments_by_id[]  = ['value' => $assignment->id, 'text' => $assignment->name];
+            }
+            $enrolled_users = $course->enrolledUsers;
+            foreach ($enrolled_users as $enrolled_user){
+                $users_by_id[] = [$enrolled_user->id, "$enrolled_user->first_name $enrolled_user->last_name", ''];
+            }
+            usort($users_by_id , function ($a, $b) {
+                return $a[1] <=> $b[1];
+            });
+           array_unshift($users_by_id, ['User Id', 'Name', 'Override Score']);
+            $response['assignments'] = $assignments_by_id;
+            $response['users'] = $users_by_id;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the user and assignment information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     /**
      * @param Assignment $assignment
      * @return array

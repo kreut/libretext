@@ -31,6 +31,7 @@ class GradingTest extends TestCase
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
 
+
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user->role = 3;
 
@@ -76,21 +77,94 @@ class GradingTest extends TestCase
             'original_filename' => 'orig_fake_1.pdf',
             'date_submitted' => Carbon::now()];
         SubmissionFile::create($data);
-        $this->getFilesFromS3Data=['open_ended_submission_type' => 'text'];
+        $this->getFilesFromS3Data = ['open_ended_submission_type' => 'text'];
     }
 
     /** @test */
-    public function owner_can_get_s3_files(){
+    public function owner_can_override_scores()
+    {
+        $score = new Score();
+        $score->user_id = $this->student_user->id;
+        $score->assignment_id = $this->assignment->id;
+        $score->score = 10;
+        $score->save();
+
+        $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
+        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
+        $score = new Score();
+        $this->assertEquals(2,$score->where('user_id', $this->student_user->id)->first()->score);
+    }
+
+    /** @test */
+    public function override_scores_does_not_affect_other_students()
+    {
+        $score = new Score();
+        $score->user_id = $this->student_user_2->id;
+        $score->assignment_id = $this->assignment->id;
+        $score->score = 10;
+        $score->save();
+
+        $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
+        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
+        $score = new Score();
+        $this->assertEquals(10,$score->where('user_id', $this->student_user_2->id)->first()->score);
+    }
+
+
+    /** @test */
+
+    public function non_owner_cannot_override_scores()
+    {
+        $data['overrideScores'] = ['user_id' => 1, 'score' => 2];
+        $this->actingAs($this->user_2)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
+            ->assertJson(['message' => "You can't override the scores since this is not one of your assignments."]);
+
+
+    }
+
+    /** @test */
+    public function students_must_be_enrolled_in_course_to_do_overrides()
+    {
+
+        $data['overrideScores'] = ['user_id' => 1, 'score' => 2];
+        $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
+            ->assertJson(['message' => "You can only override scores if the students are enrolled in your course."]);
+    }
+
+
+
+    /** @test */
+
+    public function non_owner_cannot_get_assignments_and_users()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/assignments/{$this->course->id}/assignments-and-users")
+            ->assertJson(['message' => 'You are not allowed to download the assignments and users.']);
+
+    }
+
+    /** @test */
+
+    public function an_owner_can_get_assignments_and_users()
+    {
+        $this->actingAs($this->user)->getJson("/api/assignments/{$this->course->id}/assignments-and-users")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+    public function owner_can_get_s3_files()
+    {
         $response['files'] = ['submission' => 'fake_1.pdf'];
-        $this->actingAs($this->user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+        $this->actingAs($this->user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}", $this->getFilesFromS3Data)
             ->assertJson($response);
 
     }
 
     /** @test */
-    public function grader_can_get_s3_files(){
+    public function grader_can_get_s3_files()
+    {
         $response['files'] = ['submission' => 'fake_1.pdf'];
-        $this->actingAs($this->grader_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+        $this->actingAs($this->grader_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}", $this->getFilesFromS3Data)
             ->assertJson($response);
 
     }
@@ -98,18 +172,20 @@ class GradingTest extends TestCase
 
     /** @test */
 
-public function student_can_get_their_own_s3_files(){
-    $response['files'] = ['submission' => 'fake_1.pdf'];
-    $this->actingAs($this->student_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
-    ->assertJson($response);
+    public function student_can_get_their_own_s3_files()
+    {
+        $response['files'] = ['submission' => 'fake_1.pdf'];
+        $this->actingAs($this->student_user)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}", $this->getFilesFromS3Data)
+            ->assertJson($response);
 
-}
+    }
 
     /** @test */
 
-    public function student_cannot_get_someone_elses_s3_files(){
+    public function student_cannot_get_someone_elses_s3_files()
+    {
 
-        $this->actingAs($this->student_user_2)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}",$this->getFilesFromS3Data)
+        $this->actingAs($this->student_user_2)->postJson("/api/submission-files/get-files-from-s3/{$this->assignment->id}/{$this->question->id}/{$this->student_user->id}", $this->getFilesFromS3Data)
             ->assertJson(['message' => 'You are not allowed to view that submission file.']);
 
     }

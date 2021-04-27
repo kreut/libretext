@@ -117,6 +117,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
 
+
+    Route::get('/assignments/{course}/assignments-and-users', 'AssignmentController@getAssignmentsAndUsers');
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
@@ -147,6 +149,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
+    Route::put('/scores/{assignment}/upload-override-scores','ScoreController@uploadOverrideScores');
+    Route::patch('/scores/{assignment}/override-scores','ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
     Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');

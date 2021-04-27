@@ -41,6 +41,7 @@
               </ul>
             </div>
             <b-row align-h="end">
+              <span v-show="user.role ===2 ">
               <download-excel
                 class="float-right mb-2"
                 :data="downloadRows"
@@ -48,9 +49,23 @@
                 :fields="downloadFields"
                 worksheet="My Worksheet"
                 type="csv"
-                name="scores.csv"
+                name="all_scores.csv"
               >
-                <b-button variant="success">
+                <b-button variant="info" size="sm" class="mr-2" @click="openOverrideAssignmentScoresModal">
+                  Override Assignment Scores
+                </b-button>
+              </download-excel>
+                </span>
+              <download-excel
+                class="float-right mb-2"
+                :data="downloadRows"
+                :fetch="fetchData"
+                :fields="downloadFields"
+                worksheet="My Worksheet"
+                type="csv"
+                name="all_scores.csv"
+              >
+                <b-button variant="success" size="sm">
                   Download Scores
                 </b-button>
               </download-excel>
@@ -141,7 +156,123 @@
           </b-form-group>
         </b-form>
       </b-modal>
+      <b-modal id="modal-confirm-override-assignment-scores"
+               title="Confirm override assignment scores"
+               ok-title="Let's do it!"
+               ok-variant="success"
+               cancel-title="Cancel"
+               cancel-variant="danger"
+               @ok="submitOverrideAssignmentScores()"
+      >
+        <p>
+          I have saved a copy of the current scores to my local computer. I understand that Adapt cannot retrieve
+          any of my past scores.
+        </p>
+        <p>Would you like Adapt to override your scores for <strong>{{ assignmentName }}</strong>?</p>
+      </b-modal>
+      <b-modal id="modal-override-assignment-scores"
+               ref="modal"
+               title="Override assignment scores"
+               size="lg"
+      >
+        <b-alert variant="info" :show="true">
+          A copy of your scores has been downloaded to your computer. Please save this file in case you change your mind
+          about your assignment override scores.
+        </b-alert>
 
+        <p class="font-weight-bold font-italic">
+          Step 1: Choose an assignment and download the scores worksheet.
+        </p>
+        <b-form ref="form">
+          <b-form-row class="mb-2">
+            <b-col lg="2">
+              <label>Assignment</label>
+            </b-col>
+            <b-col lg="5">
+              <b-form-select v-model="assignmentId"
+                             :options="assignmentOptions"
+                             @change="updateAssignmentName"
+              />
+            </b-col>
+            <b-col>
+              <download-excel
+                class="float-right mb-2"
+                :data="downloadAssignmentUsers"
+                worksheet="Assignment"
+                type="csv"
+                :name="getAssignmentNameAsFile()"
+              >
+                <b-button variant="success"
+                          size="sm"
+                          :disabled="assignmentId===0"
+                          @click="downloadedAssignmentUsers = true"
+                >
+                  Download Scores Worksheet
+                </b-button>
+              </download-excel>
+            </b-col>
+          </b-form-row>
+          <b-container v-show="downloadedAssignmentUsers">
+            <b-row>
+              <p class="font-weight-bold font-italic">
+                Step 2: Add the override scores to the worksheet and upload your scores back to Adapt.
+              </p>
+              <b-form-file
+                ref="assignmentOverrideScores"
+                v-model="assignmentOverrideScoresFileForm.overrideScoresFile"
+                class="mb-2"
+                placeholder="Choose a file or drop it here..."
+                drop-placeholder="Drop file here..."
+              />
+              <div v-if="uploading">
+                <b-spinner small type="grow"/>
+                Uploading file...
+              </div>
+              <input type="hidden" class="form-control is-invalid">
+              <div class="help-block invalid-feedback">
+                {{ assignmentOverrideScoresFileForm.errors.get('overrideScoresFile') }}
+              </div>
+            </b-row>
+            <b-row align-h="end">
+              <b-button variant="info" size="sm"
+                        :disabled="assignmentOverrideScoresFileForm.overrideScoresFile.length === 0"
+                        @click="handleOk"
+              >
+                Upload scores
+              </b-button>
+            </b-row>
+          </b-container>
+          <b-container v-show="fromToScores.length">
+            <b-row>
+              <p class="font-weight-bold font-italic">
+                Step 3: Review your overrides and confirm.
+                <b-button variant="primary" size="sm" @click="openConfirmOverrideAssignmentScoresModal">
+                  Confirm
+                </b-button>
+              </p>
+              <b-table
+                striped
+                hover
+                :no-border-collapse="true"
+                :fields="fromToFields"
+                :items="fromToScores"
+              />
+            </b-row>
+          </b-container>
+        </b-form>
+        <template #modal-footer>
+         <b-container>
+            <b-button
+              variant="secondary"
+              size="sm"
+              class="float-right"
+              @click="$bvModal.hide('modal-override-assignment-scores')"
+            >
+              Close
+            </b-button>
+         </b-container>
+        </template>
+      </b-modal>
       <b-modal
         id="modal-student-extension-and-override"
         ref="modal"
@@ -218,6 +349,7 @@ import Form from 'vform'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
+import { mapGetters } from 'vuex'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -228,6 +360,32 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    downloadedAssignmentUsers: false,
+    assignmentName: '',
+    fromToScores: [],
+    fromToFields: [
+      {
+        key: 'name',
+        sortable: true
+      },
+      {
+        key: 'current_score',
+        sortable: true
+      },
+      {
+        key: 'override_score',
+        sortable: true
+      }
+    ],
+    uploading: false,
+    assignmentOverrideScoresFileForm: new Form({
+      overrideScoresFile: []
+    }),
+    assignmentOverrideScoresForm: new Form({
+      overrideScores: []
+    }),
+    downloadAssignmentUsers: [],
+    assignmentOptions: [],
     studentName: '',
     sections: [{ text: 'All Sections', value: 0 }],
     hasMultipleSections: false,
@@ -266,6 +424,9 @@ export default {
     originalDueDateTime: '',
     currentScore: null
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   mounted () {
     this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
@@ -274,6 +435,95 @@ export default {
     this.getScores()
   },
   methods: {
+    getAssignmentNameAsFile () {
+      return this.assignmentName.replace(/[/\\?%*:|"<>]/g, '-') + '.csv'
+    },
+    updateAssignmentName (target) {
+      let assignment = this.assignmentOptions.filter(e => e.value === target)[0]
+      this.assignmentName = assignment.text
+    },
+    async submitOverrideAssignmentScores () {
+      try {
+        this.assignmentOverrideScoresForm.overrideScores = this.fromToScores
+        const { data } = await this.assignmentOverrideScoresForm.patch(`/api/scores/${this.assignmentId}/override-scores`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.isLoading = true
+          this.$bvModal.hide('modal-override-assignment-scores')
+          await this.getScores()
+          this.isLoading = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    openConfirmOverrideAssignmentScoresModal () {
+      this.$bvModal.show('modal-confirm-override-assignment-scores')
+    },
+    async handleOk (bvModalEvt) {
+      bvModalEvt.preventDefault()
+      try {
+        if (this.uploading) {
+          this.$noty.info('Please be patient while the file is uploading.')
+          return false
+        }
+        // this.fileFeedbackForm.errors.set('assignmentScoresFile', null)
+        this.uploading = true
+        // https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
+        let formData = new FormData()
+        formData.append('overrideScoresFile', this.assignmentOverrideScoresFileForm.overrideScoresFile)
+        formData.append('_method', 'put') // add this
+        const { data } = await axios.post(`/api/scores/${this.assignmentId}/upload-override-scores`, formData)
+        if (data.type === 'error') {
+          if (data.override_score_errors) {
+            let badStudents = data.override_score_errors.join(', ')
+            let badStudentsMessage = 'The following students have scores which are not positive numbers: ' + badStudents
+            this.assignmentOverrideScoresFileForm.errors.set('overrideScoresFile', badStudentsMessage)
+            this.assignmentOverrideScoresFileForm.overrideScoresFile = []
+          }
+          if (data.message) {
+            this.$noty.error(data.message)
+          }
+        } else {
+          this.fromToScores = data.from_to_scores
+          this.assignmentOverrideScoresFileForm.errors.clear('overrideScoresFile')
+          this.$noty.success(data.message)
+        }
+      } catch (error) {
+        if (error.message.includes('status code 413')) {
+          error.message = 'The maximum size allowed is 10MB.'
+        }
+        this.$noty.error(error.message)
+      }
+      this.uploading = false
+    },
+    async openOverrideAssignmentScoresModal () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.courseId}/assignments-and-users`)
+        console.log(data)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.assignmentOptions = data.assignments
+        this.fromToScores = []
+        let downloadAssignmentUsers = JSON.parse(JSON.stringify(data.users))
+        for (let i = 1; i < downloadAssignmentUsers.length; i++) {
+          let value = downloadAssignmentUsers[i]
+          let json = { 'User-id': value[0], 'Name': value[1], 'Score': '' }
+          this.downloadAssignmentUsers.push(json)
+        }
+
+        console.log(this.downloadAssignmentUsers)
+        this.downloadedAssignmentUsers = false
+        this.assignmentOverrideScoresFileForm.overrideScoresFile = []
+        this.assignmentId = 0
+
+        this.$bvModal.show('modal-override-assignment-scores')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     submitUpdateExtensionOrOverrideByStudent (bvModalEvt) {
       // Prevent modal from closing
       bvModalEvt.preventDefault()

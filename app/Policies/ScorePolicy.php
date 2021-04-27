@@ -13,6 +13,30 @@ class ScorePolicy
     use HandlesAuthorization;
     use \App\Traits\CommonPolicies;
 
+
+    public function overrideScores(User $user, Score $score, Assignment $assignment, array $override_scores)
+    {
+        $has_access = true;
+        $message = '';
+        if ($assignment->course->user_id !== $user->id) {
+            $has_access = false;
+            $message = "You can't override the scores since this is not one of your assignments.";
+        } else {
+            $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
+
+            foreach ($override_scores as $override_score) {
+                if (!in_array($override_score['user_id'], $enrolled_users)) {
+                    $has_access = false;
+                    $message = "You can only override scores if the students are enrolled in your course.";
+                }
+            }
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny($message);
+
+    }
+
     /**
      * Determine whether the user can update the score.
      *
