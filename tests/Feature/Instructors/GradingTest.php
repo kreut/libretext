@@ -115,7 +115,7 @@ class GradingTest extends TestCase
 
     public function non_owner_cannot_override_scores()
     {
-        $data['overrideScores'] = ['user_id' => 1, 'score' => 2];
+        $data['overrideScores'] =  [['user_id' => $this->student_user->id, 'override_score' => 2]];
         $this->actingAs($this->user_2)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
             ->assertJson(['message' => "You can't override the scores since this is not one of your assignments."]);
 
@@ -125,8 +125,7 @@ class GradingTest extends TestCase
     /** @test */
     public function students_must_be_enrolled_in_course_to_do_overrides()
     {
-
-        $data['overrideScores'] = ['user_id' => 1, 'score' => 2];
+        $data['overrideScores'] =  [['user_id' => 1, 'override_score' => 2]];
         $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
             ->assertJson(['message' => "You can only override scores if the students are enrolled in your course."]);
     }

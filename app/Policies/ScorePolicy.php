@@ -23,9 +23,8 @@ class ScorePolicy
             $message = "You can't override the scores since this is not one of your assignments.";
         } else {
             $enrolled_users = $assignment->course->enrolledUsers->pluck('id')->toArray();
-
             foreach ($override_scores as $override_score) {
-                if (!in_array($override_score['user_id'], $enrolled_users)) {
+                if (isset($override_score['user_id']) && !in_array($override_score['user_id'], $enrolled_users)) {
                     $has_access = false;
                     $message = "You can only override scores if the students are enrolled in your course.";
                 }
