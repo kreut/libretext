@@ -20,6 +20,7 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
 Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');

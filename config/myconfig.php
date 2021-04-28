@@ -6,5 +6,6 @@ return [
     'imathas_seed' =>env('IMATHAS_SEED', 'no imathas seed'),
     'jwt_secret' => env('JWT_SECRET',null),
     'webwork_jwt_secret' => env('WEBWORK_JWT_SECRET', file_get_contents(base_path() . '/JWE/webwork')),
-    'db_host' => env('DB_HOST', 'No host provided')
+    'db_host' => env('DB_HOST', 'No host provided'),
+    'minpods' => env('MINPODS','None defined')
 ];
