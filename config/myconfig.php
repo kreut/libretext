@@ -9,5 +9,5 @@ return [
         ? file_get_contents(base_path() . '/JWE/webwork')
         : 'No string exists'),
     'db_host' => env('DB_HOST', 'No host provided'),
-    'minpods' => env('MINPODS', 'None defined')
+    'minpods' => env('MINPODS', 0)
 ];
