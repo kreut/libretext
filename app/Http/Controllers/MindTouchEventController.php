@@ -16,7 +16,7 @@ class MindTouchEventController extends Controller
 {
     public function update(Request $request, Question $Question, Libretext $libretext)
     {
-      $libraries = $libretext->libraries();
+        $libraries = $libretext->libraries();
         try {
             $request_host = parse_url($request->headers->get('origin'), PHP_URL_HOST);
             $request_info = [
@@ -42,11 +42,11 @@ class MindTouchEventController extends Controller
                     $Question->getQuestionIdsByPageId($request->page_id, $request_library, true);//possibly recreate non-technology piece
                 } else if ($request->action === 'updated_title') {
                     $title = $libretext->getTitleByLibraryAndPageId($request_library, $request->page_id);
-                    Question::where('library',$request_library)
+                    Question::where('library', $request_library)
                         ->where('page_id', $request->page_id)
                         ->update(['title' => $title]);
                 } else {
-                    Log::warning('unknown_request_action' . date('Y-m-d_H:i:s'), $request_info );
+                    Log::warning('unknown_request_action' . date('Y-m-d_H:i:s'), $request_info);
                 }
             }
         } catch (Exception $e) {

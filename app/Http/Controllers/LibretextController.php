@@ -41,7 +41,6 @@ class LibretextController extends Controller
                     file_put_contents($file, Storage::disk('s3')->get("{$library}/{$pageId}.php"));
                 }
                 require_once($file);
-                unlink($file);
 
             }
         } catch (Exception $e) {
