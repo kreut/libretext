@@ -105,7 +105,7 @@ class ScoreController extends Controller
             $override_scores = $this->csvToArray($csv_file);
             $override_score_errors = [];
             foreach ($override_scores as $override_score) {
-                $score = $this->fixCSV($override_score['Score']);
+                $score = $this->fixCSV($override_score['Score'], true);
                 if ($score !== '' && !is_numeric($score) || $score < 0) {
                     $override_score_errors[] = $override_score['Name'];
                 }
@@ -127,7 +127,7 @@ class ScoreController extends Controller
                 $user_id = $this->fixCSV($override_score['UserId']);
                 $from_to_scores[] = ['user_id' => $user_id,
                     'name' => $this->fixCSV($override_score['Name']),
-                    'override_score' => $this->fixCSV($override_score['Score']),
+                    'override_score' => $this->fixCSV($override_score['Score'], true),
                     'current_score' => $current_scores_by_user_id[$user_id] ?? '-'];
             }
             $response['from_to_scores'] = $from_to_scores;
@@ -143,8 +143,10 @@ class ScoreController extends Controller
 
     }
 
-    public function fixCSV($value)
+    public function fixCSV($value, $fix_dash = false)
     {
+
+        $value = $fix_dash ? str_replace('-', '', $value) : $value;
         return str_replace(['"', '='], ['', ''], $value);
     }
 
