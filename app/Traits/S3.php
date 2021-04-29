@@ -3,17 +3,22 @@
 
 namespace App\Traits;
 
-use App\SubmissionFile;
+
+use Exception;
 use Illuminate\Support\Facades\Storage;
-use setasign\Fpdi\Fpdi;
-use App\Cutup;
-use Illuminate\Support\Facades\Log;
 
 trait S3
 {
+    public function getS3($object){
+        try {
+            Storage::disk('s3')->get($object);
+        } catch (Exception $e){
+            Storage::disk('backup_s3')->get($object);
+        }
+    }
     public function getTemporaryUrl($assignment_id, $file)
     {
-        return \Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(360));
+        return Storage::disk('s3')->temporaryUrl("assignments/$assignment_id/$file", now()->addMinutes(360));
     }
 
     public function fileValidator()
