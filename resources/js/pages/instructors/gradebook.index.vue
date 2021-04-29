@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewScores" title="Gradebook"/>
+    <PageTitle v-if="canViewScores" title="Gradebook" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -42,20 +42,12 @@
             </div>
             <b-row align-h="end">
               <span v-show="user.role ===2 ">
-              <download-excel
-                class="float-right mb-2"
-                :data="downloadRows"
-                :fetch="fetchData"
-                :fields="downloadFields"
-                worksheet="My Worksheet"
-                type="csv"
-                name="all_scores.csv"
-              >
-                <b-button variant="info" size="sm" class="mr-2" @click="openOverrideAssignmentScoresModal">
+                <b-button variant="info" size="sm" class="mr-2"
+                          @click="openOverrideAssignmentScoresModal"
+                >
                   Override Assignment Scores
                 </b-button>
-              </download-excel>
-                </span>
+              </span>
               <download-excel
                 class="float-right mb-2"
                 :data="downloadRows"
@@ -103,11 +95,10 @@
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span v-html="data.field.label"/>
+                  <span v-html="data.field.label" />
                 </template>
                 <template v-slot:cell()="data">
-                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
-                  >{{ data.value }}
+                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)">{{ data.value }}
                   </span>
                 </template>
               </b-table>
@@ -150,7 +141,7 @@
                   :class="{ 'is-invalid': extraCreditForm.errors.has('extra_credit') }"
                   @keydown="extraCreditForm.errors.clear('extra_credit')"
                 />
-                <has-error :form="extraCreditForm" field="extra_credit"/>
+                <has-error :form="extraCreditForm" field="extra_credit" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -175,93 +166,102 @@
                title="Override assignment scores"
                size="lg"
       >
-        <b-alert variant="info" :show="true">
-          A copy of your scores has been downloaded to your computer. Please save this file in case you change your mind
-          about your assignment override scores.
-        </b-alert>
-
-        <p class="font-weight-bold font-italic">
-          Step 1: Choose an assignment and download the scores worksheet.
-        </p>
-        <b-form ref="form">
-          <b-form-row class="mb-2">
-            <b-col lg="2">
-              <label>Assignment</label>
-            </b-col>
-            <b-col lg="5">
-              <b-form-select v-model="assignmentId"
-                             :options="assignmentOptions"
-                             @change="updateAssignmentName"
-              />
-            </b-col>
-            <b-col>
-              <download-excel
-                class="float-right mb-2"
-                :data="downloadAssignmentUsers"
-                worksheet="Assignment"
-                type="csv"
-                :name="getAssignmentNameAsFile()"
-              >
-                <b-button variant="success"
-                          size="sm"
-                          :disabled="assignmentId===0"
-                          @click="downloadedAssignmentUsers = true"
+        <download-excel
+          class="mb-2"
+          :data="downloadRows"
+          :fetch="fetchData"
+          :fields="downloadFields"
+          worksheet="My Worksheet"
+          type="csv"
+          name="all_scores.csv"
+        >
+          <span class="font-weight-bold font-italic mr-2">
+            Step 1: Download Current Gradebook Spreadsheet</span>
+          <b-button variant="primary" size="sm" @click="downloadedCurrentGradeBookSpreadsheet = true">
+            Download
+          </b-button>
+        </download-excel>
+        <div v-show="downloadedCurrentGradeBookSpreadsheet">
+          <p class="font-weight-bold font-italic">
+            Step 2: Choose an assignment and download the Assignment Scores Template.
+          </p>
+          <b-form ref="form">
+            <b-form-row class="mb-2">
+              <b-col lg="5">
+                <b-form-select v-model="assignmentId"
+                               :options="assignmentOptions"
+                               @change="updateAssignmentName"
+                />
+              </b-col>
+              <b-col>
+                <download-excel
+                  class="float-left mb-2"
+                  :data="downloadAssignmentUsers"
+                  worksheet="Assignment"
+                  type="csv"
+                  :name="getAssignmentNameAsFile()"
                 >
-                  Download Scores Worksheet
+                  <b-button variant="primary"
+                            size="sm"
+                            :disabled="assignmentId===0"
+                            @click="downloadedAssignmentUsers = true"
+                  >
+                    Download
+                  </b-button>
+                </download-excel>
+              </b-col>
+            </b-form-row>
+            <b-container v-show="downloadedAssignmentUsers">
+              <b-row>
+                <p class="font-weight-bold font-italic">
+                  Step 3: Upload the Assigment Scores Template. Blank and dashed cells will be ignored.
+                </p>
+                <b-form-file
+                  ref="assignmentOverrideScores"
+                  v-model="assignmentOverrideScoresFileForm.overrideScoresFile"
+                  class="mb-2"
+                  placeholder="Choose a file or drop it here..."
+                  drop-placeholder="Drop file here..."
+                />
+                <div v-if="uploading">
+                  <b-spinner small type="grow" />
+                  Uploading file...
+                </div>
+                <input type="hidden" class="form-control is-invalid">
+                <div class="help-block invalid-feedback">
+                  {{ assignmentOverrideScoresFileForm.errors.get('overrideScoresFile') }}
+                </div>
+              </b-row>
+              <b-row align-h="end">
+                <b-button variant="info" size="sm"
+                          :disabled="assignmentOverrideScoresFileForm.overrideScoresFile.length === 0"
+                          @click="handleOk"
+                >
+                  Upload scores
                 </b-button>
-              </download-excel>
-            </b-col>
-          </b-form-row>
-          <b-container v-show="downloadedAssignmentUsers">
-            <b-row>
-              <p class="font-weight-bold font-italic">
-                Step 2: Add the override scores to the worksheet and upload your scores back to Adapt.
-              </p>
-              <b-form-file
-                ref="assignmentOverrideScores"
-                v-model="assignmentOverrideScoresFileForm.overrideScoresFile"
-                class="mb-2"
-                placeholder="Choose a file or drop it here..."
-                drop-placeholder="Drop file here..."
-              />
-              <div v-if="uploading">
-                <b-spinner small type="grow"/>
-                Uploading file...
-              </div>
-              <input type="hidden" class="form-control is-invalid">
-              <div class="help-block invalid-feedback">
-                {{ assignmentOverrideScoresFileForm.errors.get('overrideScoresFile') }}
-              </div>
-            </b-row>
-            <b-row align-h="end">
-              <b-button variant="info" size="sm"
-                        :disabled="assignmentOverrideScoresFileForm.overrideScoresFile.length === 0"
-                        @click="handleOk"
-              >
-                Upload scores
-              </b-button>
-            </b-row>
-          </b-container>
-          <b-container v-show="fromToScores.length">
-            <b-row>
-              <p class="font-weight-bold font-italic">
-                Step 3: Review your overrides and confirm.
-                <b-button variant="primary" size="sm" @click="openConfirmOverrideAssignmentScoresModal">
-                  Confirm
-                </b-button>
-              </p>
-              <b-table
-                striped
-                hover
-                :no-border-collapse="true"
-                :fields="fromToFields"
-                :items="fromToScores"
-              />
-            </b-row>
-          </b-container>
-        </b-form>
+              </b-row>
+            </b-container>
+            <b-container v-show="fromToScores.length">
+              <b-row>
+                <p class="font-weight-bold font-italic">
+                  Step 3: Review your overrides and confirm.
+                  <b-button variant="primary" size="sm" @click="openConfirmOverrideAssignmentScoresModal">
+                    Confirm
+                  </b-button>
+                </p>
+                <b-table
+                  striped
+                  hover
+                  :no-border-collapse="true"
+                  :fields="fromToFields"
+                  :items="fromToScores"
+                />
+              </b-row>
+            </b-container>
+          </b-form>
+        </div>
         <template #modal-footer>
-         <b-container>
+          <b-container>
             <b-button
               variant="secondary"
               size="sm"
@@ -270,7 +270,7 @@
             >
               Close
             </b-button>
-         </b-container>
+          </b-container>
         </template>
       </b-modal>
       <b-modal
@@ -305,7 +305,7 @@
                   :class="{ 'is-invalid': form.errors.has('extension_date') }"
                   @shown="form.errors.clear('extension_date')"
                 />
-                <has-error :form="form" field="extension_date"/>
+                <has-error :form="form" field="extension_date" />
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.extension_time"
@@ -313,7 +313,7 @@
                                    :class="{ 'is-invalid': form.errors.has('extension_time') }"
                                    @shown="form.errors.clear('extension_time')"
                 />
-                <has-error :form="form" field="extension_time"/>
+                <has-error :form="form" field="extension_time" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -334,7 +334,7 @@
                   :class="{ 'is-invalid': form.errors.has('score') }"
                   @keydown="form.errors.clear('score')"
                 />
-                <has-error :form="form" field="score"/>
+                <has-error :form="form" field="score" />
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -360,6 +360,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    downloadedCurrentGradeBookSpreadsheet: false,
     downloadedAssignmentUsers: false,
     assignmentName: '',
     fromToScores: [],
@@ -498,6 +499,7 @@ export default {
       this.uploading = false
     },
     async openOverrideAssignmentScoresModal () {
+      this.downloadedCurrentGradeBookSpreadsheet = false
       try {
         const { data } = await axios.get(`/api/assignments/${this.courseId}/assignments-and-users`)
         console.log(data)
