@@ -35,18 +35,27 @@ class Kernel extends ConsoleKernel
         if (env('APP_ENV') === 'production') {
             $schedule->command('db:backup')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
+
+            $schedule->command('db:backup')->twiceDaily()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
+
+            $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
+            $schedule->command('dataShop:toS3')->twiceDaily()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
         }
 
-        if (env('APP_ENV') === 'production') {
-            $schedule->command('dataShop:toS3')->twiceDaily()
+        if (env('APP_ENV') === 'staging') {
+            $schedule->command('s3:backup')->hourly()
                 ->emailOutputOnFailure('kreut@hotmail.com');
         }
 
         $schedule->command('check:AssignTos')->twiceDaily()
             ->emailOutputOnFailure('kreut@hotmail.com');
 
-        $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
-            ->emailOutputOnFailure('kreut@hotmail.com');
 
         $schedule->command('notify:LatestErrors')->everyFiveMinutes()
             ->emailOutputOnFailure('kreut@hotmail.com');
