@@ -114,9 +114,18 @@ class ScoreController extends Controller
                 $response['override_score_errors'] = $override_score_errors;
                 return $response;
             }
+
+
+            if (!(isset($override_scores[0]['UserId'])
+                && isset($override_scores[0]['Name'])
+                && isset($override_scores[0]['Score']))) {
+                $response['message'] = "Your csv file should have UserId, Name, and Score as the first row.";
+                return $response;
+            }
+            $from_to_scores = [];
             foreach ($override_scores as $override_score) {
-                $user_id = $this->fixCSV($override_score['User-id']);
-                $from_to_scores[] = ['user_id' => $this->fixCSV($override_score['User-id']),
+                $user_id = $this->fixCSV($override_score['UserId']);
+                $from_to_scores[] = ['user_id' => $user_id,
                     'name' => $this->fixCSV($override_score['Name']),
                     'override_score' => $this->fixCSV($override_score['Score']),
                     'current_score' => $current_scores_by_user_id[$user_id] ?? '-'];

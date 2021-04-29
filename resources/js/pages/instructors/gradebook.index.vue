@@ -510,7 +510,7 @@ export default {
         let downloadAssignmentUsers = JSON.parse(JSON.stringify(data.users))
         for (let i = 1; i < downloadAssignmentUsers.length; i++) {
           let value = downloadAssignmentUsers[i]
-          let json = { 'User-id': value[0], 'Name': value[1], 'Score': '' }
+          let json = { 'UserId': value[0], 'Name': value[1], 'Score': '' }
           this.downloadAssignmentUsers.push(json)
         }
 
