@@ -80,3 +80,4 @@ jobs:
           LIBRETEXTS_CLIENT_SECRET: ${{ secrets.LIBRETEXTS_CLIENT_SECRET}}
           IS_ME_COOKIE: ${{ secrets.IS_ME_COOKIE }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          WEBWORK_JWT_SECRET: ${{ secrets.WEBWORK_JWT_SECRET }}
