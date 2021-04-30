@@ -31,7 +31,7 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        return false;
+
         if (env('APP_ENV') === 'production') {
             $schedule->command('db:backup')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
