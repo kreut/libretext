@@ -33,6 +33,16 @@ class backupS3Files extends Command
         parent::__construct();
     }
 
+    function sendTelegramMessage($message)
+    {
+        Telegram::sendMessage([
+            'chat_id' => config('myconfig.telegram_channel_id'),
+            'parse_mode' => 'HTML',
+            'text' => $message
+        ]);
+
+    }
+
     /**
      * Execute the console command.
      *
@@ -45,12 +55,8 @@ class backupS3Files extends Command
             $command = "/usr/local/bin/aws s3 ls s3://libretexts --profile default --output json";
             exec($command, $output, $return_var);
             if ($return_var !== 0) {
-                Telegram::sendMessage([
-                    'chat_id' => config('myconfig.telegram_channel_id'),
-                    'parse_mode' => 'HTML',
-                    'text' => "Unable to get the folders for the s3 backup with return var $return_var"
-                ]);
-              exit;
+                $this->sendTelegramMessage("Unable to get the folders for the s3 backup with return var $return_var");
+                exit;
             }
             foreach ($output as $value) {
 
@@ -64,13 +70,18 @@ class backupS3Files extends Command
                 exec($command, $output, $return_var);
                 echo "Return var: $return_var\r\n";
                 if ($return_var !== 0) {
-                    Telegram::sendMessage([
-                        'chat_id' => config('myconfig.telegram_channel_id'),
-                        'parse_mode' => 'HTML',
-                        'text' => "Unable to sync s3 contents from $folder with return variable $return_var"
-                    ]);
+                    $this->sendTelegramMessage("Unable to sync s3 contents from $folder with return variable $return_var");
                     exit;
                 }
+
+            }
+            echo "Backing up to Digital Ocean Spaces\r\n";
+            $command = "/usr/local/bin/aws s3 sync /var/www/dev.adapt/storage/s3_backups s3://adapt --endpoint=https://sfo3.digitaloceanspaces.com  --profile digital_ocean";
+            exec($command, $output, $return_var);
+            echo "Return var: $return_var\r\n";
+            if ($return_var !== 0) {
+                $this->sendTelegramMessage("Unable to sync back to Digital Ocean Spaces with return var $return_var");
+                exit;
             }
 
         } catch (Exception $e) {
