@@ -18,6 +18,11 @@ class AppServiceProvider extends ServiceProvider
         if ($this->app->runningUnitTests()) {
             Schema::defaultStringLength(191);
         }
+
+		if (substr( env('APP_URL'), 0, 8 ) === "https://") {
+			\Illuminate\Support\Facades\URL::forceScheme('https');
+		}
+
         $this->bootLibretextsSocialite();
         /* \DB::listen(function ($query) {
             \Log::debug($query->sql);
