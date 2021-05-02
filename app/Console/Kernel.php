@@ -36,10 +36,6 @@ class Kernel extends ConsoleKernel
             $schedule->command('db:backup')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
-            $schedule->command('db:backup')->twiceDaily()
-                ->emailOutputOnFailure('kreut@hotmail.com');
-
-
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
