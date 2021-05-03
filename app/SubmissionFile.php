@@ -26,7 +26,7 @@ class SubmissionFile extends Model
 
 
     public
-    function getAllInfo(User $user, Assignment $assignment, $solution, $open_ended_submission_type,$submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
+    function getAllInfo(User $user, Assignment $assignment, $solution, $open_ended_submission_type, $submission, $page, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
     {
         $file_feedback_type = null;
         $file_feedback_url = null;
@@ -37,6 +37,7 @@ class SubmissionFile extends Model
         return ['user_id' => $user->id,
             'name' => $user->first_name . ' ' . $user->last_name,
             'submission' => $submission,
+            'page' => $page,
             'question_id' => $question_id,
             'original_filename' => $original_filename,
             'date_submitted' => $date_submitted,
@@ -47,7 +48,7 @@ class SubmissionFile extends Model
             'solution' => $solution,
             'file_feedback_type' => $file_feedback_type,
             'file_submission_score' => $file_submission_score,
-           'open_ended_submission_type' => $open_ended_submission_type];
+            'open_ended_submission_type' => $open_ended_submission_type];
 
     }
 
@@ -123,13 +124,15 @@ class SubmissionFile extends Model
         }
 
         $points = [];
-       $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
+
+        $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
 
             foreach ($users as $key => $user) {
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
                 $submission = $questionFilesByUser[$question->question_id][$user->id]->submission ?? null;
+                $page = $questionFilesByUser[$question->question_id][$user->id]->page ?? null;
                 $open_ended_submission_type = $question->open_ended_submission_type;
                 $question_id = $question->question_id;
                 $file_feedback = $questionFilesByUser[$question->question_id][$user->id]->file_feedback ?? null;
@@ -170,9 +173,9 @@ class SubmissionFile extends Model
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";
                 $question_submission_score = $question_submission_scores[$question->question_id][$user->id] ?? 0;
-                $all_info = $this->getAllInfo($user, $assignment, $solution, $open_ended_submission_type, $submission, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
+                $all_info = $this->getAllInfo($user, $assignment, $solution, $open_ended_submission_type, $submission, $page, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score);
                 $all_info['grader_id'] = $grader_id;
-                $all_info['text_feedback_editor'] =  $text_feedback_editor;
+                $all_info['text_feedback_editor'] = $text_feedback_editor;
                 $all_info['open_ended_submission_type'] = $open_ended_submission_type;
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;

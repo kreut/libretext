@@ -9,6 +9,7 @@ use App\AssignToTiming;
 use App\AssignToUser;
 use App\Question;
 use App\Section;
+use App\SubmissionFile;
 use App\Traits\DateFormatter;
 use App\Course;
 use App\Solution;
@@ -17,6 +18,7 @@ use App\Extension;
 use App\Submission;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
+use App\Traits\S3;
 use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
@@ -33,6 +35,7 @@ use \Exception;
 class AssignmentController extends Controller
 {
     use DateFormatter;
+    use S3;
 
 
     public function getAssignmentsAndUsers(Request $request, Course $course){
@@ -871,7 +874,10 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function viewQuestionsInfo(Request $request, Assignment $assignment, Score $score)
+    function viewQuestionsInfo(Request $request,
+                               Assignment $assignment,
+                               Score $score,
+                               SubmissionFile $submissionFile)
     {
 
         $response['type'] = 'error';
@@ -908,6 +914,18 @@ class AssignmentController extends Controller
                     ? $score->where('assignment_id', $assignment->id)->get()->pluck('score')
                     : []
             ];
+
+            if (Auth::user()->role === 3 ){
+                $response['assignment']['full_pdf_url'] = '';
+                $submission_file = $submissionFile->where('user_id', $request->user()->id)
+                    ->where('assignment_id', $assignment->id)
+                    ->where('type', 'a')
+                    ->first();
+                if ($submission_file){
+                    $response['assignment']['full_pdf_url'] = $this->getTemporaryUrl($assignment->id, $submission_file->submission);
+                }
+
+            }
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

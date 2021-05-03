@@ -6,6 +6,7 @@ use App\Cutup;
 use App\Enrollment;
 use App\Grader;
 use App\Http\Requests\StoreTextFeedback;
+use App\Http\Requests\UpdateSubmisionFilePage;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use App\Question;
@@ -56,6 +57,64 @@ class SubmissionFileController extends Controller
     {
         $this->max_number_of_uploads_allowed = 15;
         $this->max_file_size = 24000000;///really just 20MB but extra wiggle room
+    }
+
+    public function updatePage(UpdateSubmisionFilePage $request,
+                               Assignment $assignment,
+                               Question $question,
+                               SubmissionFile $submissionFile,
+                               Extension $extension)
+    {
+        $response['type'] = 'error';
+        if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
+            if ($can_upload_response['type'] === 'error') {
+                $response['message'] = $can_upload_response['message'];
+                return $response;
+            }
+
+        }
+        $data = $request->validated();
+        try {
+            $page = $data['page'];
+            $full_file = $submissionFile->where('assignment_id', $assignment->id)
+                ->where('user_id', Auth::user()->id)
+                ->where('type', 'a')
+                ->first();
+
+            $submission_file_data = ['type' => 'q',
+                'submission' => $full_file->submission,
+                'original_filename' => $full_file->original_filename,
+                'page' => $page,
+                'file_feedback' => null,
+                'text_feedback' => null,
+                'date_graded' => null,
+                'score' => null,
+                'date_submitted' => Carbon::now()];
+            $submissionFile->updateOrCreate(
+                ['user_id' => Auth::user()->id,
+                    'assignment_id' => $assignment->id,
+                    'question_id' => $question->id,
+                    'type' => 'q'],
+                $submission_file_data
+            );
+$response['original_filename'] = $full_file->original_filename;
+            $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
+            $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
+
+            $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
+            $response['message'] = "You have selected <strong>Page $page</strong> as your submission to this question.";
+            $response['page'] = $page;
+            $response['type'] = 'success';
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to set the page for this question.  Please try again or contact us for assistance.";
+
+
+        }
+        return $response;
     }
 
     /**
@@ -463,10 +522,6 @@ class SubmissionFileController extends Controller
 
             switch ($upload_level) {
                 case('assignment'):
-                    //get rid of the current ones
-                    Cutup::where('user_id', $user_id)
-                        ->where('assignment_id', $assignment_id)
-                        ->delete();
 
                     $submissionFile->updateOrCreate(
                         ['user_id' => $user_id,
@@ -474,11 +529,8 @@ class SubmissionFileController extends Controller
                             'type' => 'a'],
                         $submission_file_data
                     );
-                    //add the cutups
-                    $cutup->cutUpPdf($submission, "assignments/$assignment_id", $assignment_id, $user_id);
-
-                    $response['message'] = 'Your PDF has been cutup into questions by page.';
-                    $response['original_filename'] = $original_filename;
+                    $response['message'] = "You can now choose which page to submit for this question.";
+                    $response['full_pdf_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     break;
                 case('question'):
                     $submissionFile->updateOrCreate(
@@ -492,9 +544,10 @@ class SubmissionFileController extends Controller
                     $response['original_filename'] = $original_filename;
                     $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
+                    $response['message'] = "Your file submission has been saved.";
                     break;
             }
-            $response['message'] = "Your file submission has been saved.";
+
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
             if (($upload_count >= $this->max_number_of_uploads_allowed - 3)) {
                 $response['message'] .= "  You may resubmit " . ($this->max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";

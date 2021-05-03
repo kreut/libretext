@@ -20,7 +20,7 @@ use App\Traits\S3;
 use App\Traits\DateFormatter;
 use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
-
+use Illuminate\Support\Facades\Storage;
 
 
 class CutupController extends Controller
@@ -31,17 +31,18 @@ class CutupController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
+
     public function show(Request $request, Assignment $assignment, Cutup $cutup)
     {
 
-        $user_id = Auth::user()->id;
+        $user_id = $request->user()->id;
         $response['type'] = 'error';
-        /* $authorized = Gate::inspect('view', $enrollment);
+         $authorized = Gate::inspect('view', $cutup);
 
          if (!$authorized->allowed()) {
              $response['message'] = $authorized->message();
              return $response;
-         }*/
+         }
         try {
             $cutups = [];
             $results = $cutup->where('assignment_id', $assignment->id)
@@ -51,18 +52,16 @@ class CutupController extends Controller
 
             if ($results->isNotEmpty()) {
                 foreach ($results as $key => $value) {
-                    $dir = (Auth::user()->role == 2) ? "solutions/$user_id/"
-                        : "assignments/$assignment->id/";
+                    $dir = "solutions/$user_id/";
                     $cutups[] = [
                         'id' => $value->id,
-                        'temporary_url' => \Storage::disk('s3')->temporaryUrl($dir . $value->file, now()->addMinutes(120))
+                        'temporary_url' => Storage::disk('s3')->temporaryUrl($dir . $value->file, now()->addMinutes(120))
                     ];
                 }
             }
 
             $response['cutups'] = $cutups;
             $response['type'] = 'success';
-            $response['cutups'] = $cutups;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -72,111 +71,69 @@ class CutupController extends Controller
 
     }
 
-    public function setAsSolutionOrSubmission(Request $request, Assignment $assignment, Question $question, Cutup $cutup, Solution $solution, SubmissionFile $submissionFile, Extension $extension)
+
+
+    public function updateSolution(Request $request, Assignment $assignment, Question $question, Cutup $cutup, Solution $solution, SubmissionFile $submissionFile, Extension $extension)
     {
 
         $user = Auth::user();
-        $type = ($user->role === 2) ? 'solution' : 'submission';
+
 
         $user_id = $user->id;
         $response['type'] = 'error';
-        $authorized = Gate::inspect('setAsSolutionOrSubmission', [$cutup, $assignment, $question]);
+        $authorized = Gate::inspect('updateSolution', [$cutup, $assignment, $question]);
 
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
-        if ($type === 'submission') {
-            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment->id, $question->id)) {
-                if ($can_upload_response['type'] === 'error') {
-                    $response['message'] = $can_upload_response['message'];
-                    return $response;
-                }
-
-            }
-        }
 
         $chosen_cutups = str_replace(' ', '', $request->chosen_cutups);
         $page_numbers_and_extension = $chosen_cutups . '.pdf';
         $chosen_cutups = explode(',', $chosen_cutups);
 
         try {
-            $cutup_file = $cutup->mergeCutUpPdfs($submissionFile, $solution, $type, $assignment->id, $user_id, $chosen_cutups, $page_numbers_and_extension);
+            $cutup_file = $cutup->mergeCutUpPdfs( $solution, $assignment->id, $user_id, $chosen_cutups, $page_numbers_and_extension);
             DB::beginTransaction();
-            switch ($type) {
-                case('solution'):
-                    //add the new full solution
-                    $sanitized_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($assignment->name));
-                    $cutup_filename = $sanitized_name . "-q" . $request->question_num . ".pdf";
 
-                    //if there's an audio one, then first get rid of it
-                    $solution->where('question_id', $question->id)
-                        ->where('type', 'audio')
-                        ->where('user_id', $user_id)
-                        ->delete();
+            //add the new full solution
+            $sanitized_name = preg_replace('/[^a-z0-9]+/', '_', strtolower($assignment->name));
+            $cutup_filename = $sanitized_name . "-q" . $request->question_num . ".pdf";
 
+            //if there's an audio one, then first get rid of it
+            $solution->where('question_id', $question->id)
+                ->where('type', 'audio')
+                ->where('user_id', $user_id)
+                ->delete();
 
 
-                    $solution->updateOrCreate(
-                        ['user_id' => $user_id,
-                            'question_id' => $question->id,
-                            'type' => 'q'],
-                        ['file' => $cutup_file, 'original_filename' => $cutup_filename]
-                    );
-                    //now recompile with the new file
-                    $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $user_id, $solution);
-                    if ($compiled_filename) {
-                        $compiled_file_data = [
-                            'file' => $compiled_filename,
-                            'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
-                            'updated_at' => Carbon::now()];
-                        $solution->updateOrCreate(
-                            [
-                                'user_id' => $user_id,
-                                'type' => 'a',
-                                'assignment_id' => $assignment->id,
-                                'question_id' => null
-                            ],
-                            $compiled_file_data
-                        );
-                    }
-                    $response['message'] = 'Your cutup has been set as the solution.';
-                    $response['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/$user_id/$cutup_file", now()->addMinutes(120));
-                    $response['cutup'] = $cutup_filename;
-                    break;
-                case('submission'):
-                    $original_filename = $submissionFile->where('assignment_id', $assignment->id)
-                        ->where('user_id', Auth::user()->id)
-                        ->where('type', 'a')
-                        ->first()
-                        ->original_filename;
-
-                    $original_filename = basename($original_filename, '.pdf') . "-$page_numbers_and_extension";
-                    $submission_file_data = ['type' => 'q',
-                        'submission' => $cutup_file,
-                        'original_filename' => $original_filename,
-                        'file_feedback' => null,
-                        'text_feedback' => null,
-                        'date_graded' => null,
-                        'score' => null,
-                        'date_submitted' => Carbon::now()];
-                    $submissionFile->updateOrCreate(
-                        ['user_id' => Auth::user()->id,
-                            'assignment_id' => $assignment->id,
-                            'question_id' => $question->id,
-                            'type' => 'q'],
-                        $submission_file_data
-                    );
-
-                    $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
-                    $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $cutup_file);
-                    $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
-                    $response['message'] = 'Your cutup has been saved as your file submission for this question.';
-                    $response['cutup'] = $original_filename;
-                    break;
-
+            $solution->updateOrCreate(
+                ['user_id' => $user_id,
+                    'question_id' => $question->id,
+                    'type' => 'q'],
+                ['file' => $cutup_file, 'original_filename' => $cutup_filename]
+            );
+            //now recompile with the new file
+            $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $user_id, $solution);
+            if ($compiled_filename) {
+                $compiled_file_data = [
+                    'file' => $compiled_filename,
+                    'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
+                    'updated_at' => Carbon::now()];
+                $solution->updateOrCreate(
+                    [
+                        'user_id' => $user_id,
+                        'type' => 'a',
+                        'assignment_id' => $assignment->id,
+                        'question_id' => null
+                    ],
+                    $compiled_file_data
+                );
             }
+            $response['message'] = 'Your cutup has been set as the solution.';
+            $response['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/$user_id/$cutup_file", now()->addMinutes(120));
+            $response['cutup'] = $cutup_filename;
 
             $response['type'] = 'success';
 
