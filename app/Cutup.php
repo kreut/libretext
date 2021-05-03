@@ -97,6 +97,10 @@ class Cutup extends Model
             $page_numbers[] = $page_number;
             if (in_array($page_number, $chosen_cutups)) {
                 $file = $storage_path . $dir . '/' . $filename;
+               if (!Storage::exists($file)){
+                   $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $filename);
+                   Storage::disk('local')->put($dir . '/' . $filename, $s3_file_contents);
+               }
                 $pageCount = $pdf->setSourceFile($file);
                 for ($i = 0; $i < $pageCount; $i++) {
                     $tpl = $pdf->importPage($i + 1, '/MediaBox');
