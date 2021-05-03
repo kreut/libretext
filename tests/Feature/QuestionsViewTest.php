@@ -39,6 +39,7 @@ class QuestionsViewTest extends TestCase
      * @var array
      */
     private $upload_file_submission_data;
+    private $question;
 
     public function setup(): void
     {
@@ -880,7 +881,7 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function student_cannot_create_cutups_if_the_assignment_is_past_due()
+    public function student_cannot_set_page_if_the_assignment_is_past_due()
     {
         $this->createSubmissionFile();
         $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
@@ -889,7 +890,7 @@ class QuestionsViewTest extends TestCase
 
 
         $this->assignment->save();
-        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
             ->assertJson(['message' => "No responses will be saved since the due date for this assignment has passed."]);
 
     }
@@ -1112,23 +1113,26 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function student_cannot_create_cutups_for_a_question_not_in_their_assignment()
+    public function student_cannot_create_pages_for_a_question_not_in_their_assignment()
     {
         factory(Question::class)->create(['id' => 10000000, 'page_id' => 100000000]);
-        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/10000000/set-as-solution-or-submission")
-            ->assertJson(['message' => "That question is not in the assignment."]);
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/10000000/page", ['page' =>1])
+            ->assertJson(['message' => "No responses will be saved since that question is not in the assignment."]);
 
 
     }
 
     /** @test */
 
-    public function expect_a_comma_separated_list_of_cutups()
+    public function expect_a_valid_page_number()
     {
         $this->createSubmissionFile();
-        $this->actingAs($this->student_user)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission",
-            ['chosen_cutups' => '1:2,aaa'])
-            ->assertJson(['message' => "Your cutups should be a comma separated list of pages chosen from your original PDF."]);
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page",
+            ['page'=>-1])
+            ->assertJsonValidationErrors('page');
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page",
+            ['page'=>"not a number"])
+            ->assertJsonValidationErrors('page');
 
     }
 
@@ -1160,7 +1164,7 @@ class QuestionsViewTest extends TestCase
 
     public function instructor_cannot_create_cutups_if_they_are_not_the_owner_of_the_course()
     {
-        $this->actingAs($this->user_2)->postJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/set-as-solution-or-submission")
+        $this->actingAs($this->user_2)->patchJson("/api/cutups/{$this->assignment->id}/{$this->question->id}/solution")
             ->assertJson(['message' => "You are not allowed to create a cutup for this assignment."]);
 
 

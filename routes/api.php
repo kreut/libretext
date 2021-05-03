@@ -167,7 +167,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/cutups/{assignment}', 'CutupController@show');
-    Route::post('/cutups/{assignment}/{question}/set-as-solution-or-submission', 'CutupController@setAsSolutionOrSubmission');
+    Route::patch('/cutups/{assignment}/{question}/solution', 'CutupController@updateSolution');
 
     Route::get('/tags', 'TagController@index');
 
@@ -257,6 +257,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
 
+    Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');

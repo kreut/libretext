@@ -730,7 +730,7 @@ class AssignmentSyncQuestionController extends Controller
             $late_question_submission = $this->isLateSubmission($Extension, $assignment, Carbon::parse($last_submitted));
             $answered_correctly_at_least_once = $submission->answered_correctly_at_least_once;
 
-            $student_response =$Submission->getStudentResponse($submission,  $question_technologies[$question_id]);
+            $student_response = $Submission->getStudentResponse($submission, $question_technologies[$question_id]);
 
         }
         return compact('student_response', 'correct_response', 'submission_score', 'last_submitted', 'submission_count', 'late_penalty_percent', 'late_question_submission', 'answered_correctly_at_least_once');
@@ -1023,8 +1023,12 @@ class AssignmentSyncQuestionController extends Controller
                             $assignment->questions[$key]['file_feedback_type'] = (pathinfo($formatted_submission_file_info['file_feedback'], PATHINFO_EXTENSION) === 'mpga') ? 'audio' : 'file';
                         }
                     }
+                    //for PDFS we can set the page
+                    $page = $submission_files_by_question_id[$question->id]['page']
+                        ? "#page=" . $submission_files_by_question_id[$question->id]['page']
+                        : '';
 
-                    $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'];
+                    $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'] . $page;
 
 
                 }
@@ -1088,7 +1092,7 @@ class AssignmentSyncQuestionController extends Controller
                             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                             $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
 
-                             $custom_claims['webwork']['sourceFilePath'] =  "pgfiles/". $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
+                            $custom_claims['webwork']['sourceFilePath'] = "pgfiles/" . $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
                             /*$custom_claims['webwork']['problemSourceURL'] = (substr($this->getQueryParamFromSrc($technology_src, 'sourceFilePath'), 0, 4) !== "http")
                                 ? "https://webwork.libretexts.org:8443/pgfiles/"
                                 : '';

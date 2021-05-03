@@ -228,36 +228,40 @@
             solution at a time. If you upload a full PDF, students will be able to both download a full solution key
             and download solutions on a per question basis.</span>
           <span v-if="user.role !==2">
-            Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
+            Upload an entire PDF and let Adapt know where each question files submission start. Or, upload one
             question file submission at a time, especially helpful if your submissions are in a non-PDF format.
           </span>
         </p>
-        <p>
+        <p v-if="user.role === 2">
           <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
         </p>
         <b-form ref="form">
           <b-form-group>
-            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment" @click="showCutups = true">
+            <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment"
+                          @click="showCurrentFullPDF = true"
+            >
               Upload
-              <span v-if="user.role === 2">question solutions</span>
-              <span v-if="user.role !== 2">your question file submissions</span>
-              from a full PDF that Adapt will cut up for you
+              <span v-if="user.role === 2">solutions from a single PDF that Adapt can cutup for you.</span>
+              <span v-if="user.role !== 2">a PDF and let us know which page your submission is on.</span>
             </b-form-radio>
             <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
               Upload individual
-              <span v-if="user.role === 2">question solution</span>
+              <span v-if="user.role === 2">question solutions</span>
               <span v-if="user.role !== 2">question file submissions</span>
             </b-form-radio>
           </b-form-group>
-          <div v-if="uploadLevel === 'assignment' && showCutups">
+
+          <div v-if="uploadLevel === 'assignment' && showCurrentFullPDF">
             <hr>
             <p>
-              Select a single page or a comma separated list of pages to submit as your <span v-if="user.role === 2">solution to</span>
-              <span v-if="user.role !== 2">file submission for</span> this question or
-              <a href="#" @click="showCutups = false">
+              <span v-show="user.role === 2">Select a single page or a comma separated list of pages to submit as your solution to
+                this question or </span>
+              <span v-show="user.role === 3">Tell us which page your question submission is on or
+              </span>
+              <a href="#" @click="showCurrentFullPDF = false">
                 upload a new PDF</a>.
             </p>
-            <b-container class="mb-2">
+            <b-container v-show="user.role === 2" class="mb-2">
               <b-form-group
                 id="chosen_cutups"
                 label-cols-sm="2"
@@ -280,10 +284,9 @@
                   <b-col lg="8" class="ml-3">
                     <b-row>
                       <b-button class="mt-1" size="sm" variant="outline-primary"
-                                @click="setCutupAsSolutionOrSubmission(questions[currentPage-1].id)"
+                                @click="setCutupAsSolution(questions[currentPage-1].id)"
                       >
-                        Set As <span v-if="user.role === 2">Solution</span>
-                        <span v-if="user.role !== 2">Question File Submission</span>
+                        Set As Solution
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
                         <b-spinner small type="grow"/>
@@ -294,7 +297,7 @@
                 </b-form-row>
               </b-form-group>
             </b-container>
-            <div class="overflow-auto">
+            <div v-show="user.role === 2" class="overflow-auto">
               <b-pagination
                 v-model="currentCutup"
                 :total-rows="cutups.length"
@@ -306,7 +309,45 @@
                 align="center"
               />
             </div>
-            <div v-if="showCutups && cutups.length && cutups[currentCutup-1]">
+
+            <b-container v-show="user.role === 3" class="mb-2">
+              <b-form-group
+                id="page"
+                label-cols-sm="1"
+                label-cols-lg="1"
+                label="Page"
+                label-for="Page"
+              >
+                <b-form-row lg="12">
+                  <b-col lg="2">
+                    <b-form-input
+                      id="name"
+                      v-model="questionSubmissionPageForm.page"
+                      lg="2"
+                      type="text"
+                      :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
+                      @keydown="questionSubmissionPageForm.errors.clear('page')"
+                    />
+                    <has-error :form="questionSubmissionPageForm" field="page"/>
+                  </b-col>
+                  <b-col lg="8" class="ml-3">
+                    <b-row>
+                      <b-button class="mt-1" size="sm" variant="outline-primary"
+                                @click="setPageAsSubmission(questions[currentPage-1].id)"
+                      >
+                        Set As Question File Submission
+                      </b-button>
+                      <span v-show="settingAsSolution" class="ml-2">
+                        <b-spinner small type="grow"/>
+                        Processing your file...
+                      </span>
+                    </b-row>
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+            </b-container>
+
+            <div v-if="showCurrentFullPDF && cutups.length && cutups[currentCutup-1]">
               <b-embed
                 type="iframe"
                 aspect="16by9"
@@ -314,15 +355,25 @@
                 allowfullscreen
               />
             </div>
+            <div v-if="fullPdfUrl">
+              <b-embed
+                :key="questionSubmissionPageForm.page"
+                type="iframe"
+                aspect="16by9"
+                :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
+                allowfullscreen
+              />
+
+            </div>
           </div>
-          <b-container v-show="uploadLevel === 'assignment' && (!showCutups && cutups.length)">
+          <b-container v-show="uploadLevel === 'assignment' && (!showCurrentFullPDF && (cutups.length || fullPdfUrl))">
             <b-row align-h="center">
-              <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCutups = true">
-                Use Current Cutups
+              <b-button class="ml-2" size="sm" variant="outline-primary" @click="showCurrentFullPDF = true">
+                Use Current PDF
               </b-button>
             </b-row>
           </b-container>
-          <div v-show="uploadLevel === 'question' || !showCutups">
+          <div v-show="uploadLevel === 'question' || !showCurrentFullPDF">
             <div class="example-drag">
               <div class="upload mt-3">
                 <ul v-if="files.length && (preSignedURL !== '')">
@@ -1214,7 +1265,7 @@ import { isLocked } from '~/helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
-import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
+import { downloadSolutionFile, downloadSubmissionFile, getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import { doCopy } from '~/helpers/Copy'
 
 import Email from '~/components/Email'
@@ -1256,6 +1307,7 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    fullPdfUrl: '',
     handledOK: false,
     fileUploadKey: 1,
     preSignedURL: '',
@@ -1378,7 +1430,7 @@ export default {
     range: 0,
     graderEmailSubject: '',
     to_user_id: false,
-    showCutups: false,
+    showCurrentFullPDF: false,
     settingAsSolution: false,
     cutups: [],
     uploadLevel: 'assignment',
@@ -1395,6 +1447,9 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     processingFile: false,
+    questionSubmissionPageForm: new Form({
+      page: ''
+    }),
     clickerTimeForm: new Form({
       time_to_submit: ''
     }),
@@ -1462,6 +1517,7 @@ export default {
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
+    this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
     this.isLocked = isLocked
   },
   async mounted () {
@@ -1510,7 +1566,9 @@ export default {
         this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
-      await this.getCutups(this.assignmentId)
+      if (this.user.role === 2) {
+        await this.getCutups(this.assignmentId)
+      }
       window.addEventListener('message', this.receiveMessage, false)
     }
   },
@@ -1522,6 +1580,32 @@ export default {
     }
   },
   methods: {
+    getFullPdfUrlAtPage () {
+      return this.fullPdfUrl ? `${this.fullPdfUrl}#page=${this.questionSubmissionPageForm.page}`
+        : ''
+    },
+    async setPageAsSubmission (questionId) {
+      try {
+        console.log(this.questionSubmissionPageForm)
+        const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${questionId}/page`)
+        this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-upload-file')
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].submission = data.submission
+          this.questions[this.currentPage - 1].original_filename = data.original_filename
+          this.questions[this.currentPage - 1].date_graded = 'N/A'
+          this.questions[this.currentPage - 1].file_feedback = 'N/A'
+          this.questions[this.currentPage - 1].submission_file_exists = true
+          this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
+          this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
+          this.questions[this.currentPage - 1].date_submitted = data.date_submitted
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     formatFileSize (size) {
       let sizes = [' Bytes', ' KB', ' MB', ' GB', ' TB', ' PB', ' EB', ' ZB', ' YB']
       for (let i = 1; i < sizes.length; i++) {
@@ -2164,6 +2248,8 @@ export default {
         }
       }
       this.$bvModal.show('modal-upload-file')
+      this.questionSubmissionPageForm.errors.clear()
+      this.questionSubmissionPageForm.page = ''
       this.uploadFileForm.errors.clear(this.uploadFileType)
       this.uploadFileForm.questionId = questionId
       this.uploadFileForm.assignmentId = this.assignmentId
@@ -2197,10 +2283,12 @@ export default {
       }
 
       if (!this.uploadFileForm.errors.has(this.uploadFileType)) {
-        await this.getCutups(this.assignmentId)
+        this.user.role === 2 ? await this.getCutups(this.assignmentId)
+          : this.showCurrentFullPDF = true
       }
+
       if (!this.uploadFileForm.errors.any() &&
-        (this.uploadLevel === 'question' || !this.cutups.length)) {
+        (this.uploadLevel === 'question' || !this.showCurrentFullPDF)) {
         this.questions[this.currentPage - 1].solution_type = 'q'
         this.$bvModal.hide(`modal-upload-file`)
       }
@@ -2424,10 +2512,11 @@ export default {
         let assignment = data.assignment
         if (this.user.role === 3 && !assignment.shown) {
           this.showAssessmentClosedMessage = true
-          return false
         }
         if (this.user.role === 3) {
           this.title = `${assignment.name}`
+          this.fullPdfUrl = assignment.full_pdf_url
+          this.showCurrentFullPDF = !!this.fullPdfUrl.length
         }
         if (this.user.role === 2) {
           this.questionView = assignment.question_view
@@ -2467,29 +2556,20 @@ export default {
       }
       return true
     },
-    async setCutupAsSolutionOrSubmission (questionId) {
+    async setCutupAsSolution (questionId) {
       if (this.settingAsSolution) {
         this.$noty.info('Please be patient while your request is being processed.')
         return false
       }
       this.settingAsSolution = true
       try {
-        const { data } = await this.cutupsForm.post(`/api/cutups/${this.assignmentId}/${questionId}/set-as-solution-or-submission`)
+        const { data } = await this.cutupsForm.patch(`/api/cutups/${this.assignmentId}/${questionId}/solution`)
 
         this.settingAsSolution = false
         if (data.type === 'success') {
           this.$noty.success(data.message)
           this.$bvModal.hide('modal-upload-file')
 
-          if (this.user.role === 3) {
-            this.questions[this.currentPage - 1].submission = data.submission
-            this.questions[this.currentPage - 1].original_filename = data.cutup
-            this.questions[this.currentPage - 1].date_graded = 'N/A'
-            this.questions[this.currentPage - 1].file_feedback = 'N/A'
-            this.questions[this.currentPage - 1].submission_file_exists = true
-            this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
-            this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
-          }
           if (this.user.role === 2) {
             this.questions[this.currentPage - 1].solution = data.cutup
             this.questions[this.currentPage - 1].solution_file_url = data.solution_file_url
@@ -2511,9 +2591,9 @@ export default {
           return false
         }
         this.cutups = data.cutups
-        this.showCutups = this.cutups.length
+        this.showCurrentFullPDF = this.cutups.length
       } catch (error) {
-        this.$noty.error('We could not retrieve your cutup solutions for this assignment.  Please try again or contact us for assistance.')
+        this.$noty.error('We could not retrieve your cutups for this assignment.  Please refresh the page and try again.')
       }
     },
     async getSelectedQuestions (assignmentId, questionId) {

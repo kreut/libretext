@@ -15,23 +15,22 @@ class CutupPolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-    public function setAsSolutionOrSubmission(User $user, Cutup $cutup, Assignment $assignment, Question $question)
-    {
-        $has_access = false;
+    public function view(User $user, Cutup $cutup){
+        return (int) $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to retrieve cutups for this assignment.');
 
-        if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())){
+    }
+    public function updateSolution(User $user, Cutup $cutup, Assignment $assignment, Question $question)
+    {
+
+
+        if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
             return Response::deny('That question is not in the assignment.');
         }
-        switch ($user->role) {
-            case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
-                break;
-            case(3):
-                $has_access = $assignment->course->enrollments->contains('user_id', $user->id);
-                break;
-            default:
-                false;
-        }
+
+        $has_access = $this->ownsCourseByUser($assignment->course, $user);
+
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to create a cutup for this assignment.');

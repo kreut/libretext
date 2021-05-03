@@ -31,6 +31,10 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
       })
     }
 
+    console.log(data)
+    if (form.uploadLevel === 'assignment' && type === 'submission'){
+      this.fullPdfUrl = data.full_pdf_url
+    }
     if (form.uploadLevel === 'question' && type === 'submission') {
       // immediate feedback for them to see.
       // for assignments, they'll have to click on something else to get the information

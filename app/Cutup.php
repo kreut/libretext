@@ -4,6 +4,7 @@ namespace App;
 
 use App\Assignment;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 use setasign\Fpdi\Fpdi;
@@ -48,8 +49,14 @@ class Cutup extends Model
 
         }
         $compiled_filename = false;
+
         if ($files_to_merge) {
             foreach ($files_to_merge as $file) {
+                if (!Storage::exists($file)){
+                    Log::info($dir . '/' . $file);
+                    $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $file);
+                    Storage::disk('local')->put($storage_path . $dir . '/' . $file, $s3_file_contents);
+                }
                 $pageCount = $pdf->setSourceFile($storage_path . $dir . '/' . $file);
                 for ($i = 0; $i < $pageCount; $i++) {
                     $tpl = $pdf->importPage($i + 1, '/MediaBox');
@@ -66,6 +73,7 @@ class Cutup extends Model
 
     public function saveOutputContents($pdf, $storage_path, $dir, $filename)
     {
+
         $pdf->Output('F', $storage_path . $dir . '/' . $filename);
         $s3_name = str_replace(storage_path(), '', $dir . '/' . $filename);
         $contents = Storage::disk('local')->get($s3_name);
@@ -73,13 +81,13 @@ class Cutup extends Model
     }
 
 
-    public function mergeCutUpPdfs($submissionFile, $solution, string $type, int $assignment_id, int $user_id, array $chosen_cutups, string $page_numbers_and_extension)
+    public function mergeCutUpPdfs( $solution,  int $assignment_id, int $user_id, array $chosen_cutups, string $page_numbers_and_extension)
     {
 
         $pdf = new FPDI();
 
 // iterate over array of files and merge
-        $dir = ($type === 'solution') ? "solutions/$user_id" : "assignments/$assignment_id";
+        $dir =  "solutions/$user_id" ;
         //
 
         $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
@@ -101,6 +109,7 @@ class Cutup extends Model
                    $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $filename);
                    Storage::disk('local')->put($dir . '/' . $filename, $s3_file_contents);
                }
+
                 $pageCount = $pdf->setSourceFile($file);
                 for ($i = 0; $i < $pageCount; $i++) {
                     $tpl = $pdf->importPage($i + 1, '/MediaBox');
@@ -114,15 +123,16 @@ class Cutup extends Model
         }
 
 // output the pdf as a file (http://www.fpdf.org/en/doc/output.htm)
-        $model = ($type === 'solution') ? $solution : $submissionFile;
-        $full_pdf = $model->where('assignment_id', $assignment_id)
+
+        $full_pdf =  $solution->where('assignment_id', $assignment_id)
             ->where('user_id', $user_id)
             ->where('question_id', null)
             ->first();
-        $filename = ($type === 'solution') ? $full_pdf->file : $full_pdf->submission;
+        $filename =  $full_pdf->file ;
 
         $renamed_file = pathinfo($filename, PATHINFO_FILENAME) . "_{$page_numbers_and_extension}";
         $renamed_file = str_replace(' ', '', $renamed_file);//get rid of spaces
+
         $this->saveOutputContents($pdf, $storage_path, $dir, $renamed_file);
 
         return $renamed_file;
