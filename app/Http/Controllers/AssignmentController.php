@@ -1274,6 +1274,7 @@ class AssignmentController extends Controller
             DB::table('assignment_question_learning_tree')
                 ->whereIn('assignment_question_id', $assignment_question_ids)
                 ->delete();
+            DB::beginTransaction();
             DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
             DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
             DB::table('scores')->where('assignment_id', $assignment->id)->delete();
@@ -1282,6 +1283,7 @@ class AssignmentController extends Controller
             DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
+            DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 
             $course = $assignment->course;
