@@ -41,15 +41,6 @@ class SolutionPolicy
             return Response::deny("The solutions are not released so you can't download the solution.");
         }
 
-        if ((int) $user->role === 3 &&
-            $assignment->assessment_type === 'real time' &&
-            $assignment->submissions->where('user_id', $user->id)->where('question_id', $question_id)->isEmpty()) {
-
-
-            return Response::deny("You did not submit a response, so you can't view the solutions.");
-        }
-
-
 
         if ($level === 'q' && !$assignment->questions->contains($question_id)) {
 
