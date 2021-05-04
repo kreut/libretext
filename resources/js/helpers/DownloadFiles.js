@@ -18,7 +18,10 @@ export function downloadSubmissionFile (assignmentId, submission, originalFilena
   let url = '/api/submission-files/download'
   downloadFile(url, data, originalFilename, this.$noty)
 }
-
+export function getFullPdfUrlAtPage (url, page) {
+  return url ? `${url}#page=${page}`
+    : ''
+}
 export async function downloadFile (url, fileData, originalFilename, noty) {
   try {
     const { data } = await axios({

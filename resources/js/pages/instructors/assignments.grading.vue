@@ -294,8 +294,8 @@
                             <b-row>
                               <b-col v-if="isOpenEndedFileSubmission">
                                 <b-button variant="outline-primary"
-                                          size="smç"
-                                          @click="openInNewTab(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'] )"
+                                          size="sm"
+                                          @click="openInNewTab(getFullPdfUrlAtPage(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'],submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['page']) )"
                                 >
                                   Open File Submission
                                 </b-button>
@@ -404,8 +404,10 @@
                 >
                   <div v-if="isOpenEndedFileSubmission">
                     <iframe width="600" height="600"
-                            :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
+                            :src="getFullPdfUrlAtPage(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'],submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['page'])"
                     />
+
+
                   </div>
                   <div v-if="isOpenEndedAudioSubmission">
                     <b-card sub-title="Submission">
@@ -477,7 +479,7 @@
 <script>
 import axios from 'axios'
 import Form from 'vform'
-import { downloadSubmissionFile, downloadSolutionFile } from '~/helpers/DownloadFiles'
+import { downloadSubmissionFile, downloadSolutionFile, getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import { getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
@@ -569,6 +571,7 @@ export default {
     this.downloadSubmissionFile = downloadSubmissionFile
     this.downloadSolutionFile = downloadSolutionFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
+    this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId

@@ -228,11 +228,11 @@
             solution at a time. If you upload a full PDF, students will be able to both download a full solution key
             and download solutions on a per question basis.</span>
           <span v-if="user.role !==2">
-            Upload an entire PDF with one question file submission per page and let Adapt cut up the PDF for you. Or, upload one
+            Upload an entire PDF and let Adapt know where each question files submission start. Or, upload one
             question file submission at a time, especially helpful if your submissions are in a non-PDF format.
           </span>
         </p>
-        <p>
+        <p v-if="user.role === 2">
           <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
         </p>
         <b-form ref="form">
@@ -255,7 +255,7 @@
             <p>
               <span v-show="user.role === 2">Select a single page or a comma separated list of pages to submit as your solution to
                 this question or </span>
-              <span v-show="user.role === 3">Tell us which page your question is on or
+              <span v-show="user.role === 3">Tell us which page your question submission is on or
               </span>
               <a href="#" @click="showCurrentFullPDF = false">
                 upload a new PDF</a>.
@@ -354,13 +354,15 @@
                 allowfullscreen
               />
             </div>
-            <div v-if="showCurrentFullPDF">
+            <div v-if="fullPdfUrl">
               <b-embed
+                :key="questionSubmissionPageForm.page"
                 type="iframe"
                 aspect="16by9"
-                :src="fullPdfUrl"
+                :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
                 allowfullscreen
               />
+
             </div>
           </div>
           <b-container v-show="uploadLevel === 'assignment' && (!showCurrentFullPDF && cutups.length)">
@@ -1262,7 +1264,7 @@ import { isLocked } from '~/helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
-import { downloadSolutionFile, downloadSubmissionFile } from '~/helpers/DownloadFiles'
+import { downloadSolutionFile, downloadSubmissionFile, getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import { doCopy } from '~/helpers/Copy'
 
 import Email from '~/components/Email'
@@ -1514,6 +1516,7 @@ export default {
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
+    this.getFullPdfUrlAtPage  = getFullPdfUrlAtPage
     this.isLocked = isLocked
   },
   async mounted () {
@@ -1576,6 +1579,10 @@ export default {
     }
   },
   methods: {
+    getFullPdfUrlAtPage () {
+      return this.fullPdfUrl ? `${this.fullPdfUrl}#page=${this.questionSubmissionPageForm.page}`
+        : ''
+    },
     async setPageAsSubmission (questionId) {
       try {
         console.log(this.questionSubmissionPageForm)
@@ -2507,7 +2514,7 @@ export default {
         if (this.user.role === 3) {
           this.title = `${assignment.name}`
           this.fullPdfUrl = assignment.full_pdf_url
-          this.showCurrentFullPDF = true
+          this.showCurrentFullPDF = !!this.fullPdfUrl.length
         }
         if (this.user.role === 2) {
           this.questionView = assignment.question_view
