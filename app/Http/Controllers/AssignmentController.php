@@ -1271,10 +1271,11 @@ class AssignmentController extends Controller
                 ->get()
                 ->pluck('id');
 
+            DB::beginTransaction();
             DB::table('assignment_question_learning_tree')
                 ->whereIn('assignment_question_id', $assignment_question_ids)
                 ->delete();
-            DB::beginTransaction();
+
             DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
             DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
             DB::table('scores')->where('assignment_id', $assignment->id)->delete();
