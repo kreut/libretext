@@ -259,7 +259,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
-    Route::get('/submission-files/{assignment}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
+    Route::get('/submission-files/{assignment}/{question}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 

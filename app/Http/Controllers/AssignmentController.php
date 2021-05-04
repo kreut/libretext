@@ -38,7 +38,8 @@ class AssignmentController extends Controller
     use S3;
 
 
-    public function getAssignmentsAndUsers(Request $request, Course $course){
+    public function getAssignmentsAndUsers(Request $request, Course $course)
+    {
 
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAssignmentsAndUsers', $course);
@@ -50,18 +51,18 @@ class AssignmentController extends Controller
 
         try {
             $assignments = $course->assignments;
-            $assignments_by_id[0] = ['value'=>0, 'text'=>'Please choose an assignment'];
-            foreach ($assignments as $assignment){
-                $assignments_by_id[]  = ['value' => $assignment->id, 'text' => $assignment->name];
+            $assignments_by_id[0] = ['value' => 0, 'text' => 'Please choose an assignment'];
+            foreach ($assignments as $assignment) {
+                $assignments_by_id[] = ['value' => $assignment->id, 'text' => $assignment->name];
             }
             $enrolled_users = $course->enrolledUsers;
-            foreach ($enrolled_users as $enrolled_user){
+            foreach ($enrolled_users as $enrolled_user) {
                 $users_by_id[] = [$enrolled_user->id, "$enrolled_user->first_name $enrolled_user->last_name", ''];
             }
-            usort($users_by_id , function ($a, $b) {
+            usort($users_by_id, function ($a, $b) {
                 return $a[1] <=> $b[1];
             });
-           array_unshift($users_by_id, ['User Id', 'Name', 'Override Score']);
+            array_unshift($users_by_id, ['User Id', 'Name', 'Override Score']);
             $response['assignments'] = $assignments_by_id;
             $response['users'] = $users_by_id;
             $response['type'] = 'success';
@@ -75,6 +76,7 @@ class AssignmentController extends Controller
 
 
     }
+
     /**
      * @param Assignment $assignment
      * @return array
@@ -142,12 +144,12 @@ class AssignmentController extends Controller
     {
 
         $response['type'] = 'error';
-          $authorized = Gate::inspect('getAutoGradedSubmissionsSubmissions', [$Submission, $assignment, $question]);
+        $authorized = Gate::inspect('getAutoGradedSubmissionsSubmissions', [$Submission, $assignment, $question]);
 
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
             //get enrolled students
@@ -1013,12 +1015,22 @@ class AssignmentController extends Controller
         try {
             $assignment = Assignment::find($assignment->id);
             $sections = (Auth::user()->role === 2) ? $assignment->course->sections : $assignment->course->graderSections();
+            $questions = $assignment->questions;
 
             $response['sections'] = [];
-            foreach ($sections as $key => $section) {
+            $response['questions'] = [];
+            foreach ($sections as $section) {
                 $response['sections'][] = ['name' => $section->name, 'id' => $section->id];
             }
 
+            $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
+                ->orderBy('order')
+                ->get();
+            foreach ($assignment_questions_where_student_can_upload_file as  $question) {
+                $response['questions'][] = ['text' => "$question->order", 'value' => $question->question_id];
+            }
             $response['assignment'] = [
                 'name' => $assignment->name,
                 'late_policy' => $assignment->late_policy,

@@ -245,7 +245,7 @@ class GradingTest extends TestCase
     /** @test */
     public function cannot_get_assignment_files_if_not_owner()
     {
-        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/{$this->section->id}/all_students")
+        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
             ->assertJson([
                 'type' => 'error',
                 'message' => 'You are not allowed to access these submissions for grading.'
@@ -354,7 +354,7 @@ class GradingTest extends TestCase
     public function can_get_assignment_files_if_owner()
     {
 
-        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/{$this->section->id}/all_students")
+        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
             ->assertJson(['type' => 'success']);
 
     }

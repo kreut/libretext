@@ -132,7 +132,7 @@
                   id="section-view"
                   v-model="sectionId"
                   :options="sections"
-                  @change="getSubmissionFiles"
+                  @change="processing=true;getSubmissionFiles()"
                 />
               </b-col>
             </b-form-row>
@@ -150,33 +150,38 @@
                   id="grade-view"
                   v-model="gradeView"
                   :options="gradeViews"
-                  @change="getSubmissionFiles"
+                  @change="processing=true;getSubmissionFiles()"
                 />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="question"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Question"
+            label-for="Question"
+          >
+            <b-form-row>
+              <b-col lg="1">
+                <b-form-select
+                  id="question-view"
+                  v-model="questionView"
+                  :options="questionOptions"
+                  @change="processing=true;getSubmissionFiles()"
+                />
+              </b-col>
+              <b-col lg="2">
+                <span v-if="processing">
+                      <b-spinner small type="grow"/>
+                      Processing...
+                    </span>
               </b-col>
             </b-form-row>
           </b-form-group>
           <hr>
           <div v-if="!showNoFileSubmissionsExistAlert">
-            <div class="text-center h5">
-              Question
-            </div>
-            <div class="overflow-auto">
-              <b-pagination
-                :key="currentQuestionPage"
-                v-model="currentQuestionPage"
-                :total-rows="submissionFiles.length"
-                :per-page="perPage"
-                align="center"
-                first-number
-                last-number
-                limit="20"
-                @input="changePage(currentQuestionPage)"
-              >
-                <template v-slot:page="{ page, active }">
-                  {{ submissionFiles[page - 1][currentStudentPage - 1].order }}
-                </template>
-              </b-pagination>
-            </div>
+
             <div class="text-center h5">
               Student
             </div>
@@ -196,17 +201,17 @@
             <div class="text-center">
               <h5 class="font-italic">
                 This question is out of
-                {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }} points.
+                {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }} points.
               </h5>
               <div class="mb-2">
                 <b-button variant="outline-primary"
-                          @click="viewQuestion(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id)"
+                          @click="viewQuestion(submissionFiles[currentStudentPage - 1].question_id)"
                 >
                   View Question
                 </b-button>
-                <span v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] " class="ml-2">
+                <span v-if="submissionFiles[currentStudentPage - 1]['solution'] " class="ml-2">
                   <b-button variant="outline-primary"
-                            @click.prevent="downloadSolutionFile('q', assignmentId, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1].question_id, submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'])"
+                            @click.prevent="downloadSolutionFile('q', assignmentId, submissionFiles[currentStudentPage - 1].question_id, submissionFiles[currentStudentPage - 1]['solution'])"
                   >
                     Download Solution
                   </b-button>
@@ -225,13 +230,13 @@
                   </b-row>
                 </b-container>
               </div>
-              <span v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['solution'] "
+              <span v-if="!submissionFiles[currentStudentPage - 1]['solution'] "
                     class="font-italic mt-2"
               >
                 You currently have no solution uploaded for this question.
               </span>
             </div>
-            <div v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission'] !== null">
+            <div v-if="submissionFiles[currentStudentPage - 1]['submission'] !== null">
               <hr>
               <b-container>
                 <b-row>
@@ -240,12 +245,12 @@
                       <b-card-text>
                         <b-form ref="form">
                           <b-alert
-                            :show="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission'] !== false"
+                            :show="submissionFiles[currentStudentPage - 1]['late_file_submission'] !== false"
                             variant="warning"
                           >
                             <span class="alert-link">
                               The file submission was late by  {{
-                                submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['late_file_submission']
+                                submissionFiles[currentStudentPage - 1]['late_file_submission']
                               }}.
                               <span v-if="latePolicy === 'deduction'">
                                 According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
@@ -255,25 +260,25 @@
                             </span>
                           </b-alert>
                           <strong>Date Submitted:</strong> {{
-                            submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_submitted']
+                            submissionFiles[currentStudentPage - 1]['date_submitted']
                           }} <br>
                           <strong>Date Graded:</strong> {{
-                            submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
-                              ? submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['date_graded']
+                            submissionFiles[currentStudentPage - 1]['date_graded']
+                              ? submissionFiles[currentStudentPage - 1]['date_graded']
                               : 'Not yet graded.'
                           }}<br>
                           <strong>Question Submission Score:</strong> {{
-                            1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0
+                            1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0
                           }}<br>
                           <strong>{{ capitalize(openEndedType) }} Submission Score:</strong> {{
-                            1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0
+                            1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0
                           }}
                           <br>
                           <strong>Total Score For This Question:</strong>
                           {{
-                            (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['question_submission_score'] || 0)
-                            + (1 * submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_submission_score'] || 0)
-                          }} out of {{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['points'] * 1 }}
+                            (1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0)
+                            + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
+                          }} out of {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }}
                           <br>
                           <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
                             <b-form-input v-model="scoreForm.score"
@@ -295,7 +300,7 @@
                               <b-col v-if="isOpenEndedFileSubmission">
                                 <b-button variant="outline-primary"
                                           size="sm"
-                                          @click="openInNewTab(getFullPdfUrlAtPage(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'],submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['page']) )"
+                                          @click="openInNewTab(getFullPdfUrlAtPage(submissionFiles[currentStudentPage - 1]['submission_url'],submissionFiles[currentStudentPage - 1]['page']) )"
                                 >
                                   Open File Submission
                                 </b-button>
@@ -400,11 +405,11 @@
             <div v-show="retrievedFromS3" class="row mt-4 d-flex justify-content-center" style="height:1000px">
               <div v-show="viewSubmission">
                 <div
-                  v-if="(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'])"
+                  v-if="(submissionFiles[currentStudentPage - 1]['submission_url'])"
                 >
                   <div v-if="isOpenEndedFileSubmission">
                     <iframe width="600" height="600"
-                            :src="getFullPdfUrlAtPage(submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url'],submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['page'])"
+                            :src="getFullPdfUrlAtPage(submissionFiles[currentStudentPage - 1]['submission_url'],submissionFiles[currentStudentPage - 1]['page'])"
                     />
 
 
@@ -412,45 +417,45 @@
                   <div v-if="isOpenEndedAudioSubmission">
                     <b-card sub-title="Submission">
                       <audio-player
-                        :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_url']"
+                        :src="submissionFiles[currentStudentPage - 1]['submission_url']"
                       />
                     </b-card>
                   </div>
                 </div>
                 <b-container
                   v-if="isOpenEndedTextSubmission
-                  && submissionFiles[currentQuestionPage - 1][currentStudentPage -1]['submission_text']"
+                  && submissionFiles[currentStudentPage -1]['submission_text']"
                 >
 
                   <b-card>
                     <b-card-body>
                       <b-card-text>
                         <span class="font-weight-bold"
-                              v-html="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission_text']"
+                              v-html="submissionFiles[currentStudentPage - 1]['submission_text']"
                         />
                       </b-card-text>
                     </b-card-body>
                   </b-card>
                 </b-container>
-                <div v-if="!submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['submission']">
-                  <span class="text-info">{{ submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['name'] }} has not submitted a file.</span>
+                <div v-if="!submissionFiles[currentStudentPage - 1]['submission']">
+                  <span class="text-info">{{ submissionFiles[currentStudentPage - 1]['name'] }} has not submitted a file.</span>
                 </div>
               </div>
               <div v-show="!viewSubmission">
                 <div
-                  v-if="submissionFiles.length>0 && (submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url'] !== null)"
+                  v-if="submissionFiles.length>0 && (submissionFiles[currentStudentPage - 1]['file_feedback_url'] !== null)"
                 >
                   <iframe
-                    v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] !== 'audio'"
+                    v-if="submissionFiles[currentStudentPage - 1]['file_feedback_type'] !== 'audio'"
                     width="600"
                     height="600"
-                    :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                    :src="submissionFiles[currentStudentPage - 1]['file_feedback_url']"
                   />
                   <b-card sub-title="Feedback">
                     <audio-player
-                      v-if="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_type'] === 'audio'"
+                      v-if="submissionFiles[currentStudentPage - 1]['file_feedback_type'] === 'audio'"
 
-                      :src="submissionFiles[currentQuestionPage - 1][currentStudentPage - 1]['file_feedback_url']"
+                      :src="submissionFiles[currentStudentPage - 1]['file_feedback_url']"
                     />
                   </b-card>
                   <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
@@ -498,6 +503,9 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    processing: false,
+    questionView: '',
+    questionOptions: [],
     richTextFeedback: '',
     plainTextFeedback: '',
     cannedResponse: null,
@@ -576,8 +584,6 @@ export default {
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
-    this.getSubmissionFiles()
-    this.getCannedResponses()
   },
   methods: {
     onCKEditorNamespaceLoaded (CKEDITOR) {
@@ -637,16 +643,16 @@ export default {
     },
     async getFilesFromS3 () {
       try {
-        let current = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]
+        let current = this.submissionFiles[this.currentStudentPage - 1]
         if (!current.got_files) {
           const { data } = await axios.post(`/api/submission-files/get-files-from-s3/${this.assignmentId}/${current.question_id}/${current.user_id}`, { open_ended_submission_type: current.open_ended_submission_type })
           console.log('getting files')
           if (data.type === 'success') {
             let files = data.files
-            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = files.file_feedback_url
-            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission_url = files.submission_url
-            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission_text = files.submission_text
-            this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].got_files = true
+            this.submissionFiles[this.currentStudentPage - 1].file_feedback_url = files.file_feedback_url
+            this.submissionFiles[this.currentStudentPage - 1].submission_url = files.submission_url
+            this.submissionFiles[this.currentStudentPage - 1].submission_text = files.submission_text
+            this.submissionFiles[this.currentStudentPage - 1].got_files = true
           } else {
             this.$noty.error(`We could not retrieve the files for ${current.name}`)
           }
@@ -655,14 +661,13 @@ export default {
       } catch (error) {
         this.$noty.error(`We could not retrieve the files for the student. ${error.message}`)
       }
-
     },
     setQuestionAndStudentByStudentName () {
-      for (let j = 0; j < this.submissionFiles[this.currentQuestionPage - 1].length; j++) {
-        if (this.jumpToStudent === this.submissionFiles[this.currentQuestionPage - 1][j]['name']) {
+      for (let j = 0; j < this.submissionFiles.length; j++) {
+        if (this.jumpToStudent === this.submissionFiles[j]['name']) {
           this.currentStudentPage = j + 1
-          this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
           this.$refs.queryTypeahead.inputValue = this.jumpToStudent = ''
+          this.changePage()
           return
         }
       }
@@ -689,8 +694,8 @@ export default {
         this.showAudioFeedbackMessage = false
       }, 3000)
       if (data.type === 'success') {
-        this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_url = data.file_feedback_url
-        this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].file_feedback_type = data.file_feedback_type
+        this.submissionFiles[this.currentStudentPage - 1].file_feedback_url = data.file_feedback_url
+        this.submissionFiles[this.currentStudentPage - 1].file_feedback_type = data.file_feedback_type
       }
       this.viewSubmission = false
       this.$refs.recorder.removeRecord()
@@ -700,13 +705,13 @@ export default {
       return word.charAt(0).toUpperCase() + word.slice(1)
     },
     getGraderFeedbackTitle () {
-      let grader = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
-        ? 'by ' + this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].grader_name
+      let grader = this.submissionFiles[this.currentStudentPage - 1].grader_name
+        ? 'by ' + this.submissionFiles[this.currentStudentPage - 1].grader_name
         : ''
       return `<h5>Grader Feedback ${grader}</h5>`
     },
     getStudentSubmissionTitle () {
-      return `<h5>Submission Information for  ${this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['name']}</h5>`
+      return `<h5>Submission Information for  ${this.submissionFiles[this.currentStudentPage - 1]['name']}</h5>`
     },
     viewQuestion (questionId) {
       window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)
@@ -722,7 +727,11 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+
         let assignment = data.assignment
+        this.questionOptions = data.questions
+
+        this.questionView = this.questionOptions[0].value
         let sections = data.sections
         this.hasMultipleSections = sections.length > 1
         if (this.hasMultipleSections) {
@@ -736,6 +745,8 @@ export default {
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent
+        await this.getSubmissionFiles(false)
+        await this.getCannedResponses()
       } catch (error) {
         this.title = 'Grade Open-Ended Submissions'
       }
@@ -746,16 +757,16 @@ export default {
     async submitScoreForm () {
       try {
         this.scoreForm.assignment_id = this.assignmentId
-        this.scoreForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
-        this.scoreForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
+        this.scoreForm.question_id = this.submissionFiles[this.currentStudentPage - 1]['question_id']
+        this.scoreForm.user_id = this.submissionFiles[this.currentStudentPage - 1]['user_id']
 
         const { data } = await this.scoreForm.post('/api/submission-files/score')
         this.$noty[data.type](data.message)
         console.log(data)
         if (data.type === 'success') {
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_submission_score'] = this.scoreForm.score
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['date_graded'] = data.date_graded
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['grader_name'] = data.grader_name
+          this.submissionFiles[this.currentStudentPage - 1]['file_submission_score'] = this.scoreForm.score
+          this.submissionFiles[this.currentStudentPage - 1]['date_graded'] = data.date_graded
+          this.submissionFiles[this.currentStudentPage - 1]['grader_name'] = data.grader_name
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -766,8 +777,8 @@ export default {
     openUploadFileModal () {
       this.fileFeedbackForm.errors.clear('fileFeedback')
       let assignmentId = parseInt(this.assignmentId)
-      let questionId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
-      let studentUserId = parseInt(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id'])
+      let questionId = parseInt(this.submissionFiles[this.currentStudentPage - 1]['question_id'])
+      let studentUserId = parseInt(this.submissionFiles[this.currentStudentPage - 1]['user_id'])
       this.audioFeedbackUploadUrl = `/api/submission-audios/audio-feedback/${studentUserId}/${assignmentId}/${questionId}`
     },
     async handleOk (bvModalEvt) {
@@ -783,8 +794,8 @@ export default {
         let formData = new FormData()
         formData.append('fileFeedback', this.fileFeedbackForm.fileFeedback)
         formData.append('assignmentId', this.assignmentId)
-        formData.append('questionId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id'])
-        formData.append('userId', this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id'])
+        formData.append('questionId', this.submissionFiles[this.currentStudentPage - 1]['question_id'])
+        formData.append('userId', this.submissionFiles[this.currentStudentPage - 1]['user_id'])
         formData.append('_method', 'put') // add this
         const { data } = await axios.post('/api/submission-files/file-feedback', formData)
         console.log(data)
@@ -792,8 +803,8 @@ export default {
           this.fileFeedbackForm.errors.set('fileFeedback', data.message)
         } else {
           this.$noty.success(data.message)
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['file_feedback_type'] = data.file_feedback_type
+          this.submissionFiles[this.currentStudentPage - 1]['file_feedback_url'] = data.file_feedback_url
+          this.submissionFiles[this.currentStudentPage - 1]['file_feedback_type'] = data.file_feedback_type
           this.$bvModal.hide('modal-upload-file')
         }
       } catch (error) {
@@ -838,14 +849,14 @@ export default {
           return false
         }
         this.textFeedbackForm.assignment_id = this.assignmentId
-        this.textFeedbackForm.question_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['question_id']
-        this.textFeedbackForm.user_id = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['user_id']
+        this.textFeedbackForm.question_id = this.submissionFiles[this.currentStudentPage - 1]['question_id']
+        this.textFeedbackForm.user_id = this.submissionFiles[this.currentStudentPage - 1]['user_id']
 
         const { data } = await this.textFeedbackForm.post('/api/submission-files/text-feedback')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback_editor'] = this.textFeedbackForm.text_feedback_editor
-          this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
+          this.submissionFiles[this.currentStudentPage - 1]['text_feedback_editor'] = this.textFeedbackForm.text_feedback_editor
+          this.submissionFiles[this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -858,7 +869,7 @@ export default {
       this.plainTextFeedback = ''
       if (textFeedback) {
         this.textFeedbackMode = 'plain_text'
-        switch (this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback_editor']) {
+        switch (this.submissionFiles[this.currentStudentPage - 1]['text_feedback_editor']) {
           case ('rich'):
             this.richTextFeedback = textFeedback
             this.textFeedbackMode = 'rich_text'
@@ -877,15 +888,15 @@ export default {
     async changePage () {
       this.retrievedFromS3 = false
       this.showAudioFeedbackMessage = false
-      let textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
+      let textFeedback = this.submissionFiles[this.currentStudentPage - 1]['text_feedback']
       this.setTextFeedback(textFeedback)
-      this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback']
-      console.log(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1])
+      this.textFeedbackForm.textFeedback = this.submissionFiles[this.currentStudentPage - 1]['text_feedback']
+      console.log(this.submissionFiles[this.currentStudentPage - 1])
 
-      this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
+      this.openEndedType = this.submissionFiles[this.currentStudentPage - 1].open_ended_submission_type
       await this.getFilesFromS3()
 
-      let submission = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].submission
+      let submission = this.submissionFiles[this.currentStudentPage - 1].submission
       if (submission !== null && submission.split('.').pop() === 'pdf') {
         this.isOpenEndedFileSubmission = true
       } else {
@@ -897,18 +908,18 @@ export default {
       this.retrievedFromS3 = true
     },
     async getTemporaryUrl (file, currentQuestionPage, currentStudentPage) {
-      if (this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][file] && !this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][`${file}_url`]) {
+      if (this.submissionFiles[currentStudentPage - 1][file] && !this.submissionFiles[currentStudentPage - 1][`${file}_url`]) {
         try {
           const { data } = await axios.post('/api/submission-files/get-temporary-url-from-request',
             {
               'assignment_id': this.assignmentId,
-              'file': this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][file]
+              'file': this.submissionFiles[currentStudentPage - 1][file]
             })
           if (data.type === 'error') {
             this.$noty.error(data.message)
             return false
           }
-          this.submissionFiles[currentQuestionPage - 1][currentStudentPage - 1][`${file}_url`] = data.temporary_url
+          this.submissionFiles[currentStudentPage - 1][`${file}_url`] = data.temporary_url
         } catch (error) {
           this.$noty.error(error.message)
         }
@@ -919,61 +930,68 @@ export default {
     },
     setQuestionAndStudentByQuestionIdAndStudentUserId (questionId, studentUserId) {
       for (let i = 0; i < this.submissionFiles.length; i++) {
-        for (let j = 0; j < this.submissionFiles[i].length; j++) {
-          console.log(this.submissionFiles[i][j]['question_id'], this.submissionFiles[i][j]['user_id'])
-          if (parseInt(questionId) === parseInt(this.submissionFiles[i][j]['question_id']) &&
-            parseInt(studentUserId) === parseInt(this.submissionFiles[i][j]['user_id'])) {
-            this.currentQuestionPage = i + 1
-            this.currentStudentPage = j + 1
-            return
-          }
+        if (parseInt(studentUserId) === parseInt(this.submissionFiles[i]['user_id'])) {
+          this.currentStudentPage = i + 1
+          return
         }
       }
     },
-    async getSubmissionFiles () {
+    async getSubmissionFiles (showMessage = true) {
+
+      if (this.$route.params.questionId && this.$route.params.studentUserId) {
+        this.questionView = this.$route.params.questionId
+        this.gradeView = 'allStudents'
+        this.sectionId = 0
+      }
       try {
-        const { data } = await axios.get(`/api/submission-files/${this.assignmentId}/${parseInt(this.sectionId)}/${this.gradeView}`)
+        const { data } = await axios.get(`/api/submission-files/${this.assignmentId}/${this.questionView}/${parseInt(this.sectionId)}/${this.gradeView}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           this.isLoading = false
+          this.processing = false
           return false
         }
+
         this.showNoFileSubmissionsExistAlert = !(data.user_and_submission_file_info.length > 0)
         if (this.showNoFileSubmissionsExistAlert) {
           this.isLoading = false
+          this.processing = false
           return false
         }
 
-        this.submissionFiles = data.user_and_submission_file_info
+        this.submissionFiles = data.user_and_submission_file_info[0]
         this.students = []
-        this.numStudents = Object.keys(this.submissionFiles[0]).length
+        this.numStudents = Object.keys(this.submissionFiles).length
         for (let i = 0; i < this.numStudents; i++) {
-          this.students.push(this.submissionFiles[0][i].name)
+          this.students.push(this.submissionFiles[i].name)
         }
 
-        this.currentQuestionPage = 1
         this.currentStudentPage = 1
 
         // loop through questions, inner loop through students, if match, then set question and student)
 
         if (this.$route.params.questionId && this.$route.params.studentUserId) {
           this.setQuestionAndStudentByQuestionIdAndStudentUserId(this.$route.params.questionId, this.$route.params.studentUserId)
-          this.setTextFeedback(this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1]['text_feedback'])
+          this.setTextFeedback(this.submissionFiles[this.currentStudentPage - 1]['text_feedback'])
         } else {
-          this.setTextFeedback(this.submissionFiles[0][0]['text_feedback'])
+          this.setTextFeedback(this.submissionFiles[0]['text_feedback'])
         }
 
-        this.openEndedType = this.submissionFiles[this.currentQuestionPage - 1][this.currentStudentPage - 1].open_ended_submission_type
+        this.openEndedType = this.submissionFiles[this.currentStudentPage - 1].open_ended_submission_type
         this.isOpenEndedFileSubmission = (this.openEndedType === 'file')
         this.isOpenEndedAudioSubmission = (this.openEndedType === 'audio')
         this.isOpenEndedTextSubmission = (this.openEndedType === 'text')
         await this.getFilesFromS3()
         this.retrievedFromS3 = true
         this.$forceUpdate()
+        if (showMessage) {
+          this.$noty.info(data.message)
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }
       this.isLoading = false
+      this.processing = false
     }
   }
 }

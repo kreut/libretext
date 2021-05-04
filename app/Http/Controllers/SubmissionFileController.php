@@ -206,6 +206,7 @@ class SubmissionFileController extends Controller
      */
     public function getSubmissionFilesByAssignment(Request $request,
                                                    Assignment $assignment,
+                                                   Question $question,
                                                    int $sectionId,
                                                    string $gradeView,
                                                    Section $section,
@@ -227,10 +228,16 @@ class SubmissionFileController extends Controller
             $course = $assignment->course;
             $role = Auth::user()->role;
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
+$user_ids = [];
+foreach ($enrolled_users as $user){
 
+    $user_ids[] = $user->id;
+}
+sort($user_ids);
+    \Log::info($user_ids);
             $response['type'] = 'success';
-            $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users) : [];
-
+            $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
+            $response['message'] = "Your view has been updated.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

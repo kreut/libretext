@@ -17,6 +17,7 @@ class Grader extends Model
             ->join('users','enrollments.user_id','=','users.id')
             ->select('users.id')
             ->where('sections.course_id',$course_id)
+           ->where('users.fake_student',0)
            ->where('graders.user_id', Auth::user()->id)
             ->get()
            ->pluck('id')

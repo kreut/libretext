@@ -78,7 +78,7 @@ class SubmissionFile extends Model
     }
 
     public
-    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users)
+    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, $question_id =0)
     {
 
         ///what if null?
@@ -97,11 +97,16 @@ class SubmissionFile extends Model
         }
         $user_and_submission_file_info = [];
 
-        $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
-            ->where('assignment_id', $assignment->id)
-            ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
-            ->orderBy('order')
-            ->get();
+        $assignment_questions_where_student_can_upload_file = $question_id
+          ? DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question_id)
+                ->get()
+        : DB::table('assignment_question')
+        ->where('assignment_id', $assignment->id)
+        ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
+        ->orderBy('order')
+        ->get();
 
         $question_ids = [];
 
@@ -125,7 +130,9 @@ class SubmissionFile extends Model
 
         $points = [];
 
+
         $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
+
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
 
             foreach ($users as $key => $user) {
@@ -139,7 +146,7 @@ class SubmissionFile extends Model
                 $text_feedback = $questionFilesByUser[$question->question_id][$user->id]->text_feedback ?? null;
                 $text_feedback_editor = $questionFilesByUser[$question->question_id][$user->id]->text_feedback_editor ?? null;
                 $original_filename = $questionFilesByUser[$question->question_id][$user->id]->original_filename ?? null;
-                $extension = isset($extensions[$user->user_id]) ? $extensions[$user->user_id] : null;
+                $extension = $extensions[$user->user_id] ?? null;
                 if ($submission && in_array($assignment->late_policy, ['marked late', 'deduction'])) {
                     $late_file_submission = $this->isLateSubmissionGivenExtensionForMarkedLatePolicy($extension, $assign_to_timings_by_user[$user->id]->due, $questionFilesByUser[$question->question_id][$user->id]->date_submitted);
                 }
