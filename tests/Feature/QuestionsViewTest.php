@@ -112,6 +112,43 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_switch_open_ended_submission_type()
+    {
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => 'You are not allowed to update the open ended submission type.']);
+
+    }
+
+    /** @test */
+    public function owner_can_switch_open_ended_submission_type()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => 'The open-ended submission type has been updated.']);
+
+    }
+    /** @test */
+    public function cannot_switch_open_ended_submission_type_if_submission_exists()
+    {
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'user_id' => $this->student_user->id,
+            'date_submitted' => Carbon::now()];
+        SubmissionFile::create($data);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => "There is at least one submission to this question so you can't change the open-ended submission type."]);
+
+
+    }
+
+    /** @test */
     public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()
     {
 
@@ -408,7 +445,6 @@ class QuestionsViewTest extends TestCase
         $this->assertEquals(count($num_submissions_before_delete) - 1, count($num_submissions_after_delete));
 
     }
-
 
 
     /** @test */
@@ -1116,7 +1152,7 @@ class QuestionsViewTest extends TestCase
     public function student_cannot_create_pages_for_a_question_not_in_their_assignment()
     {
         factory(Question::class)->create(['id' => 10000000, 'page_id' => 100000000]);
-        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/10000000/page", ['page' =>1])
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/10000000/page", ['page' => 1])
             ->assertJson(['message' => "No responses will be saved since that question is not in the assignment."]);
 
 
@@ -1128,10 +1164,10 @@ class QuestionsViewTest extends TestCase
     {
         $this->createSubmissionFile();
         $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page",
-            ['page'=>-1])
+            ['page' => -1])
             ->assertJsonValidationErrors('page');
         $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page",
-            ['page'=>"not a number"])
+            ['page' => "not a number"])
             ->assertJsonValidationErrors('page');
 
     }

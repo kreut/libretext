@@ -42,6 +42,7 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
+use Spipu\Html2Pdf\Tag\Html\Sub;
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -374,7 +375,10 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
+                                                  Assignment $assignment,
+                                                  Question $question,
+                                                  AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -387,6 +391,16 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+            if (DB::table('submission_files')
+                ->join('users', 'submission_files.user_id', '=', 'users.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->where('fake_student',0)
+                ->first()) {
+                $response['message'] = "There is at least one submission to this question so you can't change the open-ended submission type.";
+                return $response;
+            }
+
             $data = $request->validated();
             $open_ended_text_editor = null;
             if ((strpos($data['open_ended_submission_type'], 'text') !== false)) {

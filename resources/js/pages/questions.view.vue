@@ -367,7 +367,6 @@
                 :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
                 allowfullscreen
               />
-
             </div>
           </div>
           <b-container v-show="uploadLevel === 'assignment' && (!showCurrentFullPDF && (cutups.length || fullPdfUrl))">
@@ -485,8 +484,7 @@
         <div v-if="isLocked() && !presentationMode">
           <b-alert variant="info" show>
             <strong>This problem is locked. Since students have already submitted responses, you cannot update the
-              number
-              of points per question.</strong>
+              points per question nor change the open-ended submission type.</strong>
           </b-alert>
         </div>
         <div v-if="questions.length">
@@ -1504,11 +1502,17 @@ export default {
     title: '',
     assignmentId: '',
     name: '',
-    questionId: false
+    questionId: false,
+    originalOpenEndedSubmissionType: ''
   }),
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    openEndedSubmissionType: function (newVal, oldVal) {
+      this.originalOpenEndedSubmissionType = oldVal
+    }
+  },
   created () {
     this.doCopy = doCopy
     try {
@@ -2043,9 +2047,12 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].open_ended_submission_type = this.openEndedSubmissionType
+        } else {
+          this.openEndedSubmissionType = this.originalOpenEndedSubmissionType
         }
       } catch (error) {
         this.$noty.error(error.message)
+        this.openEndedSubmissionType = this.originalOpenEndedSubmissionType
       }
     },
     getWindowLocation () {
@@ -2676,7 +2683,8 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  },
+  }
+  ,
   metaInfo () {
     return { title: this.$t('home') }
   }
