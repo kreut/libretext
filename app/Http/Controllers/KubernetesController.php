@@ -13,7 +13,7 @@ class KubernetesController extends Controller
         $today = Carbon::today('America/Los_Angeles')->toDateString();
         $minpods = (int) config('myconfig.minpods');
         if ($minpods === 0 && in_array($today, ['2021-05-03', '2021-05-07'])){
-            $minpods = 50;
+            $minpods = 20;
         }
 
         $response = "# HELP minpods Minimum number of pods required by the application\n";
