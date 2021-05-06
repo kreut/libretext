@@ -24,11 +24,11 @@ class Cutup extends Model
         //recompile if add a single question OR cutups for a question
         //get all of the question ids from that assignment as an array order by assignment_question_id
         $question_ids = DB::table('assignment_question')
-                        ->where('assignment_id',$assignment_id)
-                        ->orderBy('id')
-                        ->select('question_id')
-                        ->get()
-                        ->pluck('question_id');
+            ->where('assignment_id', $assignment_id)
+            ->orderBy('id')
+            ->select('question_id')
+            ->get()
+            ->pluck('question_id');
 
 
         //get all uploaded solutions for that assignment
@@ -42,8 +42,8 @@ class Cutup extends Model
         }
         $files_to_merge = [];
         //loop through so they're in order of the question_ids
-        foreach ($question_ids as $key => $question_id){
-            if (isset($files_to_merge_by_question_id[$question_id])){
+        foreach ($question_ids as $key => $question_id) {
+            if (isset($files_to_merge_by_question_id[$question_id])) {
                 $files_to_merge[] = $files_to_merge_by_question_id[$question_id];
             }
 
@@ -52,7 +52,7 @@ class Cutup extends Model
 
         if ($files_to_merge) {
             foreach ($files_to_merge as $file) {
-                if (!Storage::exists($file)){
+                if (!Storage::exists($file)) {
                     Log::info($dir . '/' . $file);
                     $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $file);
                     Storage::disk('local')->put($storage_path . $dir . '/' . $file, $s3_file_contents);
@@ -81,13 +81,13 @@ class Cutup extends Model
     }
 
 
-    public function mergeCutUpPdfs( $solution,  int $assignment_id, int $user_id, array $chosen_cutups, string $page_numbers_and_extension)
+    public function mergeCutUpPdfs($solution, int $assignment_id, int $user_id, array $chosen_cutups, string $page_numbers_and_extension)
     {
 
         $pdf = new FPDI();
 
 // iterate over array of files and merge
-        $dir =  "solutions/$user_id" ;
+        $dir = "solutions/$user_id";
         //
 
         $storage_path = Storage::disk('local')->getAdapter()->getPathPrefix();
@@ -105,10 +105,8 @@ class Cutup extends Model
             $page_numbers[] = $page_number;
             if (in_array($page_number, $chosen_cutups)) {
                 $file = $storage_path . $dir . '/' . $filename;
-               if (!Storage::exists($file)){
-                   $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $filename);
-                   Storage::disk('local')->put($dir . '/' . $filename, $s3_file_contents);
-               }
+                $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $filename);
+                Storage::disk('local')->put($dir . '/' . $filename, $s3_file_contents);
 
                 $pageCount = $pdf->setSourceFile($file);
                 for ($i = 0; $i < $pageCount; $i++) {
@@ -124,11 +122,11 @@ class Cutup extends Model
 
 // output the pdf as a file (http://www.fpdf.org/en/doc/output.htm)
 
-        $full_pdf =  $solution->where('assignment_id', $assignment_id)
+        $full_pdf = $solution->where('assignment_id', $assignment_id)
             ->where('user_id', $user_id)
             ->where('question_id', null)
             ->first();
-        $filename =  $full_pdf->file ;
+        $filename = $full_pdf->file;
 
         $renamed_file = pathinfo($filename, PATHINFO_FILENAME) . "_{$page_numbers_and_extension}";
         $renamed_file = str_replace(' ', '', $renamed_file);//get rid of spaces
