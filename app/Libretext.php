@@ -225,7 +225,7 @@ class Libretext extends Model
             CURLOPT_FOLLOWLOCATION => true,
             CURLOPT_HTTP_VERSION => CURL_HTTP_VERSION_1_1,
             CURLOPT_CUSTOMREQUEST => "PUT",
-            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"' . $this->library . '","mode": "view", "format":"xhtml"}',
+            CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"' . $this->library . '","mode": "view", "dreamformat":"json"}',
             CURLOPT_HTTPHEADER => [
                 "Origin: https://adapt.libretexts.org",
                 "Content-Type: text/plain"
