@@ -256,10 +256,14 @@
             <p>
               <span v-show="user.role === 2">Select a single page or a comma separated list of pages to submit as your solution to
                 this question or </span>
-              <span v-show="user.role === 3">Tell us which page your question submission is on or
+              <span v-show="user.role === 3">Tell us which page your question submission starts on or
               </span>
               <a href="#" @click="showCurrentFullPDF = false">
                 upload a new PDF</a>.
+            </p>
+            <p class="font-italic">
+              <span class="font-weight-bold">Important:</span>
+              If your submission spans multiple pages, just enter the first page where the submission starts.
             </p>
             <b-container v-show="user.role === 2" class="mb-2">
               <b-form-group
@@ -313,9 +317,9 @@
             <b-container v-show="user.role === 3" class="mb-2">
               <b-form-group
                 id="page"
-                label-cols-sm="1"
-                label-cols-lg="1"
-                label="Page"
+                label-cols-sm="4"
+                label-cols-lg="4"
+                label="My submission starts on page:"
                 label-for="Page"
               >
                 <b-form-row lg="12">
