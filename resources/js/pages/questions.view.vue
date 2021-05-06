@@ -261,7 +261,7 @@
               <a href="#" @click="showCurrentFullPDF = false">
                 upload a new PDF</a>.
             </p>
-            <p class="font-italic">
+            <p v-show="user.role === 3" class="font-italic">
               <span class="font-weight-bold">Important:</span>
               If your submission spans multiple pages, just enter the first page where the submission starts.
             </p>

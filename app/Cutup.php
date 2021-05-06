@@ -52,10 +52,10 @@ class Cutup extends Model
 
         if ($files_to_merge) {
             foreach ($files_to_merge as $file) {
-                if (!Storage::exists($file)) {
-                    Log::info($dir . '/' . $file);
+
+                if  (!Storage::disk('local')->exists($dir . '/' . $file)) {
                     $s3_file_contents = Storage::disk('s3')->get($dir . '/' . $file);
-                    Storage::disk('local')->put($storage_path . $dir . '/' . $file, $s3_file_contents);
+                    Storage::disk('local')->put($dir . '/' . $file, $s3_file_contents);
                 }
                 $pageCount = $pdf->setSourceFile($storage_path . $dir . '/' . $file);
                 for ($i = 0; $i < $pageCount; $i++) {
