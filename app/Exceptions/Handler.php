@@ -92,7 +92,7 @@ class Handler extends ExceptionHandler
         } else {
             $date = Carbon::now('America/Los_Angeles')->format('Y-m-d');
             $date_time = Carbon::now('America/Los_Angeles');
-            $error_info = "[$date_time] " . app()->environment() . " $error_info";
+            $error_info = "[$date_time] " . app()->environment() . "\r\n\tUrl: " . config('app.url') . "\r\n\tError: $error_info";
             $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
             $contents = Storage::disk('s3')->exists("$log_file")
                 ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
