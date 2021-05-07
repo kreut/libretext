@@ -71,18 +71,19 @@ switch($user->role){
 
     }
 
-    public function canProvideFeedback($assignment, $student_user_id, $instructor_user_id)
+    public function canProvideFeedback($user, $assignment, $student_user_id, $instructor_user_id)
     {
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course
+        $has_grader_access = $assignment->course->isGrader() && in_array($assignment->id, $assignment->course->courseAssignmentPermissionsByGrader($user->id));
         return $assignment->course->enrollments->contains('user_id', $student_user_id)
-            && (($assignment->course->isGrader()) || ((int)$assignment->course->user_id === $instructor_user_id));
+            && (  $has_grader_access || ((int)$assignment->course->user_id === $instructor_user_id));
     }
 
     public function storeTextFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
     {
 
-        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+        return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to submit comments for this assignment.');
 
@@ -105,7 +106,7 @@ switch($user->role){
     public function uploadFileFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
     {
 
-        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+        return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to upload feedback for this assignment.');
 
@@ -114,7 +115,7 @@ switch($user->role){
     public function storeScore(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
     {
 
-        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+        return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to provide a score for this assignment.');
 
@@ -123,7 +124,7 @@ switch($user->role){
     public function uploadAudioFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
     {
 
-        return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
+        return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to provide feedback for this file.');
 

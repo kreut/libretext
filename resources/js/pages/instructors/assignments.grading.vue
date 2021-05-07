@@ -260,24 +260,24 @@
                             </span>
                           </b-alert>
                           <strong>Date Submitted:</strong> {{
-                            submissionFiles[currentStudentPage - 1]['date_submitted']
+                          submissionFiles[currentStudentPage - 1]['date_submitted']
                           }} <br>
                           <strong>Date Graded:</strong> {{
-                            submissionFiles[currentStudentPage - 1]['date_graded']
-                              ? submissionFiles[currentStudentPage - 1]['date_graded']
-                              : 'Not yet graded.'
+                          submissionFiles[currentStudentPage - 1]['date_graded']
+                          ? submissionFiles[currentStudentPage - 1]['date_graded']
+                          : 'Not yet graded.'
                           }}<br>
                           <strong>Question Submission Score:</strong> {{
-                            1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0
+                          1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0
                           }}<br>
                           <strong>{{ capitalize(openEndedType) }} Submission Score:</strong> {{
-                            1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0
+                          1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0
                           }}
                           <br>
                           <strong>Total Score For This Question:</strong>
                           {{
-                            (1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0)
-                            + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
+                          (1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0)
+                          + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
                           }} out of {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }}
                           <br>
                           <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
@@ -730,7 +730,11 @@ export default {
 
         let assignment = data.assignment
         this.questionOptions = data.questions
-
+        if (!data.questions.length) {
+          this.isLoading = false
+          this.showNoFileSubmissionsExistAlert = true
+          return false
+        }
         this.questionView = this.questionOptions[0].value
         let sections = data.sections
         this.hasMultipleSections = sections.length > 1

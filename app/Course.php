@@ -131,13 +131,13 @@ class Course extends Model
 
     public function fakeStudentIds()
     {
-       return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
+        return DB::table('enrollments')->join('courses', 'enrollments.course_id', '=', 'courses.id')
             ->join('users', 'enrollments.user_id', '=', 'users.id')
             ->where('course_id', $this->id)
             ->where('fake_student', 1)
             ->select('users.id')
             ->get()
-           ->pluck('id')
+            ->pluck('id')
             ->toArray();
     }
 
@@ -155,6 +155,39 @@ class Course extends Model
             ->select('sections.*')
             ->get();
 
+
+    }
+
+    /**
+     * @param int $user_id
+     * @return array
+     */
+    public function courseAssignmentPermissionsByGrader(int $user_id)
+    {
+
+        $assignment_permissions = DB::table('assignment_grader')
+            ->whereIn('assignment_id', $this->assignments->pluck('id')->toArray())
+            ->where('user_id', $user_id)
+            ->select('assignment_id')
+            ->get();
+        $assignment_ids = [];
+        foreach ($assignment_permissions as $assignment_permission) {
+            $assignment_ids[] = $assignment_permission->assignment_id;
+        }
+        return $assignment_ids;
+
+    }
+
+    public function graders()
+    {
+
+        return DB::table('graders')
+            ->join('sections', 'graders.section_id', '=', 'sections.id')
+            ->join('users', 'graders.user_id', '=', 'users.id')
+            ->where('sections.course_id', $this->id)
+            ->select('users.id')
+            ->groupBy('id')
+            ->get();
 
     }
 
@@ -188,11 +221,6 @@ class Course extends Model
         return array_values($graders);
     }
 
-    public function graders()
-    {
-        return $this->hasMany('App\Grader');
-
-    }
 
     /**
      * @param int $course_id
@@ -231,7 +259,8 @@ class Course extends Model
         return (in_array(Auth::user()->id, $graders));
     }
 
-    public function assignTosByAssignmentAndUser(){
+    public function assignTosByAssignmentAndUser()
+    {
         $assigned_assignments = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
             ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
@@ -242,8 +271,9 @@ class Course extends Model
         foreach ($assigned_assignments as $assignment) {
             $assigned_assignments_by_assignment_and_user_id[$assignment->assignment_id][] = $assignment->user_id;
         }
-        return   $assigned_assignments_by_assignment_and_user_id;
-}
+        return $assigned_assignments_by_assignment_and_user_id;
+    }
+
     public function assignedToAssignmentsByUser()
     {
         $assigned_assignments = DB::table('assignments')
@@ -258,6 +288,47 @@ class Course extends Model
         }
 
         return $assigned_assignments_by_id;
+    }
+
+    public function graderPermissions()
+    {
+        $graders = $this->graderInfo();
+        $graders_by_id = [];
+        foreach ($graders as $grader) {
+            $grader_info = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
+            if (!in_array($grader_info, $graders_by_id)) {
+                $graders_by_id[] = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
+            }
+        }
+        $assignments = $this->assignments;
+        $assignment_ids = $this->assignments->pluck('id')->toArray();
+        $permitted_graders = DB::table('assignment_grader')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->get();
+        $permitted_graders_by_assignment = [];
+        foreach ($permitted_graders as $permitted_grader) {
+            if (!isset($permitted_graders_by_assignment[$permitted_grader->assignment_id])) {
+                $permitted_graders_by_assignment[$permitted_grader->assignment_id] = [];
+            }
+            $permitted_graders_by_assignment[$permitted_grader->assignment_id][] = $permitted_grader->user_id;
+        }
+
+        $grader_permissions_by_assignment = [];
+        foreach ($assignments as $assignment) {
+            if (!isset($grader_permissions_by_assignment[$assignment->id])) {
+                $grader_permissions_by_assignment[$assignment->id] = [
+                    'assignment_name' => $assignment->name,
+                    'assignment_id' => $assignment->id
+                ];
+            }
+            foreach ($graders as $grader) {
+                $grader = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
+                $grader['has_access'] = isset($permitted_graders_by_assignment[$assignment->id]) && in_array($grader['user_id'], $permitted_graders_by_assignment[$assignment->id]);
+                $grader_permissions_by_assignment[$assignment->id]['grader_permissions'][] = $grader;
+
+            }
+        }
+        return $grader_permissions_by_assignment;
     }
 
 }

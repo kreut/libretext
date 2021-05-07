@@ -22,6 +22,17 @@ use App\SubmissionFile;
 class GradingTest extends TestCase
 {
 
+    private $student_user;
+    private $user;
+    private $user_2;
+    private $student_user_2;
+    private $course;
+    private $assignment;
+    private $grader_user;
+    private $section;
+    private $question;
+    private $score_data;
+
     public function setup(): void
     {
 
@@ -53,6 +64,12 @@ class GradingTest extends TestCase
         $this->assignment_file = factory(SubmissionFile::class)->create(['type' => 'a', 'user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
 
         $this->question = factory(Question::class)->create(['page_id' => 1]);
+        $this->score_data = [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'score' => 10];
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
@@ -81,6 +98,42 @@ class GradingTest extends TestCase
     }
 
     /** @test */
+    public function owner_or_grader_can_submit_score()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/submission-files/score", $this->score_data)
+            ->assertJson(['type' => 'success']);
+
+        $this->assignment->graders()->attach($this->grader_user);
+        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+
+    public function non_owner_can_not_submit_score()
+    {
+
+        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
+            ->assertJson(['message' => 'You are not allowed to provide a score for this assignment.']);
+
+    }
+
+    /** @test */
+
+    public function score_must_be_valid()
+    {
+
+        $this->score_data['score'] = 'a';
+        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
+            ->assertJsonValidationErrors('score');
+
+
+    }
+
+
+    /** @test */
     public function owner_can_override_scores()
     {
         $score = new Score();
@@ -92,7 +145,7 @@ class GradingTest extends TestCase
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
         $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
         $score = new Score();
-        $this->assertEquals(2,$score->where('user_id', $this->student_user->id)->first()->score);
+        $this->assertEquals(2, $score->where('user_id', $this->student_user->id)->first()->score);
     }
 
     /** @test */
@@ -107,7 +160,7 @@ class GradingTest extends TestCase
         $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
         $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data);
         $score = new Score();
-        $this->assertEquals(10,$score->where('user_id', $this->student_user_2->id)->first()->score);
+        $this->assertEquals(10, $score->where('user_id', $this->student_user_2->id)->first()->score);
     }
 
 
@@ -115,7 +168,7 @@ class GradingTest extends TestCase
 
     public function non_owner_cannot_override_scores()
     {
-        $data['overrideScores'] =  [['user_id' => $this->student_user->id, 'override_score' => 2]];
+        $data['overrideScores'] = [['user_id' => $this->student_user->id, 'override_score' => 2]];
         $this->actingAs($this->user_2)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
             ->assertJson(['message' => "You can't override the scores since this is not one of your assignments."]);
 
@@ -125,11 +178,10 @@ class GradingTest extends TestCase
     /** @test */
     public function students_must_be_enrolled_in_course_to_do_overrides()
     {
-        $data['overrideScores'] =  [['user_id' => 1, 'override_score' => 2]];
+        $data['overrideScores'] = [['user_id' => 1, 'override_score' => 2]];
         $this->actingAs($this->user)->patchJson("/api/scores/{$this->assignment->id}/override-scores", $data)
             ->assertJson(['message' => "You can only override scores if the students are enrolled in your course."]);
     }
-
 
 
     /** @test */
@@ -322,30 +374,6 @@ class GradingTest extends TestCase
             'user_id' => $this->student_user->id,
             'score' => $file_submission_score])
             ->assertJson(['message' => 'The total of your Question Submission Score and File Submission score can\'t be greater than the total number of points for this question.']);
-    }
-
-
-    /** @test */
-    public function owner_can_submit_score()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function non_owner_can_not_submit_score()
-    {
-
-
-    }
-
-    /** @test */
-
-    public function score_must_be_valid()
-    {
-
-
     }
 
 

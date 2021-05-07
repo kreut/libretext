@@ -25,10 +25,10 @@ class GraderController extends Controller
         $course = Course::find($request->course_id);
         $authorized = Gate::inspect('update', [$grader, $course]);
 
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         try {
             $data = $request->validated();
             $course_id = $request->course_id;
@@ -36,7 +36,7 @@ class GraderController extends Controller
             $section_ids = Course::find($course_id)->sections->pluck('id')->toArray();
             DB::beginTransaction();
             $grader->whereIn('section_id', $section_ids)
-                ->where('user_id', $grader_user_id )
+                ->where('user_id', $grader_user_id)
                 ->delete();
             foreach ($data['selected_sections'] as $section_id) {
                 $grader = new Grader();
@@ -90,7 +90,10 @@ class GraderController extends Controller
                 $grader->save();
             }
             $course_section_names = implode(', ', $course_section_names);
-            DB::table('grader_access_codes')->where('access_code',$data['access_code'])->delete();
+            DB::table('grader_access_codes')->where('access_code', $data['access_code'])->delete();
+            foreach ($section->course->assignments as $assignment) {
+                $assignment->graders()->attach($grader);
+            }
             DB::commit();
             $response['message'] = "You have been added as a grader to <strong>$course_section_names</strong>.";
             $response['type'] = 'success';
@@ -132,7 +135,10 @@ class GraderController extends Controller
 
     }
 
-    public function removeGraderFromCourse(Request $request, Course $Course, User $User, Grader $Grader)
+    public function removeGraderFromCourse(Request $request,
+                                           Course $Course,
+                                           User $User,
+                                           Grader $Grader)
     {
         $response['type'] = 'error';
         $course = $Course::find($request->course->id);
@@ -145,12 +151,19 @@ class GraderController extends Controller
         }
         $course_section_ids = $course->sections->pluck('id')->toArray();
         try {
+            DB::beginTransaction();
             $Grader->where('user_id', $student_user->id)->
             whereIn('section_id', $course_section_ids)
                 ->delete();
+
+            foreach ($course->assignments as $assignment) {
+                $assignment->graders()->detach( $student_user);
+            }
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The grader has been removed from your course.';
         } catch (Exception $e) {
+            DB::rollBack();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error removing your grader.  Please try again by refreshing the page or contact us for assistance.";

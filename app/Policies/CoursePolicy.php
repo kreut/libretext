@@ -13,6 +13,13 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    public function courseAccessForGraders(User $user, Course $course){
+        return ((int)$course->user_id === (int)$user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to grant access to all assignments for all graders for this course.');
+
+
+    }
     public function getAssignmentsAndUsers(User $user, Course $course){
 
         return ((int)$course->user_id === (int)$user->id)

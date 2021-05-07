@@ -19,7 +19,7 @@
 
     <div class="col-md-9">
       <transition name="fade" mode="out-in">
-        <router-view />
+        <router-view/>
       </transition>
     </div>
   </div>
@@ -28,6 +28,7 @@
 <script>
 
 import { mapGetters } from 'vuex'
+
 export default {
   middleware: 'auth',
   computed: {
@@ -53,6 +54,11 @@ export default {
           icon: '',
           name: 'Graders',
           route: 'course_properties.graders'
+        },
+        {
+          icon: '',
+          name: 'Grader Permissions',
+          route: 'course_properties.grader_permissions'
         },
         {
           icon: '',

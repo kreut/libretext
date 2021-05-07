@@ -239,6 +239,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submission-audios/error', 'SubmissionAudioController@logError');
 
 
+    Route::get('/grader-permissions/{course}', 'GraderPermissionController@index');
+    Route::patch('/grader-permissions/course/{course}/{type}', 'GraderPermissionController@courseAccess');
+    Route::patch('/grader-permissions/assignment/{assignment}/{type}', 'GraderPermissionController@assignmentAccess');
+    Route::patch('/grader-permissions/{assignment}/{user}/{hasAccess}', 'GraderPermissionController@update');
+
+
+
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::get('/enrollments/{course}/details', 'EnrollmentController@details');
     Route::post('/enrollments', 'EnrollmentController@store');

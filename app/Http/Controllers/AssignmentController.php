@@ -377,6 +377,10 @@ class AssignmentController extends Controller
                 $assignment->saveAssignmentTimingAndGroup($new_assignment);
             }
 
+            foreach ($new_assignment->course->graders() as $grader) {
+                $assignment->graders()->syncWithoutDetaching($grader);
+            }
+
             DB::commit();
             $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
             $response['type'] = 'success';
@@ -681,7 +685,9 @@ class AssignmentController extends Controller
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-
+            foreach ($course->graders() as $grader) {
+                $assignment->graders()->attach($grader);
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been created.";
@@ -917,13 +923,13 @@ class AssignmentController extends Controller
                     : []
             ];
 
-            if (Auth::user()->role === 3 ){
+            if (Auth::user()->role === 3) {
                 $response['assignment']['full_pdf_url'] = '';
                 $submission_file = $submissionFile->where('user_id', $request->user()->id)
                     ->where('assignment_id', $assignment->id)
                     ->where('type', 'a')
                     ->first();
-                if ($submission_file){
+                if ($submission_file) {
                     $response['assignment']['full_pdf_url'] = $this->getTemporaryUrl($assignment->id, $submission_file->submission);
                 }
 
@@ -1028,7 +1034,7 @@ class AssignmentController extends Controller
                 ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
                 ->orderBy('order')
                 ->get();
-            foreach ($assignment_questions_where_student_can_upload_file as  $question) {
+            foreach ($assignment_questions_where_student_can_upload_file as $question) {
                 $response['questions'][] = ['text' => "$question->order", 'value' => $question->question_id];
             }
             $response['assignment'] = [
@@ -1315,6 +1321,7 @@ class AssignmentController extends Controller
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
+            DB::table('assignment_grader')->where('assignment_id', $assignment->id)->delete();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 
             $course = $assignment->course;

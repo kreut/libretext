@@ -90,7 +90,11 @@ class Assignment extends Model
                 $assign_to_groups = $this->assignToGroupsByCourse($course);
             }
 
+
             $course_assignments = $course->assignments;
+            if (Auth::user()->role === 4) {
+                $course_assignment_permissions = $course->courseAssignmentPermissionsByGrader(Auth::user()->id);
+            }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
 
@@ -98,6 +102,10 @@ class Assignment extends Model
 
                 if (Auth::user()->role === 3 && !in_array($assignment->id, $assigned_assignment_ids)) {
                     continue;
+                }
+
+                if (Auth::user()->role === 4 && !in_array($assignment->id, $course_assignment_permissions)) {
+                    // continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
@@ -123,9 +131,9 @@ class Assignment extends Model
                     $assignments_info[$key]['number_submitted'] = $number_of_submissions_by_assignment[$assignment->id];
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                     $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
-                    $assignments_info[$key]['number_of_questions']  = $assignment->number_of_randomized_assessments
-                                                                    ? $assignment->number_of_randomized_assessments
-                                                                    : count($assignment->questions);
+                    $assignments_info[$key]['number_of_questions'] = $assignment->number_of_randomized_assessments
+                        ? $assignment->number_of_randomized_assessments
+                        : count($assignment->questions);
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
@@ -362,6 +370,12 @@ class Assignment extends Model
         return 'Closed';
     }
 
+    public function graders()
+    {
+        return $this->belongsToMany('App\User', 'assignment_grader');
+
+    }
+
     public function getEditingFormItems(string $available_from, string $due, $final_submission_deadline, Assignment $assignment)
     {
         $editing_form_items = [];
@@ -436,6 +450,7 @@ class Assignment extends Model
     {
         return $this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty();
     }
+
 
     public function questionFileSubmissions()
     {

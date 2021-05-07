@@ -526,7 +526,8 @@ class CourseController extends Controller
         try {
             DB::beginTransaction();
             foreach ($course->assignments as $assignment) {
-                $assignment_question_ids = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                $assignment_question_ids = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
                     ->get()
                     ->pluck('id');
 
@@ -540,7 +541,7 @@ class CourseController extends Controller
                 $assignment->scores()->delete();
                 $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
-
+                $assignment->graders()->detach();
             }
             $course->extensions()->delete();
             $course->assignments()->delete();
