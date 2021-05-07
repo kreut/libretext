@@ -237,7 +237,8 @@ class Question extends Model
             //private page so try again!
             try {
                 $contents = $Libretext->getBodyFromPrivatePage($page_id);
-                $body = $contents['body'][0];
+                $body = $contents->body;
+                $body = $body[0];
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);

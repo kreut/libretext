@@ -238,7 +238,7 @@ class Libretext extends Model
             throw new Exception (curl_error($curl));
         }
         curl_close($curl);
-        return $response;
+        return json_decode($response);
 
     }
 
