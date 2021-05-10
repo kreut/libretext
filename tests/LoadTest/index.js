@@ -1,22 +1,25 @@
 const jsdom = require('jsdom')
 const async = require('async')
 const puppeteer = require('puppeteer')
+const secrets = require('./auth.json')
 const { JSDOM } = jsdom
 
-const targetPages = [`https://adapt.k8.libretexts.org/`,
-  'https://adapt.k8.libretexts.org/students/courses/45/assignments',//Assignments page:
-  'https://adapt.k8.libretexts.org/students/assignments/392/summary', //Assignment Summary:
-  'https://adapt.k8.libretexts.org/assignments/392/questions/view', //View assessments:
-  'https://adapt.k8.libretexts.org/assignments/392/questions/view/98770', //Page with files from Query:
-  'https://adapt.k8.libretexts.org/assignments/392/questions/view/98760'] //Webwork question:
+// const targetPages = [`https://adapt.kdev.libretexts.org/`,
+//   'https://adapt.kdev.libretexts.org/students/courses/45/assignments',//Assignments page:
+//   'https://adapt.kdev.libretexts.org/students/assignments/392/summary', //Assignment Summary:
+//   'https://adapt.kdev.libretexts.org/assignments/392/questions/view', //View assessments:
+//   'https://adapt.kdev.libretexts.org/assignments/392/questions/view/98770', //Page with files from Query:
+//   'https://adapt.kdev.libretexts.org/assignments/392/questions/view/98760'] //Webwork question:
+const targetPages = ['https://adapt.kdev.libretexts.org/api/assignments/392/questions/view']
 const DRIVER = 'JSD'
 // const DRIVER = "pup"
 
 main().then()
 
 async function main () {
-  let total = Math.max(0, 1000)
+  let total = Math.max(0, 100)
   let concurrency
+  console.log(DRIVER)
   
   for (let page of targetPages) {
     console.log(page)
@@ -36,13 +39,20 @@ async function main () {
 }
 
 async function JSD (targetPage, total, concurrency) {
+  const cookieJar = new jsdom.CookieJar()
+  cookieJar.setCookie(`token="${secrets.kdev}"`,"https://adapt.kdev.libretexts.org");
   
   console.time('JSD')
   let completed = 0
   await async.timesLimit(total, concurrency, async (i) => {
+    const virtualConsole = new jsdom.VirtualConsole();
     const dom = await JSDOM.fromURL(targetPage, {
       resources: 'usable',
+      runScripts: "dangerously",
+      cookieJar,
+      virtualConsole
     })
+    
     // console.log(i)
     process.stdout.write(`${++completed}\r`)
   })
@@ -62,11 +72,13 @@ async function pup (targetPage, total, concurrency) {
   let completed = 0
   await async.timesLimit(total, concurrency, async (i) => {
     const page = await browser.newPage()
+    // console.log(secrets.kdev)
+    // await page.setExtraHTTPHeaders({"Authorization": `Bearer ${secrets.kdev}`)
+    await page.setCookie({name: "token", domain:"adapt.kdev.libretexts.org", value: secrets.kdev})
     await page.goto(targetPage, {
       timeout: 50000,
       waitUntil: ['load', 'domcontentloaded', 'networkidle0']
     })
-    // console.log(i)
     process.stdout.write(`${++completed}\r`)
     
     if (!page.isClosed()) {
