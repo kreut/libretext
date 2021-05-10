@@ -105,7 +105,7 @@ class Assignment extends Model
                 }
 
                 if (Auth::user()->role === 4 && !in_array($assignment->id, $course_assignment_permissions)) {
-                    // continue;
+                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
@@ -372,7 +372,7 @@ class Assignment extends Model
 
     public function graders()
     {
-        return $this->belongsToMany('App\User', 'assignment_grader');
+        return $this->belongsToMany('App\User', 'assignment_grader')->withTimestamps();
 
     }
 

@@ -26,11 +26,11 @@ class GraderPermissionController extends Controller
     {
         $response['type'] = 'error';
 
-          $authorized = Gate::inspect('courseAccessForGraders', $course);
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        $authorized = Gate::inspect('courseAccessForGraders', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
 
@@ -73,11 +73,11 @@ class GraderPermissionController extends Controller
         try {
 
             DB::beginTransaction();
-                foreach ($assignment->course->graders() as $grader) {
-                    $type
-                        ? $assignment->graders()->syncWithoutDetaching($grader)
-                        : $assignment->graders()->detach($grader);
-                }
+            foreach ($assignment->course->graders() as $grader) {
+                $type
+                    ? $assignment->graders()->syncWithoutDetaching($grader)
+                    : $assignment->graders()->detach($grader);
+            }
             DB::commit();
             $response['type'] = $type ? 'success' : 'info';
             $message = $type
@@ -102,11 +102,11 @@ class GraderPermissionController extends Controller
     {
         $response['type'] = 'error';
 
-          $authorized = Gate::inspect('assignmentAccessForGrader', [$assignment, $user]);
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        $authorized = Gate::inspect('assignmentAccessForGrader', [$assignment, $user]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
 
@@ -135,14 +135,14 @@ class GraderPermissionController extends Controller
 
         $response['type'] = 'error';
 
-         $authorized = Gate::inspect('index', [$graderPermission, $course]);
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        $authorized = Gate::inspect('index', [$graderPermission, $course]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
-
+            $response['graders'] = $course->graderInfo();
             $response['grader_permissions'] = array_values($course->graderPermissions());
             $response['type'] = 'success';
 

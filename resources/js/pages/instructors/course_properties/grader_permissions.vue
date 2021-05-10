@@ -67,16 +67,16 @@
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Grader Permissions">
           <b-card-text>
-            <b-container>
-              <b-row>
-                <p>
-                  At the course level, you can <a href="#" @click.prevent="openAllAccessModal()">give all graders
-                  access</a> to all assignments or you can
-                  <a href="#" @click.prevent="openNoAccessModal()">remove grader access</a> to all assignments.
-                </p>
-              </b-row>
-            </b-container>
-            <div v-show="graderPermissions.length">
+            <div v-show="graders.length">
+              <b-container>
+                <b-row>
+                  <p>
+                    At the course level, you can <a href="#" @click.prevent="openAllAccessModal()">give all graders
+                    access</a> to all assignments or you can
+                    <a href="#" @click.prevent="openNoAccessModal()">remove grader access</a> to all assignments.
+                  </p>
+                </b-row>
+              </b-container>
               <b-table striped hover
                        :fields="fields"
                        :items="graderPermissions"
@@ -109,9 +109,9 @@
                 </template>
               </b-table>
             </div>
-            <div v-show="!graderPermissions.length" class="clearfix">
+            <div v-show="!graders.length" class="clearfix">
               <b-alert show variant="info">
-                <span class="font-weight-bold">You currently have no assignments associated with this course.</span>
+                <span class="font-weight-bold">You currently have no graders associated with this course.</span>
               </b-alert>
             </div>
           </b-card-text>
@@ -148,6 +148,7 @@ export default {
       }
     ],
     graderPermissions: [],
+    graders: [],
     isLoading: true
 
   }),
@@ -229,6 +230,7 @@ export default {
           return false
         }
         this.graderPermissions = data.grader_permissions
+        this.graders = data.graders
       } catch (error) {
         this.$noty.error(error.message)
       }

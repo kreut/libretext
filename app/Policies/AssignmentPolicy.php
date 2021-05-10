@@ -22,7 +22,7 @@ class AssignmentPolicy
 
     }
     public function assignmentAccessForGrader(User $user, Assignment $assignment, User $grader){
-        return (int) $assignment->course->user_id === $user->id && $assignment->course->isGrader()
+        return (int) $assignment->course->user_id === $user->id && in_array($grader->id,$assignment->course->graders()->pluck('id')->toArray())
             ? Response::allow()
             : Response::deny('You are not allowed to give this grader access to this assignment.');
 

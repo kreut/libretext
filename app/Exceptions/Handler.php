@@ -79,6 +79,10 @@ class Handler extends ExceptionHandler
             request()->user() ? request()->user()->id : 'No user logged in'
         );
 
+        if (config('myconfig.loadtest')) {
+            exit;
+        }
+
         if (app()->environment('staging')) {
             Log::error($error_info);
         }
