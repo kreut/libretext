@@ -654,7 +654,7 @@ export default {
             this.submissionFiles[this.currentStudentPage - 1].submission_text = files.submission_text
             this.submissionFiles[this.currentStudentPage - 1].got_files = true
           } else {
-            this.$noty.error(`We could not retrieve the files for ${current.name}`)
+            this.$noty.error(data.message)
           }
         }
         console.log(current)

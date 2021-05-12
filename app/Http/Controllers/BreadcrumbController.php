@@ -50,7 +50,6 @@ class BreadcrumbController extends Controller
                         case('course_properties.sections'):
                         case('course_properties.letter_grades'):
                         case('course_properties.graders'):
-                        case('course_properties.grader_permissions'):
                         case('course_properties.students'):
                         case('course_properties.access_codes'):
                         case('course_properties.assignment_group_weights'):
@@ -93,6 +92,7 @@ class BreadcrumbController extends Controller
                         case('students.assignments.summary'):
                         case('instructors.assignments.summary'):
                         case('instructors.assignments.statistics'):
+                        case('instructors.assignments.grader_access'):
                         case('instructors.assignments.questions'):
                         case('instructors.assignments.auto_graded_submissions'):
                         case('instructors.assignments.gradebook'):

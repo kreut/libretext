@@ -101,21 +101,21 @@ class GradingTest extends TestCase
     public function owner_or_grader_can_submit_score()
     {
 
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", $this->score_data)
-            ->assertJson(['type' => 'success']);
-
-        $this->assignment->graders()->attach($this->grader_user);
         $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
             ->assertJson(['type' => 'success']);
 
+        $this->actingAs($this->user)->postJson("/api/submission-files/score", $this->score_data)
+            ->assertJson(['type' => 'success']);
+
     }
+
 
     /** @test */
 
     public function non_owner_can_not_submit_score()
     {
 
-        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
+        $this->actingAs($this->user_2)->postJson("/api/submission-files/score", $this->score_data)
             ->assertJson(['message' => 'You are not allowed to provide a score for this assignment.']);
 
     }

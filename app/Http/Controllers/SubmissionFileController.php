@@ -227,14 +227,25 @@ class SubmissionFileController extends Controller
         try {
             $course = $assignment->course;
             $role = Auth::user()->role;
-            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
-$user_ids = [];
-foreach ($enrolled_users as $user){
 
-    $user_ids[] = $user->id;
-}
-sort($user_ids);
-    \Log::info($user_ids);
+            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
+            if ($role === 4 && $sectionId === 0) {
+                $access_level_override = $assignment->graders()
+                    ->where('assignment_grader_access.user_id', Auth::user()->id)
+                    ->first();
+                if ($access_level_override && $access_level_override->pivot->access_level) {
+                    $enrolled_users = $course->enrolledUsers;
+                }
+            }
+
+
+            $user_ids = [];
+            foreach ($enrolled_users as $user) {
+
+                $user_ids[] = $user->id;
+            }
+            sort($user_ids);
+
             $response['type'] = 'success';
             $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
             $response['message'] = "Your view has been updated.";
@@ -366,6 +377,7 @@ sort($user_ids);
         $submission_info = DB::table('submissions')
             ->where('question_id', $question_id)
             ->where('assignment_id', $assignment_id)
+            ->where('user_id', $student_user_id)
             ->first();
         $submission_points = $submission_info->score ?? 0;
         if ($submission_points + $request->score > $max_points) {

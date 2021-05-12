@@ -17,24 +17,24 @@ class AssignmentFilePolicy
 
     public function downloadAssignmentFile(User $user, AssignmentFile $assignmentFile, SubmissionFile $submissionFile, int $assignment_id, string $filename)
     {
-switch($user->role){
-    case(2):
-        $has_access = (int) Assignment::find($assignment_id)->course->user_id ===  $user->id;
-        break;
-    case(3):
-        //student who owns the assignment or the file feedback
-        $user_id = $submissionFile->where('assignment_id', $assignment_id)
-            ->where('submission', $filename)
-            ->orWhere('file_feedback', $filename)
-            ->value('user_id');
-        $has_access = (int)$user_id === $user->id;
-        break;
-    case(4):
-        $has_access = (int) Assignment::find($assignment_id)->course->isGrader();
-        break;
+        switch ($user->role) {
+            case(2):
+                $has_access = (int)Assignment::find($assignment_id)->course->user_id === $user->id;
+                break;
+            case(3):
+                //student who owns the assignment or the file feedback
+                $user_id = $submissionFile->where('assignment_id', $assignment_id)
+                    ->where('submission', $filename)
+                    ->orWhere('file_feedback', $filename)
+                    ->value('user_id');
+                $has_access = (int)$user_id === $user->id;
+                break;
+            case(4):
+                $has_access = (int)Assignment::find($assignment_id)->course->isGrader();
+                break;
 
-    break;
-}
+                break;
+        }
 
         return ($has_access) ?
             Response::allow()
@@ -52,8 +52,8 @@ switch($user->role){
 
     public function viewAssignmentFilesByAssignment(User $user, AssignmentFile $assignmentFile, Assignment $assignment)
     {
-       $message ='';
-       if (((int)$assignment->course->user_id !== $user->id)) {
+        $message = '';
+        if (((int)$assignment->course->user_id !== $user->id)) {
             $message = 'You are not allowed to access these assignment files.';
         }
 
@@ -75,9 +75,18 @@ switch($user->role){
     {
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course
-        $has_grader_access = $assignment->course->isGrader() && in_array($assignment->id, $assignment->course->courseAssignmentPermissionsByGrader($user->id));
+
+        $has_grader_access = false;
+        if ($user->role === 4) {
+            $accessible_assignment_ids = $assignment->course->accessbileAssignmentsByGrader($user->id);
+
+            $has_grader_access = $assignment->course->isGrader()
+                && $accessible_assignment_ids
+                && $accessible_assignment_ids[$assignment->id];
+        }
+
         return $assignment->course->enrollments->contains('user_id', $student_user_id)
-            && (  $has_grader_access || ((int)$assignment->course->user_id === $instructor_user_id));
+            && ($has_grader_access || ((int)$assignment->course->user_id === $instructor_user_id));
     }
 
     public function storeTextFeedback(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)

@@ -91,9 +91,6 @@ class GraderController extends Controller
             }
             $course_section_names = implode(', ', $course_section_names);
             DB::table('grader_access_codes')->where('access_code', $data['access_code'])->delete();
-            foreach ($section->course->assignments as $assignment) {
-                $assignment->graders()->attach($grader);
-            }
             DB::commit();
             $response['message'] = "You have been added as a grader to <strong>$course_section_names</strong>.";
             $response['type'] = 'success';

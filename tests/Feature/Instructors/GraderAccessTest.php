@@ -16,7 +16,7 @@ use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class GraderPermissionsTest extends TestCase
+class GraderAccessTest extends TestCase
 {
     use Test;
 
@@ -26,7 +26,6 @@ class GraderPermissionsTest extends TestCase
     private $grader_user;
     private $user;
     private $grader_user_2;
-    private $section;
 
     public function setup(): void
     {
@@ -37,60 +36,52 @@ class GraderPermissionsTest extends TestCase
 
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        $section = factory(Section::class)->create(['course_id' => $this->course->id]);
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
-        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
+        Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $section->id]);
         $this->grader_user_2 = factory(User::class)->create();
         $this->grader_user_2->role = 4;
     }
     /** @test */
     public function non_owner_cannot_update_single_grader_permissions()
     {
-        $this->actingAs($this->user_2)->patchJson("/api/grader-permissions/{$this->assignment->id}/{$this->grader_user->id}/1")
+        $this->actingAs($this->user_2)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user->id}/1")
             ->assertJson(['message' => 'You are not allowed to give this grader access to this assignment.']);
     }
 
     /** @test */
     public function must_be_grader_in_course_to_update_single_grader_permissions()
     {
-        $this->actingAs($this->user)->patchJson("/api/grader-permissions/{$this->assignment->id}/{$this->grader_user_2->id}/1")
+        $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user_2->id}/1")
             ->assertJson(['message' => 'You are not allowed to give this grader access to this assignment.']);
     }
 
     /** @test */
     public function owner_can_update_single_grader_permissions()
     {
-        $this->actingAs($this->user)->patchJson("/api/grader-permissions/{$this->assignment->id}/{$this->grader_user->id}/1")
-            ->assertJson(['type' => 'info']);
+        $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/{$this->grader_user->id}/1")
+            ->assertJson(['type' => 'success']);
     }
 
     /** @test */
     public function owner_can_update_assignment_level_grader_permissions()
     {
-        $this->actingAs($this->user)->patchJson("/api/grader-permissions/assignment/{$this->assignment->id}/1")
+        $this->actingAs($this->user)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/1")
             ->assertJson(['type' => 'success']);
 
         $this->assertEquals($this->assignment->graders[0]->id, $this->grader_user->id);
 
     }
 
-    /** @test */
-    public function owner_can_update_course_level_grader_permissions()
-    {
-        $this->actingAs($this->user)->patchJson("/api/grader-permissions/course/{$this->course->id}/1")
-            ->assertJson(['type' => 'success']);
 
-        $this->assertEquals($this->assignment->graders[0]->id, $this->grader_user->id);
-
-    }
 
     /** @test */
-    public function nonowner_cannot_update_assignment_level_grader_permissions()
+    public function nonowner_cannot_update_assignment_level_grader_access()
     {
 
-        $this->actingAs($this->user_2)->patchJson("/api/grader-permissions/assignment/{$this->assignment->id}/1")
+        $this->actingAs($this->user_2)->patchJson("/api/assignment-grader-access/{$this->assignment->id}/1")
             ->assertJson(['message' => 'You are not allowed to give graders access to this assignment.']);
 
 
@@ -102,25 +93,17 @@ class GraderPermissionsTest extends TestCase
     public function non_owner_cannot_get_grader_permissions()
     {
 
-        $this->actingAs($this->user_2)->getJson("/api/grader-permissions/{$this->course->id}")
-            ->assertJson(['message' => 'You are not allowed to get the grader permissions for this course.']);
+        $this->actingAs($this->user_2)->getJson("/api/assignment-grader-access/{$this->assignment->id}")
+            ->assertJson(['message' => 'You are not allowed to view the grader access for this assignment.']);
 
     }
 
     /** @test */
     public function owner_can_get_grader_permissions()
     {
-        $this->assignment->graders()->attach($this->grader_user);
 
-        $this->actingAs($this->user)->getJson("/api/grader-permissions/{$this->course->id}")
+        $this->actingAs($this->user)->getJson("/api/assignment-grader-access/{$this->assignment->id}")
             ->assertJson(['type' => 'success']);
-    }
-
-    /** @test */
-    public function non_owner_cannot_update_course_level_grader_permissions()
-    {
-        $this->actingAs($this->user_2)->patchJson("/api/grader-permissions/course/{$this->course->id}/1")
-            ->assertJson(['message' => 'You are not allowed to grant access to all assignments for all graders for this course.']);
     }
 
 

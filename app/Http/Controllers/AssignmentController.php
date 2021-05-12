@@ -377,10 +377,6 @@ class AssignmentController extends Controller
                 $assignment->saveAssignmentTimingAndGroup($new_assignment);
             }
 
-            foreach ($new_assignment->course->graders() as $grader) {
-                $assignment->graders()->syncWithoutDetaching($grader);
-            }
-
             DB::commit();
             $response['message'] = "<strong>$new_assignment->name</strong> is using the same template as <strong>$assignment->name</strong>. Don't forget to add questions and update the assignment's dates.";
             $response['type'] = 'success';
@@ -685,9 +681,6 @@ class AssignmentController extends Controller
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
 
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-            foreach ($course->graders() as $grader) {
-                $assignment->graders()->attach($grader);
-            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been created.";
@@ -1020,8 +1013,29 @@ class AssignmentController extends Controller
         $response['type'] = 'error';
         try {
             $assignment = Assignment::find($assignment->id);
-            $sections = (Auth::user()->role === 2) ? $assignment->course->sections : $assignment->course->graderSections();
-            $questions = $assignment->questions;
+            $sections = [];
+            switch (Auth::user()->role) {
+
+                case(2):
+                    $sections = $assignment->course->sections;
+                    break;
+                case(4):
+                    $sections = $assignment->course->graderSections();
+                    $access_level_override = $assignment->graders()
+                        ->where('assignment_grader_access.user_id', Auth::user()->id)
+                        ->first();
+                    if ($access_level_override) {
+                        $access_level = $access_level_override->pivot->access_level;
+                        if ($access_level === 0){
+                            $sections = [];
+                        }
+                        if ($access_level === 1){
+                            $sections = $assignment->course->sections;
+                        }
+                    }
+                    break;
+            }
+
 
             $response['sections'] = [];
             $response['questions'] = [];
@@ -1321,7 +1335,7 @@ class AssignmentController extends Controller
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('assignment_grader')->where('assignment_id', $assignment->id)->delete();
+            $assignment->graders()->detach();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 
             $course = $assignment->course;

@@ -42,13 +42,13 @@ class Assignment extends Model
 
     public function assignToTimingByUser($key = '')
     {
-       /** $assign_to_timing = $this->assignToUsers
-            ->where('user_id', auth()->user()->id)
-            ->first();
-**/
+        /** $assign_to_timing = $this->assignToUsers
+         * ->where('user_id', auth()->user()->id)
+         * ->first();
+         **/
         $assign_to_timing = DB::table('assignments')
             ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
-            ->join('assign_to_users', 'assign_to_timings.id','=','assign_to_users.assign_to_timing_id')
+            ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
             ->where('assignment_id', $this->id)
             ->where('user_id', auth()->user()->id)
             ->first();
@@ -62,6 +62,25 @@ class Assignment extends Model
         return $key ? $assign_to_timing[$key] : $assign_to_timing;
 
     }
+
+    public function gradersAccess()
+    {
+        $graders = $this->course->graderInfo();
+
+        $assignment_grader_accesses = DB::table('assignment_grader_access')
+            ->join('users', 'assignment_grader_access.user_id', '=', 'users.id')
+            ->where('assignment_id', $this->id)
+            ->get();
+        $assignment_grader_access_by_id = [];
+        foreach ($assignment_grader_accesses as $assignment_grader_access) {
+            $assignment_grader_access_by_id[$assignment_grader_access->user_id] = $assignment_grader_access->access_level;
+        }
+        foreach ($graders as $key => $grader) {
+            $graders[$key]['access_level'] = $assignment_grader_access_by_id[$grader['user_id']] ?? -1;
+        }
+        return $graders;
+    }
+
 
     public function assignToUsers()
     {
@@ -101,7 +120,7 @@ class Assignment extends Model
 
             $course_assignments = $course->assignments;
             if (Auth::user()->role === 4) {
-                $course_assignment_permissions = $course->courseAssignmentPermissionsByGrader(Auth::user()->id);
+                $accessible_assignment_ids = $course->accessbileAssignmentsByGrader(Auth::user()->id);
             }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
@@ -112,8 +131,8 @@ class Assignment extends Model
                     continue;
                 }
 
-                if (Auth::user()->role === 4 && !in_array($assignment->id, $course_assignment_permissions)) {
-                     continue;
+                if (Auth::user()->role === 4 && !$accessible_assignment_ids[$assignment->id]) {
+                    continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
@@ -380,7 +399,9 @@ class Assignment extends Model
 
     public function graders()
     {
-        return $this->belongsToMany('App\User', 'assignment_grader')->withTimestamps();
+        return $this->belongsToMany('App\User', 'assignment_grader_access')
+            ->withPivot('access_level')
+            ->withTimestamps();
 
     }
 

@@ -150,8 +150,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
-    Route::put('/scores/{assignment}/upload-override-scores','ScoreController@uploadOverrideScores');
-    Route::patch('/scores/{assignment}/override-scores','ScoreController@overrideScores');
+    Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
+    Route::patch('/scores/{assignment}/override-scores', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
     Route::get('/scores/assignment-user/{assignment}/{user}', 'ScoreController@getScoreByAssignmentAndStudent');
@@ -239,11 +239,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/submission-audios/error', 'SubmissionAudioController@logError');
 
 
-    Route::get('/grader-permissions/{course}', 'GraderPermissionController@index');
-    Route::patch('/grader-permissions/course/{course}/{type}', 'GraderPermissionController@courseAccess');
-    Route::patch('/grader-permissions/assignment/{assignment}/{type}', 'GraderPermissionController@assignmentAccess');
-    Route::patch('/grader-permissions/{assignment}/{user}/{hasAccess}', 'GraderPermissionController@update');
-
+    Route::get('/assignment-grader-access/{assignment}', 'AssignmentGraderAccessController@index');
+    Route::patch('assignment-grader-access/{assignment}/{grader}/{access_level}', 'AssignmentGraderAccessController@updateGrader');
+    Route::patch('assignment-grader-access/{assignment}/{access_level}', 'AssignmentGraderAccessController@updateAllGraders');
 
 
     Route::get('/enrollments', 'EnrollmentController@index');
@@ -261,7 +259,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/canned-responses', 'CannedResponseController@index');
     Route::post('/canned-responses', 'CannedResponseController@store');
     Route::delete('/canned-responses/{cannedResponse}', 'CannedResponseController@destroy');
-
 
 
     Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');

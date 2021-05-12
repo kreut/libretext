@@ -4,7 +4,7 @@ namespace App;
 
 use Illuminate\Database\Eloquent\Model;
 
-class GraderPermission extends Model
+class AssignmentGraderAccess extends Model
 {
     //
 }

@@ -22,15 +22,24 @@ class SubmissionFilePolicy
 
         switch ($user->role) {
             case(2):
-                $has_access =  $is_student_in_course  && $assignment->course->user_id === $user->id;
+                $has_access = $is_student_in_course && $assignment->course->user_id === $user->id;
                 break;
             case(3):
-                $has_access =  $user->id === $studentUser->id;
+                $has_access = $user->id === $studentUser->id;
                 break;
             case(4):
                 $section_id = $assignment->course->enrollments->where('user_id', $studentUser->id)->pluck('section_id')->first();
                 $grader_sections = $grader->where('user_id', $user->id)->select('section_id')->get();
-                $has_access =  $is_student_in_course  && $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray());
+
+                $override_access = false;
+                $access_level_override = $assignment->graders()
+                    ->where('assignment_grader_access.user_id', $user->id)
+                    ->first();
+                if ($access_level_override) {
+                    $override_access = $access_level_override->pivot->access_level;
+                }
+
+                $has_access = $is_student_in_course && ($override_access || $grader_sections->isNotEmpty() && in_array($section_id, $grader_sections->pluck('section_id')->toArray()));
                 break;
             default:
                 $has_access = false;
@@ -82,9 +91,18 @@ class SubmissionFilePolicy
                 $has_access = (int)$assignment->course->user_id === $user->id;
                 break;
             case(4):
-                $has_access = $sectionId ? Section::find($sectionId)->isGrader()
-                    : $assignment->course->isGrader();
-                break;
+                if ($sectionId) {
+                    $override_access = false;
+                    $access_level_override = $assignment->graders()
+                        ->where('assignment_grader_access.user_id', $user->id)
+                        ->first();
+                    if ($access_level_override) {
+                        $override_access = $access_level_override->pivot->access_level;
+                    }
+                    $has_access = Section::find($sectionId)->isGrader() || $override_access;
+                } else {
+                    $has_access = $assignment->course->isGrader();
+                }
         }
 
         if (!$has_access) {

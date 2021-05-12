@@ -56,6 +56,7 @@ let general_paths  = [
       { path: 'questions', name: 'instructors.assignments.questions', component: page('instructors/assignment_information/questions.vue') },
       { path: 'auto-graded-submissions', name: 'instructors.assignments.auto_graded_submissions', component: page('instructors/assignment_information/auto_graded_submissions.vue') },
       { path: 'summary', name: 'instructors.assignments.summary', component: page('instructors/assignment_information/summary.vue') },
+      { path: 'grader-access', name: 'instructors.assignments.grader_access', component: page('instructors/assignment_information/grader_access.vue') },
       { path: 'statistics', name: 'instructors.assignments.statistics', component: page('instructors/assignment_information/statistics.vue') },
       { path: 'gradebook', name: 'instructors.assignments.gradebook', component: page('instructors/assignment_information/gradebook.vue') },
 
@@ -69,7 +70,6 @@ let general_paths  = [
       { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
       { path: 'assignment-group-weights', name: 'course_properties.assignment_group_weights', component: page('instructors/course_properties/assignment_group_weights.vue') },
       { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') },
-      { path: 'grader-permissions', name: 'course_properties.grader_permissions', component: page('instructors/course_properties/grader_permissions.vue') },
       { path: 'students', name: 'course_properties.students', component: page('instructors/course_properties/students.vue') }
     ] },
   { path: '*', component: page('errors/404.vue') }

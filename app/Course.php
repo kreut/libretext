@@ -147,12 +147,15 @@ class Course extends Model
         return $this->hasOne('App\FinalGrade');
     }
 
-    public function graderSections()
+    public function graderSections($user = null)
     {
-        return DB::table('graders')->join('sections', 'graders.section_id', '=', 'sections.id')
+        $user = ($user === null) ? Auth::user() : $user;
+        return DB::table('graders')
+            ->join('sections', 'graders.section_id', '=', 'sections.id')
             ->where('sections.course_id', $this->id)
-            ->where('graders.user_id', Auth::user()->id)
+            ->where('graders.user_id', $user->id)
             ->select('sections.*')
+            ->orderBy('sections.name')
             ->get();
 
 
@@ -162,19 +165,27 @@ class Course extends Model
      * @param int $user_id
      * @return array
      */
-    public function courseAssignmentPermissionsByGrader(int $user_id)
+    public function accessbileAssignmentsByGrader(int $user_id)
     {
 
-        $assignment_permissions = DB::table('assignment_grader')
+
+        $cannot_access_assignments  = DB::table('assignment_grader_access')
             ->whereIn('assignment_id', $this->assignments->pluck('id')->toArray())
             ->where('user_id', $user_id)
+            ->where('access_level',0)
             ->select('assignment_id')
             ->get();
-        $assignment_ids = [];
-        foreach ($assignment_permissions as $assignment_permission) {
-            $assignment_ids[] = $assignment_permission->assignment_id;
+        $cannot_access_assignment_ids = [];
+        foreach ($cannot_access_assignments as $cannot_access_assignment){
+            $cannot_access_assignment_ids[] = $cannot_access_assignment->assignment_id;
         }
-        return $assignment_ids;
+        $accessible_assignment_ids = [];
+
+        foreach ($this->assignments as $assignment){
+
+            $accessible_assignment_ids[$assignment->id] = !in_array($assignment->id,  $cannot_access_assignment_ids);
+        }
+        return  $accessible_assignment_ids;
 
     }
 
@@ -290,45 +301,5 @@ class Course extends Model
         return $assigned_assignments_by_id;
     }
 
-    public function graderPermissions()
-    {
-        $graders = $this->graderInfo();
-        $graders_by_id = [];
-        foreach ($graders as $grader) {
-            $grader_info = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
-            if (!in_array($grader_info, $graders_by_id)) {
-                $graders_by_id[] = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
-            }
-        }
-        $assignments = $this->assignments;
-        $assignment_ids = $this->assignments->pluck('id')->toArray();
-        $permitted_graders = DB::table('assignment_grader')
-            ->whereIn('assignment_id', $assignment_ids)
-            ->get();
-        $permitted_graders_by_assignment = [];
-        foreach ($permitted_graders as $permitted_grader) {
-            if (!isset($permitted_graders_by_assignment[$permitted_grader->assignment_id])) {
-                $permitted_graders_by_assignment[$permitted_grader->assignment_id] = [];
-            }
-            $permitted_graders_by_assignment[$permitted_grader->assignment_id][] = $permitted_grader->user_id;
-        }
-
-        $grader_permissions_by_assignment = [];
-        foreach ($assignments as $assignment) {
-            if (!isset($grader_permissions_by_assignment[$assignment->id])) {
-                $grader_permissions_by_assignment[$assignment->id] = [
-                    'assignment_name' => $assignment->name,
-                    'assignment_id' => $assignment->id
-                ];
-            }
-            foreach ($graders as $grader) {
-                $grader = ['user_id' => $grader['user_id'], 'name' => $grader['name']];
-                $grader['has_access'] = isset($permitted_graders_by_assignment[$assignment->id]) && in_array($grader['user_id'], $permitted_graders_by_assignment[$assignment->id]);
-                $grader_permissions_by_assignment[$assignment->id]['grader_permissions'][] = $grader;
-
-            }
-        }
-        return $grader_permissions_by_assignment;
-    }
 
 }

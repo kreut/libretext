@@ -57,11 +57,6 @@ export default {
         },
         {
           icon: '',
-          name: 'Grader Permissions',
-          route: 'course_properties.grader_permissions'
-        },
-        {
-          icon: '',
           name: 'Students',
           route: 'course_properties.students'
         },

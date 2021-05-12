@@ -74,6 +74,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Grader Access',
+          route: 'instructors.assignments.grader_access'
+        },
+        {
+          icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
         },
