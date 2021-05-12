@@ -42,9 +42,17 @@ class Assignment extends Model
 
     public function assignToTimingByUser($key = '')
     {
-        $assign_to_timing = $this->assignToUsers
+       /** $assign_to_timing = $this->assignToUsers
             ->where('user_id', auth()->user()->id)
             ->first();
+**/
+        $assign_to_timing = DB::table('assignments')
+            ->join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
+            ->join('assign_to_users', 'assign_to_timings.id','=','assign_to_users.assign_to_timing_id')
+            ->where('assignment_id', $this->id)
+            ->where('user_id', auth()->user()->id)
+            ->first();
+
         if (!$assign_to_timing) {
             return false;
         }
