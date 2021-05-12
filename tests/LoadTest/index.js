@@ -11,7 +11,19 @@ const { JSDOM } = jsdom
 //   'https://adapt.kdev.libretexts.org/assignments/392/questions/view', //View assessments:
 //   'https://adapt.kdev.libretexts.org/assignments/392/questions/view/98770', //Page with files from Query:
 //   'https://adapt.kdev.libretexts.org/assignments/392/questions/view/98760'] //Webwork question:
-const targetPages = ['https://adapt.kdev.libretexts.org/api/assignments/392/questions/view']
+
+// const targetPages = [
+//   'https://adapt.kdev.libretexts.org/api/assignments/392/questions/view',
+  // 'https://adapt.kdev.libretexts.org/api/assignments/392/view-questions-info',
+  // 'https://adapt.kdev.libretexts.org/api/scores/45/get-course-scores-by-user',
+  // 'https://adapt.kdev.libretexts.org/api/scores/summary/392/98760'
+// ]
+const targetPages = [
+  // 'https://adapt.kdev.libretexts.org/api/assignments/392/questions/view',
+  // 'https://adapt.kdev.libretexts.org/api/assignments/392/view-questions-info',
+  'https://adapt.kdev.libretexts.org/api/assignments/543/questions/view',
+  'https://adapt.kdev.libretexts.org/api/assignments/543/view-questions-info',
+]
 const DRIVER = 'requests'
 // const DRIVER = 'JSD'
 // const DRIVER = "pup"
@@ -19,7 +31,7 @@ const DRIVER = 'requests'
 main().then()
 
 async function main () {
-  let total = Math.max(0, 100)
+  let total = Math.max(0, 1000)
   let concurrency
   console.log(DRIVER)
   
@@ -28,7 +40,7 @@ async function main () {
     switch (DRIVER) {
       case 'requests':
         concurrency = Math.min(total, 100)
-        await requests(page, total, concurrency)
+        await fetchAPI(page, total, concurrency)
         break
       case 'JSD':
         concurrency = Math.min(total, 100)
@@ -41,11 +53,13 @@ async function main () {
       default:
         throw Error(`Invalid Drive ${DRIVER}`)
     }
+    await sleep(10000)
   }
 }
 
-async function requests (targetPage, total, concurrency) {
+async function fetchAPI (targetPage, total, concurrency) {
   console.time('requests')
+  let completed = 0
   await async.timesLimit(total, concurrency, async (i) => {
     let response = await fetch(targetPage, {
       headers: { cookie: `token=${secrets.kdev}` }
@@ -106,4 +120,8 @@ async function pup (targetPage, total, concurrency) {
     }
   })
   console.timeEnd('Puppeteer')
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
 }
