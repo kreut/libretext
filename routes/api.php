@@ -275,7 +275,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/canned-responses', 'CannedResponseController@store');
     Route::delete('/canned-responses/{cannedResponse}', 'CannedResponseController@destroy');
 
-
+    Route::get('/submission-files/ungraded-submissions/{course}', 'SubmissionFileController@getUngradedSubmissions');
     Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{question}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
@@ -308,6 +308,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/graders/{user}', 'GraderController@update');
     Route::delete('/graders/{course}/{user}', 'GraderController@removeGraderFromCourse');
 
+    Route::patch('/head-graders/{course}/{user}', 'HeadGraderController@update');
+    Route::delete('/head-graders/{course}', 'HeadGraderController@destroy');
+
+
+    Route::get('/grader-notifications/{course}', 'GraderNotificationController@index');
+    Route::patch('/grader-notifications/{course}', 'GraderNotificationController@update');
 
 });
 

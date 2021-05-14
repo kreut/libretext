@@ -74,6 +74,12 @@ class SubmissionFilePolicy
 
     }
 
+    public function getUngradedSubmissions(User $user, SubmissionFile $submissionFile, Course $course){
+        return ((int)$course->user_id === $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the ungraded submissions for this course.');
+
+    }
     public function createTemporaryUrl(User $user, SubmissionFile $submissionFile, Course $course)
     {
 

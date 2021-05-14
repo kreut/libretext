@@ -42,6 +42,20 @@ class Kernel extends ConsoleKernel
             $schedule->command('dataShop:toS3')->twiceDaily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
+            /* grader notifications */
+            $schedule->command('notify:gradersForDueAssignments')->hourly()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
+
+           $schedule->command('notify:gradersForLateSubmissions')->Daily()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
+            $schedule->command('notify:gradersReminders')
+                ->emailOutputOnFailure('kreut@hotmail.com');
+            /* end grader notifications */
+
+
+
         }
 
         if (env('APP_ENV') === 'staging') {

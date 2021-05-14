@@ -2,9 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
 use App\Cutup;
 use App\Enrollment;
 use App\Grader;
+use App\GraderNotification;
 use App\Http\Requests\StoreTextFeedback;
 use App\Http\Requests\UpdateSubmisionFilePage;
 use App\LtiLaunch;
@@ -57,6 +59,60 @@ class SubmissionFileController extends Controller
     {
         $this->max_number_of_uploads_allowed = 15;
         $this->max_file_size = 24000000;///really just 20MB but extra wiggle room
+    }
+
+    /**
+     * @param Course $course
+     * @param GraderNotification $graderNotification
+     * @param Assignment $assignment
+     * @param SubmissionFile $submissionFile
+     * @return array
+     * @throws Exception
+     */
+    public function getUngradedSubmissions(Course $course,
+                                           GraderNotification $graderNotification,
+                                           Assignment $assignment,
+                                           SubmissionFile $submissionFile): array
+    {
+        $authorized = Gate::inspect('getUngradedSubmissions', [$submissionFile, $course]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+
+            $now = Carbon::now()->subDay()->format('Y-m-d H:i:s');
+            $where = "date_graded IS NULL
+                      AND due < '$now'
+                      AND TYPE != 'a'
+                      AND courses.id = '$course->id'";
+
+
+            $sql = $graderNotification->submissionSQL($where);
+
+            $ungraded_submissions = DB::select(DB::raw($sql));
+            $process_ungraded_submissions = $graderNotification->processUngradedSubmissions($ungraded_submissions, $assignment);
+            $formatted_ungraded_submissions_by_grader = $process_ungraded_submissions['formatted_ungraded_submissions_by_grader'];
+            $graders_by_id = $process_ungraded_submissions['graders_by_id'];
+
+            $formatted_ungraded_submissions_by_course = '';
+            foreach ($formatted_ungraded_submissions_by_grader as $grader_id => $formatted_ungraded_submission) {
+                $formatted_ungraded_submissions_by_course .= "<p><strong>{$graders_by_id[$grader_id]['first_name']} {$graders_by_id[$grader_id]['last_name']}</strong></p>";
+                $formatted_ungraded_submissions_by_course .= $formatted_ungraded_submission . '<br><hr>';
+
+            }
+
+            $response['ungraded_submissions'] = $formatted_ungraded_submissions_by_course;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the ungraded submissions.  Please try again by refreshing the page or contact us for assistance.";
+        }
+        return $response;
     }
 
     public function updatePage(UpdateSubmisionFilePage $request,

@@ -32,11 +32,18 @@ class Course extends Model
         return $this->hasMany('App\ExtraCredit');
     }
 
+    public function headGrader()
+    {
+        return $this->hasOne('App\HeadGrader');
+}
     public function sections()
     {
         return $this->hasMany('App\Section');
     }
 
+    public function graderNotifications() {
+        return $this->hasOne('App\GraderNotification');
+    }
     public function assignmentGroups()
     {
 

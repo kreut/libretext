@@ -41,7 +41,7 @@
           name="sections"
           @keydown="sectionsForm.errors.clear('selected_sections')"
         />
-        <has-error :form="sectionsForm" field="selected_sections"/>
+        <has-error :form="sectionsForm" field="selected_sections" />
       </b-form>
       <template #modal-footer>
         <b-button
@@ -75,7 +75,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('email') }"
             @keydown="graderForm.errors.clear('email')"
           />
-          <has-error :form="graderForm" field="email"/>
+          <has-error :form="graderForm" field="email" />
         </b-form-group>
         Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
         <b-form-checkbox-group
@@ -85,11 +85,11 @@
           name="sections"
           @keydown="graderForm.errors.clear('selected_sections')"
         />
-        <has-error :form="graderForm" field="selected_sections"/>
+        <has-error :form="graderForm" field="selected_sections" />
       </b-form>
       <template #modal-footer>
         <span v-if="sendingEmail">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Sending Email..
         </span>
         <b-button
@@ -116,12 +116,39 @@
           <b-card-text>
             <b-container>
               <b-row align-h="end">
-              <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
-                Invite Grader
-              </b-button>
+                <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
+                  Invite Grader
+                </b-button>
               </b-row>
             </b-container>
             <div v-show="course.graders.length">
+              <b-form-group
+                id="head_grader"
+                label-cols-sm="3"
+                label-cols-lg="2"
+                label-for="Head Grader"
+              >
+                <template slot="label">
+                  Head Grader
+                  <b-icon id="head-grader-tooltip"
+                          v-b-tooltip.hover
+                          class="text-muted"
+                          icon="question-circle"
+                  />
+                  <b-tooltip target="head-grader-tooltip" triggers="hover">
+                    Optionally choose a head grader.  Head graders can be sent a summary of ungraded assignments by
+                    visiting the Grading Notifications page.
+                  </b-tooltip>
+                </template>
+                <b-form-row>
+                  <b-col lg="6">
+                    <b-form-select v-model="headGrader"
+                                   :options="graderOptions"
+                                   @change="submitHeadGrader()"
+                    />
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
               <b-table striped hover
                        :fields="fields"
                        :items="graders"
@@ -130,8 +157,8 @@
                   {{ formatSections(data.item.sections) }}
                 </template>
                 <template v-slot:cell(actions)="data">
-                  <b-icon icon="pencil" @click="initEditSections(data.item)"/>
-                  <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)"/>
+                  <b-icon icon="pencil" @click="initEditSections(data.item)" />
+                  <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)" />
                 </template>
               </b-table>
             </div>
@@ -160,6 +187,8 @@ export default {
     Loading
   },
   data: () => ({
+    headGrader: null,
+    graderOptions: [],
     graderToRemoveId: 0,
     sectionOptions: [],
     graderFormType: 'addGrader',
@@ -196,6 +225,17 @@ export default {
     this.getCourse(this.courseId)
   },
   methods: {
+    async submitHeadGrader () {
+      try {
+        const { data } = this.headGrader !== null
+          ? await axios.patch(`/api/head-graders/${this.courseId}/${this.headGrader}`)
+          : await axios.delete(`/api/head-graders/${this.courseId}`)
+
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     cancelRemoveGrader () {
       this.$bvModal.hide('modal-confirm-remove')
     },
@@ -249,6 +289,11 @@ export default {
           }
         }
         this.graders = this.course.graders
+        this.graderOptions = [{ text: 'Please choose a head grader', value: null }]
+        for (let i = 0; i < this.graders.length; i++) {
+          let grader = this.graders[i]
+          this.graderOptions.push({ text: grader.name, value: grader.user_id })
+        }
         this.isLoading = false
       } catch (error) {
         this.$noty.error(error.message)

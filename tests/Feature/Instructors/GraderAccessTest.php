@@ -20,7 +20,6 @@ class GraderAccessTest extends TestCase
 {
     use Test;
 
-    private $course;
     private $user_2;
     private $assignment;
     private $grader_user;
@@ -34,9 +33,9 @@ class GraderAccessTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
 
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-        $section = factory(Section::class)->create(['course_id' => $this->course->id]);
+        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
+        $section = factory(Section::class)->create(['course_id' => $course->id]);
 
         $this->grader_user = factory(User::class)->create();
         $this->grader_user->role = 4;
