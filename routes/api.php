@@ -293,6 +293,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/graders/{user}', 'GraderController@update');
     Route::delete('/graders/{course}/{user}', 'GraderController@removeGraderFromCourse');
 
+    Route::patch('/head-graders/{course}/{user}', 'HeadGraderController@update');
+    Route::delete('/head-graders/{course}', 'HeadGraderController@destroy');
 
 });
 

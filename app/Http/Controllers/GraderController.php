@@ -18,6 +18,7 @@ use Illuminate\Support\Facades\Gate;
 class GraderController extends Controller
 {
 
+
     public function update(UpdateGrader $request, Course $course, User $user, Grader $grader)
     {
 
@@ -154,7 +155,7 @@ class GraderController extends Controller
                 ->delete();
 
             foreach ($course->assignments as $assignment) {
-                $assignment->graders()->detach( $student_user);
+                $assignment->graders()->detach($student_user);
             }
             DB::commit();
             $response['type'] = 'success';

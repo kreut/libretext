@@ -116,12 +116,28 @@
           <b-card-text>
             <b-container>
               <b-row align-h="end">
-              <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
-                Invite Grader
-              </b-button>
+                <b-button class="mb-2" variant="primary" size="sm" @click="initInviteGrader()">
+                  Invite Grader
+                </b-button>
               </b-row>
             </b-container>
             <div v-show="course.graders.length">
+              <b-form-group
+                id="head_grader"
+                label-cols-sm="4"
+                label-cols-lg="3"
+                label="(Optional) Head Grader"
+                label-for="(Optional) Head Grader"
+              >
+                <b-form-row>
+                  <b-col lg="6">
+                    <b-form-select v-model="headGrader"
+                                   :options="graderOptions"
+                                   @change="submitHeadGrader()"
+                    />
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
               <b-table striped hover
                        :fields="fields"
                        :items="graders"
@@ -160,6 +176,8 @@ export default {
     Loading
   },
   data: () => ({
+    headGrader: null,
+    graderOptions: [],
     graderToRemoveId: 0,
     sectionOptions: [],
     graderFormType: 'addGrader',
@@ -196,6 +214,17 @@ export default {
     this.getCourse(this.courseId)
   },
   methods: {
+    async submitHeadGrader () {
+      try {
+        const { data } = this.headGrader !== null
+          ? await axios.patch(`/api/head-graders/${this.courseId}/${this.headGrader}`)
+          : await axios.delete(`/api/head-graders/${this.courseId}`)
+
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     cancelRemoveGrader () {
       this.$bvModal.hide('modal-confirm-remove')
     },
@@ -249,6 +278,11 @@ export default {
           }
         }
         this.graders = this.course.graders
+        this.graderOptions = [{ text: 'Please choose a head grader', value: null }]
+        for (let i = 0; i < this.graders.length; i++) {
+          let grader = this.graders[i]
+          this.graderOptions.push({ text: grader.name, value: grader.user_id })
+        }
         this.isLoading = false
       } catch (error) {
         this.$noty.error(error.message)
