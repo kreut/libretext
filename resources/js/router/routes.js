@@ -70,6 +70,7 @@ let general_paths  = [
       { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
       { path: 'assignment-group-weights', name: 'course_properties.assignment_group_weights', component: page('instructors/course_properties/assignment_group_weights.vue') },
       { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') },
+      { path: 'grader-notifications', name: 'course_properties.grader_notifications', component: page('instructors/course_properties/grader_notifications.vue') },
       { path: 'students', name: 'course_properties.students', component: page('instructors/course_properties/students.vue') }
     ] },
   { path: '*', component: page('errors/404.vue') }

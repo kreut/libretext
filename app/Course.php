@@ -37,6 +37,9 @@ class Course extends Model
         return $this->hasMany('App\Section');
     }
 
+    public function graderNotifications() {
+        return $this->hasOne('App\GraderNotification');
+    }
     public function assignmentGroups()
     {
 

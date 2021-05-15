@@ -57,6 +57,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Grader Notifications',
+          route: 'course_properties.grader_notifications'
+        },
+        {
+          icon: '',
           name: 'Students',
           route: 'course_properties.students'
         },

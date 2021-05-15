@@ -296,6 +296,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/head-graders/{course}/{user}', 'HeadGraderController@update');
     Route::delete('/head-graders/{course}', 'HeadGraderController@destroy');
 
+    Route::get('/grader-notifications/{course}', 'GraderNotificationController@index');
+    Route::patch('/grader-notifications/{course}', 'GraderNotificationController@update');
+
 });
 
 Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
