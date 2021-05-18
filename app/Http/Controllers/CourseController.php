@@ -31,6 +31,22 @@ class CourseController extends Controller
     use DateFormatter;
 
 
+    public function getPublicCourses(Course $course)
+    {
+        $response['type'] = 'error';
+        try {
+            $response['public_courses'] = $course->where('public', 1)->select('id', 'name')->get();
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get the public courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public function getCoursesAndAssignments(Request $request)
     {
 
@@ -85,14 +101,15 @@ class CourseController extends Controller
      * @return array
      * @throws Exception '
      */
-    public function import(Request $request,
-                           Course $course,
-                           AssignmentGroup $assignmentGroup,
-                           AssignmentGroupWeight $assignmentGroupWeight,
-                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                           Enrollment $enrollment,
-                           FinalGrade $finalGrade,
-                           Section $section)
+    public
+    function import(Request $request,
+                    Course $course,
+                    AssignmentGroup $assignmentGroup,
+                    AssignmentGroupWeight $assignmentGroupWeight,
+                    AssignmentSyncQuestion $assignmentSyncQuestion,
+                    Enrollment $enrollment,
+                    FinalGrade $finalGrade,
+                    Section $section)
     {
         $response['type'] = 'error';
 
@@ -157,7 +174,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getImportable(Request $request, Course $course)
+    public
+    function getImportable(Request $request, Course $course)
     {
         $response['type'] = 'error';
 
@@ -200,7 +218,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function index(Request $request, Course $course)
+    public
+    function index(Request $request, Course $course)
     {
 
         $response['type'] = 'error';
@@ -227,7 +246,8 @@ class CourseController extends Controller
 
     }
 
-    public function updateShowZScores(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
+    public
+    function updateShowZScores(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateShowZScores', $course);
@@ -257,7 +277,8 @@ class CourseController extends Controller
 
     }
 
-    public function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
+    public
+    function updateStudentsCanViewWeightedAverage(Request $request, Course $course, AssignmentGroupWeight $assignmentGroupWeight)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateStudentsCanViewWeightedAverage', $course);
@@ -286,7 +307,8 @@ class CourseController extends Controller
 
     }
 
-    public function show(Course $course)
+    public
+    function show(Course $course)
     {
 
         $response['type'] = 'error';
@@ -326,7 +348,8 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function showCourse(Request $request, Course $course, int $shown)
+    public
+    function showCourse(Request $request, Course $course, int $shown)
     {
 
         $response['type'] = 'error';
@@ -362,7 +385,8 @@ class CourseController extends Controller
      * @param $user
      * @return array|\Illuminate\Support\Collection
      */
-    public function getCourses($user)
+    public
+    function getCourses($user)
     {
 
         switch ($user->role) {
@@ -421,11 +445,12 @@ class CourseController extends Controller
      * @throws Exception
      */
 
-    public function store(StoreCourse $request,
-                          Course $course,
-                          Enrollment $enrollment,
-                          FinalGrade $finalGrade,
-                          Section $section)
+    public
+    function store(StoreCourse $request,
+                   Course $course,
+                   Enrollment $enrollment,
+                   FinalGrade $finalGrade,
+                   Section $section)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -477,7 +502,8 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function update(UpdateCourse $request, Course $course)
+    public
+    function update(UpdateCourse $request, Course $course)
     {
         $response['type'] = 'error';
 
@@ -512,7 +538,8 @@ class CourseController extends Controller
      * @return mixed
      * @throws Exception
      */
-    public function destroy(Course $course, AssignToTiming $assignToTiming)
+    public
+    function destroy(Course $course, AssignToTiming $assignToTiming)
     {
 
         $response['type'] = 'error';

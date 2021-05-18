@@ -13,6 +13,15 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
+    public function getAssignmentNamesForPublicCourse(User $user, Course $course){
+
+        return $user->role === 2 && $course->public
+            ? Response::allow()
+            : Response::deny('You are not allowed to access the assignments in that course.');
+
+
+    }
+
     public function courseAccessForGraders(User $user, Course $course){
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()

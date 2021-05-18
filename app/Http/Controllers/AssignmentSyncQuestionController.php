@@ -57,8 +57,92 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function remixAssignmentWithChosenQuestions(Request $request,
+                                                       Assignment $assignment,
+                                                       AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
 
-    public function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+        $response['type'] = 'error';
+         $authorized = Gate::inspect('remixAssignmentWithChosenQuestions', [$assignmentSyncQuestion, $assignment]);
+          if (!$authorized->allowed()) {
+          $response['message'] = $authorized->message();
+          return $response;
+          }
+
+
+        try {
+
+
+            $chosen_questions = $request->chosen_questions;
+            $assignment_questions = $assignment->questions->pluck('question_id')->toArray();
+            //dd($chosen_questions);
+
+            foreach ($chosen_questions as $key => $question) {
+                if (!in_array($question['question_id'], $assignment_questions)) {
+                    $assignment_question = DB::table('assignment_question')
+                        ->where('assignment_id', $question['assignment_id'])
+                        ->where('question_id', $question['question_id'])
+                        ->first();
+                    if (!$assignment_question){
+                        $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
+                        return $response;
+                    }
+                    unset($assignment_question->id);
+                    $assignment_question->assignment_id = $assignment->id;
+                    $assignment_question->order = $key + 1;
+                    $assignment_question->points = $assignment->default_points_per_question;
+                    $assignment_question->created_at = Carbon::now();
+                    $assignment_question->updated_at = Carbon::now();
+
+                    $assignment_question_exists = DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question['question_id'])->first();
+                    $assignment_question_arr = (array)$assignment_question;
+
+                    $assignment_question_exists
+                        ? DB::table('assignment_question')
+                        ->where('assignment_id', $assignment->id)
+                        ->where('question_id', $question['question_id'])
+                        ->update($assignment_question_arr)
+                        : DB::table('assignment_question')->insert($assignment_question_arr);
+                }
+            }
+            DB::beginTransaction();
+            //clean up the order, just in case
+            $assignment_questions = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
+                ->select('id')
+                ->get();
+
+            foreach ($assignment_questions as $key => $assignment_question) {
+                DB::table('assignment_question')->where('id', $assignment_question->id)
+                    ->update(['order' => $key = 1]);
+
+            }
+
+
+            DB::commit();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating thi questions for this assignment.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
+    public
+    function storeOpenEndedDefaultText(Request $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('storeOpenEndedSubmissionDefaultText', [$assignmentSyncQuestion, $assignment, $question]);
@@ -94,7 +178,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function order(Request $request, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('order', [$assignmentSyncQuestion, $assignment]);
@@ -121,7 +206,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getClickerQuestion(Request $request, Assignment $assignment)
+    public
+    function getClickerQuestion(Request $request, Assignment $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getClickerQuestion', $assignment);
@@ -152,7 +238,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function startClickerAssessment(StartClickerAssessment $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -210,7 +297,8 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getQuestionIdsByAssignment(Assignment $assignment)
+    public
+    function getQuestionIdsByAssignment(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -232,7 +320,55 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public
+    function getQuestionTitles(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getQuestionTitles', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+
+            //Get all assignment questions Question Upload, Solution, Number of Points
+            $assignment_questions = DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->where('assignment_id', $assignment->id)
+                ->orderBy('order')
+                ->select('assignment_question.*',
+                    'questions.title',
+                    'questions.id AS question_id',
+                    'questions.technology_iframe',
+                    'questions.technology')
+                ->get();
+
+
+            $response['type'] = 'success';
+            foreach ($assignment_questions as $key => $assignment_question){
+
+                $assignment_questions[$key]->submission =$this->_getSubmissionType($assignment_question);
+
+            }
+            $response['assignment_questions'] = $assignment_questions;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public
+    function getQuestionSummaryByAssignment(Assignment $assignment, Solution $solutions)
     {
 
         $response['type'] = 'error';
@@ -290,17 +426,8 @@ class AssignmentSyncQuestionController extends Controller
                 if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
                 }
-                $submission = [];
-                if ($value->technology !== 'text') {
-                    $submission[] = $value->technology;
-                }
-                if ($value->open_ended_submission_type) {
-                    $submission[] = ucwords($value->open_ended_submission_type);
-                }
-                if (!$submission) {
-                    $submission = ['Nothing to submit'];
-                }
-                $columns['submission'] = implode(', ', $submission);
+
+                $columns['submission'] = $this->_getSubmissionType($value);
                 $columns['points'] = $this->formatDecimals($value->points);
                 $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
                 $columns['order'] = $value->order;
@@ -324,14 +451,30 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    private function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
+    private function _getSubmissionType($value)
+    {
+        $submission = [];
+        if ($value->technology !== 'text') {
+            $submission[] = $value->technology;
+        }
+        if ($value->open_ended_submission_type) {
+            $submission[] = ucwords($value->open_ended_submission_type);
+        }
+        if (!$submission) {
+            $submission = ['Nothing to submit'];
+        }
+        return implode(', ', $submission);
+    }
+    private
+    function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
     {
         return isset($assignment_solutions_by_question_id[$question_id]) ?
             '<a href="' . Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$assignment_solutions_by_question_id[$question_id]['file']}", now()->addMinutes(360)) . '" target="_blank">' . $assignment_solutions_by_question_id[$question_id]['original_filename'] . '</a>'
             : 'None';
     }
 
-    public function getQuestionInfoByAssignment(Assignment $assignment)
+    public
+    function getQuestionInfoByAssignment(Assignment $assignment)
     {
 
         $response['type'] = 'error';
@@ -375,10 +518,11 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
-                                                  Assignment $assignment,
-                                                  Question $question,
-                                                  AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
+                                           Assignment $assignment,
+                                           Question $question,
+                                           AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -395,7 +539,7 @@ class AssignmentSyncQuestionController extends Controller
                 ->join('users', 'submission_files.user_id', '=', 'users.id')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
-                ->where('fake_student',0)
+                ->where('fake_student', 0)
                 ->first()) {
                 $response['message'] = "There is at least one submission to this question so you can't change the open-ended submission type.";
                 return $response;
@@ -423,7 +567,8 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -468,7 +613,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function store(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -504,7 +650,12 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function destroy(Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
+    public
+    function destroy(Assignment $assignment,
+                     Question $question,
+                     AssignmentSyncQuestion $assignmentSyncQuestion,
+                     LtiLaunch $ltiLaunch,
+                     LtiGradePassback $ltiGradePassback)
     {
 
 
@@ -595,7 +746,7 @@ class AssignmentSyncQuestionController extends Controller
 
 
             DB::commit();
-            $response['type'] = 'success';
+            $response['type'] = 'info';
             $response['message'] = 'The question has been removed from the assignment.';
         } catch (Exception $e) {
             DB::rollback();
@@ -607,7 +758,8 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment, Question $question, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
+    public
+    function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment, Question $question, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
     {
 
         $scores = DB::table('scores')->where('assignment_id', $assignment->id)
@@ -655,7 +807,8 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
+    public
+    function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
     {
         libxml_use_internal_errors(true);//errors from DOM that I don't care about
         $domd->loadHTML($html);
@@ -665,14 +818,16 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getQueryParamFromSrc(string $src, string $query_param)
+    public
+    function getQueryParamFromSrc(string $src, string $query_param)
     {
         $url_components = parse_url($src);
         parse_str($url_components['query'], $output);
         return $output[$query_param];
     }
 
-    public function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission, Extension $Extension)
+    public
+    function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission, Extension $Extension)
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -719,12 +874,13 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    public function getResponseInfo(Assignment $assignment,
-                                    Extension $Extension,
-                                    Submission $Submission,
-                                    $submissions_by_question_id,
-                                    $question_technologies,
-                                    $question_id)
+    public
+    function getResponseInfo(Assignment $assignment,
+                             Extension $Extension,
+                             Submission $Submission,
+                             $submissions_by_question_id,
+                             $question_technologies,
+                             $question_id)
     {
         $student_response = 'N/A';
         $correct_response = null;
@@ -752,7 +908,8 @@ class AssignmentSyncQuestionController extends Controller
     }
 
 
-    public function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension, AssignmentSyncQuestion $assignmentSyncQuestion)
+    public
+    function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -1111,7 +1268,7 @@ class AssignmentSyncQuestionController extends Controller
                                 ? "https://webwork.libretexts.org:8443/pgfiles/"
                                 : '';
                             $custom_claims['webwork']['problemSourceURL'] .= $this->getQueryParamFromSrc($technology_src, 'sourceFilePath');
-*/
+    */
 
                             $custom_claims['webwork']['JWTanswerURL'] = $request->getSchemeAndHttpHost() . "/api/jwt/process-answer-jwt";
 

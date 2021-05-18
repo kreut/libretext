@@ -93,6 +93,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/courses', 'CourseController@index');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
+    Route::get('/courses/public', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::post('/courses/import/{course}', 'CourseController@import');
 
@@ -124,6 +125,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
+    Route::get('/assignments/courses/public/{course}/names', 'AssignmentController@getAssignmentNamesForPublicCourse');
     Route::get('/assignments/{assignment}/{question}/get-auto-graded-submissions', 'AssignmentController@getAutoGradedSubmissions');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
@@ -176,6 +178,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
 
+
     Route::get('/questions/{question}', 'QuestionController@show');
 
 
@@ -211,8 +214,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
     Route::get('/assignments/{assignment}/questions/question-info', 'AssignmentSyncQuestionController@getQuestionInfoByAssignment');
     Route::get('/assignments/{assignment}/questions/view', 'AssignmentSyncQuestionController@getQuestionsToView');
+    Route::get('/assignments/{assignment}/questions/titles', 'AssignmentSyncQuestionController@getQuestionTitles');
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
-
+    Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
 
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
     Route::post('/assignments/{assignment}/learning-trees/{learningTree}', 'AssignmentQuestionSyncLearningTreeController@store');

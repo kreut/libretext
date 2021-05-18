@@ -530,7 +530,7 @@ class QuestionsViewTest extends TestCase
             'score' => $current_assignment_score]);
 
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'success']);
+            ->assertJson(['type' => 'info']);
         $new_score = Score::where('assignment_id', $this->assignment->id)->where('user_id', $this->student_user->id)->first()->score;
         $this->assertEquals($current_assignment_score - $submission_file_score - $submission_score, $new_score);
     }
@@ -1541,7 +1541,7 @@ class QuestionsViewTest extends TestCase
     public function can_remove_question_from_assignment_if_owner()
     {
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'success']);
+            ->assertJson(['type' => 'info']);
 
     }
 

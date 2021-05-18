@@ -38,6 +38,31 @@ class AssignmentController extends Controller
     use S3;
 
 
+    public function getAssignmentNamesForPublicCourse(Course $course){
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('getAssignmentNamesForPublicCourse', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            ///just does it for delayed
+            foreach ($course->assignments as $key => $assignment){
+                if ($assignment->assessment_type !== 'delayed'){
+                    $course->assignments->forget($key);
+                }
+            }
+           $response['assignments'] = $course->assignments;
+           $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
     public function getAssignmentsAndUsers(Request $request, Course $course)
     {
 
@@ -938,11 +963,9 @@ class AssignmentController extends Controller
 
 
     /**
-     *
-     * Display the specified resource
-     *
      * @param Assignment $assignment
-     * @return Assignment
+     * @return array
+     * @throws Exception
      */
     public
     function getQuestionsInfo(Assignment $assignment)
@@ -959,7 +982,8 @@ class AssignmentController extends Controller
             $response['assignment'] = [
                 'name' => $assignment->name,
                 'has_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
-                'submission_files' => $assignment->submission_files
+                'submission_files' => $assignment->submission_files,
+                'assessment_type' => $assignment->assessment_type
             ];
             $response['type'] = 'success';
         } catch (Exception $e) {

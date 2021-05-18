@@ -195,6 +195,7 @@ class QuestionController extends Controller
         return $response;
     }
 
+
     public function getQuestionsByTags(Request $request, Question $Question)
     {
         $response['type'] = 'error';
@@ -250,14 +251,14 @@ class QuestionController extends Controller
         }
         $question = [];
         $response['type'] = 'error';
-        $question_info = Question::select('id', 'page_id', 'technology_iframe', 'non_technology')
+        $question_info = Question::select('id', 'page_id', 'technology_iframe', 'non_technology','library')
             ->where('id', $Question->id)->first();
 
         if ($question_info) {
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
             $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
-            $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question_info['iframe_id']);
+            $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question['iframe_id']);
             $response['type'] = 'success';
             $response['question'] = $question;
         } else {

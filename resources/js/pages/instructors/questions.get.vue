@@ -27,6 +27,23 @@
         </div>
       </b-form>
     </b-modal>
+    <b-modal
+      id="modal-view-question"
+      ref="modalViewQuestion"
+      title="View Question"
+      size="lg"
+    >
+      <div>
+        <iframe v-show="questionToView.non_technology"
+                id="question-to-view-non-technology-iframe"
+                allowtransparency="true"
+                frameborder="0"
+                :src="questionToView.non_technology_iframe_src"
+                style="width: 1px;min-width: 100%;"
+        />
+      </div>
+      <div v-show="questionToView" v-html="questionToView.technology_iframe" />
+    </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -40,112 +57,268 @@
         <PageTitle :title="title" />
         <b-container>
           <b-row align-h="end">
-            <b-button variant="primary" @click="getStudentView(assignmentId)">
+            <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
               View as Student
             </b-button>
           </b-row>
-          <hr>
-          <b-row>
-            <b-col cols="6" class="border-right" @click="resetDirectImport()">
-              <b-card header-html="<span class='font-weight-bold'>Search Query By Tag</span>" class="h-100">
-                <b-card-text>
-                  <p>
-                    Search for query questions by tag which can then be added to your assignment.
-                    <b-icon id="search-by-tag-tooltip"
-                            v-b-tooltip.hover
-                            class="text-muted"
-                            icon="question-circle"
-                    />
-                    <b-tooltip target="search-by-tag-tooltip" triggers="hover">
-                      Using the search box you can find query questions by tag.
-                      Note that adding multiple tags will result in a search result which matches all of the conditions.
-                    </b-tooltip>
-                  </p>
-                  <div class="col-7 p-0">
-                    <vue-bootstrap-typeahead
-                      ref="queryTypeahead"
-                      v-model="query"
-                      :data="tags"
-                      placeholder="Enter a tag"
-                    />
-                  </div>
-                  <div class="mt-3 d-flex flex-row">
-                    <b-button variant="primary" class="mr-2" @click="addTag()">
-                      Add Tag
-                    </b-button>
-                    <b-button variant="success" class="mr-2" @click="getQuestionsByTags()">
-                      <b-spinner v-if="gettingQuestions" small type="grow" />
-                      Get Questions
-                    </b-button>
-                  </div>
-                  <hr>
-                  <span class="font-weight-bold font-italic">Chosen Tags:</span>
-                  <div v-if="chosenTags.length>0">
-                    <ol>
-                      <li v-for="chosenTag in chosenTags" :key="chosenTag">
-                        <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                          <b-icon icon="trash" variant="danger" /></span>
-                      </li>
-                    </ol>
-                  </div>
-                  <div v-else>
-                    <span class="text-danger">No tags have been chosen.</span>
-                  </div>
-                </b-card-text>
-              </b-card>
-            </b-col>
-            <b-col @click="resetSearchByTag">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
-                <b-card-text>
-                  <p>
-                    Perform a direct import of questions directly into your assignment from any library. Please enter
-                    your questions using a comma
-                    separated list of the form {library}-{page id}.
-                  </p>
+        </b-container>
+        <hr>
+        <div>
+          <b-tabs content-class="mt-3">
+            <b-tab title="Assignment Remixer" active @click="showQuestions = false;getCurrentAssignmentQuestions()">
+              <div v-if="assessmentType !== 'delayed'">
+                <b-alert variant="info" :show="true">
+                  <span class="font-weight-bold font-italic">
+                    The remixer currently only works for assignments that have an assessment type of "delayed'.  Please update your assignment before using the remixer.
+                  </span>
+                </b-alert>
+              </div>
+              <div v-else>
+                <b-container>
                   <b-form-group
-                    id="default_library"
-                    label-cols-sm="5"
-                    label-cols-lg="4"
-                    label-for="Default Library"
+                    id="assign_to"
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label="Course"
+                    label-for="Course"
                   >
-                    <template slot="label">
-                      Default Library
-                      <b-icon id="default-library-tooltip"
-                              v-b-tooltip.hover
-                              class="text-muted"
-                              icon="question-circle"
-                      />
-                      <b-tooltip target="default-library-tooltip" triggers="hover">
-                        By setting the default library, you can just enter page ids. As an example, choosing Query as
-                        the default
-                        library, you can then enter 123,chemistry-927,149 instead of query-123,chemistry-927,query-149.
-                      </b-tooltip>
-                    </template>
                     <b-form-row>
-                      <b-form-select v-model="defaultImportLibrary"
-                                     :options="libraryOptions"
-                                     @change="setDefaultImportLibrary()"
-                      />
+                      <b-col lg="8">
+                        <b-form-select v-model="publicCourse"
+                                       :options="publicCoursesOptions"
+                                       @change="getPublicCourseAssignments($event)"
+                        />
+                      </b-col>
                     </b-form-row>
                   </b-form-group>
-                  <b-form-textarea
-                    id="textarea"
-                    v-model="directImport"
-                    placeholder="Example. query-1023, chemistry-2213"
-                    rows="4"
-                    max-rows="5"
-                  />
-                  <div class="float-right mt-2">
-                    <b-button variant="success" class="mr-2" @click="directImportQuestions()">
-                      <b-spinner v-if="directImportingQuestions" small type="grow" />
-                      Import Questions
-                    </b-button>
-                  </div>
+                  <b-form-group
+                    id="assignment"
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label="Assignment"
+                    label-for="Assignment"
+                  >
+                    <b-form-row>
+                      <b-col lg="8">
+                        <b-form-select v-model="publicCourseAssignment"
+                                       :options="publicCourseAssignmentsOptions"
+                                       :disabled="!publicCourse"
+                                       @change="getPublicCourseAssignmentQuestions($event)"
+                        />
+                      </b-col>
+                    </b-form-row>
+                  </b-form-group>
+                  <b-row>
+                    <b-col>
+                      <b-row class="mb-2">
+                        <b-col>
+                          <h5 class="font-italic">
+                            Possible Questions
+                          </h5>
+                        </b-col>
+                        <b-col class="text-right">
+                          <a href="" @click.prevent="addAllQuestions()">
+                            <span class="font-italic"><b-icon icon="plus-circle" /> Add all questions</span>
+                          </a>
+                        </b-col>
+                      </b-row>
+                      <table class="table dragArea table-striped">
+                        <thead>
+                          <tr>
+                            <th>Order</th>
+                            <th>Title</th>
+                            <th>Submission</th>
+                          </tr>
+                        </thead>
+                        <draggable v-model="publicCourseAssignmentQuestions"
+                                   :group="'remixerQuestions'"
+                                   :element="'tbody'"
+                                   :empty-insert-threshold="100"
+                                   :move="checkMove"
+                                   @end="updateAssignmentWithChosenQuestions('single')"
+                        >
+                          <tr v-for="(question, index) in publicCourseAssignmentQuestions"
+                              :key="question.title"
+                              class="dragArea"
+                          >
+                            <td class="dragArea">
+                              {{ index + 1 }}
+                            </td>
+                            <td class="dragArea">
+                              <a href="" @click.stop.prevent="viewQuestion(question.question_id)">
+                                {{ question.title ? question.title : 'No title' }}
+                              </a>
+                            </td>
+                            <td class="dragArea">
+                              {{ question.submission }}
+                            </td>
+                          </tr>
+                        </draggable>
+                      </table>
+                    </b-col>
+                    <b-col>
+                      <h5 class="font-italic">
+                        Chosen Questions
+                      </h5>
+                      <table class="table dragArea table-striped">
+                        <thead>
+                          <tr>
+                            <th>Order</th>
+                            <th>Title</th>
+                            <th>Submission</th>
+                          </tr>
+                        </thead>
+                        <draggable v-model="chosenPublicCourseAssignmentQuestions"
+                                   :options="{group:'remixerQuestions'}"
+                                   :element="'tbody'"
+                                   :empty-insert-threshold="100"
+                                   @end="updateAssignmentWithChosenQuestions('single')"
+                        >
+                          <tr v-for="(question, index) in chosenPublicCourseAssignmentQuestions"
+                              :key="question.title"
+                              class="dragArea"
+                          >
+                            <td class="dragArea">
+                              {{ index + 1 }}
+                            </td>
+                            <td class="dragArea">
+                              <a href="" @click.stop.prevent="viewQuestion(question.question_id)">
+                                {{ question.title ? question.title : 'No title' }}
+                              </a>
+                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)" />
+                            </td>
+                            <td class="dragArea">
+                              {{ question.submission }}
+                            </td>
+                          </tr>
+                        </draggable>
+                      </table>
+                    </b-col>
+                  </b-row>
+                </b-container>
+              </div>
+            </b-tab>
+            <b-tab title="Search Query By Tag">
+              <b-col @click="resetDirectImport()">
+                <b-card header-html="<span class='font-weight-bold'>Search Query By Tag</span>" class="h-100">
+                  <b-card-text>
+                    <b-container>
+                      <b-row>
+                        <b-col class="border-right">
+                          <p>
+                            Search for query questions by tag which can then be added to your assignment.
+                            <b-icon id="search-by-tag-tooltip"
+                                    v-b-tooltip.hover
+                                    class="text-muted"
+                                    icon="question-circle"
+                            />
+                            <b-tooltip target="search-by-tag-tooltip" triggers="hover">
+                              Using the search box you can find query questions by tag.
+                              Note that adding multiple tags will result in a search result which matches all of the
+                              conditions.
+                            </b-tooltip>
+                          </p>
+                          <div class="col-7 p-0">
+                            <vue-bootstrap-typeahead
+                              ref="queryTypeahead"
+                              v-model="query"
+                              :data="tags"
+                              placeholder="Enter a tag"
+                            />
+                          </div>
+                          <div class="mt-3 ">
+                            <b-button variant="primary" size="sm" class="mr-2" @click="addTag()">
+                              Add Tag
+                            </b-button>
+                            <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
+                              <b-spinner v-if="gettingQuestions" small type="grow" />
+                              Get Questions
+                            </b-button>
+                          </div>
+                        </b-col>
+                        <b-col>
+                          <span class="font-weight-bold font-italic">Chosen Tags:</span>
+                          <div v-if="chosenTags.length>0">
+                            <ol>
+                              <li v-for="chosenTag in chosenTags" :key="chosenTag">
+                                <span @click="removeTag(chosenTag)">{{ chosenTag }}
+                                  <b-icon icon="trash" variant="danger" /></span>
+                              </li>
+                            </ol>
+                          </div>
+                          <div v-else>
+                            <span class="text-danger">No tags have been chosen.</span>
+                          </div>
+                        </b-col>
+                      </b-row>
+                    </b-container>
+                  </b-card-text>
+                </b-card>
+              </b-col>
+            </b-tab>
+            <b-tab title="Direct Import By Page Id" @click="showQuestions = false">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
+                <b-card-text>
+                  <b-container>
+                    <b-row>
+                      <b-col @click="resetSearchByTag">
+                        <p>
+                          Perform a direct import of questions directly into your assignment from any library. Please
+                          enter
+                          your questions using a comma
+                          separated list of the form {library}-{page id}.
+                        </p>
+                        <b-form-group
+                          id="default_library"
+                          label-cols-sm="5"
+                          label-cols-lg="4"
+                          label-for="Default Library"
+                        >
+                          <template slot="label">
+                            Default Library
+                            <b-icon id="default-library-tooltip"
+                                    v-b-tooltip.hover
+                                    class="text-muted"
+                                    icon="question-circle"
+                            />
+                            <b-tooltip target="default-library-tooltip" triggers="hover">
+                              By setting the default library, you can just enter page ids. As an example, choosing Query
+                              as
+                              the default
+                              library, you can then enter 123,chemistry-927,149 instead of
+                              query-123,chemistry-927,query-149.
+                            </b-tooltip>
+                          </template>
+                          <b-form-row>
+                            <b-form-select v-model="defaultImportLibrary"
+                                           :options="libraryOptions"
+                                           @change="setDefaultImportLibrary()"
+                            />
+                          </b-form-row>
+                        </b-form-group>
+                      </b-col>
+                      <b-col>
+                        <b-form-textarea
+                          id="textarea"
+                          v-model="directImport"
+                          placeholder="Example. query-1023, chemistry-2213"
+                          rows="4"
+                          max-rows="5"
+                        />
+                        <div class="float-right mt-2">
+                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions()">
+                            <b-spinner v-if="directImportingQuestions" small type="grow" />
+                            Import Questions
+                          </b-button>
+                        </div>
+                      </b-col>
+                    </b-row>
+                  </b-container>
                 </b-card-text>
               </b-card>
-            </b-col>
-          </b-row>
-        </b-container>
+            </b-tab>
+          </b-tabs>
+        </div>
 
         <hr>
       </div>
@@ -159,7 +332,7 @@
           <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
         </b-alert>
       </div>
-      <div v-if="questions.length>0" class="overflow-auto">
+      <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
         <b-pagination
           v-model="currentPage"
           :total-rows="questions.length"
@@ -175,13 +348,17 @@
           <b-row v-if="questions[currentPage-1]">
             <span v-if="!questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
-                        variant="primary" @click="addQuestion(questions[currentPage-1])"
+                        variant="primary"
+                        size="sm"
+                        @click="addQuestion(questions[currentPage-1])"
               >Add Question
               </b-button>
             </span>
             <span v-if="questions[currentPage-1].inAssignment">
               <b-button class="mt-1 mb-2 mr-2"
-                        variant="danger" @click="removeQuestion(questions[currentPage-1])"
+                        variant="danger"
+                        size="sm"
+                        @click="removeQuestion(questions[currentPage-1])"
               >Remove Question
               </b-button>
             </span>
@@ -209,6 +386,7 @@ import { h5pResizer } from '~/helpers/H5PResizer'
 import { mapGetters } from 'vuex'
 import { submitUploadFile, getAcceptedFileTypes } from '~/helpers/UploadFiles'
 import { downloadSolutionFile } from '~/helpers/DownloadFiles'
+import draggable from 'vuedraggable'
 
 import Form from 'vform'
 import Loading from 'vue-loading-overlay'
@@ -218,11 +396,22 @@ import libraries from '~/helpers/Libraries'
 export default {
   components: {
     VueBootstrapTypeahead,
+    draggable,
     Loading
   },
   middleware: 'auth',
   data: () => ({
+    assessmentType: '',
+    loadingQuestion: false,
+    questionToView: {},
+    originalChosenPublicCourseAssignmentQuestions: [],
+    publicCourseAssignmentQuestions: [],
+    chosenPublicCourseAssignmentQuestions: [],
     defaultImportLibrary: null,
+    publicCoursesOptions: [{ value: null, text: 'Please select a course' }],
+    publicCourseAssignmentsOptions: [{ value: null, text: 'Please select an assignment' }],
+    publicCourse: null,
+    publicCourseAssignment: null,
     libraryOptions: libraries,
     pageIdsNotAddedToAssignmentMessage: '',
     pageIdsAddedToAssignmentMessage: '',
@@ -263,10 +452,135 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
+    this.getPublicCourses()
     this.getDefaultImportLibrary()
     this.getAssignmentInfo()
+    this.getCurrentAssignmentQuestions()
   },
   methods: {
+    checkMove: function (evt) {
+      let questionId = evt.draggedContext.element.question_id
+      if (this.chosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)) {
+        this.$noty.info('That assessment is already in your assignment.')
+        return false
+      }
+      return true
+    },
+    async removeQuestionFromAssignment (questionId) {
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          console.log(questionId)
+          console.log(this.originalChosenPublicCourseAssignmentQuestions)
+          let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
+          if (questionFromPublicCourseAssignmentQuestions) {
+            this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
+          }
+          this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async updateAssignmentWithChosenQuestions (type) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
+          {
+            'chosen_questions': this.chosenPublicCourseAssignmentQuestions,
+            'type': type
+          })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async addAllQuestions () {
+      for (let i = 0; i < this.publicCourseAssignmentQuestions.length; i++) {
+        let question = this.publicCourseAssignmentQuestions[i]
+        this.chosenPublicCourseAssignmentQuestions.push(question)
+        console.log(i)
+      }
+      this.publicCourseAssignmentQuestions = []
+      await this.updateAssignmentWithChosenQuestions('all')
+    },
+    async getCurrentAssignmentQuestions () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/titles`)
+        this.chosenPublicCourseAssignmentQuestions = data.assignment_questions
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async viewQuestion (questionId) {
+      try {
+        this.$bvModal.show('modal-view-question')
+        this.loadingQuestion = true
+        const { data } = await axios.get(`/api/questions/${questionId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          this.loadingQuestion = false
+          return false
+        }
+        this.questionToView = data.question
+        iFrameResize({ log: true }, `${this.questionToView.iframe_id}`)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.loadingQuestion = false
+    },
+    async getPublicCourseAssignmentQuestions (assignmentId) {
+      try {
+        const { data } = await axios.get(`/api/assignments/${assignmentId}/questions/titles`)
+        let chosenQuestionIds = []
+        for (let i = 0; i < this.chosenPublicCourseAssignmentQuestions.length; i++) {
+          chosenQuestionIds.push(this.chosenPublicCourseAssignmentQuestions[i].question_id)
+        }
+        this.publicCourseAssignmentQuestions = data.assignment_questions.filter(question => !chosenQuestionIds.includes(question.question_id))
+        this.originalChosenPublicCourseAssignmentQuestions = this.publicCourseAssignmentQuestions
+        console.log(data)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getPublicCourseAssignments (courseId) {
+      if (courseId) {
+        try {
+          const { data } = await axios.get(`/api/assignments/courses/public/${courseId}/names`)
+          if (data.assignments) {
+            this.publicCourseAssignmentsOptions = [{ value: null, text: 'Please select an assignment' }]
+            for (let i = 0; i < data.assignments.length; i++) {
+              let assignment = { value: data.assignments[i].id, text: data.assignments[i].name }
+              this.publicCourseAssignmentsOptions.push(assignment)
+            }
+          }
+          this.publicCourseAssignment = null
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      } else {
+        this.publicCourseAssignment = null
+        this.publicCourseAssignmentsOptions = [{ value: null, text: 'There are no assignments available' }]
+      }
+    },
+    async getPublicCourses () {
+      try {
+        const { data } = await axios.get('/api/courses/public')
+        console.log(data)
+        if (data.public_courses) {
+          for (let i = 0; i < data.public_courses.length; i++) {
+            let publicCourse = { value: data.public_courses[i].id, text: data.public_courses[i].name }
+            this.publicCoursesOptions.push(publicCourse)
+          }
+        } else {
+          this.publicCoursesOptions = [{ value: null, text: 'There are no public courses available' }]
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getDefaultImportLibrary () {
       try {
         const { data } = await axios.get('/api/questions/default-import-library')
@@ -355,8 +669,10 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        console.log(data.assignment)
         let assignment = data.assignment
         this.title = `Add Questions to "${assignment.name}"`
+        this.assessmentType = assignment.assessment_type
         this.questionFilesAllowed = (assignment.submission_files === 'q')// can upload at the question level
       } catch (error) {
         console.log(error.message)

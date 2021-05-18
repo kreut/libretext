@@ -19,6 +19,32 @@ class QuestionsGetTest extends TestCase
 {
 
     /**Still must test the stuff with the correct/completed and number**/
+    private $assignment_remixer;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $assignment;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $user_2;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $user;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $course;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $question;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $student_user;
+
     /** Should test that only an instructor can create an assignment... */
     public function setup(): void
     {
@@ -30,6 +56,17 @@ class QuestionsGetTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->question = factory(Question::class)->create();
+
+        $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment_remixer->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'none'
+        ]);;
+
 
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -55,6 +92,40 @@ class QuestionsGetTest extends TestCase
 
 
     }
+
+    /** @test */
+    public function remixed_question_must_be_valid()
+    {
+        $data['chosen_questions'] = [['question_id' => 0, 'assignment_id' => 0]];
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['message' => 'Question 0 does not belong to that assignment.']);
+    }
+
+    /** @test */
+    public function owner_can_remix_assignment_with_chosen_questions()
+    {
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id]
+        ];
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function non_owner_cannot_remix_assignment_with_chosen_questions()
+    {
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id]
+        ];
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['message' => 'You are not allowed to remix that assignment.']);
+    }
+
 
     /** @test */
     public function with_default_library_just_need_page_id()
@@ -121,7 +192,6 @@ class QuestionsGetTest extends TestCase
     }
 
 
-
     /** @test */
     public function can_remove_a_question_from_an_assignment_if_you_are_the_owner()
     {
@@ -134,7 +204,7 @@ class QuestionsGetTest extends TestCase
         ]);
 
         $this->actingAs($this->user)->deleteJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}")
-            ->assertJson(['type' => 'success']);
+            ->assertJson(['type' => 'info']);
     }
 
 

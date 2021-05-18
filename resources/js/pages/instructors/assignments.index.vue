@@ -131,7 +131,7 @@
                       variant="primary"
                       @click="initAddAssignment"
             >
-              Add Assignment
+              New Assignment
             </b-button>
             <b-button v-if="(user && user.role === 2)"
                       class="mr-1"

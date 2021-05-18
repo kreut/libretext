@@ -14,6 +14,14 @@ class AssignmentSyncQuestionPolicy
 {
     use HandlesAuthorization;
 
+    public function remixAssignmentWithChosenQuestions(User $user,AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment ){
+
+        return (int) $user->id === $assignment->course->user_id
+            ? Response::allow()
+            : Response::deny('You are not allowed to remix that assignment.');
+
+
+    }
     public function order(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment){
 
         return (int) $assignment->course->user_id === $user->id

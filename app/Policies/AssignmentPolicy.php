@@ -16,8 +16,6 @@ class AssignmentPolicy
     use CommonPolicies;
 
 
-
-
     public function getClickerQuestion(User $user, Assignment $assignment)
     {
 
@@ -27,17 +25,19 @@ class AssignmentPolicy
 
     }
 
-    public function linkAssignmentToLMS(User $user, Assignment $assignment){
-        return (int) $assignment->course->user_id === $user->id
+    public function linkAssignmentToLMS(User $user, Assignment $assignment)
+    {
+        return (int)$assignment->course->user_id === $user->id
             ? Response::allow()
             : Response::deny('You are not allowed to link this assignment.');
 
 
     }
+
     public function order(User $user, Assignment $assignment, Course $course)
     {
 
-        return (int) $course->user_id === $user->id
+        return (int)$course->user_id === $user->id
             ? Response::allow()
             : Response::deny('You are not allowed to re-order the assignments in that course.');
 
@@ -57,6 +57,20 @@ class AssignmentPolicy
         return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to access this assignment.');
+    }
+
+    /**
+     * @param User $user
+     * @param Assignment $assignment
+     * @return Response
+     */
+    public function getQuestionTitles(User $user, Assignment $assignment)
+
+    {
+        $has_access = (int)$assignment->course->user_id = $user->id || ($user->role === 2 && $assignment->course->public);
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to access these assignment questions.');
     }
 
     function canView(User $user, Assignment $assignment)
