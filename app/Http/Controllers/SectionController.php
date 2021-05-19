@@ -23,6 +23,25 @@ class SectionController extends Controller
 {
     use AccessCodes;
 
+    public function canCreateStudentAccessCodes(Request $request)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $email = $request->user()->email;
+            $response['can_create_student_access_codes'] = DB::table('no_student_access_codes')
+                ->where('email', $email)
+                ->first() === null;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting whether you can create student access codes.  Please try again or contact us for assistance.";
+
+        }
+        return $response;
+    }
+
     public function realEnrolledUsers(Request $request, Section $section)
     {
         $response['has_enrolled_users'] = true;
@@ -32,7 +51,6 @@ class SectionController extends Controller
             $response['type'] = 'success';
 
         } catch (Exception $e) {
-            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the number of enrolled users.  Please try again or contact us for assistance.";

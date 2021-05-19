@@ -39,7 +39,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name" />
+        <has-error :form="sectionForm" field="name"/>
       </b-form-group>
     </b-modal>
     <div class="vld-parent">
@@ -52,32 +52,38 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Sections">
-          <b-card-text>
-            <b-table striped hover :fields="fields" :items="sections">
-              <template v-slot:cell(access_code)="data">
-                {{ data.item.access_code ? data.item.access_code : 'None Available' }}
-              </template>
-              <template v-slot:cell(actions)="data">
-                <div class="mb-0">
+        <div v-if="!viewStudentAccessCodes">
+          <b-alert :show="true" variant="info">
+            <span class="font-weight-bold font-italic">You current don't have the ability to create new sections.</span>
+          </b-alert>
+        </div>
+        <div v-else>
+          <b-card header="default" header-html="Sections">
+            <b-card-text>
+              <b-table striped hover :fields="fields" :items="sections">
+                <template v-slot:cell(access_code)="data">
+                  {{ data.item.access_code ? data.item.access_code : 'None Available' }}
+                </template>
+                <template v-slot:cell(actions)="data">
+                  <div class="mb-0">
                   <span class="pr-1" @click="initEditSection(data.item.id, data.item.name)">
                     <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
                                delay="500"
                     >
                       Edit Section
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
+                    <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
                   </span>
 
-                  <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
+                    <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
                     <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
                                delay="500"
                     >
                       Delete Section
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
+                    <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
                   </span>
-                  <span class="text-info">
+                    <span class="text-info">
                     <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                delay="500"
                     >
@@ -90,14 +96,15 @@
                                          @click="refreshAccessCode(data.item.id)"
                     />
                   </span>
-                </div>
-              </template>
-            </b-table>
-            <b-button class="float-right" variant="primary" @click="initAddSection">
-              Add Section
-            </b-button>
-          </b-card-text>
-        </b-card>
+                  </div>
+                </template>
+              </b-table>
+              <b-button class="float-right" variant="primary" @click="initAddSection">
+                Add Section
+              </b-button>
+            </b-card-text>
+          </b-card>
+        </div>
       </div>
     </div>
   </div>
@@ -116,6 +123,7 @@ export default {
     Loading
   },
   data: () => ({
+    viewStudentAccessCodes: true,
     sectionForm: new Form({
       name: ''
     }),
@@ -140,10 +148,18 @@ export default {
     initTooltips(this)
     this.courseId = this.$route.params.courseId
     await this.getSections(this.courseId)
-
+    await this.canCreateStudentAccessCodes()
     this.isLoading = false
   },
   methods: {
+    async canCreateStudentAccessCodes () {
+      try {
+        const { data } = await axios.get('/api/sections/can-create-student-access-codes')
+        this.viewStudentAccessCodes = data.can_create_student_access_codes
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async confirmDeleteSection (sectionId) {
       this.sectionId = sectionId
       try {
@@ -176,13 +192,15 @@ export default {
           this.$noty.error(error.message)
         }
       }
-    },
+    }
+    ,
     initAddSection () {
       this.sectionId = false
       this.sectionForm.name = ''
       this.sectionForm.errors.clear()
       this.$bvModal.show('modal-section')
-    },
+    }
+    ,
     async submitSectionForm (bvEvt) {
       bvEvt.preventDefault()
       try {
@@ -198,13 +216,15 @@ export default {
           this.$noty.error(error.message)
         }
       }
-    },
+    }
+    ,
     initEditSection (sectionId, sectionName) {
       this.sectionForm.errors.clear()
       this.sectionId = sectionId
       this.sectionForm.name = sectionName
       this.$bvModal.show('modal-section')
-    },
+    }
+    ,
     async getSections (courseId) {
       const { data } = await axios.get(`/api/sections/${courseId}`)
       if (data.type === 'error') {
@@ -212,7 +232,8 @@ export default {
         return false
       }
       this.sections = data.sections
-    },
+    }
+    ,
     async refreshAccessCode (sectionId) {
       try {
         const { data } = await axios.patch(`/api/sections/refresh-access-code/${sectionId}`)
