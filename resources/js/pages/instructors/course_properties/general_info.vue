@@ -38,6 +38,7 @@ export default {
     isLoading: true,
     courseId: false,
     editCourseForm: new Form({
+      school: '',
       name: '',
       start_date: '',
       end_date: '',
@@ -67,12 +68,11 @@ export default {
       try {
         const { data } = await axios.get(`/api/courses/${courseId}`)
         let course = data.course
+        this.editCourseForm.school = course.school
         this.editCourseForm.name = course.name
         this.editCourseForm.start_date = course.start_date
         this.editCourseForm.end_date = course.end_date
         this.editCourseForm.public = course.public
-
-        console.log(data)
         if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve the course information.')
           return false

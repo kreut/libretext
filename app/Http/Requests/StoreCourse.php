@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidSchoolName;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
@@ -29,6 +30,7 @@ class StoreCourse extends FormRequest
             'section' => ['required', 'max:255','regex:/^((?!---).)*$/'],
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
+            'school' =>  new IsValidSchoolName(),
             'public' => Rule::in([0,1])
         ];
 

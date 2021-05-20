@@ -205,6 +205,7 @@ export default {
       access_code: ''
     }),
     newCourseForm: new Form({
+      school: '',
       name: '',
       section: '',
       start_date: '',

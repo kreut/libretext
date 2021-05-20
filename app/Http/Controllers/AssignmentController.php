@@ -38,7 +38,8 @@ class AssignmentController extends Controller
     use S3;
 
 
-    public function getAssignmentNamesForPublicCourse(Course $course){
+    public function getAssignmentNamesForPublicCourse(Course $course)
+    {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAssignmentNamesForPublicCourse', $course);
         if (!$authorized->allowed()) {
@@ -46,14 +47,14 @@ class AssignmentController extends Controller
             return $response;
         }
         try {
-            ///just does it for delayed
-            foreach ($course->assignments as $key => $assignment){
-                if ($assignment->assessment_type !== 'delayed'){
-                    $course->assignments->forget($key);
+            $delayed_assignments = [];
+            foreach ($course->assignments as $assignment) {
+                if ($assignment->assessment_type == 'delayed') {
+                    $delayed_assignments[] = $assignment;
                 }
             }
-           $response['assignments'] = $course->assignments;
-           $response['type'] = 'success';
+            $response['assignments'] = $delayed_assignments;
+            $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -63,6 +64,7 @@ class AssignmentController extends Controller
 
 
     }
+
     public function getAssignmentsAndUsers(Request $request, Course $course)
     {
 
@@ -1050,10 +1052,10 @@ class AssignmentController extends Controller
                         ->first();
                     if ($access_level_override) {
                         $access_level = $access_level_override->pivot->access_level;
-                        if ($access_level === 0){
+                        if ($access_level === 0) {
                             $sections = [];
                         }
-                        if ($access_level === 1){
+                        if ($access_level === 1) {
                             $sections = $assignment->course->sections;
                         }
                     }

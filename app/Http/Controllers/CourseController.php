@@ -9,11 +9,13 @@ use App\AssignToTiming;
 use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\UpdateCourse;
+use App\School;
 use App\Section;
 use App\AssignmentGroup;
 use App\AssignmentGroupWeight;
 use App\Enrollment;
 use App\Http\Requests\StoreCourse;
+use App\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
@@ -31,11 +33,21 @@ class CourseController extends Controller
     use DateFormatter;
 
 
-    public function getPublicCourses(Course $course)
+    public function getPublicCourses(Course $course, User $instructor = null)
     {
+
         $response['type'] = 'error';
         try {
-            $response['public_courses'] = $course->where('public', 1)->select('id', 'name')->get();
+            $response['public_courses'] = $instructor
+                ? $course->where('public', 1)
+                    ->where('user_id', $instructor->id)
+                    ->select('id', 'name')
+                    ->orderBy('name')
+                    ->get()
+                : $course->where('public', 1)
+                    ->select('id', 'name')
+                    ->orderBy('name')
+                    ->get();
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -320,7 +332,9 @@ class CourseController extends Controller
         }
 
         try {
-            $response['course'] = ['name' => $course->name,
+            $response['course'] = [
+                'school' => $course->school->name,
+                'name' => $course->name,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
                 'sections' => $course->sections,
@@ -450,7 +464,8 @@ class CourseController extends Controller
                    Course $course,
                    Enrollment $enrollment,
                    FinalGrade $finalGrade,
-                   Section $section)
+                   Section $section,
+                   School $school)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -464,10 +479,10 @@ class CourseController extends Controller
 
 
         try {
-            DB::beginTransaction();
             $data = $request->validated();
+            DB::beginTransaction();
             $data['user_id'] = auth()->user()->id;
-
+            $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
             $data['shown'] = 0;
@@ -491,7 +506,12 @@ class CourseController extends Controller
         }
         return $response;
     }
+public function getSchoolIdFromRequest(Request $request, School $school){
 
+    return $request->school
+        ? $school->where('name', $request->school)->first()->id
+        : $school->first()->id;
+}
     /**
      *
      * Update the specified resource in storage.
@@ -503,7 +523,7 @@ class CourseController extends Controller
      * @throws Exception
      */
     public
-    function update(UpdateCourse $request, Course $course)
+    function update(UpdateCourse $request, Course $course, School $school)
     {
         $response['type'] = 'error';
 
@@ -515,6 +535,7 @@ class CourseController extends Controller
 
         try {
             $data = $request->validated();
+            $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
 

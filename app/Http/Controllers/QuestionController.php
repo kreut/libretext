@@ -255,6 +255,7 @@ class QuestionController extends Controller
             ->where('id', $Question->id)->first();
 
         if ($question_info) {
+            $question['id'] = $question_info['id'];
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
             $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);

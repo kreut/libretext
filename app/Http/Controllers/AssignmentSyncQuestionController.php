@@ -124,7 +124,7 @@ class AssignmentSyncQuestionController extends Controller
 
             foreach ($assignment_questions as $key => $assignment_question) {
                 DB::table('assignment_question')->where('id', $assignment_question->id)
-                    ->update(['order' => $key = 1]);
+                    ->update(['order' => $key + 1]);
 
             }
 

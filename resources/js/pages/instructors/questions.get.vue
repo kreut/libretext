@@ -18,7 +18,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -42,7 +42,27 @@
                 style="width: 1px;min-width: 100%;"
         />
       </div>
-      <div v-show="questionToView" v-html="questionToView.technology_iframe" />
+      <div v-show="questionToView" v-html="questionToView.technology_iframe"/>
+      <template #modal-footer>
+        <b-button
+          v-show="viewQuestionAction==='add'"
+          size="sm"
+          class="float-right"
+          variant="primary"
+          @click="addQuestionToAssignmentFromViewQuestion(questionToView.id)"
+        >
+          Add Question
+        </b-button>
+        <b-button
+          v-show="viewQuestionAction==='remove'"
+          size="sm"
+          class="float-right"
+          variant="danger"
+          @click="removeQuestionFromAssignment(questionToView.id)"
+        >
+          Remove Question
+        </b-button>
+      </template>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -54,7 +74,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <b-container>
           <b-row align-h="end">
             <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
@@ -76,7 +96,43 @@
               <div v-else>
                 <b-container>
                   <b-form-group
-                    id="assign_to"
+                    id="school"
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label="School"
+                    label-for="School"
+                  >
+                    <b-form-row>
+                      <b-col lg="8">
+                        <vue-bootstrap-typeahead
+                          ref="queryTypeaheadSchools"
+                          v-model="school"
+                          :data="schools"
+                          placeholder="Any school"
+                          @hit="getInstructorsWithPublicCourses()"
+                        />
+                      </b-col>
+                    </b-form-row>
+                  </b-form-group>
+                  <b-form-group
+                    id="instructor"
+                    label-cols-sm="3"
+                    label-cols-lg="2"
+                    label="Instructor"
+                    label-for="Instructor"
+                  >
+                    <b-form-row>
+                      <b-col lg="8">
+                        <b-form-select v-model="instructor"
+                                       :options="instructorOptions"
+                                       @change="getPublicCourses($event)"
+                        />
+                      </b-col>
+                    </b-form-row>
+                  </b-form-group>
+
+                  <b-form-group
+                    id="course"
                     label-cols-sm="3"
                     label-cols-lg="2"
                     label="Course"
@@ -118,17 +174,17 @@
                         </b-col>
                         <b-col class="text-right">
                           <a href="" @click.prevent="addAllQuestions()">
-                            <span class="font-italic"><b-icon icon="plus-circle" /> Add all questions</span>
+                            <span class="font-italic"><b-icon icon="plus-circle"/> Add all questions</span>
                           </a>
                         </b-col>
                       </b-row>
                       <table class="table dragArea table-striped">
                         <thead>
-                          <tr>
-                            <th>Order</th>
-                            <th>Title</th>
-                            <th>Submission</th>
-                          </tr>
+                        <tr>
+                          <th>Order</th>
+                          <th>Title</th>
+                          <th>Submission</th>
+                        </tr>
                         </thead>
                         <draggable v-model="publicCourseAssignmentQuestions"
                                    :group="'remixerQuestions'"
@@ -138,14 +194,14 @@
                                    @end="updateAssignmentWithChosenQuestions('single')"
                         >
                           <tr v-for="(question, index) in publicCourseAssignmentQuestions"
-                              :key="question.title"
+                              :key="question.id"
                               class="dragArea"
                           >
                             <td class="dragArea">
                               {{ index + 1 }}
                             </td>
                             <td class="dragArea">
-                              <a href="" @click.stop.prevent="viewQuestion(question.question_id)">
+                              <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
                                 {{ question.title ? question.title : 'No title' }}
                               </a>
                             </td>
@@ -162,11 +218,11 @@
                       </h5>
                       <table class="table dragArea table-striped">
                         <thead>
-                          <tr>
-                            <th>Order</th>
-                            <th>Title</th>
-                            <th>Submission</th>
-                          </tr>
+                        <tr>
+                          <th>Order</th>
+                          <th>Title</th>
+                          <th>Submission</th>
+                        </tr>
                         </thead>
                         <draggable v-model="chosenPublicCourseAssignmentQuestions"
                                    :options="{group:'remixerQuestions'}"
@@ -175,17 +231,17 @@
                                    @end="updateAssignmentWithChosenQuestions('single')"
                         >
                           <tr v-for="(question, index) in chosenPublicCourseAssignmentQuestions"
-                              :key="question.title"
+                              :key="question.id"
                               class="dragArea"
                           >
                             <td class="dragArea">
                               {{ index + 1 }}
                             </td>
                             <td class="dragArea">
-                              <a href="" @click.stop.prevent="viewQuestion(question.question_id)">
+                              <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
                                 {{ question.title ? question.title : 'No title' }}
                               </a>
-                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)" />
+                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)"/>
                             </td>
                             <td class="dragArea">
                               {{ question.submission }}
@@ -231,7 +287,7 @@
                               Add Tag
                             </b-button>
                             <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                              <b-spinner v-if="gettingQuestions" small type="grow" />
+                              <b-spinner v-if="gettingQuestions" small type="grow"/>
                               Get Questions
                             </b-button>
                           </div>
@@ -242,7 +298,7 @@
                             <ol>
                               <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                 <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger" /></span>
+                                  <b-icon icon="trash" variant="danger"/></span>
                               </li>
                             </ol>
                           </div>
@@ -307,7 +363,7 @@
                         />
                         <div class="float-right mt-2">
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions()">
-                            <b-spinner v-if="directImportingQuestions" small type="grow" />
+                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
                         </div>
@@ -373,7 +429,7 @@
                   style="width: 1px;min-width: 100%;"
           />
         </div>
-        <div v-if="questions[currentPage-1]" v-html="questions[currentPage-1].technology_iframe" />
+        <div v-if="questions[currentPage-1]" v-html="questions[currentPage-1].technology_iframe"/>
       </div>
     </div>
   </div>
@@ -401,6 +457,11 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    viewQuestionAction: '',
+    school: '',
+    schools: [],
+    instructor: null,
+    instructorOptions: [],
     assessmentType: '',
     loadingQuestion: false,
     questionToView: {},
@@ -452,12 +513,49 @@ export default {
       return false
     }
     this.assignmentId = this.$route.params.assignmentId
+
+    this.getSchools()
+    this.getInstructorsWithPublicCourses()
     this.getPublicCourses()
     this.getDefaultImportLibrary()
     this.getAssignmentInfo()
     this.getCurrentAssignmentQuestions()
   },
   methods: {
+    async getSchools () {
+      try {
+        const { data } = await axios.get(`/api/schools`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.schools = data.schools
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getInstructorsWithPublicCourses () {
+      try {
+        const { data } = await axios.post('/api/user/instructors-with-public-courses',
+          { 'name': this.school })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+
+        this.instructorOptions = [{ value: null, text: 'Any Instructor' }]
+        if (data.instructors.length) {
+          for (let i = 0; i < data.instructors.length; i++) {
+            let instructor = { 'text': data.instructors[i].name, 'value': data.instructors[i].user_id }
+            this.instructorOptions.push(instructor)
+          }
+        } else {
+          this.$noty.info('There are no instructors associated with that school.')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     checkMove: function (evt) {
       let questionId = evt.draggedContext.element.question_id
       if (this.chosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)) {
@@ -471,19 +569,29 @@ export default {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type !== 'error') {
-          console.log(questionId)
-          console.log(this.originalChosenPublicCourseAssignmentQuestions)
           let questionFromPublicCourseAssignmentQuestions = this.originalChosenPublicCourseAssignmentQuestions.find(question => question.question_id === questionId)
           if (questionFromPublicCourseAssignmentQuestions) {
             this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
           }
           this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+          this.$bvModal.hide('modal-view-question')
         }
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
+    async addQuestionToAssignmentFromViewQuestion (questionId) {
+      console.log(this.publicCourseAssignmentQuestions)
+      let chosenQuestion = this.publicCourseAssignmentQuestions.find(question => question.question_id === questionId)
+      this.publicCourseAssignmentQuestions = this.publicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+      this.chosenPublicCourseAssignmentQuestions.push(chosenQuestion)
+      let success = await this.updateAssignmentWithChosenQuestions('single')
+      if (success){
+        this.$noty.success('The question has been added to the assignment.')
+      }
+    },
     async updateAssignmentWithChosenQuestions (type) {
+      let success = true
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/remix-assignment-with-chosen-questions`,
           {
@@ -492,10 +600,14 @@ export default {
           })
         if (data.type === 'error') {
           this.$noty.error(data.message)
+          success = false
         }
       } catch (error) {
         this.$noty.error(error.message)
+        success = false
       }
+      this.$bvModal.hide('modal-view-question')
+      return success
     },
     async addAllQuestions () {
       for (let i = 0; i < this.publicCourseAssignmentQuestions.length; i++) {
@@ -514,7 +626,8 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async viewQuestion (questionId) {
+    async viewQuestion (questionId, action) {
+      this.viewQuestionAction = action
       try {
         this.$bvModal.show('modal-view-question')
         this.loadingQuestion = true
@@ -546,17 +659,17 @@ export default {
       }
     },
     async getPublicCourseAssignments (courseId) {
+      this.publicCourseAssignment = null
+      this.publicCourseAssignmentsOptions = [{ value: null, text: 'Please select an assignment' }]
       if (courseId) {
         try {
           const { data } = await axios.get(`/api/assignments/courses/public/${courseId}/names`)
           if (data.assignments) {
-            this.publicCourseAssignmentsOptions = [{ value: null, text: 'Please select an assignment' }]
             for (let i = 0; i < data.assignments.length; i++) {
               let assignment = { value: data.assignments[i].id, text: data.assignments[i].name }
               this.publicCourseAssignmentsOptions.push(assignment)
             }
           }
-          this.publicCourseAssignment = null
         } catch (error) {
           this.$noty.error(error.message)
         }
@@ -565,17 +678,18 @@ export default {
         this.publicCourseAssignmentsOptions = [{ value: null, text: 'There are no assignments available' }]
       }
     },
-    async getPublicCourses () {
+    async getPublicCourses (instructor) {
+      this.publicCoursesOptions = [{ value: null, text: 'Any course' }]
+      this.publicCourse = null
       try {
-        const { data } = await axios.get('/api/courses/public')
-        console.log(data)
+        const { data } = instructor
+          ? await axios.get(`/api/courses/public/${instructor}`)
+          : await axios.get(`/api/courses/public`)
         if (data.public_courses) {
           for (let i = 0; i < data.public_courses.length; i++) {
             let publicCourse = { value: data.public_courses[i].id, text: data.public_courses[i].name }
             this.publicCoursesOptions.push(publicCourse)
           }
-        } else {
-          this.publicCoursesOptions = [{ value: null, text: 'There are no public courses available' }]
         }
       } catch (error) {
         this.$noty.error(error.message)

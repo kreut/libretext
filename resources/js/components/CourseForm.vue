@@ -8,6 +8,23 @@
     </b-tooltip>
     <b-form ref="form">
       <b-form-group
+        id="school"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="School"
+        label-for="school"
+      >
+        <vue-bootstrap-typeahead
+          v-model="form.school"
+          :data="schools"
+          ref="schoolTypeAhead"
+          placeholder="Not Specified"
+          :class="{ 'is-invalid': form.errors.has('school') }"
+          @keydown="form.errors.clear('school')"
+        />
+        <has-error :form="form" field="school"/>
+      </b-form-group>
+      <b-form-group
         id="name"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -21,7 +38,7 @@
           :class="{ 'is-invalid': form.errors.has('name') }"
           @keydown="form.errors.clear('name')"
         />
-        <has-error :form="form" field="name" />
+        <has-error :form="form" field="name"/>
       </b-form-group>
       <div v-if="'section' in form">
         <b-form-group
@@ -38,7 +55,7 @@
             :class="{ 'is-invalid': form.errors.has('section') }"
             @keydown="form.errors.clear('section')"
           />
-          <has-error :form="form" field="section" />
+          <has-error :form="form" field="section"/>
         </b-form-group>
       </div>
       <b-form-group
@@ -54,7 +71,7 @@
           :class="{ 'is-invalid': form.errors.has('start_date') }"
           @shown="form.errors.clear('start_date')"
         />
-        <has-error :form="form" field="start_date" />
+        <has-error :form="form" field="start_date"/>
       </b-form-group>
 
       <b-form-group
@@ -72,7 +89,7 @@
           @click="form.errors.clear('end_date')"
           @shown="form.errors.clear('end_date')"
         />
-        <has-error :form="form" field="end_date" />
+        <has-error :form="form" field="end_date"/>
       </b-form-group>
       <b-form-group
         id="public"
@@ -83,7 +100,7 @@
         <template slot="label">
           Public
           <span id="public_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
         <b-form-radio-group v-model="form.public" stacked>
           <b-form-radio name="public" value="1">
@@ -100,15 +117,42 @@
 </template>
 
 <script>
+import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
+import axios from 'axios'
+
 const now = new Date()
 export default {
   name: 'CourseForm',
+  components: {
+    VueBootstrapTypeahead
+  },
   props: {
     form: { type: Object, default: null }
   },
   data: () => ({
+    schools: [],
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate())
-  })
+  }),
+  mounted () {
+    if (this.form.school) {
+      this.$refs.schoolTypeAhead.inputValue = this.form.school
+    }
+    this.getSchools()
+  },
+  methods: {
+    async getSchools () {
+      try {
+        const { data } = await axios.get(`/api/schools`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.schools = data.schools
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    }
+  }
 }
 </script>
 
