@@ -546,17 +546,17 @@ export default {
       }
     },
     async getPublicCourseAssignments (courseId) {
+      this.publicCourseAssignment = null
+      this.publicCourseAssignmentsOptions = [{ value: null, text: 'Please select an assignment' }]
       if (courseId) {
         try {
           const { data } = await axios.get(`/api/assignments/courses/public/${courseId}/names`)
           if (data.assignments) {
-            this.publicCourseAssignmentsOptions = [{ value: null, text: 'Please select an assignment' }]
             for (let i = 0; i < data.assignments.length; i++) {
               let assignment = { value: data.assignments[i].id, text: data.assignments[i].name }
               this.publicCourseAssignmentsOptions.push(assignment)
             }
           }
-          this.publicCourseAssignment = null
         } catch (error) {
           this.$noty.error(error.message)
         }
