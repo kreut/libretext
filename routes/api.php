@@ -70,6 +70,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/user/login-as', 'Auth\UserController@loginAs');
     Route::post('/user/login-as-student-in-course', 'Auth\UserController@loginAsStudentInCourse');
     Route::get('/user/get-session', 'Auth\UserController@getSession');
+    Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
 
@@ -91,9 +92,13 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/assign-to-groups/{course}', 'AssignToGroupController@assignToGroups');
 
+    Route::get('/schools', 'SchoolController@index');
+
+
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
-    Route::get('/courses/public', 'CourseController@getPublicCourses');
+    Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::post('/courses/import/{course}', 'CourseController@import');
 

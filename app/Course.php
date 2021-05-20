@@ -13,7 +13,7 @@ class Course extends Model
      *
      * @var array
      */
-    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown', 'public'];
+    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown', 'public','school_id'];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
@@ -21,6 +21,10 @@ class Course extends Model
     public function scores()
     {
         return $this->hasManyThrough('App\Score', 'App\Assignment');
+    }
+
+    public function school() {
+        return $this->belongsTo('App\School');
     }
 
     public function extraCredits()

@@ -38,7 +38,7 @@ class AssignmentController extends Controller
     use S3;
 
 
-    public function getAssignmentNamesForPublicCourse(Course $course)
+    public function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('getAssignmentNamesForPublicCourse', $course);
@@ -46,10 +46,18 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $assignment_groups = $assignmentGroup->assignmentGroupsByCourse($course->id);
+
+
+
         try {
             $delayed_assignments = [];
             foreach ($course->assignments as $assignment) {
                 if ($assignment->assessment_type == 'delayed') {
+
+                    $assignment->name = strpos($assignment->name,$assignment_groups[$assignment->id]) !== false
+                        ? $assignment->name
+                        : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                     $delayed_assignments[] = $assignment;
                 }
             }
