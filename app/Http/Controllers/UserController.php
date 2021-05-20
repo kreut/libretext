@@ -19,7 +19,7 @@ class UserController extends Controller
         $school_id = $request->name
                     ? $school->where('name', $request->name)
                         ->first()
-                        ->pluck('id')
+                        ->id
                     : 0;
 
         try {
@@ -35,7 +35,6 @@ class UserController extends Controller
                 ->orderBy('users.last_name')
                 ->select('user_id', DB::raw("CONCAT(first_name, ' ',last_name) AS name"))
                 ->get();
-
 
             $response['type'] = 'success';
             $response['instructors'] = $instructors;

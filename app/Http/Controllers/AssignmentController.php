@@ -54,8 +54,10 @@ class AssignmentController extends Controller
             $delayed_assignments = [];
             foreach ($course->assignments as $assignment) {
                 if ($assignment->assessment_type == 'delayed') {
-                    $assignment_group = $assignment_groups[$assignment->id];
-                    $assignment->name = "$assignment->name ($assignment_group)";
+
+                    $assignment->name = strpos($assignment->name,$assignment_groups[$assignment->id]) !== false
+                        ? $assignment->name
+                        : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                     $delayed_assignments[] = $assignment;
                 }
             }

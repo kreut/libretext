@@ -33,6 +33,31 @@ class CourseController extends Controller
     use DateFormatter;
 
 
+    public function getLastSchool(Request $request, School $school)
+    {
+        $response['type'] = 'error';
+        try {
+            $school = DB::table('courses')
+                ->join('schools', 'courses.school_id', '=', 'schools.id')
+                ->where('user_id', $request->user()->id)
+                ->orderBy('courses.created_at', 'desc')
+                ->first();
+            $school_name = $school->school_id === 1
+                ? ''
+                : $school->name;
+            $response['last_school_name'] = $school_name;
+            $response['last_school_id'] = $school->school_id;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get your last school.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
     public function getPublicCourses(Course $course, User $instructor = null)
     {
 
@@ -121,7 +146,8 @@ class CourseController extends Controller
                     AssignmentSyncQuestion $assignmentSyncQuestion,
                     Enrollment $enrollment,
                     FinalGrade $finalGrade,
-                    Section $section)
+                    Section $section,
+                    School $school)
     {
         $response['type'] = 'error';
 
@@ -131,11 +157,13 @@ class CourseController extends Controller
             return $response;
         }
 
+        $school = $this->getLastSchool($request, $school);
         try {
             DB::beginTransaction();
             $imported_course = $course->replicate();
             $imported_course->name = "$imported_course->name Import";
             $imported_course->shown = 0;
+            $imported_course->school_id = $school['last_school_id'];
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
@@ -506,12 +534,15 @@ class CourseController extends Controller
         }
         return $response;
     }
-public function getSchoolIdFromRequest(Request $request, School $school){
 
-    return $request->school
-        ? $school->where('name', $request->school)->first()->id
-        : $school->first()->id;
-}
+    public function getSchoolIdFromRequest(Request $request, School $school)
+    {
+
+        return $request->school
+            ? $school->where('name', $request->school)->first()->id
+            : $school->first()->id;
+    }
+
     /**
      *
      * Update the specified resource in storage.

@@ -140,7 +140,7 @@ class QuestionController extends Controller
                             'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                             'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                            'open_ended_text_editor' =>  $assignment->default_open_ended_text_editor]);
+                            'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
                     array_push($library_page_ids_added_to_assignment, $library_text_page_id);
                 } else {
                     array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
@@ -188,7 +188,7 @@ class QuestionController extends Controller
     {
         $response = $library;
         foreach ($libraries as $library_text => $value) {
-            if ($value === $library){
+            if ($value === $library) {
                 $response = $library_text;
             }
         }
@@ -251,15 +251,23 @@ class QuestionController extends Controller
         }
         $question = [];
         $response['type'] = 'error';
-        $question_info = Question::select('id', 'page_id', 'technology_iframe', 'non_technology','library')
+        $question_info = Question::select('*')
             ->where('id', $Question->id)->first();
 
         if ($question_info) {
+
             $question['id'] = $question_info['id'];
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
             $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
             $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question['iframe_id']);
+            $question['technology_iframe'] = str_replace('width: 1px', 'height:400px', $question['technology_iframe']);
+            if ($question_info['technology'] === 'webwork') {
+                //since it's the instructor, show the answer stuff
+                $question['technology_iframe'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
+                    '',
+                    $question['technology_iframe']);
+            }
             $response['type'] = 'success';
             $response['question'] = $question;
         } else {

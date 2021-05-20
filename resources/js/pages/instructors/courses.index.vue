@@ -14,7 +14,7 @@
         placeholder="Enter a course or instructor name"
       />
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses" />
+    <PageTitle v-if="canViewCourses" title="My Courses"/>
     <b-container v-if="canViewCourses && user && user.role === 2">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -36,7 +36,7 @@
       @ok="submitCourseInfo"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm" />
+      <CourseForm :form="newCourseForm"/>
     </b-modal>
     <b-modal
       id="modal-delete-course"
@@ -86,7 +86,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code" />
+          <has-error :form="graderForm" field="access_code"/>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -99,7 +99,7 @@
         <template v-slot:head(shown)="data">
           Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
                                                                    icon="question-circle"
-          /></span>
+        /></span>
         </template>
         <template v-slot:cell(name)="data">
           <div class="mb-0">
@@ -135,7 +135,7 @@
               >
                 Gradebook
               </b-tooltip>
-              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
+              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet"/></span>
             <span v-if="user && user.role === 2">
 
               <span class="pr-1" @click="getProperties(data.item)">
@@ -144,7 +144,7 @@
                 >
                   Course Properties
                 </b-tooltip>
-                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
+                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear"/>
               </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"
@@ -218,6 +218,7 @@ export default {
   }),
   mounted () {
     this.getCourses()
+    this.getLastCourseSchool()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.fields = (this.user.role === 2)
@@ -226,35 +227,48 @@ export default {
         label: 'Course',
         sortable: true
       },
-      'shown',
-      {
-        key: 'start_date',
-        sortable: true
-      },
-      {
-        key: 'end_date',
-        sortable: true
-      },
-      'actions'
+        'shown',
+        {
+          key: 'start_date',
+          sortable: true
+        },
+        {
+          key: 'end_date',
+          sortable: true
+        },
+        'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-      'sections',
-      {
-        key: 'start_date',
-        sortable: true
-      },
-      {
-        key: 'end_date',
-        sortable: true
-      },
-      'actions'
+        'sections',
+        {
+          key: 'start_date',
+          sortable: true
+        },
+        {
+          key: 'end_date',
+          sortable: true
+        },
+        'actions'
       ]
   },
   methods: {
+    async getLastCourseSchool () {
+      try {
+        const { data } = await axios.get(`/api/courses/last-school`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.newCourseForm.school = data.last_school_name
+
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async initImportCourse () {
       try {
         const { data } = await axios.get(`/api/courses/importable`)

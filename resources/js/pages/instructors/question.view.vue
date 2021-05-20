@@ -37,10 +37,10 @@ export default {
     }
     h5pResizer()
     this.questionId = this.$route.params.questionId
-    await this.getSelectedQuestions(this.questionId)
+    await this.getSelectedQuestion(this.questionId)
   },
   methods: {
-    async getSelectedQuestions (questionId) {
+    async getSelectedQuestion (questionId) {
       try {
         const { data } = await axios.get(`/api/questions/${questionId}`)
         console.log(data)
