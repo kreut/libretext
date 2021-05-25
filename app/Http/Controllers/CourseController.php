@@ -38,18 +38,20 @@ class CourseController extends Controller
         $response['type'] = 'error';
         try {
             $school_name = '';
+            $school_id = 1;
             if ($request->user()->role === 2) {
                 $school = DB::table('courses')
                     ->join('schools', 'courses.school_id', '=', 'schools.id')
                     ->where('user_id', $request->user()->id)
                     ->orderBy('courses.created_at', 'desc')
                     ->first();
-                $school_name = $school->school_id === 1
-                    ? ''
-                    : $school->name;
+                if ($school && ($school->school_id !== 1)) {
+                    $school_name = $school->name;
+                    $school_id = $school->school_id;
+                }
             }
             $response['last_school_name'] = $school_name;
-            $response['last_school_id'] = $school->school_id;
+            $response['last_school_id'] = $school_id;
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();
