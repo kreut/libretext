@@ -7,6 +7,7 @@ use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
 use App\Http\Requests\UpdateNode;
 use App\LearningTree;
+use App\LearningTreeHistory;
 use App\Libretext;
 use App\Question;
 use Illuminate\Http\Request;
@@ -132,10 +133,13 @@ class LearningTreeController extends Controller
     /**
      * @param Request $request
      * @param LearningTree $learningTree
+     * @param LearningTreeHistory $learningTreeHistory
      * @return array
      * @throws Exception
      */
-    public function updateLearningTree(Request $request, LearningTree $learningTree)
+    public function updateLearningTree(Request $request,
+                                       LearningTree $learningTree,
+                                       LearningTreeHistory $learningTreeHistory)
     {
 
         $response['type'] = 'error';
@@ -157,13 +161,16 @@ class LearningTreeController extends Controller
         } else {
             try {
                 $learningTree->learning_tree = $learning_tree_parsed;
-
+                DB::beginTransaction();
                 $learningTree->save();
+                $this->saveLearningTreeToHistory($learningTree, $learningTreeHistory);
                 $response['type'] = 'success';
                 $response['message'] = "The learning tree has been saved.";
                 $response['no_change'] = $no_change;
-
+                $response['can_undo'] = $learningTreeHistory->where('learning_tree_id',$learningTree->id)->get()->count() >1;
+                DB::commit();
             } catch (Exception $e) {
+                DB::rollback();
                 $h = new Handler(app());
                 $h->report($e);
                 $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
@@ -171,6 +178,13 @@ class LearningTreeController extends Controller
         }
         return $response;
 
+    }
+
+    public function saveLearningTreeToHistory(LearningTree $learningTree, LearningTreeHistory $learningTreeHistory)
+    {
+        $learningTreeHistory->learning_tree_id = $learningTree->id;
+        $learningTreeHistory->learning_tree = $learningTree->learning_tree;
+        $learningTreeHistory->save();
     }
 
     /**
@@ -210,7 +224,16 @@ class LearningTreeController extends Controller
 
     }
 
-    public function storeLearningTreeInfo(StoreLearningTreeInfo $request, LearningTree $learningTree)
+    /**
+     * @param StoreLearningTreeInfo $request
+     * @param LearningTree $learningTree
+     * @param LearningTreeHistory $learningTreeHistory
+     * @return array
+     * @throws Exception
+     */
+    public function storeLearningTreeInfo(StoreLearningTreeInfo $request,
+                                          LearningTree $learningTree,
+                                          LearningTreeHistory $learningTreeHistory): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -242,15 +265,20 @@ class LearningTreeController extends Controller
 
             $learningTree->user_id = Auth::user()->id;
 
-            $shortened_title = strlen($validated_node['title']) < 29 ? $validated_node['title'] : substr($validated_node['title'],0,29) .  '...';
-            $learningTree->learning_tree = $this->getRootNode( $shortened_title , $data['library'], $request->text, $request->color, $data['page_id']);
+            $shortened_title = strlen($validated_node['title']) < 29 ? $validated_node['title'] : substr($validated_node['title'], 0, 29) . '...';
+            DB::beginTransaction();
+            $learningTree->learning_tree = $this->getRootNode($shortened_title, $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();
+            $this->saveLearningTreeToHistory($learningTree, $learningTreeHistory);
+
 
             $response['type'] = 'success';
             $response['learning_tree'] = $learningTree->learning_tree;
             $response['message'] = "The Learning Tree has been created.";
             $response['learning_tree_id'] = $learningTree->id;
+            DB::commit();
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error saving the learning tree.  Please try again or contact us for assistance.";
@@ -302,7 +330,9 @@ EOT;
         return $matches[0] ?? 'Could not find Page Id';
     }
 
-    public function show(Request $request, LearningTree $learningTree)
+    public function show(Request $request,
+                         LearningTree $learningTree,
+    LearningTreeHistory $learningTreeHistory)
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -314,7 +344,7 @@ EOT;
             $response['description'] = $learningTree->description;
             $response['library'] = $this->getNodeLibraryTextFromLearningTree($learningTree->learning_tree);
             $response['page_id'] = $this->getNodePageIdFromLearningTree($learningTree->learning_tree);
-
+            $response['can_undo'] = $learningTreeHistory->where('learning_tree_id',$learningTree->id)->get()->count() >1;
 
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -335,8 +365,10 @@ EOT;
     /**
      * Display the specified resource.
      *
-     * @param \App\LearningTree $learningTree
-     * @return \Illuminate\Http\Response
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
      */
     public function showByQuestion(Request $request, Question $question)
     {
@@ -370,10 +402,13 @@ EOT;
     /**
      * @param Request $request
      * @param LearningTree $learningTree
+     * @param LearningTreeHistory $learningTreeHistory
      * @return array
      * @throws Exception
      */
-    public function destroy(Request $request, LearningTree $learningTree)
+    public function destroy(Request $request,
+                            LearningTree $learningTree,
+                            LearningTreeHistory $learningTreeHistory)
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -406,7 +441,7 @@ EOT;
                         : "It looks like another instructor is using this Learning Tree so you won't be able to delete it.";
                 return $response;
             }
-
+            $learningTree->learningTreeHistories()->delete();
             $learningTree->delete();
             $response['type'] = 'info';
             $response['message'] = "The Learning Tree has been deleted.";

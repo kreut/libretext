@@ -196,6 +196,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/learning-trees/{learningTree}/create-learning-tree-from-template', 'LearningTreeController@createLearningTreeFromTemplate');
 
 
+    Route::patch('/learning-tree-histories/{learningTree}', 'LearningTreeHistoryController@updateLearningTreeFromHistory');
+
+
+
     Route::post('/learning-trees/learning-tree-exists', 'LearningTreeController@learningTreeExists');
     Route::delete('/learning-trees/{learningTree}', 'LearningTreeController@destroy');
     Route::patch('/learning-trees/nodes/{learningTree}', 'LearningTreeController@updateNode');

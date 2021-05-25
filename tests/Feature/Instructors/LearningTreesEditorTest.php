@@ -2,12 +2,35 @@
 
 namespace Tests\Feature\Instructors;
 
+use App\LearningTreeHistory;
 use Tests\TestCase;
 use App\User;
 use App\LearningTree;
 
 class LearningTreesEditorTest extends TestCase
 {
+
+    private $user_2;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $learning_tree;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $learning_tree_history;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $student_user;
+    /**
+     * @var array
+     */
+    private $learning_tree_info;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $user;
 
     public function setup(): void
     {
@@ -16,6 +39,10 @@ class LearningTreesEditorTest extends TestCase
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
+        $this->learning_tree_history = factory(LearningTreeHistory::class)->create([
+            'learning_tree_id' => $this->learning_tree->id,
+            'learning_tree' => $this->learning_tree->learning_tree
+        ]);
         //create a student and enroll in the class
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
@@ -27,6 +54,23 @@ class LearningTreesEditorTest extends TestCase
             'color' => 'green'];
     }
 
+    /** @test */
+
+    public function non_owner_cannot_undo_learning_tree()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/learning-tree-histories/{$this->learning_tree->id}")
+            ->assertJson(['message' => 'You are not allowed to update this Learning Tree.']);
+
+    }
+
+    /** @test */
+
+    public function owner_can_undo_learning_tree()
+    {
+        $this->actingAs($this->user)->patchJson("/api/learning-tree-histories/{$this->learning_tree->id}")
+            ->assertJson(['type' => 'info']);
+
+    }
 
     /** @test */
     public function non_owner_cannot_update_a_node()
@@ -57,7 +101,7 @@ class LearningTreesEditorTest extends TestCase
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
-                'type'=> 'success'
+                'type' => 'success'
             ]);
 
     }
@@ -117,7 +161,6 @@ class LearningTreesEditorTest extends TestCase
                 'message' => 'You are not allowed to update this Learning Tree.',
             ]);
     }
-
 
 
     /** @test */

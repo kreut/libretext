@@ -162,7 +162,6 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 
 export default {
-  copyIcon: faCopy,
   middleware: 'auth',
   components: {
     Loading,

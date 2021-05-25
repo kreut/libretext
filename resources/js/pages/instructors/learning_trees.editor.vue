@@ -21,7 +21,7 @@
                            :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                            @change="nodeForm.errors.clear('library')"
             />
-            <has-error :form="nodeForm" field="library" />
+            <has-error :form="nodeForm" field="library"/>
           </div>
         </b-form-group>
         <b-form-group>
@@ -40,7 +40,7 @@
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id" />
+            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
         </b-form-group>
       </b-form>
@@ -55,7 +55,8 @@
       @hidden="resetLearningTreeDetailsModal"
     >
       <p v-if="learningTreeId" class="font-italic">
-        The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }}, a page id of {{ assessmentPageId }} and comes from the
+        The assessment question for the root node of this learning tree has a learning tree id of {{ learningTreeId }},
+        a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
 
@@ -74,7 +75,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -91,7 +92,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
         <b-form-group
           v-if="!learningTreeId"
@@ -107,7 +108,7 @@
                            :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
                            @change="learningTreeForm.errors.clear('library')"
             />
-            <has-error :form="learningTreeForm" field="library" />
+            <has-error :form="learningTreeForm" field="library"/>
           </div>
         </b-form-group>
         <b-form-group>
@@ -127,7 +128,7 @@
               :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
               @keydown="learningTreeForm.errors.clear('page_id')"
             />
-            <has-error :form="learningTreeForm" field="page_id" />
+            <has-error :form="learningTreeForm" field="page_id"/>
           </b-form-group>
         </b-form-group>
       </b-form>
@@ -156,26 +157,35 @@
         </b-button>
         <div id="search">
           <div class="mb-2 mr-2">
-            <b-form-select v-model="library" :options="libraryOptions" class="mt-3" />
+            <b-form-select v-model="library" :options="libraryOptions" class="mt-3"/>
           </div>
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id" />
+            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"/>
             <b-button id="add"
-                      class="ml-2"
+                      class="ml-2 mr-2"
                       variant="secondary"
+                      size="sm"
                       :disabled="learningTreeId === 0"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               Get Node
+            </b-button>
+            <b-button size="sm"
+                      variant="outline-info"
+                      class="mr-2"
+                      :disabled="!canUndo"
+                      @click="undo()"
+            >
+              <font-awesome-icon :icon="undoIcon"/>
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
 
-    <div id="canvas" />
+    <div id="canvas"/>
   </div>
 </template>
 
@@ -187,13 +197,21 @@ import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
 import libraries from '~/helpers/Libraries'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faUndo } from '@fortawesome/free-solid-svg-icons'
+import Loading from 'vue-loading-overlay'
 
 export default {
 
   metaInfo () {
     return { title: this.$t('home') }
   },
+  components: {
+    FontAwesomeIcon
+  },
   data: () => ({
+    canUndo: false,
+    undoIcon: faUndo,
     nodeForm: new Form({
       library: null,
       page_id: ''
@@ -280,10 +298,10 @@ export default {
       let body = isAssessmentNode ? 'The original question'
         : `${blockynameContents}
 <span class="extra"></span></div>`
-      drag.innerHTML += `<div class='blockyleft'>
-<p class='blockyname' style="margin-bottom:0;">${body}</p></div>
-<div class='blockydiv'></div>
-<div class='blockyinfo'>${title}
+      drag.innerHTML += `<div class="blockyleft">
+<p class="blockyname" style="margin-bottom:0;">${body}</p></div>
+<div class="blockydiv"></div>
+<div class="blockyinfo">${title}
 </div>`
       return true
     }
@@ -354,6 +372,20 @@ export default {
     }
   },
   methods: {
+    async undo () {
+      try {
+        const { data } = await axios.patch(`/api/learning-tree-histories/${this.learningTreeId}`)
+        console.log(data)
+        if (data.type === 'success') {
+          window.location.href = `/instructors/learning-trees/editor/${this.learningTreeId}`
+        } else {
+          this.$noty[data.type](data.message)
+        }
+      } catch (error) {
+
+        this.$noty.error(error.message)
+      }
+    },
     openUpdateNodeModal (nodeToUpdate) {
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
@@ -472,7 +504,9 @@ export default {
     },
     setRemediationLibraryByAssessmentLibrary (assessmentLibrary) {
       for (let i = 0; i < this.libraryOptions.length; i++) {
-        if (this.libraryOptions[i].text === assessmentLibrary) { return this.libraryOptions[i].value }
+        if (this.libraryOptions[i].text === assessmentLibrary) {
+          return this.libraryOptions[i].value
+        }
       }
     },
     async updateLearningTreeInfo () {
@@ -495,6 +529,7 @@ export default {
         this.description = data.description
         this.assessmentPageId = data.page_id
         this.assessmentLibrary = data.library
+        this.canUndo = data.can_undo
         this.library = this.setRemediationLibraryByAssessmentLibrary(this.assessmentLibrary)
         if (data.learning_tree) {
           flowy.import(JSON.parse(data.learning_tree))
@@ -504,6 +539,7 @@ export default {
       }
     },
     async saveLearningTree () {
+
       try {
         const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
           'learning_tree': JSON.stringify(flowy.output())
@@ -517,6 +553,7 @@ export default {
           this.pageId = ''
         }
         this.$noty[data.type](data.message)
+        this.canUndo = data.can_undo
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -585,16 +622,16 @@ export default {
       let blockyNameHTML = this.getBlockyNameHTML(this.library, this.pageId)
 
       let newBlockElem = `<div class="blockelem create-flowy noselect" style="border: 1px solid ${this.libraryColors[this.library]}">
-        <input type="hidden" name='blockelemtype' class="blockelemtype" value="${blockElems.length + 2}">
-        <input type="hidden" name='page_id' value="${this.pageId}">
-        <input type="hidden" name='library' value="${this.library}">
+        <input type="hidden" name="blockelemtype" class="blockelemtype" value="${blockElems.length + 2}">
+        <input type="hidden" name="page_id" value="${this.pageId}">
+        <input type="hidden" name="library" value="${this.library}">
 <div class="grabme">
 </div>
       <div class="blockin">
         <div class="blockyleft">
           <p class="blockyname"> ${blockyNameHTML} </p>
         </div>
-          <div class='blockydiv'>
+          <div class="blockydiv">
           </div>
           <div class="blockin-info">
           <span class="blockdesc"><b-icon icon="pencil"></b-icon><span class="title">${this.shortenString(title)}</span>
