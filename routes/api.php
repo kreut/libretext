@@ -193,6 +193,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/learning-trees', 'LearningTreeController@index');
     Route::get('/learning-trees/{learningTree}', 'LearningTreeController@show');
+    Route::post('/learning-trees/import', 'LearningTreeController@import');
     Route::post('/learning-trees/{learningTree}/create-learning-tree-from-template', 'LearningTreeController@createLearningTreeFromTemplate');
 
 

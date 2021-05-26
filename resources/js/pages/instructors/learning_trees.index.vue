@@ -1,25 +1,88 @@
 <template>
   <div>
     <div v-if="canViewLearningTrees">
-      <PageTitle title="My Learning Trees" />
+      <PageTitle title="My Learning Trees"/>
       <div class="float-right mb-2">
-        <b-button v-b-modal.modal-assignment-details
-                  class="mr-1"
-                  size="sm"
-                  variant="primary"
-                  @click="createLearningTree"
+        <b-button
+          class="mr-1"
+          size="sm"
+          variant="primary"
+          @click="createLearningTree()"
         >
           Create Learning Tree
         </b-button>
+        <b-button
+          class="mr-1"
+          size="sm"
+          variant="info"
+          @click="importLearningTrees()"
+        >
+          Import Learning Trees
+        </b-button>
       </div>
+      <b-modal
+        id="modal-import-learning-tree"
+        ref="import-learning-tree-modal"
+        title="Import Learning Trees"
+      >
+        <b-form-group
+          id="learning_tree_imports"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label="Learning Tree Id(s)"
+          label-for="learning Tree Id(s)"
+        >
+          <b-form-row>
+            <b-col lg="5">
+              <b-form-input
+                id="learning_tree_imports"
+                v-model="learningTreeImportForm.learning_tree_ids"
+                type="text"
+                placeholder="1,2,3..."
+                :class="{ 'is-invalid': learningTreeImportForm.errors.has('learning_tree_ids') }"
+                @keydown="learningTreeImportForm.errors.clear('learning_tree_ids')"
+              />
+              <has-error :form="learningTreeImportForm" field="learning_tree_ids"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+
+
+        <template #modal-footer>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleImportLearningTrees"
+          >
+            Import
+          </b-button>
+        </template>
+      </b-modal>
+
       <b-modal
         id="modal-delete-learning-tree"
         ref="modal"
         title="Confirm Delete Learning Tree"
-        ok-title="Yes, delete learning tree!"
-        @ok="handleDeleteLearningTree"
       >
         <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-delete-learning-tree')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleDeleteLearningTree"
+          >
+            Yes, delete learning tree!
+          </b-button>
+        </template>
       </b-modal>
       <div v-if="hasLearningTrees">
         <b-table striped hover
@@ -44,7 +107,7 @@
                 Create Learning Tree From Template
               </b-tooltip>
               <span class="pr-1" @click="editLearningTree(data.item.id)">
-                <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil" />
+                <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil"/>
               </span>
               <span class="pr-1" @click="createLearningTreeFromTemplate(data.item.id)">
                 <b-icon :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
@@ -56,7 +119,9 @@
               >
                 Delete Learning Tree
               </b-tooltip>
-              <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash" @click="deleteLearningTree(data.item.id)" />
+              <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash"
+                      @click="deleteLearningTree(data.item.id)"
+              />
             </div>
           </template>
         </b-table>
@@ -79,10 +144,14 @@
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
+import Form from 'vform'
 
 export default {
   middleware: 'auth',
   data: () => ({
+    learningTreeImportForm: new Form({
+      learning_tree_ids: ''
+    }),
     fields: [
       'id',
       {
@@ -114,6 +183,24 @@ export default {
     initTooltips(this)
   },
   methods: {
+    async handleImportLearningTrees () {
+      try {
+        const { data } = await this.learningTreeImportForm.post(`/api/learning-trees/import`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          await this.getLearningTrees()
+          this.$bvModal.hide('modal-import-learning-tree')
+          this.learningTreeImportForm.learning_tree_ids = ''
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    importLearningTrees () {
+      this.$bvModal.show('modal-import-learning-tree')
+    },
     async createLearningTreeFromTemplate (learningTreeId) {
       try {
         const { data } = await axios.post(`/api/learning-trees/${learningTreeId}/create-learning-tree-from-template`)

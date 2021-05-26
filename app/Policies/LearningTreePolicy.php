@@ -26,6 +26,14 @@ class LearningTreePolicy
 
     }
 
+    public function import(User $user)
+    {
+        return ((int) $user->role === 2)
+            ? Response::allow()
+            : Response::deny('You are not allowed to import Learning Trees.');
+
+    }
+
     public function update(User $user, LearningTree $learningTree)
     {
         return ((int) $learningTree->user_id === $user->id)

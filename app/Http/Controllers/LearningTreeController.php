@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Http\Requests\ImportLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
 use App\Http\Requests\UpdateNode;
@@ -28,6 +29,56 @@ class LearningTreeController extends Controller
 /// if there is
 
 
+    }
+
+    /**
+     * @param ImportLearningTreesRequest $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
+     */
+    public function import(ImportLearningTreesRequest $request,
+                           LearningTree $learningTree): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('import', $learningTree);
+
+         if (!$authorized->allowed()) {
+             $response['message'] = $authorized->message();
+             return $response;
+         }
+
+        try {
+
+        $request->validated();
+
+
+            $learning_tree_ids = explode(',', $request->learning_tree_ids);
+            DB::beginTransaction();
+            foreach ($learning_tree_ids as $learning_tree_id) {
+                $learning_tree_to_import = LearningTree::find(trim($learning_tree_id))
+                    ->replicate()
+                    ->fill(['user_id' => $request->user()->id]);
+                $learning_tree_to_import->save();
+
+                $learningTreeHistory = new LearningTreeHistory();
+                $learningTreeHistory->learning_tree =  $learning_tree_to_import->learning_tree;
+                $learningTreeHistory->learning_tree_id = $learning_tree_to_import->id;
+                $learningTreeHistory->save();
+
+            }
+            $plural = str_contains($request->learning_tree_ids,',') ? "s have been" : ' was';
+            $response['type'] = 'success';
+            $response['message'] = "The Learning Tree$plural imported.";
+
+            DB::commit();
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error importing the learning trees.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     public function updateNode(UpdateNode $request, LearningTree $learningTree)
@@ -62,7 +113,6 @@ class LearningTreeController extends Controller
         }
         return $response;
 
-
     }
 
     public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree)
@@ -81,6 +131,13 @@ class LearningTreeController extends Controller
             $new_learning_tree = $learningTree->replicate();
             $new_learning_tree->title = $new_learning_tree->title . ' copy';
             $new_learning_tree->save();
+
+
+            $learningTreeHistory = new LearningTreeHistory();
+            $learningTreeHistory->learning_tree =  $new_learning_tree->learning_tree;
+            $learningTreeHistory->learning_tree_id = $new_learning_tree->id;
+            $learningTreeHistory->save();
+
             $response['message'] = "The Learning Tree has been created.";
             $response['type'] = 'success';
 
@@ -167,7 +224,7 @@ class LearningTreeController extends Controller
                 $response['type'] = 'success';
                 $response['message'] = "The learning tree has been saved.";
                 $response['no_change'] = $no_change;
-                $response['can_undo'] = $learningTreeHistory->where('learning_tree_id',$learningTree->id)->get()->count() >1;
+                $response['can_undo'] = $learningTreeHistory->where('learning_tree_id', $learningTree->id)->get()->count() > 1;
                 DB::commit();
             } catch (Exception $e) {
                 DB::rollback();
@@ -332,7 +389,7 @@ EOT;
 
     public function show(Request $request,
                          LearningTree $learningTree,
-    LearningTreeHistory $learningTreeHistory)
+                         LearningTreeHistory $learningTreeHistory)
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -344,7 +401,7 @@ EOT;
             $response['description'] = $learningTree->description;
             $response['library'] = $this->getNodeLibraryTextFromLearningTree($learningTree->learning_tree);
             $response['page_id'] = $this->getNodePageIdFromLearningTree($learningTree->learning_tree);
-            $response['can_undo'] = $learningTreeHistory->where('learning_tree_id',$learningTree->id)->get()->count() >1;
+            $response['can_undo'] = $learningTreeHistory->where('learning_tree_id', $learningTree->id)->get()->count() > 1;
 
         } catch (Exception $e) {
             $h = new Handler(app());

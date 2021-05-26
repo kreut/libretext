@@ -11,6 +11,26 @@ use App\LearningTree;
 class LearningTreesGetTest extends TestCase
 {
 
+
+    private $learning_tree;
+    private $user;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $student_user;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $assignment;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $course;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     */
+    private $user_2;
+
     public function setup(): void
     {
 
@@ -19,10 +39,43 @@ class LearningTreesGetTest extends TestCase
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->user_2 = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create();
+        $this->student_user->role = 3;
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
         //create a student and enroll in the class
+        
+    }
+
+    /** @test */
+
+    public function non_instructor_cannot_import_learning_trees()
+    {
+
+        $this->actingAs($this->student_user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => $this->learning_tree->id])
+            ->assertJson(['message' => 'You are not allowed to import Learning Trees.']);
 
     }
+
+    /** @test */
+    public function imported_learning_trees_must_be_valid()
+    {
+        $this->actingAs($this->user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => "{$this->learning_tree->id},badValue,3"])
+            ->assertJsonValidationErrors(['learning_tree_ids']);
+
+
+    }
+
+    /** @test */
+
+    public function instructor_can_import_learning_trees()
+    {
+
+        $this->actingAs($this->user)->postJson("/api/learning-trees/import", ['learning_tree_ids' => $this->learning_tree->id])
+            ->assertJson(['type' => 'success']);
+
+
+
+}
 
     /** @test */
     public function existing_learning_tree_can_be_retrieved()

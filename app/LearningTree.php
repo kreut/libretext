@@ -3,12 +3,16 @@
 namespace App;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class LearningTree extends Model
 {
-    protected $guarded = ['user_id'];
+    protected $guarded = [];
 
-    public function learningTreeHistories()
+    /**
+     * @return HasMany
+     */
+    public function learningTreeHistories(): HasMany
     {
        return $this->hasMany('App\LearningTreeHistory');
     }
