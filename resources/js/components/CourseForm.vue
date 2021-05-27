@@ -6,18 +6,29 @@
       Public courses can be imported by other instructors; non-public can only be imported by you. Note that student
       grades will never be made public nor copied from a course.
     </b-tooltip>
+    <b-tooltip target="school_tooltip"
+               delay="250"
+    >
+      Adapt keeps a comprehensive list of colleges and universities, using the school's full name.  So, to find UC-Davis, you
+      can start typing University of California-Los Angeles. In general, any word within your school's name will lead you to your school.  If you still can't
+      find it, then please contact us.
+    </b-tooltip>
     <b-form ref="form">
       <b-form-group
         id="school"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="School"
         label-for="school"
       >
+        <template slot="label">
+          School
+          <span id="school_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
         <vue-bootstrap-typeahead
+          ref="schoolTypeAhead"
           v-model="form.school"
           :data="schools"
-          ref="schoolTypeAhead"
           placeholder="Not Specified"
           :class="{ 'is-invalid': form.errors.has('school') }"
           @keydown="form.errors.clear('school')"

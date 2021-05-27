@@ -43,7 +43,7 @@ class LearningTreesGetTest extends TestCase
         $this->student_user->role = 3;
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
         //create a student and enroll in the class
-        
+
     }
 
     /** @test */

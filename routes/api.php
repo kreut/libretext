@@ -93,6 +93,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assign-to-groups/{course}', 'AssignToGroupController@assignToGroups');
 
     Route::get('/schools', 'SchoolController@index');
+    Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
 
 
     Route::get('/courses', 'CourseController@index');

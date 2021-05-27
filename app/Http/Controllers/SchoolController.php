@@ -29,4 +29,27 @@ class SchoolController extends Controller
         }
         return $response;
     }
+
+    public function getSchoolsWithPublicCourses(Request $request)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $response['schools'] = DB::table('schools')
+                ->join('courses','schools.id', '=','courses.school_id')
+                ->where('courses.public',1)
+                ->groupBy('schools.name')
+                ->select('schools.name')
+                ->get()
+                ->pluck('name');
+
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get a list of all schools with public courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 }

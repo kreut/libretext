@@ -102,18 +102,35 @@
                     id="school"
                     label-cols-sm="3"
                     label-cols-lg="2"
-                    label="School"
                     label-for="School"
                   >
+                    <template slot="label">
+                      School
+                      <span id="school_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+                    </template>
+                    <b-tooltip target="school_tooltip"
+                               delay="250"
+                    >
+                      Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So,
+                      to find UC-Davis, you
+                      can start typing University of California-Los Angeles. In general, any word within your school's
+                      name will lead you to your school. If you still can't
+                      find it, then please contact us.
+                    </b-tooltip>
                     <b-form-row>
                       <b-col lg="8">
                         <vue-bootstrap-typeahead
                           ref="queryTypeaheadSchools"
                           v-model="school"
                           :data="schools"
-                          placeholder="Any School"
+                          placeholder="Any School With Public Courses"
                           @hit="getInstructorsWithPublicCourses()"
                         />
+                      </b-col>
+
+                      <b-col>
+
                       </b-col>
                     </b-form-row>
                   </b-form-group>
@@ -541,7 +558,7 @@ export default {
     }
     this.assignmentId = this.$route.params.assignmentId
 
-    this.getSchools()
+    this.getSchoolsWithPublicCourses()
     this.getInstructorsWithPublicCourses()
     this.getPublicCourses()
     this.getDefaultImportLibrary()
@@ -549,9 +566,9 @@ export default {
     this.getCurrentAssignmentQuestions()
   },
   methods: {
-    async getSchools () {
+    async getSchoolsWithPublicCourses () {
       try {
-        const { data } = await axios.get(`/api/schools`)
+        const { data } = await axios.get(`/api/schools/public-courses`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
