@@ -78,10 +78,20 @@ class SubmissionController extends Controller
 
 
     public
-    function store(StoreSubmission $request, Assignment $Assignment, Score $score)
+    function store(StoreSubmission $request,
+                   Assignment $Assignment,
+                   Score $score,
+                    AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $Submission = new Submission();
-        return $Submission->store($request, new Submission(), $Assignment, $score, new LtiLaunch(), new LtiGradePassback(), new DataShop());
+        return $Submission->store($request,
+            new Submission(),
+            $Assignment,
+            $score,
+            new LtiLaunch(),
+            new LtiGradePassback(),
+            new DataShop(),
+            $assignmentSyncQuestion);
 
     }
 

@@ -49,13 +49,12 @@ class AssignmentController extends Controller
         $assignment_groups = $assignmentGroup->assignmentGroupsByCourse($course->id);
 
 
-
         try {
             $delayed_assignments = [];
             foreach ($course->assignments as $assignment) {
                 if ($assignment->assessment_type == 'delayed') {
 
-                    $assignment->name = strpos($assignment->name,$assignment_groups[$assignment->id]) !== false
+                    $assignment->name = strpos($assignment->name, $assignment_groups[$assignment->id]) !== false
                         ? $assignment->name
                         : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
                     $delayed_assignments[] = $assignment;
@@ -698,6 +697,7 @@ class AssignmentController extends Controller
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
+                    'combined_pdf' => $request->assessment_type === 'delayed' ? $data['combined_pdf'] : 0,
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
                     'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
                     'late_policy' => $data['late_policy'],
@@ -866,6 +866,8 @@ class AssignmentController extends Controller
     {
         if ($request->assessment_type !== 'delayed') {
             return null;
+        } elseif ($data['combined_pdf']) {
+            return null;
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return str_replace(' text', '', $data['default_open_ended_submission_type']);
         } else {
@@ -885,11 +887,12 @@ class AssignmentController extends Controller
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
             return 0;
+        } elseif ($data['combined_pdf']) {
+            return 'file';
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return 'text';
         } else {
             return $data['default_open_ended_submission_type'];
-
         }
     }
 
@@ -929,6 +932,7 @@ class AssignmentController extends Controller
                 'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
+                'combined_pdf' => $assignment->combined_pdf,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
@@ -1120,12 +1124,17 @@ class AssignmentController extends Controller
     /**
      * @param Assignment $assignment
      * @param AssignmentGroup $assignmentGroup
+     * @param SubmissionFile $submissionFile
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
 
     public
-    function getAssignmentSummary(Assignment $assignment, AssignmentGroup $assignmentGroup)
+    function getAssignmentSummary(Assignment $assignment,
+                                  AssignmentGroup $assignmentGroup,
+                                  SubmissionFile $submissionFile,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -1150,6 +1159,8 @@ class AssignmentController extends Controller
                     ? $assignment->number_of_randomized_assessments : "none"
             ];
             if (auth()->user()->role === 3) {
+                $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
+                $formatted_items['full_pdf_url'] = $submissionFile->getFullPdfUrl($assignment);
                 $assign_to_timing = $assignment->assignToTimingByUser();
                 $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, $assign_to_timing);
                 $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
@@ -1288,6 +1299,7 @@ class AssignmentController extends Controller
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             $data['number_of_randomized_assessments'] = $data['number_of_randomized_assessments'] ?? null;
+            $data['combined_pdf'] = $request->assessment_type === 'delayed' ? $data['combined_pdf'] : 0;
             unset($data['available_from_date']);
             unset($data['available_from_time']);
             unset($data['final_submission_deadline']);

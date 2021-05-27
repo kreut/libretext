@@ -24,6 +24,22 @@ class SubmissionFile extends Model
 
     protected $guarded = [];
 
+    /**
+     * @param $assignment
+     * @return string|null
+     */
+    public function getFullPdfUrl($assignment)
+    {
+
+        $full_pdf = $this->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->where('type', 'a')
+            ->first();
+        if (!$full_pdf) {
+            return null;
+        }
+        return $this->getTemporaryUrl($assignment->id, $full_pdf->submission);
+    }
 
     public
     function getAllInfo(User $user, Assignment $assignment, $solution, $open_ended_submission_type, $submission, $page, $question_id, $original_filename, $date_submitted, $file_feedback, $text_feedback, $date_graded, $file_submission_score, $question_submission_score = null)
@@ -78,7 +94,7 @@ class SubmissionFile extends Model
     }
 
     public
-    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, $question_id =0)
+    function getUserAndQuestionFileInfo(Assignment $assignment, string $grade_view, $users, $question_id = 0)
     {
 
         ///what if null?
@@ -98,15 +114,15 @@ class SubmissionFile extends Model
         $user_and_submission_file_info = [];
 
         $assignment_questions_where_student_can_upload_file = $question_id
-          ? DB::table('assignment_question')
+            ? DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question_id)
                 ->get()
-        : DB::table('assignment_question')
-        ->where('assignment_id', $assignment->id)
-        ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
-        ->orderBy('order')
-        ->get();
+            : DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
+                ->orderBy('order')
+                ->get();
 
         $question_ids = [];
 

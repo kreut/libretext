@@ -32,7 +32,8 @@ class Submission extends Model
                           Score $score,
                           LtiLaunch $ltiLaunch,
                           LtiGradePassback $ltiGradePassback,
-                          DataShop $dataShop)
+                          DataShop $dataShop,
+                          AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -125,7 +126,10 @@ class Submission extends Model
                 ->get();
             $learning_tree_percent_penalty = 0;
             $explored_learning_tree = 0;
-            $message = 'Question submission saved. Your score was updated.';
+            $message = 'Auto-graded submission saved.';
+            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
+                $message .= '  You have completed this assignment.';
+            }
 
             if ($submission) {
                 if ($assignment->assessment_type === 'real time') {

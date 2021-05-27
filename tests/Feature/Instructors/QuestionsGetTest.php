@@ -64,8 +64,8 @@ class QuestionsGetTest extends TestCase
             'question_id' => $this->question->id,
             'points' => 10,
             'order' => 1,
-            'open_ended_submission_type' => 'none'
-        ]);;
+            'open_ended_submission_type' => '0'
+        ]);
 
 
         $this->student_user = factory(User::class)->create();
@@ -91,6 +91,24 @@ class QuestionsGetTest extends TestCase
         ];
 
 
+    }
+
+    /** @test */
+
+    public function cannot_add_non_file_questions_to_a_compiled_assignment(){
+        $this->assignment->combined_pdf = 1;
+        $this->assignment->save();
+
+        DB::table('assignment_question')->where('question_id' ,$this->question->id)
+               ->where('assignment_id', $this->assignment_remixer->id)
+            ->update(['open_ended_submission_type'=>'audio']);
+        $data['chosen_questions'] = [
+            ['question_id' => $this->question->id,
+                'assignment_id' => $this->assignment_remixer->id]
+        ];
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
+            $data)
+            ->assertJson(['message' => "Your assignment is of type Combined PDF but you're trying to remix an open-ended type of audio.  If you would like to use this question, please edit your assignment and change Combined PDF to 'no'."]);
     }
 
     /** @test */

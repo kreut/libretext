@@ -13,8 +13,10 @@ use App\LearningTree;
 use App\Question;
 use App\RandomizedAssignmentQuestion;
 use App\Section;
+use App\SubmissionFile;
 use App\User;
 use App\Assignment;
+use Carbon\Carbon;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -106,7 +108,8 @@ class AssignmentsIndex2Test extends TestCase
             'instructions' => 'Some instructions',
             "number_of_randomized_assessments" => null,
             'notifications' => 1,
-            'assignment_group_id' => 1];
+            'assignment_group_id' => 1,
+            'combined_pdf' => 0];
 
         foreach ($this->assign_tos[0]['groups'] as $key => $group) {
             $group_info = ["groups_$key" => ['Everybody'],
@@ -135,6 +138,49 @@ class AssignmentsIndex2Test extends TestCase
         Enrollment::create(['course_id' => $this->course->id,
             'section_id' => $this->section_1->id,
             'user_id' => $this->student_user_2->id]);
+
+    }
+
+    /**  @test */
+
+    public function cannot_change_from_individual_to_compiled_or_vice_versa_if_there_are_any_submissions()
+    {
+
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['open_ended_submission_type' => 'file']);
+
+        SubmissionFile::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'type' => 'text',
+            'original_filename' => '',
+            'submission' => 'some.pdf',
+            'date_submitted' => Carbon::now()]);
+
+        $this->actingAs($this->user)
+            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-or-from-combined-pdf")
+            ->assertJson(['message' => "Since students have already submitted responses, you can't switch this option."]);
+
+    }
+
+
+
+
+    /**  @test */
+
+    public function cannot_change_from_individual_to_compiled_if_non_file_open_ended_assessment_exists()
+    {
+
+        DB::table('assignment_question')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['open_ended_submission_type' => 'audio']);
+
+        $this->actingAs($this->user)
+            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-combined-pdf")
+            ->assertJson(['message' => 'If you would like to use the compiled PDF feature, please update your assessments so that they are all of type "file" or "none".']);
 
     }
 

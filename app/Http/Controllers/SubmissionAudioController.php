@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentFile;
+use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\User;
 use \Exception;
@@ -36,7 +37,12 @@ class SubmissionAudioController extends Controller
 
     }
 
-    public function store(Request $request, Assignment $assignment, Question $question, SubmissionFile $submissionFile, Extension $extension)
+    public function store(Request $request,
+                          Assignment $assignment,
+                          Question $question,
+                          SubmissionFile $submissionFile,
+                          Extension $extension,
+                            AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $assignment_id = $assignment->id;
@@ -97,6 +103,10 @@ class SubmissionAudioController extends Controller
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
             $response['submission_file_url'] =$this->getTemporaryUrl($assignment_id, basename($submission));
             $response['message'] = "Your audio submission has been saved.";
+            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
+                $response['message'] .= ' You have completed the assignment.';
+
+            }
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
 
 
@@ -108,7 +118,7 @@ class SubmissionAudioController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to retrieve the audio submissions for this assignment.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to save this audio submission.  Please try again or contact us for assistance.";
         }
         return $response;
     }

@@ -4,13 +4,44 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
 
-    public function importAssignmentQuestionsAndLearningTrees( int $from_assignment_id, int $to_assignment_id)
+    public function completedAllAssignmentQuestions($assignment)
+    {
+        $num_technology_questions = $assignment->number_of_randomized_assignments
+            ?: $assignment->questions
+                ->pluck('technology')
+                ->where('technology', '<>', 'text')
+                ->count();
+        $num_non_technology_questions = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->where('open_ended_submission_type', '<>', '0')
+            ->get()
+            ->count();
+        $num_submitted_technology_questions = DB::table('submissions')
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->get()
+            ->count();
+        if ($num_technology_questions !== $num_submitted_technology_questions) {
+            return false;
+        }
+        $num_submitted_non_technology_questions = DB::table('submission_files')
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id', Auth::user()->id)
+            ->where('type', '<>', 'a')
+            ->get()
+            ->count();
+        return $num_submitted_non_technology_questions === $num_non_technology_questions;
+
+    }
+
+    public function importAssignmentQuestionsAndLearningTrees(int $from_assignment_id, int $to_assignment_id)
     {
         $assignment_questions = DB::table('assignment_question')
             ->where('assignment_id', $from_assignment_id)
@@ -34,17 +65,20 @@ class AssignmentSyncQuestion extends Model
             }
         }
     }
-    public function getNewQuestionOrder(Assignment $assignment){
+
+    public function getNewQuestionOrder(Assignment $assignment)
+    {
         $max_order = DB::table('assignment_question')
             ->where('assignment_id', $assignment->id)
             ->max('order');
-        return $max_order ? $max_order+1 : 1;
+        return $max_order ? $max_order + 1 : 1;
     }
+
     public function getQuestionCountByAssignmentIds(Collection $assignments)
     {
         $questions_count_by_assignment_id = [];
-        foreach ($assignments as $assignment){
-            if ($assignment->number_of_randomized_assessments){
+        foreach ($assignments as $assignment) {
+            if ($assignment->number_of_randomized_assessments) {
                 $questions_count_by_assignment_id[$assignment->id] = $assignment->number_of_randomized_assessments;
             } else {
                 $non_randomized_assignment_ids[] = $assignment->id;

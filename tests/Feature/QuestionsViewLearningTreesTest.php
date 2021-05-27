@@ -122,7 +122,7 @@ class QuestionsViewLearningTreesTest extends TestCase
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->correctSubmission)
-            ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
+            ->assertJson(['message' => 'Auto-graded submission saved.']);
     }
 
     /** @test */

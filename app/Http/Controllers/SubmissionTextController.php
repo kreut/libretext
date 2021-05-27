@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\Question;
 use App\Submission;
@@ -26,7 +27,8 @@ class SubmissionTextController extends Controller
     use DateFormatter;
 
 
-    public function destroy(Request $request, Assignment $assignment, Question $question, Submission $submission, SubmissionFile $submissionFile){
+    public function destroy(Request $request, Assignment $assignment, Question $question, Submission $submission, SubmissionFile $submissionFile)
+    {
         $response['type'] = 'error';
         $assignment = Assignment::find($assignment->id);
         $user = Auth::user();
@@ -38,9 +40,9 @@ class SubmissionTextController extends Controller
         try {
             //validator put here to be consistent with the file submissions
 
-            $submissionFile->where('user_id' , $user->id)
+            $submissionFile->where('user_id', $user->id)
                 ->where('assignment_id', $assignment->id)
-                ->where( 'question_id', $question->id)
+                ->where('question_id', $question->id)
                 ->delete();
 
             $response['type'] = 'success';
@@ -57,16 +59,20 @@ class SubmissionTextController extends Controller
         return $response;
 
 
-
     }
+
     /**
      * @param Request $request
      * @param SubmissionFile $submissionFile
      * @param Submission $submission
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @return array
      * @throws Exception
      */
-    public function store(Request $request, SubmissionFile $submissionFile, Submission $submission)
+    public function store(Request $request,
+                          SubmissionFile $submissionFile,
+                          Submission $submission,
+                          AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -128,6 +134,9 @@ class SubmissionTextController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = 'Your text submission was saved.';
+            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
+                $response['message'] .= "  You have completed this assignment.";
+            }
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
                 $user->time_zone, 'M d, Y g:i:s a');
             DB::commit();

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\AssignmentSyncQuestion;
 use App\Http\Requests\StoreSolutionText;
 use App\Question;
 use App\Solution;
@@ -56,7 +57,23 @@ class SolutionController extends Controller
         return $response;
 
     }
-    public function storeAudioSolutionFile(Request $request, Solution $Solution, Assignment $assignment, Question $question, Cutup $cutup)
+
+    /**
+     * @param Request $request
+     * @param Solution $Solution
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Cutup $cutup
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function storeAudioSolutionFile(Request $request,
+                                           Solution $Solution,
+                                           Assignment $assignment,
+                                           Question $question,
+                                           Cutup $cutup,
+                                        AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;
@@ -107,6 +124,9 @@ class SolutionController extends Controller
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'Your audio solution has been saved.';
+            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
+                $response['message'] .= "  You have completed the assignment.";
+            }
             $response['solution'] = $original_filename;
             $response['solution_file_url'] =\Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/$basename", now()->addMinutes(360));
 

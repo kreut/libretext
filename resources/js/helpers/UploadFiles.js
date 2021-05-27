@@ -24,15 +24,20 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
   if (data.type === 'error') {
     form.errors.set(type, data.message)
   } else {
-    noty.success(data.message)
     if (closeModal) {
       nextTick(() => {
         bvModal.hide(`modal-upload-file`)
       })
     }
+    if (this.user.role === 3) {
+      this.submissionDataMessage = data.message
+      this.$bvModal.show('modal-thumbs-up')
+    } else {
+      noty.success(data.message)
+    }
 
     console.log(data)
-    if (form.uploadLevel === 'assignment' && type === 'submission'){
+    if (form.uploadLevel === 'assignment' && type === 'submission') {
       this.fullPdfUrl = data.full_pdf_url
     }
     if (form.uploadLevel === 'question' && type === 'submission') {

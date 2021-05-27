@@ -1,5 +1,26 @@
 <template>
   <div style="min-height:400px; margin-bottom:100px">
+    <b-modal
+      id="modal-thumbs-down"
+      ref="modalThumbsUp"
+      hide-footer
+      size="lg"
+      title="Submission Not Accepted"
+    >
+      <b-alert variant="danger" :show="true">
+        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+      </b-alert>
+    </b-modal>
+    <b-modal
+      id="modal-thumbs-up"
+      ref="modalThumbsUp"
+      hide-footer
+      size="lg"
+      title="Submission Accepted"
+    >
+      <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="75"/>
+      <span class="font-italic" style="font-size: large" v-html="submissionDataMessage"/>
+    </b-modal>
     <div v-if="showInvalidAssignmentMessage">
       <b-alert show variant="info">
         <div class="font-weight-bold">
@@ -227,16 +248,12 @@
           <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
             solution at a time. If you upload a full PDF, students will be able to both download a full solution key
             and download solutions on a per question basis.</span>
-          <span v-if="user.role !==2">
-            Upload an entire PDF and let Adapt know where each question files submission start. Or, upload one
-            question file submission at a time, especially helpful if your submissions are in a non-PDF format.
-          </span>
         </p>
         <p v-if="user.role === 2">
           <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
         </p>
         <b-form ref="form">
-          <b-form-group>
+          <b-form-group v-show="user.role !== 3">
             <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment"
                           @click="showCurrentFullPDF = true"
             >
@@ -411,9 +428,11 @@
               <div class="help-block invalid-feedback">
                 {{ uploadFileForm.errors.get(uploadFileType) }}
               </div>
+
+
               <b-container>
-                <hr>
-                <b-row align-h="end">
+                <hr v-show="user.role !== 3">
+                <b-row :align-h="user.role === 3 ? 'start' : 'end'">
                   <div style="vertical-align: bottom">
                     <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
                         getSolutionUploadTypes()
@@ -427,11 +446,11 @@
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
-                    <b-button variant="primary" class="mr-3">
+                    <b-button variant="primary" size="sm" class="mr-3">
                       Select file
                     </b-button>
                   </file-upload>
-                  <b-button class="mr-2" @click="handleCancel">
+                  <b-button class="mr-2" size="sm" @click="handleCancel">
                     Cancel
                   </b-button>
                 </b-row>
@@ -736,13 +755,13 @@
             </div>
             <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
               <span class="font-italic">Open-Ended Submission Type:</span>
-              <b-form-select v-model="openEndedSubmissionType"
-                             :options="openEndedSubmissionTypeOptions"
-                             style="width:100px"
-                             class="mt-1"
-                             size="sm"
-                             @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
-              />
+                <b-form-select v-model="openEndedSubmissionType"
+                               :options="combinedPDF ? openEndedSubmissionCompiledPDFTypeOptions : openEndedSubmissionTypeOptions"
+                               style="width:100px"
+                               class="mt-1"
+                               size="sm"
+                               @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+                />
             </div>
             <div v-if="questionView !== 'basic'" class="p-2">
               <b-button
@@ -1104,19 +1123,29 @@
                                                                                           :assignment-name="name"
                       /><br>
                       </span>
-
                       <span v-if="assessmentType==='learning tree'">
                         <span class="font-weight-bold">Number of attempts: </span>
                         {{
                           questions[currentPage - 1].submission_count
                         }}<br></span>
-                      <span class="font-weight-bold">Last submitted:</span> {{
-                        questions[currentPage - 1].last_submitted
-                      }}<br>
 
-                      <span class="font-weight-bold">Last response:</span> {{
-                        questions[currentPage - 1].student_response
-                      }}<br>
+                      <span class="font-weight-bold">Submission:</span>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                      >{{
+                          questions[currentPage - 1].student_response
+                        }}</span> <br>
+                      <span class="font-weight-bold">Submitted At:</span>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                      >{{
+                          questions[currentPage - 1].last_submitted
+                        }} </span>
+                      <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'"
+                                         class="text-success"
+                                         :icon="thumbsUpIcon"
+                      />
+                      <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
                           questions[currentPage - 1].submission_score
@@ -1143,15 +1172,13 @@
                   <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
                     <b-card-text>
                       <span
-                        v-show="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                        v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
                       >
                         <b-alert variant="warning" show>
                           <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
                         </b-alert>
+                       <br>
                       </span>
-                      <span class="font-weight-bold">Solution: </span>
-                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
-                      <br>
                       <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                         <strong> Uploaded file:</strong>
                         <span v-if="questions[currentPage-1].submission_file_exists">
@@ -1162,11 +1189,23 @@
                             View Submission
                           </a>
                         </span>
-                        <span v-if="!questions[currentPage-1].submission_file_exists">
-                          No files have been uploaded
-                        </span><br>
+                        <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
+                          No files have been uploaded.</span><br>
                       </span>
-                      <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                      <strong>Submitted At:</strong>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
+                      >{{ questions[currentPage - 1].date_submitted }}</span>
+                      <font-awesome-icon v-show="questions[currentPage - 1].date_submitted !== 'N/A'"
+                                         class="text-success"
+                                         :icon="thumbsUpIcon"
+                      />
+                      <br>
+                      <div v-if="solutionsReleased">
+                      <span class="font-weight-bold">Solution: </span>
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
+                      </div>
+                      <br>
                       <span v-if="showScores">
                         <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
                       </span>
@@ -1196,12 +1235,20 @@
                       <div v-if="isOpenEndedFileSubmission">
                         <hr>
                         <div class="mt-2">
-                          <b-button variant="primary"
-                                    class="float-right mr-2"
-                                    @click="openUploadFileModal(questions[currentPage-1].id)"
-                          >
-                            Upload New File
-                          </b-button>
+                          <span v-show="!combinedPDF">
+                            <b-button variant="primary"
+                                      class="float-right mr-2"
+                                      size="sm"
+                                      @click="openUploadFileModal(questions[currentPage-1].id)"
+                            >
+                              Upload New File
+                            </b-button>
+                          </span>
+                          <span v-show="combinedPDF && user.role === 3" class="font-italic">
+                            Please upload your compiled PDF on the assignment's <router-link
+                            :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
+                          >summary page</router-link>.
+                          </span>
                         </div>
                       </div>
                       <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
@@ -1287,6 +1334,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 
 import Vue from 'vue'
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1309,6 +1357,8 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    thumbsUpIcon: faThumbsUp,
+    combinedPDF: false,
     fullPdfUrl: '',
     handledOK: false,
     fileUploadKey: 1,
@@ -1403,6 +1453,10 @@ export default {
       { value: 'plain text', text: 'Plain Text' },
       { value: 'file', text: 'File' },
       { value: 'audio', text: 'Audio' },
+      { value: 0, text: 'None' }
+    ],
+    openEndedSubmissionCompiledPDFTypeOptions: [
+      { value: 'file', text: 'PDF' },
       { value: 0, text: 'None' }
     ],
     showDidNotAnswerCorrectlyMessage: false,
@@ -1588,10 +1642,6 @@ export default {
     }
   },
   methods: {
-    getFullPdfUrlAtPage () {
-      return this.fullPdfUrl ? `${this.fullPdfUrl}#page=${this.questionSubmissionPageForm.page}`
-        : ''
-    },
     async setPageAsSubmission (questionId) {
       try {
         console.log(this.questionSubmissionPageForm)
@@ -1866,11 +1916,10 @@ export default {
     submittedAudioUpload (response) {
       let data = response.data
       this.openEndedSubmissionDataType = (data.type === 'success') ? 'success' : 'danger'
-      this.openEndedSubmissionDataMessage = data.message
-      this.showOpenEndedSubmissionMessage = true
-      setTimeout(() => {
-        this.showOpenEndedSubmissionMessage = false
-      }, 8000)
+      this.submissionDataMessage = data.message
+      let modalToShow = this.openEndedSubmissionDataType === 'success' ? 'modal-thumbs-up' : 'modal-thumbs-down'
+      this.$bvModal.show(modalToShow)
+
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
@@ -1974,11 +2023,13 @@ export default {
         this.textSubmissionForm.questionId = this.questions[this.currentPage - 1].id
         this.textSubmissionForm.assignmentId = this.assignmentId
         const { data } = await this.textSubmissionForm.post('/api/submission-texts')
-
-        this.$noty[data.type](data.message)
+        this.submissionDataMessage = data.message
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
           this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
+          this.$bvModal.show('modal-thumbs-up')
+        } else {
+          this.$bvModal.show('modal-thumbs-down')
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -2203,12 +2254,12 @@ export default {
 
       this.submissionDataMessage = data.message
       this.learningTreePercentPenalty = data.learning_tree_percent_penalty
-      this.showSubmissionMessage = true
-      setTimeout(() => {
-        this.showSubmissionMessage = false
-      }, 8000)
+
       if (this.submissionDataType !== 'danger') {
+        this.$bvModal.show('modal-thumbs-up')
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
+      } else {
+        this.$bvModal.show('modal-thumbs-down')
       }
     },
     getTechnology (body) {
@@ -2244,6 +2295,7 @@ export default {
     },
     async openUploadFileModal (questionId) {
       if (this.uploadFileType === 'submission') {
+        this.uploadLevel = 'question'
         try {
           const { data } = await axios.post('/api/submission-files/can-submit-file-submission', {
             assignmentId: this.assignmentId,
@@ -2282,13 +2334,7 @@ export default {
       this.processingFile = true
 
       try {
-        let response = await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
-        if (response === 'status code 413') {
-          let message = 'The maximum size allowed is 10MB.  If you\'re trying to upload a PDF, you can use an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
-          this.uploadFileForm.errors.set(this.uploadFileType, message)
-          this.processingFile = false
-          return false
-        }
+        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2549,6 +2595,7 @@ export default {
         this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
+        this.combinedPDF = !!assignment.combined_pdf
         this.openEndedSubmissionTypeAllowed = (assignment.assessment_type === 'delayed')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
         this.latePolicy = assignment.late_policy
@@ -2683,8 +2730,7 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: this.$t('home') }
   }

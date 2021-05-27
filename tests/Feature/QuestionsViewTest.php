@@ -111,6 +111,21 @@ class QuestionsViewTest extends TestCase
             ];
     }
 
+
+
+    /** @test */
+
+    public function completed_assignment_returns_true_when_all_submitted() {
+
+
+
+
+
+
+
+    }
+
+
     /** @test */
     public function non_owner_cannot_switch_open_ended_submission_type()
     {
@@ -825,12 +840,12 @@ class QuestionsViewTest extends TestCase
 
 
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
+            ->assertJson(['message' => 'Auto-graded submission saved.']);
 
         $this->assignment->late_policy = 'delayed';
         $this->assignment->save();
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson(['message' => 'Question submission saved. Your score was updated.']);
+            ->assertJson(['message' => 'Auto-graded submission saved.']);
 
     }
 
