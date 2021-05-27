@@ -83,10 +83,6 @@ class Handler extends ExceptionHandler
             exit;
         }
 
-        if (app()->environment('staging')) {
-            Log::error($error_info);
-        }
-
         if (app()->environment('local')) {
             Log::error($error_info);
         } else if (app()->environment('testing')) {

@@ -38,7 +38,7 @@
     >
       <b-container>
         <b-row>
-          <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275">
+          <img src="/assets/img/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275">
         </b-row>
         <b-row><h5>All Question Submissions Successfully Uploaded.</h5></b-row>
       </b-container>

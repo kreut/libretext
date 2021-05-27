@@ -10,7 +10,10 @@ mix
 
   .disableNotifications()
 
+const ASSET_URL = process.env.ASSET_URL ? process.env.ASSET_URL + '/' : ''
+
 if (mix.inProduction()) {
+  // console.log(process.env);
   mix
     // .extract() // Disabled until resolved: https://github.com/JeffreyWay/laravel-mix/issues/1889
     // .version() // Use `laravel-mix-versionhash` for the generating correct Laravel Mix manifest file.
@@ -18,12 +21,15 @@ if (mix.inProduction()) {
 } else {
   mix.sourceMaps()
 }
-const webpack = require('webpack');
+const webpack = require('webpack')
 
 mix.webpackConfig({
   plugins: [
     // new BundleAnalyzerPlugin()
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/) //Locales were causing a css error in app.css
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // Locales were causing a css error in app.css
+    new webpack.DefinePlugin({
+      'process.env.ASSET_PATH': JSON.stringify(ASSET_URL)
+    })
   ],
   resolve: {
     extensions: ['.js', '.json', '.vue'],
@@ -33,7 +39,8 @@ mix.webpackConfig({
   },
   output: {
     chunkFilename: 'dist/js/[chunkhash].js',
-    path: mix.config.hmr ? '/' : path.resolve(__dirname, './public/build')
+    path: mix.config.hmr ? '/' : path.resolve(__dirname, './public/build'),
+    publicPath: ASSET_URL
   }
 })
 
@@ -53,3 +60,7 @@ function publishAseets () {
   fs.copySync(path.join(publicDir, 'build', 'dist'), path.join(publicDir, 'dist'))
   fs.removeSync(path.join(publicDir, 'build'))
 }
+
+/* mix
+  .js("resources/js/app.js", "public/js")
+  .sass("resources/sass/app.scss", "public/css");*/

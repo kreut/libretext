@@ -19,6 +19,14 @@ import iFrameResize from 'iframe-resizer/js/iframeResizer'
 
 import VueMoment from 'vue-moment'
 
+import { asset } from '@codinglabs/laravel-asset'
+
+Vue.mixin({
+  methods: {
+    asset: asset
+  }
+})
+
 VueClipboard.config.autoSetContainer = true // add this line
 Vue.use(VueClipboard)
 Vue.component(VueCountdown.name, VueCountdown)

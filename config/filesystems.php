@@ -1,5 +1,24 @@
 <?php
 
+$s3 = env('APP_ENV') === 'staging'
+    ? [
+        'driver' => 's3',
+        'key' => env('AWS_STAGING_ACCESS_ID'),
+        'secret' => env('AWS_STAGING_SECRET'),
+        'region' => env('AWS_STAGING_DEFAULT_REGION'),
+        'bucket' => env('AWS_STAGING_BUCKET'),
+        'url' => env('AWS_URL'),
+    ]
+    : [
+        'driver' => 's3',
+        'key' => env('AWS_ACCESS_KEY_ID'),
+        'secret' => env('AWS_SECRET_ACCESS_KEY'),
+        'region' => env('AWS_DEFAULT_REGION'),
+        'bucket' => env('AWS_BUCKET'),
+        'url' => env('AWS_URL'),
+    ];
+
+
 return [
 
     /*
@@ -51,19 +70,10 @@ return [
         'public' => [
             'driver' => 'local',
             'root' => storage_path('app/public'),
-            'url' => env('APP_URL').'/storage',
+            'url' => env('APP_URL') . '/storage',
             'visibility' => 'public',
         ],
-
-        's3' => [
-            'driver' => 's3',
-            'key' => env('AWS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_DEFAULT_REGION'),
-            'bucket' => env('AWS_BUCKET'),
-            'url' => env('AWS_URL'),
-        ],
-
+        's3' => $s3,
         'backup_s3' => [
             'driver' => 's3',
             'key' => env('BACKUP_AWS_ACCESS_KEY_ID'),

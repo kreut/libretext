@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="basic-layout d-flex  justify-content-center bg"
-         :style="{backgroundImage:'url(/assets/img/splash.jpg)'}"
+         :style="{backgroundImage:'url(' + asset('assets/img/splash.jpg') + ')'}"
     >
       <div class="text-center">
         <div class="title font-italic text-white">
@@ -25,9 +25,9 @@ export default {
   },
 
   data: () => ({
+    backgroundUrl: '',
     title: window.config.appName
   }),
-
   computed: mapGetters({
     authenticated: 'auth/check'
   })

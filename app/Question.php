@@ -250,6 +250,14 @@ class Question extends Model
         }
 
         try {
+            $efs_dir = '/mnt/local/';
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
+
+            $file = "{$storage_path}{$library}/{$page_id}.php";
+
 
             if ($technology = $Libretext->getTechnologyFromBody($body)) {
                 $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
@@ -257,12 +265,12 @@ class Question extends Model
                 $non_technology = str_replace($technology_iframe, '', $body);
                 $has_non_technology = trim($non_technology) !== '';
 
+
                 if ($has_non_technology) {
                     //Frankenstein type problem
                     $non_technology = $Libretext->addExtras($non_technology,
                         ['glMol' => strpos($body, '/Molecules/GLmol/js/GLWrapper.js') !== false,
                             'MathJax' => false]);
-                    Storage::disk('local')->put("$library/{$page_id}.php", $non_technology);
                     Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
                 }
             } else {
@@ -273,8 +281,13 @@ class Question extends Model
                         'MathJax' => true
                     ]);
                 $technology = 'text';
-                Storage::disk('local')->put("$library/{$page_id}.php", $non_technology);
                 Storage::disk('s3')->put("$library/{$page_id}.php", $non_technology);
+            }
+
+
+            if ($cache_busting && file_exists($file)) {
+                //remove the local file
+                unlink($file);
             }
 
             $question = Question::updateOrCreate(

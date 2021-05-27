@@ -2,15 +2,15 @@
   <div>
     <div v-if="user.role === 2" class="font-italic">
       <b-row>
-        <b-col class="col-md-3" />
+        <b-col class="col-md-3"/>
         <h5>Title: {{ title }}</h5>
       </b-row>
       <b-row>
-        <b-col class="col-md-3" />
+        <b-col class="col-md-3"/>
         <h5>Description: {{ description }}</h5>
       </b-row>
     </div>
-    <div id="canvas" />
+    <div id="canvas"/>
   </div>
 </template>
 
@@ -47,7 +47,8 @@ export default {
         this.title = data.title
         this.description = data.description
         if (data.learning_tree) {
-          flowy.import(JSON.parse(data.learning_tree))
+          let learningTree = data.learning_tree.replaceAll('/assets/img', this.asset('assets/img'))
+          flowy.import(JSON.parse(learningTree))
         }
       } catch (error) {
         this.$noty.error(error.message)
