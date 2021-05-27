@@ -15,7 +15,7 @@ trait GeneralSubmissionPolicy
      * @param int $question_id
      * @return array
      */
-    public function canSubmitBasedOnGeneralSubmissionPolicy(User $user, $assignment, int $assignment_id, int $question_id)
+    public function canSubmitBasedOnGeneralSubmissionPolicy(User $user, $assignment, int $assignment_id, int $question_id, $level = 'question')
     {
         $response['type'] = 'error';
         $response['message'] = '';
@@ -37,7 +37,7 @@ trait GeneralSubmissionPolicy
             }
 
         }
-        if (!$assignment->questions->contains($question_id)) {
+        if ($level === 'question' && !$assignment->questions->contains($question_id)) {
             $response['message'] = 'No responses will be saved since that question is not in the assignment.';
             return $response;
         }

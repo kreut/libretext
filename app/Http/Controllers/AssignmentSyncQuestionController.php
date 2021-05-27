@@ -58,6 +58,63 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
     /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function validateCanSwitchToOrFromCombinedPdf(Assignment $assignment): array
+    {
+        $response['type'] = 'error';
+        try {
+         $submission_files = DB::table('submission_files')
+                ->join('users','submission_files.user_id','=','users.id')
+                ->where('fake_student',0)
+                ->where('assignment_id', $assignment->id)
+                ->first();
+            if ( $submission_files){
+                $response['message'] = "Since students have already submitted responses, you can't switch this option.";
+                return $response;
+            }
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error validating whether you can switch from a compiled PDF assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+}
+    /**
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function validateCanSwitchToCombinedPdf(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $has_other_types = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                ->where('open_ended_submission_type', '<>', 'file')
+                ->where('open_ended_submission_type', '<>', '0')
+                ->first();
+            if ($has_other_types) {
+                $response['message'] = 'If you would like to use the compiled PDF feature, please update your assessments so that they are all of type "file" or "none".';
+                return $response;
+            }
+
+            $response['type'] = 'success';
+
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error validating whether you can switch from a compiled PDF assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
      * @param Request $request
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
@@ -70,11 +127,11 @@ class AssignmentSyncQuestionController extends Controller
     {
 
         $response['type'] = 'error';
-         $authorized = Gate::inspect('remixAssignmentWithChosenQuestions', [$assignmentSyncQuestion, $assignment]);
-          if (!$authorized->allowed()) {
-          $response['message'] = $authorized->message();
-          return $response;
-          }
+        $authorized = Gate::inspect('remixAssignmentWithChosenQuestions', [$assignmentSyncQuestion, $assignment]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
 
         try {
@@ -90,8 +147,15 @@ class AssignmentSyncQuestionController extends Controller
                         ->where('assignment_id', $question['assignment_id'])
                         ->where('question_id', $question['question_id'])
                         ->first();
-                    if (!$assignment_question){
+                    if (!$assignment_question) {
                         $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
+                        return $response;
+                    }
+
+                    if ($assignment->combined_pdf
+                        && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
+                        $response['message'] = "Your assignment is of type Combined PDF but you're trying to remix an open-ended type of {$assignment_question->open_ended_submission_type}.
+                        If you would like to use this question, please edit your assignment and change Combined PDF to 'no'.";
                         return $response;
                     }
                     unset($assignment_question->id);
@@ -351,9 +415,9 @@ class AssignmentSyncQuestionController extends Controller
 
 
             $response['type'] = 'success';
-            foreach ($assignment_questions as $key => $assignment_question){
+            foreach ($assignment_questions as $key => $assignment_question) {
 
-                $assignment_questions[$key]->submission =$this->_getSubmissionType($assignment_question);
+                $assignment_questions[$key]->submission = $this->_getSubmissionType($assignment_question);
 
             }
             $response['assignment_questions'] = $assignment_questions;
@@ -465,6 +529,7 @@ class AssignmentSyncQuestionController extends Controller
         }
         return implode(', ', $submission);
     }
+
     private
     function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
     {
@@ -1200,6 +1265,9 @@ class AssignmentSyncQuestionController extends Controller
                         : '';
 
                     $assignment->questions[$key]['submission_file_url'] = $formatted_submission_file_info['temporary_url'] . $page;
+                    $assignment->questions[$key]['submission_file_page'] = $submission_files_by_question_id[$question->id]['page']
+                        ? $submission_files_by_question_id[$question->id]['page']
+                        : null;
 
 
                 }

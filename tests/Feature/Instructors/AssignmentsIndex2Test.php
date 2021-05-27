@@ -106,7 +106,8 @@ class AssignmentsIndex2Test extends TestCase
             'instructions' => 'Some instructions',
             "number_of_randomized_assessments" => null,
             'notifications' => 1,
-            'assignment_group_id' => 1];
+            'assignment_group_id' => 1,
+            'combined_pdf' => 0];
 
         foreach ($this->assign_tos[0]['groups'] as $key => $group) {
             $group_info = ["groups_$key" => ['Everybody'],

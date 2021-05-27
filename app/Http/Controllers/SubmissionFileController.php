@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentSyncQuestion;
 use App\Course;
 use App\Cutup;
 use App\Enrollment;
@@ -115,11 +116,22 @@ class SubmissionFileController extends Controller
         return $response;
     }
 
+    /**
+     * @param UpdateSubmisionFilePage $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param SubmissionFile $submissionFile
+     * @param Extension $extension
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public function updatePage(UpdateSubmisionFilePage $request,
                                Assignment $assignment,
                                Question $question,
                                SubmissionFile $submissionFile,
-                               Extension $extension)
+                               Extension $extension,
+                                AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
@@ -153,12 +165,14 @@ class SubmissionFileController extends Controller
                     'type' => 'q'],
                 $submission_file_data
             );
+
+            $response['completed_all_assignment_questions']= $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['original_filename'] = $full_file->original_filename;
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
 
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
-            $response['message'] = "You have selected <strong>Page $page</strong> as your submission to this question.";
+            $response['message'] = "Success!  You have set <strong>Page $page</strong> as your submission to this question.";
             $response['page'] = $page;
             $response['type'] = 'success';
 
@@ -484,12 +498,13 @@ class SubmissionFileController extends Controller
             $assignment_id = $request->assignmentId;
             $assignment = Assignment::find($assignment_id);
             $question_id = $request->questionId;
+            $upload_level = $request->uploadLevel;
             $user = Auth::user();
             $user_id = $user->id;
             $response['type'] = 'error';
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id,$upload_level)) {
                 if ($can_upload_response['type'] === 'error') {
                     $response['message'] = $can_upload_response['message'];
                     return $response;

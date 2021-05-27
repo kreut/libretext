@@ -230,6 +230,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/questions/summary', 'AssignmentSyncQuestionController@getQuestionSummaryByAssignment');
     Route::patch('/assignments/{assignment}/remix-assignment-with-chosen-questions', 'AssignmentSyncQuestionController@remixAssignmentWithChosenQuestions');
 
+    Route::get('/assignments/{assignment}/validate-can-switch-to-combined-pdf', 'AssignmentSyncQuestionController@validateCanSwitchToCombinedPdf');
+    Route::get('/assignments/{assignment}/validate-can-switch-to-or-from-combined-pdf', 'AssignmentSyncQuestionController@validateCanSwitchToOrFromCombinedPdf');
+
     Route::post('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@store');
     Route::post('/assignments/{assignment}/learning-trees/{learningTree}', 'AssignmentQuestionSyncLearningTreeController@store');
 

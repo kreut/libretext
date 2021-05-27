@@ -10,6 +10,16 @@
       @hidden="resetModalForms"
       @shown="updateModalToggleIndex"
     >
+      <b-tooltip target="combined_pdf_tooltip"
+                 delay="250"
+      >
+        <p>
+          If you choose this option, your students will upload a single compiled PDF and let Adapt know which pages
+          are associated with which questions. This process makes it much easier to grade since the grader
+          will see the correct page while grading.
+        </p>
+        <p>For more flexibility in the types of submissions at the question level, please choose "no".</p>
+      </b-tooltip>
       <b-tooltip target="internal"
                  delay="250"
       >
@@ -456,6 +466,38 @@
       </div>
       <b-form-group
         v-show="form.assessment_type === 'delayed' && form.source === 'a'"
+        id="combined_pdf"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="Compiled PDF"
+      >
+        <template slot="label">
+          Compiled PDF
+          <span id="combined_pdf_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.combined_pdf"
+                            stacked
+                            :disabled="isLocked()"
+                            name="combined_pdf"
+                            :class="{ 'is-invalid': form.errors.has('combined_pdf') }"
+                            @keydown="form.errors.clear('combined_pdf')"
+                            @change="initCombinedPDFSwitch($event)"
+        >
+          <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
+          <b-form-radio name="combined_pdf" value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio name="combined_pdf" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+        <div v-if="form.errors.has('combined_pdf')" class="help-block invalid-feedback">
+          Please choose either yes or no
+        </div>
+      </b-form-group>
+      <b-form-group
+        v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.combined_pdf) !==1"
         id="default_open_ended_submission_type"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -886,7 +928,7 @@ export default {
         '/',
         { name: 'links', items: ['Link', 'Unlink'] },
         { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
-        { name: 'styles', items: [ 'Format', 'Font', 'FontSize'] },
+        { name: 'styles', items: ['Format', 'Font', 'FontSize'] },
         { name: 'colors', items: ['TextColor', 'BGColor'] }
       ],
       removeButtons: ''
@@ -924,6 +966,7 @@ export default {
       submission_count_percent_decrease: null,
       assignment_group_id: null,
       default_open_ended_submission_type: 0,
+      combined_pdf: 1,
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
@@ -966,6 +1009,31 @@ export default {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
+    async initCombinedPDFSwitch (value) {
+      try {
+        if (this.assignmentId) {
+          if (parseInt(value) === 1) {
+            const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-combined-pdf`)
+            if (data.type === 'error') {
+              this.$noty.error(data.message)
+              this.form.combined_pdf = 0
+              return false
+            }
+          }
+          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-or-from-combined-pdf`)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            this.form.combined_pdf = 1 - this.form.combined_pdf
+            return false
+          }
+        }
+        if (parseInt(value) === 0) {
+          this.form.default_open_ended_submission_type = 'rich text'
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     },
@@ -1232,6 +1300,7 @@ export default {
       this.form.default_clicker_time_to_submit = ''
       this.form.instructions = ''
       this.form.assessment_type = 'real time'
+      this.form.combined_pdf = 1
       this.form.number_of_randomized_assessments = null
       this.form.randomizations = 0
       this.form.min_time_needed_in_learning_tree = null
@@ -1293,6 +1362,7 @@ export default {
       if (assignment.default_open_ended_text_editor) {
         this.form.default_open_ended_submission_type = assignment.default_open_ended_text_editor + ' ' + assignment.default_open_ended_submission_type
       }
+      this.form.combined_pdf = assignment.combined_pdf
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type

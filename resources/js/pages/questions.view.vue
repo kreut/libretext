@@ -1,5 +1,15 @@
 <template>
   <div style="min-height:400px; margin-bottom:100px">
+    <b-modal
+      id="modal-thumbs-up"
+      ref="modalThumbsUp"
+      hide-footer
+      size="lg"
+      title="Submission Accepted"
+    >
+      <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="75"/>
+      <span class="font-italic" style="font-size: large" v-html="submissionDataMessage"/>
+    </b-modal>
     <div v-if="showInvalidAssignmentMessage">
       <b-alert show variant="info">
         <div class="font-weight-bold">
@@ -13,7 +23,7 @@
         </div>
       </b-alert>
     </div>
-    <EnrollInCourse/>
+    <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -49,7 +59,7 @@
       ok-title="Yes, remove question"
       @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion />
     </b-modal>
 
     <b-modal
@@ -126,19 +136,19 @@
       <div class="mb-2">
         <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')" />
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Page ID:</span> <span id="pageId">{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')" />
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')" />
         </span>
       </div>
       <div class="mb-2">
@@ -146,19 +156,19 @@
           currentUrl
         }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">iframe:</span> <span id="embedCode" class="font-italic">{{ embedCode }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')" />
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
                                                                     v-html="technologySrc"
-      />
+        />
       </div>
     </b-modal>
 
@@ -213,11 +223,10 @@
                       :class="{ 'is-invalid': solutionTextForm.errors.has('solution_text') }"
                       @keydown="solutionTextForm.errors.clear('solution_text')"
             />
-            <has-error :form="solutionTextForm" field="solution_text"/>
+            <has-error :form="solutionTextForm" field="solution_text" />
           </div>
           <div>
-            <span class="float-right"><b-button variant="primary" @click="submitSolutionText"
-            >Save Text</b-button></span>
+            <span class="float-right"><b-button variant="primary" @click="submitSolutionText">Save Text</b-button></span>
           </div>
         </div>
       </div>
@@ -227,16 +236,12 @@
           <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
             solution at a time. If you upload a full PDF, students will be able to both download a full solution key
             and download solutions on a per question basis.</span>
-          <span v-if="user.role !==2">
-            Upload an entire PDF and let Adapt know where each question files submission start. Or, upload one
-            question file submission at a time, especially helpful if your submissions are in a non-PDF format.
-          </span>
         </p>
         <p v-if="user.role === 2">
           <span class="font-italic"><span class="font-weight-bold">Important:</span> For best results, don't crop any of your pages.  In addition, please make sure that they are all oriented in the same direction.</span>
         </p>
         <b-form ref="form">
-          <b-form-group>
+          <b-form-group v-show="user.role !== 3" >
             <b-form-radio v-model="uploadLevel" name="uploadLevel" value="assignment"
                           @click="showCurrentFullPDF = true"
             >
@@ -283,7 +288,7 @@
                       :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
                       @keydown="cutupsForm.errors.clear('chosen_cutups')"
                     />
-                    <has-error :form="cutupsForm" field="chosen_cutups"/>
+                    <has-error :form="cutupsForm" field="chosen_cutups" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -293,7 +298,7 @@
                         Set As Solution
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -332,7 +337,7 @@
                       :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
                       @keydown="questionSubmissionPageForm.errors.clear('page')"
                     />
-                    <has-error :form="questionSubmissionPageForm" field="page"/>
+                    <has-error :form="questionSubmissionPageForm" field="page" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -342,7 +347,7 @@
                         Set As Question File Submission
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -382,17 +387,17 @@
                 <ul v-if="files.length && (preSignedURL !== '')">
                   <li v-for="file in files" :key="file.id">
                     <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
-                        file.name
-                      }}</span> -
+                      file.name
+                    }}</span> -
                     <span>{{ formatFileSize(file.size) }} </span>
                     <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
                     <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                     <span v-else-if="file.active" class="ml-2">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Uploading File...
                     </span>
                     <span v-if="processingFile">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Processing file...
                     </span>
                     <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -411,13 +416,17 @@
               <div class="help-block invalid-feedback">
                 {{ uploadFileForm.errors.get(uploadFileType) }}
               </div>
+
+
+
+
               <b-container>
-                <hr>
-                <b-row align-h="end">
+                <hr v-show="user.role !== 3">
+                <b-row :align-h="user.role === 3 ? 'start' : 'end'">
                   <div style="vertical-align: bottom">
                     <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
-                        getSolutionUploadTypes()
-                      }}.</span>
+                      getSolutionUploadTypes()
+                    }}.</span>
                   </div>
                   <file-upload
                     ref="upload"
@@ -427,11 +436,11 @@
                     @input-file="inputFile"
                     @input-filter="inputFilter"
                   >
-                    <b-button variant="primary" class="mr-3">
+                    <b-button variant="primary" size="sm" class="mr-3">
                       Select file
                     </b-button>
                   </file-upload>
-                  <b-button class="mr-2" @click="handleCancel">
+                  <b-button class="mr-2" @click="handleCancel" size="sm">
                     Cancel
                   </b-button>
                 </b-row>
@@ -456,7 +465,7 @@
                background="#FFFFFF"
       />
       <div v-if="questions !==['init'] && !inIFrame">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
@@ -567,7 +576,7 @@
                   </div>
                   <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' " class="text-center">
                     <b-form-row>
-                      <b-col/>
+                      <b-col />
                       <h5 class="mt-1">
                         This question is worth
                       </h5>
@@ -581,7 +590,7 @@
                           :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                           @keydown="questionPointsForm.errors.clear('points')"
                         />
-                        <has-error :form="questionPointsForm" field="points"/>
+                        <has-error :form="questionPointsForm" field="points" />
                       </b-col>
                       <h5 class="mt-1">
                         points.
@@ -607,8 +616,8 @@
                   <div v-if="assessmentType === 'learning tree'">
                     <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
                       <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                          questions[currentPage - 1].last_submitted
-                        }}</span>
+                        questions[currentPage - 1].last_submitted
+                      }}</span>
                     </div>
                     <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                       <span class="font-weight-bold">You had a late penalty of </span> {{
@@ -619,7 +628,7 @@
                   <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
                     <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                       <template slot-scope="props">
-                        <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                        <span v-html="getTimeLeftMessage(props, assessmentType)" />
                       </template>
                     </countdown>
                   </div>
@@ -629,7 +638,7 @@
                       size="sm"
                       @click="openModalShare()"
                     >
-                      <b-icon icon="share"/>
+                      <b-icon icon="share" />
                       Share
                     </b-button>
                   </div>
@@ -712,8 +721,8 @@
           <div v-if="assessmentType === 'learning tree'">
             <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
               <span class="font-weight-bold">You achieved a score of {{
-                  questions[currentPage - 1].submission_score
-                }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+                questions[currentPage - 1].submission_score
+              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
             </b-alert>
           </div>
           <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
@@ -736,13 +745,18 @@
             </div>
             <div v-if="openEndedSubmissionTypeAllowed" class="p-2">
               <span class="font-italic">Open-Ended Submission Type:</span>
-              <b-form-select v-model="openEndedSubmissionType"
-                             :options="openEndedSubmissionTypeOptions"
-                             style="width:100px"
-                             class="mt-1"
-                             size="sm"
-                             @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
-              />
+              <span v-if="!combinedPDF">
+                <b-form-select v-model="openEndedSubmissionType"
+                               :options="openEndedSubmissionTypeOptions"
+                               style="width:100px"
+                               class="mt-1"
+                               size="sm"
+                               @change="updateOpenEndedSubmissionType(questions[currentPage-1].id)"
+                />
+              </span>
+              <span v-if="combinedPDF" class="font-weight-bolder">
+                Combined PDF
+              </span>
             </div>
             <div v-if="questionView !== 'basic'" class="p-2">
               <b-button
@@ -798,8 +812,8 @@
                   <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                     <template slot-scope="props">
                       <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                          props.seconds
-                        }} seconds, then re-submit.
+                        props.seconds
+                      }} seconds, then re-submit.
                       </span>
                     </template>
                   </countdown>
@@ -896,7 +910,7 @@
                             @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
                             @namespaceloaded="onCKEditorNamespaceLoaded"
                           />
-                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
+                          <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text" />
                         </b-card>
                         <b-container class="mt-2">
                           <b-row align-h="end">
@@ -989,7 +1003,7 @@
                             :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
                             @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                           />
-                          <has-error :form="clickerTimeForm" field="time_to_submit"/>
+                          <has-error :form="clickerTimeForm" field="time_to_submit" />
                         </b-form-group>
                         <b-col>
                           <b-button variant="success" @click="startClickerAssessment">
@@ -1005,7 +1019,7 @@
                         </h5>
                       </div>
                     </div>
-                    <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart"/>
+                    <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                   </div>
                 </div>
               </b-col>
@@ -1055,21 +1069,21 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                              previousNode.title
-                            }}</a>
+                            previousNode.title
+                          }}</a>
                         </b-row>
                         <b-row align-h="center">
-                          <b-icon icon="arrow-down-square-fill" variant="success"/>
+                          <b-icon icon="arrow-down-square-fill" variant="success" />
                         </b-row>
                       </div>
                       <b-row align-h="center" class="p-2">
                         <span class="font-weight-bold font-italic text-muted">{{
-                            activeNode.title
-                          }}</span>
+                          activeNode.title
+                        }}</span>
                       </b-row>
                       <div v-if="futureNodes.length>0">
                         <b-row align-h="center">
-                          <b-icon icon="arrow-down-square-fill" variant="success"/>
+                          <b-icon icon="arrow-down-square-fill" variant="success" />
                         </b-row>
                         <b-row class="p-2">
                           <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
@@ -1102,21 +1116,30 @@
                         <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
                                                                                           :current-page="currentPage"
                                                                                           :assignment-name="name"
-                      /><br>
+                        /><br>
                       </span>
-
                       <span v-if="assessmentType==='learning tree'">
                         <span class="font-weight-bold">Number of attempts: </span>
                         {{
                           questions[currentPage - 1].submission_count
                         }}<br></span>
-                      <span class="font-weight-bold">Last submitted:</span> {{
-                        questions[currentPage - 1].last_submitted
-                      }}<br>
 
-                      <span class="font-weight-bold">Last response:</span> {{
+                      <span class="font-weight-bold">Submission:</span>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                      >{{
                         questions[currentPage - 1].student_response
-                      }}<br>
+                      }}</span> <br>
+                      <span class="font-weight-bold">Submitted At:</span>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
+                      >{{
+                          questions[currentPage - 1].last_submitted
+                        }} </span>
+                      <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'" class="text-success"
+                                         :icon="thumbsUpIcon"
+                      />
+                      <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
                           questions[currentPage - 1].submission_score
@@ -1150,7 +1173,7 @@
                         </b-alert>
                       </span>
                       <span class="font-weight-bold">Solution: </span>
-                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
                       <br>
                       <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
                         <strong> Uploaded file:</strong>
@@ -1162,11 +1185,17 @@
                             View Submission
                           </a>
                         </span>
-                        <span v-if="!questions[currentPage-1].submission_file_exists">
-                          No files have been uploaded
-                        </span><br>
+                        <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
+                          No files have been uploaded.</span><br>
                       </span>
-                      <strong>Date Submitted:</strong> {{ questions[currentPage - 1].date_submitted }}<br>
+                      <strong>Submitted At:</strong>
+                      <span
+                        :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
+                      >{{ questions[currentPage - 1].date_submitted }}</span>
+                      <font-awesome-icon v-show="questions[currentPage - 1].date_submitted !== 'N/A'" class="text-success"
+                                         :icon="thumbsUpIcon"
+                      />
+                      <br>
                       <span v-if="showScores">
                         <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
                       </span>
@@ -1182,7 +1211,7 @@
                           </a>
                           <br>
                         </span>
-                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback"/><br>
+                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback" /><br>
 
                         <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
                         <span v-if="questions[currentPage - 1].grader_id">
@@ -1196,12 +1225,18 @@
                       <div v-if="isOpenEndedFileSubmission">
                         <hr>
                         <div class="mt-2">
-                          <b-button variant="primary"
-                                    class="float-right mr-2"
-                                    @click="openUploadFileModal(questions[currentPage-1].id)"
-                          >
-                            Upload New File
-                          </b-button>
+                          <span v-show="!combinedPDF">
+                            <b-button variant="primary"
+                                      class="float-right mr-2"
+                                      size="sm"
+                                      @click="openUploadFileModal(questions[currentPage-1].id)"
+                            >
+                              Upload New File
+                            </b-button>
+                          </span>
+                          <span v-show="combinedPDF && user.role === 3" class="font-italic">
+                            Please upload your combined PDF on the assignment's <router-link :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}">summary page</router-link>.
+                          </span>
                         </div>
                       </div>
                       <b-alert :variant="openEndedSubmissionDataType" :show="showOpenEndedSubmissionMessage">
@@ -1287,6 +1322,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 
 import Vue from 'vue'
+import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1309,6 +1345,8 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    thumbsUpIcon: faThumbsUp,
+    combinedPDF: false,
     fullPdfUrl: '',
     handledOK: false,
     fileUploadKey: 1,
@@ -1588,10 +1626,6 @@ export default {
     }
   },
   methods: {
-    getFullPdfUrlAtPage () {
-      return this.fullPdfUrl ? `${this.fullPdfUrl}#page=${this.questionSubmissionPageForm.page}`
-        : ''
-    },
     async setPageAsSubmission (questionId) {
       try {
         console.log(this.questionSubmissionPageForm)
@@ -2203,12 +2237,15 @@ export default {
 
       this.submissionDataMessage = data.message
       this.learningTreePercentPenalty = data.learning_tree_percent_penalty
-      this.showSubmissionMessage = true
-      setTimeout(() => {
-        this.showSubmissionMessage = false
-      }, 8000)
+
       if (this.submissionDataType !== 'danger') {
+        this.$bvModal.show('modal-thumbs-up')
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
+      } else {
+        this.showSubmissionMessage = true
+        setTimeout(() => {
+          this.showSubmissionMessage = false
+        }, 8000)
       }
     },
     getTechnology (body) {
@@ -2244,6 +2281,7 @@ export default {
     },
     async openUploadFileModal (questionId) {
       if (this.uploadFileType === 'submission') {
+        this.uploadLevel = 'question'
         try {
           const { data } = await axios.post('/api/submission-files/can-submit-file-submission', {
             assignmentId: this.assignmentId,
@@ -2282,13 +2320,7 @@ export default {
       this.processingFile = true
 
       try {
-        let response = await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
-        if (response === 'status code 413') {
-          let message = 'The maximum size allowed is 10MB.  If you\'re trying to upload a PDF, you can use an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
-          this.uploadFileForm.errors.set(this.uploadFileType, message)
-          this.processingFile = false
-          return false
-        }
+        await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2549,6 +2581,7 @@ export default {
         this.submissionCountPercentDecrease = assignment.submission_count_percent_decrease
         this.totalPoints = parseInt(String(assignment.total_points).replace(/\.00$/, ''))
         this.source = assignment.source
+        this.combinedPDF = !!assignment.combined_pdf
         this.openEndedSubmissionTypeAllowed = (assignment.assessment_type === 'delayed')// can upload at the question level
         this.solutionsReleased = Boolean(Number(assignment.solutions_released))
         this.latePolicy = assignment.late_policy
@@ -2683,8 +2716,7 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: this.$t('home') }
   }

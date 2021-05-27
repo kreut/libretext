@@ -660,7 +660,6 @@ export default {
       }
     },
     async addQuestionToAssignmentFromViewQuestion (questionId) {
-      console.log(this.publicCourseAssignmentQuestions)
       let chosenQuestion = this.publicCourseAssignmentQuestions.find(question => question.question_id === questionId)
       this.publicCourseAssignmentQuestions = this.publicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
       this.chosenPublicCourseAssignmentQuestions.push(chosenQuestion)
@@ -678,7 +677,11 @@ export default {
             'type': type
           })
         if (data.type === 'error') {
-          this.$noty.error(data.message)
+          this.$noty.error(data.message, {
+            timeout: 8000
+          })
+          await this.getCurrentAssignmentQuestions()
+          await this.getPublicCourseAssignmentQuestions(this.publicCourseAssignment)
           success = false
         }
       } catch (error) {

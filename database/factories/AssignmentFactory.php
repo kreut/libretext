@@ -16,6 +16,7 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'late_policy' => 'not accepted',
         'include_in_weighted_average' => 1,
         'notifications' => 1,
-        'order' => 1
+        'order' => 1,
+        'combined_pdf'=>0
         ];
 });
