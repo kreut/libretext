@@ -114,7 +114,7 @@
                 add comments in the form of text or a file upload. The total number of points that the student receives
                 for this questions will be the sum of the points that they received for submitting any automatically
                 graded responses (Question Submission Score)
-                plus the number of points that you give them for their file submission (File Submission Score).
+                plus the number of points that you give them for their file submission (File Submission Score).  You can move through the course roster by using the right/left arrows, searching for students by name, or by clicking on individual student numbers.
               </p>
             </b-row>
           </b-container>
@@ -260,24 +260,24 @@
                             </span>
                           </b-alert>
                           <strong>Date Submitted:</strong> {{
-                          submissionFiles[currentStudentPage - 1]['date_submitted']
+                            submissionFiles[currentStudentPage - 1]['date_submitted']
                           }} <br>
                           <strong>Date Graded:</strong> {{
-                          submissionFiles[currentStudentPage - 1]['date_graded']
-                          ? submissionFiles[currentStudentPage - 1]['date_graded']
-                          : 'Not yet graded.'
+                            submissionFiles[currentStudentPage - 1]['date_graded']
+                              ? submissionFiles[currentStudentPage - 1]['date_graded']
+                              : 'Not yet graded.'
                           }}<br>
                           <strong>Question Submission Score:</strong> {{
-                          1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0
+                            1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0
                           }}<br>
                           <strong>{{ capitalize(openEndedType) }} Submission Score:</strong> {{
-                          1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0
+                            1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0
                           }}
                           <br>
                           <strong>Total Score For This Question:</strong>
                           {{
-                          (1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0)
-                          + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
+                            (1 * submissionFiles[currentStudentPage - 1]['question_submission_score'] || 0)
+                            + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
                           }} out of {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }}
                           <br>
                           <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
@@ -503,6 +503,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    message: '',
     processing: false,
     questionView: '',
     questionOptions: [],
@@ -580,12 +581,26 @@ export default {
     this.downloadSolutionFile = downloadSolutionFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
+    window.addEventListener('keydown', this.escapeListener)
+  },
+  destroyed () {
+    window.removeEventListener('keydown', this.escapeListener)
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
   },
   methods: {
+    escapeListener (event) {
+      if (event.key === 'ArrowRight' && this.currentStudentPage < this.numStudents) {
+        this.currentStudentPage++
+        this.changePage()
+      }
+      if (event.key === 'ArrowLeft' && this.currentStudentPage > 1) {
+        this.currentStudentPage--
+        this.changePage()
+      }
+    },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
     },
