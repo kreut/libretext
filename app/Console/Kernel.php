@@ -50,7 +50,7 @@ class Kernel extends ConsoleKernel
            $schedule->command('notify:gradersForLateSubmissions')->Daily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
-            $schedule->command('notify:gradersReminders')
+            $schedule->command('notify:gradersReminders')->Daily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
             /* end grader notifications */
 
