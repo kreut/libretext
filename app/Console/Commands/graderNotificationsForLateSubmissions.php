@@ -60,7 +60,9 @@ class graderNotificationsForLateSubmissions extends Command
                 $course_ids[] = '"' . $grader_notification->course_id . '"';
             }
             $course_ids = implode(', ', $course_ids);
-
+            if ($course_ids){
+                exit;
+            }
             $last_24_hours = Carbon::now()->subDay()->format('Y-m-d H:i:s');
             $where = "date_graded IS NULL
                         AND date_submitted > due
