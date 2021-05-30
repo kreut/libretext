@@ -18,7 +18,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -43,7 +43,7 @@
         />
       </div>
 
-      <div data-iframe-height="iFrameResizer" v-if="questionToView && showQuestion"
+      <div v-if="questionToView && showQuestion" data-iframe-height="iFrameResizer"
            v-html="questionToView.technology_iframe"
       />
       <template #modal-footer>
@@ -77,7 +77,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <b-container>
           <b-row align-h="end">
             <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
@@ -107,7 +107,7 @@
                     <template slot="label">
                       School
                       <span id="school_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+                        <b-icon class="text-muted" icon="question-circle" /></span>
                     </template>
                     <b-tooltip target="school_tooltip"
                                delay="250"
@@ -129,9 +129,7 @@
                         />
                       </b-col>
 
-                      <b-col>
-
-                      </b-col>
+                      <b-col />
                     </b-form-row>
                   </b-form-group>
                   <b-form-group
@@ -166,15 +164,39 @@
                     <b-form-row>
                       <b-col lg="8">
                         <vue-bootstrap-typeahead
+                          v-if="textBasedCourseSearchType"
                           ref="publicCourseTypeahead"
-                          v-model="publicCourse"
                           :key="publicCoursesKey"
-                          placeholder="Any Course"
+                          v-model="publicCourse"
+                          placeholder="Select A Course"
                           :serializer="publicCoursesOptions => publicCoursesOptions.text"
                           :data="publicCoursesOptions"
                           :disabled="publicCoursesOptions.length === 1"
                           @hit="getPublicCourseAssignments(publicCourse)"
                         />
+
+                        <b-form-select v-if="!textBasedCourseSearchType"
+                                       v-model="publicCourse"
+                                       :options="publicCoursesOptions"
+                                       :disabled="publicCoursesOptions.length === 1"
+                                       @change="getPublicCourseAssignments($event)"
+                        />
+                      </b-col>
+                      <b-col>
+                        <b-button v-if="!textBasedCourseSearchType"
+                                  variant="outline-primary"
+                                  size="sm"
+                                  @click="textBasedCourseSearchType = !textBasedCourseSearchType"
+                        >
+                          Text-based Search
+                        </b-button>
+                        <b-button v-if="textBasedCourseSearchType"
+                                  variant="outline-info"
+                                  size="sm"
+                                  @click="textBasedCourseSearchType = !textBasedCourseSearchType;publicCourse=null"
+                        >
+                          Show All
+                        </b-button>
                       </b-col>
                     </b-form-row>
                   </b-form-group>
@@ -205,16 +227,16 @@
                         </b-col>
                         <b-col class="text-right">
                           <a href="" @click.prevent="addAllQuestions()">
-                            <span class="font-italic"><b-icon icon="plus-circle"/> Add all questions</span>
+                            <span class="font-italic"><b-icon icon="plus-circle" /> Add all questions</span>
                           </a>
                         </b-col>
                       </b-row>
                       <table class="table dragArea table-striped">
                         <thead>
-                        <tr>
-                          <th>Title</th>
-                          <th>Submission</th>
-                        </tr>
+                          <tr>
+                            <th>Title</th>
+                            <th>Submission</th>
+                          </tr>
                         </thead>
                         <draggable v-model="publicCourseAssignmentQuestions"
                                    :group="'remixerQuestions'"
@@ -245,11 +267,11 @@
                       </h5>
                       <table class="table dragArea table-striped">
                         <thead>
-                        <tr>
-                          <th>Order</th>
-                          <th>Title</th>
-                          <th>Submission</th>
-                        </tr>
+                          <tr>
+                            <th>Order</th>
+                            <th>Title</th>
+                            <th>Submission</th>
+                          </tr>
                         </thead>
                         <draggable v-model="chosenPublicCourseAssignmentQuestions"
                                    :options="{group:'remixerQuestions'}"
@@ -268,7 +290,7 @@
                               <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
                                 {{ question.title ? question.title : 'No title' }}
                               </a>
-                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)"/>
+                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)" />
                             </td>
                             <td class="dragArea">
                               {{ question.submission }}
@@ -314,7 +336,7 @@
                               Add Tag
                             </b-button>
                             <b-button variant="success" size="sm" class="mr-2" @click="getQuestionsByTags()">
-                              <b-spinner v-if="gettingQuestions" small type="grow"/>
+                              <b-spinner v-if="gettingQuestions" small type="grow" />
                               Get Questions
                             </b-button>
                           </div>
@@ -325,7 +347,7 @@
                             <ol>
                               <li v-for="chosenTag in chosenTags" :key="chosenTag">
                                 <span @click="removeTag(chosenTag)">{{ chosenTag }}
-                                  <b-icon icon="trash" variant="danger"/></span>
+                                  <b-icon icon="trash" variant="danger" /></span>
                               </li>
                             </ol>
                           </div>
@@ -390,7 +412,7 @@
                         />
                         <div class="float-right mt-2">
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions()">
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                            <b-spinner v-if="directImportingQuestions" small type="grow" />
                             Import Questions
                           </b-button>
                         </div>
@@ -456,7 +478,7 @@
                   style="width: 1px;min-width: 100%;"
           />
         </div>
-        <div v-if="questions[currentPage-1]" v-html="questions[currentPage-1].technology_iframe"/>
+        <div v-if="questions[currentPage-1]" v-html="questions[currentPage-1].technology_iframe" />
       </div>
     </div>
   </div>
@@ -484,6 +506,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    textBasedCourseSearchType: true,
     showQuestion: false,
     publicCoursesKey: 0,
     viewQuestionAction: '',
@@ -743,7 +766,7 @@ export default {
       }
     },
     getDefaultPublicCoursesOptions () {
-      return [{ value: null, text: 'Any Course' }]
+      return [{ value: null, text: 'Select A Course' }]
     },
     getDefaultPublicCourseAssignmentsOptions () {
       return [{ value: null, text: 'Please select an assignment' }]
