@@ -1140,10 +1140,10 @@
                         :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                       >{{
                           questions[currentPage - 1].last_submitted
-                        }} </span>
+                      }} </span>
                       <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'"
                                          class="text-success"
-                                         :icon="thumbsUpIcon"
+                                         :icon="checkIcon"
                       />
                       <br>
                       <div v-if="showScores">
@@ -1198,7 +1198,7 @@
                       >{{ questions[currentPage - 1].date_submitted }}</span>
                       <font-awesome-icon v-show="questions[currentPage - 1].date_submitted !== 'N/A'"
                                          class="text-success"
-                                         :icon="thumbsUpIcon"
+                                         :icon="checkIcon"
                       />
                       <br>
                       <div v-if="solutionsReleased">
@@ -1334,7 +1334,7 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 
 import Vue from 'vue'
-import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
+import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1357,6 +1357,7 @@ export default {
     FileUpload: VueUploadComponent
   },
   data: () => ({
+    checkIcon: faCheck,
     thumbsUpIcon: faThumbsUp,
     combinedPDF: false,
     fullPdfUrl: '',
@@ -2204,7 +2205,7 @@ export default {
           let data = JSON.parse(event.data)
           console.log(data)
           if (technology === 'webwork' && data.status) {
-            data.type = data.status < 400 ? 'success' : 'error'
+            data.type = data.status < 300 ? 'success' : 'error'
             try {
               data = { ...data, ...JSON.parse(data.message) }
             } catch (error) {

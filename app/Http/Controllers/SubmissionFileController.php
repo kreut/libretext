@@ -157,6 +157,11 @@ class SubmissionFileController extends Controller
                 'date_graded' => null,
                 'score' => null,
                 'date_submitted' => Carbon::now()];
+            $is_update = DB::table('submission_files')
+                ->where('user_id', Auth::user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
             $submissionFile->updateOrCreate(
                 ['user_id' => Auth::user()->id,
                     'assignment_id' => $assignment->id,
@@ -171,7 +176,8 @@ class SubmissionFileController extends Controller
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
 
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
-            $response['message'] = "Success!  You have set <strong>Page $page</strong> as your submission to this question.";
+           $re = $is_update ? 're-' : '';
+           $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
             $response['page'] = $page;
             $response['type'] = 'success';
 

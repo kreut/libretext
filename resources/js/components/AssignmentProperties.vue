@@ -472,7 +472,7 @@
         label-for="Compiled PDF"
       >
         <template slot="label">
-          Compiled PDF
+          File Upload Mode
           <span id="combined_pdf_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
@@ -486,10 +486,10 @@
         >
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
           <b-form-radio name="combined_pdf" value="1">
-            Yes
+            Compiled Upload (PDFs only)
           </b-form-radio>
           <b-form-radio name="combined_pdf" value="0">
-            No
+            Individual Assessment Upload
           </b-form-radio>
         </b-form-radio-group>
         <div v-if="form.errors.has('combined_pdf')" class="help-block invalid-feedback">

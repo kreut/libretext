@@ -1,6 +1,20 @@
 <template>
   <div>
     <b-modal
+      id="modal-submission-accepted"
+      ref="modalThumbsUp"
+      hide-footer
+      size="lg"
+      title="Submission Accepted"
+    >    <font-awesome-icon  class="text-success"
+                             :icon="checkIcon"
+    />
+
+        <span class="font-weight-bold font-italic">
+  {{successMessage}}</span>
+
+    </b-modal>
+    <b-modal
       id="modal-thumbs-down"
       ref="modalThumbsUp"
       hide-footer
@@ -12,14 +26,20 @@
       </b-alert>
     </b-modal>
     <b-modal
-      id="modal-thumbs-up"
+      id="modal-completed-assignment"
       ref="modalThumbsUp"
       hide-footer
-      size="lg"
+      size="sm"
       title="Submission Accepted"
     >
-      <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="75"/>
-      <span class="font-italic" style="font-size: large" v-html="successMessage"/>
+      <b-container>
+        <b-row>
+          <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275"/>
+        </b-row>
+        <b-row>
+          <h4 class="font-weight-bold font-italic" style="font-size: large" v-html="successMessage"/>
+        </b-row>
+      </b-container>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -112,56 +132,7 @@
                 allowfullscreen
               />
             </div>
-            <hr v-show="fullPdfUrl">
-            <b-form-group
-              v-show="fullPdfUrl"
-              id="question_to_set_page"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label="Select Question"
-              label-for="Select Question"
-            >
-              <b-form-row>
-                <b-col lg="1">
-                  <b-form-select
-                    id="question_to_set_page"
-                    v-model="questionSubmissionPageForm.questionId"
-                    :options="openEndedSubmissionQuestionOptions"
-                  />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
 
-            <b-form-group
-              v-show="fullPdfUrl"
-              id="page"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label="Set Page"
-              label-for="page"
-            >
-              <b-form-row>
-                <b-col lg="1">
-                  <b-form-input
-                    id="name"
-                    v-model="questionSubmissionPageForm.page"
-                    type="text"
-                    :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
-                    @keydown="questionSubmissionPageForm.errors.clear('page')"
-                  />
-                  <has-error :form="questionSubmissionPageForm" field="page"/>
-                </b-col>
-                <b-col>
-                  <b-button variant="primary"
-                            :disabled="!questionSubmissionPageForm.questionId"
-                            size="sm"
-                            @click="handleSetPageAsSubmission"
-                  >
-                    Set Page
-                  </b-button>
-                </b-col>
-              </b-form-row>
-            </b-form-group>
           </b-card>
           <b-card class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>">
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
@@ -190,7 +161,7 @@
                   {{ data.item.last_question_submission }}
                 </span>
                 <font-awesome-icon v-show="data.item.showThumbsUpForQuestionSubmission" class="text-success"
-                                   :icon="thumbsUpIcon"
+                                   :icon="checkIcon"
                 />
               </template>
 
@@ -208,17 +179,45 @@
                   </span>
                 </span>
                 <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission" class="text-success"
-                                   :icon="thumbsUpIcon"
+                                   :icon="checkIcon"
                 />
               </template>
 
               <template v-slot:head(last_open_ended_submission)="data">
                 Last Open Ended Submission <span v-b-tooltip="showOpenEndedSubmissionTooltip"><b-icon
                 class="text-muted" icon="question-circle"
-              /></span>
+              />
+              </span>
               </template>
               <template #cell(solution_file_url)="data">
                 <span v-html="getSolutionFileLink(data.item)"/>
+              </template>
+              <template #cell(page)="data">
+                <div v-if="data.item.isOpenEndedFileSubmission">
+                  <b-input-group>
+                    <b-form-input v-model="data.item.page"
+                                  type="text"
+                                  style="width: 50px"
+                                  placeholder=""
+                                  :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
+                                  @keydown="questionSubmissionPageForm.errors.clear('page')"
+                    />
+                    <b-input-group-append>
+                      <b-button variant="primary" size="sm"
+                                @click="handleSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
+                      >
+                        Set Page
+                      </b-button>
+                    </b-input-group-append>
+
+                    <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
+                               :form="questionSubmissionPageForm" field="page"
+                    />
+                  </b-input-group>
+                </div>
+                <div v-else>
+                  N/A
+                </div>
               </template>
             </b-table>
           </b-card>
@@ -240,7 +239,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import AssignmentStatistics from '~/components/AssignmentStatistics'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faThumbsUp } from '@fortawesome/free-solid-svg-icons'
+import { faThumbsUp,faCheck } from '@fortawesome/free-solid-svg-icons'
 import Vue from 'vue'
 import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
@@ -265,8 +264,9 @@ export default {
     fullPdfUrl: '',
     fullPdfUrlKey: 0,
     questionSubmissionPageForm: new Form({
-      page: '',
-      questionId: 0
+      question_number: '',
+      questionId: 0,
+      page: ''
     }),
     processingFile: false,
     preSignedURL: '',
@@ -277,6 +277,7 @@ export default {
       questionId: null
     }),
     thumbsUpIcon: faThumbsUp,
+    checkIcon: faCheck,
     showAutoGradedSubmissionTooltip: {
       fallbackPlacement: ['right'],
       placement: 'right',
@@ -317,8 +318,10 @@ export default {
     }
   },
   methods: {
-    async handleSetPageAsSubmission () {
-      let questionId = this.questionSubmissionPageForm.questionId
+    async handleSetPageAsSubmission (questionNumber, questionId, page) {
+      this.questionSubmissionPageForm.questionId = questionId
+      this.questionSubmissionPageForm.page = page
+      this.questionSubmissionPageForm.question_number = questionNumber
       try {
         const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${questionId}/page`)
         if (data.type === 'error') {
@@ -334,7 +337,11 @@ export default {
         openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
         this.successMessage = data.message
         this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
-        this.$bvModal.show('modal-thumbs-up')
+        if (this.completedAllAssignmentQuestions) {
+          this.$bvModal.show('modal-completed-assignment')
+        } else {
+          this.$bvModal.show('modal-submission-accepted')
+        }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.errorMessage = error.message
@@ -527,7 +534,8 @@ export default {
             label: 'Number'
           },
           'last_question_submission',
-          'last_open_ended_submission']
+          'last_open_ended_submission',
+          'page']
         if (assignment.show_points_per_question) {
           this.fields.push({
             key: 'points',
@@ -551,7 +559,6 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        this.questionSubmissionPageForm.questionId = data.questions[0].id
         for (let i = 0; i < data.questions.length; i++) {
           let question = data.questions[i]
           let lastOpenEndedSubmission = 'None required.'
@@ -585,7 +592,9 @@ export default {
             showThumbsUpForQuestionSubmission: showThumbsUpForQuestionSubmission,
             openEndedSubmissionRequired: openEndedSubmissionRequired,
             last_open_ended_submission: lastOpenEndedSubmission,
+            isOpenEndedFileSubmission: question.open_ended_submission_type === 'file',
             showThumbsUpForOpenEndedSubmission: showThumbsUpForOpenEndedSubmission,
+            page: question.submission_file_page ? question.submission_file_page : null,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
             solution_file_url: question.solution_file_url ? question.solution_file_url : null,
             points: question.points ? question.points : 'N/A',
