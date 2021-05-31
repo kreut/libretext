@@ -391,12 +391,18 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
         try {
             DB::beginTransaction();
             $assignment = Assignment::find($assignment->id);
+            foreach ($assignment->course->assignments as $current_assignment){
+                if ($current_assignment->order > $assignment->order){
+                    $current_assignment->order++;
+                    $current_assignment->save();
+                }
+            }
             $new_assignment = $assignment->replicate();
             $new_assignment->name = $new_assignment->name . " copy";
+            $new_assignment->order++;
             $new_assignment->save();
 
             if ($request->level === 'properties_and_questions') {

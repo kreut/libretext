@@ -29,8 +29,6 @@
         id="modal-create-assignment-from-template"
         ref="modal"
         title="Create Assignment From Template"
-        ok-title="Yes, copy assignment!"
-        @ok="handleCreateAssignmentFromTemplate"
       >
         <b-form-group
           id="create_assignment_from_template_level"
@@ -71,6 +69,23 @@
             </b-form-radio>
           </b-form-radio-group>
         </b-form-group>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-create-assignment-from-template')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleCreateAssignmentFromTemplate"
+          >
+            Yes, copy assignment!
+          </b-button>
+        </template>
       </b-modal>
       <b-modal
         id="modal-import-assignment"
@@ -108,11 +123,26 @@
         id="modal-delete-assignment"
         ref="modal"
         title="Confirm Delete Assignment"
-        ok-title="Yes, delete assignment!"
-        @ok="handleDeleteAssignment"
       >
         <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
         <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-delete-assignment')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleDeleteAssignment"
+          >
+            Yes, delete assignment!
+          </b-button>
+        </template>
       </b-modal>
 
       <b-container>
@@ -529,6 +559,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           this.getAssignments()
+          this.$bvModal.hide('modal-create-assignment-from-template')
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -652,7 +683,7 @@ export default {
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}`)
         this.$noty[data.type](data.message)
-        this.resetAll('modal-delete-assignment')
+        await this.resetAll('modal-delete-assignment')
       } catch (error) {
         this.$noty.error(error.message)
       }
