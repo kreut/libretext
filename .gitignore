@@ -124,3 +124,4 @@ fabric.properties
 .vapor/
 .env.production
 .env.staging
+.env.docker_staging
