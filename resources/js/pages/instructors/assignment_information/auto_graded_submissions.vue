@@ -11,166 +11,172 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Auto-Graded Submissions"/>
-        <b-container>
-          <b-row>
-            <span class="font-weight-bold mr-2">Title: </span> <a href=""
-                                                                  @click.stop.prevent="viewQuestion(questions[currentQuestionPage-1].question_id)"
-          >{{ questions[currentQuestionPage - 1].title }}</a>
-          </b-row>
-          <b-row>
-            <span class="font-weight-bold mr-2">Adapt ID: </span>
-            {{ questions[currentQuestionPage - 1].assignment_id_question_id }} <span class="text-info ml-1">
+        <div v-if="questions.length">
+          <b-container>
+            <b-row>
+              <span class="font-weight-bold mr-2">Title: </span> <a href=""
+                                                                    @click.stop.prevent="viewQuestion(questions[currentQuestionPage-1].question_id)"
+            >{{ questions[currentQuestionPage - 1].title }}</a>
+            </b-row>
+            <b-row>
+              <span class="font-weight-bold mr-2">Adapt ID: </span>
+              {{ questions[currentQuestionPage - 1].assignment_id_question_id }} <span class="text-info ml-1">
               <font-awesome-icon :icon="copyIcon"
                                  @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
               />
             </span>
-          </b-row>
-          <b-row><span class="font-weight-bold mr-2">Points: </span> {{ questions[currentQuestionPage - 1].points }}
-          </b-row>
-        </b-container>
-        <b-form-group
-          id="student"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Student"
-          label-for="Student"
-        >
-          <b-form-row>
-            <b-col lg="6">
-              <b-form-select v-model="studentId"
-                             :options="studentsOptions"
-                             @change="updateStudentsFilter($event)"
-              />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          id="submission"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Submission"
-          label-for="Submission"
-        >
-          <b-form-row>
-            <b-col lg="4">
-              <b-form-select v-model="submission"
-                             :options="submissionsOptions"
-                             @change="updateSubmissionsFilter($event)"
-              />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <b-form-group
-          id="score"
-          label-cols-sm="3"
-          label-cols-lg="2"
-          label="Score"
-          label-for="Score"
-        >
-          <b-form-row>
-            <b-col lg="3">
-              <b-form-select v-model="score"
-                             :options="scoresOptions"
-                             @change="updateScoresFilter($event)"
-              />
-            </b-col>
-          </b-form-row>
-        </b-form-group>
-        <div class="overflow-auto">
-          <b-pagination
-            :key="currentQuestionPage"
-            v-model="currentQuestionPage"
-            :total-rows="questions.length"
-            per-page="1"
-            align="center"
-            first-number
-            last-number
-            limit="20"
-            @input="changePage(currentQuestionPage)"
-          >
-            <template v-slot:page="{ page, active }">
-              {{ questions[page - 1].order }}
-            </template>
-          </b-pagination>
-        </div>
-        <div class="vld-parent">
-          <loading :active.sync="isTableLoading"
-                   :can-cancel="true"
-                   :is-full-page="true"
-                   :width="128"
-                   :height="128"
-                   color="#007BFF"
-                   background="#FFFFFF"
-          />
+            </b-row>
+            <b-row><span class="font-weight-bold mr-2">Points: </span> {{ questions[currentQuestionPage - 1].points }}
+            </b-row>
+          </b-container>
           <b-form-group
-            id="apply_to"
+            id="student"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Apply To"
-            label-for="Apply To"
+            label="Student"
+            label-for="Student"
           >
             <b-form-row>
-
-              <b-form-radio-group
-                v-model="questionScoreForm.apply_to"
-                stacked
-              >
-                <b-form-radio name="apply_to" value="1">
-                  Submission scores in the filtered group
-                </b-form-radio>
-
-                <b-form-radio name="apply_to" value="0">
-                  Submission scores that are not in the filtered group
-                </b-form-radio>
-              </b-form-radio-group>
-
+              <b-col lg="6">
+                <b-form-select v-model="studentId"
+                               :options="studentsOptions"
+                               @change="updateStudentsFilter($event)"
+                />
+              </b-col>
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="new_score"
+            id="submission"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="New Score"
-            label-for="New Score"
+            label="Submission"
+            label-for="Submission"
           >
             <b-form-row>
-              <b-col lg="2">
-                <b-form-input
-                  id="new_score"
-                  v-model="questionScoreForm.new_score"
-                  lg="7"
-                  type="text"
-                  :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"
-                  @keydown="questionScoreForm.errors.clear('new_score')"
+              <b-col lg="4">
+                <b-form-select v-model="submission"
+                               :options="submissionsOptions"
+                               @change="updateSubmissionsFilter($event)"
                 />
-                <has-error :form="questionScoreForm" field="new_score"/>
               </b-col>
-              <b-col>
-                <b-button variant="primary" size="sm" @click="updateScores()">
-                  Update
-                </b-button>
-                <span v-if="processing">
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            id="score"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Score"
+            label-for="Score"
+          >
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-select v-model="score"
+                               :options="scoresOptions"
+                               @change="updateScoresFilter($event)"
+                />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
+          <div class="overflow-auto">
+            <b-pagination
+              :key="currentQuestionPage"
+              v-model="currentQuestionPage"
+              :total-rows="questions.length"
+              per-page="1"
+              align="center"
+              first-number
+              last-number
+              limit="20"
+              @input="changePage(currentQuestionPage)"
+            >
+              <template v-slot:page="{ page, active }">
+                {{ questions[page - 1].order }}
+              </template>
+            </b-pagination>
+          </div>
+          <div class="vld-parent">
+            <loading :active.sync="isTableLoading"
+                     :can-cancel="true"
+                     :is-full-page="true"
+                     :width="128"
+                     :height="128"
+                     color="#007BFF"
+                     background="#FFFFFF"
+            />
+            <b-form-group
+              id="apply_to"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="Apply To"
+              label-for="Apply To"
+            >
+              <b-form-row>
+
+                <b-form-radio-group
+                  v-model="questionScoreForm.apply_to"
+                  stacked
+                >
+                  <b-form-radio name="apply_to" value="1">
+                    Submission scores in the filtered group
+                  </b-form-radio>
+
+                  <b-form-radio name="apply_to" value="0">
+                    Submission scores that are not in the filtered group
+                  </b-form-radio>
+                </b-form-radio-group>
+
+              </b-form-row>
+            </b-form-group>
+            <b-form-group
+              id="new_score"
+              label-cols-sm="3"
+              label-cols-lg="2"
+              label="New Score"
+              label-for="New Score"
+            >
+              <b-form-row>
+                <b-col lg="2">
+                  <b-form-input
+                    id="new_score"
+                    v-model="questionScoreForm.new_score"
+                    lg="7"
+                    type="text"
+                    :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"
+                    @keydown="questionScoreForm.errors.clear('new_score')"
+                  />
+                  <has-error :form="questionScoreForm" field="new_score"/>
+                </b-col>
+                <b-col>
+                  <b-button variant="primary" size="sm" @click="updateScores()">
+                    Update
+                  </b-button>
+                  <span v-if="processing">
                       <b-spinner small type="grow"/>
                       Processing...
                     </span>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-table
-            v-if="items.length"
-            striped
-            hover
-            :no-border-collapse="true"
-            :fields="fields"
-            :items="items"
-          />
-          <b-alert :show="!items.length" class="info">
-            <span class="font-weight-bold">Nothing matches that set of filters.</span>
-          </b-alert>
+                </b-col>
+              </b-form-row>
+            </b-form-group>
+            <b-table
+              v-if="items.length"
+              striped
+              hover
+              :no-border-collapse="true"
+              :fields="fields"
+              :items="items"
+            />
+            <b-alert :show="!items.length" class="info">
+              <span class="font-weight-bold">Nothing matches that set of filters.</span>
+            </b-alert>
+          </div>
         </div>
       </div>
+      <b-alert :show="!questions.length && !isLoading" variant="info">
+        <span class="font-italic font-weight-bold">This assignment has no assessments.</span>
+      </b-alert>
     </div>
   </div>
+
 </template>
 
 <script>
@@ -249,6 +255,10 @@ export default {
     this.doCopy = doCopy
     this.viewQuestion = viewQuestion
     await this.getQuestions()
+    if (!this.questions.length) {
+      this.isLoading = false
+      return false
+    }
     await this.getSubmissions()
     this.setStudentIds()
     if (this.submissionsOptions.length) {
@@ -330,7 +340,9 @@ export default {
             this.questions.push(data.rows[i])
           }
         }
-        console.log(this.questions)
+        if (!this.questions.length) {
+          return false
+        }
         this.questionId = this.questions[0].question_id
         if (data.type === 'error') {
           this.$noty.error(data.message)
