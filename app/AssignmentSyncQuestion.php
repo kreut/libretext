@@ -23,6 +23,9 @@ class AssignmentSyncQuestion extends Model
             ->where('open_ended_submission_type', '<>', '0')
             ->get()
             ->count();
+        if ($num_technology_questions + $num_non_technology_questions === 0){
+            return false;
+        }
         $num_submitted_technology_questions = DB::table('submissions')
             ->where('assignment_id', $assignment->id)
             ->where('user_id', Auth::user()->id)

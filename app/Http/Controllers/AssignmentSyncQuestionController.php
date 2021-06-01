@@ -62,7 +62,7 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateCanSwitchToOrFromCombinedPdf(Assignment $assignment): array
+    public function validateCanSwitchToOrFromCompiledPdf(Assignment $assignment): array
     {
         $response['type'] = 'error';
         try {
@@ -89,7 +89,7 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateCanSwitchToCombinedPdf(Assignment $assignment)
+    public function validateCanSwitchToCompiledPdf(Assignment $assignment)
     {
         $response['type'] = 'error';
         try {
@@ -152,9 +152,9 @@ class AssignmentSyncQuestionController extends Controller
                         return $response;
                     }
 
-                    if ($assignment->combined_pdf
+                    if ($assignment->file_upload_mode === 'compiled_pdf'
                         && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
-                        $response['message'] = "Your assignment is of type Combined PDF but you're trying to remix an open-ended type of $assignment_question->open_ended_submission_type.  If you would like to use this question, please edit your assignment and change Combined PDF to 'no'.";
+                        $response['message'] = "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of $assignment_question->open_ended_submission_type.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'.";
                         return $response;
                     }
                     unset($assignment_question->id);
@@ -891,7 +891,12 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     public
-    function updateLastSubmittedAndLastResponse(Request $request, Assignment $assignment, Question $question, Submission $Submission, Extension $Extension)
+    function updateLastSubmittedAndLastResponse(Request $request,
+                                                Assignment $assignment,
+                                                Question $question,
+                                                Submission $Submission,
+                                                Extension $Extension,
+    AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -933,7 +938,8 @@ class AssignmentSyncQuestionController extends Controller
             'late_penalty_percent' => $response_info['late_penalty_percent'],
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
-            'solution' => $original_filename
+            'solution' => $original_filename,
+            'completed_all_assignment_questions' =>$assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
         ];
 
     }

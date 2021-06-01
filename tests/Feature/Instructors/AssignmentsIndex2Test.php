@@ -109,7 +109,7 @@ class AssignmentsIndex2Test extends TestCase
             "number_of_randomized_assessments" => null,
             'notifications' => 1,
             'assignment_group_id' => 1,
-            'combined_pdf' => 0];
+            'file_upload_mode' => 'both'];
 
         foreach ($this->assign_tos[0]['groups'] as $key => $group) {
             $group_info = ["groups_$key" => ['Everybody'],
@@ -160,7 +160,7 @@ class AssignmentsIndex2Test extends TestCase
             'date_submitted' => Carbon::now()]);
 
         $this->actingAs($this->user)
-            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-or-from-combined-pdf")
+            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-or-from-compiled-pdf")
             ->assertJson(['message' => "Since students have already submitted responses, you can't switch this option."]);
 
     }
@@ -179,7 +179,7 @@ class AssignmentsIndex2Test extends TestCase
             ->update(['open_ended_submission_type' => 'audio']);
 
         $this->actingAs($this->user)
-            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-combined-pdf")
+            ->getJson("/api/assignments/{$this->assignment->id}/validate-can-switch-to-compiled-pdf")
             ->assertJson(['message' => 'If you would like to use the compiled PDF feature, please update your assessments so that they are all of type "file" or "none".']);
 
     }

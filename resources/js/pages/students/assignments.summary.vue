@@ -6,12 +6,14 @@
       hide-footer
       size="lg"
       title="Submission Accepted"
-    >    <font-awesome-icon  class="text-success"
-                             :icon="checkIcon"
-    />
+      @hidden="checkIfAssignmentCompleted"
+    >
+      <font-awesome-icon class="text-success"
+                         :icon="checkIcon"
+      />
 
-        <span class="font-weight-bold font-italic">
-  {{successMessage}}</span>
+      <span class="font-weight-bold font-italic">
+  {{ successMessage }}</span>
 
     </b-modal>
     <b-modal
@@ -30,14 +32,11 @@
       ref="modalThumbsUp"
       hide-footer
       size="sm"
-      title="Submission Accepted"
+      title="Assignment Completed"
     >
       <b-container>
         <b-row>
           <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275"/>
-        </b-row>
-        <b-row>
-          <h4 class="font-weight-bold font-italic" style="font-size: large" v-html="successMessage"/>
         </b-row>
       </b-container>
     </b-modal>
@@ -82,7 +81,7 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="combinedPdf" class="mt-3 mb-3" header="default" header-html="<h5>Compiled PDF</h5>">
+          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default" header-html="<h5>Compiled PDF</h5>">
             <file-upload
               ref="upload"
               v-model="files"
@@ -134,7 +133,7 @@
             </div>
 
           </b-card>
-          <b-card class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>">
+          <b-card class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>" v-show="items.length">
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
@@ -203,7 +202,9 @@
                                   @keydown="questionSubmissionPageForm.errors.clear('page')"
                     />
                     <b-input-group-append>
-                      <b-button variant="primary" size="sm"
+                      <b-button variant="primary"
+                                size="sm"
+                                :disabled="!fullPdfUrl"
                                 @click="handleSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
                       >
                         Set Page
@@ -239,7 +240,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import AssignmentStatistics from '~/components/AssignmentStatistics'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
-import { faThumbsUp,faCheck } from '@fortawesome/free-solid-svg-icons'
+import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Vue from 'vue'
 import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
@@ -255,7 +256,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
-    combinedPdf: false,
+    compiledPdf: false,
     completedAllAssignmentQuestions: false,
     successMessage: '',
     errorMessage: '',
@@ -318,6 +319,11 @@ export default {
     }
   },
   methods: {
+    checkIfAssignmentCompleted () {
+      if (this.completedAllAssignmentQuestions) {
+        this.$bvModal.show('modal-completed-assignment')
+      }
+    },
     async handleSetPageAsSubmission (questionNumber, questionId, page) {
       this.questionSubmissionPageForm.questionId = questionId
       this.questionSubmissionPageForm.page = page
@@ -337,11 +343,7 @@ export default {
         openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
         this.successMessage = data.message
         this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
-        if (this.completedAllAssignmentQuestions) {
-          this.$bvModal.show('modal-completed-assignment')
-        } else {
-          this.$bvModal.show('modal-submission-accepted')
-        }
+        this.$bvModal.show('modal-submission-accepted')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.errorMessage = error.message
@@ -520,7 +522,7 @@ export default {
         this.instructions = assignment.instructions
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
-        this.combinedPdf = assignment.combined_pdf
+        this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
         this.name = assignment.name
         this.pastDue = assignment.past_due
@@ -534,8 +536,10 @@ export default {
             label: 'Number'
           },
           'last_question_submission',
-          'last_open_ended_submission',
-          'page']
+          'last_open_ended_submission']
+        if (assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both') {
+          this.fields.push('page')
+        }
         if (assignment.show_points_per_question) {
           this.fields.push({
             key: 'points',

@@ -103,10 +103,7 @@ class SubmissionAudioController extends Controller
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
             $response['submission_file_url'] =$this->getTemporaryUrl($assignment_id, basename($submission));
             $response['message'] = "Your audio submission has been saved.";
-            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
-                $response['message'] .= ' You have completed the assignment.';
-
-            }
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
 
 

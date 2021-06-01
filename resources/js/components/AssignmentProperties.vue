@@ -10,16 +10,34 @@
       @hidden="resetModalForms"
       @shown="updateModalToggleIndex"
     >
-      <b-tooltip target="combined_pdf_tooltip"
+      <b-tooltip target="compiled_pdf_tooltip"
                  delay="250"
       >
         <p>
           If you choose this option, your students will upload a single compiled PDF and let Adapt know which pages
-          are associated with which questions. This process makes it much easier to grade since the grader
-          will see the correct page while grading.
+          are associated with which questions.
         </p>
-        <p>For more flexibility in the types of submissions at the question level, please choose "no".</p>
       </b-tooltip>
+      <b-tooltip target="individual_assessment_upload_tooltip"
+                 delay="250"
+      >
+        <p>
+          If you choose this option, your students will upload individual submissions at the question level.
+          Use this option if you don't plan on having non-PDF uploads such as text, images, or audio or if
+          there is only one PDF submission.
+        </p>
+      </b-tooltip>
+      <b-tooltip target="both_upload_tooltip"
+                 delay="250"
+      >
+        <p>
+          If you choose this option, your students will be able to upload either a compiled PDF or individual
+          assessment uploads. Use this option if you have both several assessments which require a PDF submission
+          and you also have non-PDF assessments such as text, images, or audio.
+        </p>
+      </b-tooltip>
+
+
       <b-tooltip target="internal"
                  delay="250"
       >
@@ -466,38 +484,41 @@
       </div>
       <b-form-group
         v-show="form.assessment_type === 'delayed' && form.source === 'a'"
-        id="combined_pdf"
+        id="file_upload_mode"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Compiled PDF"
+        label="File Upload Mode"
+        label-for="File Upload Mode"
       >
-        <template slot="label">
-          File Upload Mode
-          <span id="combined_pdf_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
-        </template>
-        <b-form-radio-group v-model="form.combined_pdf"
+        <b-form-radio-group v-model="form.file_upload_mode"
                             stacked
                             :disabled="isLocked()"
-                            name="combined_pdf"
-                            :class="{ 'is-invalid': form.errors.has('combined_pdf') }"
-                            @keydown="form.errors.clear('combined_pdf')"
-                            @change="initCombinedPDFSwitch($event)"
+                            name="file_upload_mode"
+                            :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
+                            @keydown="form.errors.clear('file_upload_mode')"
+                            @change="initFileUploadModeSwitch($event)"
         >
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio name="combined_pdf" value="1">
-            Compiled Upload (PDFs only)
+          <b-form-radio name="file_upload_mode" value="compiled_pdf">
+            Compiled Upload (PDFs only) <span id="compiled_pdf_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
-          <b-form-radio name="combined_pdf" value="0">
-            Individual Assessment Upload
+          <b-form-radio name="file_upload_mode" value="individual_assessment">
+            Individual Assessment Upload <span id="individual_assessment_upload_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
+          <b-form-radio name="file_upload_mode" value="both">
+            Compiled Upload/Individual Assessment Upload <span id="both_upload_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+          </b-form-radio>
+
         </b-form-radio-group>
-        <div v-if="form.errors.has('combined_pdf')" class="help-block invalid-feedback">
-          Please choose either yes or no
+        <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
+          Please choose one of the given options.
         </div>
       </b-form-group>
       <b-form-group
-        v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.combined_pdf) !==1"
+        v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
         id="default_open_ended_submission_type"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -517,19 +538,19 @@
                             @keydown="form.errors.clear('default_open_ended_submission_type')"
         >
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
-          <b-form-radio name="default_open_ended_submission_type" value="rich text">
-            Rich Text
-          </b-form-radio>
-          <b-form-radio name="default_open_ended_submission_type" value="plain text">
-            Plain Text
-          </b-form-radio>
           <b-form-radio name="default_open_ended_submission_type" value="file">
             File
           </b-form-radio>
-          <b-form-radio name="default_open_ended_submission_type" value="audio">
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="rich text">
+            Rich Text
+          </b-form-radio>
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="plain text">
+            Plain Text
+          </b-form-radio>
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="audio">
             Audio
           </b-form-radio>
-          <b-form-radio name="default_open_ended_submission_type" value="0">
+          <b-form-radio  name="default_open_ended_submission_type" value="0">
             None
           </b-form-radio>
         </b-form-radio-group>
@@ -966,7 +987,7 @@ export default {
       submission_count_percent_decrease: null,
       assignment_group_id: null,
       default_open_ended_submission_type: 0,
-      combined_pdf: 1,
+      file_upload_mode: 'compiled_pdf',
       late_policy: 'not accepted',
       late_deduction_percent: null,
       late_deduction_applied_once: 1,
@@ -1009,26 +1030,27 @@ export default {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
-    async initCombinedPDFSwitch (value) {
+    async initFileUploadModeSwitch (value) {
+      let currentFileUploadMode = this.form.file_upload_mode
       try {
         if (this.assignmentId) {
-          if (parseInt(value) === 1) {
-            const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-combined-pdf`)
+          if (value === 'compiled_pdf') {
+            const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-compiled-pdf`)
             if (data.type === 'error') {
               this.$noty.error(data.message)
-              this.form.combined_pdf = 0
+              this.form.file_upload_mode = currentFileUploadMode
               return false
             }
           }
-          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-or-from-combined-pdf`)
+          const { data } = await axios.get(`/api/assignments/${this.assignmentId}/validate-can-switch-to-or-from-compiled-pdf`)
           if (data.type === 'error') {
             this.$noty.error(data.message)
-            this.form.combined_pdf = 1 - this.form.combined_pdf
+            this.form.file_upload_mode = currentFileUploadMode
             return false
           }
         }
-        if (parseInt(value) === 0) {
-          this.form.default_open_ended_submission_type = 'rich text'
+        if (this.form.file_upload_mode === 'compiled_pdf') {
+          this.form.default_open_ended_submission_type = 'file'
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -1208,7 +1230,7 @@ export default {
       this.form.late_deduction_application_period = null
     },
     showDelayedOptions () {
-      this.form.default_open_ended_submission_type = 'rich text'
+      this.form.default_open_ended_submission_type = 'file'
       this.form.min_time_needed_in_learning_tree = null
       this.form.percent_earned_for_exploring_learning_tree = null
       this.form.submission_count_percent_decrease = null
@@ -1300,7 +1322,7 @@ export default {
       this.form.default_clicker_time_to_submit = ''
       this.form.instructions = ''
       this.form.assessment_type = 'real time'
-      this.form.combined_pdf = 1
+      this.form.file_upload_mode = 'compiled_pdf'
       this.form.number_of_randomized_assessments = null
       this.form.randomizations = 0
       this.form.min_time_needed_in_learning_tree = null
@@ -1318,7 +1340,7 @@ export default {
     },
     resetOpenEndedResponsesAndPointsPerQuestion () {
       this.form.default_points_per_question = 10
-      this.form.default_open_ended_submission_type = 'rich text'
+      this.form.default_open_ended_submission_type = 'file'
       this.form.assessment_type = 'real time'
       this.form.students_can_view_assignment_statistics = 0
       this.form.external_source_points = 100
@@ -1362,7 +1384,7 @@ export default {
       if (assignment.default_open_ended_text_editor) {
         this.form.default_open_ended_submission_type = assignment.default_open_ended_text_editor + ' ' + assignment.default_open_ended_submission_type
       }
-      this.form.combined_pdf = assignment.combined_pdf
+      this.form.file_upload_mode = assignment.file_upload_mode
       this.form.num_submissions_needed = assignment.num_submissions_needed
       this.form.default_points_per_question = assignment.default_points_per_question
       this.form.scoring_type = assignment.scoring_type
@@ -1449,7 +1471,7 @@ export default {
       this.form.due_time = '09:00:00'
       this.form.type_of_submission = 'correct'
       this.form.num_submissions_needed = '2'
-      this.form.default_open_ended_submission_type = 'rich text'
+      this.form.default_open_ended_submission_type = 'file'
       this.form.default_points_per_question = '10'
       this.form.scoring_type = 'p'
 

@@ -127,10 +127,7 @@ class Submission extends Model
             $learning_tree_percent_penalty = 0;
             $explored_learning_tree = 0;
             $message = 'Auto-graded submission saved.';
-            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
-                $message .= '  You have completed this assignment.';
-            }
-
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             if ($submission) {
                 if ($assignment->assessment_type === 'real time') {
                     $response['message'] = 'You can only submit once since you are provided with real-time feedback.';

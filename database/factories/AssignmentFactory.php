@@ -17,6 +17,6 @@ $factory->define(Assignment::class, function (Faker $faker) {
         'include_in_weighted_average' => 1,
         'notifications' => 1,
         'order' => 1,
-        'combined_pdf'=>0
+        'file_upload_mode'=>'both'
         ];
 });

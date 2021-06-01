@@ -96,7 +96,7 @@ class QuestionsGetTest extends TestCase
     /** @test */
 
     public function cannot_add_non_file_questions_to_a_compiled_assignment(){
-        $this->assignment->combined_pdf = 1;
+        $this->assignment->file_upload_mode = 'compiled_pdf';
         $this->assignment->save();
 
         DB::table('assignment_question')->where('question_id' ,$this->question->id)
@@ -108,7 +108,7 @@ class QuestionsGetTest extends TestCase
         ];
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/remix-assignment-with-chosen-questions",
             $data)
-            ->assertJson(['message' => "Your assignment is of type Combined PDF but you're trying to remix an open-ended type of audio.  If you would like to use this question, please edit your assignment and change Combined PDF to 'no'."]);
+            ->assertJson(['message' => "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of audio.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'."]);
     }
 
     /** @test */

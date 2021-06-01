@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class UpdateCombinedPdfToAssignments extends Migration
@@ -14,8 +15,11 @@ class UpdateCombinedPdfToAssignments extends Migration
     public function up()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->boolean('combined_pdf')->after('show_points_per_question');
+            $table->string('file_upload_mode', 50)
+                ->after('show_points_per_question')
+                ->nullable();
         });
+        DB::table('assignments')->update(['file_upload_mode' => 'both']);
     }
 
     /**
@@ -26,7 +30,7 @@ class UpdateCombinedPdfToAssignments extends Migration
     public function down()
     {
         Schema::table('assignments', function (Blueprint $table) {
-            $table->dropColumn('combined_pdf');
+            $table->dropColumn('file_upload_mode');
         });
     }
 }

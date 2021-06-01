@@ -134,9 +134,7 @@ class SubmissionTextController extends Controller
 
             $response['type'] = 'success';
             $response['message'] = 'Your text submission was saved.';
-            if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
-                $response['message'] .= "  You have completed this assignment.";
-            }
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
                 $user->time_zone, 'M d, Y g:i:s a');
             DB::commit();

@@ -627,7 +627,7 @@ class SubmissionFileController extends Controller
                             'type' => 'a'],
                         $submission_file_data
                     );
-                    $response['message'] = "You can now choose which page to submit for this question.";
+                    $response['message'] = "You can now set the pages for your open-ended submissions.";
                     $response['full_pdf_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     break;
                 case('question'):
@@ -643,9 +643,7 @@ class SubmissionFileController extends Controller
                     $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
                     $response['message'] = "Your file submission has been saved.";
-                    if ($assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)){
-                        $response['message'] .= "  You have completed the assignment.";
-                    }
+                    $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                     break;
             }
 

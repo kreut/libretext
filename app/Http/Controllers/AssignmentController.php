@@ -697,7 +697,7 @@ class AssignmentController extends Controller
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
-                    'combined_pdf' => $request->assessment_type === 'delayed' ? $data['combined_pdf'] : 0,
+                    'file_upload_mode' => $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null,
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
                     'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
                     'late_policy' => $data['late_policy'],
@@ -866,7 +866,7 @@ class AssignmentController extends Controller
     {
         if ($request->assessment_type !== 'delayed') {
             return null;
-        } elseif ($data['combined_pdf']) {
+        } elseif ($data['file_upload_mode']) {
             return null;
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return str_replace(' text', '', $data['default_open_ended_submission_type']);
@@ -887,7 +887,7 @@ class AssignmentController extends Controller
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
             return 0;
-        } elseif ($data['combined_pdf']) {
+        } elseif ($data['file_upload_mode'] === 'compiled_pdf') {
             return 'file';
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return 'text';
@@ -932,7 +932,7 @@ class AssignmentController extends Controller
                 'question_view' => $request->hasCookie('question_view') != false ? $request->cookie('question_view') : 'basic',
                 'name' => $assignment->name,
                 'assessment_type' => $assignment->assessment_type,
-                'combined_pdf' => $assignment->combined_pdf,
+                'file_upload_mode' => $assignment->file_upload_mode,
                 'has_submissions_or_file_submissions' => $assignment->submissions->isNotEmpty() + $assignment->fileSubmissions->isNotEmpty(),
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
@@ -1299,7 +1299,7 @@ class AssignmentController extends Controller
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             $data['number_of_randomized_assessments'] = $data['number_of_randomized_assessments'] ?? null;
-            $data['combined_pdf'] = $request->assessment_type === 'delayed' ? $data['combined_pdf'] : 0;
+            $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
             unset($data['available_from_date']);
             unset($data['available_from_time']);
             unset($data['final_submission_deadline']);
