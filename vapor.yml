@@ -1,7 +1,7 @@
 id: 21410
 name: adapt
 environments:
-    docker_staging:
+    docker-staging:
         memory: 1024
         cli-memory: 512
         runtime: docker
