@@ -4,7 +4,7 @@ environments:
     production:
         memory: 1024
         cli-memory: 512
-        runtime: 'php-8.0:al2'
+        runtime: 'php-7.4'
         build:
             - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev'
             - 'php artisan event:cache'
@@ -12,7 +12,7 @@ environments:
     staging:
         memory: 1024
         cli-memory: 512
-        runtime: 'php-8.0:al2'
+        runtime: 'php-7.4'
         build:
             - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install'
             - 'php artisan event:cache'
