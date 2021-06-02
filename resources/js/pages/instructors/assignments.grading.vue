@@ -581,17 +581,17 @@ export default {
     this.downloadSolutionFile = downloadSolutionFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
-    window.addEventListener('keydown', this.escapeListener)
+    window.addEventListener('keydown', this.arrowListener)
   },
   destroyed () {
-    window.removeEventListener('keydown', this.escapeListener)
+    window.removeEventListener('keydown', this.arrowListener)
   },
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
   },
   methods: {
-    escapeListener (event) {
+    arrowListener (event) {
       if (event.key === 'ArrowRight' && this.currentStudentPage < this.numStudents) {
         this.currentStudentPage++
         this.changePage()

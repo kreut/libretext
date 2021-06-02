@@ -1601,6 +1601,10 @@ export default {
     this.downloadSubmissionFile = downloadSubmissionFile
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
     this.isLocked = isLocked
+    window.addEventListener('keydown', this.arrowListener)
+  },
+  destroyed () {
+    window.removeEventListener('keydown', this.arrowListener)
   },
   async mounted () {
     this.isLoading = true
@@ -1662,6 +1666,16 @@ export default {
     }
   },
   methods: {
+    arrowListener (event) {
+      if (event.key === 'ArrowRight' && this.currentPage < this.questions.length) {
+        this.currentPage++
+        this.changePage(this.currentPage)
+      }
+      if (event.key === 'ArrowLeft' && this.currentPage > 1) {
+        this.currentPage--
+        this.changePage(this.currentPage)
+      }
+    },
     checkIfAssignmentCompleted () {
       if (this.completedAllAssignmentQuestions) {
         this.$bvModal.show('modal-completed-assignment')
