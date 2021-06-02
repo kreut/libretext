@@ -16,6 +16,85 @@
                             :course-end-date="course.end_date"
       />
 
+      <b-modal id="modal-show-assignment-statistics"
+               title="Show Assignment Statistics"
+      >
+        <p>
+          It looks like you want to show the assignment statistics but your students can't view their own scores.
+          Are you sure that you want to show the assignment statistics?
+        </p>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-show-assignment-statistics')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="submitShowAssignmentStatistics()"
+          >
+            Yes, I want to show the assignment statistics.
+          </b-button>
+        </template>
+      </b-modal>
+
+      <b-modal id="modal-hide-solutions"
+               title="Hide Solutions"
+      >
+        <p>
+          This is a "<strong>{{ assessmentType }}</strong>" assignment. Typically
+          for this type of assignment, students are shown the solutions immediately.
+          Are you sure that you want to hide the solutions?
+        </p>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-hide-solutions')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="submitSolutionsReleased()"
+          >
+            Yes, I want to hide the solutions!
+          </b-button>
+        </template>
+      </b-modal>
+
+      <b-modal id="modal-hide-scores"
+               title="Hide Scores"
+      >
+        <p>
+          This is a "<strong>{{ assessmentType }}</strong>" assignment. Typically
+          for this type of assignment, students get immediate feedback.
+          Are you sure that you want to hide the scores?
+        </p>
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-hide-scores')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="submitShowScores()"
+          >
+            Yes, I want to hide the scores!
+          </b-button>
+        </template>
+      </b-modal>
       <b-modal
         id="modal-assign-tos-to-view"
         ref="modal"
@@ -293,7 +372,7 @@
                 :margin="4"
                 :color="{checked: '#28a745', unchecked: '#6c757d'}"
                 :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                @change="submitShowScores(assignment)"
+                @change="initShowScores(assignment)"
               />
             </td>
             <td>
@@ -305,7 +384,7 @@
                 :margin="4"
                 :color="{checked: '#28a745', unchecked: '#6c757d'}"
                 :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                @change="submitSolutionsReleased(assignment)"
+                @change="initSolutionsReleased(assignment)"
               />
             </td>
             <td>
@@ -317,7 +396,7 @@
                 :margin="4"
                 :color="{checked: '#28a745', unchecked: '#6c757d'}"
                 :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                @change="submitShowAssignmentStatistics(assignment)"
+                @change="initShowAssignmentStatistics(assignment)"
               />
             </td>
             <td>
@@ -420,6 +499,7 @@ export default {
     draggable
   },
   data: () => ({
+    assessmentType: '',
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
     assignmentGroupOptions: [],
@@ -440,7 +520,6 @@ export default {
     }),
     allAssignments: [],
     title: '',
-    assessmentType: '',
     isLoading: false,
     solutionsReleased: 0,
     assignmentId: false, // if there's an assignmentId it's an update
@@ -595,24 +674,30 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async submitShowAssignmentStatistics (assignment) {
-      if (!assignment.students_can_view_assignment_statistics && !assignment.show_scores) {
-        this.$noty.info('If you would like students to view the assignment statistics, please first allow them to view the scores.')
-        return false
-      }
 
+    async initShowAssignmentStatistics (assignment) {
+      this.assignment = assignment
+      !assignment.students_can_view_assignment_statistics && !assignment.show_scores
+        ? this.$bvModal.show('modal-show-assignment-statistics')
+        : await this.submitShowAssignmentStatistics()
+    },
+    async submitShowAssignmentStatistics () {
       try {
-        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-assignment-statistics/${Number(assignment.students_can_view_assignment_statistics)}`)
+        const { data } = await axios.patch(`/api/assignments/${this.assignment.id}/show-assignment-statistics/${Number(this.assignment.students_can_view_assignment_statistics)}`)
         this.$noty[data.type](data.message)
+        this.$bvModal.hide('modal-show-assignment-statistics')
         if (data.type === 'error') {
           return false
         }
-        assignment.students_can_view_assignment_statistics = !assignment.students_can_view_assignment_statistics
+        this.assignment.students_can_view_assignment_statistics = !this.assignment.students_can_view_assignment_statistics
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.$bvModal.hide('modal-show-assignment-statistics')
     },
+
     async submitShowPointsPerQuestion (assignment) {
+
       try {
         const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-points-per-question/${Number(assignment.show_points_per_question)}`)
         this.$noty[data.type](data.message)
@@ -624,34 +709,47 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async submitShowScores (assignment) {
-      if (assignment.students_can_view_assignment_statistics && assignment.show_scores) {
-        this.$noty.info('If you would like students to view the scores, please first hide the assignment statistics.')
-        return false
-      }
-      console.log(assignment)
-      try {
-        const { data } = await axios.patch(`/api/assignments/${assignment.id}/show-scores/${Number(assignment.show_scores)}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        assignment.show_scores = !assignment.show_scores
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
+    async initShowScores (assignment) {
+      this.assessmentType = assignment.assessment_type
+      this.assignment = assignment
+      this.assessmentType !== 'delayed' && Boolean(assignment.show_scores)
+        ? this.$bvModal.show('modal-hide-scores')
+        : await this.submitShowScores()
     },
-    async submitSolutionsReleased (assignment) {
+    async submitShowScores () {
       try {
-        const { data } = await axios.patch(`/api/assignments/${assignment.id}/solutions-released/${Number(assignment.solutions_released)}`)
+        const { data } = await axios.patch(`/api/assignments/${this.assignment.id}/show-scores/${Number(this.assignment.show_scores)}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
+          this.$bvModal.hide('modal-hide-scores')
           return false
         }
-        assignment.solutions_released = !assignment.solutions_released
+        this.assignment.show_scores = !this.assignment.show_scores
       } catch (error) {
         this.$noty.error(error.message)
       }
+      this.$bvModal.hide('modal-hide-scores')
+    },
+    async initSolutionsReleased (assignment) {
+      this.assessmentType = assignment.assessment_type
+      this.assignment = assignment
+      this.assessmentType !== 'delayed' && Boolean(assignment.solutions_released)
+        ? this.$bvModal.show('modal-hide-solutions')
+        : await this.submitSolutionsReleased()
+    },
+    async submitSolutionsReleased () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignment.id}/solutions-released/${Number(this.assignment.solutions_released)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          this.$bvModal.hide('modal-hide-solutions')
+          return false
+        }
+        this.assignment.solutions_released = !this.assignment.solutions_released
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.$bvModal.hide('modal-hide-solutions')
     },
     async handleReleaseSolutions (bvModalEvt) {
       bvModalEvt.preventDefault()

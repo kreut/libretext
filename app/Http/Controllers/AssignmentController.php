@@ -539,7 +539,7 @@ class AssignmentController extends Controller
     }
 
     public
-    function showPointsPerQuestion(Request $request, Assignment $assignment, int $showPointsPerQuestion)
+    function showPointsPerQuestion(Assignment $assignment, int $showPointsPerQuestion)
     {
 
         $response['type'] = 'error';
