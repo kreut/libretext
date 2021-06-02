@@ -14,8 +14,9 @@ class AssignmentSyncQuestion extends Model
     public function completedAllAssignmentQuestions($assignment)
     {
         $num_technology_questions = $assignment->number_of_randomized_assignments
-            ?: $assignment->questions
-                ->pluck('technology')
+            ?: DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->join('questions','assignment_question.question_id','=','questions.id')
                 ->where('technology', '<>', 'text')
                 ->count();
         $num_non_technology_questions = DB::table('assignment_question')

@@ -641,7 +641,7 @@ class SubmissionFileController extends Controller
                     $response['submission'] = basename($submission);
                     $response['original_filename'] = $original_filename;
                     $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
-                    $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
+                    $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
                     $response['message'] = "Your file submission has been saved.";
                     $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                     break;

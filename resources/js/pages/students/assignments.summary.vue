@@ -1,6 +1,20 @@
 <template>
   <div>
     <b-modal
+      id="modal-completed-assignment"
+      ref="modalThumbsUp"
+      hide-footer
+      size="sm"
+      title="Congratulations!"
+    >
+      <b-container>
+        <b-row>
+          <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275">
+        </b-row>
+        <b-row><h5>All Question Submissions Successfully Uploaded.</h5></b-row>
+      </b-container>
+    </b-modal>
+    <b-modal
       id="modal-submission-accepted"
       ref="modalThumbsUp"
       hide-footer
@@ -27,19 +41,7 @@
         <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage"/>
       </b-alert>
     </b-modal>
-    <b-modal
-      id="modal-completed-assignment"
-      ref="modalThumbsUp"
-      hide-footer
-      size="sm"
-      title="Assignment Completed"
-    >
-      <b-container>
-        <b-row>
-          <img src="/assets/img/thumbs_up/gif/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275"/>
-        </b-row>
-      </b-container>
-    </b-modal>
+
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -78,10 +80,17 @@
                 <span class="font-weight-bold">Late Policy: </span>
                 <span class="font-italic"> {{ formattedLatePolicy }}</span>
               </p>
+              <p v-if="bothFileUploadMode">
+                <span class="font-weight-bold">
+                  Open ended submissions:</span>
+                <span class="font-italic">
+                  Upload a single compiled PDF of the questions and assign pages AND/OR submit individual submissions on each page.
+              </span>
+              </p>
             </b-card-text>
           </b-card>
 
-          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default" header-html="<h5>Compiled PDF</h5>">
+          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default" header-html="<h5>Upload Compiled PDF Submission</h5>">
             <file-upload
               ref="upload"
               v-model="files"
@@ -146,7 +155,7 @@
               :items="items"
             >
               <template #cell(question_number)="data">
-                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)">{{ data.item.question_number }}</a>
+                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{ data.item.question_number }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto Graded Submission <span v-b-tooltip="showAutoGradedSubmissionTooltip"><b-icon
@@ -256,6 +265,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    bothFileUploadMode: false,
     compiledPdf: false,
     completedAllAssignmentQuestions: false,
     successMessage: '',
@@ -523,6 +533,7 @@ export default {
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
         this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'
+        this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
         this.name = assignment.name
         this.pastDue = assignment.past_due
@@ -538,7 +549,7 @@ export default {
           'last_question_submission',
           'last_open_ended_submission']
         if (assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both') {
-          this.fields.push('page')
+          this.fields.push({ key: 'page', label: 'Initial Page'})
         }
         if (assignment.show_points_per_question) {
           this.fields.push({
@@ -565,8 +576,8 @@ export default {
         }
         for (let i = 0; i < data.questions.length; i++) {
           let question = data.questions[i]
-          let lastOpenEndedSubmission = 'None required.'
-          let lastSubmitted = 'None required.'
+          let lastOpenEndedSubmission = 'N/A'
+          let lastSubmitted = 'N/A'
           let openEndedSubmissionRequired = false
           let showThumbsUpForOpenEndedSubmission = false
           let questionSubmissionRequired = false
