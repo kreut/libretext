@@ -125,3 +125,4 @@ fabric.properties
 .env.production
 .env.staging
 .env.docker_staging
+/.env.docker-staging
