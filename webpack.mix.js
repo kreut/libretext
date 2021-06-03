@@ -10,7 +10,8 @@ mix
 
   .disableNotifications()
 
-const ASSET_URL = process.env.ASSET_URL + "/";
+const ASSET_URL = process.env.ASSET_URL ? process.env.ASSET_URL + '/' : ''
+
 if (mix.inProduction()) {
   // console.log(process.env);
   mix
@@ -20,14 +21,14 @@ if (mix.inProduction()) {
 } else {
   mix.sourceMaps()
 }
-const webpack = require('webpack');
+const webpack = require('webpack')
 
 mix.webpackConfig({
   plugins: [
     // new BundleAnalyzerPlugin()
-    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), //Locales were causing a css error in app.css
+    new webpack.IgnorePlugin(/^\.\/locale$/, /moment$/), // Locales were causing a css error in app.css
     new webpack.DefinePlugin({
-      "process.env.ASSET_PATH": JSON.stringify(ASSET_URL)
+      'process.env.ASSET_PATH': JSON.stringify(ASSET_URL)
     })
   ],
   resolve: {
@@ -60,7 +61,6 @@ function publishAseets () {
   fs.removeSync(path.join(publicDir, 'build'))
 }
 
-
-/*mix
+/* mix
   .js("resources/js/app.js", "public/js")
   .sass("resources/sass/app.scss", "public/css");*/

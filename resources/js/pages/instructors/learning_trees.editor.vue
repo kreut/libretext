@@ -602,7 +602,9 @@ export default {
     },
     getBlockyNameHTML (library, pageId) {
       let libraryText = this.getLibraryText(library)
-      return `<img src="/assets/img/${library}.svg" style="${this.libraryColors[library]}"><span class="library"
+      let svg = `assets/img/${library}.svg`
+      let src = this.asset("'" + svg + "'")
+      return `<img :src="${src}" alt="${library}" style="${this.libraryColors[library]}"><span class="library"
       >${libraryText}</span> - <span class="page_id">${pageId}</span>`
     },
     async addRemediation () {
