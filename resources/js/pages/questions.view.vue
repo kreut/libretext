@@ -513,9 +513,12 @@
           <span class="font-weight-bold">Assessment is closed. Contact the instructor for more details.</span>
         </b-alert>
       </div>
-      <div v-if="questions.length && !initializing">
+      <div v-if="questions.length && !initializing && !isLoading">
+        <div v-show="isInstructorLoggedInAsStudent">
+          <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+        </div>
         <div v-if="isLocked() && !presentationMode">
-          <b-alert variant="info" show>
+          <b-alert variant="info" :show="true">
             <strong>This problem is locked. Since students have already submitted responses, you cannot update the
               points per question nor change the open-ended submission type.</strong>
           </b-alert>
@@ -1260,7 +1263,7 @@
                           </b-row>
                           <b-row v-show="(compiledPDF || bothFileUploadMode) && user.role === 3" class="mt-2">
                             <span class="font-italic">
-                              {{bothFileUploadMode ? 'Optionally' : 'Please'}}, upload your compiled PDF on the assignment's <router-link
+                              {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
                                 :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
                               >summary page</router-link>.
                             </span>
@@ -1352,6 +1355,8 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import Vue from 'vue'
 import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 
+import LoggedInAsStudent from '~/components/LoggedInAsStudent'
+
 Vue.prototype.$http = axios // needed for the audio player
 
 const VueUploadComponent = require('vue-upload-component')
@@ -1370,10 +1375,11 @@ export default {
     PieChart,
     RemoveQuestion,
     ckeditor: CKEditor.component,
-    FileUpload: VueUploadComponent
+    FileUpload: VueUploadComponent,
+    LoggedInAsStudent
   },
   data: () => ({
-
+    isInstructorLoggedInAsStudent: false,
     completedAllAssignmentQuestions: false,
     checkIcon: faCheck,
     thumbsUpIcon: faThumbsUp,
@@ -2706,7 +2712,7 @@ export default {
         }
 
         this.questions = data.questions
-
+        this.isInstructorLoggedInAsStudent = data.is_instructor_logged_in_as_student
         if (!this.questions.length) {
           this.initializing = false
           return false

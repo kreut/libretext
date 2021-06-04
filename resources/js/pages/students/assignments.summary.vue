@@ -67,6 +67,9 @@
               <span class="font-weight-bold">Please wait for your instructor to open up this assignment.</span>
             </b-alert>
           </div>
+          <div v-show="isInstructorLoggedInAsStudent">
+            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+          </div>
           <b-card header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
               <p v-if="instructions.length" class="mb-2">
@@ -253,6 +256,7 @@ import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 import Vue from 'vue'
 import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
+import LoggedInAsStudent from '~/components/LoggedInAsStudent'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -261,10 +265,12 @@ export default {
   components: {
     AssignmentStatistics,
     Loading,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    LoggedInAsStudent
   },
   middleware: 'auth',
   data: () => ({
+    isInstructorLoggedInAsStudent: false,
     bothFileUploadMode: false,
     compiledPdf: false,
     completedAllAssignmentQuestions: false,
@@ -529,6 +535,7 @@ export default {
           return false
         }
         let assignment = data.assignment
+        this.isInstructorLoggedInAsStudent = assignment.is_instructor_logged_in_as_student
         this.instructions = assignment.instructions
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due

@@ -18,7 +18,7 @@ export async function loginAsStudentInCourse (studentUserId) {
       // Fetch the user.
       await this.$store.dispatch('auth/fetchUser')
       // Redirect to the correct home page
-      this.$router.push({ name: 'students.assignments.index' })
+      await this.$router.push({ name: 'students.assignments.index' })
     } else {
       this.$noty.error(data.message)// no access
     }

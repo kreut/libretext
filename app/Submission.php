@@ -91,11 +91,11 @@ class Submission extends Model
                 //$submission_score = json_decode(json_encode($submission->score));
 
 
-                $submission_score = (object) $submission->score; //
+                $submission_score = (object)$submission->score; //
                 //Log::info( $submission_score->result);
-            if (!isset($submission_score->result)){
-                throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
-            }
+                if (!isset($submission_score->result)) {
+                    throw new Exception ('Please refresh the page and resubmit to use the upgraded Webwork renderer.');
+                }
                 $proportion_correct = floatval($submission_score->result);
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
@@ -215,9 +215,9 @@ class Submission extends Model
 
             //don't really care if this gets messed up from the user perspective
             try {
-                session()->put('submission_id',md5(uniqid('', true)) );
+                session()->put('submission_id', md5(uniqid('', true)));
                 $dataShop->store($submission, $data);
-            } catch (Exception $e){
+            } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
 
@@ -243,6 +243,10 @@ class Submission extends Model
 
     public function latePenaltyPercent(Assignment $assignment, Carbon $now)
     {
+        if (session()->get('instructor_user_id')) {
+            //logged in as student
+            return 0;
+        }
         $late_deduction_percent = 0;
         if ($assignment->late_policy === 'deduction') {
             $late_deduction_percent = $assignment->late_deduction_percent;
@@ -271,7 +275,8 @@ class Submission extends Model
      * @return false|string
      * @throws Exception
      */
-    public function getStudentResponse(object $submission, string $technology){
+    public function getStudentResponse(object $submission, string $technology)
+    {
 
         $submission_object = json_decode($submission->submission);
         $student_response = '';
@@ -337,6 +342,7 @@ class Submission extends Model
         }
         return $student_response;
     }
+
     public function getSubmissionDatesByAssignmentIdAndUser($assignment_id, User $user)
     {
         $last_submitted_by_user = [];

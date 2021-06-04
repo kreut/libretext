@@ -1165,6 +1165,7 @@ class AssignmentController extends Controller
                     ? $assignment->number_of_randomized_assessments : "none"
             ];
             if (auth()->user()->role === 3) {
+                $formatted_items['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id');
                 $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                 $formatted_items['full_pdf_url'] = $submissionFile->getFullPdfUrl($assignment);
                 $assign_to_timing = $assignment->assignToTimingByUser();

@@ -46,6 +46,10 @@ trait GeneralSubmissionPolicy
             $response['message'] = 'No responses will be saved since the assignment is `not` part of your course.';
             return $response;
         }
+        if (session()->get('instructor_user_id')){
+            //logged in as student
+           $response['type'] = 'success';
+        }
 
         if (strtotime($assign_to_timing->available_from) > time()) {
             $response['message'] = 'No responses will be saved since this assignment is not yet available.';

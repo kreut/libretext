@@ -1425,7 +1425,7 @@ class AssignmentSyncQuestionController extends Controller
 
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
-
+            $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;
 
         } catch (Exception $e) {
             $h = new Handler(app());
