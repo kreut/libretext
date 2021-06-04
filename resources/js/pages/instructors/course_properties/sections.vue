@@ -39,7 +39,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name"/>
+        <has-error :form="sectionForm" field="name" />
       </b-form-group>
     </b-modal>
     <div class="vld-parent">
@@ -66,36 +66,35 @@
                 </template>
                 <template v-slot:cell(actions)="data">
                   <div class="mb-0">
-                  <span class="pr-1" @click="initEditSection(data.item.id, data.item.name)">
-                    <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
-                               delay="500"
-                    >
-                      Edit Section
-                    </b-tooltip>
-                    <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
-                  </span>
-
+                    <span class="pr-1" @click="initEditSection(data.item.id, data.item.name)">
+                      <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
+                                 delay="500"
+                      >
+                        Edit Section
+                      </b-tooltip>
+                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
+                    </span>
                     <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
-                    <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
-                               delay="500"
-                    >
-                      Delete Section
-                    </b-tooltip>
-                    <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
-                  </span>
+                      <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
+                                 delay="500"
+                      >
+                        Delete Section
+                      </b-tooltip>
+                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
+                    </span>
                     <span class="text-info">
-                    <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
-                               delay="500"
-                    >
+                      <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                 delay="500"
+                      >
 
-                      You can refresh the access code if you would like to render the current access code invalid.
+                        You can refresh the access code if you would like to render the current access code invalid.
 
-                    </b-tooltip>
-                    <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                         variant="dark"
-                                         @click="refreshAccessCode(data.item.id)"
-                    />
-                  </span>
+                      </b-tooltip>
+                      <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                           variant="dark"
+                                           @click="refreshAccessCode(data.item.id)"
+                      />
+                    </span>
                   </div>
                 </template>
               </b-table>
@@ -170,7 +169,7 @@ export default {
         }
 
         this.numberOfEnrolledUsers = data.number_of_enrolled_users
-        data.hasEnrolledUsers
+        data.has_enrolled_users
           ? this.$bvModal.show('modal-delete-section')
           : await this.handleDeleteSection()
       } catch (error) {
@@ -180,6 +179,7 @@ export default {
       }
     },
     async handleDeleteSection () {
+      this.isLoading = true
       try {
         const { data } = await axios.delete(`/api/sections/${this.sectionId}`)
         this.$noty[data.type](data.message)
@@ -192,15 +192,14 @@ export default {
           this.$noty.error(error.message)
         }
       }
-    }
-    ,
+      this.isLoading = false
+    },
     initAddSection () {
       this.sectionId = false
       this.sectionForm.name = ''
       this.sectionForm.errors.clear()
       this.$bvModal.show('modal-section')
-    }
-    ,
+    },
     async submitSectionForm (bvEvt) {
       bvEvt.preventDefault()
       try {
@@ -216,15 +215,13 @@ export default {
           this.$noty.error(error.message)
         }
       }
-    }
-    ,
+    },
     initEditSection (sectionId, sectionName) {
       this.sectionForm.errors.clear()
       this.sectionId = sectionId
       this.sectionForm.name = sectionName
       this.$bvModal.show('modal-section')
-    }
-    ,
+    },
     async getSections (courseId) {
       const { data } = await axios.get(`/api/sections/${courseId}`)
       if (data.type === 'error') {
@@ -232,8 +229,7 @@ export default {
         return false
       }
       this.sections = data.sections
-    }
-    ,
+    },
     async refreshAccessCode (sectionId) {
       try {
         const { data } = await axios.patch(`/api/sections/refresh-access-code/${sectionId}`)
