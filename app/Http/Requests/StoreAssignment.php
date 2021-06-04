@@ -42,13 +42,14 @@ class StoreAssignment extends FormRequest
             'late_policy' => Rule::in(['not accepted', 'marked late', 'deduction']),
             'assignment_group_id' => 'required|exists:assignment_groups,id',
             'include_in_weighted_average' => Rule::in([0, 1]),
-            'file_upload_mode' => Rule::in(['compiled_pdf','individual_assessment','both']),
             'instructions' => 'max:10000',
             'default_open_ended_submission_type' => Rule::in(['file', 'rich text', 'plain text', 'audio', 0]),
             'notifications' => Rule::in([0, 1]),
         ];
 
-
+        if ($this->assessment_type === 'delayed'){
+            $rules['file_upload_mode'] = Rule::in(['compiled_pdf','individual_assessment','both']);
+        }
         foreach ($this->assign_tos as $key => $assign_to) {
             if ($this->late_policy !== 'not accepted') {
                 $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
