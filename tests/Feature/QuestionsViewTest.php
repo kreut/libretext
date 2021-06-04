@@ -1083,7 +1083,8 @@ class QuestionsViewTest extends TestCase
     public function student_cannot_get_scores_by_assignment_and_question()
     {
         $this->actingAs($this->student_user)->getJson("/api/scores/summary/{$this->assignment->id}/{$this->question->id}")
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to retrieve this summary.']);
+            ->assertJson(['type' => 'error', 'message' => "You can't get the scores for an assignment that is not in one of your courses."]);
+
     }
 
     /** @test */

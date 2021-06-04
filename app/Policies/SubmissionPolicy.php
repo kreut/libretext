@@ -16,6 +16,7 @@ class SubmissionPolicy
     use HandlesAuthorization;
     use GeneralSubmissionPolicy;
 
+
     /**
      * @param User $user
      * @param Submission $submission
@@ -23,7 +24,7 @@ class SubmissionPolicy
      * @param Question $question
      * @return Response
      */
-    public function getAutoGradedSubmissionsSubmissions(User $user, Submission $submission, Assignment $assignment, Question $question){
+    public function getSubmissions(User $user, Submission $submission, Assignment $assignment, Question $question){
 
         $has_access = true;
         $message = '';

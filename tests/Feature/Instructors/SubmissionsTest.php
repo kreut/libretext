@@ -1,6 +1,6 @@
 <?php
 
-namespace Tests\Feature;
+namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\Course;
@@ -9,15 +9,17 @@ use App\Question;
 use App\Score;
 use App\Section;
 use App\Submission;
+use App\SubmissionFile;
 use App\Traits\Test;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
-class AutoGradedSubmissionsTest extends TestCase
+class SubmissionsTest extends TestCase
 {
 
     use Test;
@@ -27,6 +29,15 @@ class AutoGradedSubmissionsTest extends TestCase
     private $question;
     private $student_user_2;
     private $user;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|Model|mixed
+     */
+    private $section;
+    /**
+     * @var \Illuminate\Database\Eloquent\Collection|Model|mixed
+     */
+    private $course;
+    private $scores;
 
     public function setup(): void
     {
@@ -63,9 +74,20 @@ class AutoGradedSubmissionsTest extends TestCase
 
         $this->scores = ['new_score' => 10,
             'apply_to' => 1,
-            'user_ids' => [$this->student_user->id]];
+            'user_ids' => [$this->student_user->id],
+            'type' => 'Auto-graded'];
 
     }
+
+    /** @test */
+    public function return_if_the_new_score_goes_over_the_points_for_the_question(){
+        $this->scores['new_score'] = 20;
+        $this->createSubmission($this->student_user, 5);
+        $this->actingAs($this->user)->postJson("/api/scores/over-total-points/{$this->assignment->id}/{$this->question->id}", $this->scores)
+            ->assertJson(['num_over_max' => 1]);
+    }
+
+
 
     function createSubmission($student, $score)
     {
@@ -110,7 +132,34 @@ class AutoGradedSubmissionsTest extends TestCase
         $this->assertEquals($original_assignment_score + $this->scores['new_score'] - $original_assessment_score, $new_score->score, 'Adds the correct adjustment');
 
         $new_score = $score->where('user_id', $this->student_user_2->id)->first();
-        $this->assertEquals($original_assignment_score , $new_score->score, 'Does not touch the other student');
+        $this->assertEquals($original_assignment_score, $new_score->score, 'Does not touch the other student');
+
+    }
+
+    /** @test */
+    public function update_works_for_file_submissions()
+    {
+
+        $original_assignment_score = 5;
+        $original_assessment_score = 2;
+        SubmissionFile::create($this->submission_file = [
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'type' => 'q',
+            'user_id' => $this->student_user->id,
+            'original_filename' => 'blah blah',
+            'submission' => 'sflkjfwlKEKLie.jpg',
+            'score' =>  $original_assessment_score,
+            'date_submitted' => Carbon::now()
+        ]);
+        $this->createScore($this->student_user, $original_assignment_score);
+
+        $this->scores['new_score'] = 4;
+        $this->actingAs($this->user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/scores", $this->scores);
+
+        $score = new Score();
+        $new_score = $score->where('user_id', $this->student_user->id)->first();
+        $this->assertEquals($original_assignment_score + $this->scores['new_score'] - $original_assessment_score, $new_score->score, 'Adds the correct adjustment');
 
     }
 
@@ -118,7 +167,7 @@ class AutoGradedSubmissionsTest extends TestCase
     /** @test */
     public function owner_can_get_auto_graded_submissions()
     {
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/{$this->question->id}/get-auto-graded-submissions")
+        $this->actingAs($this->user)->getJson("/api/scores/{$this->assignment->id}/{$this->question->id}/get-scores-by-assignment-and-question")
             ->assertJson(['type' => 'success']);
 
     }
@@ -126,17 +175,14 @@ class AutoGradedSubmissionsTest extends TestCase
     /** @test */
     public function non_owner_cannot_get_auto_graded_submissions()
     {
-        $this->actingAs($this->student_user)->getJson("/api/assignments/{$this->assignment->id}/{$this->question->id}/get-auto-graded-submissions")
+        $this->actingAs($this->student_user)->getJson("/api/scores/{$this->assignment->id}/{$this->question->id}/get-scores-by-assignment-and-question")
             ->assertJson(['message' => "You can't get the scores for an assignment that is not in one of your courses."]);
-
-        $this->actingAs($this->user)->getJson("/api/assignments/{$this->assignment->id}/{$this->question_2->id}/get-auto-graded-submissions")
-            ->assertJson(['message' => "You can't get the scores for a question that is not in one of your assignments."]);
 
     }
 
 
     /** @test */
-    public function non_owner_cannot_updated_auto_graded_submissions()
+    public function non_owner_cannot_update_auto_graded_submissions()
     {
 
         $this->actingAs($this->student_user)->patchJson("/api/submissions/{$this->assignment->id}/{$this->question->id}/scores", $this->scores)

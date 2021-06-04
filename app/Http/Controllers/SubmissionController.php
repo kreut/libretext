@@ -13,67 +13,25 @@ use App\Submission;
 use App\Score;
 use App\Assignment;
 use App\Question;
-use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\DB;
 
 use App\Http\Requests\StoreSubmission;
-
-
 class SubmissionController extends Controller
 {
+
+
 
     public function updateScores(UpdateScoresRequest $request,
                                  Assignment $assignment,
                                  Question $question,
-                                 Submission $submission)
+                                 Submission $submission,
+                                 Score $score): array
     {
-        $response['type'] = 'error';
+        return $score->handleUpdateScores($request, $assignment, $question, $submission);
 
-        $authorized = Gate::inspect('updateScores', [$submission, $assignment, $question, $request->user_ids]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-        $data = $request->validated();
-        try {
-            $apply_to = $request->apply_to;
-            $new_score = $data['new_score'];
-            DB::beginTransaction();
-            $submissions = $apply_to
-                ? $submission->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->whereIn('user_id', $request->user_ids)
-                    ->get()
-                : $submission->where('assignment_id', $assignment->id)
-                    ->where('question_id', $question->id)
-                    ->whereNotIn('user_id', $request->user_ids)
-                    ->get();
-
-            foreach ($submissions as $submission) {
-                $adjustment = $new_score - $submission->score;
-                $submission->score = $new_score;
-                $submission->save();
-                $score = new Score();
-                $assignment_score = $score->where('assignment_id', $assignment->id)
-                    ->where('user_id', $submission->user_id)
-                    ->first();
-                $assignment_score->score += $adjustment;
-                $assignment_score->save();
-            }
-            DB::commit();
-            $response['type'] = 'success';
-            $response['message'] = 'The scores have been updated.';
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error updating the scores.  Please refresh the page and try again or contact us for assistance.";
-        }
-        return $response;
     }
 
 
@@ -81,7 +39,7 @@ class SubmissionController extends Controller
     function store(StoreSubmission $request,
                    Assignment $Assignment,
                    Score $score,
-                    AssignmentSyncQuestion $assignmentSyncQuestion)
+                   AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $Submission = new Submission();
         return $Submission->store($request,

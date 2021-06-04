@@ -132,7 +132,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
     Route::get('/assignments/courses/public/{course}/names', 'AssignmentController@getAssignmentNamesForPublicCourse');
-    Route::get('/assignments/{assignment}/{question}/get-auto-graded-submissions', 'AssignmentController@getAutoGradedSubmissions');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
     Route::get('/assignments/{assignment}/scores-info', 'AssignmentController@scoresInfo');
@@ -158,7 +157,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
-    Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
+    Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student','AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
+    Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
+    Route::put('/scores/{assignment}/{question}/upload-override-scores', 'ScoreController@uploadOverrideScores');
+    Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
     Route::patch('/scores/{assignment}/override-scores', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
     Route::get('/scores/{course}/{sectionId}', 'ScoreController@index');
@@ -281,6 +283,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/submission-files/ungraded-submissions/{course}', 'SubmissionFileController@getUngradedSubmissions');
     Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');
+    Route::patch('/submission-files/{assignment}/{question}/scores', 'SubmissionFileController@updateScores');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
     Route::get('/submission-files/{assignment}/{question}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');

@@ -122,3 +122,4 @@ fabric.properties
 # End of https://www.toptal.com/developers/gitignore/api/phpstorm
 /tests/LoadTest/node_modules/
 /.env.docker-staging
+/.env.staging

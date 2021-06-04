@@ -25,7 +25,56 @@ class Submission extends Model
 
     protected $guarded = [];
 
+    /**
+     * @throws Exception
+     */
+    public function getAutoGradedSubmissionsByUser($enrolled_users, $assignment, $question)
+    {
+        $submissions = $assignment->submissions->where('question_id', $question->id);
 
+        $submissions_by_user = [];
+
+        foreach ($submissions as $submission) {
+            $submissions_by_user[$submission->user_id] = $submission;
+        }
+
+
+        $auto_graded_submission_info_by_user = [];
+
+        foreach ($enrolled_users as $enrolled_user) {
+            if (isset($submissions_by_user[$enrolled_user->id])) {
+                $submission = $submissions_by_user[$enrolled_user->id];
+                $auto_graded_submission_info_by_user[] = [
+                    'user_id' => $enrolled_user->id,
+                    'question_id' => $question->id,
+                    'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
+                    'email' => $enrolled_user->email,
+                    'submission' => $this->getStudentResponse($submission, $question->technology),
+                    'submission_count' => $submission->submission_count,
+                    'score' => rtrim(rtrim($submission->score, "0"),".")
+                    ];
+            }
+
+        }
+        if ($auto_graded_submission_info_by_user) {
+            usort($auto_graded_submission_info_by_user, function ($a, $b) {
+                return $a['name'] <=> $b['name'];
+            });
+        }
+        return $auto_graded_submission_info_by_user;
+    }
+    /**
+     * @param StoreSubmission $request
+     * @param Submission $submission
+     * @param Assignment $Assignment
+     * @param Score $score
+     * @param LtiLaunch $ltiLaunch
+     * @param LtiGradePassback $ltiGradePassback
+     * @param DataShop $dataShop
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public function store(StoreSubmission $request,
                           Submission $submission,
                           Assignment $Assignment,

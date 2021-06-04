@@ -8,6 +8,7 @@ use App\Enrollment;
 use App\Grader;
 use App\GraderNotification;
 use App\Http\Requests\StoreTextFeedback;
+use App\Http\Requests\UpdateScoresRequest;
 use App\Http\Requests\UpdateSubmisionFilePage;
 use App\LtiLaunch;
 use App\LtiGradePassback;
@@ -31,6 +32,7 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
+
 use Carbon\Carbon;
 use Illuminate\Support\Facades\Validator;
 
@@ -46,6 +48,7 @@ class SubmissionFileController extends Controller
     use GeneralSubmissionPolicy;
     use LatePolicy;
 
+
     /**
      * @var int
      */
@@ -59,6 +62,16 @@ class SubmissionFileController extends Controller
     {
         $this->max_number_of_uploads_allowed = 15;
         $this->max_file_size = 24000000;///really just 20MB but extra wiggle room
+    }
+
+    public function updateScores(UpdateScoresRequest $request,
+                                 Assignment $assignment,
+                                 Question $question,
+                                 SubmissionFile $submissionFile,
+                                 Score $score): array
+    {
+        return $score->handleUpdateScores($request, $assignment, $question, $submissionFile);
+
     }
 
     /**
@@ -130,7 +143,7 @@ class SubmissionFileController extends Controller
                                Question $question,
                                SubmissionFile $submissionFile,
                                Extension $extension,
-                                AssignmentSyncQuestion $assignmentSyncQuestion)
+                               AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
@@ -170,14 +183,14 @@ class SubmissionFileController extends Controller
                 $submission_file_data
             );
 
-            $response['completed_all_assignment_questions']= $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
+            $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['original_filename'] = $full_file->original_filename;
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
 
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
-           $re = $is_update ? 're-' : '';
-           $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
+            $re = $is_update ? 're-' : '';
+            $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
             $response['page'] = $page;
             $response['type'] = 'success';
 
@@ -509,7 +522,7 @@ class SubmissionFileController extends Controller
             $response['type'] = 'error';
             //validator put here because I wasn't using vform so had to manually handle errors
 
-            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id,$upload_level)) {
+            if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id, $upload_level)) {
                 if ($can_upload_response['type'] === 'error') {
                     $response['message'] = $can_upload_response['message'];
                     return $response;

@@ -171,65 +171,6 @@ class AssignmentController extends Controller
      * @return array
      * @throws \Throwable
      */
-    public function getAutoGradedSubmissions(Request $request,
-                                             Assignment $assignment,
-                                             Question $question,
-                                             Submission $Submission)
-    {
-
-        $response['type'] = 'error';
-        $authorized = Gate::inspect('getAutoGradedSubmissionsSubmissions', [$Submission, $assignment, $question]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            //get enrolled students
-            //get all questions, need to be able to see the question
-            //get auto-graded and submission file if needed (just auto-graded?)
-            $enrolled_users = $assignment->course->enrolledUsers;
-            $question = $assignment->questions->where('id', $question->id)->first();
-
-            $submissions = $assignment->submissions->where('question_id', $question->id);
-            $submissions_by_user = [];
-
-            foreach ($submissions as $submission) {
-                $submissions_by_user[$submission->user_id] = $submission;
-            }
-
-            $auto_graded_submission_info_by_user = [];
-
-            foreach ($enrolled_users as $enrolled_user) {
-                if (isset($submissions_by_user[$enrolled_user->id])) {
-                    $submission = $submissions_by_user[$enrolled_user->id];
-                    $auto_graded_submission_info_by_user[] = [
-                        'user_id' => $enrolled_user->id,
-                        'question_id' => $question->id,
-                        'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
-                        'email' => $enrolled_user->email,
-                        'submission' => $Submission->getStudentResponse($submission, $question->technology),
-                        'submission_count' => $submission->submission_count,
-                        'score' => $submission->score];
-                }
-
-            }
-            usort($auto_graded_submission_info_by_user, function ($a, $b) {
-                return $a['name'] <=> $b['name'];
-            });
-
-
-            $response['auto_graded_submission_info_by_user'] = array_values($auto_graded_submission_info_by_user);
-            $response['type'] = 'success';
-
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error getting the auto-graded submissions for this assignment.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
 
 
     public function order(Request $request, Course $course, Assignment $assignment)

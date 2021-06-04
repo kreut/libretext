@@ -25,6 +25,44 @@ class SubmissionFile extends Model
     protected $guarded = [];
 
     /**
+     * @param $enrolled_users
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     */
+    public function getOpenEndedSubmissionsByUser($enrolled_users, Assignment $assignment, Question $question)
+    {
+
+        $open_ended_submissions = DB::table('submission_files')
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->where('type', '<>', 'a')
+            ->get();
+        foreach ($open_ended_submissions as $open_ended_submission) {
+            $open_ended_submissions_by_user[$open_ended_submission->user_id] = $open_ended_submission;
+        }
+        $open_ended_submission_info_by_user = [];
+        foreach ($enrolled_users as $enrolled_user) {
+            if (isset($open_ended_submissions_by_user[$enrolled_user->id])) {
+                $open_ended_submission_info_by_user[] = [
+                    'user_id' => $enrolled_user->id,
+                    'question_id' => $question->id,
+                    'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
+                    'email' => $enrolled_user->email,
+                    'type' => $open_ended_submissions_by_user[$enrolled_user->id]->type,
+                    'score' => $open_ended_submissions_by_user[$enrolled_user->id]->score ? rtrim(rtrim($open_ended_submissions_by_user[$enrolled_user->id]->score, "0"), ".") : 'Not Scored.'];
+            }
+
+        }
+        if ($open_ended_submission_info_by_user) {
+            usort($open_ended_submission_info_by_user, function ($a, $b) {
+                return $a['name'] <=> $b['name'];
+            });
+        }
+        return $open_ended_submission_info_by_user;
+    }
+
+    /**
      * @param $assignment
      * @return string|null
      */

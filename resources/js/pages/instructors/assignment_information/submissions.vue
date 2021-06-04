@@ -1,5 +1,46 @@
 <template>
   <div>
+    <b-modal v-if="questions.length"
+             id="modal-confirm-update-scores"
+             ref="submissionFileModal"
+             title="Confirm Update Scores"
+             size="lg"
+    >
+      <p>
+        <b-alert variant="info" :show="true">
+        <span class="font-weight-bold font-italic">By updating the score to {{
+            questionScoreForm.new_score
+          }}, {{ numOverMax }} students will
+        be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
+        of points allotted to this question. Are you sure you would like to update the scores?
+        </span>
+        </b-alert>
+      </p>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-update-scores')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="handleUpdateScores">
+          Yes, update the scores!
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal id="modal-submission-file"
+             ref="submissionFileModal"
+             title="Open-ended submission"
+             size="lg"
+    >
+      <div v-show="submissionUrl" class="mb-2">
+        <b-embed
+          type="iframe"
+          aspect="16by9"
+          :src="submissionUrl"
+          allowfullscreen
+        />
+      </div>
+      <div v-show="submissionText" v-html=" submissionText"/>
+    </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -10,23 +51,41 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Auto-Graded Submissions"/>
+        <PageTitle title="Submissions"/>
         <div v-if="questions.length">
           <b-container>
             <b-row>
-              <span class="font-weight-bold mr-2">Title: </span> <a href=""
-                                                                    @click.stop.prevent="viewQuestion(questions[currentQuestionPage-1].question_id)"
-            >{{ questions[currentQuestionPage - 1].title }}</a>
+              <span class="font-weight-bold mr-2">Title: </span>
+              <a href="" @click.stop.prevent="viewQuestion(questions[currentQuestionPage-1].question_id)">
+                {{ questions[currentQuestionPage - 1].title }}
+              </a>
             </b-row>
             <b-row>
               <span class="font-weight-bold mr-2">Adapt ID: </span>
               {{ questions[currentQuestionPage - 1].assignment_id_question_id }} <span class="text-info ml-1">
-              <font-awesome-icon :icon="copyIcon"
-                                 @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
-              />
-            </span>
+                <font-awesome-icon :icon="copyIcon"
+                                   @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
+                />
+              </span>
             </b-row>
-            <b-row><span class="font-weight-bold mr-2">Points: </span> {{ questions[currentQuestionPage - 1].points }}
+            <b-row>
+              <span class="font-weight-bold mr-2">Points: </span> {{ questions[currentQuestionPage - 1].points }}
+            </b-row>
+            <b-row class="mb-3">
+              <span class="font-weight-bold mr-2">Submission Type: </span>
+              <span v-show="!hasAutoGradedAndOpended">{{ submissionType }}</span>
+              <toggle-button
+                v-show="hasAutoGradedAndOpended"
+                class="mt-1"
+                :width="120"
+                :value="submissionType === 'Auto-graded'"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Auto-graded', unchecked: 'Open-ended'}"
+                @change="toggleSubmissionType()"
+              />
             </b-row>
           </b-container>
           <b-form-group
@@ -56,6 +115,7 @@
               <b-col lg="4">
                 <b-form-select v-model="submission"
                                :options="submissionsOptions"
+                               :disabled="openEndedView"
                                @change="updateSubmissionsFilter($event)"
                 />
               </b-col>
@@ -77,23 +137,22 @@
               </b-col>
             </b-form-row>
           </b-form-group>
-          <div class="overflow-auto">
-            <b-pagination
-              :key="currentQuestionPage"
-              v-model="currentQuestionPage"
-              :total-rows="questions.length"
-              per-page="1"
-              align="center"
-              first-number
-              last-number
-              limit="20"
-              @input="changePage(currentQuestionPage)"
-            >
-              <template v-slot:page="{ page, active }">
-                {{ questions[page - 1].order }}
-              </template>
-            </b-pagination>
-          </div>
+          <b-form-group
+            id="question"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="Question"
+            label-for="Question"
+          >
+            <b-form-row>
+              <b-col lg="3">
+                <b-form-select v-model="currentQuestionPage"
+                               :options="questionsOptions"
+                               @change="updateQuestionsFilter()"
+                />
+              </b-col>
+            </b-form-row>
+          </b-form-group>
           <div class="vld-parent">
             <loading :active.sync="isTableLoading"
                      :can-cancel="true"
@@ -111,7 +170,6 @@
               label-for="Apply To"
             >
               <b-form-row>
-
                 <b-form-radio-group
                   v-model="questionScoreForm.apply_to"
                   stacked
@@ -124,7 +182,6 @@
                     Submission scores that are not in the filtered group
                   </b-form-radio>
                 </b-form-radio-group>
-
               </b-form-row>
             </b-form-group>
             <b-form-group
@@ -147,13 +204,13 @@
                   <has-error :form="questionScoreForm" field="new_score"/>
                 </b-col>
                 <b-col>
-                  <b-button variant="primary" size="sm" @click="updateScores()">
+                  <b-button variant="primary" size="sm" @click="confirmUpdateScores()">
                     Update
                   </b-button>
                   <span v-if="processing">
-                      <b-spinner small type="grow"/>
-                      Processing...
-                    </span>
+                    <b-spinner small type="grow"/>
+                    Processing...
+                  </span>
                 </b-col>
               </b-form-row>
             </b-form-group>
@@ -162,9 +219,19 @@
               striped
               hover
               :no-border-collapse="true"
-              :fields="fields"
+              :fields="showFields"
               :items="items"
-            />
+            >
+              <template v-slot:cell(submission)="data">
+                <span v-if="autoGradedView">
+                  {{ data.item.submission }}
+                </span>
+                <span v-if="openEndedView">
+                  <b-button size="sm" variant="primary" @click="openSubmissionFileModal(data.item)">View</b-button>
+
+                </span>
+              </template>
+            </b-table>
             <b-alert :show="!items.length" class="info">
               <span class="font-weight-bold">Nothing matches that set of filters.</span>
             </b-alert>
@@ -176,7 +243,6 @@
       </b-alert>
     </div>
   </div>
-
 </template>
 
 <script>
@@ -191,20 +257,34 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import Form from 'vform'
 
+import { ToggleButton } from 'vue-js-toggle-button'
+
 export default {
   components: {
     Loading,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    ToggleButton
   },
   middleware: 'auth',
   data: () => ({
+    numOverMax: 0,
+    submissionUrl: '',
+    submissionText: '',
+    autoGradedSubmissionInfoByUser: [],
+    openEndedSubmissionInfoByUser: [],
+    submissionType: '',
+    autoGradedView: false,
+    openEndedView: false,
+    hasAutoGradedAndOpended: false,
+    questionsOptions: [],
     processing: false,
     submission: null,
     score: '',
     questionScoreForm: new Form({
       new_score: null,
       apply_to: 1,
-      user_ids: []
+      user_ids: [],
+      type: ''
     }),
     isTableLoading: false,
     copyIcon: faCopy,
@@ -215,37 +295,19 @@ export default {
     submissionsOptions: [],
     scoresOptions: [],
     questions: [],
-    fields: [
-      {
-        key: 'name',
-        sortable: true
-      },
-      {
-        key: 'email',
-        sortable: true
-      },
-      {
-        key: 'submission',
-        sortable: true
-      },
-      {
-        key: 'submission_count',
-        label: 'Count',
-        sortable: true
-      },
-      {
-        key: 'score',
-        sortable: true
-      }
-    ],
-    autoGradedSubmissionInfoByQuestionAndUser: [],
-    autoGradedSubmissionInfoByUser: [],
+    fields: [],
     isLoading: true,
     assignmentId: 0
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed:
+    {
+      ...mapGetters({
+        user: 'auth/user'
+      }),
+      showFields () {
+        return this.fields.filter(field => field.shown)
+      }
+    },
   async mounted () {
     if (![2, 4].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment submissions page.')
@@ -259,22 +321,67 @@ export default {
       this.isLoading = false
       return false
     }
-    await this.getSubmissions()
+    await this.getScoresByAssignmentAndQuestion()
     this.setStudentIds()
     if (this.submissionsOptions.length) {
       this.submission = this.submissionsOptions[0].value
       this.score = this.scoresOptions[0].value
     }
   },
+
   methods: {
-    async updateScores () {
+    async confirmUpdateScores () {
+      try {
+        const { data } = await this.questionScoreForm.post(`/api/scores/over-total-points/${this.assignmentId}/${this.questionId}`)
+        this.numOverMax = parseInt(data.num_over_max)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+
+        this.numOverMax > 0
+          ? this.$bvModal.show('modal-confirm-update-scores')
+          : await this.handleUpdateScores()
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async openSubmissionFileModal (item) {
+      this.submissionUrl = ''
+      this.submissionText = ''
+      try {
+        const { data } = await axios.post(`/api/submission-files/get-files-from-s3/${this.assignmentId}/${item.question_id}/${item.user_id}`, { open_ended_submission_type: item.open_ended_submission_type })
+        if (data.type === 'success') {
+          this.submissionUrl = data.files.submission_url
+          this.submissionText = data.files.submission_text
+          this.$bvModal.show('modal-submission-file')
+        } else {
+          this.$noty.error(data.message)
+        }
+      } catch (error) {
+        this.$noty.error(`We could not retrieve the files for the student. ${error.message}`)
+      }
+    },
+    toggleSubmissionType () {
+      this.submissionType = this.submissionType === 'Auto-graded'
+        ? 'Open-ended' : 'Auto-graded'
+      this.items = this.submissionType === 'Auto-graded'
+        ? this.autoGradedSubmissionInfoByUser
+        : this.openEndedSubmissionInfoByUser
+      this.fields.find(field => field.key === 'submission_count').shown = this.submissionType === 'Auto-graded'
+    },
+    async handleUpdateScores () {
       if (!this.processing) {
+        this.$bvModal.hide('modal-confirm-update-scores')
         this.processing = true
         try {
-          const { data } = await this.questionScoreForm.patch(`/api/submissions/${this.assignmentId}/${this.questionId}/scores`)
+          let controller = this.autoGradedView ? 'submissions' : 'submission-files'
+          const { data } = await this.questionScoreForm.patch(`/api/${controller}/${this.assignmentId}/${this.questionId}/scores`)
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
-            await this.getSubmissions()
+            await this.getScoresByAssignmentAndQuestion()
           }
         } catch (error) {
           if (!error.message.includes('status code 422')) {
@@ -286,11 +393,10 @@ export default {
         this.$noty.info('Please be patient while we process this request.')
       }
     },
-
-    async changePage (currentQuestionPage) {
+    async updateQuestionsFilter () {
       this.isTableLoading = true
-      this.questionId = this.questions[currentQuestionPage - 1].question_id
-      await this.getSubmissions()
+      this.questionId = this.questions.find(question => question.order === this.currentQuestionPage).question_id
+      await this.getScoresByAssignmentAndQuestion()
       this.studentId = null
       this.submission = null
       this.score = null
@@ -299,7 +405,7 @@ export default {
     },
 
     async updateFilter (studentId, submission, score) {
-      await this.getSubmissions()
+      await this.getScoresByAssignmentAndQuestion()
       if (this.studentId !== null) {
         this.items = this.items.filter(item => item.user_id === studentId)
       }
@@ -333,17 +439,18 @@ export default {
       }
     },
     async getQuestions () {
+      this.questions = []
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
-        for (let i = 0; i < data.rows.length; i++) {
-          if (data.rows[i].technology !== 'text') {
-            this.questions.push(data.rows[i])
-          }
-        }
-        if (!this.questions.length) {
+        if (!data.rows.length) {
           return false
         }
-        this.questionId = this.questions[0].question_id
+        for (let i = 0; i < data.rows.length; i++) {
+          let question = data.rows[i]
+          this.questions.push(question)
+          this.questionsOptions.push({ value: question.order, text: question.order })
+        }
+        this.questionId = data.rows[0].question_id
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -353,16 +460,63 @@ export default {
       }
       this.currentQuestionPage = 1
     },
-    async getSubmissions () {
+    async getScoresByAssignmentAndQuestion () {
       try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/${this.questionId}/get-auto-graded-submissions`)
+        const { data } = await axios.get(`/api/auto-graded-and-file-submissions/${this.assignmentId}/${this.questionId}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student`)
         console.log(data)
         this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
         }
-        this.items = data.auto_graded_submission_info_by_user
+        this.items = []
+        this.fields = [{
+          key: 'name',
+          sortable: true,
+          shown: true
+        },
+          {
+            key: 'email',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission_count',
+            label: 'Count',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'score',
+            sortable: true,
+            shown: true
+          }]
+        this.autoGradedView = false
+        this.openEndedView = false
+        let hasAutoGraded = data.auto_graded_submission_info_by_user.length > 0
+        let hasOpenEnded = data.open_ended_submission_info_by_user.length > 0
+        this.autoGradedSubmissionInfoByUser = data.auto_graded_submission_info_by_user
+        this.openEndedSubmissionInfoByUser = data.open_ended_submission_info_by_user
+        this.hasAutoGradedAndOpended = hasAutoGraded && hasOpenEnded
+        if (!this.hasAutoGradedAndOpended) {
+          this.submissionType = hasAutoGraded ? 'Auto-graded' : 'Open-ended'
+        }
+        if (hasAutoGraded) {
+          this.submissionType = 'Auto-graded'
+          this.items = this.autoGradedSubmissionInfoByUser
+          this.autoGradedView = true
+        } else if (hasOpenEnded) {
+          this.submissionType = 'Open-ended'
+          this.items = this.openEndedSubmissionInfoByUser
+          this.openEndedView = true
+          this.fields.find(field => field.key === 'submission_count').shown = false
+        }
+
         this.studentsOptions = [{ 'value': null, text: 'All students with submissions' }]
         this.scoresOptions = []
         this.submissionsOptions = []

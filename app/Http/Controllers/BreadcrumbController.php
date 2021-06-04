@@ -96,7 +96,7 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.statistics'):
                         case('instructors.assignments.grader_access'):
                         case('instructors.assignments.questions'):
-                        case('instructors.assignments.auto_graded_submissions'):
+                        case('instructors.assignments.submissions'):
                         case('instructors.assignments.gradebook'):
 
                             //My courses / The assignment's course / that assignment;

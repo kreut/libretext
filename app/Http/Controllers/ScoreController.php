@@ -6,6 +6,7 @@ use App\AssignmentGroup;
 use App\Enrollment;
 use App\Extension;
 use App\Grader;
+use App\Http\Requests\UpdateScoresRequest;
 use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\Score;
@@ -35,6 +36,105 @@ ini_set('max_execution_time', 300);
 class ScoreController extends Controller
 {
     use Statistics;
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Score $score
+     * @param SubmissionFile $submissionFile
+     * @param Submission $submission
+     * @return array
+     * @throws Exception
+     */
+    public function overTotalPoints(UpdateScoresRequest $request,
+                                    Assignment $assignment,
+                                    Question $question,
+                                    Score $score,
+                                    SubmissionFile $submissionFile,
+                                    Submission $submission)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('overTotalPoints', [$score, $assignment]);
+        if (!$authorized->allowed()) {
+            $response['type'] = 'error';
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $new_score = $request->new_score;
+            $apply_to = $request->apply_to;
+            $type = $request->type;
+            $total_points = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->pluck('points')
+                ->first();
+            $auto_graded_submissions = $apply_to
+                ? $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereIn('user_id', $request->user_ids)
+                    ->get()
+                : $submission->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereNotIn('user_id', $request->user_ids)
+                    ->get();
+
+            $submission_files = $apply_to
+                ? $submissionFile->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('type', '<>', 'a')
+                    ->whereIn('user_id', $request->user_ids)
+                    ->get()
+                : $submissionFile->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->where('type', '<>', 'a')
+                    ->whereNotIn('user_id', $request->user_ids)
+                    ->get();
+            $auto_graded_submissions_by_user = [];
+            $submission_files_by_user = [];
+
+
+            $user_ids = [];
+            foreach ($auto_graded_submissions as $auto_graded_submission) {
+                $auto_graded_submissions_by_user[$auto_graded_submission->user_id] = $type === 'Auto-graded'
+                    ? $new_score
+                    : $auto_graded_submission->score;
+                $user_ids[] = $auto_graded_submission->user_id;
+            }
+
+            foreach ($submission_files as $submission_file) {
+                $submission_files_by_user[$submission_file->user_id] = $type === 'Open-ended'
+                    ? $new_score
+                    : $submission_file->score;
+                $user_ids[] = $submission_file->user_id;
+            }
+            $user_ids = array_unique($user_ids);
+            $total_scores_by_user = [];
+            foreach ($user_ids as $user_id) {
+                $total_scores_by_user[$user_id] = 0;
+                $total_scores_by_user[$user_id] += $auto_graded_submissions_by_user[$user_id] ?? 0;
+                $total_scores_by_user[$user_id] += $submission_files_by_user[$user_id] ?? 0;
+            }
+            $num_over_max = 0;
+            foreach ($total_scores_by_user as $total_score_by_user) {
+                if ($total_score_by_user > $total_points) {
+                    $num_over_max++;
+                }
+            }
+
+            $response['type'] = 'success';
+            $response['num_over_max'] = $num_over_max;
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error overriding these assignment scores.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
 
     function csvToArray($filename = '', $delimiter = ',')
     {

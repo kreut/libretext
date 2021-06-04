@@ -64,8 +64,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Auto-Graded Submissions',
-          route: 'instructors.assignments.auto_graded_submissions'
+          name: 'Submissions',
+          route: 'instructors.assignments.submissions'
         },
         {
           icon: '',

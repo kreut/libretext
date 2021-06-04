@@ -2,10 +2,14 @@
 
 namespace App;
 
-use App\Assignment;
+
+use App\Http\Requests\UpdateScoresRequest;
+use Exception;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Foundation\Exceptions\Handler;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
 use App\Traits\Statistics;
 
@@ -16,6 +20,71 @@ class Score extends Model
     use Statistics;
 
     protected $fillable = ['user_id', 'assignment_id', 'score'];
+
+    /**
+     * @param UpdateScoresRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param $model
+     * @return array
+     * @throws Exception
+     */
+    public function handleUpdateScores(UpdateScoresRequest $request,
+                                       Assignment $assignment,
+                                       Question $question,
+                                       $model)
+    {
+
+        $response['type'] = 'error';
+        $submission = new Submission();
+        $authorized = Gate::inspect('updateScores', [$submission, $assignment, $question, $request->user_ids]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        $data = $request->validated();
+        try {
+            $apply_to = $request->apply_to;
+            $new_score = $data['new_score'];
+            $submissions = $apply_to
+                ? $model->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereIn('user_id', $request->user_ids)
+                    ->get()
+                : $model->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->whereNotIn('user_id', $request->user_ids)
+                    ->get();
+            DB::beginTransaction();
+            foreach ($submissions as $submission) {
+                $adjustment = $new_score - $submission->score;
+                $submission->score = $new_score;
+                $submission->save();
+                $score = new Score();
+                $assignment_score = $score->where('assignment_id', $assignment->id)
+                    ->where('user_id', $submission->user_id)
+                    ->first();
+                if (!$assignment_score){
+                    $assignment_score = new Score();
+                    $assignment_score->user_id = $submission->user_id;
+                    $assignment_score->assignment_id = $assignment->id;
+                }
+                $assignment_score->score += $adjustment;
+                $assignment_score->save();
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The scores have been updated.';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the scores.  Please refresh the page and try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 
     public function updateAssignmentScore(int $student_user_id,
                                           int $assignment_id,

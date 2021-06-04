@@ -61,6 +61,13 @@ class ScorePolicy
 
     }
 
+    public function overTotalPoints(User $user, Score $score, Assignment $assignment)
+    {
+        return (int)$assignment->course->user_id === (int)$user->id || $assignment->course->isGrader()
+            ? Response::allow()
+            : Response::deny('You are not allowed to check whether the scores are over the total number of points for this assignment.');
+    }
+
     public function getAssignmentQuestionScoresByUser(User $user, Score $score, Assignment $assignment)
     {
         return (int)$assignment->course->user_id === (int)$user->id || $assignment->course->isGrader()
@@ -81,7 +88,7 @@ class ScorePolicy
         }
         return $has_access
             ? Response::allow()
-            : Response::deny('You are not allowed to retrieve this summary.');
+            : Response::deny("You can't get the scores for an assignment that is not in one of your courses.");
 
     }
 
