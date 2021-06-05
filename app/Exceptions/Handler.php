@@ -83,10 +83,6 @@ class Handler extends ExceptionHandler
             exit;
         }
 
-        if (app()->environment('staging')) {
-            Log::error($error_info);
-        }
-
         if (app()->environment('local')) {
             Log::error($error_info);
         } else if (app()->environment('testing')) {
@@ -98,12 +94,10 @@ class Handler extends ExceptionHandler
             $date_time = Carbon::now('America/Los_Angeles');
             $error_info = "[$date_time] " . app()->environment() . "\r\n\tUrl: " . config('app.url') . "\r\n\tError: $error_info";
             $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
-            Log::info('a');
             $contents = Storage::disk('s3')->exists("$log_file")
                 ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
                 : $error_info;
             Storage::disk('s3')->put("$log_file", $contents, ['StorageClass' => 'STANDARD_IA']);
-            Log::info('b');
         }
     }
 
