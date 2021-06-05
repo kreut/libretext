@@ -1,7 +1,7 @@
 <?php
 
 $s3 = [];
-if (env('APP_ENV') === 'docker-staging') {
+if (env('APP_ENV') === 'staging') {
     $s3 = [
         'driver' => 's3',
         'key' => env('AWS_STAGING_ACCESS_ID'),
