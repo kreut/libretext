@@ -6,7 +6,7 @@ environments:
         cli-memory: 512
         runtime: docker
         database: staging
-        domain: aws.libretexts.org
+        #domain: aws.libretexts.org
         build:
             - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev'
             - 'php artisan event:cache'
