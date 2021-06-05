@@ -1,7 +1,7 @@
 id: 21410
 name: adapt
 environments:
-    docker-staging:
+    staging:
         memory: 1024
         cli-memory: 512
         runtime: docker
@@ -19,11 +19,4 @@ environments:
             - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install --no-dev'
             - 'php artisan event:cache'
             - 'npm ci && npm run prod && rm -rf node_modules'
-    staging:
-        memory: 1024
-        cli-memory: 512
-        runtime: 'php-7.4:al2'
-        build:
-            - 'COMPOSER_MIRROR_PATH_REPOS=1 composer install'
-            - 'php artisan event:cache'
-            - 'npm ci && npm run dev && rm -rf node_modules'
+
