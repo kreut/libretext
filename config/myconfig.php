@@ -10,5 +10,6 @@ return [
         : 'No string exists'),
     'db_host' => env('DB_HOST', 'No host provided'),
     'minpods' => env('MINPODS', 0),
-    'loadtest' => env('LOADTEST', false)
+    'loadtest' => env('LOADTEST', false),
+    'my_ip' => env('MY_IP', false)
 ];
