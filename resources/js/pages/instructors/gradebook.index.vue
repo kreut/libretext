@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewScores" title="Gradebook" />
+    <PageTitle v-if="canViewScores" title="Gradebook"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -85,7 +85,6 @@
               <b-table striped
                        hover
                        responsive="true"
-                       sticky-header="600px"
                        :no-border-collapse="true"
                        :items="items"
                        :fields="fields"
@@ -95,10 +94,20 @@
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span v-html="data.field.label" />
+                  <span v-html="data.field.label"/>
                 </template>
+
                 <template v-slot:cell()="data">
-                  <span @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)">{{ data.value }}
+                  <span v-if="['name'].includes(data.field.key)">
+                    <a href=""
+                       @click.prevent="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
+                    >
+                      {{ data.value }}
+                    </a>
+                  </span>
+                  <span v-if="!['name'].includes(data.field.key)"
+                        @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
+                  >{{ data.value }}
                   </span>
                 </template>
               </b-table>
@@ -141,7 +150,7 @@
                   :class="{ 'is-invalid': extraCreditForm.errors.has('extra_credit') }"
                   @keydown="extraCreditForm.errors.clear('extra_credit')"
                 />
-                <has-error :form="extraCreditForm" field="extra_credit" />
+                <has-error :form="extraCreditForm" field="extra_credit"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -224,7 +233,7 @@
                   drop-placeholder="Drop file here..."
                 />
                 <div v-if="uploading">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Uploading file...
                 </div>
                 <input type="hidden" class="form-control is-invalid">
@@ -305,7 +314,7 @@
                   :class="{ 'is-invalid': form.errors.has('extension_date') }"
                   @shown="form.errors.clear('extension_date')"
                 />
-                <has-error :form="form" field="extension_date" />
+                <has-error :form="form" field="extension_date"/>
               </b-col>
               <b-col>
                 <b-form-timepicker v-model="form.extension_time"
@@ -313,7 +322,7 @@
                                    :class="{ 'is-invalid': form.errors.has('extension_time') }"
                                    @shown="form.errors.clear('extension_time')"
                 />
-                <has-error :form="form" field="extension_time" />
+                <has-error :form="form" field="extension_time"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -334,7 +343,7 @@
                   :class="{ 'is-invalid': form.errors.has('score') }"
                   @keydown="form.errors.clear('score')"
                 />
-                <has-error :form="form" field="score" />
+                <has-error :form="form" field="score"/>
               </b-col>
             </b-form-row>
           </b-form-group>
@@ -350,12 +359,14 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
+import Email from '~/components/Email'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
 export default {
   components: {
+    Email,
     Loading
   },
   middleware: 'auth',
@@ -629,6 +640,9 @@ export default {
       // name shouldn't be clickable
 
       if (parseInt(assignmentId) === parseInt(this.weightedAverageAssignmentId)) {
+        return false
+      }
+      if (assignmentId === 'email') {
         return false
       }
       if (assignmentId === 'name') {
