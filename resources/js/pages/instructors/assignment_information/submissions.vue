@@ -8,12 +8,12 @@
     >
       <p>
         <b-alert variant="info" :show="true">
-        <span class="font-weight-bold font-italic">By updating the score to {{
+          <span class="font-weight-bold font-italic">By updating the score to {{
             questionScoreForm.new_score
           }}, {{ numOverMax }} students will
-        be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
-        of points allotted to this question. Are you sure you would like to update the scores?
-        </span>
+            be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
+            of points allotted to this question. Are you sure you would like to update the scores?
+          </span>
         </b-alert>
       </p>
       <template #modal-footer="{ ok, cancel }">
@@ -39,7 +39,7 @@
           allowfullscreen
         />
       </div>
-      <div v-show="submissionText" v-html=" submissionText"/>
+      <div v-show="submissionText" v-html=" submissionText" />
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -51,7 +51,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Submissions"/>
+        <PageTitle title="Submissions" />
         <div v-if="questions.length">
           <b-container>
             <b-row>
@@ -201,14 +201,14 @@
                     :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"
                     @keydown="questionScoreForm.errors.clear('new_score')"
                   />
-                  <has-error :form="questionScoreForm" field="new_score"/>
+                  <has-error :form="questionScoreForm" field="new_score" />
                 </b-col>
                 <b-col>
                   <b-button variant="primary" size="sm" @click="confirmUpdateScores()">
                     Update
                   </b-button>
                   <span v-if="processing">
-                    <b-spinner small type="grow"/>
+                    <b-spinner small type="grow" />
                     Processing...
                   </span>
                 </b-col>
@@ -367,6 +367,7 @@ export default {
     toggleSubmissionType () {
       this.submissionType = this.submissionType === 'Auto-graded'
         ? 'Open-ended' : 'Auto-graded'
+      this.autoGradedView = this.submissionType === 'Auto-graded'
       this.items = this.submissionType === 'Auto-graded'
         ? this.autoGradedSubmissionInfoByUser
         : this.openEndedSubmissionInfoByUser
@@ -475,27 +476,27 @@ export default {
           sortable: true,
           shown: true
         },
-          {
-            key: 'email',
-            sortable: true,
-            shown: true
-          },
-          {
-            key: 'submission',
-            sortable: true,
-            shown: true
-          },
-          {
-            key: 'submission_count',
-            label: 'Count',
-            sortable: true,
-            shown: true
-          },
-          {
-            key: 'score',
-            sortable: true,
-            shown: true
-          }]
+        {
+          key: 'email',
+          sortable: true,
+          shown: true
+        },
+        {
+          key: 'submission',
+          sortable: true,
+          shown: true
+        },
+        {
+          key: 'submission_count',
+          label: 'Count',
+          sortable: true,
+          shown: true
+        },
+        {
+          key: 'score',
+          sortable: true,
+          shown: true
+        }]
         this.autoGradedView = false
         this.openEndedView = false
         let hasAutoGraded = data.auto_graded_submission_info_by_user.length > 0
