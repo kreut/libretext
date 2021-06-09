@@ -94,7 +94,7 @@
                        sort-icon-left
               >
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span v-html="data.field.label"/>
+                  <span :key="field.key" v-html="data.field.label"/>
                 </template>
 
                 <template v-slot:cell()="data">
@@ -366,7 +366,6 @@ import Email from '~/components/Email'
 //
 export default {
   components: {
-    Email,
     Loading
   },
   middleware: 'auth',
