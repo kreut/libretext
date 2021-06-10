@@ -7,21 +7,18 @@
              size="lg"
     >
       <p>
-        <b-alert variant="info" :show="true">
+        <b-alert variant="danger" :show="true">
           <span class="font-weight-bold font-italic">By updating the score to {{
             questionScoreForm.new_score
           }}, {{ numOverMax }} students will
             be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
-            of points allotted to this question. Are you sure you would like to update the scores?
+            of points allotted to this question. Please reduce the score provided.
           </span>
         </b-alert>
       </p>
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide('modal-confirm-update-scores')">
-          Cancel
-        </b-button>
-        <b-button size="sm" variant="primary" @click="handleUpdateScores">
-          Yes, update the scores!
+          Got it!
         </b-button>
       </template>
     </b-modal>
@@ -73,12 +70,12 @@
             </b-row>
             <b-row class="mb-3">
               <span class="font-weight-bold mr-2">Submission Type: </span>
-              <span v-show="!hasAutoGradedAndOpended">{{ submissionType }}</span>
+              <span v-show="!hasAutoGradedAndOpended">{{ questionScoreForm.type }}</span>
               <toggle-button
                 v-show="hasAutoGradedAndOpended"
                 class="mt-1"
                 :width="120"
-                :value="submissionType === 'Auto-graded'"
+                :value="questionScoreForm.type === 'Auto-graded'"
                 :sync="true"
                 :font-size="14"
                 :margin="4"
@@ -272,7 +269,6 @@ export default {
     submissionText: '',
     autoGradedSubmissionInfoByUser: [],
     openEndedSubmissionInfoByUser: [],
-    submissionType: '',
     autoGradedView: false,
     openEndedView: false,
     hasAutoGradedAndOpended: false,
@@ -365,13 +361,13 @@ export default {
       }
     },
     toggleSubmissionType () {
-      this.submissionType = this.submissionType === 'Auto-graded'
+      this.questionScoreForm.type = this.questionScoreForm.type === 'Auto-graded'
         ? 'Open-ended' : 'Auto-graded'
-      this.autoGradedView = this.submissionType === 'Auto-graded'
-      this.items = this.submissionType === 'Auto-graded'
+      this.autoGradedView = this.questionScoreForm.type === 'Auto-graded'
+      this.items = this.questionScoreForm.type === 'Auto-graded'
         ? this.autoGradedSubmissionInfoByUser
         : this.openEndedSubmissionInfoByUser
-      this.fields.find(field => field.key === 'submission_count').shown = this.submissionType === 'Auto-graded'
+      this.fields.find(field => field.key === 'submission_count').shown = this.questionScoreForm.type === 'Auto-graded'
     },
     async handleUpdateScores () {
       if (!this.processing) {
@@ -383,6 +379,8 @@ export default {
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
             await this.getScoresByAssignmentAndQuestion()
+            this.submission = this.submissionsOptions[0].value
+            this.score = this.scoresOptions[0].value
           }
         } catch (error) {
           if (!error.message.includes('status code 422')) {
@@ -505,14 +503,14 @@ export default {
         this.openEndedSubmissionInfoByUser = data.open_ended_submission_info_by_user
         this.hasAutoGradedAndOpended = hasAutoGraded && hasOpenEnded
         if (!this.hasAutoGradedAndOpended) {
-          this.submissionType = hasAutoGraded ? 'Auto-graded' : 'Open-ended'
+          this.questionScoreForm.type = hasAutoGraded ? 'Auto-graded' : 'Open-ended'
         }
         if (hasAutoGraded) {
-          this.submissionType = 'Auto-graded'
+          this.questionScoreForm.type = 'Auto-graded'
           this.items = this.autoGradedSubmissionInfoByUser
           this.autoGradedView = true
         } else if (hasOpenEnded) {
-          this.submissionType = 'Open-ended'
+          this.questionScoreForm.type = 'Open-ended'
           this.items = this.openEndedSubmissionInfoByUser
           this.openEndedView = true
           this.fields.find(field => field.key === 'submission_count').shown = false
