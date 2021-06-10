@@ -1,7 +1,7 @@
 <template>
   <div>
     <div class="vld-parent">
-      <PageTitle :title="title" />
+      <PageTitle :title="title"/>
       <loading :active.sync="isLoading"
                :can-cancel="true"
                :is-full-page="true"
@@ -12,7 +12,8 @@
       />
 
       <p>
-        Using the search box you can find Learning Trees by its corresponding Id.  You can then add the Learning Tree to your assignment.
+        Using the search box you can find Learning Trees by its corresponding Id. You can then add the Learning Tree to
+        your assignment.
       </p>
       <b-form-row>
         <b-col lg="3">
@@ -24,23 +25,23 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('learning_tree_id') }"
             @keydown="learningTreeForm.errors.clear('learning_tree_id')"
           />
-          <has-error :form="learningTreeForm" field="learning_tree_id" />
+          <has-error :form="learningTreeForm" field="learning_tree_id"/>
         </b-col>
       </b-form-row>
 
       <div class="mt-3 d-flex flex-row">
-        <b-button variant="success" class="mr-2" @click="getLearningTreeById()">
-          <b-spinner v-if="gettingLearningTree" small type="grow" />
+        <b-button variant="success" class="mr-2" size="sm" @click="getLearningTreeById()">
+          <b-spinner v-if="gettingLearningTree" small type="grow"/>
           Get Learning Tree
         </b-button>
-        <b-button variant="dark" @click="getStudentView(assignmentId)">
+        <b-button variant="dark" size="sm" @click="getStudentView(assignmentId)">
           View as Student
         </b-button>
       </div>
     </div>
     <hr>
     <div class="mt-2 mb-1">
-      <b-button v-if="learningTreeSrc" variant="primary" @click="addLearningTree()">
+      <b-button v-if="learningTreeSrc" variant="primary" size="sm" @click="addLearningTree()">
         Add Learning Tree
       </b-button>
     </div>
@@ -110,7 +111,7 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
           // need to add to the array of selected ones
-        //  this.questions[this.currentPage - 1].inAssignment = true
+          //  this.questions[this.currentPage - 1].inAssignment = true
           this.learningTreeSrc = ''
           this.learningTreeForm.learning_tree_id = ''
         }
@@ -140,7 +141,7 @@ export default {
     async getLearningTreeById () {
       try {
         if (!this.learningTreeForm.learning_tree_id) {
-          this.$noty.error("You didn't enter a Learning Tree id.")
+          this.$noty.error('You didn\'t enter a Learning Tree id.')
           return false
         }
         this.gettingLearningTree = true

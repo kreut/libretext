@@ -44,14 +44,14 @@ class LearningTreeController extends Controller
         $response['type'] = 'error';
         $authorized = Gate::inspect('import', $learningTree);
 
-         if (!$authorized->allowed()) {
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
 
-        $request->validated();
+            $request->validated();
 
 
             $learning_tree_ids = explode(',', $request->learning_tree_ids);
@@ -63,12 +63,14 @@ class LearningTreeController extends Controller
                 $learning_tree_to_import->save();
 
                 $learningTreeHistory = new LearningTreeHistory();
-                $learningTreeHistory->learning_tree =  $learning_tree_to_import->learning_tree;
+                $learningTreeHistory->learning_tree = $learning_tree_to_import->learning_tree;
                 $learningTreeHistory->learning_tree_id = $learning_tree_to_import->id;
+                $learningTreeHistory->root_node_library = $learning_tree_to_import->root_node_library;
+                $learningTreeHistory->root_node_page_id = $learning_tree_to_import->root_node_page_id;
                 $learningTreeHistory->save();
 
             }
-            $plural = str_contains($request->learning_tree_ids,',') ? "s have been" : ' was';
+            $plural = str_contains($request->learning_tree_ids, ',') ? "s have been" : ' was';
             $response['type'] = 'success';
             $response['message'] = "The Learning Tree$plural imported.";
 
@@ -92,6 +94,12 @@ class LearningTreeController extends Controller
         }
 
         $response['type'] = 'error';
+        $message = $this->learningTreeInAssignment($request, $learningTree, 'update the node');
+        if ($message) {
+            $response['message'] = $message;
+            return $response;
+
+        }
         try {
             $data = $request->validated();
             $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
@@ -115,6 +123,12 @@ class LearningTreeController extends Controller
 
     }
 
+    /**
+     * @param Request $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
+     */
     public function createLearningTreeFromTemplate(Request $request, LearningTree $learningTree)
     {
 
@@ -128,23 +142,27 @@ class LearningTreeController extends Controller
         $response['type'] = 'error';
 
         try {
+            DB::beginTransaction();
             $new_learning_tree = $learningTree->replicate();
             $new_learning_tree->title = $new_learning_tree->title . ' copy';
             $new_learning_tree->save();
 
 
             $learningTreeHistory = new LearningTreeHistory();
-            $learningTreeHistory->learning_tree =  $new_learning_tree->learning_tree;
+            $learningTreeHistory->root_node_library = $new_learning_tree->root_node_library;
+            $learningTreeHistory->root_node_page_id = $new_learning_tree->root_node_page_id;
+            $learningTreeHistory->learning_tree = $new_learning_tree->learning_tree;
             $learningTreeHistory->learning_tree_id = $new_learning_tree->id;
             $learningTreeHistory->save();
-
+            DB::commit();
             $response['message'] = "The Learning Tree has been created.";
             $response['type'] = 'success';
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error retrieving your learning trees.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error creating a learning tree from this template.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -218,9 +236,16 @@ class LearningTreeController extends Controller
         } else {
             try {
                 $learningTree->learning_tree = $learning_tree_parsed;
+                if ($request->root_node_library && $request->root_node_page_id) {
+                    $learningTree->root_node_library = $request->root_node_library;
+                    $learningTree->root_node_page_id = $request->root_node_page_id;
+                }
                 DB::beginTransaction();
                 $learningTree->save();
-                $this->saveLearningTreeToHistory($learningTree, $learningTreeHistory);
+                $this->saveLearningTreeToHistory($learningTree->root_node_library,
+                    $learningTree->root_node_page_id,
+                    $learningTree,
+                    $learningTreeHistory);
                 $response['type'] = 'success';
                 $response['message'] = "The learning tree has been saved.";
                 $response['no_change'] = $no_change;
@@ -237,8 +262,10 @@ class LearningTreeController extends Controller
 
     }
 
-    public function saveLearningTreeToHistory(LearningTree $learningTree, LearningTreeHistory $learningTreeHistory)
+    public function saveLearningTreeToHistory(string $library, int $page_id, LearningTree $learningTree, LearningTreeHistory $learningTreeHistory)
     {
+        $learningTreeHistory->root_node_library = $library;
+        $learningTreeHistory->root_node_page_id = $page_id;
         $learningTreeHistory->learning_tree_id = $learningTree->id;
         $learningTreeHistory->learning_tree = $learningTree->learning_tree;
         $learningTreeHistory->save();
@@ -321,12 +348,11 @@ class LearningTreeController extends Controller
 
 
             $learningTree->user_id = Auth::user()->id;
-
-            $shortened_title = strlen($validated_node['title']) < 29 ? $validated_node['title'] : substr($validated_node['title'], 0, 29) . '...';
+            $shortened_title = strlen($validated_node['title']) < 28 ? $validated_node['title'] : substr($validated_node['title'], 0, 28) . '...';
             DB::beginTransaction();
             $learningTree->learning_tree = $this->getRootNode($shortened_title, $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();
-            $this->saveLearningTreeToHistory($learningTree, $learningTreeHistory);
+            $this->saveLearningTreeToHistory($learningTree->root_node_library, $learningTree->root_node_page_id, $learningTree, $learningTreeHistory);
 
 
             $response['type'] = 'success';
@@ -465,7 +491,7 @@ EOT;
      */
     public function destroy(Request $request,
                             LearningTree $learningTree,
-                            LearningTreeHistory $learningTreeHistory)
+                            LearningTreeHistory $learningTreeHistory): array
     {
         //anybody who is logged in can do this!
         $response['type'] = 'error';
@@ -476,26 +502,9 @@ EOT;
             return $response;
         }
         try {
-            $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
-                ->first();
-            if ($assignment_learning_tree_info) {
-                $assignment_info = DB::table('assignment_question_learning_tree')
-                    ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
-                    ->join('assignments', 'assignment_id', '=', 'assignments.id')
-                    ->join('courses', 'course_id', '=', 'courses.id')
-                    ->join('users', 'user_id', '=', 'users.id')
-                    ->where('assignment_question_id', $assignment_learning_tree_info->assignment_question_id)
-                    ->select('users.id',
-                        DB::raw('assignments.name AS assignment'),
-                        DB::raw('courses.name AS course')
-                    )
-                    ->first();
-
-
-                $response['message'] =
-                    ($assignment_info->id === $request->user()->id)
-                        ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first remove that question from the assignment before deleting this Learning Tree."
-                        : "It looks like another instructor is using this Learning Tree so you won't be able to delete it.";
+            $message = $this->learningTreeInAssignment($request, $learningTree, 'delete it');
+            if ($message) {
+                $response['message'] = $message;
                 return $response;
             }
             $learningTree->learningTreeHistories()->delete();
@@ -513,6 +522,41 @@ EOT;
 
     }
 
+    /**
+     * @param Request $request
+     * @param LearningTree $learningTree
+     * @param string $action
+     * @return string
+     */
+    public function learningTreeInAssignment(Request $request, learningTree $learningTree, string $action): string
+    {
+
+        $assignment_learning_tree_info = DB::table('assignment_question_learning_tree')->where('learning_tree_id', $learningTree->id)
+            ->first();
+        if (!$assignment_learning_tree_info) {
+            return '';
+        }
+
+        $assignment_info = DB::table('assignment_question_learning_tree')
+            ->join('assignment_question', 'assignment_question_id', '=', 'assignment_question.id')
+            ->join('assignments', 'assignment_id', '=', 'assignments.id')
+            ->join('courses', 'course_id', '=', 'courses.id')
+            ->join('users', 'user_id', '=', 'users.id')
+            ->where('assignment_question_id', $assignment_learning_tree_info->assignment_question_id)
+            ->select('users.id',
+                DB::raw('assignments.name AS assignment'),
+                DB::raw('courses.name AS course')
+            )
+            ->first();
+
+
+        return
+            ($assignment_info->id === $request->user()->id)
+                ? "It looks like you're using this Learning Tree in $assignment_info->course --- $assignment_info->assignment.  Please first remove that question from the assignment before attempting to $action."
+                : "It looks like another instructor is using this Learning Tree so you won't be able to $action.";
+
+    }
+
     public function validateLearningTreeNode(string $library, int $pageId)
     {
 
@@ -522,6 +566,7 @@ EOT;
             $contents = $Libretext->getContentsByPageId($pageId);
             $response['body'] = $contents['body'];
             $response['title'] = $contents['@title'] ?? 'Title';
+            $response['title'] = str_replace('"', '&quot;', $response['title']);
             $response['type'] = 'success';
         } catch (Exception $e) {
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
@@ -532,8 +577,10 @@ EOT;
             } else {
                 try {
                     $contents = $Libretext->getBodyFromPrivatePage($pageId);
-                    $response['body'] = $contents['@title'] ?? 'Title';
-                    $response['title'] = $contents;
+                    $title = '@title';
+                    $response['title'] = $contents->{$title} ?? 'Title';
+                    $response['title'] = str_replace('"', '&quot;', $response['title']);
+                    $response['body'] = $contents->body[0];
                     $response['type'] = 'success';
                 } catch (Exception $e) {
                     $h = new Handler(app());

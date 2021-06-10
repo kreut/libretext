@@ -187,6 +187,7 @@ class Submission extends Model
                     $explored_learning_tree = $submission->explored_learning_tree;
                     if (!$explored_learning_tree && (int)$submission->submission_count >= 1) {
                         $response['type'] = 'info';
+                        $response['learning_tree_message'] = true;
                         $response['message'] = 'You can resubmit after spending time exploring the Learning Tree.';
                         return $response;
                     }
@@ -194,6 +195,7 @@ class Submission extends Model
                     if ($submission->answered_correctly_at_least_once) {
                         $data['score'] = $submission->submission_score;
                         $response['type'] = 'info';
+                        $response['not_updated_message'] = true;
                         $response['message'] = "Your score was not updated since you already answered this question correctly.";
                         return $response;
                     }
@@ -234,7 +236,7 @@ class Submission extends Model
                 if (($assignment->assessment_type === 'learning tree')) {
                     if (!$data['all_correct']) {
                         $data['score'] = 0;
-                        $message = "Unfortunately, you didn't answer this question correctly.  Explore the Learning Tree, and then you can try again!";
+                        $message = "Unfortunately, you did not answer this question correctly.  Explore the Learning Tree, and then you can try again!";
                     }
                 }
                 DB::beginTransaction();
@@ -261,6 +263,7 @@ class Submission extends Model
             $response['learning_tree'] = ($learning_tree->isNotEmpty() && !$data['all_correct']) ? json_decode($learning_tree[0]->learning_tree)->blocks : '';
             $response['learning_tree_percent_penalty'] = "$learning_tree_percent_penalty%";
             $response['explored_learning_tree'] = $explored_learning_tree;
+            $response['learning_tree_message'] = !$explored_learning_tree;
 
             //don't really care if this gets messed up from the user perspective
             try {

@@ -4,11 +4,12 @@ namespace Tests\Feature\Instructors;
 
 use App\Assignment;
 use App\Course;
+use App\LearningTreeHistory;
 use Tests\TestCase;
 use App\User;
 use App\LearningTree;
 
-class LearningTreesGetTest extends TestCase
+class LearningTreesIndexTest extends TestCase
 {
 
 
@@ -47,6 +48,28 @@ class LearningTreesGetTest extends TestCase
     }
 
     /** @test */
+    public function non_owner_cannot_create_learning_tree_from_template()
+    {
+        $this->actingAs($this->student_user)->postJson("api/learning-trees/{$this->learning_tree->id}/create-learning-tree-from-template")
+            ->assertJson(['message' => 'You are not allowed to create a template from this Learning Tree.']);
+
+
+    }
+
+    /** @test */
+    public function owner_can_create_learning_tree_from_template()
+    {
+        $num_learning_tree_histories = count(LearningTreeHistory::all());
+        $this->actingAs($this->user)->postJson("api/learning-trees/{$this->learning_tree->id}/create-learning-tree-from-template")
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('learning_trees', ['title' => $this->learning_tree->title . ' copy']);
+        $num_learning_tree_histories_with_copy = count(LearningTreeHistory::all());
+        $this->assertEquals($num_learning_tree_histories+1,$num_learning_tree_histories_with_copy );
+
+
+    }
+
+    /** @test */
 
     public function non_instructor_cannot_import_learning_trees()
     {
@@ -74,8 +97,7 @@ class LearningTreesGetTest extends TestCase
             ->assertJson(['type' => 'success']);
 
 
-
-}
+    }
 
     /** @test */
     public function existing_learning_tree_can_be_retrieved()

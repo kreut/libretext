@@ -138,10 +138,25 @@
       id="modal-delete-learning-tree"
       ref="modal"
       title="Confirm Delete Learning Tree"
-      ok-title="Yes, delete learning tree!"
-      @ok="handleDeleteLearningTree"
     >
       <p>Please note that once a Learning Tree is deleted, it can not be retrieved.</p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-delete-learninig-tree')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="danger"
+          size="sm"
+          class="float-right"
+          @click="handleDeleteLearningTree"
+        >
+          Yes, delete learning tree!
+        </b-button>
+      </template>
     </b-modal>
 
     <div v-if="user.role === 2" id="leftcard">
@@ -405,11 +420,11 @@ export default {
           this.nodeToUpdate.querySelector('input[name="library"]').value = this.nodeForm.library
           this.nodeToUpdate.querySelector('.blockyinfo').innerHTML = this.shortenString(data.title)
           this.nodeToUpdate.querySelector('.blockyname').innerHTML = this.getBlockyNameHTML(this.nodeForm.library, this.nodeForm.page_id)
-          await this.saveLearningTree()
-          this.$bvModal.hide('modal-update-node')
+          await this.saveLearningTree(this.nodeForm.library, this.nodeForm.page_id)
         } else {
           this.$noty.error(data.message)
         }
+        this.$bvModal.hide('modal-update-node')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
@@ -538,11 +553,12 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    async saveLearningTree () {
-
+    async saveLearningTree (root_node_library = null, root_node_page_id = null) {
       try {
         const { data } = await axios.patch(`/api/learning-trees/${this.learningTreeId}`, {
-          'learning_tree': JSON.stringify(flowy.output())
+          'learning_tree': JSON.stringify(flowy.output()),
+          'root_node_library': root_node_library,
+          'root_node_page_id': root_node_page_id
         })
         console.log(data)
         if (data.type === 'no_change') {

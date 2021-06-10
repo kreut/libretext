@@ -335,8 +335,8 @@ class AssignmentController extends Controller
         try {
             DB::beginTransaction();
             $assignment = Assignment::find($assignment->id);
-            foreach ($assignment->course->assignments as $current_assignment){
-                if ($current_assignment->order > $assignment->order){
+            foreach ($assignment->course->assignments as $current_assignment) {
+                if ($current_assignment->order > $assignment->order) {
                     $current_assignment->order++;
                     $current_assignment->save();
                 }
@@ -887,7 +887,7 @@ class AssignmentController extends Controller
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
-                'min_time_needed_in_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->min_time_needed_in_learning_tree * 3000 : 0,//in milliseconds
+                'min_time_needed_in_learning_tree' => $this->minTimeNeededInLearningTree($assignment),
                 'percent_earned_for_exploring_learning_tree' => ($assignment->assessment_type === 'learning tree') ? $assignment->percent_earned_for_exploring_learning_tree : 0,
                 'submission_files' => $assignment->submission_files,
                 'show_points_per_question' => $assignment->show_points_per_question,
@@ -922,6 +922,16 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    public function minTimeNeededInLearningTree(Assignment $assignment)
+    {
+        if ($assignment->assessment_type !== 'learning tree') {
+            return 0;
+        }
+        if (session()->get('instructor_user_id')) {
+            return 3000;
+        }
+        return $assignment->min_time_needed_in_learning_tree * 1000 * 60;
+    }
 
     /**
      * @param Assignment $assignment
@@ -1081,7 +1091,7 @@ class AssignmentController extends Controller
     function getAssignmentSummary(Assignment $assignment,
                                   AssignmentGroup $assignmentGroup,
                                   SubmissionFile $submissionFile,
-                                    AssignmentSyncQuestion $assignmentSyncQuestion)
+                                  AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
