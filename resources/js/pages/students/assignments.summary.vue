@@ -68,7 +68,7 @@
             </b-alert>
           </div>
           <div v-show="isInstructorLoggedInAsStudent">
-            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
           </div>
           <b-card header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
@@ -93,7 +93,9 @@
             </b-card-text>
           </b-card>
 
-          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default" header-html="<h5>Upload Compiled PDF Submission</h5>">
+          <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default"
+                  header-html="<h5>Upload Compiled PDF Submission</h5>"
+          >
             <file-upload
               ref="upload"
               v-model="files"
@@ -154,11 +156,13 @@
               striped
               hover
               :no-border-collapse="true"
-              :fields="fields"
+              :fields="shownFields"
               :items="items"
             >
               <template #cell(question_number)="data">
-                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{ data.item.question_number }}&nbsp;</span></a>
+                <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{
+                    data.item.question_number
+                  }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto Graded Submission <span v-b-tooltip="showAutoGradedSubmissionTooltip"><b-icon
@@ -319,9 +323,14 @@ export default {
     canViewAssignmentStatistics: false,
     assignmentInfo: {}
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    shownFields () {
+      return this.fields.filter(field => field.shown)
+    }
+  },
   created () {
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
   },
@@ -427,6 +436,7 @@ export default {
           this.submissionFileForm.errors.set('submission', data.message)
         } else {
           this.fullPdfUrl = data.full_pdf_url
+          this.fields.find(field => field.key === 'page').shown = true
         }
       } catch (error) {
         this.$noty.error(error.message)
@@ -551,23 +561,37 @@ export default {
         this.fields = [
           {
             key: 'question_number',
-            label: 'Number'
+            label: 'Number',
+            shown: true
           },
-          'last_question_submission',
-          'last_open_ended_submission']
-        if (assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both') {
-          this.fields.push({ key: 'page', label: 'Initial Page'})
-        }
-        if (assignment.show_points_per_question) {
-          this.fields.push({
+          {
+            key: 'last_question_submission',
+            shown: true
+          },
+          {
+            key: 'last_open_ended_submission',
+            shown: true
+          },
+          {
+            key: 'page',
+            label: 'Initial Page',
+            shown: this.fullPdfUrl !== null
+          },
+          {
             key: 'points',
-            label: 'Question Points'
-          })
-        }
-        this.fields.push('total_score', {
-          key: 'solution_file_url',
-          label: 'Solution File'
-        })
+            label: 'Question Points',
+            shown: assignment.show_points_per_question
+          },
+          {
+            key: 'total_score',
+            shown: true
+          },
+          {
+            key: 'solution_file_url',
+            label: 'Solution File',
+            shown: true
+          }
+        ]
       } catch (error) {
         this.$noty.error(error.message)
         this.name = 'Assignment Summary'

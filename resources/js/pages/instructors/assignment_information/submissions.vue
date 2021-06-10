@@ -219,7 +219,7 @@
               striped
               hover
               :no-border-collapse="true"
-              :fields="showFields"
+              :fields="shownFields"
               :items="items"
             >
               <template v-slot:cell(submission)="data">
@@ -304,7 +304,7 @@ export default {
       ...mapGetters({
         user: 'auth/user'
       }),
-      showFields () {
+      shownFields () {
         return this.fields.filter(field => field.shown)
       }
     },
