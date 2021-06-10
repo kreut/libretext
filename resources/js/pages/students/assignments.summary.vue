@@ -41,6 +41,27 @@
         <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage"/>
       </b-alert>
     </b-modal>
+    <b-modal id="modal-confirm-set-page"
+             ref="confirmSetPage"
+             title="Confirm Set Page"
+    >
+      <p>
+        You already have submitted a file for this question. If you set the page again, your submission file
+        will be updated with the associated page from your compiled PDF.
+      </p>
+      <p>Would you like to update your submission with a page from your compiled PDF?</p>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-set-page')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="handleSetPageAsSubmission">
+          Yes, set the page!
+        </b-button>
+      </template>
+
+
+    </b-modal>
+
 
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -221,7 +242,7 @@
                       <b-button variant="primary"
                                 size="sm"
                                 :disabled="!fullPdfUrl"
-                                @click="handleSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
+                                @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
                       >
                         Set Page
                       </b-button>
@@ -349,19 +370,26 @@ export default {
         this.$bvModal.show('modal-completed-assignment')
       }
     },
-    async handleSetPageAsSubmission (questionNumber, questionId, page) {
+    confirmSetPageAsSubmission (questionNumber, questionId, page) {
       this.questionSubmissionPageForm.questionId = questionId
       this.questionSubmissionPageForm.page = page
       this.questionSubmissionPageForm.question_number = questionNumber
+      let question = this.items.find(question => question.question_id === questionId)
+      question.submission_file_exists
+        ? this.$bvModal.show('modal-confirm-set-page')
+        : this.handleSetPageAsSubmission()
+    },
+    async handleSetPageAsSubmission () {
       try {
-        const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${questionId}/page`)
+        const { data } = await this.questionSubmissionPageForm.patch(`/api/submission-files/${this.assignmentId}/${this.questionSubmissionPageForm.questionId}/page`)
+        this.$bvModal.hide('modal-confirm-set-page')
         if (data.type === 'error') {
           this.errorMessage = data.message
           this.$bvModal.show('modal-thumbs-down')
           return false
         }
         let openEndedSubmission
-        openEndedSubmission = this.items.find(question => question.question_id === questionId)
+        openEndedSubmission = this.items.find(question => question.question_id === this.questionSubmissionPageForm.questionId)
         openEndedSubmission.submission_file_exists = true
         openEndedSubmission.submission_file_url = data.submission_file_url
         openEndedSubmission.last_open_ended_submission = data.date_submitted
@@ -372,6 +400,7 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.errorMessage = error.message
+          this.$bvModal.hide('modal-confirm-set-page')
           this.$bvModal.show('modal-thumbs-down')
         }
       }
@@ -641,6 +670,7 @@ export default {
             isOpenEndedFileSubmission: question.open_ended_submission_type === 'file',
             showThumbsUpForOpenEndedSubmission: showThumbsUpForOpenEndedSubmission,
             page: question.submission_file_page ? question.submission_file_page : null,
+            submission_file_exists: question.submission_file_exists,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
             solution_file_url: question.solution_file_url ? question.solution_file_url : null,
             points: question.points ? question.points : 'N/A',
