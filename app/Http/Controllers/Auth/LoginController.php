@@ -105,6 +105,10 @@ class LoginController extends Controller
         if ($request->session()->has('original_email')) {
             $request->session()->forget('original_email');
         }
+
+        if ($request->session()->has('instructor_user_id')) {
+            $request->session()->forget('instructor_user_id');
+        }
         $this->guard()->logout();
     }
 }
