@@ -49,6 +49,7 @@ trait GeneralSubmissionPolicy
         if (session()->get('instructor_user_id')){
             //logged in as student
            $response['type'] = 'success';
+           return $response;
         }
 
         if (strtotime($assign_to_timing->available_from) > time()) {
