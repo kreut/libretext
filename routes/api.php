@@ -159,7 +159,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student','AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
-    Route::put('/scores/{assignment}/{question}/upload-override-scores', 'ScoreController@uploadOverrideScores');
+    Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
     Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
     Route::patch('/scores/{assignment}/override-scores', 'ScoreController@overrideScores');
     Route::get('/scores/{course}/get-course-scores-by-user', 'ScoreController@getCourseScoresByUser');
