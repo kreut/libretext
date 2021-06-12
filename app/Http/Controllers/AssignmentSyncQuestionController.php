@@ -1276,9 +1276,10 @@ class AssignmentSyncQuestionController extends Controller
 
 
                 }
-                $submission_file_score = $formatted_submission_file_info['submission_file_score'] ?? 0;
                 if ($assignment->show_scores) {
-                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), floatval($submission_score) + floatval($submission_file_score)), 2);
+                   $total_score = floatval($assignment->questions[$key]['submission_file_score']  ?? 0)
+                   + floatval( $assignment->questions[$key]['submission_score'] ?? 0);
+                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score, 2));
                 }
 
 
