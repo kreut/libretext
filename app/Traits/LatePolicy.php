@@ -10,10 +10,18 @@ use Illuminate\Support\Facades\Auth;
 
 trait LatePolicy
 {
-    public function isLateSubmission(Extension $Extension, Assignment $assignment, Carbon $date_submitted)
+    public function isLateSubmission($Extension, Assignment $assignment, Carbon $date_submitted)
     {
-        $extension = $Extension->getAssignmentExtensionByUser($assignment, Auth::user());
-        $max_date_to_submit = $extension ? $extension : $assignment->assignToTimingByUser('due');
+        if ($Extension === false){
+            //checked at the individual level and it's not an extension
+            return false;
+        }
+        //either pass through the model because we don't actually know it or pass through an actual extension.
+        $extension = ($Extension instanceof Extension)
+            ? $Extension->getAssignmentExtensionByUser($assignment, Auth::user())
+            : $Extension;
+
+        $max_date_to_submit = $extension ?: $assignment->assignToTimingByUser('due');
         return in_array($assignment->late_policy, ['marked late', 'deduction']) && Carbon::parse($max_date_to_submit) < $date_submitted;
     }
 

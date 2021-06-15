@@ -51,8 +51,8 @@ class Submission extends Model
                     'email' => $enrolled_user->email,
                     'submission' => $this->getStudentResponse($submission, $question->technology),
                     'submission_count' => $submission->submission_count,
-                    'score' => rtrim(rtrim($submission->score, "0"),".")
-                    ];
+                    'score' => rtrim(rtrim($submission->score, "0"), ".")
+                ];
             }
 
         }
@@ -63,6 +63,7 @@ class Submission extends Model
         }
         return $auto_graded_submission_info_by_user;
     }
+
     /**
      * @param StoreSubmission $request
      * @param Submission $submission
@@ -416,6 +417,33 @@ class Submission extends Model
 
         $assignment_question_submissions = [];
         $assignment_file_submissions = [];
+        $assignment_questions = [];
+        $results = DB::table('assignment_question')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->select('assignment_id', 'question_id')
+            ->get();
+        foreach ($results as $value) {
+            $assignment_questions[$value->assignment_id][] = $value->question_id;
+        }
+
+        $results = DB::table('randomized_assignment_questions')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('user_id', $user->id)
+            ->select('assignment_id', 'question_id')
+            ->get();
+        foreach ($results as $value) {
+            if (isset($assignment_questions[$value->assignment_id])) {
+                unset($assignment_questions[$value->assignment_id]);
+            }
+        }
+
+        foreach ($results as $value) {
+            $assignment_questions[$value->assignment_id][] = $value->question_id;
+        }
+
+        foreach ($results as $key => $value) {
+            $assignment_question_submissions[$value->assignment_id][] = $value->question_id;
+        }
         $results = DB::table('submissions')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('user_id', $user->id)
@@ -431,15 +459,18 @@ class Submission extends Model
             ->whereIn('type', ['q', 'text'])
             ->select('question_id', 'assignment_id')
             ->get();
+
         foreach ($results as $key => $value) {
             $assignment_file_submissions[$value->assignment_id][] = $value->question_id;
         }
 
 
         $submissions_count_by_assignment_id = [];
+
         foreach ($assignments as $assignment) {
             $question_submissions = [];
             $file_submissions = [];
+            $total_submissions_for_assignment = 0;
             if (isset($assignment_question_submissions[$assignment->id])) {
                 foreach ($assignment_question_submissions[$assignment->id] as $question_id) {
                     $question_submissions[] = $question_id;
@@ -450,15 +481,14 @@ class Submission extends Model
                     $file_submissions[] = $question_id;
                 }
             }
-            $total_submissions_for_assignment = 0;
-            foreach ($assignment->questions as $question) {
-                if (in_array($question->id, $question_submissions) || in_array($question->id, $file_submissions)) {
-                    $total_submissions_for_assignment++;
+            if (isset($assignment_questions[$assignment->id])) {
+                foreach ($assignment_questions[$assignment->id] as $question_id) {
+                    if (in_array($question_id, $question_submissions) || in_array($question_id, $file_submissions)) {
+                        $total_submissions_for_assignment++;
+                    }
                 }
-
-                $submissions_count_by_assignment_id[$assignment->id] = $total_submissions_for_assignment;
             }
-
+            $submissions_count_by_assignment_id[$assignment->id] = $total_submissions_for_assignment;
         }
 
         return $submissions_count_by_assignment_id;
@@ -483,7 +513,9 @@ class Submission extends Model
             $questions_count_by_assignment_id = $AssignmentSyncQuestion->getQuestionCountByAssignmentIds($assignments);
 
             $submissions_count_by_assignment_id = $this->getSubmissionsCountByAssignmentIdsAndUser($course->assignments, $assignment_ids, $user);
+
             //set to 0 if there are no questions
+
             foreach ($assignment_ids as $assignment_id) {
                 $num_questions = $questions_count_by_assignment_id[$assignment_id] ?? 0;
                 $num_submissions = $submissions_count_by_assignment_id[$assignment_id] ?? 0;
@@ -495,6 +527,7 @@ class Submission extends Model
                         $num_sumbissions_per_assignment[$assignment_id] = 'N/A';
                 }
             }
+
         }
         return $num_sumbissions_per_assignment;
 

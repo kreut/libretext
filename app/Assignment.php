@@ -124,9 +124,19 @@ class Assignment extends Model
             }
             $assignment_groups_by_assignment = $AssignmentGroup->assignmentGroupsByCourse($course->id);
             $assignments_info = [];
+            $number_of_questions = [];
+            $results = DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->whereIn('assignment_id', $assigned_assignment_ids)
+                ->select('assignment_id', DB::raw('COUNT(*) AS num_questions'))
+                ->groupBy('assignment_id')
+                ->get();
+            foreach ($results as $result) {
+                $number_of_questions[$result->assignment_id] = $result->num_questions;
+            }
 
             foreach ($course_assignments as $key => $assignment) {
-
+                $number_of_questions = $number_of_questions[$assignment->id] ?? 0;
                 if (Auth::user()->role === 3 && !in_array($assignment->id, $assigned_assignment_ids)) {
                     continue;
                 }
@@ -159,8 +169,7 @@ class Assignment extends Model
                     $assignments_info[$key]['solution_key'] = $solutions_by_assignment[$assignment->id];
                     $assignments_info[$key]['total_points'] = $total_points_by_assignment[$assignment->id] ?? 0;
                     $assignments_info[$key]['number_of_questions'] = $assignment->number_of_randomized_assessments
-                        ? $assignment->number_of_randomized_assessments
-                        : count($assignment->questions);
+                        ?: $number_of_questions;
 
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
@@ -186,7 +195,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     }
 
-                    $assignments_info[$key]['number_of_questions'] = count($assignment->questions);
+                    $assignments_info[$key]['number_of_questions'] = $number_of_questions;
 
 
                 }

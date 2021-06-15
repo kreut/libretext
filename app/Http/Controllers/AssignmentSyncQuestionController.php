@@ -946,15 +946,16 @@ class AssignmentSyncQuestionController extends Controller
 
     public
     function getResponseInfo(Assignment $assignment,
-                             Extension $Extension,
+                             $Extension,
                              Submission $Submission,
                              $submissions_by_question_id,
                              $question_technologies,
                              $question_id)
     {
+        //$Extension will be the model when returning the information to the user at the individual level
+        //it will be the actual date when doing it for the assignment since I just need to do it once
         $student_response = 'N/A';
         $correct_response = null;
-        $score = null;
         $late_penalty_percent = 0;
         $submission_score = 0;
         $last_submitted = 'N/A';
@@ -1170,7 +1171,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['points'] = $points[$question->id];
                 $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
-                $response_info = $this->getResponseInfo($assignment, $Extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
+                $response_info = $this->getResponseInfo($assignment, $extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
