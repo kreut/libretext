@@ -1248,6 +1248,15 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
+            if ($assignment->assessment_type !== $request->assessment_type) {
+                $message = $this->validAssessmentTypeSwitch($assignment, $request->assessment_type);
+                if ($message) {
+                    $response['message'] = $message;
+                    $response['timeout'] = 12000;
+                    return $response;
+                }
+            }
+
             $assign_tos = $request->assign_tos;
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
@@ -1384,5 +1393,33 @@ class AssignmentController extends Controller
     function formatDateFromRequest($date, $time)
     {
         return $this->convertLocalMysqlFormattedDateToUTC("$date $time", Auth::user()->time_zone);
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param $new_assessment_type
+     * @return string
+     */
+    public function validAssessmentTypeSwitch(Assignment $assignment, $new_assessment_type): string
+    {
+        $has_questions = count($assignment->questions) > 0;
+        $message = '';
+        if ($has_questions) {
+            switch ($assignment->assessment_type) {
+                case('learning tree'):
+                case('delayed'):
+                    $message = "This assignment already has assessments in it which may not be compatible with an assignment with $new_assessment_type assessments.  If you would like to change the assessment type, please first remove the assessments before changing the assignment's assessment type.";
+                    break;
+                case('clicker'):
+                case('real time'):
+                    if ($new_assessment_type === 'learning tree') {
+                        $message = "You can't switch from a real time to a learning tree assignment.  Please first remove all assessments before choosing this option.";
+                    }
+                    break;
+            }
+        }
+
+        return $message;
+
     }
 }

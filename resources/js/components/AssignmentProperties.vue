@@ -541,16 +541,22 @@
           <b-form-radio name="default_open_ended_submission_type" value="file">
             File
           </b-form-radio>
-          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="rich text">
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type"
+                        value="rich text"
+          >
             Rich Text
           </b-form-radio>
-          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="plain text">
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type"
+                        value="plain text"
+          >
             Plain Text
           </b-form-radio>
-          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type" value="audio">
+          <b-form-radio v-show="form.file_upload_mode !== 'compiled_pdf'" name="default_open_ended_submission_type"
+                        value="audio"
+          >
             Audio
           </b-form-radio>
-          <b-form-radio  name="default_open_ended_submission_type" value="0">
+          <b-form-radio name="default_open_ended_submission_type" value="0">
             None
           </b-form-radio>
         </b-form-radio-group>
@@ -1417,7 +1423,8 @@ export default {
     async updateAssignment () {
       try {
         const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-        this.$noty[data.type](data.message)
+        let timeout = data.timeout ? data.timeout : 4000
+        this.$noty[data.type](data.message, { timeout: timeout })
         if (data.type === 'success') {
           await this.resetAll('modal-assignment-properties')
         }
