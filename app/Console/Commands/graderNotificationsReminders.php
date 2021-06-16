@@ -104,7 +104,7 @@ class graderNotificationsReminders extends Command
             }
             $course_ids = implode(', ', $course_ids);
 
-            if ($course_ids){
+            if (!$course_ids){
                 exit;
             }
             $yesterday = Carbon::now()->subDay()->format('Y-m-d H:i:s');
