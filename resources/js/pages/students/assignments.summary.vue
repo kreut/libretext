@@ -99,6 +99,7 @@
               <p>
                 <span class="font-weight-bold">Due Date: </span>
                 <span class="font-italic">This assignment is due {{ formattedDue }}.</span>
+                <span v-if="extension" class="font-italic">(You have an extension until {{ extension }}).</span>
               </p>
               <p>
                 <span class="font-weight-bold">Late Policy: </span>
@@ -295,6 +296,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    extension: null,
     isInstructorLoggedInAsStudent: false,
     bothFileUploadMode: false,
     compiledPdf: false,
@@ -581,6 +583,7 @@ export default {
         this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'
         this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
+        this.extension = assignment.extension
         this.name = assignment.name
         this.pastDue = assignment.past_due
         this.canViewAssignmentStatistics = assignment.can_view_assignment_statistics

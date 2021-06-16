@@ -1113,15 +1113,21 @@ class AssignmentController extends Controller
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
-                    ? $assignment->number_of_randomized_assessments : "none"
+                    ?: "none"
             ];
             if (auth()->user()->role === 3) {
+                $extension = DB::table('extensions')
+                    ->select('extension')
+                    ->where('assignment_id', $assignment->id)
+                    ->where('user_id', auth()->user()->id)
+                    ->first('extension');
                 $formatted_items['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id');
                 $formatted_items['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
                 $formatted_items['full_pdf_url'] = $submissionFile->getFullPdfUrl($assignment);
                 $assign_to_timing = $assignment->assignToTimingByUser();
                 $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, $assign_to_timing);
                 $formatted_items['past_due'] = time() > strtotime($assign_to_timing->due);
+                $formatted_items['extension'] = $extension ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($extension->extension, Auth::user()->time_zone, 'F d, Y \a\t g:i a') : null;
                 $formatted_items['due'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone);
                 $formatted_items['formatted_due'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_timing->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a');
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
