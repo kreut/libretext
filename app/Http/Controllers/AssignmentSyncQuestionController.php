@@ -343,7 +343,7 @@ class AssignmentSyncQuestionController extends Controller
             DB::commit();
             $response['time_left'] = $clicker_end->subSeconds($seconds_padding)->diffInMilliseconds($clicker_start);
             $response['type'] = 'success';
-            $response['message'] = 'You students can begin submitting responses.';
+            $response['message'] = 'Your students can begin submitting responses.';
 
         } catch (Exception $e) {
             DB::rollback();
@@ -500,7 +500,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['mind_touch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
                 $rows[] = $columns;
             }
-
+            $response['assessment_type'] = $assignment->assessment_type;
             $response['type'] = 'success';
             $response['rows'] = $rows;
 

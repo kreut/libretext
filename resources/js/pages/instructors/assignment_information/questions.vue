@@ -4,11 +4,44 @@
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
-      ok-title="Yes, remove question"
-      @ok="submitRemoveQuestion"
     >
       <RemoveQuestion/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
     </b-modal>
+    <b-modal
+      id="modal-non-h5p"
+      ref="h5pModal"
+      title="Non-H5P assessments in clicker assignment"
+    >
+      <b-alert :show="true" variant="danger">
+        <span class="font-weight-bold font-italic">
+          This assignment has non-H5P assessments. Clicker assignments can only be used with H5P true-false
+          and H5P multiple choice assessments. Please remove any non-H5P assessments.
+        </span>
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-non-h5p')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
+
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -20,6 +53,11 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Questions"/>
+        <b-alert :show="assessmentType === 'clicker'">
+          <span class="font-italic font-weight-bold">
+            Important: clicker assignments can only be used in conjunction with H5P true-false and multiple choice assessments.
+          </span>
+        </b-alert>
         <div v-if="items.length">
           <table class="table table-striped">
             <thead>
@@ -128,6 +166,7 @@ export default {
     RemoveQuestion
   },
   data: () => ({
+    assessmentType: '',
     adaptId: 0,
     copyIcon: faCopy,
     currentOrderedQuestions: [],
@@ -154,6 +193,7 @@ export default {
     async submitRemoveQuestion () {
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questionId}`)
+        this.$bvModal.hide('modal-remove-question')
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -208,11 +248,19 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.assessmentType = data.assessment_type
         this.items = data.rows
+        let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {
+          if (this.items[i].submission !== 'h5p') {
+            hasNonH5P = true
+          }
           this.currentOrderedQuestions.push(this.items[i].question_id)
         }
         console.log(data)
+        if (this.assessment_type === 'clicker' && hasNonH5P) {
+          this.$bvModal.show('modal-non-h5p')
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

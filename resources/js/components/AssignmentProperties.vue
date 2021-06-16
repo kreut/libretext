@@ -1170,6 +1170,8 @@ export default {
           this.checkIfScoringTypeOfPoints()
           break
         case ('clicker'):
+          this.form.number_of_randomized_assessments = null
+          this.form.randomizations = 0
           this.checkSourceAndLatePolicy()
           this.form.notifications = 0
       }

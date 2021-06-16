@@ -638,7 +638,8 @@ class AssignmentController extends Controller
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
-                    'number_of_randomized_assessments' => $data['number_of_randomized_assessments'] ?? null,
+
+                    'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
@@ -1271,7 +1272,7 @@ class AssignmentController extends Controller
             $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
             $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
-            $data['number_of_randomized_assessments'] = $data['number_of_randomized_assessments'] ?? null;
+            $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
             $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
             unset($data['available_from_date']);
             unset($data['available_from_time']);
@@ -1421,5 +1422,18 @@ class AssignmentController extends Controller
 
         return $message;
 
+    }
+
+    /**
+     * @param string $assessment_type
+     * @param array $data
+     * @return mixed|null
+     */
+    public function getNumberOfRandomizedAssessments(string $assessment_type, array $data)
+    {
+        if ($assessment_type === 'clicker') {
+            return null;
+        }
+        return $data['number_of_randomized_assessments'] ?? null;
     }
 }

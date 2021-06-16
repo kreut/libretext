@@ -91,7 +91,7 @@
           <div v-show="isInstructorLoggedInAsStudent">
             <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
           </div>
-          <b-card header="default" header-html="<h5>Important Information</h5>">
+          <b-card v-show="assessmentType !== 'clicker'" header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
               <p v-if="instructions.length" class="mb-2">
                 <span class="font-weight-bold">Instructions: </span> <span v-html="instructions"/>
@@ -169,7 +169,7 @@
             </div>
 
           </b-card>
-          <b-card class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>" v-show="items.length">
+          <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>">
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>

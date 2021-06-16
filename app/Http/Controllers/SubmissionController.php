@@ -8,6 +8,7 @@ use App\Exceptions\Handler;
 use App\Http\Requests\UpdateScoresRequest;
 use App\LtiLaunch;
 use App\LtiGradePassback;
+use Carbon\Carbon;
 use \Exception;
 use App\Submission;
 use App\Score;
@@ -93,12 +94,11 @@ class SubmissionController extends Controller
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
 
             if (Auth::user()->role === 3) {
-                $due = DB::table('assignments')
-                    ->where('id', $assignment->id)
-                    ->select('due')
-                    ->first()
-                    ->due;
-                if (time() <= strtotime($due)) {
+                $now = Carbon::now();
+                $clicker_end = Carbon::parse($question_info->clicker_end);
+                $time_left = $clicker_end > $now ? $clicker_end->diffInMilliseconds($now) : 0;
+                $response['time_left'] = $time_left;
+                if (!$past_due) {
                     $response['type'] = 'success';
                     return $response;
                 }
@@ -162,6 +162,9 @@ class SubmissionController extends Controller
                         }
                         //Log::info(print_r($submission['result'], true));
 
+                        break;
+                    case('webwork'):
+                        Log::info(print_r($submission, true));
                         break;
                     default:
                         $response['message'] = 'Only h5p is supported at this time.';

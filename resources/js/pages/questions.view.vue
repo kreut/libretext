@@ -2158,6 +2158,7 @@ export default {
           this.correctAnswer = data.correct_answer
           this.responsePercent = data.response_percent
           this.clickerStatus = data.clicker_status
+          this.timeLeft = data.time_left
           this.updateClickerMessage(this.clickerStatus)
         } else {
           this.$noty.error(data.message)
@@ -2337,7 +2338,7 @@ export default {
       this.learningTreePercentPenalty = data.learning_tree_percent_penalty
 
       if (this.submissionDataType !== 'danger') {
-        if (data.learning_tree_message) {
+        if (this.assessmentType === 'learning tree' && data.learning_tree_message) {
           this.$bvModal.show('modal-learning-tree')
         } else if (data.not_updated_message) {
           this.$bvModal.show('modal-not-updated')
