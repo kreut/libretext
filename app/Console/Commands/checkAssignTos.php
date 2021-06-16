@@ -38,6 +38,7 @@ class checkAssignTos extends Command
      */
     public function handle()
     {
+        ini_set('memory_limit', '16MB');
         try {
             $counts = Assignment::join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
                 ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
@@ -63,12 +64,13 @@ class checkAssignTos extends Command
                 throw new Exception("Count mismatch in assign tos.  Should be $count. " . print_r($problem_users,true));
 
             }
+            echo "No issues";
         } catch (Exception $e) {
 
             $h = new Handler(app());
             $h->report($e);
 
-
         }
+
     }
 }

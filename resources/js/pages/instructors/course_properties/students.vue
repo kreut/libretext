@@ -87,6 +87,10 @@
         </b-form-group>
       </b-form>
       <template #modal-footer>
+        <span v-if="processingMoveStudent">
+                    <b-spinner small type="grow"/>
+                    Processing...
+                  </span>
         <b-button
           size="sm"
           class="float-right"
@@ -99,6 +103,7 @@
           variant="primary"
           size="sm"
           class="float-right"
+          :disabled="processingMoveStudent"
           @click="submitMoveStudent"
         >
           Yes, move the student!
@@ -168,6 +173,7 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    processingMoveStudent: false,
     copyIcon: faCopy,
     studentToUnenroll: {},
     unenrollStudentForm: new Form({
@@ -241,6 +247,7 @@ export default {
       this.$bvModal.hide('modal-move-student')
     },
     async submitMoveStudent () {
+      this.processingMoveStudent = true
       try {
         const { data } = await this.moveStudentForm.patch(`/api/enrollments/${this.courseId}/${this.studentId}`)
         this.$noty[data.type](data.message)
@@ -248,7 +255,9 @@ export default {
           await this.getEnrolledStudents()
         }
         this.$bvModal.hide('modal-move-student')
+        this.processingMoveStudent = false
       } catch (error) {
+        this.processingMoveStudent = false
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
           return false

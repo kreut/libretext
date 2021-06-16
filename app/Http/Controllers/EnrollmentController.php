@@ -103,15 +103,29 @@ class EnrollmentController extends Controller
                 ->where('user_id', $user->id)
                 ->update(['section_id' => $new_section_id]);
 
+            ///clean up database call
             foreach ($new_assign_to_timing_ids as $assign_to_timing_id) {
-                $assign_to_group = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)->first();
-                if ($assign_to_group->group === 'course' ||
-                    ($assign_to_group->group === 'section' && $assign_to_group->group_id === $new_section_id)
-                ) {
-                    $assignToUser = new AssignToUser();
-                    $assignToUser->user_id = $user->id;
-                    $assignToUser->assign_to_timing_id = $assign_to_timing_id;
-                    $assignToUser->save();
+                $section_assign_to_groups = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)
+                        ->where('group','section')->get();
+                $assigned_user_to_new_assign_to_group = false;
+                foreach ($section_assign_to_groups as $section_assign_to_group){
+                    if (!$assigned_user_to_new_assign_to_group && $section_assign_to_group->group_id === $new_section_id){
+                        $assignToUser = new AssignToUser();
+                        $assignToUser->user_id = $user->id;
+                        $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+                        $assignToUser->save();
+                        $assigned_user_to_new_assign_to_group = true;
+                    }
+                }
+                if (!$assigned_user_to_new_assign_to_group){
+                    $course_assign_to_group = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)
+                        ->where('group','course')->first();
+                    if ( $course_assign_to_group){
+                        $assignToUser = new AssignToUser();
+                        $assignToUser->user_id = $user->id;
+                        $assignToUser->assign_to_timing_id = $assign_to_timing_id;
+                        $assignToUser->save();
+                    }
                 }
             }
             DB::commit();
