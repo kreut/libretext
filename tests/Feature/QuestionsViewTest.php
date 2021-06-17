@@ -290,7 +290,7 @@ class QuestionsViewTest extends TestCase
     public function owner_can_start_a_clicker_assessment()
     {
         $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}}/questions/{$this->question->id}/start-clicker-assessment", ['time_to_submit' => '30 seconds'])
-            ->assertJson(['message' => 'You students can begin submitting responses.']);
+            ->assertJson(['message' => 'Your students can begin submitting responses.']);
     }
 
     /** @test */

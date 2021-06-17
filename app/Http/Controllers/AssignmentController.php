@@ -1318,9 +1318,8 @@ class AssignmentController extends Controller
      *
      * Delete an assignment
      *
-     * @param Course $course
      * @param Assignment $assignment
-     * @param Score $score
+     * @param AssignToTiming $assignToTiming
      * @return mixed
      * @throws Exception
      */
@@ -1404,17 +1403,38 @@ class AssignmentController extends Controller
     public function validAssessmentTypeSwitch(Assignment $assignment, $new_assessment_type): string
     {
         $has_questions = count($assignment->questions) > 0;
+
         $message = '';
         if ($has_questions) {
             switch ($assignment->assessment_type) {
                 case('learning tree'):
+                    $message = "This assignment already has non-Learning Tree assessments in it.  If you would like to change the assessment type, please first remove those assessments.";
+                    break;
                 case('delayed'):
-                    $message = "This assignment already has assessments in it which may not be compatible with an assignment with $new_assessment_type assessments.  If you would like to change the assessment type, please first remove the assessments before changing the assignment's assessment type.";
+                    if (in_array($new_assessment_type, ['real time','clicker'])) {
+                        $new_assessment_type = ucfirst($new_assessment_type);
+                        foreach ($assignment->questions as $question) {
+                            if (!$question->technology_iframe) {
+                                $message = "If you would like to change this assignment to $new_assessment_type, all of your assessments must have an associated auto-graded component H5P or Webwork.  Please remove any assessments that don't have auto-graded component.";
+                                break;
+                            }
+                        }
+                        $open_ended_submissions = DB::table('assignment_question')
+                            ->where('assignment_id', $assignment->id)
+                            ->where('open_ended_submission_type', '<>', '0')
+                            ->first();
+                        if ($open_ended_submissions) {
+                            $message = "If you would like to change this assignment to $new_assessment_type, please first remove any assessments that require an open-ended submission.";
+                        }
+                    }
+                    if ($new_assessment_type === 'learning tree'){
+                        $message = "You can't switch from a Delayed to a Learning Tree assessment type until you remove all current assessments.";
+                    }
                     break;
                 case('clicker'):
                 case('real time'):
                     if ($new_assessment_type === 'learning tree') {
-                        $message = "You can't switch from a real time to a learning tree assignment.  Please first remove all assessments before choosing this option.";
+                        $message = "Please first remove all Learning Tree assessments before choosing this option.";
                     }
                     break;
             }

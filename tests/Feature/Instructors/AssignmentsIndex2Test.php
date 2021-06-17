@@ -58,10 +58,10 @@ class AssignmentsIndex2Test extends TestCase
         ]);
 
 
-        $this->leraning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
+        $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
         $this->original_assignment_question_learning_tree_id = DB::table('assignment_question_learning_tree')->insertGetId([
             'assignment_question_id' => $this->original_assignment_question_id,
-            'learning_tree_id' => $this->leraning_tree->id
+            'learning_tree_id' => $this->learning_tree->id
         ]);
 
         $this->course_3 = factory(Course::class)->create(['user_id' => $this->user->id]);
