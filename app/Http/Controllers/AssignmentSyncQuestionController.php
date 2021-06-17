@@ -66,12 +66,12 @@ class AssignmentSyncQuestionController extends Controller
     {
         $response['type'] = 'error';
         try {
-         $submission_files = DB::table('submission_files')
-                ->join('users','submission_files.user_id','=','users.id')
-                ->where('fake_student',0)
+            $submission_files = DB::table('submission_files')
+                ->join('users', 'submission_files.user_id', '=', 'users.id')
+                ->where('fake_student', 0)
                 ->where('assignment_id', $assignment->id)
                 ->first();
-            if ( $submission_files){
+            if ($submission_files) {
                 $response['message'] = "Since students have already submitted responses, you can't switch this option.";
                 return $response;
             }
@@ -83,7 +83,8 @@ class AssignmentSyncQuestionController extends Controller
             $response['message'] = "There was an error validating whether you can switch from a compiled PDF assignment.  Please try again or contact us for assistance.";
         }
         return $response;
-}
+    }
+
     /**
      * @param Assignment $assignment
      * @return array
@@ -139,13 +140,17 @@ class AssignmentSyncQuestionController extends Controller
 
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('question_id')->toArray();
-            //dd($chosen_questions);
+
 
             foreach ($chosen_questions as $key => $question) {
                 if (!in_array($question['question_id'], $assignment_questions)) {
                     $assignment_question = DB::table('assignment_question')
                         ->where('assignment_id', $question['assignment_id'])
                         ->where('question_id', $question['question_id'])
+                        ->first();
+
+                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                        ->where('assignment_question_id', $assignment_question->id)
                         ->first();
                     if (!$assignment_question) {
                         $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
@@ -175,6 +180,20 @@ class AssignmentSyncQuestionController extends Controller
                         ->where('question_id', $question['question_id'])
                         ->update($assignment_question_arr)
                         : DB::table('assignment_question')->insert($assignment_question_arr);
+                    if ($assignment_question_learning_tree) {
+                        $assignment_question = DB::table('assignment_question')
+                            ->where('assignment_id', $assignment->id)
+                            ->where('question_id', $question['question_id'])
+                            ->first();
+                        if (!DB::table('assignment_question_learning_tree')
+                            ->where('assignment_question_id', $assignment_question->id)
+                            ->first()) {
+                            DB::table('assignment_question_learning_tree')
+                                ->insert(['assignment_question_id' => $assignment_question->id,
+                                    'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id]);
+
+                        }
+                    }
                 }
             }
             DB::beginTransaction();
@@ -446,6 +465,7 @@ class AssignmentSyncQuestionController extends Controller
             //Get all assignment questions Question Upload, Solution, Number of Points
             $assignment_questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->leftJoin('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
                 ->select('assignment_question.*',
@@ -453,7 +473,8 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.page_id',
                     'questions.technology_iframe',
                     'questions.technology',
-                    'questions.title', DB::raw('questions.id AS question_id'))
+                    'questions.title', DB::raw('questions.id AS question_id'),
+                    'learning_tree_id')
                 ->get();
 
             $question_ids = [];
@@ -491,6 +512,9 @@ class AssignmentSyncQuestionController extends Controller
                 }
 
                 $columns['submission'] = $this->_getSubmissionType($value);
+
+                $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
+                $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['points'] = $this->formatDecimals($value->points);
                 $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
                 $columns['order'] = $value->order;
@@ -896,7 +920,7 @@ class AssignmentSyncQuestionController extends Controller
                                                 Question $question,
                                                 Submission $Submission,
                                                 Extension $Extension,
-    AssignmentSyncQuestion $assignmentSyncQuestion)
+                                                AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         /**helper function to get the response info from server side technologies...*/
 
@@ -939,7 +963,7 @@ class AssignmentSyncQuestionController extends Controller
             'late_question_submission' => $response_info['late_question_submission'],
             'answered_correctly_at_least_once' => $response_info['answered_correctly_at_least_once'],
             'solution' => $original_filename,
-            'completed_all_assignment_questions' =>$assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
+            'completed_all_assignment_questions' => $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment)
         ];
 
     }
@@ -1278,9 +1302,9 @@ class AssignmentSyncQuestionController extends Controller
 
                 }
                 if ($assignment->show_scores) {
-                   $total_score = floatval($assignment->questions[$key]['submission_file_score']  ?? 0)
-                   + floatval( $assignment->questions[$key]['submission_score'] ?? 0);
-                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score),2);
+                    $total_score = floatval($assignment->questions[$key]['submission_file_score'] ?? 0)
+                        + floatval($assignment->questions[$key]['submission_score'] ?? 0);
+                    $assignment->questions[$key]['total_score'] = round(min(floatval($points[$question->id]), $total_score), 2);
                 }
 
 

@@ -50,17 +50,14 @@ class AssignmentController extends Controller
 
 
         try {
-            $delayed_assignments = [];
+            $assignments = [];
             foreach ($course->assignments as $assignment) {
-                if ($assignment->assessment_type == 'delayed') {
-
-                    $assignment->name = strpos($assignment->name, $assignment_groups[$assignment->id]) !== false
-                        ? $assignment->name
-                        : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
-                    $delayed_assignments[] = $assignment;
-                }
+                $assignment->name = strpos($assignment->name, $assignment_groups[$assignment->id]) !== false
+                    ? $assignment->name
+                    : $assignment->name . " (" . $assignment_groups[$assignment->id] . ")";
+                $assignments[] = $assignment;
             }
-            $response['assignments'] = $delayed_assignments;
+            $response['assignments'] = $assignments;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -1411,7 +1408,7 @@ class AssignmentController extends Controller
                     $message = "This assignment already has non-Learning Tree assessments in it.  If you would like to change the assessment type, please first remove those assessments.";
                     break;
                 case('delayed'):
-                    if (in_array($new_assessment_type, ['real time','clicker'])) {
+                    if (in_array($new_assessment_type, ['real time', 'clicker'])) {
                         $new_assessment_type = ucfirst($new_assessment_type);
                         foreach ($assignment->questions as $question) {
                             if (!$question->technology_iframe) {
@@ -1427,7 +1424,7 @@ class AssignmentController extends Controller
                             $message = "If you would like to change this assignment to $new_assessment_type, please first remove any assessments that require an open-ended submission.";
                         }
                     }
-                    if ($new_assessment_type === 'learning tree'){
+                    if ($new_assessment_type === 'learning tree') {
                         $message = "You can't switch from a Delayed to a Learning Tree assessment type until you remove all current assessments.";
                     }
                     break;

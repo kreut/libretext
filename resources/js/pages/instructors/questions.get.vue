@@ -28,6 +28,24 @@
       </b-form>
     </b-modal>
     <b-modal
+      id="modal-non-h5p"
+      ref="h5pModal"
+      title="Non-H5P assessments in clicker assignment"
+    >
+      <b-alert :show="true" variant="danger">
+        <span class="font-weight-bold font-italic">
+          {{
+            h5pText()
+          }}
+        </span>
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-non-h5p')">
+          OK
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-view-question"
       ref="modalViewQuestion"
       title="View Question"
@@ -79,6 +97,11 @@
       <div v-if="!isLoading">
         <PageTitle :title="title" />
         <b-container>
+          <AssessmentTypeWarnings :assessment-type="assessmentType"
+                            :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
+                            :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
+                            :non-learning-tree-questions="nonLearningTreeQuestions"
+          />
           <b-row align-h="end">
             <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
               View as Student
@@ -89,219 +112,210 @@
         <div>
           <b-tabs content-class="mt-3">
             <b-tab title="Assignment Remixer" active @click="showQuestions = false;getCurrentAssignmentQuestions()">
-              <div v-if="assessmentType !== 'delayed'">
-                <b-alert variant="info" :show="true">
-                  <span class="font-weight-bold font-italic">
-                    The remixer currently only works for assignments that have an assessment type of "delayed'.  Please update your assignment before using the remixer.
-                  </span>
-                </b-alert>
-              </div>
-              <div v-else>
-                <b-container>
-                  <b-form-group
-                    id="school"
-                    label-cols-sm="3"
-                    label-cols-lg="2"
-                    label-for="School"
+              <b-container>
+                <b-form-group
+                  id="school"
+                  label-cols-sm="3"
+                  label-cols-lg="2"
+                  label-for="School"
+                >
+                  <template slot="label">
+                    School
+                    <span id="school_tooltip">
+                      <b-icon class="text-muted" icon="question-circle" /></span>
+                  </template>
+                  <b-tooltip target="school_tooltip"
+                             delay="250"
                   >
-                    <template slot="label">
-                      School
-                      <span id="school_tooltip">
-                        <b-icon class="text-muted" icon="question-circle" /></span>
-                    </template>
-                    <b-tooltip target="school_tooltip"
-                               delay="250"
-                    >
-                      Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So,
-                      to find UC-Davis, you
-                      can start typing University of California-Los Angeles. In general, any word within your school's
-                      name will lead you to your school. If you still can't
-                      find it, then please contact us.
-                    </b-tooltip>
-                    <b-form-row>
-                      <b-col lg="8">
-                        <vue-bootstrap-typeahead
-                          ref="queryTypeaheadSchools"
-                          v-model="school"
-                          :data="schools"
-                          placeholder="Any School With Public Courses"
-                          @hit="getInstructorsWithPublicCourses()"
-                        />
-                      </b-col>
+                    Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So,
+                    to find UC-Davis, you
+                    can start typing University of California-Los Angeles. In general, any word within your school's
+                    name will lead you to your school. If you still can't
+                    find it, then please contact us.
+                  </b-tooltip>
+                  <b-form-row>
+                    <b-col lg="8">
+                      <vue-bootstrap-typeahead
+                        ref="queryTypeaheadSchools"
+                        v-model="school"
+                        :data="schools"
+                        placeholder="Any School With Public Courses"
+                        @hit="getInstructorsWithPublicCourses()"
+                      />
+                    </b-col>
 
-                      <b-col />
-                    </b-form-row>
-                  </b-form-group>
-                  <b-form-group
-                    id="instructor"
-                    label-cols-sm="3"
-                    label-cols-lg="2"
-                    label="Instructor"
-                    label-for="Instructor"
-                  >
-                    <b-form-row>
-                      <b-col lg="8">
-                        <vue-bootstrap-typeahead
-                          ref="instructorTypeahead"
-                          v-model="instructor"
-                          placeholder="Any Instructor"
-                          :serializer="instructorsOptions => instructorsOptions.text"
-                          :data="instructorsOptions"
-                          :disabled="instructorsOptions.length === 1"
-                          @hit="getPublicCourses(instructor)"
-                        />
-                      </b-col>
-                    </b-form-row>
-                  </b-form-group>
+                    <b-col />
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  id="instructor"
+                  label-cols-sm="3"
+                  label-cols-lg="2"
+                  label="Instructor"
+                  label-for="Instructor"
+                >
+                  <b-form-row>
+                    <b-col lg="8">
+                      <vue-bootstrap-typeahead
+                        ref="instructorTypeahead"
+                        v-model="instructor"
+                        placeholder="Any Instructor"
+                        :serializer="instructorsOptions => instructorsOptions.text"
+                        :data="instructorsOptions"
+                        :disabled="instructorsOptions.length === 1"
+                        @hit="getPublicCourses(instructor)"
+                      />
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
 
-                  <b-form-group
-                    id="course"
-                    label-cols-sm="3"
-                    label-cols-lg="2"
-                    label="Course"
-                    label-for="Course"
-                  >
-                    <b-form-row>
-                      <b-col lg="8">
-                        <vue-bootstrap-typeahead
-                          v-if="textBasedCourseSearchType"
-                          ref="publicCourseTypeahead"
-                          :key="publicCoursesKey"
-                          v-model="publicCourse"
-                          placeholder="Select A Course"
-                          :serializer="publicCoursesOptions => publicCoursesOptions.text"
-                          :data="publicCoursesOptions"
-                          :disabled="publicCoursesOptions.length === 1"
-                          @hit="getPublicCourseAssignments(publicCourse)"
-                        />
+                <b-form-group
+                  id="course"
+                  label-cols-sm="3"
+                  label-cols-lg="2"
+                  label="Course"
+                  label-for="Course"
+                >
+                  <b-form-row>
+                    <b-col lg="8">
+                      <vue-bootstrap-typeahead
+                        v-if="textBasedCourseSearchType"
+                        ref="publicCourseTypeahead"
+                        :key="publicCoursesKey"
+                        v-model="publicCourse"
+                        placeholder="Select A Course"
+                        :serializer="publicCoursesOptions => publicCoursesOptions.text"
+                        :data="publicCoursesOptions"
+                        :disabled="publicCoursesOptions.length === 1"
+                        @hit="getPublicCourseAssignments(publicCourse)"
+                      />
 
-                        <b-form-select v-if="!textBasedCourseSearchType"
-                                       v-model="publicCourseId"
-                                       :options="publicCoursesOptions"
-                                       :disabled="publicCoursesOptions.length === 1"
-                                       @change="getPublicCourseNameById($event);getPublicCourseAssignments(publicCourse)"
-                        />
-                      </b-col>
+                      <b-form-select v-if="!textBasedCourseSearchType"
+                                     v-model="publicCourseId"
+                                     :options="publicCoursesOptions"
+                                     :disabled="publicCoursesOptions.length === 1"
+                                     @change="getPublicCourseNameById($event);getPublicCourseAssignments(publicCourse)"
+                      />
+                    </b-col>
+                    <b-col>
+                      <b-button v-if="!textBasedCourseSearchType"
+                                variant="outline-primary"
+                                size="sm"
+                                @click="textBasedCourseSearchType = !textBasedCourseSearchType"
+                      >
+                        Text-based Search
+                      </b-button>
+                      <b-button v-if="textBasedCourseSearchType"
+                                variant="outline-info"
+                                size="sm"
+                                @click="textBasedCourseSearchType = !textBasedCourseSearchType;publicCourse=null"
+                      >
+                        Show All
+                      </b-button>
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-form-group
+                  id="assignment"
+                  label-cols-sm="3"
+                  label-cols-lg="2"
+                  label="Assignment"
+                  label-for="Assignment"
+                >
+                  <b-form-row>
+                    <b-col lg="8">
+                      <b-form-select v-model="publicCourseAssignment"
+                                     :options="publicCourseAssignmentsOptions"
+                                     :disabled="publicCourseAssignmentsOptions.length === 1"
+                                     @change="getPublicCourseAssignmentQuestions($event)"
+                      />
+                    </b-col>
+                  </b-form-row>
+                </b-form-group>
+                <b-row>
+                  <b-col>
+                    <b-row class="mb-2">
                       <b-col>
-                        <b-button v-if="!textBasedCourseSearchType"
-                                  variant="outline-primary"
-                                  size="sm"
-                                  @click="textBasedCourseSearchType = !textBasedCourseSearchType"
-                        >
-                          Text-based Search
-                        </b-button>
-                        <b-button v-if="textBasedCourseSearchType"
-                                  variant="outline-info"
-                                  size="sm"
-                                  @click="textBasedCourseSearchType = !textBasedCourseSearchType;publicCourse=null"
-                        >
-                          Show All
-                        </b-button>
+                        <h5 class="font-italic">
+                          Possible Questions
+                        </h5>
                       </b-col>
-                    </b-form-row>
-                  </b-form-group>
-                  <b-form-group
-                    id="assignment"
-                    label-cols-sm="3"
-                    label-cols-lg="2"
-                    label="Assignment"
-                    label-for="Assignment"
-                  >
-                    <b-form-row>
-                      <b-col lg="8">
-                        <b-form-select v-model="publicCourseAssignment"
-                                       :options="publicCourseAssignmentsOptions"
-                                       :disabled="publicCourseAssignmentsOptions.length === 1"
-                                       @change="getPublicCourseAssignmentQuestions($event)"
-                        />
+                      <b-col class="text-right">
+                        <a href="" @click.prevent="addAllQuestions()">
+                          <span class="font-italic"><b-icon icon="plus-circle" /> Add all questions</span>
+                        </a>
                       </b-col>
-                    </b-form-row>
-                  </b-form-group>
-                  <b-row>
-                    <b-col>
-                      <b-row class="mb-2">
-                        <b-col>
-                          <h5 class="font-italic">
-                            Possible Questions
-                          </h5>
-                        </b-col>
-                        <b-col class="text-right">
-                          <a href="" @click.prevent="addAllQuestions()">
-                            <span class="font-italic"><b-icon icon="plus-circle" /> Add all questions</span>
-                          </a>
-                        </b-col>
-                      </b-row>
-                      <table class="table dragArea table-striped">
-                        <thead>
-                          <tr>
-                            <th>Title</th>
-                            <th>Submission</th>
-                          </tr>
-                        </thead>
-                        <draggable v-model="publicCourseAssignmentQuestions"
-                                   :group="'remixerQuestions'"
-                                   :element="'tbody'"
-                                   :empty-insert-threshold="100"
-                                   :move="checkMove"
-                                   @end="updateAssignmentWithChosenQuestions('single')"
+                    </b-row>
+                    <table class="table dragArea table-striped">
+                      <thead>
+                        <tr>
+                          <th>Title</th>
+                          <th>Submission</th>
+                        </tr>
+                      </thead>
+                      <draggable v-model="publicCourseAssignmentQuestions"
+                                 :group="'remixerQuestions'"
+                                 :element="'tbody'"
+                                 :empty-insert-threshold="100"
+                                 :move="checkMove"
+                                 @end="updateAssignmentWithChosenQuestions('single')"
+                      >
+                        <tr v-for="(question, index) in publicCourseAssignmentQuestions"
+                            :key="question.id"
+                            class="dragArea"
                         >
-                          <tr v-for="(question, index) in publicCourseAssignmentQuestions"
-                              :key="question.id"
-                              class="dragArea"
-                          >
-                            <td class="dragArea">
-                              <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
-                                {{ question.title ? question.title : 'No title' }}
-                              </a>
-                            </td>
-                            <td class="dragArea">
-                              {{ question.submission }}
-                            </td>
-                          </tr>
-                        </draggable>
-                      </table>
-                    </b-col>
-                    <b-col>
-                      <h5 class="font-italic">
-                        Chosen Questions
-                      </h5>
-                      <table class="table dragArea table-striped">
-                        <thead>
-                          <tr>
-                            <th>Order</th>
-                            <th>Title</th>
-                            <th>Submission</th>
-                          </tr>
-                        </thead>
-                        <draggable v-model="chosenPublicCourseAssignmentQuestions"
-                                   :options="{group:'remixerQuestions'}"
-                                   :element="'tbody'"
-                                   :empty-insert-threshold="100"
-                                   @end="updateAssignmentWithChosenQuestions('single')"
+                          <td class="dragArea">
+                            <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
+                              {{ question.title ? question.title : 'No title' }}
+                            </a>
+                          </td>
+                          <td class="dragArea">
+                            {{ question.submission }}
+                          </td>
+                        </tr>
+                      </draggable>
+                    </table>
+                  </b-col>
+                  <b-col>
+                    <h5 class="font-italic">
+                      Chosen Questions
+                    </h5>
+                    <table class="table dragArea table-striped">
+                      <thead>
+                        <tr>
+                          <th>Order</th>
+                          <th>Title</th>
+                          <th>Submission</th>
+                        </tr>
+                      </thead>
+                      <draggable v-model="chosenPublicCourseAssignmentQuestions"
+                                 :options="{group:'remixerQuestions'}"
+                                 :element="'tbody'"
+                                 :empty-insert-threshold="100"
+                                 @end="updateAssignmentWithChosenQuestions('single')"
+                      >
+                        <tr v-for="(question, index) in chosenPublicCourseAssignmentQuestions"
+                            :key="question.id"
+                            class="dragArea"
                         >
-                          <tr v-for="(question, index) in chosenPublicCourseAssignmentQuestions"
-                              :key="question.id"
-                              class="dragArea"
-                          >
-                            <td class="dragArea">
-                              {{ index + 1 }}
-                            </td>
-                            <td class="dragArea">
-                              <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
-                                {{ question.title ? question.title : 'No title' }}
-                              </a>
-                              <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)" />
-                            </td>
-                            <td class="dragArea">
-                              {{ question.submission }}
-                            </td>
-                          </tr>
-                        </draggable>
-                      </table>
-                    </b-col>
-                  </b-row>
-                </b-container>
-              </div>
+                          <td class="dragArea">
+                            {{ index + 1 }}
+                          </td>
+                          <td class="dragArea">
+                            <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
+                              {{ question.title ? question.title : 'No title' }}
+                            </a>
+                            <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)" />
+                          </td>
+                          <td class="dragArea">
+                            {{ question.submission }}
+                          </td>
+                        </tr>
+                      </draggable>
+                    </table>
+                  </b-col>
+                </b-row>
+              </b-container>
             </b-tab>
             <b-tab title="Search Query By Tag">
               <b-col @click="resetDirectImport()">
@@ -497,15 +511,27 @@ import Form from 'vform'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import libraries from '~/helpers/Libraries'
+import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
+
+import {
+  h5pText,
+  updateOpenEndedInRealTimeMessage,
+  updateLearningTreeInNonLearningTreeMessage,
+  updateNonLearningTreeInLearningTreeMessage
+} from '~/helpers/AssessmentTypeWarnings'
 
 export default {
   components: {
     VueBootstrapTypeahead,
     draggable,
+    AssessmentTypeWarnings,
     Loading
   },
   middleware: 'auth',
   data: () => ({
+    openEndedQuestionsInRealTime: '',
+    learningTreeQuestionsInNonLearningTree: '',
+    nonLearningTreeQuestions: '',
     publicCourseId: null,
     textBasedCourseSearchType: true,
     showQuestion: false,
@@ -574,6 +600,10 @@ export default {
     this.submitUploadFile = submitUploadFile
     this.getAcceptedFileTypes = getAcceptedFileTypes
     this.downloadSolutionFile = downloadSolutionFile
+    this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
+    this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
+    this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
+    this.h5pText = h5pText
   },
   mounted () {
     if (this.user.role !== 2) {
@@ -588,10 +618,38 @@ export default {
     this.getDefaultImportLibrary()
     this.getAssignmentInfo()
     this.getCurrentAssignmentQuestions()
+    this.getQuestionWarningInfo()
   },
   methods: {
-    getPublicCourseNameById(courseId){
-     this.publicCourse = this.publicCoursesOptions.find(course => course.value === courseId).text
+    async getQuestionWarningInfo () {
+      try {
+        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.items = data.rows
+        let hasNonH5P
+        for (let i = 0; i < this.items.length; i++) {
+          if (this.items[i].submission !== 'h5p') {
+            hasNonH5P = true
+          }
+          if (this.assessmentType !== 'delayed' && !this.items[i].auto_graded_only) {
+            this.openEndedQuestionsInRealTime += this.items[i].order + ', '
+          }
+        }
+        this.updateOpenEndedInRealTimeMessage()
+        this.updateLearningTreeInNonLearningTreeMessage()
+        this.updateNonLearningTreeInLearningTreeMessage()
+        if (this.assessment_type === 'clicker' && hasNonH5P) {
+          this.$bvModal.show('modal-non-h5p')
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    getPublicCourseNameById (courseId) {
+      this.publicCourse = this.publicCoursesOptions.find(course => course.value === courseId).text
     },
     async getSchoolsWithPublicCourses () {
       try {
@@ -657,6 +715,7 @@ export default {
             this.publicCourseAssignmentQuestions.push(questionFromPublicCourseAssignmentQuestions)
           }
           this.chosenPublicCourseAssignmentQuestions = this.chosenPublicCourseAssignmentQuestions.filter(question => question.question_id !== questionId)
+          await this.getQuestionWarningInfo()
           this.$bvModal.hide('modal-view-question')
         }
       } catch (error) {
@@ -688,10 +747,12 @@ export default {
           await this.getPublicCourseAssignmentQuestions(this.publicCourseAssignment)
           success = false
         }
+        await this.getQuestionWarningInfo()
       } catch (error) {
         this.$noty.error(error.message)
         success = false
       }
+
       this.$bvModal.hide('modal-view-question')
       return success
     },
@@ -703,6 +764,7 @@ export default {
       }
       this.publicCourseAssignmentQuestions = []
       await this.updateAssignmentWithChosenQuestions('all')
+      await this.getQuestionWarningInfo()
     },
     async getCurrentAssignmentQuestions () {
       try {

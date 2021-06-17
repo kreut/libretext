@@ -71,20 +71,18 @@
         </b-row>
       </b-container>
     </b-modal>
-    <div v-if="showInvalidAssignmentMessage">
-      <b-alert show variant="info">
-        <div class="font-weight-bold">
-          <p>
-            It looks like you're trying to access an assignment with the URL {{ $router.currentRoute.path }}
-            but we can't find that assignment. Please log out then log back in as your instructor may have updated the
-            link.
-            However, if you are still having issues and this is an embedded problem, please let your instructor know so
-            that they can fix the URL.
-          </p>
-        </div>
-      </b-alert>
-    </div>
-    <EnrollInCourse/>
+    <b-alert :show="showInvalidAssignmentMessage" variant="info">
+      <div class="font-weight-bold">
+        <p>
+          It looks like you're trying to access an assignment with the URL {{ $router.currentRoute.path }}
+          but we can't find that assignment. Please log out then log back in as your instructor may have updated the
+          link.
+          However, if you are still having issues and this is an embedded problem, please let your instructor know so
+          that they can fix the URL.
+        </p>
+      </div>
+    </b-alert>
+    <EnrollInCourse />
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."

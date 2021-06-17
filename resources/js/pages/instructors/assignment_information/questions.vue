@@ -31,8 +31,7 @@
     >
       <b-alert :show="true" variant="danger">
         <span class="font-weight-bold font-italic">
-          This assignment has non-H5P assessments. Clicker assignments can only be used with H5P true-false
-          and H5P multiple choice assessments. Please remove any non-H5P assessments.
+        {{ h5pText }}
         </span>
       </b-alert>
       <template #modal-footer="{ ok }">
@@ -53,12 +52,28 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Questions"/>
-        <b-alert :show="assessmentType === 'clicker'">
-          <span class="font-italic font-weight-bold">
-            Important: clicker assignments can only be used in conjunction with H5P true-false and multiple choice assessments.
-          </span>
-        </b-alert>
+        <AssessmentTypeWarnings :assessment-type="assessmentType"
+                                :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
+                                :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
+                                :non-learning-tree-questions="nonLearningTreeQuestions"
+        />
         <div v-if="items.length">
+          <p>
+            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
+          >{{ assessmentType }}</span> assessments.
+            <span v-if="assessmentType === 'delayed'">
+              Students will be able to get feedback for their responses after the assignment is closed.
+            </span>
+            <span v-if="assessmentType === 'real time'">
+              Students will get immediate feedback on their submissions.
+            </span>
+            <span v-if="assessmentType === 'learning tree'">
+              Learning trees provide additional resources if they are unable to answer a question correctly.
+            </span>
+            <span v-if="assessmentType === 'clicker'">
+              Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
+            </span>
+          </p>
           <table class="table table-striped">
             <thead>
             <tr>
@@ -156,16 +171,27 @@ import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { viewQuestion, doCopy } from '~/helpers/Questions'
+import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
+import {
+  h5pText,
+  updateOpenEndedInRealTimeMessage,
+  updateLearningTreeInNonLearningTreeMessage,
+  updateNonLearningTreeInLearningTreeMessage
+} from '~/helpers/AssessmentTypeWarnings'
 
 export default {
   middleware: 'auth',
   components: {
+    AssessmentTypeWarnings,
     FontAwesomeIcon,
     Loading,
     draggable,
     RemoveQuestion
   },
   data: () => ({
+    openEndedQuestionsInRealTime: '',
+    learningTreeQuestionsInNonLearningTree: '',
+    nonLearningTreeQuestions: '',
     assessmentType: '',
     adaptId: 0,
     copyIcon: faCopy,
@@ -177,6 +203,12 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  created () {
+    this.updateOpenEndedInRealTimeMessage = updateOpenEndedInRealTimeMessage
+    this.updateLearningTreeInNonLearningTreeMessage = updateLearningTreeInNonLearningTreeMessage
+    this.updateNonLearningTreeInLearningTreeMessage = updateNonLearningTreeInLearningTreeMessage
+    this.h5pText = h5pText
+  },
   mounted () {
     if (![2, 4].includes(this.user.role)) {
       this.$noty.error('You do not have access to the assignment questions page.')
@@ -255,9 +287,15 @@ export default {
           if (this.items[i].submission !== 'h5p') {
             hasNonH5P = true
           }
+          if (this.assessmentType !== 'delayed' && !this.items[i].auto_graded_only) {
+            this.openEndedQuestionsInRealTime += this.items[i].order + ', '
+          }
           this.currentOrderedQuestions.push(this.items[i].question_id)
         }
         console.log(data)
+        this.updateOpenEndedInRealTimeMessage()
+        this.updateLearningTreeInNonLearningTreeMessage()
+        this.updateNonLearningTreeInLearningTreeMessage()
         if (this.assessment_type === 'clicker' && hasNonH5P) {
           this.$bvModal.show('modal-non-h5p')
         }
