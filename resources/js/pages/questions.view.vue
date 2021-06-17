@@ -38,7 +38,7 @@
     >
       <b-container>
         <b-row>
-          <img src="/assets/img/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275">
+          <img :src="asset('assets/img/391906020_THUMBS_UP_400px.gif')" alt="Thumbs up" width="275">
         </b-row>
         <b-row><h5>All Question Submissions Successfully Completed.</h5></b-row>
       </b-container>
@@ -56,15 +56,20 @@
     </b-modal>
     <b-modal
       id="modal-submission-accepted"
-      ref="modalThumbsUp"
+      ref="modalSubmissionAccepted"
       hide-footer
+      size="sm"
       title="Submission Accepted"
       @hidden="checkIfAssignmentCompleted"
     >
-      <font-awesome-icon class="text-success"
-                         :icon="checkIcon"
-      />
-      <span class="font-italic" style="font-size: large" v-html="submissionDataMessage"/>
+      <b-container>
+        <b-row>
+          <img :src="asset('assets/img/372103860_CHECK_MARK_400.gif')" alt="Check mark" width="275">
+        </b-row>
+        <b-row>
+          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+        </b-row>
+      </b-container>
     </b-modal>
     <div v-if="showInvalidAssignmentMessage">
       <b-alert show variant="info">

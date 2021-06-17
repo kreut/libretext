@@ -322,6 +322,14 @@ class ScoreController extends Controller
         return [$assignment_group_weights_info, $assignment_groups_by_assignment_id];
     }
 
+    /**
+     * @param Course $course
+     * @param $scores
+     * @param array $assignment_groups_by_assignment_id
+     * @param array $total_points_by_assignment_id
+     * @param array $include_in_weighted_average_by_assignment_id_and_user_id
+     * @return array[]
+     */
     public function getScoresByUserIdAndAssignment(Course $course, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id)
     {
 

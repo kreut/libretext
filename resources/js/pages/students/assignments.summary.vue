@@ -9,7 +9,7 @@
     >
       <b-container>
         <b-row>
-          <img src="/assets/img/391906020_THUMBS_UP_400px.gif" alt="Thumbs up" width="275">
+          <img :src="asset('assets/img/391906020_THUMBS_UP_400px.gif')" alt="Thumbs up" width="275">
         </b-row>
         <b-row><h5>All Question Submissions Successfully Completed.</h5></b-row>
       </b-container>
@@ -18,17 +18,19 @@
       id="modal-submission-accepted"
       ref="modalThumbsUp"
       hide-footer
-      size="lg"
+      size="sm"
       title="Submission Accepted"
       @hidden="checkIfAssignmentCompleted"
     >
-      <font-awesome-icon class="text-success"
-                         :icon="checkIcon"
-      />
-
+      <b-container>
+        <b-row>
+          <img :src="asset('assets/img/372103860_CHECK_MARK_400.gif')" alt="Check mark" width="275">
+        </b-row>
+        <b-row>
       <span class="font-weight-bold font-italic">
   {{ successMessage }}</span>
-
+        </b-row>
+      </b-container>
     </b-modal>
     <b-modal
       id="modal-thumbs-down"
@@ -169,7 +171,9 @@
             </div>
 
           </b-card>
-          <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default" header-html="<h5>Questions</h5>">
+          <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default"
+                  header-html="<h5>Questions</h5>"
+          >
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
