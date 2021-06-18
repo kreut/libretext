@@ -112,15 +112,10 @@ class QuestionsViewTest extends TestCase
     }
 
 
-
     /** @test */
 
-    public function completed_assignment_returns_true_when_all_submitted() {
-
-
-
-
-
+    public function completed_assignment_returns_true_when_all_submitted()
+    {
 
 
     }
@@ -143,6 +138,7 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'The open-ended submission type has been updated.']);
 
     }
+
     /** @test */
     public function cannot_switch_open_ended_submission_type_if_submission_exists()
     {

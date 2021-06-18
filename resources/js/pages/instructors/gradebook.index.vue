@@ -282,73 +282,15 @@
           </b-container>
         </template>
       </b-modal>
-      <b-modal
-        id="modal-student-extension-and-override"
-        ref="modal"
-        :title="`Update Extension And Override for ${studentName}`"
-        ok-title="Submit"
-        size="lg"
-        @ok="submitUpdateExtensionOrOverrideByStudent"
-        @hidden="resetModalForms"
-      >
-        <p>Please use this form to either provide an extension for your student or an override score.</p>
-        <div v-if="extensionWarning">
-          <b-alert variant="info" show>
-            <span class="font-weight-bold">{{ extensionWarning }}</span>
-          </b-alert>
-        </div>
-        <p><span class="font-italic">This assignment was originally due at {{ originalDueDateTime }}.</span></p>
-        <b-form ref="form" @submit="updateExtensionOrOverrideByStudent">
-          <b-form-group
-            id="extension"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Extension"
-            label-for="Extension"
-          >
-            <b-form-row>
-              <b-col lg="7">
-                <b-form-datepicker
-                  v-model="form.extension_date"
-                  :min="min"
-                  :class="{ 'is-invalid': form.errors.has('extension_date') }"
-                  @shown="form.errors.clear('extension_date')"
-                />
-                <has-error :form="form" field="extension_date"/>
-              </b-col>
-              <b-col>
-                <b-form-timepicker v-model="form.extension_time"
-                                   locale="en"
-                                   :class="{ 'is-invalid': form.errors.has('extension_time') }"
-                                   @shown="form.errors.clear('extension_time')"
-                />
-                <has-error :form="form" field="extension_time"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-          <b-form-group
-            id="score"
-            label-cols-sm="4"
-            label-cols-lg="3"
-            label="Override Score"
-            label-for="Override Score"
-          >
-            <b-form-row>
-              <b-col lg="3">
-                <b-form-input
-                  id="score"
-                  v-model="form.score"
-                  type="text"
-                  placeholder=""
-                  :class="{ 'is-invalid': form.errors.has('score') }"
-                  @keydown="form.errors.clear('score')"
-                />
-                <has-error :form="form" field="score"/>
-              </b-col>
-            </b-form-row>
-          </b-form-group>
-        </b-form>
-      </b-modal>
+      <ExtensionAndOverrideScore :assignment-id="parseInt(assignmentId)"
+                                 :student-user-id="studentUserId"
+                                 :student-name="studentName"
+                                 :original-due-date-time="originalDueDateTime"
+                                 :extension-warning="extensionWarning"
+                                 :current-extension-date="currentExtensionDate"
+                                 :current-extension-time="currentExtensionTime"
+                                 :form="form"
+      />
     </div>
   </div>
 </template>
@@ -359,17 +301,23 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
-import Email from '~/components/Email'
+import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
 //
 export default {
   components: {
+    ExtensionAndOverrideScore,
     Loading
   },
   middleware: 'auth',
   data: () => ({
+    form: new Form({
+      extension_date: '',
+      extension_time: '',
+      score: null
+    }),
     downloadedCurrentGradeBookSpreadsheet: false,
     downloadedAssignmentUsers: false,
     assignmentName: '',
@@ -405,12 +353,6 @@ export default {
     weightedAverageAssignmentId: 0,
     extraCreditAssignmentId: 0,
     isLoading: true,
-    min: '',
-    form: new Form({
-      extension_date: '',
-      extension_time: '',
-      score: null
-    }),
     extraCreditForm: new Form({
       extra_credit: null,
       student_user_id: 0,
@@ -441,11 +383,22 @@ export default {
   mounted () {
     this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
-    this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
     this.isLoading = true
     this.getScores()
   },
   methods: {
+    updateScoreExtension (assignmentId, studentUserId, cellContents) {
+      this.form.score = null
+      this.form.extension_date = ''
+      this.form.extension_time = ''
+      this.form.errors.clear()
+      for (let i = 0; i < this.items.length; i++) {
+        if (parseInt(this.items[i].userId) === parseInt(studentUserId)) {
+          this.items[i][assignmentId] = cellContents
+          return
+        }
+      }
+    },
     getAssignmentNameAsFile () {
       return this.assignmentName.replace(/[/\\?%*:|"<>]/g, '-') + '.csv'
     },
@@ -536,58 +489,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    submitUpdateExtensionOrOverrideByStudent (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
-      this.updateExtensionOrOverrideByStudent()
-    },
-    async updateExtensionOrOverrideByStudent () {
-      let isUpdateScore = (this.currentScore !== this.form.score)
-      let isUpdateExtension = ((this.currentExtensionDate !== this.form.extension_date) ||
-        (this.currentExtensionTime !== this.form.extension_time))
-
-      if (!(isUpdateScore || isUpdateExtension)) {
-        this.$noty.error('Please either give an extension or provide an override score.')
-      }
-      let success = true
-      if (isUpdateScore) {
-        success = await this.updateScore()
-      }
-      if (success) {
-        if (isUpdateExtension) {
-          success = await this.updateExtension()
-        }
-        if (success) {
-          await this.getScores()
-          this.resetAll('modal-student-extension-and-override')
-        }
-      }
-    },
-    async updateScore () {
-      try {
-        const { data } = await this.form.patch(`/api/scores/${this.assignmentId}/${this.studentUserId}`)
-        this.$noty[data.type](data.message)
-        return (data.type === 'success')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-        return false
-      }
-    },
-    async updateExtension () {
-      try {
-        const { data } = await this.form.post(`/api/extensions/${this.assignmentId}/${this.studentUserId}`)
-        this.$noty[data.type](data.message)
-        return (data.type === 'success')
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        }
-        return false
-      }
-    },
     resetAll (modalId) {
       this.resetModalForms()
       // Hide the modal manually
@@ -596,21 +497,19 @@ export default {
       })
     },
     resetModalForms () {
-      this.form.extension_date = ''
-      this.form.extension_time = ''
       this.extraCreditForm.extra_credit = ''
-      this.form.score = null
-      this.form.errors.clear()
       this.extraCreditForm.errors.clear()
     },
     initStudentAssignmentCell (key) {
       console.log(key)
       return `cell(${key})` // simple string interpolation
     },
-    async getExtensionByAssignmentAndStudent () {
-      const { data } = await axios.get(`/api/extensions/${this.assignmentId}/${this.studentUserId}`)
+    async getScoreAndExtensionByAssignmentAndStudent () {
+      const { data } = await axios.get(`/api/scores/assignment-user/${this.assignmentId}/${this.studentUserId}`)
       console.log(data)
       if (data.type === 'success') {
+        this.currentScore = data.score
+        this.form.score = data.score
         this.currentExtensionDate = data.extension_date
         this.currentExtensionTime = data.extension_time
         this.originalDueDateTime = data.originally_due
@@ -619,17 +518,6 @@ export default {
           this.form.extension_time = data.extension_time
         }
         this.extensionWarning = data.extension_warning
-      } else {
-        this.$noty.error(data.message)
-        return false
-      }
-    },
-    async getScoreByAssignmentAndStudent () {
-      const { data } = await axios.get(`/api/scores/assignment-user/${this.assignmentId}/${this.studentUserId}`)
-      console.log(data)
-      if (data.type === 'success') {
-        this.currentScore = data.score
-        this.form.score = data.score
       } else {
         this.$noty.error(data.message)
         return false
@@ -692,9 +580,9 @@ export default {
       this.assignmentId = assignmentId
 
       try {
-        await this.getScoreByAssignmentAndStudent()
-        await this.getExtensionByAssignmentAndStudent()
-
+        this.isLoading = true
+        await this.getScoreAndExtensionByAssignmentAndStudent()
+        this.isLoading = false
         this.$bvModal.show('modal-student-extension-and-override')
       } catch (error) {
         this.$noty.error(error.message)

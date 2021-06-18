@@ -124,7 +124,7 @@ class AssignmentSyncQuestionController extends Controller
      */
     public function remixAssignmentWithChosenQuestions(Request $request,
                                                        Assignment $assignment,
-                                                       AssignmentSyncQuestion $assignmentSyncQuestion)
+                                                       AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -148,14 +148,14 @@ class AssignmentSyncQuestionController extends Controller
                         ->where('assignment_id', $question['assignment_id'])
                         ->where('question_id', $question['question_id'])
                         ->first();
-
-                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-                        ->where('assignment_question_id', $assignment_question->id)
-                        ->first();
                     if (!$assignment_question) {
                         $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
                         return $response;
                     }
+                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                        ->where('assignment_question_id', $assignment_question->id)
+                        ->first();
+
 
                     if ($assignment->file_upload_mode === 'compiled_pdf'
                         && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
@@ -217,7 +217,7 @@ class AssignmentSyncQuestionController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error updating thi questions for this assignment.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error updating the questions for this assignment.  Please try again or contact us for assistance.";
         }
 
         return $response;
@@ -1472,6 +1472,12 @@ class AssignmentSyncQuestionController extends Controller
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
         \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
+       /*  May help for debugging...
+        \Storage::disk('s3')->put('secret.txt',$secret);
+        \Storage::disk('s3')->put('webwork.txt',$token);
+        \Storage::disk('s3')->put('problem_jwt.txt',$problemJWT);
+        \Storage::disk('s3')->put('myconfig.jwt_secret.txt',config('myconfig.jwt_secret'));
+       */
         $payload = auth()->payload();
 
         return $problemJWT;

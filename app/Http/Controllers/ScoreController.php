@@ -974,15 +974,21 @@ class ScoreController extends Controller
 
         try {
             DB::beginTransaction();
+
+            $current_score = Score::where('assignment_id', $assignment->id)
+                ->where('user_id', $user->id)
+                ->first();
+            $score_updated = !$current_score || floatval($current_score->score) !== floatval($request->score);
             Score::updateOrCreate(
                 ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['score' => $request->score]
             );
             $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $user->id, $request->score, $ltiLaunch);
             DB::commit();
-            $response['type'] = 'success';
-            $response['message'] = 'The score has been updated.';
-
+            $response['type'] = $score_updated ? 'success' : 'info';
+            $response['message'] = $score_updated
+                ? "The score on $assignment->name for $user->first_name $user->last_name has been updated."
+                : "The score was not updated.";
         } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
@@ -992,7 +998,19 @@ class ScoreController extends Controller
         return $response;
     }
 
-    public function getScoreByAssignmentAndStudent(Request $request, Assignment $assignment, User $user, Score $Score)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param User $user
+     * @param Score $Score
+     * @param Extension $extension
+     * @return array
+     * @throws Exception
+     */
+    public function getScoreByAssignmentAndStudent(Assignment $assignment,
+                                                   User $user,
+                                                   Score $Score,
+                                                   Extension $extension)
     {
 
         $response['type'] = 'error';
@@ -1009,6 +1027,8 @@ class ScoreController extends Controller
             $score = $Score->where('assignment_id', $assignment->id)
                 ->where('user_id', $user->id)
                 ->first();
+            $response = $extension->show($assignment, $user);
+
             $response['score'] = $score ? $score->score : 0;
             $response['type'] = 'success';
 

@@ -52,7 +52,7 @@ class ExtensionController extends Controller
             );
 
             $response['type'] = 'success';
-            $response['message'] = 'The student has been given an extension.';
+            $response['message'] = "$user->first_name $user->last_name given an extension for $assignment->name.";
 
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -81,33 +81,7 @@ class ExtensionController extends Controller
             return $response;
         }
         try {
-            $assign_to_user = DB::table('assign_to_users')
-                ->join('assign_to_timings', 'assign_to_users.assign_to_timing_id', '=', 'assign_to_timings.id')
-                ->where('assignment_id', $assignment->id)
-                ->where('user_id', $user->id)
-                ->first();
-            $extension = DB::table('extensions')
-                ->where('assignment_id', $assignment->id)
-                ->where('user_id', $user->id)
-                ->first();
-            $response['type'] = 'success';
-            $response['extension_date'] = '';
-            $response['extension_time'] = '';
-            $response['originally_due'] =  $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($assign_to_user->due, Auth::user()->time_zone, 'F d, Y \a\t g:i a');
-            $response['extension_warning'] = '';
-            if ($assignment->show_scores) {
-                $response['extension_warning'] .= "The assignment scores have been released.  ";
-            }
-            if ($assignment->solutions_released) {
-                $response['extension_warning'] .= "The assignment solutions are available.";
-            }
-            if ($response['extension_warning']) {
-                $response['extension_warning'] = "Before providing an extension please note that:  " . $response['extension_warning'];
-            }
-            if ($extension) {
-                $response['extension_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($extension->extension, Auth::user()->time_zone);
-                $response['extension_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($extension->extension, Auth::user()->time_zone);
-            }
+            $response = $extension->show($assignment, $user);
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
