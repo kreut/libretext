@@ -580,7 +580,7 @@ export default {
     async openExtensionAndOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
       for (const assignmentName in this.downloadFields) {
-        if (parseInt(this.downloadFields[assignmentName]) === parseInt(assignmentId)){
+        if (parseInt(this.downloadFields[assignmentName]) === parseInt(assignmentId)) {
           this.assignmentName = assignmentName
         }
       }
