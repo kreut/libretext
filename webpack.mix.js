@@ -10,7 +10,8 @@ mix
 
   .disableNotifications()
 
-const ASSET_URL = process.env.ASSET_URL ? process.env.ASSET_URL + '/' : ''
+const ASSET_URL = process.env.ASSET_URL ? process.env.ASSET_URL + '/' : '/'
+console.log('Asset URL: ' + ASSET_URL)
 
 if (mix.inProduction()) {
   // console.log(process.env);
@@ -64,3 +65,4 @@ function publishAseets () {
 /* mix
   .js("resources/js/app.js", "public/js")
   .sass("resources/sass/app.scss", "public/css");*/
+
