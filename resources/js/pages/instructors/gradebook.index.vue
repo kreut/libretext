@@ -283,6 +283,7 @@
         </template>
       </b-modal>
       <ExtensionAndOverrideScore :assignment-id="parseInt(assignmentId)"
+                                 :assignment-name="assignmentName"
                                  :student-user-id="studentUserId"
                                  :student-name="studentName"
                                  :original-due-date-time="originalDueDateTime"
@@ -578,6 +579,11 @@ export default {
     },
     async openExtensionAndOverrideModal (assignmentId) {
       this.assignmentId = assignmentId
+      for (const assignmentName in this.downloadFields) {
+        if (parseInt(this.downloadFields[assignmentName]) === parseInt(assignmentId)){
+          this.assignmentName = assignmentName
+        }
+      }
 
       try {
         this.isLoading = true

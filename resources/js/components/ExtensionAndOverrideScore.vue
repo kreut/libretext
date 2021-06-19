@@ -6,7 +6,10 @@
       :title="`Update Extension And Override for ${studentName}`"
       size="lg"
     >
-      <p>Please use this form to either provide an extension for your student or an override score.</p>
+      <p>
+        Please use this form to either provide an extension or an override score for <span class="font-weight-bold"
+      >{{ assignmentName }}</span>.
+      </p>
       <b-alert variant="info" :show="extensionWarning !== ''">
         <span class="font-weight-bold">{{ extensionWarning }}</span>
       </b-alert>
@@ -89,6 +92,7 @@ export default {
   name: 'ExtensionAndOverrideScore',
   props: {
     assignmentId: { type: Number, default: 0 },
+    assignmentName: { type: String, default: '' },
     studentUserId: { type: Number, default: 0 },
     studentName: { type: String, default: '' },
     originalDueDateTime: { type: String, default: '' },
