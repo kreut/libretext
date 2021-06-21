@@ -2289,10 +2289,10 @@ export default {
           if (technology === 'webwork' && data.status) {
             data.type = data.status < 300 ? 'success' : 'error'
             try {
-              data = { ...data, ...JSON.parse(data.message) }
+              let message = JSON.parse(data.message)
+              data = { ...data, ...message }
             } catch (error) {
-              this.$noty.error(error.message)
-              return false
+              console.log(error)
             }
           }
           await this.showResponse(data)
