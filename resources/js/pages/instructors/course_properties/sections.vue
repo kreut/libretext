@@ -22,7 +22,6 @@
     <b-modal id="modal-section"
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
-             @ok="submitSectionForm"
     >
       <b-form-group
         id="section_name"
@@ -39,8 +38,51 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name" />
+        <has-error :form="sectionForm" field="name"/>
       </b-form-group>
+      <b-form-group
+        id="crn"
+        label-cols-sm="5"
+        label-cols-lg="4"
+      >
+        <template slot="label">
+          CRN
+          <b-icon id="crn-tooltip-2"
+                  v-b-tooltip.hover
+                  class="text-muted"
+                  icon="question-circle"
+          />
+          <b-tooltip target="crn-tooltip-2" triggers="hover">
+            The Course Reference Number is the number that identifies a specific section of a course being offered.
+          </b-tooltip>
+        </template>
+        <b-form-input
+          id="crn"
+          v-model="sectionForm.crn"
+          type="text"
+          placeholder=""
+          :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
+          @keydown="sectionForm.errors.clear('crn')"
+        />
+        <has-error :form="sectionForm" field="crn"/>
+      </b-form-group>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-section')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitSectionForm()"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -61,18 +103,33 @@
           <b-card header="default" header-html="Sections">
             <b-card-text>
               <b-table striped hover :fields="fields" :items="sections">
+                <template v-slot:head(crn)>
+                  CRN
+                  <b-icon id="crn-tooltip"
+                          v-b-tooltip.hover
+                          class="text-muted"
+                          icon="question-circle"
+                  />
+                  <b-tooltip target="crn-tooltip" triggers="hover">
+                    The Course Reference Number is the number that identifies a specific section of a course being
+                    offered.
+                  </b-tooltip>
+                </template>
                 <template v-slot:cell(access_code)="data">
                   {{ data.item.access_code ? data.item.access_code : 'None Available' }}
                 </template>
+                <template v-slot:cell(crn)="data">
+                  {{ data.item.crn ? data.item.crn : 'None Provided' }}
+                </template>
                 <template v-slot:cell(actions)="data">
                   <div class="mb-0">
-                    <span class="pr-1" @click="initEditSection(data.item.id, data.item.name)">
+                    <span class="pr-1" @click="initEditSection(data.item)">
                       <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
                                  delay="500"
                       >
                         Edit Section
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
+                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
                     </span>
                     <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
                       <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
@@ -80,7 +137,7 @@
                       >
                         Delete Section
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
+                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
                     </span>
                     <span class="text-info">
                       <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
@@ -98,7 +155,7 @@
                   </div>
                 </template>
               </b-table>
-              <b-button class="float-right" variant="primary" @click="initAddSection">
+              <b-button class="float-right" size="sm" variant="primary" @click="initAddSection">
                 Add Section
               </b-button>
             </b-card-text>
@@ -124,7 +181,8 @@ export default {
   data: () => ({
     viewStudentAccessCodes: true,
     sectionForm: new Form({
-      name: ''
+      name: '',
+      crn: ''
     }),
     numberOfEnrolledUsers: 0,
     sections: [],
@@ -135,6 +193,7 @@ export default {
         key: 'name',
         label: 'Section'
       },
+      'crn',
       'access_code',
       'actions'
     ]
@@ -196,17 +255,17 @@ export default {
     },
     initAddSection () {
       this.sectionId = false
+      this.sectionForm.crn = ''
       this.sectionForm.name = ''
       this.sectionForm.errors.clear()
       this.$bvModal.show('modal-section')
     },
-    async submitSectionForm (bvEvt) {
-      bvEvt.preventDefault()
+    async submitSectionForm () {
       try {
         const { data } = !this.sectionId ? await this.sectionForm.post(`/api/sections/${this.courseId}`)
           : await this.sectionForm.patch(`/api/sections/${this.sectionId}`)
         this.$noty[data.type](data.message)
-        if (data.type === 'success') {
+        if (data.type !== 'error') {
           await this.getSections(this.courseId)
           this.$bvModal.hide('modal-section')
         }
@@ -216,10 +275,11 @@ export default {
         }
       }
     },
-    initEditSection (sectionId, sectionName) {
+    initEditSection (section) {
       this.sectionForm.errors.clear()
-      this.sectionId = sectionId
-      this.sectionForm.name = sectionName
+      this.sectionId = section.id
+      this.sectionForm.name = section.name
+      this.sectionForm.crn = section.crn
       this.$bvModal.show('modal-section')
     },
     async getSections (courseId) {

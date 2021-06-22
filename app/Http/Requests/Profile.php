@@ -30,7 +30,9 @@ class Profile extends FormRequest
             'last_name' => 'required|max:255',
             'email' =>   'required|email|unique:users,email,'.Auth::user()->id
         ];
-
+        if (Auth::user()->role === 3){
+            $rules['student_id'] = 'required';
+        }
         $rules['time_zone'] = new isValidTimeZone();
        return $rules;
     }

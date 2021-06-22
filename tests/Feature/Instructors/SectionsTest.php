@@ -43,7 +43,9 @@ class SectionsTest extends TestCase
         Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section->id]);
         Grader::create(['user_id' => $this->grader_user->id, 'section_id' => $this->section_2->id]);
         GraderAccessCode::create(['section_id' => $this->section_3->id, 'access_code' => 'sdfsdOlwf']);
-        $this->section_info = ['name' => 'New Section', 'course_id' => $this->course->id];
+        $this->section_info = ['name' => 'New Section',
+            'course_id' => $this->course->id,
+            'crn' => 'some CRN'];
 
     }
 

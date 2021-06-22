@@ -9,6 +9,7 @@ $factory->define(Section::class, function (Faker $faker) {
     return [
         'name' => 'Section 1',
         'course_id' => 1,
-        'access_code' =>'some_access_code'
+        'access_code' =>'some_access_code',
+        'crn' => '123123'
     ];
 });

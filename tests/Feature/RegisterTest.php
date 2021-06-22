@@ -34,6 +34,7 @@ class RegisterTest extends TestCase
             'first_name' => 'Test',
             'last_name' => 'User',
             'email' => 'test@test.app',
+            'student_id' => 'my student id',
             'password' => 'secret',
             'password_confirmation' => 'secret',
             'time_zone' => 'America/Los_Angeles',

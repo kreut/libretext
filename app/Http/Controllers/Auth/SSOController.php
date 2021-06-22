@@ -42,6 +42,9 @@ class SSOController extends Controller
             [$course_id, $role] = $this->setRole($data);
             $user = Auth::user();
             $user->role = $role;
+            if ($role === 'student') {
+                $user->student_id = $request->student_id;
+            }
             $user->time_zone = $data['time_zone'];
             $user->save();
             if ($role === 4) {

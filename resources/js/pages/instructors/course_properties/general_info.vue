@@ -13,7 +13,7 @@
         <b-card header="default" header-html="General Information">
           <b-card-text>
             <CourseForm :form="editCourseForm" />
-            <b-button class="float-right" variant="primary" @click="updateCourse">
+            <b-button class="float-right" size="sm" variant="primary" @click="updateCourse">
               Update
             </b-button>
           </b-card-text>
@@ -70,6 +70,7 @@ export default {
         let course = data.course
         this.editCourseForm.school = course.school
         this.editCourseForm.name = course.name
+        this.editCourseForm.term = course.term
         this.editCourseForm.start_date = course.start_date
         this.editCourseForm.end_date = course.end_date
         this.editCourseForm.public = course.public

@@ -13,7 +13,7 @@ class Course extends Model
      *
      * @var array
      */
-    protected $fillable = ['name', 'start_date', 'end_date', 'user_id', 'shown', 'public','school_id'];
+    protected $guarded = [];
 
     /**
      * @return \Illuminate\Database\Eloquent\Relations\HasManyThrough
@@ -91,6 +91,28 @@ class Course extends Model
             'user_id')
             ->where('fake_student', 0)
             ->orderBy('enrollments.id'); //local key in enrollments table
+    }
+
+    /**
+     * @return array
+     */
+    public function sectionEnrollmentsByUser()
+    {
+        $enrolled_user_ids = $this->enrolledUsers->pluck('id')->toArray();
+        $enrollments = DB::table('enrollments')
+            ->join('sections', 'enrollments.section_id', '=', 'sections.id')
+            ->where('enrollments.course_id', $this->id)
+            ->whereIn('enrollments.user_id', $enrolled_user_ids)
+            ->select('user_id', 'sections.name', 'sections.crn')
+            ->get();
+        $enrolled_users_by_section = [];
+        foreach ($enrollments as $enrollment) {
+            $enrolled_users_by_section[$enrollment->user_id] = [
+                'crn' => $enrollment->crn,
+                'course_section' => "$this->name - $enrollment->name"
+                ];
+        }
+        return $enrolled_users_by_section;
     }
 
     public function enrolledUsersWithFakeStudent()

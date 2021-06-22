@@ -30,11 +30,16 @@ class FinishRegistration extends FormRequest
     {
         $rules = ['time_zone' => new IsValidTimeZone(),
             'registration_type' => Rule::in(['student', 'grader', 'instructor'])];
-        if ($this->registration_type === 'instructor') {
-            $rules['access_code'] = new IsValidInstructorAccessCode();
-        }
-        if ($this->registration_type === 'grader') {
-            $rules['access_code'] = new IsValidGraderAccessCode();
+        switch ($this->registration_type) {
+            case('instructor'):
+                $rules['access_code'] = new IsValidInstructorAccessCode();
+                break;
+            case('grader'):
+                $rules['access_code'] = new IsValidGraderAccessCode();
+                break;
+            case('student'):
+                $rules['student_id'] = 'required';
+                break;
         }
         return $rules;
     }
