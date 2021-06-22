@@ -9,8 +9,10 @@
     <b-tooltip target="school_tooltip"
                delay="250"
     >
-      Adapt keeps a comprehensive list of colleges and universities, using the school's full name.  So, to find UC-Davis, you
-      can start typing University of California-Los Angeles. In general, any word within your school's name will lead you to your school.  If you still can't
+      Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So, to find UC-Davis,
+      you
+      can start typing University of California-Los Angeles. In general, any word within your school's name will lead
+      you to your school. If you still can't
       find it, then please contact us.
     </b-tooltip>
     <b-form ref="form">
@@ -56,9 +58,18 @@
           id="section"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Section"
-          label-for="section"
         >
+          <template slot="label">
+            Section
+            <b-icon id="section-name-tooltip"
+                    v-b-tooltip.hover
+                    class="text-muted"
+                    icon="question-circle"
+            />
+            <b-tooltip target="section-name-tooltip" triggers="hover">
+              A descriptive name for the section. You can add more sections after the course is created.
+            </b-tooltip>
+          </template>
           <b-form-input
             id="name"
             v-model="form.section"
@@ -68,7 +79,59 @@
           />
           <has-error :form="form" field="section"/>
         </b-form-group>
+        <b-form-group
+          id="crn"
+          label-cols-sm="4"
+          label-cols-lg="3"
+        >
+          <template slot="label">
+            CRN
+            <b-icon id="crn-tooltip"
+                    v-b-tooltip.hover
+                    class="text-muted"
+                    icon="question-circle"
+            />
+            <b-tooltip target="crn-tooltip" triggers="hover">
+              The Course Reference Number is the number that identifies a specific section of a course being offered.
+            </b-tooltip>
+          </template>
+          <b-form-input
+            id="crn"
+            v-model="form.crn"
+            type="text"
+            placeholder=""
+            :class="{ 'is-invalid': form.errors.has('crn') }"
+            @keydown="form.errors.clear('crn')"
+          />
+          <has-error :form="form" field="crn"/>
+        </b-form-group>
       </div>
+      <b-form-group
+        id="term"
+        label-cols-sm="4"
+        label-cols-lg="3"
+      >
+        <template slot="label">
+          Term
+          <b-icon id="term-tooltip"
+                  v-b-tooltip.hover
+                  class="text-muted"
+                  icon="question-circle"
+          />
+          <b-tooltip target="term-tooltip" triggers="hover">
+            The form of this field will depend on your school. As one example, it might be 202103 to represent 3rd
+            Quarter of 2021 "year-quarter" such as 2021-03.
+          </b-tooltip>
+        </template>
+        <b-form-input
+          id="term"
+          v-model="form.term"
+          type="text"
+          :class="{ 'is-invalid': form.errors.has('term') }"
+          @keydown="form.errors.clear('term')"
+        />
+        <has-error :form="form" field="term"/>
+      </b-form-group>
       <b-form-group
         id="start_date"
         label-cols-sm="4"

@@ -38,7 +38,15 @@
                 <has-error :form="form" field="last_name" />
               </div>
             </div>
-
+            <div v-if="isStudent" class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right">Student ID</label>
+            <div class="col-md-7">
+              <input v-model="form.student_id" :class="{ 'is-invalid': form.errors.has('student_id') }"
+                     class="form-control" type="text" name="student_id"
+              >
+              <has-error :form="form" field="student_id"/>
+            </div>
+            </div>
             <!-- Email -->
             <div class="form-group row">
               <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
@@ -130,6 +138,7 @@ export default {
       first_name: '',
       last_name: '',
       email: '',
+      student_id: '',
       password: '',
       password_confirmation: '',
       access_code: '',

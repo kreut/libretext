@@ -172,7 +172,9 @@ class CourseController extends Controller
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
+
             $imported_course->save();
+
             foreach ($course->assignments as $assignment) {
                 $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
                 $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $imported_course, $imported_assignment_group_id, false);
@@ -194,10 +196,12 @@ class CourseController extends Controller
 
             $section->name = 'Main';
             $section->course_id = $imported_course->id;
+            $section->crn = "To be determined";
             $section->save();
             $course->enrollFakeStudent($imported_course->id, $section->id, $enrollment);
 
             $finalGrade->setDefaultLetterGrades($imported_course->id);
+
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "<strong>$imported_course->name</strong> has been imported.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
@@ -368,6 +372,7 @@ class CourseController extends Controller
             $response['course'] = [
                 'school' => $course->school->name,
                 'name' => $course->name,
+                'term' => $course->term,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
                 'sections' => $course->sections,
@@ -488,6 +493,7 @@ class CourseController extends Controller
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
      * @param Section $section
+     * @param School $school
      * @return array
      * @throws Exception
      */
@@ -519,10 +525,15 @@ class CourseController extends Controller
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
             $data['shown'] = 0;
-            //create the course
-            $new_course = $course->create($data);
             //create the main section
             $section->name = $data['section'];
+            $section->crn = $data['crn'];
+            unset($data['section']);
+            unset($data['crn']);
+            unset($data['school']);
+            //create the course
+            $new_course = $course->create($data);
+
             $section->course_id = $new_course->id;
             $section->save();
             $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);

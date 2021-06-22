@@ -177,6 +177,7 @@ class SectionController extends Controller
             DB::beginTransaction();
             $section->name = $data['name'];
             $section->course_id = $course->id;
+            $section->crn = $data['crn'];
             $section->access_code = $this->createSectionAccessCode();
             $section->save();
             $course->enrollFakeStudent($course->id, $section->id, $enrollment);
@@ -209,12 +210,13 @@ class SectionController extends Controller
         $data = $request->validated();
         try {
             $section->name = $data['name'];
+            $section->crn = $data['crn'];
             $section->save();
             $name_changed = $original_name !== $data['name'];
             $response['type'] = $name_changed ? 'success' : 'info';
             $response['message'] = $name_changed
                 ? "The section <strong>$original_name</strong> has been changed to <strong>{$data['name']}</strong>."
-                : "Your new name is the same as the old name.";
+                : "The new section name is the same as the old section name and has not been updated.";
         } catch (Exception $e) {
 
             $h = new Handler(app());

@@ -27,7 +27,8 @@ class StoreSection extends FormRequest
         return [
             'name' => ['required',
                 'max:255',
-                'unique:sections,name,NULL,id,course_id,' . $course_id]
+                'unique:sections,name,NULL,id,course_id,' . $course_id],
+            'crn' => 'required'
         ];
     }
 }

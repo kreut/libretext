@@ -68,12 +68,16 @@ class RegisterController extends Controller
             'password' => 'required|min:6|confirmed',
         ];
 
-        if ($data['registration_type'] === 'instructor') {
-            $validator['access_code'] = new IsValidInstructorAccessCode();
-        }
-
-        if ($data['registration_type'] === 'grader') {
-            $validator['access_code'] = new IsValidGraderAccessCode();
+        switch ($data['registration_type']) {
+            case('instructor'):
+                $validator['access_code'] = new IsValidInstructorAccessCode();
+                break;
+            case('grader'):
+                $validator['access_code'] = new IsValidGraderAccessCode();
+                break;
+            case('student'):
+                $validator['student_id'] = 'required';
+                break;
         }
         $validator['time_zone'] = new IsValidTimeZone();
         return Validator::make($data, $validator);
@@ -95,6 +99,8 @@ class RegisterController extends Controller
             $user->first_name = $data['first_name'];
             $user->last_name = $data['last_name'];
             $user->email = $data['email'];
+            $user->student_id = $data['student_id'] ?? null;
+
             $user->password = bcrypt($data['password']);
             $user->time_zone = $data['time_zone'];
             $user->role = $role;

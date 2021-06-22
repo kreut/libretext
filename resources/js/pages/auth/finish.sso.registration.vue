@@ -3,6 +3,15 @@
     <div class="col-lg-8 m-auto">
       <card title="Complete Registration">
         <form>
+          <div v-if="form.registration_type === 'student'" class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right">Student ID</label>
+            <div class="col-md-7">
+              <input v-model="form.student_id" :class="{ 'is-invalid': form.errors.has('student_id') }"
+                     class="form-control" type="text" name="student_id"
+              >
+              <has-error :form="form" field="student_id"/>
+            </div>
+          </div>
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right">Time zone</label>
             <div class="col-md-7" @change="removeTimeZoneError()">
@@ -10,7 +19,7 @@
                              :options="timeZones"
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
               />
-              <has-error :form="form" field="time_zone" />
+              <has-error :form="form" field="time_zone"/>
             </div>
           </div>
           <div class="form-group row">
@@ -20,7 +29,7 @@
                              :options="registrationTypes"
                              :class="{ 'is-invalid': form.errors.has('registration_type') }"
               />
-              <has-error :form="form" field="registration_type" />
+              <has-error :form="form" field="registration_type"/>
             </div>
           </div>
           <!-- Name -->
@@ -30,7 +39,7 @@
               <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }"
                      class="form-control" type="text" name="access_code"
               >
-              <has-error :form="form" field="access_code" />
+              <has-error :form="form" field="access_code"/>
             </div>
           </div>
           <b-row align-h="end" class="col-md-10">
@@ -57,6 +66,7 @@ export default {
     form: new Form({
       registration_type: null,
       access_code: '',
+      student_id: '',
       time_zone: null
     }),
     timeZones: [

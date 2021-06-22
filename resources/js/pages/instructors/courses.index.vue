@@ -3,9 +3,6 @@
     <b-modal
       id="modal-import-course"
       ref="modal"
-      title="Import Course"
-      ok-title="Yes, import course!"
-      @ok="handleImportCourse"
     >
       <vue-bootstrap-typeahead
         ref="queryTypeahead"
@@ -13,6 +10,23 @@
         :data="formattedImportableCourses"
         placeholder="Enter a course or instructor name"
       />
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-import-course')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleImportCourse"
+        >
+          Yes, import course!
+        </b-button>
+      </template>
     </b-modal>
     <PageTitle v-if="canViewCourses" title="My Courses"/>
     <b-container v-if="canViewCourses && user && user.role === 2">
@@ -32,11 +46,26 @@
       id="modal-course-details"
       ref="modal"
       title="Course Details"
-      ok-title="Submit"
-      @ok="submitCourseInfo"
       @hidden="resetModalForms"
     >
       <CourseForm :form="newCourseForm"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-course-details')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          size="sm"
+          variant="primary"
+          class="float-right"
+          @click="submitCourseInfo"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
     <b-modal
       id="modal-delete-course"
@@ -175,8 +204,8 @@
 <script>
 import axios from 'axios'
 import { mapGetters } from 'vuex'
-import { getTooltipTarget, initTooltips } from '../../helpers/Tooptips'
-import CourseForm from '../../components/CourseForm'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
+import CourseForm from '~/components/CourseForm'
 import Form from 'vform'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { ToggleButton } from 'vue-js-toggle-button'

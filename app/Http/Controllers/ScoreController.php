@@ -300,7 +300,7 @@ class ScoreController extends Controller
             ->select('assignments.id', 'assignments.assignment_group_id', 'assignment_group_weights.assignment_group_weight')
             ->get();
 //create arrays for assignment_group_ids, weights, and counts
-//dd( $include_in_weighted_average);
+
 
         foreach ($assignment_group_weights as $key => $value) {
             foreach ($enrolled_user_ids as $user_id) {
@@ -444,9 +444,23 @@ class ScoreController extends Controller
         return 'Letter grade error';
     }
 
-    public function getFinalTableInfo(array $assignment_ids,
+    /**
+     * @param Course $course
+     * @param array $assignment_ids
+     * @param array $enrolled_users
+     * @param $assignments
+     * @param array $extensions
+     * @param array $extra_credit
+     * @param array $final_weighted_scores
+     * @param array $letter_grades
+     * @param array $final_weighted_scores_without_extra_credit
+     * @param array $scores_by_user_and_assignment
+     * @param array $total_points_by_assignment_id
+     * @return array
+     */
+    public function getFinalTableInfo(Course $course,
+                                      array $assignment_ids,
                                       array $enrolled_users,
-                                      array $enrolled_users_last_first,
                                       $assignments,
                                       array $extensions,
                                       array $extra_credit,
@@ -454,10 +468,10 @@ class ScoreController extends Controller
                                       array $letter_grades,
                                       array $final_weighted_scores_without_extra_credit,
                                       array $scores_by_user_and_assignment,
-                                      array $total_points_by_assignment_id)
+                                      array $total_points_by_assignment_id): array
     {
         {
-
+            $with_download_rows = Auth::user()->role === 2;
             $extra_credit_assignment_id = max($assignment_ids) + 1;
             $weighted_score_assignment_id = $extra_credit_assignment_id + 1;
             $z_score_assignment_id = $weighted_score_assignment_id + 1;
@@ -471,9 +485,19 @@ class ScoreController extends Controller
             //now fill in the actual scores
             $rows = [];
             $download_rows = [];
+            $download_fields = new \stdClass();
             foreach ($enrolled_users as $user_id => $user_info) {
                 $columns = [];
-                $download_row_data = ['name' => $user_info['name'], 'email' => $user_info['email']];
+                if (  $with_download_rows ) {
+                    $download_row_data = [
+                        'first_name' => $user_info['first_name'],
+                        'last_name' => $user_info['last_name'],
+                        'course_section' => $user_info['course_section'],
+                        'crn' => $user_info['crn'],
+                        'term' => $course->term,
+                        'email' => $user_info['email'],
+                        'student_id' => $user_info['student_id']];
+                }
                 foreach ($assignments as $assignment) {
                     $default_score = '-';
                     $score = $scores_by_user_and_assignment[$user_id][$assignment->id] ?? $default_score;
@@ -481,22 +505,22 @@ class ScoreController extends Controller
                         $score .= ' (E)';
                     }
                     $columns[$assignment->id] = $score;
-                    $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
+                    if (  $with_download_rows ) {
+                        $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
+                    }
                 }
 
                 $columns[$extra_credit_assignment_id] = $extra_credit[$user_id];
-                $download_row_data[$extra_credit_assignment_id] = $extra_credit[$user_id];
-
-
                 $columns[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
-                $download_row_data[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
-
                 $columns[$z_score_assignment_id] = $this->computeZScore($final_weighted_scores_without_extra_credit[$user_id], $mean_and_std_dev_info);
-                $download_row_data[$z_score_assignment_id] = $columns[$z_score_assignment_id];
 
                 $columns[$letter_grade_assignment_id] = $letter_grades[$user_id];
-                $download_row_data[$letter_grade_assignment_id] = $letter_grades[$user_id];
-
+                $download_row_data[$extra_credit_assignment_id] = $extra_credit[$user_id];
+                if ($with_download_rows) {
+                    $download_row_data[$weighted_score_assignment_id] = $final_weighted_scores[$user_id];
+                    $download_row_data[$z_score_assignment_id] = $columns[$z_score_assignment_id];
+                    $download_row_data[$letter_grade_assignment_id] = $letter_grades[$user_id];
+                }
 
                 $columns['name'] = $user_info['name'];
                 $columns['email'] = $user_info['email'];
@@ -513,10 +537,17 @@ class ScoreController extends Controller
                     'label' => 'Email',
                     'sortable' => true,
                     'stickyColumn' => false]];
-            $download_fields = new \stdClass();
-            $download_fields->name = 'name';
-            $download_fields->email = 'email';
-
+            if ($with_download_rows) {
+                $download_fields->Term = 'term';
+                $download_fields->CRN = 'crn';
+                $download_fields->{'First Name'} = 'first_name';
+                $download_fields->{'Last Name'} = 'last_name';
+                $download_fields->Email = 'email';
+                $download_fields->{'Student ID'} = 'student_id';
+                $download_fields->{'Course - Section'} = 'course_section';
+                $reserved_names = ['Term', 'CRN', 'First Name', 'Last Name', 'Email', 'Student Id', 'Course - Section',
+                    'Extra Credit', 'Weighted Score', 'Z-Score', 'Letter Grade'];
+            }
 
             foreach ($assignments as $assignment) {
                 $points = 0 + ($total_points_by_assignment_id[$assignment->id] ?? 0);
@@ -524,21 +555,25 @@ class ScoreController extends Controller
                 $name_and_points = "{$assignment->name}<br><span style='font-size: 12px'>($points points)</span>$not_included";
                 $field = ['key' => "$assignment->id",
                     'label' => $name_and_points];
-                $download_fields->{$assignment->name} = $assignment->id;
+                if ($with_download_rows) {
+                    if (in_array($assignment->name, $reserved_names)) {
+                        $assignment->name .= ' ';
+                    }
+                    $download_fields->{$assignment->name} = $assignment->id;
+                }
                 array_push($fields, $field);
             }
             array_push($fields, ['key' => "$extra_credit_assignment_id", 'label' => 'Extra Credit']);
-            $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
-
             array_push($fields, ['key' => "$weighted_score_assignment_id", 'label' => 'Weighted Score']);
-            $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
-
             array_push($fields, ['key' => "$z_score_assignment_id", 'label' => 'Z-Score']);
-            $download_fields->{"Z-Score"} = $z_score_assignment_id;
-
-
             array_push($fields, ['key' => "$letter_grade_assignment_id", 'label' => 'Letter Grade']);
-            $download_fields->{"Letter Grade"} = $letter_grade_assignment_id;
+            if ($with_download_rows) {
+                $download_fields->{"Extra Credit"} = $extra_credit_assignment_id;
+                $download_fields->{"Weighted Score"} = $weighted_score_assignment_id;
+                $download_fields->{"Z-Score"} = $z_score_assignment_id;
+                $download_fields->{"Letter Grade"} = $letter_grade_assignment_id;
+            }
+
             return [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id];
 
         }
@@ -709,7 +744,7 @@ class ScoreController extends Controller
                                           Submission $Submission,
                                           Solution $Solution,
                                           AssignmentGroup $AssignmentGroup,
-                                          Enrollment $enrollment)
+                                          Enrollment $enrollment): array
     {
 
 
@@ -729,7 +764,8 @@ class ScoreController extends Controller
         $Assignment = new Assignment();
         $assignments_info = $Assignment->getAssignmentsByCourse($course,
             $extension,
-            $Score, $Submission,
+            $Score,
+            $Submission,
             $Solution,
             $AssignmentGroup);
 
@@ -750,23 +786,17 @@ class ScoreController extends Controller
             $total_points_by_assignment_id = $this->getTotalPointsByAssignmentId($assignments, $assignment_ids);
             $scores = $course->scores->whereIn('assignment_id', $assignment_ids);
 
-
-            $enrolled_users_last_first = [];
             $enrolled_users_by_id = [];
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
             if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
-                foreach ($enrolled_users as $key => $enrolled_user) {//ignore the test student
+                foreach ($enrolled_users as  $enrolled_user) {//ignore the test student
                     $enrolled_users_by_id[$enrolled_user->id] =
                         ['name' => "$enrolled_user->first_name $enrolled_user->last_name",
-                            'email' => $user->email];
-                    $enrolled_users_last_first[$enrolled_user->id] =
-                        ['name' => "$enrolled_user->last_name, $enrolled_user->first_name",
-                            'email' => $user->email];
-
-
+                            'email' => $user->email,
+                            'student_id' => $user->student_id];
                 }
-                [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+                [$rows, $fields, $download_rows, $download_fields, $extra_credit, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, [], $enrolled_users, $enrolled_users_by_id, $total_points_by_assignment_id);
 
 
                 $z_score = false;
@@ -811,11 +841,16 @@ class ScoreController extends Controller
      * @param $extensions
      * @param $enrolled_users
      * @param $enrolled_users_by_id
-     * @param $enrolled_users_last_first
      * @param $total_points_by_assignment_id
      * @return array
      */
-    function processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id)
+    function processAllScoreInfo($course,
+                                 $assignments,
+                                 $assignment_ids,
+                                 $scores, $extensions,
+                                 $enrolled_users,
+                                 $enrolled_users_by_id,
+                                 $total_points_by_assignment_id)
     {
 
         $include_in_weighted_average_by_assignment_id_and_user_id = [];
@@ -834,9 +869,9 @@ class ScoreController extends Controller
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $enrolled_users, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
-            $assignment_ids,
+           $course,
+           $assignment_ids,
             $enrolled_users_by_id,
-            $enrolled_users_last_first,
             $assignments,
             $extensions,
             $final_weighted_scores_and_letter_grades['extra_credit'],
@@ -864,7 +899,7 @@ class ScoreController extends Controller
 
         //get all user_ids for the user enrolled in the course
         $enrolled_users_by_id = [];
-        $enrolled_users_last_first = [];
+
 
         $role = Auth::user()->role;
         $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
@@ -874,11 +909,18 @@ class ScoreController extends Controller
             $viewable_users_by_id[] = $viewable_user->id;
         }
         $enrolled_users = $course->enrolledUsers;
-        foreach ($enrolled_users as $key => $user) {
+        $course_section_enrollments_by_user = $course->sectionEnrollmentsByUser();
+
+
+
+        foreach ($enrolled_users as  $user) {
             $enrolled_users_by_id[$user->id] = ['name' => "$user->first_name $user->last_name",
-                'email' => $user->email];
-            $enrolled_users_last_first[$user->id] = ['name' => "$user->last_name, $user->first_name",
-                'email' => $user->email];
+                'email' => $user->email,
+                'crn' => $course_section_enrollments_by_user[$user->id]['crn'],
+                'first_name' => $user->first_name,
+                'last_name' => $user->last_name,
+                'student_id' => $user->student_id,
+                'course_section' =>  $course_section_enrollments_by_user[$user->id]['course_section']];
         }
 
         //get all assignments in the course
@@ -913,7 +955,7 @@ class ScoreController extends Controller
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
 
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $enrolled_users_last_first, $total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id,$total_points_by_assignment_id);
 
         $viewable_rows = [];
         $viewable_download_rows = [];

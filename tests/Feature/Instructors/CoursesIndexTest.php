@@ -248,8 +248,32 @@ class CoursesIndexTest extends TestCase
             'section' => 'Some New Section',
             'start_date' => '2020-06-10',
             'end_date' => '2021-06-10',
+            'term' => 'Some term',
+            'crn' => 'Some CRN',
             'public' => 1
         ])->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function crn_field_is_requied()
+    {
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
+            'name' => 'Some New Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+        ])->assertJson(['type' => 'success']);
+    }
+
+    /** @test */
+    public function term_field_is_requried()
+    {
+        $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
+            'name' => 'Some New Course',
+            'start_date' => '2020-06-10',
+            'end_date' => '2021-06-10',
+            'crn' => 'some crn',
+        ])->assertJsonValidationErrors(['term']);
     }
 
     /** @test */
@@ -260,7 +284,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->patchJson("/api/courses/{$this->course->id}", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10'
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJson(['type' => 'success']);
     }
 
@@ -271,7 +297,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user_2)->patchJson("/api/courses/{$this->course->id}", [
             'name' => 'Some New Course',
             'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10'
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJson(['type' => 'error', 'message' => 'You are not allowed to update this course.']);
 
 
@@ -283,7 +311,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => '',
             'start_date' => '2020-06-10',
-            'end_date' => '2021-06-10'
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJsonValidationErrors(['name']);
     }
 
@@ -293,7 +323,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some course',
             'start_date' => 'blah blah',
-            'end_date' => '2021-06-10'
+            'end_date' => '2021-06-10',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJsonValidationErrors(['start_date']);
 
     }
@@ -304,7 +336,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some course',
             'start_date' => '2021-06-10',
-            'end_date' => 'blah blah'
+            'end_date' => 'blah blah',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJsonValidationErrors(['end_date']);
 
     }
@@ -315,7 +349,9 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user)->postJson('/api/courses', [
             'name' => 'Some course',
             'start_date' => '2021-06-10',
-            'end_date' => '2021-06-09'
+            'end_date' => '2021-06-09',
+            'term' => 'some term',
+            'crn' => 'some crn'
         ])->assertJsonValidationErrors(['end_date']);
 
     }
