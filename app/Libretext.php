@@ -74,7 +74,7 @@ class Libretext extends Model
     {
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
         $xml = simplexml_load_string($response->body());
-        return  $xml->attributes()->title[0];
+        return $xml->attributes()->title[0];
     }
 
     public function import()
@@ -257,7 +257,7 @@ class Libretext extends Model
     public function getTechnologyFromBody($body)
     {
 
-        if (strpos($body, 'h5p.libretexts.org') !== false) {
+        if (strpos($body, 'h5p.libretexts.org') !== false || strpos($body, 'studio.libretexts.org/h5p') !== false) {
             return 'h5p';
         }
         if (strpos($body, 'webwork.libretexts.org') !== false) {

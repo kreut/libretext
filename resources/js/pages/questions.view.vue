@@ -2355,7 +2355,7 @@ export default {
     },
     getTechnology (body) {
       let technology
-      if (body.includes('h5p.libretexts.org')) {
+      if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org/h5p')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
