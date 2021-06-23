@@ -508,7 +508,7 @@
             <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
           <b-form-radio name="file_upload_mode" value="both">
-            Compiled Upload/Individual Assessment Upload <span id="both_upload_tooltip">
+            Compiled Upload & Individual Assessment Upload <span id="both_upload_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
 
