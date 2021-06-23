@@ -1,12 +1,12 @@
 <?php
 
-$s3 = env('APP_ENV') === 'staging'
+$s3 = env('APP_VAPOR')
     ? [
         'driver' => 's3',
-        'key' => env('AWS_STAGING_ACCESS_ID'),
-        'secret' => env('AWS_STAGING_SECRET'),
-        'region' => env('AWS_STAGING_DEFAULT_REGION'),
-        'bucket' => env('AWS_STAGING_BUCKET'),
+        'key' => env('AWS_VAPOR_ACCESS_ID'),
+        'secret' => env('AWS_VAPOR_SECRET'),
+        'region' => env('AWS_VAPOR_DEFAULT_REGION'),
+        'bucket' => env('AWS_VAPOR_BUCKET'),
         'url' => env('AWS_URL'),
     ]
     : [
