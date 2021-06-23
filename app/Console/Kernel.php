@@ -31,10 +31,11 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-
         if (env('APP_ENV') === 'production') {
-            $schedule->command('db:backup')->twiceDaily()
-                ->emailOutputOnFailure('kreut@hotmail.com');
+            if (!env('APP_VAPOR')) {
+                $schedule->command('db:backup')->twiceDaily()
+                    ->emailOutputOnFailure('kreut@hotmail.com');
+            }
 
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
                 ->emailOutputOnFailure('kreut@hotmail.com');
@@ -47,13 +48,12 @@ class Kernel extends ConsoleKernel
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
 
-           $schedule->command('notify:gradersForLateSubmissions')->Daily()
+            $schedule->command('notify:gradersForLateSubmissions')->Daily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
             $schedule->command('notify:gradersReminders')->Daily()
                 ->emailOutputOnFailure('kreut@hotmail.com');
             /* end grader notifications */
-
 
 
         }

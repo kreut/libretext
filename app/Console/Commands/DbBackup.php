@@ -39,6 +39,7 @@ class DbBackup extends Command
      */
     public function handle()
     {
+        /* Be sure to have your DB credentials in the .conf file since they can't be grabbed as environment variables */
         $database_name = DB::connection()->getDatabaseName();
         $database_host = config('myconfig.db_host');
         $filename = $database_name . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";

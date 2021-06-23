@@ -123,3 +123,5 @@ fabric.properties
 /tests/LoadTest/node_modules/
 /.env.docker-staging
 /.env.staging
+/.env.production
+/.env.testing
