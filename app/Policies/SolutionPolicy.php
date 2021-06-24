@@ -25,6 +25,17 @@ class SolutionPolicy
 
     }
 
+    public function destroy(User $user, Solution $solution, Assignment $assignment, Question $question){
+        $owns_solution = $solution->where('question_id', $question->id)
+            ->where('user_id', $user->id)
+            ->first();
+        return $owns_solution
+            ? Response::allow()
+            : Response::deny('You are not allowed to remove this solution.');
+
+
+
+    }
     public function storeText(User $user, Solution $solution, Assignment $assignment, Question $question)
     {
         return $assignment->questions->contains($question->id) && (int) $assignment->course->user_id === $user->id

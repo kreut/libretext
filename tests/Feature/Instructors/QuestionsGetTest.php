@@ -157,6 +157,26 @@ class QuestionsGetTest extends TestCase
 
     }
 
+    /** @test */
+    public function direct_import_can_use_abbreviations()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+                ['direct_import' => "chem-265531"]
+            )->assertJson(['page_ids_added_to_assignment' => 'chemistry-265531']);
+
+    }
+
+    /** @test */
+    public function direct_import_must_be_a_valid_library()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
+                ['direct_import' => "chems-265531"]
+            )->assertJson(['message' => 'chems is not a valid library.']);
+
+    }
+
 
     /** @test */
     public function non_owner_cannot_do_a_direct_import()

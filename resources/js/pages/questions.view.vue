@@ -9,7 +9,7 @@
       <b-container>
         <b-row>
           <span class="font-italic font-weight-bold" style="font-size: large">
-           {{ submissionDataMessage }}
+            {{ submissionDataMessage }}
           </span>
         </b-row>
       </b-container>
@@ -23,8 +23,8 @@
       <b-container>
         <b-row>
           <span class="font-italic font-weight-bold" style="font-size: large">
-          <font-awesome-icon :icon="treeIcon" class="text-success"/>
-           {{ submissionDataMessage }}
+            <font-awesome-icon :icon="treeIcon" class="text-success"/>
+            {{ submissionDataMessage }}
           </span>
         </b-row>
       </b-container>
@@ -82,7 +82,7 @@
         </p>
       </div>
     </b-alert>
-    <EnrollInCourse />
+    <EnrollInCourse/>
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -112,13 +112,31 @@
     </b-modal>
 
     <b-modal
+      id="modal-remove-solution"
+      ref="modal"
+      title="Confirm Remove Solution"
+    >
+      <p>
+        Please confirm that you would like to remove this solution. Note that you will still be able to upload
+        a different solution at any time.
+      </p>
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm" @click="$bvModal.hide('modal-remove-solution')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="submitRemoveSolution">
+          Yes, remove this solution!
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
       ok-title="Yes, remove question"
       @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion />
     </b-modal>
 
     <b-modal
@@ -815,12 +833,22 @@
             </div>
             <div v-if="questionView !== 'basic'" class="p-2">
               <b-button
+                v-if="!questions[currentPage-1].solution"
                 class="mt-1 mb-2 ml-1"
                 variant="dark"
                 size="sm"
                 @click="openUploadSolutionModal(questions[currentPage-1])"
               >
                 Upload Solution
+              </b-button>
+              <b-button
+                v-if="questions[currentPage-1].solution"
+                class="mt-1 mb-2 ml-1"
+                variant="danger"
+                size="sm"
+                @click="$bvModal.show('modal-remove-solution')"
+              >
+                Remove Solution
               </b-button>
               <span v-if="questions[currentPage-1].solution">
                 <span v-if="!showUploadedAudioSolutionMessage">
@@ -1124,7 +1152,7 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                              previousNode.title
+                            previousNode.title
                             }}</a>
                         </b-row>
                         <b-row align-h="center">
@@ -1198,13 +1226,13 @@
                       <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
-                          questions[currentPage - 1].submission_score
+                        questions[currentPage - 1].submission_score
                         }}<br>
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
                       </div>
                       <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                         <span class="font-weight-bold">Late Penalty:</span> {{
-                          questions[currentPage - 1].late_penalty_percent
+                        questions[currentPage - 1].late_penalty_percent
                         }}%<br>
                       </div>
 
@@ -1382,11 +1410,10 @@ import libraries from '~/helpers/Libraries'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
-import { faTree } from '@fortawesome/free-solid-svg-icons'
+import { faTree, faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 import RemoveQuestion from '~/components/RemoveQuestion'
 
 import Vue from 'vue'
-import { faThumbsUp, faCheck } from '@fortawesome/free-solid-svg-icons'
 
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
 
@@ -1706,6 +1733,18 @@ export default {
     }
   },
   methods: {
+    async submitRemoveSolution () {
+      try {
+        const { data } = await axios.delete(`/api/solution-files/${this.assignmentId}/${this.questionId}`)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].solution = null
+          this.$bvModal.hide('modal-remove-solution')
+        }
+        this.$noty[data.type](data.message)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     arrowListener (event) {
       if (event.key === 'ArrowRight' && this.currentPage < this.questions.length) {
         this.currentPage++
@@ -2827,7 +2866,8 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  },
+  }
+  ,
   metaInfo () {
     return { title: this.$t('home') }
   }

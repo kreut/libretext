@@ -27,7 +27,77 @@ class SolutionController extends Controller
 {
 
     use S3;
-    public function storeText(StoreSolutionText $request, Solution $Solution, Assignment $assignment, Question $question)
+
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param Solution $solution
+     * @return array
+     * @throws Exception
+     */
+    public function destroy(Request $request,
+                            Assignment $assignment,
+                            Question $question,
+                            Solution $solution,
+                            Cutup $cutup)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $authorized = Gate::inspect('destroy', [$solution, $assignment, $question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            $solution->where('question_id', $question->id)
+                ->where('user_id', $request->user()->id)
+                ->delete();
+            $compiled_filename = $cutup->forcePDFRecompileSolutionsByAssignment($assignment->id, $request->user()->id, $solution);
+            if ($compiled_filename) {
+                $compiled_file_data = [
+                    'file' => $compiled_filename,
+                    'original_filename' => str_replace(' ', '', $assignment->name . '.pdf'),
+                    'updated_at' => Carbon::now()];
+                $solution->updateOrCreate(
+                    [
+                        'user_id' => $request->user()->id,
+                        'type' => 'a',
+                        'assignment_id' => $assignment->id,
+                        'question_id' => null
+                    ],
+                    $compiled_file_data
+                );
+            }
+            DB::commit();
+            $response['type'] = 'success';
+            $response['message'] = 'The solution has been removed.';
+
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error removing the solution.  Please try again or contact us for assistance.";
+            return $response;
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param StoreSolutionText $request
+     * @param Solution $Solution
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function storeText(StoreSolutionText $request,
+                              Solution $Solution,
+                              Assignment $assignment,
+                              Question $question): array
     {
         $response['type'] = 'error';
         $user_id = Auth::user()->id;
@@ -40,9 +110,9 @@ class SolutionController extends Controller
                 return $response;
             }
             $data = $request->validated();
-            $Solution->where('user_id',$user_id)
-                ->where('question_id',$question->id)
-                ->update(['text'=>$data['solution_text']]);
+            $Solution->where('user_id', $user_id)
+                ->where('question_id', $question->id)
+                ->update(['text' => $data['solution_text']]);
 
             $response['type'] = 'success';
             $response['message'] = 'Your text solution has been saved.';
@@ -123,7 +193,7 @@ class SolutionController extends Controller
             $response['type'] = 'success';
             $response['message'] = 'Your audio solution has been saved.';
             $response['solution'] = $original_filename;
-            $response['solution_file_url'] =\Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/$basename", now()->addMinutes(360));
+            $response['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/$basename", now()->addMinutes(360));
 
         } catch (Exception $e) {
             DB::rollBack();
@@ -203,7 +273,7 @@ class SolutionController extends Controller
                     $response['type'] = 'success';
                     $response['message'] = 'Your solution has been saved and the full answer key has been re-compiled.';
                     $response['original_filename'] = $original_filename;
-                    $response['solution_file_url'] =\Storage::disk('s3')->temporaryUrl("solutions/{$user_id}/$basename", now()->addMinutes(360));
+                    $response['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$user_id}/$basename", now()->addMinutes(360));
                     break;
                 case('assignment'):
                     //get rid of the current ones

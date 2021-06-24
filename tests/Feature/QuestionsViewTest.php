@@ -111,6 +111,29 @@ class QuestionsViewTest extends TestCase
             ];
     }
 
+    /** @test */
+
+    public function non_owner_cannot_remove_solution()
+    {
+
+        $this->actingAs($this->user_2)->deleteJson("/api/solution-files/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'You are not allowed to remove this solution.']);
+    }
+
+    /** @test */
+    public function owner_can_remove_solution()
+    {
+        Solution::create([
+            'user_id' => $this->user->id,
+            'type' => 'q',
+            'file' => 'some_file.pdf',
+            'original_filename' => 'blah blah',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id]);
+        $this->actingAs($this->user)->deleteJson("/api/solution-files/{$this->assignment->id}/{$this->question->id}")
+            ->assertJson(['message' => 'The solution has been removed.']);
+    }
+
 
     /** @test */
 

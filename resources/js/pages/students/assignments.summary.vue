@@ -60,8 +60,6 @@
           Yes, set the page!
         </b-button>
       </template>
-
-
     </b-modal>
 
 

@@ -294,6 +294,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/solution-files/audio/{assignment}/{question}', 'SolutionController@storeAudioSolutionFile');
     Route::put('/solution-files', 'SolutionController@storeSolutionFile');
     Route::post('/solution-files/download', 'SolutionController@downloadSolutionFile');
+    Route::delete('/solution-files/{assignment}/{question}', 'SolutionController@destroy');
 
     Route::post('/submission-texts', 'SubmissionTextController@store');
     Route::delete('/submission-texts/{assignment}/{question}', 'SubmissionTextController@destroy');
