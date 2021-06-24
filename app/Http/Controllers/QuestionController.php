@@ -111,8 +111,7 @@ class QuestionController extends Controller
                     $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library));
                 } else {
                     [$library_text, $page_id] = explode('-', $library_text_page_id);
-                    $library_text = trim(strtolower($library_text));
-
+                    $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library_text));
                     if (!in_array($library_text, $library_texts)) {
                         $response['message'] = "$library_text is not a valid library.";
                         return $response;
@@ -171,8 +170,9 @@ class QuestionController extends Controller
     public function getLibraryFromLibraryText($libraries, $library_text)
     {
         $response = false;
-        foreach ($libraries as $key => $library) {
-            if (strtolower($key) === $library_text) {
+        foreach ($libraries as $key => $library){
+            //works for the name or abbreviations
+            if (strtolower($key) === $library_text || $library === $library_text) {
                 $response = $library;
             }
         }
