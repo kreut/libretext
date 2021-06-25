@@ -789,7 +789,7 @@
               v-model="currentPage"
               :total-rows="questions.length"
               :per-page="perPage"
-              limit="25"
+              limit="22"
               first-number
               last-number
               align="center"
