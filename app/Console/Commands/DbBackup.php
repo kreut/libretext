@@ -2,6 +2,8 @@
 
 namespace App\Console\Commands;
 
+use Exception;
+use App\Exceptions\Handler;
 use Illuminate\Console\Command;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -39,17 +41,25 @@ class DbBackup extends Command
      */
     public function handle()
     {
-        $database_name = DB::connection()->getDatabaseName();
-        $database_host = config('myconfig.db_host');
-        $filename = $database_name . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";
-        echo "Backing up $filename\r\n";
-        $command = "mysqldump -h $database_host --port=25060 --set-gtid-purged=OFF production_libretexts | gzip > " . storage_path() . "/db_backups/" . $filename . ".gz";
-        $returnVar = NULL;
-        $output = NULL;
-        exec($command, $output, $returnVar);
-        $db_backup = file_get_contents(storage_path() . "/db_backups/" . $filename . ".gz");
-        Storage::disk('s3')->put("db_backups/" . $filename . ".gz", $db_backup, ['StorageClass' => 'STANDARD_IA']);
+        try {
+            $database_name = DB::connection()->getDatabaseName();
+            $database_host = config('myconfig.db_host');
+            $filename = $database_name . "-" . Carbon::now()->format('Y-m-d_g_i_s_a') . ".sql";
+            echo "Backing up $filename\r\n";
+            $command = "mysqldump -h $database_host --port=25060 --set-gtid-purged=OFF production_libretexts | gzip > " . storage_path() . "/db_backups/" . $filename . ".gz";
+            $returnVar = NULL;
+            $output = NULL;
+            exec($command, $output, $returnVar);
+            if ($returnVar) {
+                throw new Exception ("Database backup not successful: $returnVar");
+            }
+            $db_backup = file_get_contents(storage_path() . "/db_backups/" . $filename . ".gz");
+            Storage::disk('s3')->put("db_backups/" . $filename . ".gz", $db_backup, ['StorageClass' => 'STANDARD_IA']);
 
-        echo "Done.";
+            echo "Done.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
     }
 }
