@@ -1422,9 +1422,7 @@ class AssignmentSyncQuestionController extends Controller
 
                         break;
                     case('h5p'):
-                        //NOT USED FOR anything at the moment
-                        $custom_claims = [];
-                        $problemJWT = \JWTAuth::customClaims($custom_claims)->fromUser(Auth::user());
+                        $problemJWT = '';
                         $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
                         break;
                     case('text'):
