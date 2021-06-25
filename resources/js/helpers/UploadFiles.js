@@ -32,8 +32,9 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
     if (this.user.role === 3) {
       this.submissionDataMessage = data.message
       this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
-      this.$bvModal.show('modal-submission-accepted')
-      console.log(data)
+      this.completedAllAssignmentQuestions
+        ? this.$bvModal.show('modal-thumbs-up')
+        : this.$bvModal.show('modal-submission-accepted')
     } else {
       noty.success(data.message)
     }

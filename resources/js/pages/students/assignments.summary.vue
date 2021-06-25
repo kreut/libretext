@@ -20,7 +20,6 @@
       hide-footer
       size="sm"
       title="Submission Accepted"
-      @hidden="checkIfAssignmentCompleted"
     >
       <b-container>
         <b-row>
@@ -369,11 +368,6 @@ export default {
     }
   },
   methods: {
-    checkIfAssignmentCompleted () {
-      if (this.completedAllAssignmentQuestions) {
-        this.$bvModal.show('modal-completed-assignment')
-      }
-    },
     confirmSetPageAsSubmission (questionNumber, questionId, page) {
       this.questionSubmissionPageForm.questionId = questionId
       this.questionSubmissionPageForm.page = page
@@ -400,6 +394,9 @@ export default {
         openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
         this.successMessage = data.message
         this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+        if (this.completedAllAssignmentQuestions) {
+          this.$bvModal.show('modal-completed-assignment')
+        }
         this.$bvModal.show('modal-submission-accepted')
       } catch (error) {
         if (!error.message.includes('status code 422')) {

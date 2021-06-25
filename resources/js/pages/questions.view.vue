@@ -60,7 +60,6 @@
       hide-footer
       size="sm"
       title="Submission Accepted"
-      @hidden="checkIfAssignmentCompleted"
     >
       <b-container>
         <b-row>
@@ -136,7 +135,7 @@
       ok-title="Yes, remove question"
       @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion />
+      <RemoveQuestion/>
     </b-modal>
 
     <b-modal
@@ -1152,7 +1151,7 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                            previousNode.title
+                              previousNode.title
                             }}</a>
                         </b-row>
                         <b-row align-h="center">
@@ -1226,13 +1225,13 @@
                       <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
-                        questions[currentPage - 1].submission_score
+                          questions[currentPage - 1].submission_score
                         }}<br>
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
                       </div>
                       <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                         <span class="font-weight-bold">Late Penalty:</span> {{
-                        questions[currentPage - 1].late_penalty_percent
+                          questions[currentPage - 1].late_penalty_percent
                         }}%<br>
                       </div>
 
@@ -1440,7 +1439,6 @@ export default {
   },
   data: () => ({
     isInstructorLoggedInAsStudent: false,
-    completedAllAssignmentQuestions: false,
     checkIcon: faCheck,
     thumbsUpIcon: faThumbsUp,
     bothFileUploadMode: false,
@@ -1755,11 +1753,6 @@ export default {
         this.changePage(this.currentPage)
       }
     },
-    checkIfAssignmentCompleted () {
-      if (this.completedAllAssignmentQuestions) {
-        this.$bvModal.show('modal-completed-assignment')
-      }
-    },
     async setPageAsSubmission (questionId) {
       try {
         console.log(this.questionSubmissionPageForm)
@@ -2030,20 +2023,22 @@ export default {
         this.$noty.error(data.message)
       }
     },
-
     submittedAudioUpload (response) {
       let data = response.data
       this.openEndedSubmissionDataType = (data.type === 'success') ? 'success' : 'danger'
       this.submissionDataMessage = data.message
-      let modalToShow = this.openEndedSubmissionDataType === 'success' ? 'modal-submission-accepted' : 'modal-thumbs-down'
+      let modalToShow
+      if (this.openEndedSubmissionDataType !== 'success') {
+        modalToShow = 'modal-thumbs-down'
+      } else {
+        modalToShow = data.completed_all_assignment_questions ? 'modal-completed-assignment' : 'modal-submission-accepted'
+      }
       this.$bvModal.show(modalToShow)
-
       if (data.type === 'success') {
         this.questions[this.currentPage - 1].date_submitted = data.date_submitted
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
         this.questions[this.currentPage - 1].submission_file_exists = true
-        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
       }
       this.$refs.uploadRecorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
@@ -2146,8 +2141,9 @@ export default {
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
           this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
-          this.$bvModal.show('modal-submission-accepted')
-          this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
+          data.completed_all_assignment_questions
+            ? this.$bvModal.show('modal-completed-assignment')
+            : this.$bvModal.show('modal-submission-accepted')
         } else {
           this.$bvModal.show('modal-thumbs-down')
         }
@@ -2275,7 +2271,6 @@ export default {
         this.questions[this.currentPage - 1]['answered_correctly_at_least_once'] = data.answered_correctly_at_least_once
         this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
         this.questions[this.currentPage - 1]['solution'] = data.solution
-        this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
         if (data.submission_count > 1) {
           // successfully made a submission so they don't need to know about the points for the learning tree anymore
           this.showLearningTreePointsMessage = false
@@ -2288,7 +2283,6 @@ export default {
       }
     },
     async receiveMessage (event) {
-      console.log(event)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
 
@@ -2299,11 +2293,10 @@ export default {
         let serverSideSubmit
         let iMathASResize
         try {
-          console.log(event)
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
-          console.log(error.message)
+          console.log(JSON.parse(error))
         }
         try {
           serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
@@ -2388,7 +2381,9 @@ export default {
         } else if (data.not_updated_message) {
           this.$bvModal.show('modal-not-updated')
         } else {
-          this.$bvModal.show('modal-submission-accepted')
+          data.completed_all_assignment_questions
+            ? this.$bvModal.show('modal-completed-assignment')
+            : this.$bvModal.show('modal-submission-accepted')
         }
         await this.updateLastSubmittedAndLastResponse(this.assignmentId, this.questions[this.currentPage - 1].id)
       } else {
