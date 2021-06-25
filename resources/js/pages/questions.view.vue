@@ -2288,6 +2288,7 @@ export default {
       }
     },
     async receiveMessage (event) {
+      console.log(event)
       if (this.user.role === 3) {
         let technology = this.getTechnology(event.origin)
 
@@ -2298,9 +2299,11 @@ export default {
         let serverSideSubmit
         let iMathASResize
         try {
+          console.log(event)
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
+          console.log(error.message)
         }
         try {
           serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
@@ -2394,7 +2397,7 @@ export default {
     },
     getTechnology (body) {
       let technology
-      if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org/h5p')) {
+      if (body.includes('h5p.libretexts.org') || body.includes('studio.libretexts.org')) {
         technology = 'h5p'
       } else if (body.includes('imathas.libretexts.org')) {
         technology = 'imathas'
