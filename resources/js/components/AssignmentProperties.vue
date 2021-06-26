@@ -1,15 +1,39 @@
 <template>
   <div>
     <b-modal
+      id="modal-form-errors"
+      ref="formErrorsModal"
+      title="Form Errors"
+      hide-footer
+    >
+      <p class="font-weight-bold font-italic">
+        Please fix the following errors in your form:
+      </p>
+      <ul>
+        <li v-for="formError in allFormErrors" :key="formError">
+          <span class="text-danger">{{ formError }}</span>
+        </li>
+      </ul>
+    </b-modal>
+    <b-modal
       id="modal-assignment-properties"
       ref="modal"
       title="Assignment Properties"
       ok-title="Submit"
       size="lg"
-      @ok="submitAssignmentInfo"
       @hidden="resetModalForms"
       @shown="updateModalToggleIndex"
     >
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="submitAssignmentInfo">
+          Submit
+        </b-button>
+      </template>
+
+
       <b-tooltip target="compiled_pdf_tooltip"
                  delay="250"
       >
@@ -36,7 +60,6 @@
           and you also have non-PDF assessments such as text, images, or audio.
         </p>
       </b-tooltip>
-
 
       <b-tooltip target="internal"
                  delay="250"
@@ -501,17 +524,16 @@
           <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
           <b-form-radio name="file_upload_mode" value="compiled_pdf">
             Compiled Upload (PDFs only) <span id="compiled_pdf_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+              <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
           <b-form-radio name="file_upload_mode" value="individual_assessment">
             Individual Assessment Upload <span id="individual_assessment_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+              <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
           <b-form-radio name="file_upload_mode" value="both">
             Compiled Upload & Individual Assessment Upload <span id="both_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+              <b-icon class="text-muted" icon="question-circle"/></span>
           </b-form-radio>
-
         </b-form-radio-group>
         <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
           Please choose one of the given options.
@@ -941,6 +963,7 @@ export default {
     courseStartDate: { type: String, default: '' }
   },
   data: () => ({
+    allFormErrors: [],
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
@@ -1433,6 +1456,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors')
         }
       }
     },
@@ -1447,6 +1473,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors')
         }
       }
     },
