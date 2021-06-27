@@ -22,7 +22,12 @@
               if a student has an average of 90 and you provide up to 3 points for extra credit, the student can receive
               up to 93 points total for the course.
             </p>
-
+            <b-alert :show="weightsTotal !== 100 || weightHas0Entry" variant="info">
+              <span class="font-weight-bold font-italic">
+                <span v-show="weightsTotal !== 100"> The total of your assignment group weights does not sum to 100.</span>
+                <span v-show="weightHas0Entry">  At least one of your weights has a 0 entry.</span>
+              </span>
+            </b-alert>
             <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
                      class="border border-1 rounded"
             >
@@ -34,6 +39,7 @@
                     type="text"
                     :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
                     @keydown="assignmentGroupWeightsFormWeightError = ''"
+                    @keyup="validateWeightsSumTo100"
                   />
                 </b-col>
               </template>
@@ -88,6 +94,8 @@ export default {
     Loading
   },
   data: () => ({
+    weightHas0Entry: false,
+    weightsTotal: 0,
     course: {},
     extraCreditId: 0,
     isLoading: true,
@@ -113,6 +121,15 @@ export default {
     this.initAssignmentGroupWeights()
   },
   methods: {
+    validateWeightsSumTo100 () {
+      this.weightsTotal = 0
+      for (let i = 0; i < this.assignmentGroupWeights.length; i++) {
+        if (this.assignmentGroupWeights[i]['assignment_group'] !== 'Extra Credit') {
+          let id = this.assignmentGroupWeights[i].id
+          this.weightsTotal += parseFloat(this.assignmentGroupWeightsForm[id])
+        }
+      }
+    },
     async initAssignmentGroupWeights () {
       try {
         const { data } = await axios.get(`/api/assignmentGroupWeights/${this.courseId}`)
@@ -123,6 +140,7 @@ export default {
           return false
         }
         this.assignmentGroupWeights = data.assignment_group_weights
+
         let formInputs = {}
         for (let i = 0; i < data.assignment_group_weights.length; i++) {
           if (data.assignment_group_weights[i]['assignment_group'] === 'Extra Credit') {
@@ -137,6 +155,7 @@ export default {
         }
         console.log(this.assignmentGroupWeights)
         this.assignmentGroupWeightsForm = new Form(formInputs)
+        this.validateWeightsSumTo100()
       } catch (error) {
         this.$noty.error(error.message)
         this.isLoading = false
