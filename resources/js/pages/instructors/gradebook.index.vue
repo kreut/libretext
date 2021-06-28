@@ -96,7 +96,6 @@
                 <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
                   <span :key="field.key" v-html="data.field.label"/>
                 </template>
-
                 <template v-slot:cell()="data">
                   <span v-if="['name'].includes(data.field.key)">
                     <a href=""
@@ -628,7 +627,7 @@ export default {
           // map the group_ids to specific colors
           // do the headers
           let assignmentGroups = data.assignment_groups
-          for (let i = 1; i < this.fields.length - 4; i++) {
+          for (let i = 2; i < this.fields.length - 4; i++) {
             let key = this.fields[i]['key']
             this.fields[i]['thStyle'] = this.getHeaderColor(key, assignmentGroups)
           }

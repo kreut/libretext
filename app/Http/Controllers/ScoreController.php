@@ -552,7 +552,7 @@ class ScoreController extends Controller
             foreach ($assignments as $assignment) {
                 $points = 0 + ($total_points_by_assignment_id[$assignment->id] ?? 0);
                 $not_included = !$assignment->include_in_weighted_average ? "<span style='font-size: 12px;color:red'>*</span>" : '';
-                $name_and_points = "{$assignment->name}<br><span style='font-size: 12px'>($points points)</span>$not_included";
+                $name_and_points = "<a href='/instructors/assignments/{$assignment->id}/information/questions'>{$assignment->name}</a><br><span style='font-size: 12px'>($points points)</span>$not_included";
                 $field = ['key' => "$assignment->id",
                     'label' => $name_and_points];
                 if ($with_download_rows) {
