@@ -174,11 +174,27 @@ class Assignment extends Model
                     $assignments_info[$key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                 } else {
                     $assignments_info[$key]['assign_tos'] = array_values($assign_to_groups[$assignment->id]);
+                    $num_assign_tos = 0;
+                    $num_open = 0;
+                    $num_closed = 0;
+                    $num_upcoming = 0;
                     foreach ($assignments_info[$key]['assign_tos'] as $assign_to_key => $assign_to) {
                         $available_from = $assign_to['available_from'];
                         $due = $assign_to['due'];
                         $final_submission_deadline = $assign_to['final_submission_deadline'];
-                        $assignments_info[$key]['assign_tos'][$assign_to_key]['status'] = $this->getStatus($available_from, $due);
+                        $status = $this->getStatus($available_from, $due);
+                        switch ($status) {
+                            case('Open'):
+                                $num_open++;
+                                break;
+                            case('Closed'):
+                                $num_closed++;
+                                break;
+                            case('Upcoming'):
+                                $num_upcoming++;
+                        }
+                        $num_assign_tos++;
+                        $assignments_info[$key]['assign_tos'][$assign_to_key]['status'] = $status;
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($available_from, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
@@ -194,7 +210,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     }
-
+                    $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
                     $assignments_info[$key]['number_of_questions'] = $number_of_questions;
 
 
@@ -571,6 +587,21 @@ class Assignment extends Model
             $assign_to_timings_by_user[$assign_to_timing->user_id] = $assign_to_timing;
         }
         return $assign_to_timings_by_user;
+    }
+
+    public function getOverallStatus(int $num_assign_tos, int $num_open, int $num_closed, int $num_upcoming)
+    {
+        if ($num_assign_tos === $num_open) {
+            return 'Open';
+        }
+
+        if ($num_assign_tos === $num_closed) {
+            return 'Closed';
+        }
+        if ($num_assign_tos === $num_upcoming) {
+            return 'Upcoming';
+        }
+        return 'Partial';
     }
 
 }

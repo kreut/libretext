@@ -552,9 +552,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $response = $assignment->getAssignmentsByCourse($course, $extension, $Score, $Submission, $Solution, $AssignmentGroup);
-
-        return $response;
+        return  $assignment->getAssignmentsByCourse($course, $extension, $Score, $Submission, $Solution, $AssignmentGroup);
     }
 
 
@@ -1446,7 +1444,7 @@ class AssignmentController extends Controller
      * @param array $data
      * @return mixed|null
      */
-    public function getNumberOfRandomizedAssessments(string $assessment_type, array $data)
+    public function getNumberOfRandomizedAssessments($assessment_type, array $data)
     {
         if ($assessment_type === 'clicker') {
             return null;
