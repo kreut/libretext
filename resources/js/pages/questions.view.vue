@@ -2293,10 +2293,11 @@ export default {
         let serverSideSubmit
         let iMathASResize
         try {
+          console.log(event)
           clientSideSubmit = ((technology === 'h5p') && (JSON.parse(event.data).verb.id === 'http://adlnet.gov/expapi/verbs/answered'))
         } catch (error) {
           clientSideSubmit = false
-          console.log(JSON.parse(error))
+          console.log(JSON.parse(JSON.stringify(error)))
         }
         try {
           serverSideSubmit = ((technology === 'imathas' && JSON.parse(event.data).subject === 'lti.ext.imathas.result') ||
