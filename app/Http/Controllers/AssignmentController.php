@@ -1275,12 +1275,6 @@ class AssignmentController extends Controller
             unset($data['open_ended_response']);
             //submissions exist so don't let them change the things below
             $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
-            if ($assignment->hasFileOrQuestionSubmissions()) {
-                unset($data['scoring_type']);
-                unset($data['default_points_per_question']);
-                unset($data['submission_files']);
-                unset($data['assessment_type']);
-            }
             foreach ($assign_tos as $key => $assign_to) {
                 unset($data['groups_' . $key]);
                 unset($data['due_' . $key]);
@@ -1291,7 +1285,6 @@ class AssignmentController extends Controller
                 unset($data['final_submission_deadline_date' . $key]);
                 unset($data['final_submission_deadline_time_' . $key]);
             }
-
             DB::beginTransaction();
             $assignment->update($data);
 
