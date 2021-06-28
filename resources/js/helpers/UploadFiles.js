@@ -29,11 +29,11 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
         bvModal.hide(`modal-upload-file`)
       })
     }
-    if (this.user.role === 3) {
+    if (form.uploadLevel === 'question' && type === 'submission') {
       this.submissionDataMessage = data.message
       this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
       this.completedAllAssignmentQuestions
-        ? this.$bvModal.show('modal-thumbs-up')
+        ? this.$bvModal.show('modal-completed-assignment')
         : this.$bvModal.show('modal-submission-accepted')
     } else {
       noty.success(data.message)
