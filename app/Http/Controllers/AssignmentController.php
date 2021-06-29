@@ -809,7 +809,7 @@ class AssignmentController extends Controller
     {
         if ($request->assessment_type !== 'delayed') {
             return null;
-        } elseif ($data['file_upload_mode']) {
+        } elseif ($data['file_upload_mode'] === 'combined_pdf') {
             return null;
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return str_replace(' text', '', $data['default_open_ended_submission_type']);
