@@ -188,7 +188,7 @@ class QuestionController extends Controller
     {
         $response = $library;
         foreach ($libraries as $library_text => $value) {
-            if ($value === $library) {
+            if ($value === trim($library)) {
                 $response = $library_text;
             }
         }
