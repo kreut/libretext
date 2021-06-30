@@ -1151,7 +1151,7 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                              previousNode.title
+                            previousNode.title
                             }}</a>
                         </b-row>
                         <b-row align-h="center">
@@ -1225,13 +1225,13 @@
                       <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
-                          questions[currentPage - 1].submission_score
+                        questions[currentPage - 1].submission_score
                         }}<br>
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
                       </div>
                       <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                         <span class="font-weight-bold">Late Penalty:</span> {{
-                          questions[currentPage - 1].late_penalty_percent
+                        questions[currentPage - 1].late_penalty_percent
                         }}%<br>
                       </div>
 
@@ -1733,7 +1733,7 @@ export default {
   methods: {
     async submitRemoveSolution () {
       try {
-        const { data } = await axios.delete(`/api/solution-files/${this.assignmentId}/${this.questionId}`)
+        const { data } = await axios.delete(`/api/solution-files/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].solution = null
           this.$bvModal.hide('modal-remove-solution')
