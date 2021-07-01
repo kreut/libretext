@@ -93,6 +93,7 @@ class BreadcrumbController extends Controller
                             break;
                         case('students.assignments.summary'):
                         case('instructors.assignments.summary'):
+                        case('instructors.assignments.properties'):
                         case('instructors.assignments.statistics'):
                         case('instructors.assignments.grader_access'):
                         case('instructors.assignments.questions'):
@@ -112,8 +113,8 @@ class BreadcrumbController extends Controller
                                 'href' => "/$users/courses/{$assignment->course->id}/assignments"];
 
                             if (Auth::user()->role === 3) {
-                                    $breadcrumbs[] = ['text' => "{$assignment->name}",
-                                        'href' => "/students/assignments/{$assignment_id}/summary"];
+                                $breadcrumbs[] = ['text' => "{$assignment->name}",
+                                    'href' => "/students/assignments/{$assignment_id}/summary"];
                             } else {
                                 $breadcrumbs[] = ['text' => "{$assignment->name}",
                                     'href' => "/instructors/assignments/{$assignment_id}/information"];

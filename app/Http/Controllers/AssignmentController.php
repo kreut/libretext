@@ -1158,6 +1158,7 @@ class AssignmentController extends Controller
             $response['message'] = "There was an error getting the assignment.  Please try again or contact us for assistance.";
 
         }
+
         return $response;
     }
 

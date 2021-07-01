@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -10,12 +10,37 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <AssignmentProperties ref="assignmentProperties"
-                            :course-id="parseInt(courseId)"
-                            :course-start-date="course.start_date"
-                            :course-end-date="course.end_date"
-      />
+      <b-modal
+        id="modal-assignment-properties"
+        ref="modal"
+        title="Assignment Properties"
+        ok-title="Submit"
+        size="lg"
+        @hidden="resetAssignmentForm"
+        @shown="updateModalToggleIndex"
+      >
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
+            Cancel
+          </b-button>
+          <b-button size="sm" variant="primary"
+                    @click="handleSubmitAssignmentInfo()"
+          >
+            Submit
+          </b-button>
+        </template>
 
+        <AssignmentProperties
+          :key="assignmentId"
+          :assignment-groups="assignmentGroups"
+          :form="form"
+          :course-id="parseInt(courseId)"
+          :course-start-date="course.start_date"
+          :course-end-date="course.end_date"
+          :all-form-errors="allFormErrors"
+          :assignment-id="assignmentId"
+        />
+      </b-modal>
       <b-modal id="modal-show-assignment-statistics"
                title="Show Assignment Statistics"
       >
@@ -101,7 +126,7 @@
         title="Assigned To"
         size="lg"
       >
-        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView" />
+        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
       </b-modal>
 
       <b-modal
@@ -238,7 +263,7 @@
                       class="ml-5 mr-1"
                       size="sm"
                       variant="primary"
-                      @click="initAddAssignment"
+                      @click="assignmentId=0;initAddAssignment(form, courseId, assignmentGroups, $noty, $moment, course.start_date, course.end_date, $bvModal, assignmentId)"
             >
               New Assignment
             </b-button>
@@ -263,57 +288,57 @@
       <div v-show="hasAssignments" class="table-responsive">
         <table class="table table-striped">
           <thead>
-            <tr>
-              <th scope="col">
-                Assignment Name
-              </th>
-              <th scope="col">
-                Shown
-              </th>
-              <th scope="col">
-                Group
-              </th>
-              <th scope="col">
-                Available On
-              </th>
-              <th scope="col">
-                Due
-              </th>
-              <th scope="col">
-                Status
-              </th>
-              <th scope="col">
-                Points per Question
-              </th>
-              <th scope="col">
-                Scores
-              </th>
-              <th scope="col">
-                Solutions
-              </th>
-              <th scope="col">
-                Statistics
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+          <tr>
+            <th scope="col">
+              Assignment Name
+            </th>
+            <th scope="col">
+              Shown
+            </th>
+            <th scope="col">
+              Group
+            </th>
+            <th scope="col">
+              Available On
+            </th>
+            <th scope="col">
+              Due
+            </th>
+            <th scope="col">
+              Status
+            </th>
+            <th scope="col">
+              Points per Question
+            </th>
+            <th scope="col">
+              Scores
+            </th>
+            <th scope="col">
+              Solutions
+            </th>
+            <th scope="col">
+              Statistics
+            </th>
+            <th scope="col">
+              Actions
+            </th>
+          </tr>
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
-            <tr v-for="assignment in assignments"
-                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-                :key="assignment.id"
-            >
-              <td style="width:300px">
-                <b-icon icon="list" />
-                <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
+          <tr v-for="assignment in assignments"
+              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+              :key="assignment.id"
+          >
+            <td style="width:300px">
+              <b-icon icon="list"/>
+              <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"
                     :id="getTooltipTarget('getQuestions',assignment.id)"
                     icon="lock-fill"
                   />
                 </span><a href="" @click.prevent="getAssignmentView(user.role, assignment)">{{ assignment.name }}</a>
-                <span v-if="user && [2,4].includes(user.role)">
+              <span v-if="user && [2,4].includes(user.role)">
                   <b-tooltip :target="getTooltipTarget('getQuestions',assignment.id)"
                              delay="500"
                   >
@@ -321,110 +346,110 @@
                   </b-tooltip>
 
                 </span>
-              </td>
-              <td>
-                <toggle-button
-                  :width="57"
-                  :value="Boolean(assignment.shown)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowAssignment(assignment)"
-                />
-              </td>
-              <td>{{ assignment.assignment_group }}</td>
-              <td>
+            </td>
+            <td>
+              <toggle-button
+                :width="57"
+                :value="Boolean(assignment.shown)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowAssignment(assignment)"
+              />
+            </td>
+            <td>{{ assignment.assignment_group }}</td>
+            <td>
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-                <span v-if="assignment.assign_tos.length > 1">
+              <span v-if="assignment.assign_tos.length > 1">
                   <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                 </span>
-              </td>
-              <td style="width:200px">
+            </td>
+            <td style="width:200px">
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}<br>
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-              </td>
-              <td>
-                <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
-                <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
-              </td>
-              <td>
-                <toggle-button
-                  :width="80"
-                  :value="Boolean(assignment.show_points_per_question)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                  @change="submitShowPointsPerQuestion(assignment)"
-                />
-              </td>
-              <td>
-                <toggle-button
-                  :width="80"
-                  :value="Boolean(assignment.show_scores)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                  @change="initShowScores(assignment)"
-                />
-              </td>
-              <td>
-                <toggle-button
-                  :width="80"
-                  :value="Boolean(assignment.solutions_released)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                  @change="initSolutionsReleased(assignment)"
-                />
-              </td>
-              <td>
-                <toggle-button
-                  :width="80"
-                  :value="Boolean(assignment.students_can_view_assignment_statistics)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-                  @change="initShowAssignmentStatistics(assignment)"
-                />
-              </td>
-              <td>
-                <div class="mb-0">
-                  <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                             delay="500"
-                  >
-                    Grading
-                  </b-tooltip>
-                  <span v-show="assignment.source === 'a'" class="pr-1"
-                        @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
-                  >
+            </td>
+            <td>
+              <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
+              <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status"/>
+            </td>
+            <td>
+              <toggle-button
+                :width="80"
+                :value="Boolean(assignment.show_points_per_question)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                @change="submitShowPointsPerQuestion(assignment)"
+              />
+            </td>
+            <td>
+              <toggle-button
+                :width="80"
+                :value="Boolean(assignment.show_scores)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                @change="initShowScores(assignment)"
+              />
+            </td>
+            <td>
+              <toggle-button
+                :width="80"
+                :value="Boolean(assignment.solutions_released)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                @change="initSolutionsReleased(assignment)"
+              />
+            </td>
+            <td>
+              <toggle-button
+                :width="80"
+                :value="Boolean(assignment.students_can_view_assignment_statistics)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+                @change="initShowAssignmentStatistics(assignment)"
+              />
+            </td>
+            <td>
+              <div class="mb-0">
+                <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
+                           delay="500"
+                >
+                  Grading
+                </b-tooltip>
+                <span v-show="assignment.source === 'a'" class="pr-1"
+                      @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
+                >
                     <b-icon
                       v-show="assignment.submission_files !== '0'"
                       :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                       icon="check2"
                     />
                   </span>
-                  <span v-show="user && user.role === 2">
+                <span v-show="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('editAssignment',assignment.id)"
                                delay="500"
                     >
                       Assignment Properties
                     </b-tooltip>
-                    <span class="pr-1" @click="editAssignment(assignment)">
+                    <span class="pr-1" @click="assignmentId=assignment.id;editAssignment(assignment)">
                       <b-icon :id="getTooltipTarget('editAssignment',assignment.id)"
                               icon="gear"
                       />
@@ -450,9 +475,9 @@
                             @click="deleteAssignment(assignment.id)"
                     />
                   </span>
-                </div>
-              </td>
-            </tr>
+              </div>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
@@ -484,6 +509,13 @@ import {
   updateAssignmentGroupFilter
 } from '~/helpers/Assignments'
 
+import {
+  initAddAssignment,
+  editAssignment,
+  getAssignmentGroups,
+  prepareForm,
+  assignmentForm
+} from '~/helpers/AssignmentProperties'
 import AssignmentProperties from '~/components/AssignmentProperties'
 import AssignTosToView from '~/components/AssignTosToView'
 
@@ -502,6 +534,9 @@ export default {
     draggable
   },
   data: () => ({
+    allFormErrors: [],
+    assignmentGroups: [],
+    form: assignmentForm,
     assessmentType: '',
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
@@ -525,7 +560,7 @@ export default {
     title: '',
     isLoading: false,
     solutionsReleased: 0,
-    assignmentId: false, // if there's an assignmentId it's an update
+    assignmentId: 0, // if there's an assignmentId it's an update
     assignments: [],
     showPointsPerQuestionTooltip: {
       fallbackPlacement: ['right'],
@@ -554,12 +589,15 @@ export default {
     this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
   },
   async mounted () {
-    this.initAddAssignment = this.$refs.assignmentProperties.initAddAssignment
-    this.editAssignment = this.$refs.assignmentProperties.editAssignment
+    this.initAddAssignment = initAddAssignment
+    this.editAssignment = editAssignment
+    this.getAssignmentGroups = getAssignmentGroups
+    this.prepareForm = prepareForm
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.isLoading = true
     await this.getCourseInfo()
+    this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     if (this.user) {
       if (![2, 4].includes(this.user.role)) {
         this.isLoading = false
@@ -572,6 +610,50 @@ export default {
     }
   },
   methods: {
+    async handleSubmitAssignmentInfo () {
+      this.prepareForm(this.form)
+      try {
+        this.form.course_id = this.courseId
+        const { data } = !this.assignmentId
+          ? await this.form.post(`/api/assignments`)
+          : await this.form.patch(`/api/assignments/${this.assignmentId}`)
+        let timeout = data.timeout ? data.timeout : 4000
+        this.$noty[data.type](data.message, { timeout: timeout })
+        if (data.type === 'success') {
+          this.$bvModal.hide('modal-assignment-properties')
+          this.getAssignments()
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors')
+        }
+      }
+    },
+
+    resetAssignmentForm () {
+      this.form.name = ''
+      this.form.available_from_date = ''
+      this.form.available_from_time = '09:00:00'
+      this.form.due_date = ''
+      this.form.due_time = '09:00:00'
+      this.form.type_of_submission = 'correct'
+      this.form.num_submissions_needed = '2'
+      this.form.default_open_ended_submission_type = 'file'
+      this.form.default_points_per_question = '10'
+      this.form.scoring_type = 'p'
+
+      this.assignmentId = 0
+      this.form.errors.clear()
+    },
+    updateModalToggleIndex () {
+      // ckeditor fix for input type text --- wasn't able to click
+      // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
+      let modalAssignmentProperties = document.querySelectorAll('*[id="modal-assignment-properties___BV_modal_content_"]')[0]
+      modalAssignmentProperties.removeAttribute('tabindex')
+    },
     viewAssignTos (assignTosToView) {
       this.assignTosToView = assignTosToView
       this.$bvModal.show('modal-assign-tos-to-view')

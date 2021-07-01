@@ -54,8 +54,9 @@ let general_paths  = [
     children: [
       { path: '', redirect: { name: 'instructors.assignments.questions' } },
       { path: 'questions', name: 'instructors.assignments.questions', component: page('instructors/assignment_information/questions.vue') },
-      { path: 'submissions', name: 'instructors.assignments.submissions', component: page('instructors/assignment_information/submissions.vue') },
       { path: 'summary', name: 'instructors.assignments.summary', component: page('instructors/assignment_information/summary.vue') },
+      { path: 'properties', name: 'instructors.assignments.properties', component: page('instructors/assignment_information/properties.vue') },
+      { path: 'submissions', name: 'instructors.assignments.submissions', component: page('instructors/assignment_information/submissions.vue') },
       { path: 'grader-access', name: 'instructors.assignments.grader_access', component: page('instructors/assignment_information/grader_access.vue') },
       { path: 'statistics', name: 'instructors.assignments.statistics', component: page('instructors/assignment_information/statistics.vue') },
       { path: 'gradebook', name: 'instructors.assignments.gradebook', component: page('instructors/assignment_information/gradebook.vue') },

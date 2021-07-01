@@ -11,12 +11,6 @@
       />
       <div v-if="!isLoading">
         <PageTitle title="Assignment Summary"/>
-
-        <AssignmentProperties ref="assignmentProperties"
-                              :course-id="Number(courseId)"
-                              :course-end-date="courseEndDate"
-                              :course-start-date="courseStartDate"
-        />
         <b-modal
           id="modal-assign-tos-to-view"
           ref="modal"
@@ -26,13 +20,6 @@
           <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
         </b-modal>
         <b-container>
-          <b-row align-h="end" class="pb-2">
-            <b-button size="sm" variant="primary" @click="initEditAssignment()">
-              <b-icon icon="gear"/>
-              Edit Assignment
-            </b-button>
-          </b-row>
-
           <b-card :header="assignment.name" class="h-100">
             <b-card-text>
               <p>
@@ -72,14 +59,11 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
-import AssignmentProperties from '~/components/AssignmentProperties'
 import AssignTosToView from '~/components/AssignTosToView'
-
 export default {
   middleware: 'auth',
   components: {
     Loading,
-    AssignmentProperties,
     AssignTosToView
   },
   data: () => ({
@@ -112,9 +96,6 @@ export default {
     viewAssignTos () {
       this.assignTosToView = this.assignment.assign_tos
       this.$bvModal.show('modal-assign-tos-to-view')
-    },
-    initEditAssignment () {
-      this.$refs.assignmentProperties.editAssignment(this.assignment)
     },
     async getAssignmentSummary () {
       try {
