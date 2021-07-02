@@ -64,11 +64,6 @@ export default {
         },
         {
           icon: '',
-          name: 'Submissions',
-          route: 'instructors.assignments.submissions'
-        },
-        {
-          icon: '',
           name: 'Summary',
           route: 'instructors.assignments.summary'
         },
@@ -76,6 +71,16 @@ export default {
           icon: '',
           name: 'Properties',
           route: 'instructors.assignments.properties'
+        },
+        {
+          icon: '',
+          name: 'Control Panel',
+          route: 'instructors.assignments.control_panel'
+        },
+        {
+          icon: '',
+          name: 'Submissions',
+          route: 'instructors.assignments.submissions'
         },
         {
           icon: '',

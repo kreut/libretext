@@ -20,6 +20,12 @@
           <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
         </b-modal>
         <b-container>
+          <b-row align-h="end" class="pb-2">
+            <b-button size="sm" variant="primary" @click="getPropertiesView">
+              <b-icon icon="gear"/>
+              Edit Assignment
+            </b-button>
+          </b-row>
           <b-card :header="assignment.name" class="h-100">
             <b-card-text>
               <p>
@@ -60,6 +66,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import AssignTosToView from '~/components/AssignTosToView'
+
 export default {
   middleware: 'auth',
   components: {
@@ -90,6 +97,9 @@ export default {
     this.getAssignmentSummary()
   },
   methods: {
+    getPropertiesView () {
+      this.$router.push(`/instructors/assignments/${this.assignmentId}/information/properties`)
+    },
     getInstructions (assignment) {
       return assignment.instructions ? assignment.instructions : 'None provided.'
     },
