@@ -2,8 +2,10 @@
 
 namespace App\Console;
 
+use App\Jobs\LogFromCRONJob;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
+use Illuminate\Support\Facades\Log;
 
 class Kernel extends ConsoleKernel
 {
@@ -31,44 +33,29 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
+        $schedule->command('notify:LatestErrors')->everyFiveMinutes();
+
         if (env('APP_ENV') === 'production') {
             if (!env('APP_VAPOR')) {
-                $schedule->command('db:backup')->twiceDaily()
-                    ->emailOutputOnFailure('kreut@hotmail.com');
+                $schedule->command('db:backup')->twiceDaily();
             }
 
-            $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute()
-                ->emailOutputOnFailure('kreut@hotmail.com');
+            $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
-            $schedule->command('dataShop:toS3')->twiceDaily()
-                ->emailOutputOnFailure('kreut@hotmail.com');
+            $schedule->command('dataShop:toS3')->twiceDaily();
 
             /* grader notifications */
-            $schedule->command('notify:gradersForDueAssignments')->hourly()
-                ->emailOutputOnFailure('kreut@hotmail.com');
-
-
-            $schedule->command('notify:gradersForLateSubmissions')->Daily()
-                ->emailOutputOnFailure('kreut@hotmail.com');
-
-            $schedule->command('notify:gradersReminders')->Daily()
-                ->emailOutputOnFailure('kreut@hotmail.com');
+            $schedule->command('notify:gradersForDueAssignments')->hourly();
+            $schedule->command('notify:gradersForLateSubmissions')->Daily();
+            $schedule->command('notify:gradersReminders')->Daily();
             /* end grader notifications */
-
+            $schedule->command('check:AssignTos')->twiceDaily();
 
         }
 
-        if (env('APP_ENV') === 'staging') {
-            $schedule->command('s3:backup')->hourly()
-                ->emailOutputOnFailure('kreut@hotmail.com');
+        if (env('APP_ENV') === 'dev') {
+            $schedule->command('s3:backup')->hourly();
         }
-
-        $schedule->command('check:AssignTos')->twiceDaily()
-            ->emailOutputOnFailure('kreut@hotmail.com');
-
-
-        $schedule->command('notify:LatestErrors')->everyFiveMinutes()
-            ->emailOutputOnFailure('kreut@hotmail.com');
 
     }
 

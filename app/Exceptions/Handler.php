@@ -7,6 +7,7 @@ use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Exceptions\Handler as ExceptionHandler;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
+use Telegram\Bot\Laravel\Facades\Telegram;
 use Throwable;
 
 class Handler extends ExceptionHandler
@@ -49,6 +50,13 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
+        Telegram::sendMessage([
+            'chat_id' => config('myconfig.telegram_channel_id'),
+            'parse_mode' => 'HTML',
+            'text' =>  $exception->getMessage() .'report'
+        ]);
+
+
         $logoutError = strpos(json_encode(request()->all()), '{"logoutRequest":"<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"') !== false;
 
         $dontReportException = in_array(get_class($exception), [
@@ -94,6 +102,11 @@ class Handler extends ExceptionHandler
             $date_time = Carbon::now('America/Los_Angeles');
             $error_info = "[$date_time] " . app()->environment() . "\r\n\tUrl: " . config('app.url') . "\r\n\tError: $error_info";
             $log_file = $dontReports ? "logs/unreported-errors.log" : "logs/laravel-$date.log";
+            Telegram::sendMessage([
+                'chat_id' => config('myconfig.telegram_channel_id'),
+                'parse_mode' => 'HTML',
+                'text' =>  $error_info
+            ]);
             $contents = Storage::disk('s3')->exists("$log_file")
                 ? Storage::disk('s3')->get("$log_file") . "\r\n$error_info"
                 : $error_info;

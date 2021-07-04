@@ -2,7 +2,6 @@
 
 namespace App\Console\Commands;
 
-use App\Mail\EmailError;
 use Carbon\Carbon;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Mail;
@@ -51,7 +50,7 @@ class notifyLatestErrors extends Command
             Telegram::sendMessage([
                 'chat_id' => config('myconfig.telegram_channel_id'),
                 'parse_mode' => 'HTML',
-                'text' =>  $latest_error
+                'text' =>  $latest_error . 'notify'
             ]);
         }
     }
