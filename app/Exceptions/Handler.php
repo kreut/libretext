@@ -50,13 +50,6 @@ class Handler extends ExceptionHandler
      */
     public function report(Throwable $exception)
     {
-        Telegram::sendMessage([
-            'chat_id' => config('myconfig.telegram_channel_id'),
-            'parse_mode' => 'HTML',
-            'text' =>  $exception->getMessage() .'report'
-        ]);
-
-
         $logoutError = strpos(json_encode(request()->all()), '{"logoutRequest":"<samlp:LogoutRequest xmlns:samlp=\"urn:oasis:names:tc:SAML:2.0:protocol\"') !== false;
 
         $dontReportException = in_array(get_class($exception), [
