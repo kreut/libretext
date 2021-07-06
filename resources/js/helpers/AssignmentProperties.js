@@ -28,7 +28,7 @@ export const assignmentForm = new Form({
   notifications: 1
 })
 
-export async function getAssignmentGroups (courseId, noty) {
+export async function getAssignmentGroups (courseId, noty, vm) {
   let assignmentGroups = [{ value: null, text: 'Please choose one' }]
   try {
     const { data } = await axios.get(`/api/assignmentGroups/${courseId}`)

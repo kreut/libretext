@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Course;
 use App\Exceptions\Handler;
 use Exception;
 use Illuminate\Http\Request;
@@ -26,6 +27,22 @@ class CookieController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error switching views. Please try again or contact us for assistance.";
+        }
+        return response($response)->withCookie($cookie);
+    }
+
+    public function setAssignmentGroupFilter(Request $request, Course $course, string $chosenAssignmentGroup)
+    {
+        try {
+            $response['type'] = 'error';
+            $cookie = $request->cookie('assignment_group_filter');
+            $assignment_group_filters = json_decode($cookie, true);
+            $assignment_group_filters[$course->id] = $chosenAssignmentGroup === "null" ? null : (int)$chosenAssignmentGroup;
+            $cookie = cookie()->forever('assignment_group_filter', json_encode($assignment_group_filters));
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
         }
         return response($response)->withCookie($cookie);
     }

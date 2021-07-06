@@ -48,10 +48,15 @@ export function initAssignmentGroupOptions (assignments) {
   }
 }
 
-export function updateAssignmentGroupFilter () {
+export function updateAssignmentGroupFilter (courseId) {
   for (let i = 0; i < this.assignmentGroupOptions.length; i++) {
     if (this.assignmentGroupOptions[i].value === this.chosenAssignmentGroup) {
       this.chosenAssignmentGroupText = this.assignmentGroupOptions[i].text
     }
+  }
+  try {
+    axios.patch(`/api/cookie/set-assignment-group-filter/${courseId}/${this.chosenAssignmentGroup}`)
+  } catch (error) {
+    console.log(error)
   }
 }

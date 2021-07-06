@@ -61,6 +61,7 @@ Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
+    Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
 
     Route::post('logout', 'Auth\LoginController@logout');
 
@@ -124,7 +125,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('assignmentGroups/{course}', 'AssignmentGroupController@getAssignmentGroupsByCourse');
     Route::post('assignmentGroups/{course}', 'AssignmentGroupController@store');
-
+    Route::get('assignmentGroups/get-assignment-group-filter/{course}', 'AssignmentGroupController@getAssignmentGroupFilter');
 
     Route::get('/assignments/{course}/assignments-and-users', 'AssignmentController@getAssignmentsAndUsers');
     Route::patch('/assignments/{course}/order', 'AssignmentController@order');

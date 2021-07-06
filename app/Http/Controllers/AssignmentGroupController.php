@@ -46,8 +46,12 @@ class AssignmentGroupController extends Controller
         return $response;
     }
 
-
-    public function getAssignmentGroupsByCourse(Request $request, Course $course, AssignmentGroup $assignmentGroup)
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentGroupsByCourse(Course $course): array
     {
         $response['type'] = 'error';
         try {
@@ -57,6 +61,31 @@ class AssignmentGroupController extends Controller
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting your assignment groups.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentGroupFilter(Request $request, Course $course): array
+    {
+        $response['type'] = 'error';
+        try {
+            $assignment_group_filter = null;
+            if ( $request->hasCookie('assignment_group_filter')){
+                $cookie = $request->cookie('assignment_group_filter');
+                $assignment_group_filters_by_course = json_decode($cookie, true);
+                $assignment_group_filter = $assignment_group_filters_by_course[$course->id] ?? null;
+            }
+            $response['assignment_group_filter'] = $assignment_group_filter;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
         }
         return $response;
     }

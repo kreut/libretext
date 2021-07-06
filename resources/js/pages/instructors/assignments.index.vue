@@ -176,7 +176,7 @@
             <b-form-select v-if="assignmentGroupOptions.length>1"
                            v-model="chosenAssignmentGroup"
                            :options="assignmentGroupOptions"
-                           @change="updateAssignmentGroupFilter()"
+                           @change="updateAssignmentGroupFilter(courseId)"
             />
           </b-col>
           <b-col lg="5">
@@ -459,6 +459,9 @@ export default {
     this.isLoading = true
     await this.getCourseInfo()
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
+    if (this.user.role === 2) {
+      await this.getAssignmentGroupFilter(this.courseId)
+    }
     if (this.user) {
       if (![2, 4].includes(this.user.role)) {
         this.isLoading = false
@@ -468,9 +471,23 @@ export default {
       await this.getAssignments()
       this.currentOrderedAssignments = this.assignments
       this.initAssignmentGroupOptions(this.assignments)
+      if (this.user.role === 2) {
+        this.updateAssignmentGroupFilter(this.courseId)
+      }
     }
   },
   methods: {
+    async getAssignmentGroupFilter (courseId) {
+      try {
+        const { data } = await axios.get(`/api/assignmentGroups/get-assignment-group-filter/${courseId}`)
+        if (data.type === 'success') {
+          this.chosenAssignmentGroup = data.assignment_group_filter
+          console.log(this.assignmentGroupOptions)
+        }
+      } catch (error) {
+        console.log(error)
+      }
+    },
     async handleSubmitAssignmentInfo () {
       this.prepareForm(this.form)
       try {
