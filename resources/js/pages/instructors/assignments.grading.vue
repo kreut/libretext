@@ -114,7 +114,9 @@
                 add comments in the form of text or a file upload. The total number of points that the student receives
                 for this questions will be the sum of the points that they received for submitting any automatically
                 graded responses (Question Submission Score)
-                plus the number of points that you give them for their file submission (File Submission Score).  You can move through the course roster by using the right/left arrows, searching for students by name, or by clicking on individual student numbers.
+                plus the number of points that you give them for their file submission (File Submission Score). You can
+                move through the course roster by using the right/left arrows, searching for students by name, or by
+                clicking on individual student numbers.
               </p>
             </b-row>
           </b-container>
@@ -194,7 +196,7 @@
                 align="center"
                 first-number
                 last-number
-                limit="20"
+                limit="17"
                 @input="changePage()"
               />
             </div>
@@ -283,13 +285,17 @@
                           <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
                             <b-form-input v-model="scoreForm.score"
                                           type="text"
-                                          placeholder="Enter the score"
                                           :class="{ 'is-invalid': scoreForm.errors.has('score') }"
                                           @keydown="scoreForm.errors.clear('score')"
                             />
                             <b-input-group-append>
-                              <b-button variant="primary" size="sm" @click="submitScoreForm">
-                                Save Score
+                              <b-button variant="primary" size="sm" class="ml-1 mr-1" @click="submitScoreForm(false)">
+                                Submit
+                              </b-button>
+                              <b-button :disabled="currentStudentPage === numStudents" variant="success" size="sm"
+                                        @click="submitScoreForm(true)"
+                              >
+                                Submit And Next
                               </b-button>
                             </b-input-group-append>
                             <has-error :form="scoreForm" field="score"/>
@@ -370,8 +376,13 @@
                           />
 
                           <b-row align-h="end" class="m-3">
-                            <b-button variant="primary" size="sm" @click="submitTextFeedbackForm">
-                              Save Comments
+                            <b-button variant="primary" size="sm" class="mr-1" @click="submitTextFeedbackForm(false)">
+                              Submit
+                            </b-button>
+                            <b-button :disabled="currentStudentPage === numStudents" variant="success" size="sm"
+                                      @click="submitTextFeedbackForm(true)"
+                            >
+                              Submit And Next
                             </b-button>
                           </b-row>
                           <hr>
@@ -773,7 +784,7 @@ export default {
     async toggleView () {
       this.viewSubmission = !this.viewSubmission
     },
-    async submitScoreForm () {
+    async submitScoreForm (next) {
       try {
         this.scoreForm.assignment_id = this.assignmentId
         this.scoreForm.question_id = this.submissionFiles[this.currentStudentPage - 1]['question_id']
@@ -786,6 +797,10 @@ export default {
           this.submissionFiles[this.currentStudentPage - 1]['file_submission_score'] = this.scoreForm.score
           this.submissionFiles[this.currentStudentPage - 1]['date_graded'] = data.date_graded
           this.submissionFiles[this.currentStudentPage - 1]['grader_name'] = data.grader_name
+          if (next) {
+            this.currentStudentPage++
+            await this.changePage()
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -854,7 +869,7 @@ export default {
           return false
       }
     },
-    async submitTextFeedbackForm () {
+    async submitTextFeedbackForm (next) {
       if (this.textFeedbackMode === 'canned_response' && this.cannedResponse === null) {
         this.$noty.error('You need to choose a response.')
         return false
@@ -876,6 +891,10 @@ export default {
         if (data.type === 'success') {
           this.submissionFiles[this.currentStudentPage - 1]['text_feedback_editor'] = this.textFeedbackForm.text_feedback_editor
           this.submissionFiles[this.currentStudentPage - 1]['text_feedback'] = this.textFeedbackForm.textFeedback
+          if (next) {
+            this.currentStudentPage++
+            await this.changePage()
+          }
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
