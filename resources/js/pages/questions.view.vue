@@ -90,7 +90,97 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+    <b-modal
+      id="modal-properties"
+      ref="modalProperties"
+      title="Properties"
+      size="lg"
+    >
+      <b-container>
+        <b-form-group
+          id="private_description"
+          label-cols-sm="3"
+          label-cols-lg="2"
+        >
+          <template slot="label">
+            Private Description
+            <b-icon id="private-description-tooltip"
+                    v-b-tooltip.hover
+                    class="text-muted"
+                    icon="question-circle"
+            />
+            <b-tooltip target="private-description-tooltip" triggers="hover">
+              An optional description for the assessment. This description will only be viewable by you.
+            </b-tooltip>
+          </template>
+          <b-form-textarea
+            id="private_description"
+            v-model="propertiesForm.private_description"
+            rows="2"
+            max-rows="2"
+          />
+        </b-form-group>
 
+        <b-form-group
+          id="author"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Author"
+          label-for="author"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-input
+                id="author"
+                v-model="propertiesForm.author"
+                lg="7"
+                type="text"
+              />
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="license"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="License"
+          label-for="license"
+        >
+          <b-form-row>
+            <b-col lg="4">
+              <b-form-select v-model="propertiesForm.license"
+                             :options="licenseOptions"
+                             :class="{ 'is-invalid': propertiesForm.errors.has('license') }"
+                             size="sm"
+                             @change="propertiesForm.errors.clear('license')"
+              />
+              <has-error :form="propertiesForm" field="license"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          id="attribution"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label="Attribution"
+          label-for="attribution"
+        >
+          <b-form-row>
+            <ckeditor v-model="propertiesForm.attribution"
+                      :config="richEditorConfig"
+            />
+          </b-form-row>
+        </b-form-group>
+      </b-container>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-properties')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="updateProperties()">
+          Update
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-reset-to-default-text"
       ref="modal"
@@ -718,6 +808,13 @@
                       <b-icon icon="share"/>
                       Share
                     </b-button>
+                    <b-button
+                      variant="info"
+                      size="sm"
+                      @click="openModalProperties()"
+                    >
+                      Properties
+                    </b-button>
                   </div>
                   <div class="font-italic font-weight-bold">
                     <div v-if="user.role === 3 && showScores && isOpenEnded">
@@ -938,23 +1035,23 @@
 
                 <div v-if="showQuestion">
                   <div class="border border-gray p-0">
-                    <div v-if="questions[currentPage-1].non_technology">
-                    <iframe
-                      :key="`non-technology-iframe-${currentPage}`"
-                      v-resize="{ log: true }"
-                      width="100%"
-                      :src="questions[currentPage-1].non_technology_iframe_src"
-                      frameborder="0"
-                    ></iframe>
+                    <div>
+                      <iframe v-show="questions[currentPage-1].non_technology"
+                              :id="`non-technology-iframe-${currentPage}`"
+                              allowtransparency="true"
+                              frameborder="0"
+                              :src="questions[currentPage-1].non_technology_iframe_src"
+                              style="width: 1px;min-width: 100%;"
+                      />
                     </div>
-                    <div v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')">
-                    <iframe
-                      v-resize="{ log: true }"
-                      width="100%"
-                      :src="questions[currentPage-1].technology_iframe"
-                      frameborder="0"
-                    ></iframe>
-                      </div>
+                    <div v-show="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')">
+                      <div v-html="questions[currentPage-1].technology_iframe"/>
+                    </div>
+                  </div>
+                  <div v-show="questions[currentPage-1].attribution" class="mt-2">
+                    <b-card header-html="<h6 class=&quot;font-weight-bold&quot;>Attribution</h6>">
+                      <span class="font-italic" v-html="questions[currentPage-1].attribution"/>
+                    </b-card>
                   </div>
                   <div v-if="assessmentType === 'clicker'">
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -1156,7 +1253,7 @@
                           <a href=""
                              @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                           >{{
-                            previousNode.title
+                              previousNode.title
                             }}</a>
                         </b-row>
                         <b-row align-h="center">
@@ -1230,13 +1327,13 @@
                       <br>
                       <div v-if="showScores">
                         <span class="font-weight-bold">Score:</span> {{
-                        questions[currentPage - 1].submission_score
+                          questions[currentPage - 1].submission_score
                         }}<br>
                         <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_z_score }}<br>
                       </div>
                       <div v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                         <span class="font-weight-bold">Late Penalty:</span> {{
-                        questions[currentPage - 1].late_penalty_percent
+                          questions[currentPage - 1].late_penalty_percent
                         }}%<br>
                       </div>
 
@@ -1593,6 +1690,23 @@ export default {
     submissionDataMessage: '',
     showSubmissionMessage: false,
     processingFile: false,
+    propertiesForm: new Form({
+      private_description: '',
+      author: '',
+      license: null,
+      attribution: ''
+    }),
+    licenseOptions: [
+      { value: null, text: 'None' },
+      { value: 'publicdomain', text: 'Public Domain' },
+      { value: 'ccby', text: 'CC BY' },
+      { value: 'ccbyncsa', text: 'CC BY-SA' },
+      { value: 'ccbynd', text: 'CC BY-ND' },
+      { value: 'ccbyncnd', text: 'CC BY-NC-ND' },
+      { value: 'gnu', text: 'GNU GPL' },
+      { value: 'arr', text: 'All Rights Reserved' },
+      { value: 'gnufdl', text: 'GNU FDL' }
+    ],
     questionSubmissionPageForm: new Form({
       page: ''
     }),
@@ -1736,6 +1850,31 @@ export default {
     }
   },
   methods: {
+    async updateProperties () {
+      try {
+        const { data } = await this.propertiesForm.patch(`/api/questions/properties/${this.questions[this.currentPage - 1].id}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'success') {
+          return false
+        }
+        this.questions[this.currentPage - 1].author = this.propertiesForm.author
+        this.questions[this.currentPage - 1].license = this.propertiesForm.license
+        this.questions[this.currentPage - 1].attribution = this.propertiesForm.attribution
+        this.questions[this.currentPage - 1].private_description = this.propertiesForm.private_description
+        this.$bvModal.hide('modal-properties')
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
+    async openModalProperties () {
+      this.propertiesForm.author = this.questions[this.currentPage - 1].author
+      this.propertiesForm.license = this.questions[this.currentPage - 1].license
+      this.propertiesForm.attribution = this.questions[this.currentPage - 1].attribution
+      this.propertiesForm.private_description = this.questions[this.currentPage - 1].private_description
+      this.$bvModal.show('modal-properties')
+    },
     async submitRemoveSolution () {
       try {
         const { data } = await axios.delete(`/api/solution-files/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`)
@@ -2501,6 +2640,8 @@ export default {
     },
     showIframe (id) {
       this.iframeLoaded = true
+      iFrameResize({ log: false }, `#${id}`)
+      iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
     },
     back (remediationObject) {
       let parentIdToShow = false
@@ -2563,6 +2704,9 @@ export default {
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
+        let iframeId = this.questions[currentPage - 1].iframe_id
+        iFrameResize({ log: false }, `#${iframeId}`)
+        iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
       })
 
       if (this.showAssignmentStatistics) {
@@ -2865,8 +3009,7 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: this.$t('home') }
   }

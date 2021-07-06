@@ -14,6 +14,14 @@ class QuestionPolicy
     use HandlesAuthorization;
 
 
+    public function updateProperties(User $user)
+    {
+        return ($user->role === 2)
+            ? Response::allow()
+            : Response::deny("You are not allowed to update the question's properties.");
+
+    }
+
     public function viewAny(User $user)
     {
         return ($user->role !== 3)

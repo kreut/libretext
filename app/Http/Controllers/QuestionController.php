@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\Http\Requests\UpdateQuestionProperties;
 use App\Libretext;
 use App\Question;
 use Illuminate\Http\Request;
@@ -34,6 +35,39 @@ class QuestionController extends Controller
     {
         $response['default_import_library'] = $request->cookie('default_import_library') ?? null;
         return $response;
+    }
+
+    /**
+     * @param UpdateQuestionProperties $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function updateProperties(UpdateQuestionProperties $request, Question $question): array
+    {
+
+        try {
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('updateProperties', $question);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            $data = $request->validated();
+            $question->author = $request->author;
+            $question->license = $data['license'];
+            $question->attribution = $request->attribution;
+            $question->save();
+            $response['type'] = 'success';
+            $response['message']= "The question's properties have been updated.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
     }
 
     public function storeDefaultImportLibrary(Request $request, Libretext $libretext)
@@ -170,7 +204,7 @@ class QuestionController extends Controller
     public function getLibraryFromLibraryText($libraries, $library_text)
     {
         $response = false;
-        foreach ($libraries as $key => $library){
+        foreach ($libraries as $key => $library) {
             //works for the name or abbreviations
             if (strtolower($key) === $library_text || $library === $library_text) {
                 $response = $library;

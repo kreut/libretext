@@ -113,6 +113,29 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
+    public function non_instructor_cannot_update_properties(){
+
+        $this->actingAs($this->student_user)->patchJson("/api/questions/properties/{$this->question->id}")
+            ->assertJson(['message' => "You are not allowed to update the question's properties."]);
+
+    }
+
+    /** @test */
+    public function license_must_be_valid(){
+        $this->actingAs($this->user)->patchJson("/api/questions/properties/{$this->question->id}", ['license' => 'fake license'])
+            ->assertJsonValidationErrors(['license']);
+
+    }
+
+    /** @test */
+
+    public function instructor_can_update_properties(){
+        $this->actingAs($this->user)->patchJson("/api/questions/properties/{$this->question->id}", ['license' => 'arr'])
+            ->assertJson(['message' => "The question's properties have been updated."]);
+    }
+
+    /** @test */
+
     public function non_owner_cannot_remove_solution()
     {
 

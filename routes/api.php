@@ -189,7 +189,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/questions/{question}', 'QuestionController@show');
-
+    Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
+    Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
 
     Route::get('/libreverse/library/{library}/page/{pageId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByLibraryAndPageId');
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');

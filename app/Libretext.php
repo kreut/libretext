@@ -3,7 +3,6 @@
 namespace App;
 
 use App\MindTouchEvent;
-use App\Question;
 use Illuminate\Database\Eloquent\Model;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Http;
@@ -13,7 +12,6 @@ use Illuminate\Support\Facades\DB;
 use App\Traits\MindTouchTokens;
 use App\Traits\S3;
 
-use App\Exceptions\Handler;
 use \Exception;
 
 class Libretext extends Model
@@ -63,6 +61,21 @@ class Libretext extends Model
             'Social Science' => 'socialsci',
             'Statistics' => 'stats',
             'Workforce' => 'workforce'];
+    }
+
+    public function saveQuestionMetaInformation()
+    {
+        try {
+            $questions = Question::all();
+            foreach ($questions as $question) {
+                $response = Http::get("https://{$question->library}.libretexts.org/@api/deki/pages/{$question->page_id}/contents");
+                $xml = simplexml_load_string($response->body());
+                var_dump($xml->attributes());
+                sleep(1);
+            }
+        } catch (Exception $e) {
+          Log::error($e->getMessage());
+        }
     }
 
     /**
