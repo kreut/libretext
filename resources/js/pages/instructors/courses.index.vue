@@ -236,6 +236,8 @@ export default {
     newCourseForm: new Form({
       school: '',
       name: '',
+      public_description: '',
+      private_description: '',
       section: '',
       start_date: '',
       end_date: '',

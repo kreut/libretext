@@ -106,10 +106,10 @@ class EnrollmentController extends Controller
             ///clean up database call
             foreach ($new_assign_to_timing_ids as $assign_to_timing_id) {
                 $section_assign_to_groups = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)
-                        ->where('group','section')->get();
+                    ->where('group', 'section')->get();
                 $assigned_user_to_new_assign_to_group = false;
-                foreach ($section_assign_to_groups as $section_assign_to_group){
-                    if (!$assigned_user_to_new_assign_to_group && $section_assign_to_group->group_id === $new_section_id){
+                foreach ($section_assign_to_groups as $section_assign_to_group) {
+                    if (!$assigned_user_to_new_assign_to_group && $section_assign_to_group->group_id === $new_section_id) {
                         $assignToUser = new AssignToUser();
                         $assignToUser->user_id = $user->id;
                         $assignToUser->assign_to_timing_id = $assign_to_timing_id;
@@ -117,10 +117,10 @@ class EnrollmentController extends Controller
                         $assigned_user_to_new_assign_to_group = true;
                     }
                 }
-                if (!$assigned_user_to_new_assign_to_group){
+                if (!$assigned_user_to_new_assign_to_group) {
                     $course_assign_to_group = AssignToGroup::where('assign_to_timing_id', $assign_to_timing_id)
-                        ->where('group','course')->first();
-                    if ( $course_assign_to_group){
+                        ->where('group', 'course')->first();
+                    if ($course_assign_to_group) {
                         $assignToUser = new AssignToUser();
                         $assignToUser->user_id = $user->id;
                         $assignToUser->assign_to_timing_id = $assign_to_timing_id;
@@ -281,7 +281,8 @@ class EnrollmentController extends Controller
                     DB::raw('CONCAT(courses.name, " - " , sections.name) AS course_section_name'),
                     'courses.start_date',
                     'courses.end_date',
-                    'courses.id')
+                    'courses.id',
+                    'courses.public_description')
                 ->get();
             $response['type'] = 'success';
         } catch (Exception $e) {

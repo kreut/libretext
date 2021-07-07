@@ -372,6 +372,8 @@ class CourseController extends Controller
             $response['course'] = [
                 'school' => $course->school->name,
                 'name' => $course->name,
+                'public_description' => $course->public_description,
+                'private_description' => $course->private_description,
                 'term' => $course->term,
                 'students_can_view_weighted_average' => $course->students_can_view_weighted_average,
                 'letter_grades_released' => $course->finalGrades->letter_grades_released,
@@ -525,6 +527,8 @@ class CourseController extends Controller
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'] . '00:00:00', auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'] . '00:00:00', auth()->user()->time_zone);
             $data['shown'] = 0;
+            $data['public_description'] = $request->public_description;
+            $data['private_description'] = $request->private_description;
             //create the main section
             $section->name = $data['section'];
             $section->crn = $data['crn'];
@@ -585,7 +589,8 @@ class CourseController extends Controller
             $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
-
+            $data['public_description'] = $request->public_description;
+            $data['private_description'] = $request->private_description;
             $course->update($data);
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been updated.";

@@ -40,6 +40,8 @@ export default {
     editCourseForm: new Form({
       school: '',
       name: '',
+      public_description: '',
+      private_description: '',
       start_date: '',
       end_date: '',
       public: '1'
@@ -70,6 +72,8 @@ export default {
         let course = data.course
         this.editCourseForm.school = course.school
         this.editCourseForm.name = course.name
+        this.editCourseForm.public_description = course.public_description
+        this.editCourseForm.private_description = course.private_description
         this.editCourseForm.term = course.term
         this.editCourseForm.start_date = course.start_date
         this.editCourseForm.end_date = course.end_date

@@ -1,8 +1,8 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses" />
+    <PageTitle title="My Courses"/>
     <div class="row mb-4 float-right">
-      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses" />
+      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
       <b-button v-b-modal.modal-enroll-in-course variant="primary">
         Enroll In Course
       </b-button>
@@ -13,6 +13,9 @@
           <div class="mb-0">
             <a href="" @click.prevent="getAssignments(data.item.id)">{{ data.item.course_section_name }}</a>
           </div>
+        </template>
+        <template v-slot:cell(public_description)="data">
+          {{ data.item.public_description ? data.item.public_description : 'None provided' }}
         </template>
         <template v-slot:cell(start_date)="data">
           {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
@@ -48,6 +51,10 @@ export default {
       {
         key: 'course_section_name',
         label: 'Course - Section'
+      },
+      {
+        key: 'public_description',
+        label: 'Course Description'
       },
       'instructor',
       {
