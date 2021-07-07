@@ -552,7 +552,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        return  $assignment->getAssignmentsByCourse($course, $extension, $Score, $Submission, $Solution, $AssignmentGroup);
+        return $assignment->getAssignmentsByCourse($course, $extension, $Score, $Submission, $Solution, $AssignmentGroup);
     }
 
 
@@ -627,6 +627,8 @@ class AssignmentController extends Controller
             $assignment = Assignment::create(
                 [
                     'name' => $data['name'],
+                    'public_description' => $request->public_description,
+                    'private_description' => $request->private_description,
                     'source' => $data['source'],
                     'assessment_type' => $data['source'] === 'a' ? $request->assessment_type : 'delayed',
                     'min_time_needed_in_learning_tree' => $learning_tree_assessment ? $data['min_time_needed_in_learning_tree'] : null,
@@ -1260,7 +1262,8 @@ class AssignmentController extends Controller
                 $response['message'] = $repeated_groups;
                 return $response;
             }
-
+            $data['public_description'] = $request->public_description;
+            $data['private_description'] = $request->private_description;
             $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
             $data['instructions'] = $request->instructions ? $request->instructions : '';
             $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
@@ -1270,7 +1273,7 @@ class AssignmentController extends Controller
             $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
             $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
             $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
-            unset($data['available_from_date']);
+            unset($data['available_frovm_date']);
             unset($data['available_from_time']);
             unset($data['final_submission_deadline']);
             unset($data['open_ended_response']);

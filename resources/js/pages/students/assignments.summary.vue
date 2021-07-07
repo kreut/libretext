@@ -92,8 +92,11 @@
           </div>
           <b-card v-show="assessmentType !== 'clicker'" header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
+              <p v-if="public_description.length" class="mb-2">
+                <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
+              </p>
               <p v-if="instructions.length" class="mb-2">
-                <span class="font-weight-bold">Instructions: </span> <span v-html="instructions"/>
+                 <span v-html="instructions"/>
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
@@ -298,6 +301,7 @@ export default {
   middleware: 'auth',
   data: () => ({
     extension: null,
+    public_description: '',
     isInstructorLoggedInAsStudent: false,
     bothFileUploadMode: false,
     compiledPdf: false,
@@ -576,7 +580,10 @@ export default {
         }
         let assignment = data.assignment
         this.isInstructorLoggedInAsStudent = assignment.is_instructor_logged_in_as_student
+        this.public_description = assignment.public_description
         this.instructions = assignment.instructions
+          ? assignment.instructions.replace('<p>','<p><span class="font-weight-bold">Instructions: </span>')
+          : ''
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
         this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'

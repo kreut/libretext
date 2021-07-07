@@ -145,6 +145,8 @@ export async function editAssignment (assignment) {
   this.number_of_questions = assignment.number_of_questions
   this.form.default_clicker_time_to_submit = assignment.default_clicker_time_to_submit
   this.form.name = assignment.name
+  this.form.public_description = assignment.public_description
+  this.form.private_description = assignment.private_description
   this.form.assessment_type = this.assessmentType = assignment.assessment_type
 
   this.form.assign_tos = assignment.assign_tos

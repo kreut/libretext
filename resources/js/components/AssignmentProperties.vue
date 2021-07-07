@@ -199,6 +199,54 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
+        id="public_description"
+        label-cols-sm="4"
+        label-cols-lg="3"
+      >
+        <template slot="label">
+          Public Description
+          <b-icon id="public-description-tooltip"
+                  v-b-tooltip.hover
+                  class="text-muted"
+                  icon="question-circle"
+          />
+          <b-tooltip target="public-description-tooltip" triggers="hover">
+            An optional descriptive name for the assignment.  This description will be viewable by your students.
+          </b-tooltip>
+        </template>
+        <b-form-textarea
+          id="public_description"
+          v-model="form.public_description"
+          style="margin-bottom: 23px"
+          rows="2"
+          max-rows="2"
+        />
+      </b-form-group>
+      <b-form-group
+        id="private_description"
+        label-cols-sm="4"
+        label-cols-lg="3"
+      >
+        <template slot="label">
+          Private Description
+          <b-icon id="private-description-tooltip"
+                  v-b-tooltip.hover
+                  class="text-muted"
+                  icon="question-circle"
+          />
+          <b-tooltip target="private-description-tooltip" triggers="hover">
+            An optional descriptive name for the assignment.  This description will only be viewable by you.
+          </b-tooltip>
+        </template>
+        <b-form-textarea
+          id="private_description"
+          v-model="form.private_description"
+          style="margin-bottom: 23px"
+          rows="2"
+          max-rows="2"
+        />
+      </b-form-group>
+      <b-form-group
         id="assignment_group"
         label-cols-sm="4"
         label-cols-lg="3"

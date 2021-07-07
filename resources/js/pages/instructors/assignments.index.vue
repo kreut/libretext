@@ -513,6 +513,8 @@ export default {
 
     resetAssignmentForm () {
       this.form.name = ''
+      this.form.public_description = ''
+      this.form.private_description = ''
       this.form.available_from_date = ''
       this.form.available_from_time = '09:00:00'
       this.form.due_date = ''
