@@ -211,7 +211,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="public-description-tooltip" triggers="hover">
-            An optional descriptive name for the assignment.  This description will be viewable by your students.
+            An optional description for the assignment.  This description will be viewable by your students.
           </b-tooltip>
         </template>
         <b-form-textarea
@@ -235,7 +235,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="private-description-tooltip" triggers="hover">
-            An optional descriptive name for the assignment.  This description will only be viewable by you.
+            An optional description for the assignment.  This description will only be viewable by you.
           </b-tooltip>
         </template>
         <b-form-textarea

@@ -1191,6 +1191,9 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
                 $assignment->questions[$key]['author'] = $question->author;
+                $assignment->questions[$key]['private_description'] = $request->user()->role === 2
+                    ? $question->private_description
+                    : '';
                 $assignment->questions[$key]['license'] = $question->license;
                 $assignment->questions[$key]['attribution'] = $question->attribution;
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
@@ -1473,12 +1476,12 @@ class AssignmentSyncQuestionController extends Controller
         $problemJWT = $JWE->encrypt($token, 'webwork'); //create the token
         //put back the original secret
         \JWTAuth::getJWTProvider()->setSecret(config('myconfig.jwt_secret'));
-       /*  May help for debugging...
-        \Storage::disk('s3')->put('secret.txt',$secret);
-        \Storage::disk('s3')->put('webwork.txt',$token);
-        \Storage::disk('s3')->put('problem_jwt.txt',$problemJWT);
-        \Storage::disk('s3')->put('myconfig.jwt_secret.txt',config('myconfig.jwt_secret'));
-       */
+        /*  May help for debugging...
+         \Storage::disk('s3')->put('secret.txt',$secret);
+         \Storage::disk('s3')->put('webwork.txt',$token);
+         \Storage::disk('s3')->put('problem_jwt.txt',$problemJWT);
+         \Storage::disk('s3')->put('myconfig.jwt_secret.txt',config('myconfig.jwt_secret'));
+        */
         $payload = auth()->payload();
 
         return $problemJWT;

@@ -57,6 +57,7 @@ class QuestionController extends Controller
             $question->author = $request->author;
             $question->license = $data['license'];
             $question->attribution = $request->attribution;
+            $question->private_description = $request->private_description;
             $question->save();
             $response['type'] = 'success';
             $response['message']= "The question's properties have been updated.";
