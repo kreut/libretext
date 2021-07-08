@@ -54,8 +54,7 @@
     "web-token/jwt-encryption-algorithm-aeskw": "^2.2",
     "web-token/jwt-encryption-algorithm-pbes2": "^2.2",
     "web-token/jwt-key-mgmt": "^2.2",
-    "web-token/jwt-signature-algorithm-hmac": "^2.2",
-    "wildbit/swiftmailer-postmark": "^3.3"
+    "web-token/jwt-signature-algorithm-hmac": "^2.2"
   },
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.5",
