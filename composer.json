@@ -24,6 +24,7 @@
     "ext-dom": "*",
     "ext-json": "*",
     "ext-libxml": "*",
+    "doctrine/dbal": "2.*",
     "fideloper/proxy": "^4.2",
     "fruitcake/laravel-cors": "^1.0",
     "guzzlehttp/guzzle": "^6.3",
@@ -59,7 +60,6 @@
   "require-dev": {
     "barryvdh/laravel-debugbar": "^3.5",
     "beyondcode/laravel-dump-server": "^1.4.0",
-    "doctrine/dbal": "^2.9",
     "facade/ignition": "^2.0",
     "fzaninotto/faker": "^1.9.1",
     "laravel/dusk": "^5.11",
