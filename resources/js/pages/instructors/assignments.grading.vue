@@ -282,7 +282,7 @@
                             + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
                           }} out of {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }}
                           <br>
-                          <b-input-group :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
+                          <b-input-group size="sm" :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
                             <b-form-input v-model="scoreForm.score"
                                           type="text"
                                           :class="{ 'is-invalid': scoreForm.errors.has('score') }"
