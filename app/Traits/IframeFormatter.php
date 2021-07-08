@@ -16,7 +16,7 @@ trait IframeFormatter
    public function formatIframeSrc($body, $id, $problemJWT = '')
    {
        preg_match('/src="([^"]+)"/', $body, $match);
-       $url = $match[1];
+       $url = $match[1] ?? '';
        if ($problemJWT) {
            if ($url) {
                $and = (substr($url, -1) === '?') ? '' : '&';//just the problemJWT or with query parameters
