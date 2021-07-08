@@ -938,18 +938,23 @@
 
                 <div v-if="showQuestion">
                   <div class="border border-gray p-0">
-                    <div>
-                      <iframe v-show="questions[currentPage-1].non_technology"
-                              :id="`non-technology-iframe-${currentPage}`"
-                              allowtransparency="true"
-                              frameborder="0"
-                              :src="questions[currentPage-1].non_technology_iframe_src"
-                              style="width: 1px;min-width: 100%;"
-                      />
+                    <div v-if="questions[currentPage-1].non_technology">
+                    <iframe
+                      :key="`non-technology-iframe-${currentPage}`"
+                      v-resize="{ log: true }"
+                      width="100%"
+                      :src="questions[currentPage-1].non_technology_iframe_src"
+                      frameborder="0"
+                    ></iframe>
                     </div>
-                    <div v-if="!(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
-                         v-html="questions[currentPage-1].technology_iframe"
-                    />
+                    <div v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')">
+                    <iframe
+                      v-resize="{ log: true }"
+                      width="100%"
+                      :src="questions[currentPage-1].technology_iframe"
+                      frameborder="0"
+                    ></iframe>
+                      </div>
                   </div>
                   <div v-if="assessmentType === 'clicker'">
                     <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -2496,8 +2501,6 @@ export default {
     },
     showIframe (id) {
       this.iframeLoaded = true
-      iFrameResize({ log: false }, `#${id}`)
-      iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
     },
     back (remediationObject) {
       let parentIdToShow = false
@@ -2560,9 +2563,6 @@ export default {
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
-        let iframeId = this.questions[currentPage - 1].iframe_id
-        iFrameResize({ log: false }, `#${iframeId}`)
-        iFrameResize({ log: false }, `#non-technology-iframe-${this.currentPage}`)
       })
 
       if (this.showAssignmentStatistics) {

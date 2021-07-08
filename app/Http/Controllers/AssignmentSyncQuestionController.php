@@ -1437,7 +1437,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
-                    $assignment->questions[$key]->technology_iframe = $this->formatIframe($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
+                    $assignment->questions[$key]->technology_iframe = $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
 
                 }

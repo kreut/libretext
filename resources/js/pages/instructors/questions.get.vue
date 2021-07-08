@@ -61,9 +61,15 @@
         />
       </div>
 
-      <div v-if="questionToView && showQuestion" data-iframe-height="iFrameResizer"
-           v-html="questionToView.technology_iframe"
-      />
+      <div v-if="questionToView && showQuestion" data-iframe-height="iFrameResizer">
+        <iframe
+          :id="`technology-iframe-${questionToView.id}`"
+          v-resize="{ log: true }"
+          width="100%"
+          :src="questionToView.technology_iframe"
+          frameborder="0"
+        />
+      </div>
       <template #modal-footer>
         <b-button
           v-show="viewQuestionAction==='add'"

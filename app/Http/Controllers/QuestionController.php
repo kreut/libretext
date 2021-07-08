@@ -230,7 +230,7 @@ class QuestionController extends Controller
             $questions[$key]['iframe_id'] = $this->createIframeId();
             $questions[$key]['non_technology'] = $question['non_technology'];
             $questions[$key]['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
-            $questions[$key]['technology_iframe'] = $this->formatIframe($question['technology_iframe'], $question['iframe_id']);
+            $questions[$key]['technology_iframe'] = $this->formatIframeSrc($question['technology_iframe'], $question['iframe_id']);
             $questions[$key]['solution'] = $solutions[$question->id] ?? false;
         }
 
@@ -260,8 +260,7 @@ class QuestionController extends Controller
             $question['iframe_id'] = $this->createIframeId();
             $question['non_technology'] = $question_info['non_technology'];
             $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
-            $question['technology_iframe'] = $this->formatIframe($question_info['technology_iframe'], $question['iframe_id']);
-            $question['technology_iframe'] = str_replace('width: 1px', 'height:400px', $question['technology_iframe']);
+            $question['technology_iframe'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
             if ($question_info['technology'] === 'webwork') {
                 //since it's the instructor, show the answer stuff
                 $question['technology_iframe'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',

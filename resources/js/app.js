@@ -34,6 +34,9 @@ Vue.component(VueCountdown.name, VueCountdown)
 Vue.directive('resize', {
   bind: function (el, { value = {} }) {
     el.addEventListener('load', () => iFrameResize(value, el))
+  },
+  unbind: function (el) {
+    el.iFrameResizer.removeListeners()
   }
 })
 
