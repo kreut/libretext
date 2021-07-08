@@ -3,25 +3,24 @@
 namespace App\Console\Commands;
 
 use App\Question;
-use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
 
-class convertH5pToLibreStudio extends Command
+class h5pfix extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'convert:h5pToLibreStudio';
+    protected $signature = 'fix:h5p';
 
     /**
      * The console command description.
      *
      * @var string
      */
-    protected $description = 'Rewrites the h5p as libre studio';
+    protected $description = 'Fixes the messed up h5p questions';
 
     /**
      * Create a new command instance.
@@ -40,7 +39,6 @@ class convertH5pToLibreStudio extends Command
      */
     public function handle()
     {
-
         try {
 
             // DB::statement('CREATE TABLE questions_original LIKE questions');
@@ -49,12 +47,9 @@ class convertH5pToLibreStudio extends Command
             $questions = Question::where('technology', 'h5p')->get();
             DB::beginTransaction();
             foreach ($questions as $question) {
-                if (strpos($question->technology_iframe,'h5p.libretexts.org') !== false) {
-                    preg_match('/src="([^"]*)"/i', $question->technology_iframe, $output_array);
-                    $id = str_replace('https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&amp;id=', '', $output_array[1]);
-                    $question->technology_iframe = str_replace($output_array[1], "https://studio.libretexts.org/h5p/$id/embed", $question->technology_iframe);
-                    $question->save();
-                }
+                $question->technology_iframe= str_replace('https://studio.libretexts.org/h5p/https://studio.libretexts.org/', 'https://studio.libretexts.org/',$question->technology_iframe);
+                $question->technology_iframe =  str_replace('/embed/embed','/embed', $question->technology_iframe);
+               $question->save();
             }
             DB::commit();
 
