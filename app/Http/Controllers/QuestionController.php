@@ -43,7 +43,7 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateProperties(UpdateQuestionProperties $request, Question $question): array
+    public function updateProperties(Request $request, Question $question): array
     {
 
         try {
@@ -53,10 +53,8 @@ class QuestionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-            $data = $request->validated();
-            $question->author = $request->author;
-            $question->license = $data['license'];
-            $question->attribution = $request->attribution;
+            $question->auto_attribution = $request->auto_attribution;
+            $question->attribution = !$request->auto_attribution ? $request->attribution : null;
             $question->private_description = $request->private_description;
             $question->save();
             $response['type'] = 'success';
