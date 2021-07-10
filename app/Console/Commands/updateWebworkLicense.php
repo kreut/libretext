@@ -38,11 +38,8 @@ class updateWebworkLicense extends Command
      */
     public function handle()
     {
-       $questions = Question::where('technology','webwork')->get();
-       foreach ($questions as $question){
-           $question->license = 'ccbyncsa';
-           $question->license_version = '3.0';
-           $question->save();
-       }
+       Question::where('technology','webwork')->update(['license' => 'ccbyncsa',
+       'license_version'=> '3.0']);
+
     }
 }
