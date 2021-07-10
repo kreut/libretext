@@ -39,7 +39,7 @@ class Email extends Mailable
     public function build()
     {
 
-        return $this->from('adapt@libretexts.org','Adapt')
+        return $this->from('adapt@noreply.libretexts.org','Adapt')
                     ->view('emails.contact_us')
                     ->replyTo($this->email, $this->name)
                     ->with([

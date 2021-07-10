@@ -151,7 +151,7 @@ EOD;
         $beauty_mail->send($email_blade, $grading_info, function ($message)
         use ($to_email) {
             $message
-                ->from('adapt@libretexts.org')
+                ->from('adapt@noreply.libretexts.org','Adapt')
                 ->to($to_email)
                 ->subject("Grading Reminder");
         });

@@ -97,7 +97,7 @@ class graderNotificationsForDueAssignments extends Command
                           $beauty_mail->send('emails.notify_grader_when_assignment_due', $grading_info, function ($message)
                           use ($to_email) {
                               $message
-                                  ->from('adapt@libretexts.org')
+                                  ->from('adapt@noreply.libretexts.org','Adapt')
                                   ->to($to_email)
                                   ->subject('Grading');
                           });

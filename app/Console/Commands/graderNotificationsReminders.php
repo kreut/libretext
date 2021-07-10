@@ -167,7 +167,7 @@ class graderNotificationsReminders extends Command
         $beauty_mail->send('emails.summary_of_grader_reminders', $grading_info, function ($message)
         use ($to_email) {
             $message
-                ->from('adapt@libretexts.org')
+                ->from('adapt@noreply.libretexts.org','Adapt')
                 ->to($to_email)
                 ->subject("Summary of Ungraded Assignments");
         });
