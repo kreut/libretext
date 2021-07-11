@@ -140,7 +140,10 @@
               @change="autoAttribution = !autoAttribution"
             />
           </b-form-row>
-          <span class="ml-2" v-show="autoAttribution" v-html="autoAttributionHTML"/>
+          <div v-show="autoAttribution">
+          <span v-show="!autoAttribution.length" class="font-weight-bold font-italic">No licensing information is available.</span>
+          <span class="ml-2" v-show="autoAttribution.length" v-html="autoAttributionHTML"/>
+          </div>
           <ckeditor v-show="!autoAttribution"
                     v-model="propertiesForm.attribution"
                     :config="richEditorConfig"
@@ -1696,7 +1699,8 @@ export default {
       { value: 'ccbyncsa', text: 'CC BY-NC-SA', url: 'http://creativecommons.org/licenses/by-nc-sa' },
       { value: 'gnu', text: 'GNU GPL', url: 'https://www.gnu.org/licenses/gpl-' },
       { value: 'arr', text: 'All Rights Reserved' },
-      { value: 'gnufdl', text: 'GNU FDL', url: 'https://www.gnu.org/licenses/fdl-' }
+      { value: 'gnufdl', text: 'GNU FDL', url: 'https://www.gnu.org/licenses/fdl-' },
+      { value:'opl_license', text: 'OPL', url:'https://github.com/openwebwork/webwork-open-problem-library/blob/master/OPL_LICENSE'}
     ],
     licenseVersionOptions: [],
     defaultLicenseVersionOptions: [
@@ -1864,11 +1868,14 @@ export default {
       }
     },
     updateAutoAttribution (license, licenseVersion, author) {
+      if (licenseVersion === null){
+        licenseVersion = ''
+      }
       let byAuthor = author
         ? `by <span class="font-weight-bold">${author}</span>`
         : ''
-      if (!(license && licenseVersion)) {
-        this.autoAttributionHTML = '<span class="font-weight-bold font-italic">No licensing information is available.</span>'
+      if (!license) {
+        this.autoAttributionHTML = ''
         return
       }
       let chosenLicenseText = this.licenseOptions.find(item => item.value === license).text
