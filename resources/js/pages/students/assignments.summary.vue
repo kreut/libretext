@@ -92,7 +92,7 @@
           </div>
           <b-card v-show="assessmentType !== 'clicker'" header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
-              <p v-if="public_description.length" class="mb-2">
+              <p v-if="public_description" class="mb-2">
                 <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
               </p>
               <p v-if="instructions.length" class="mb-2">
@@ -301,7 +301,7 @@ export default {
   middleware: 'auth',
   data: () => ({
     extension: null,
-    public_description: '',
+    public_description: null,
     isInstructorLoggedInAsStudent: false,
     bothFileUploadMode: false,
     compiledPdf: false,
