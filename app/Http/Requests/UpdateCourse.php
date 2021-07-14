@@ -29,6 +29,7 @@ class UpdateCourse extends FormRequest
             'start_date' => 'required|date',
             'end_date' => 'required|date|after:start_date',
             'term' => 'required',
+            'alpha' => Rule::in([0, 1]),
             'public' => Rule::in([0, 1])
         ];
     }

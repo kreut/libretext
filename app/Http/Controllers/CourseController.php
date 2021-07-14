@@ -6,6 +6,8 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
+use App\BetaAssignment;
+use App\BetaCourse;
 use App\Course;
 use App\FinalGrade;
 use App\Http\Requests\UpdateCourse;
@@ -32,6 +34,21 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+
+    public function isAlpha(Course $course)
+    {
+        $response['type'] = 'error';
+        try {
+            $response['alpha'] = $course->alpha;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see whether this course is an Alpha course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     public function getLastSchool(Request $request, School $school)
     {
@@ -152,8 +169,11 @@ class CourseController extends Controller
                     Enrollment $enrollment,
                     FinalGrade $finalGrade,
                     Section $section,
-                    School $school)
+                    School $school,
+                    BetaCourse $betaCourse,
+                    BetaAssignment $betaAssignment)
     {
+
         $response['type'] = 'error';
 
         $authorized = Gate::inspect('import', $course);
@@ -165,6 +185,7 @@ class CourseController extends Controller
         $school = $this->getLastSchool($request, $school);
         try {
             DB::beginTransaction();
+            $import_as_beta = (int) $request->import_as_beta;
             $imported_course = $course->replicate();
             $imported_course->name = "$imported_course->name Import";
             $imported_course->shown = 0;
@@ -172,9 +193,12 @@ class CourseController extends Controller
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
-
             $imported_course->save();
-
+            if ($import_as_beta) {
+                $betaCourse->id = $imported_course->id;
+                $betaCourse->alpha_course_id = $course->id;
+                $betaCourse->save();
+            }
             foreach ($course->assignments as $assignment) {
                 $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
                 $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $imported_course, $imported_assignment_group_id, false);
@@ -190,6 +214,12 @@ class CourseController extends Controller
                 $imported_assignment->students_can_view_assignment_statistics = 0;
                 $imported_assignment->assignment_group_id = $imported_assignment_group_id;
                 $imported_assignment->save();
+                if ($import_as_beta){
+                   BetaAssignment::create([
+                        'id' => $imported_assignment->id,
+                       'alpha_assignment_id' => $assignment->id
+                    ]);
+                }
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment);
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
@@ -382,7 +412,8 @@ class CourseController extends Controller
                 'graders' => $course->graderInfo(),
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
-                'public' => $course->public];
+                'public' => $course->public,
+                'alpha' => $course->alpha];
 
             $response['type'] = 'success';
 

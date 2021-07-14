@@ -7,6 +7,8 @@ use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\BetaAssignment;
+use App\BetaCourse;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -599,7 +601,8 @@ class AssignmentController extends Controller
     function store(StoreAssignment $request, Assignment $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
                    Section $section,
-                   User $user)
+                   User $user,
+                   BetaCourse $betaCourse)
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -615,7 +618,6 @@ class AssignmentController extends Controller
 
             $data = $request->validated();
             $assign_tos = $request->assign_tos;
-
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
                 $response['message'] = $repeated_groups;
@@ -635,7 +637,6 @@ class AssignmentController extends Controller
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
-
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
@@ -657,9 +658,26 @@ class AssignmentController extends Controller
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
+            if ($course->alpha) {
+                $beta_assign_tos[0] = $assign_tos[0];
+                $beta_assign_tos[0]['groups'] = [];
+                $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
 
+                $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
+                foreach ($beta_courses as $beta_course) {
+                    $beta_assignment =$assignment->replicate()->fill([
+                        'course_id' => $beta_course->id
+                    ]);
+                    $beta_assignment->save();
+                    $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+                    BetaAssignment::create([
+                        'id' => $beta_assignment->id,
+                        'alpha_assignment_id' => $assignment->id
+                    ]);
+                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+                }
+            }
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
-
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\BetaAssignment;
 use App\DataShop;
 use App\Exceptions\Handler;
 use App\Http\Requests\StartClickerAssessment;
@@ -124,7 +125,8 @@ class AssignmentSyncQuestionController extends Controller
      */
     public function remixAssignmentWithChosenQuestions(Request $request,
                                                        Assignment $assignment,
-                                                       AssignmentSyncQuestion $assignmentSyncQuestion): array
+                                                       AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                       BetaAssignment $betaAssignment): array
     {
 
         $response['type'] = 'error';
@@ -141,73 +143,84 @@ class AssignmentSyncQuestionController extends Controller
             $chosen_questions = $request->chosen_questions;
             $assignment_questions = $assignment->questions->pluck('question_id')->toArray();
 
+            $assignment_ids = [$assignment->id];
 
-            foreach ($chosen_questions as $key => $question) {
-                if (!in_array($question['question_id'], $assignment_questions)) {
-                    $assignment_question = DB::table('assignment_question')
-                        ->where('assignment_id', $question['assignment_id'])
-                        ->where('question_id', $question['question_id'])
-                        ->first();
-                    if (!$assignment_question) {
-                        $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
-                        return $response;
-                    }
-                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-                        ->where('assignment_question_id', $assignment_question->id)
-                        ->first();
+            foreach ($assignment->betaAssignments() as $beta_assignment) {
+                $assignment_ids[] = $beta_assignment->id;
+            }
 
+            DB::beginTransaction();
 
-                    if ($assignment->file_upload_mode === 'compiled_pdf'
-                        && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
-                        $response['message'] = "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of $assignment_question->open_ended_submission_type.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'.";
-                        return $response;
-                    }
-                    unset($assignment_question->id);
-                    $assignment_question->assignment_id = $assignment->id;
-                    $assignment_question->order = $key + 1;
-                    $assignment_question->points = $assignment->default_points_per_question;
-                    $assignment_question->created_at = Carbon::now();
-                    $assignment_question->updated_at = Carbon::now();
-
-                    $assignment_question_exists = DB::table('assignment_question')
-                        ->where('assignment_id', $assignment->id)
-                        ->where('question_id', $question['question_id'])->first();
-                    $assignment_question_arr = (array)$assignment_question;
-
-                    $assignment_question_exists
-                        ? DB::table('assignment_question')
-                        ->where('assignment_id', $assignment->id)
-                        ->where('question_id', $question['question_id'])
-                        ->update($assignment_question_arr)
-                        : DB::table('assignment_question')->insert($assignment_question_arr);
-                    if ($assignment_question_learning_tree) {
+            foreach ($assignment_ids as $assignment_id) {
+                foreach ($chosen_questions as $key => $question) {
+                    if (!in_array($question['question_id'], $assignment_questions)) {
                         $assignment_question = DB::table('assignment_question')
-                            ->where('assignment_id', $assignment->id)
+                            ->where('assignment_id', $question['assignment_id'])
                             ->where('question_id', $question['question_id'])
                             ->first();
-                        if (!DB::table('assignment_question_learning_tree')
+                        if (!$assignment_question) {
+                            $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
+                            DB::rollBack();
+                            return $response;
+                        }
+                        $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                             ->where('assignment_question_id', $assignment_question->id)
-                            ->first()) {
-                            DB::table('assignment_question_learning_tree')
-                                ->insert(['assignment_question_id' => $assignment_question->id,
-                                    'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id]);
+                            ->first();
 
+
+                        if ($assignment->file_upload_mode === 'compiled_pdf'
+                            && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
+                            $response['message'] = "Your assignment is of file upload type Compiled PDF but you're trying to remix an open-ended type of $assignment_question->open_ended_submission_type.  If you would like to use this question, please edit your assignment and change the file upload type to 'Individual Assessment Upload' or 'Compiled Upload/Individual Assessment Upload'.";
+                            DB::rollBack();
+                            return $response;
+                        }
+
+                        unset($assignment_question->id);
+                        $assignment_question->assignment_id = $assignment_id;
+                        $assignment_question->order = $key + 1;
+                        $assignment_question->points = $assignment->default_points_per_question;
+                        $assignment_question->created_at = Carbon::now();
+                        $assignment_question->updated_at = Carbon::now();
+
+                        $assignment_question_exists = DB::table('assignment_question')
+                            ->where('assignment_id', $assignment_id)
+                            ->where('question_id', $question['question_id'])->first();
+                        $assignment_question_arr = (array)$assignment_question;
+
+                        $assignment_question_exists
+                            ? DB::table('assignment_question')
+                            ->where('assignment_id', $assignment_id)
+                            ->where('question_id', $question['question_id'])
+                            ->update($assignment_question_arr)
+                            : DB::table('assignment_question')->insert($assignment_question_arr);
+                        if ($assignment_question_learning_tree) {
+                            $assignment_question = DB::table('assignment_question')
+                                ->where('assignment_id', $assignment_id)
+                                ->where('question_id', $question['question_id'])
+                                ->first();
+                            if (!DB::table('assignment_question_learning_tree')
+                                ->where('assignment_question_id', $assignment_question->id)
+                                ->first()) {
+                                DB::table('assignment_question_learning_tree')
+                                    ->insert(['assignment_question_id' => $assignment_question->id,
+                                        'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id]);
+
+                            }
                         }
                     }
                 }
-            }
-            DB::beginTransaction();
-            //clean up the order, just in case
-            $assignment_questions = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->orderBy('order')
-                ->select('id')
-                ->get();
+                //clean up the order, just in case
+                $current_ordered_assignment_questions = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment_id)
+                    ->orderBy('order')
+                    ->select('id')
+                    ->get();
 
-            foreach ($assignment_questions as $key => $assignment_question) {
-                DB::table('assignment_question')->where('id', $assignment_question->id)
-                    ->update(['order' => $key + 1]);
+                foreach ($current_ordered_assignment_questions as $key => $assignment_question) {
+                    DB::table('assignment_question')->where('id', $assignment_question->id)
+                        ->update(['order' => $key + 1]);
 
+                }
             }
 
 
@@ -714,15 +727,22 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
+            $assignments = [$assignment];
+            $beta_assignments = $assignment->betaAssignments();
+            foreach ($beta_assignments as $beta_assignment){
+                $assignments[] = $beta_assignment;
+            }
             DB::beginTransaction();
-            DB::table('assignment_question')
-                ->insert([
-                    'assignment_id' => $assignment->id,
-                    'question_id' => $question->id,
-                    'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                    'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                    'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
+            foreach ($assignments as $assignment) {
+                DB::table('assignment_question')
+                    ->insert([
+                        'assignment_id' => $assignment->id,
+                        'question_id' => $question->id,
+                        'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
+                        'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                        'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                        'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
