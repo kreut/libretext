@@ -2,10 +2,10 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\ConfirmedBetaCourseName;
 use Illuminate\Foundation\Http\FormRequest;
-use Illuminate\Validation\Rule;
 
-class UpdateCourse extends FormRequest
+class UntetherBetaCourse extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,13 +24,9 @@ class UpdateCourse extends FormRequest
      */
     public function rules()
     {
+
         return [
-            'name' => ['required', 'max:255'],
-            'start_date' => 'required|date',
-            'end_date' => 'required|date|after:start_date',
-            'term' => 'required',
-            'alpha' => Rule::in([0, 1]),
-            'public' => Rule::in([0, 1])
+            'name' => new ConfirmedBetaCourseName($this->course_id, $this->name)
         ];
     }
 }

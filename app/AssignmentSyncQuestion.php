@@ -11,12 +11,33 @@ use Illuminate\Support\Collection;
 class AssignmentSyncQuestion extends Model
 {
 
+    public function addLearningTreeIfBetaAssignment(int $assignment_question_id,
+                                                    int $assignment_id,
+                                                    int $question_id)
+    {
+        $beta_learning_tree = DB::table('beta_course_approvals')
+            ->where('beta_assignment_id', $assignment_id)
+            ->where('beta_question_id', $question_id)
+            ->where('beta_learning_tree_id','<>',0)
+            ->first();
+        if ($beta_learning_tree) {
+            DB::table('assignment_question_learning_tree')
+                ->insert([
+                    'assignment_question_id' => $assignment_question_id,
+                    'learning_tree_id' => $beta_learning_tree->id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()
+                ]);
+        }
+
+    }
+
     public function completedAllAssignmentQuestions($assignment)
     {
         $num_technology_questions = $assignment->number_of_randomized_assignments
             ?: DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
-                ->join('questions','assignment_question.question_id','=','questions.id')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->where('technology', '<>', 'text')
                 ->count();
         $num_non_technology_questions = DB::table('assignment_question')
@@ -24,7 +45,7 @@ class AssignmentSyncQuestion extends Model
             ->where('open_ended_submission_type', '<>', '0')
             ->get()
             ->count();
-        if ($num_technology_questions + $num_non_technology_questions === 0){
+        if ($num_technology_questions + $num_non_technology_questions === 0) {
             return false;
         }
         $num_submitted_technology_questions = DB::table('submissions')

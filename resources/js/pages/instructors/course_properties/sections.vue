@@ -38,7 +38,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name"/>
+        <has-error :form="sectionForm" field="name" />
       </b-form-group>
       <b-form-group
         id="crn"
@@ -64,7 +64,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn"/>
+        <has-error :form="sectionForm" field="crn" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -102,6 +102,15 @@
         <div v-else>
           <b-card header="default" header-html="Sections">
             <b-card-text>
+              <p>
+                This course currently runs from
+                <span class="font-weight-bold">{{ $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}</span> to
+                <span class="font-weight-bold">{{ $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}</span>.
+                The access codes will only be valid within the start and end dates of
+                this course.  If you need to change these dates, you can always do so
+                <router-link :to="{name: 'course_properties.general_info'}" :params="{courseId: courseId}">
+                  here</router-link>.
+              </p>
               <b-table striped hover :fields="fields" :items="sections">
                 <template v-slot:head(crn)>
                   CRN
@@ -129,7 +138,7 @@
                       >
                         Edit Section
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
+                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
                     </span>
                     <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
                       <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
@@ -137,7 +146,7 @@
                       >
                         Delete Section
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
+                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
                     </span>
                     <span class="text-info">
                       <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
@@ -179,6 +188,9 @@ export default {
     Loading
   },
   data: () => ({
+    courseId: '',
+    courseStartDate: '',
+    courseEndDate: '',
     viewStudentAccessCodes: true,
     sectionForm: new Form({
       name: '',
@@ -202,6 +214,7 @@ export default {
     user: 'auth/user'
   }),
   async mounted () {
+    this.courseId = this.$route.params.courseId
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.courseId = this.$route.params.courseId
@@ -289,6 +302,8 @@ export default {
         return false
       }
       this.sections = data.sections
+      this.courseStartDate = data.course_start_date
+      this.courseEndDate = data.course_end_date
     },
     async refreshAccessCode (sectionId) {
       try {

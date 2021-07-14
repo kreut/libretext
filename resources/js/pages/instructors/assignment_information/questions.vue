@@ -1,11 +1,59 @@
 <template>
   <div>
+    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <b-modal
+      v-if="alphaAssignmentQuestion"
+      id="modal-view-question"
+      ref="modalViewQuestion"
+      title="View Question"
+      size="lg"
+    >
+      <div>
+        <iframe v-show="alphaAssignmentQuestion.non_technology"
+                :key="`non-technology-iframe-${alphaAssignmentQuestion.id}`"
+                v-resize="{checkOrigin: false }"
+                width="100%"
+                :src="alphaAssignmentQuestion.non_technology_iframe_src"
+                frameborder="0"
+        />
+      </div>
+
+      <div v-if="alphaAssignmentQuestion.technology_iframe">
+        <iframe
+          :key="`technology-iframe-${alphaAssignmentQuestion.id}`"
+          v-resize="{ checkOrigin: false }"
+          width="100%"
+          :src="alphaAssignmentQuestion.technology_iframe"
+          frameborder="0"
+        />
+      </div>
+      <template #modal-footer>
+        <b-button
+          v-show="viewQuestionAction==='add'"
+          size="sm"
+          class="float-right"
+          variant="primary"
+          @click="addQuestionFromAlphaAssignment()"
+        >
+          Add Question
+        </b-button>
+        <b-button
+          v-show="viewQuestionAction==='remove'"
+          size="sm"
+          class="float-right"
+          variant="danger"
+          @click="removeQuestionFromBetaAssignment()"
+        >
+          Remove Question
+        </b-button>
+      </template>
+    </b-modal>
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -56,6 +104,7 @@
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
                                 :non-learning-tree-questions="nonLearningTreeQuestions"
+                                :beta-assignments-exist="betaAssignmentsExist"
         />
         <div v-if="items.length">
           <p>
@@ -74,6 +123,51 @@
               Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
             </span>
           </p>
+        </div>
+        <b-card v-show="user.role === 2 && betaCourseApprovals.length"
+                header="default"
+                header-html="Beta Course Approvals"
+        >
+          <p>
+            The Alpha course instructor has either added or removed assessments on the tethered assignment.
+            By approving any changes here, your own students' assignments will reflect the changes.
+            In addition, their scores will be automatically updated to reflect the change; it is therefore
+            advisable not to approve any changes during a grading period.
+          </p>
+          <p class="font-weight-bold font-italic">
+            Due to the tethered nature of the assignment, once you approve an add or remove, this action cannot be
+            undone.
+          </p>
+          <b-card-text>
+            <b-table striped hover
+                     :fields="fields"
+                     :items="betaCourseApprovals"
+            >
+              <template v-slot:cell(title)="data">
+                <a href="#" @click="viewQuestionInModal(data.item,data.item.action)">
+                  {{ data.item.title !== null ? data.item.title : 'None provided' }}
+                </a>
+              </template>
+              <template v-slot:cell(action)="data">
+                <b-button v-if="data.item.action === 'add'"
+                          variant="primary"
+                          size="sm"
+                          @click="alphaAssignmentQuestion=data.item;addQuestionFromAlphaAssignment()"
+                >
+                  Add
+                </b-button>
+                <b-button v-if="data.item.action === 'remove'"
+                          variant="danger"
+                          size="sm"
+                          @click="alphaAssignmentQuestion=data.item;removeQuestionFromBetaAssignment()"
+                >
+                  Remove
+                </b-button>
+              </template>
+            </b-table>
+          </b-card-text>
+        </b-card>
+        <div v-if="items.length">
           <table class="table table-striped">
             <thead>
             <tr>
@@ -148,12 +242,12 @@
             </tbody>
           </table>
         </div>
-        <div v-else>
-          <b-alert variant="warning" show>
-            <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-            <strong/>
-          </b-alert>
-        </div>
+      </div>
+      <div v-if="!items.length && !isLoading" class="mt-5">
+        <b-alert variant="warning" :show="true">
+          <span class="font-weight-bold">This assignment doesn't have any questions.</span>
+          <strong/>
+        </b-alert>
       </div>
     </div>
   </div>
@@ -164,6 +258,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import draggable from 'vuedraggable'
+import { h5pResizer } from '~/helpers/H5PResizer'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
@@ -172,6 +267,8 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { viewQuestion, doCopy } from '~/helpers/Questions'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
+import CannotDeleteAssessmentFromBetaAssignmentModal from '~/components/CannotDeleteAssessmentFromBetaAssignmentModal'
+
 import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
@@ -186,9 +283,19 @@ export default {
     FontAwesomeIcon,
     Loading,
     draggable,
-    RemoveQuestion
+    RemoveQuestion,
+    CannotDeleteAssessmentFromBetaAssignmentModal
   },
   data: () => ({
+    viewQuestionAction: '',
+    alphaAssignmentQuestion: {},
+    fields: [
+      'title',
+      'action'
+    ],
+    betaCourseApprovals: [],
+    isBetaAssignment: false,
+    betaAssignmentsExist: false,
     openEndedQuestionsInRealTime: '',
     learningTreeQuestionsInNonLearningTree: '',
     nonLearningTreeQuestions: '',
@@ -220,8 +327,54 @@ export default {
     initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
+    this.getBetaCourseApprovals()
+    h5pResizer()
   },
   methods: {
+    viewQuestionInModal (question, action) {
+      this.alphaAssignmentQuestion = question
+      this.viewQuestionAction = action
+      this.$bvModal.show('modal-view-question')
+    },
+    async removeQuestionFromBetaAssignment () {
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.alphaAssignmentQuestion.question_id}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.betaCourseApprovals = this.betaCourseApprovals.filter(question => question.question_id !== this.alphaAssignmentQuestion.question_id)
+          await this.getAssignmentInfo()
+          this.$bvModal.hide('modal-view-question')
+        }
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+
+    async addQuestionFromAlphaAssignment () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.alphaAssignmentQuestion.question_id}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.betaCourseApprovals = this.betaCourseApprovals.filter(question => question.question_id !== this.alphaAssignmentQuestion.question_id)
+          await this.getAssignmentInfo()
+          this.$bvModal.hide('modal-view-question')
+        }
+      } catch (error) {
+        this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+    async getBetaCourseApprovals () {
+      try {
+        const { data } = await axios.get(`/api/beta-course-approvals/assignment/${this.assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.betaCourseApprovals = data.beta_course_approvals
+      } catch (error) {
+        this.$noty.error('We could not retrieve your Beta course approvals.  Please try again or contact us for assistance.')
+      }
+    },
     async submitRemoveQuestion () {
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questionId}`)
@@ -237,6 +390,10 @@ export default {
       }
     },
     openRemoveQuestionModal (questionId) {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
+        return false
+      }
       this.questionId = questionId
       this.$bvModal.show('modal-remove-question')
     },
@@ -281,6 +438,8 @@ export default {
           return false
         }
         this.assessmentType = data.assessment_type
+        this.betaAssignmentsExist = data.beta_assignments_exist
+        this.isBetaAssignment = data.is_beta_assignment
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {

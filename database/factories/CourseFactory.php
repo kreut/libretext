@@ -13,7 +13,8 @@ $factory->define(Course::class, function (Faker $faker) {
         'shown' => 1,
         'term' => '202101',
         'end_date' => '2021-06-10',
-        'public' => 1
+        'public' => 1,
+        'alpha' => 0
     ];
 
 });

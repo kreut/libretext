@@ -1,5 +1,42 @@
 <template>
   <div>
+    <b-modal
+      id="modal-untether-beta-course-warning"
+      ref="untetherBetaCourseWarning"
+      title="Untether Beta Course Warning"
+    >
+      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+        <p>
+          You are choosing to untether this Beta course from its Alpha course. Changes in the Alpha course will no
+          longer
+          be reflected in this course. In addition, if your course is served through a Libretext, your students will
+          no longer be able to access their assignments through your Libretext.
+        </p>
+        <p>If you choose this option and submit the form, you will not be able to re-tether the course.</p>
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-untether-beta-course-warning')">
+          I understand the consequences
+        </b-button>
+      </template>
+    </b-modal>
+    <b-tooltip target="untether_beta_course_tooltip"
+               delay="250"
+    >
+      If you would like to regain complete control over this Beta course, you can untether it. By untethering the
+      course,
+      you will be able to add/remove any assessments. Please note that if you are using your course in a Libretext and
+      untether it from the associated Alpha course, your students will no longer be able to access those assessments in
+      the Libretexdt.
+    </b-tooltip>
+    <b-tooltip target="alpha_course_tooltip"
+               delay="250"
+    >
+      If you designate this course as an Alpha course, other instructors will be able to create Beta courses which
+      are tethered to the Alpha course. Assignments in Alpha courses will then be replicated in the associated Beta
+      courses.
+      Because of the tethering feature, Alpha courses cannot be deleted unless all associated Beta courses are deleted.
+    </b-tooltip>
     <b-tooltip target="public_tooltip"
                delay="250"
     >
@@ -66,7 +103,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="public-description-tooltip" triggers="hover">
-            An optional description for the course.  This description will be viewable by your students.
+            An optional description for the course. This description will be viewable by your students.
           </b-tooltip>
         </template>
         <b-form-textarea
@@ -90,7 +127,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="private-description-tooltip" triggers="hover">
-            An optional description for the course.  This description will only be viewable by you.
+            An optional description for the course. This description will only be viewable by you.
           </b-tooltip>
         </template>
         <b-form-textarea
@@ -234,6 +271,49 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <b-form-group
+        id="alpha"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="alpha"
+      >
+        <template slot="label">
+          Alpha
+          <span id="alpha_course_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.alpha" stacked @change="validateCanChange">
+          <b-form-radio name="alpha" value="1">
+            Yes
+          </b-form-radio>
+
+          <b-form-radio name="alpha" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-show="course && course.is_beta_course"
+        id="untether_beta_course"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="untether_beta_course"
+      >
+        <template slot="label">
+          Untether Beta Course
+          <span id="untether_beta_course_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.untether_beta_course" stacked>
+          <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
+            Yes
+          </b-form-radio></span>
+
+          <b-form-radio name="untether_beta_course" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
     </b-form>
   </div>
 </template>
@@ -249,7 +329,8 @@ export default {
     VueBootstrapTypeahead
   },
   props: {
-    form: { type: Object, default: null }
+    form: { type: Object, default: null },
+    course: { type: Object, default: null }
   },
   data: () => ({
     schools: [],
@@ -262,6 +343,31 @@ export default {
     this.getSchools()
   },
   methods: {
+    showUntetherBetaCourseWarning () {
+      if (parseInt(this.form.untether_beta_course) === 0) {
+        this.$bvModal.show('modal-untether-beta-course-warning')
+      }
+    },
+    async validateCanChange () {
+      if (!this.course) {
+        return
+      }
+      let valid = true
+      let currentSelection = this.form.alpha
+      if (this.course.alpha && this.course.beta_courses_info.length) {
+        valid = false
+        this.$noty.info('You can\'t change this option since there are Beta courses associated with this Alpha course.')
+      }
+      if (this.course.is_beta_course) {
+        valid = false
+        this.$noty.info('You can\'t change this option since this is already a Beta course.')
+      }
+      if (!valid) {
+        this.$nextTick(() => {
+          this.form.alpha = currentSelection
+        })
+      }
+    },
     async getSchools () {
       try {
         const { data } = await axios.get(`/api/schools`)
@@ -281,4 +387,3 @@ export default {
 <style scoped>
 
 </style>
-

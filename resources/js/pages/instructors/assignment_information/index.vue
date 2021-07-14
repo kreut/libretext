@@ -1,6 +1,7 @@
 <template>
   <div>
     <div v-if="[2, 4].includes(user.role)">
+      <CannotAddAssessmentToBetaAssignmentModal />
       <b-container>
         <hr>
       </b-container>
@@ -45,11 +46,17 @@
 
 import { mapGetters } from 'vuex'
 import axios from 'axios'
+import CannotAddAssessmentToBetaAssignmentModal from '~/components/CannotAddAssessmentToBetaAssignmentModal'
 
 export default {
+
   middleware: 'auth',
+  components: {
+    CannotAddAssessmentToBetaAssignmentModal
+  },
   data: () => ({
-    courseId: 0
+    isBetaAssignment: false,
+    courseId: 0,
   }),
   computed: {
     ...mapGetters({
@@ -111,7 +118,9 @@ export default {
   methods:
     {
       getAssessmentsForAssignment (assignmentId) {
-        this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
+        this.isBetaAssignment
+          ? this.$bvModal.show('modal-cannot-add-assessment-to-beta-assignment')
+          : this.$router.push(`/assignments/${assignmentId}/${this.assessmentUrlType}/get`)
       },
       getStudentView (assignmentId) {
         this.$router.push(`/assignments/${assignmentId}/questions/view`)
@@ -125,6 +134,7 @@ export default {
             return false
           }
           this.courseId = data.assignment.course_id
+          this.isBetaAssignment = data.assignment.is_beta_assignment
           this.assessmentUrlType = data.assignment.assessment_type === 'learning tree' ? 'learning-trees' : 'questions'
         } catch (error) {
           this.$noty.error(error.message)

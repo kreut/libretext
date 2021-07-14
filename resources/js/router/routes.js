@@ -28,6 +28,7 @@ let admin_paths = [
   { path: '/login-as', name: 'login.as', component: page('admin/login.as.vue') }
 ]
 let general_paths  = [
+  { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },
   { path: '/init-lms-assignment/:assignmentId', name: 'init_lms_assignment', component: page('init_lms_assignment.vue') },
   { path: '/question-in-iframe', name: 'question_in_iframe', component: page('iframe_test.vue') },
   { path: '/assignments/:assignmentId/questions/view/:questionId?/:shownSections?', name: 'questions.view', component: page('questions.view.vue') },
@@ -69,6 +70,7 @@ let general_paths  = [
       { path: '', redirect: { name: 'course_properties.general_info' } },
       { path: 'details', name: 'course_properties.general_info', component: page('instructors/course_properties/general_info.vue') },
       { path: 'sections', name: 'course_properties.sections', component: page('instructors/course_properties/sections.vue') },
+      { path: 'tethered-courses', name: 'course_properties.tethered_courses', component: page('instructors/course_properties/tethered_courses.vue') },
       { path: 'letter-grades', name: 'course_properties.letter_grades', component: page('instructors/course_properties/letter_grades.vue') },
       { path: 'assignment-group-weights', name: 'course_properties.assignment_group_weights', component: page('instructors/course_properties/assignment_group_weights.vue') },
       { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') },

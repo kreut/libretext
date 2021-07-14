@@ -57,6 +57,7 @@ Route::post('/email/send', 'EmailController@send');
 Route::get('jwt/init', 'JWTController@init');
 Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
+Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
@@ -98,11 +99,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::post('/courses/import/{course}', 'CourseController@import');
+    Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
+    Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');
 
     Route::get('/courses/{course}', 'CourseController@show');
     Route::patch('/courses/{course}/show-course/{shown}', 'CourseController@showCourse');
@@ -187,6 +191,18 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
 
+    Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
+    Route::get('/beta-courses/get-tethered-to-alpha-course/{course}', 'BetaCourseController@getTetheredToAlphaCourse');
+    Route::delete('/beta-courses/untether/{course}', 'BetaCourseController@untetherBetaCourseFromAlphaCourse');
+
+    Route::post('/beta-courses/do-not-show-beta-course-dates-warning', 'BetaCourseController@doNotShowBetaCourseDatesWarning');
+
+
+    Route::get('/alpha-course-import-codes/{course}', 'AlphaCourseImportCodeController@show');
+    Route::post('/alpha-course-import-codes/refresh/{course}', 'AlphaCourseImportCodeController@refresh');
+
+    Route::get('/beta-course-approvals/assignment/{assignment}', 'BetaCourseApprovalController@getByAssignment');
+    Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');

@@ -81,6 +81,10 @@ class Assignment extends Model
         return $graders;
     }
 
+    public function isBetaAssignment()
+    {
+        return DB::table('beta_assignments')->where('id', $this->id)->first() !== null;
+    }
 
     public function assignToUsers()
     {
@@ -119,6 +123,7 @@ class Assignment extends Model
 
 
             $course_assignments = $course->assignments;
+            $course_beta_assignment_ids = $course->betaAssignmentIds();
             if (Auth::user()->role === 4) {
                 $accessible_assignment_ids = $course->accessbileAssignmentsByGrader(Auth::user()->id);
             }
@@ -146,7 +151,7 @@ class Assignment extends Model
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
-
+                $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
 
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
@@ -482,6 +487,36 @@ class Assignment extends Model
     public function seeds()
     {
         return $this->hasMany('App\Seed');
+    }
+
+
+    public function betaAssignments()
+    {
+        if (!$this->course->alpha) {
+            return [];
+        }
+        $beta_assignment_ids = DB::table('beta_assignments')
+            ->where('alpha_assignment_id', $this->id)
+            ->get();
+
+        if ($beta_assignment_ids->isNotEmpty()) {
+            $beta_assignment_ids = $beta_assignment_ids->pluck('id')->toArray();
+        }
+        return $this->whereIn('assignments.id', $beta_assignment_ids)
+            ->get();
+    }
+
+    /**
+     * @return Assignment[]
+     */
+    public function addBetaAssignments()
+    {
+        $assignments = [$this];
+        $beta_assignments = $this->betaAssignments();
+        foreach ($beta_assignments as $beta_assignment) {
+            $assignments[] = $beta_assignment;
+        }
+        return $assignments;
     }
 
     public function course()

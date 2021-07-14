@@ -13,8 +13,9 @@ class CoursePolicy
     use HandlesAuthorization;
     use CommonPolicies;
 
-    public function getAssignmentNamesForPublicCourse(User $user, Course $course){
 
+    public function getAssignmentNamesForPublicCourse(User $user, Course $course)
+    {
         return $user->role === 2 && $course->public
             ? Response::allow()
             : Response::deny('You are not allowed to access the assignments in that course.');
@@ -22,19 +23,29 @@ class CoursePolicy
 
     }
 
-    public function courseAccessForGraders(User $user, Course $course){
+    public function updateBetaApprovalNotifications(User $user, Course $course)
+    {
+        return ((int)$course->user_id === (int)$user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the Beta course notifications for this course.');
+
+    }
+
+    public function courseAccessForGraders(User $user, Course $course)
+    {
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to grant access to all assignments for all graders for this course.');
-
-
     }
-    public function getAssignmentsAndUsers(User $user, Course $course){
+
+    public function getAssignmentsAndUsers(User $user, Course $course)
+    {
 
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to download the assignments and users.');
     }
+
     public function import(User $user, Course $course)
     {
 

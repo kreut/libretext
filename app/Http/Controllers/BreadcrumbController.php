@@ -49,6 +49,7 @@ class BreadcrumbController extends Controller
                         case('course_properties.general_info'):
                         case('course_properties.sections'):
                         case('course_properties.letter_grades'):
+                        case('course_properties.tethered_courses'):
                         case('course_properties.graders'):
                         case('course_properties.grader_notifications'):
                         case('course_properties.ungraded_submissions'):

@@ -250,7 +250,8 @@ class CoursesIndexTest extends TestCase
             'end_date' => '2021-06-10',
             'term' => 'Some term',
             'crn' => 'Some CRN',
-            'public' => 1
+            'public' => 1,
+            'alpha' => 0
         ])->assertJson(['type' => 'success']);
     }
 
