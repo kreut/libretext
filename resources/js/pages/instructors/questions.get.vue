@@ -1,6 +1,30 @@
 <template>
   <div>
     <b-modal
+      id="modal-remove-question"
+      ref="modal"
+      title="Confirm Remove Question"
+    >
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-upload-file"
       ref="solutionFileInput"
       title="Upload File"
@@ -85,7 +109,7 @@
           size="sm"
           class="float-right"
           variant="danger"
-          @click="removeQuestionFromAssignment(questionToView.id)"
+          @click="isRemixerTab = true; questionToRemove = questionToView; openRemoveQuestionModal()"
         >
           Remove Question
         </b-button>
@@ -107,6 +131,7 @@
                                   :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                   :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
                                   :non-learning-tree-questions="nonLearningTreeQuestions"
+                                  :beta-assignments-exist="betaAssignmentsExist"
           />
           <b-row align-h="end">
             <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
@@ -311,7 +336,9 @@
                             <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
                               {{ question.title ? question.title : 'No title' }}
                             </a>
-                            <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)"/>
+                            <b-icon icon="trash"
+                                    @click="isRemixerTab = true; questionToRemove = question; openRemoveQuestionModal()"
+                            />
                           </td>
                           <td class="dragArea">
                             {{ question.submission }}
@@ -483,7 +510,7 @@
               <b-button class="mt-1 mb-2 mr-2"
                         variant="danger"
                         size="sm"
-                        @click="removeQuestion(questions[currentPage-1])"
+                        @click="isRemixerTab = false; questionToRemove = questions[currentPage-1];openRemoveQuestionModal()"
               >Remove Question
               </b-button>
             </span>
@@ -534,15 +561,22 @@ import {
   updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
 
+import RemoveQuestion from '~/components/RemoveQuestion'
+
 export default {
   components: {
     VueBootstrapTypeahead,
     draggable,
     AssessmentTypeWarnings,
-    Loading
+    Loading,
+    RemoveQuestion
   },
   middleware: 'auth',
   data: () => ({
+    assessmentTypeWarningsKey: 0,
+    betaAssignmentsExist: false,
+    questionToRemove: {},
+    isRemixerTab: false,
     openEndedQuestionsInRealTime: '',
     learningTreeQuestionsInNonLearningTree: '',
     nonLearningTreeQuestions: '',
@@ -640,6 +674,12 @@ export default {
     this.getQuestionWarningInfo()
   },
   methods: {
+    submitRemoveQuestion () {
+      this.isRemixerTab ? this.removeQuestionFromRemixedAssignment(this.questionToRemove.question_id) : this.removeQuestionFromSearchResult(this.questionToRemove)
+    },
+    openRemoveQuestionModal () {
+      this.$bvModal.show('modal-remove-question')
+    },
     async getQuestionWarningInfo () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
@@ -647,6 +687,8 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.betaAssignmentsExist = data.beta_assignments_exist
+        this.assessmentTypeWarningsKey = 1
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {
@@ -724,7 +766,8 @@ export default {
       }
       return true
     },
-    async removeQuestionFromAssignment (questionId) {
+    async removeQuestionFromRemixedAssignment (questionId) {
+      this.$bvModal.hide('modal-remove-question')
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
@@ -806,6 +849,7 @@ export default {
           return false
         }
         this.questionToView = data.question
+        this.questionToView.question_id = data.question.id //to make it consistent for easier removal
         this.showQuestion = true
         console.log(`#${this.questionToView.iframe_id}`)
       } catch (error) {
@@ -1037,12 +1081,13 @@ export default {
         this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
       }
     },
-    async removeQuestion (question) {
+    async removeQuestionFromSearchResult (question) {
+      this.$bvModal.hide('modal-remove-question')
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-        if (data.type === 'success') {
+        if (data.type === 'info') {
           this.$noty.info(data.message)
-          question.inAssignment = false
+          this.questions[this.currentPage - 1].inAssignment = false
         } else {
           this.$noty.error(data.message)
         }

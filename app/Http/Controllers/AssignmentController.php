@@ -7,6 +7,8 @@ use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
 use App\AssignToUser;
+use App\BetaAssignment;
+use App\BetaCourse;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -599,7 +601,8 @@ class AssignmentController extends Controller
     function store(StoreAssignment $request, Assignment $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
                    Section $section,
-                   User $user)
+                   User $user,
+                   BetaCourse $betaCourse)
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -615,7 +618,6 @@ class AssignmentController extends Controller
 
             $data = $request->validated();
             $assign_tos = $request->assign_tos;
-
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
                 $response['message'] = $repeated_groups;
@@ -635,7 +637,6 @@ class AssignmentController extends Controller
                     'percent_earned_for_exploring_learning_tree' => $learning_tree_assessment ? $data['percent_earned_for_exploring_learning_tree'] : null,
                     'submission_count_percent_decrease' => $learning_tree_assessment ? $data['submission_count_percent_decrease'] : null,
                     'instructions' => $request->instructions ? $request->instructions : '',
-
                     'number_of_randomized_assessments' => $this->getNumberOfRandomizedAssessments($request->assessment_type, $data),
                     'external_source_points' => $data['source'] === 'x' ? $data['external_source_points'] : null,
                     'assignment_group_id' => $data['assignment_group_id'],
@@ -657,9 +658,26 @@ class AssignmentController extends Controller
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
+            if ($course->alpha) {
+                $beta_assign_tos[0] = $assign_tos[0];
+                $beta_assign_tos[0]['groups'] = [];
+                $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
 
+                $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
+                foreach ($beta_courses as $beta_course) {
+                    $beta_assignment = $assignment->replicate()->fill([
+                        'course_id' => $beta_course->id
+                    ]);
+                    $beta_assignment->save();
+                    $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+                    BetaAssignment::create([
+                        'id' => $beta_assignment->id,
+                        'alpha_assignment_id' => $assignment->id
+                    ]);
+                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+                }
+            }
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
-
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';
@@ -854,6 +872,7 @@ class AssignmentController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param Score $score
+     * @param SubmissionFile $submissionFile
      * @return array
      * @throws Exception
      */
@@ -897,7 +916,9 @@ class AssignmentController extends Controller
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics
                     ? $score->where('assignment_id', $assignment->id)->get()->pluck('score')
-                    : []
+                    : [],
+                'beta_assignments_exist' => $assignment->betaAssignments() !== [],
+                'is_beta_assignment' =>$assignment->isBetaAssignment()
             ];
 
             if (Auth::user()->role === 3) {
@@ -1316,7 +1337,9 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function destroy(Assignment $assignment, AssignToTiming $assignToTiming)
+    function destroy(Assignment $assignment,
+                     AssignToTiming $assignToTiming,
+                     BetaAssignment $betaAssignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('delete', $assignment);
@@ -1327,46 +1350,49 @@ class AssignmentController extends Controller
         }
 
         try {
-            $assignment_question_ids = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
-                ->get()
-                ->pluck('id');
-
+            $assignments = $assignment->addBetaAssignments();
             DB::beginTransaction();
-            DB::table('assignment_question_learning_tree')
-                ->whereIn('assignment_question_id', $assignment_question_ids)
-                ->delete();
+            $betaAssignment->where('alpha_assignment_id', $assignment->id)->delete();
+            foreach ($assignments as $assignment) {
+                $assignment_question_ids = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
+                    ->get()
+                    ->pluck('id');
 
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
-            DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('scores')->where('assignment_id', $assignment->id)->delete();
-            DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
-            DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
-            DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
-            DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
-            DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
-            DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
-            $assignment->graders()->detach();
-            $assignToTiming->deleteTimingsGroupsUsers($assignment);
+                DB::table('assignment_question_learning_tree')
+                    ->whereIn('assignment_question_id', $assignment_question_ids)
+                    ->delete();
 
-            $course = $assignment->course;
-            $number_with_the_same_assignment_group_weight = DB::table('assignments')
-                ->where('course_id', $course->id)
-                ->where('assignment_group_id', $assignment->assignment_group_id)
-                ->select()
-                ->get();
-            if (count($number_with_the_same_assignment_group_weight) === 1) {
-                DB::table('assignment_group_weights')
+                DB::table('assignment_question')->where('assignment_id', $assignment->id)->delete();
+                DB::table('extensions')->where('assignment_id', $assignment->id)->delete();
+                DB::table('scores')->where('assignment_id', $assignment->id)->delete();
+                DB::table('submission_files')->where('assignment_id', $assignment->id)->delete();
+                DB::table('submissions')->where('assignment_id', $assignment->id)->delete();
+                DB::table('seeds')->where('assignment_id', $assignment->id)->delete();
+                DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
+                DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
+                DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
+                $assignment->graders()->detach();
+                $assignToTiming->deleteTimingsGroupsUsers($assignment);
+
+                $course = $assignment->course;
+                $number_with_the_same_assignment_group_weight = DB::table('assignments')
                     ->where('course_id', $course->id)
                     ->where('assignment_group_id', $assignment->assignment_group_id)
-                    ->delete();
+                    ->select()
+                    ->get();
+                if (count($number_with_the_same_assignment_group_weight) === 1) {
+                    DB::table('assignment_group_weights')
+                        ->where('course_id', $course->id)
+                        ->where('assignment_group_id', $assignment->assignment_group_id)
+                        ->delete();
+                }
+                $assignments = $course->assignments->where('id', '<>', $assignment->id)
+                    ->pluck('id')
+                    ->toArray();
+                $assignment->orderAssignments($assignments, $course);
+                $assignment->delete();
             }
-            $assignments = $course->assignments->where('id', '<>', $assignment->id)
-                ->pluck('id')
-                ->toArray();
-            $assignment->orderAssignments($assignments, $course);
-            $assignment->delete();
-
 
             DB::commit();
             $response['type'] = 'success';

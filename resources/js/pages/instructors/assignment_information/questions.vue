@@ -1,11 +1,12 @@
 <template>
   <div>
+    <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -56,11 +57,11 @@
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
                                 :non-learning-tree-questions="nonLearningTreeQuestions"
+                                :beta-assignments-exist="betaAssignmentsExist"
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
-          >{{ assessmentType }}</span> assessments.
+            The assessments that make up this assignment are <span class="font-italic font-weight-bold">{{ assessmentType }}</span> assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
             </span>
@@ -172,6 +173,8 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import { viewQuestion, doCopy } from '~/helpers/Questions'
 import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
+import CannotDeleteAssessmentFromBetaAssignmentModal from '~/components/CannotDeleteAssessmentFromBetaAssignmentModal'
+
 import {
   h5pText,
   updateOpenEndedInRealTimeMessage,
@@ -186,9 +189,12 @@ export default {
     FontAwesomeIcon,
     Loading,
     draggable,
-    RemoveQuestion
+    RemoveQuestion,
+    CannotDeleteAssessmentFromBetaAssignmentModal
   },
   data: () => ({
+    isBetaAssignment: false,
+    betaAssignmentsExist: false,
     openEndedQuestionsInRealTime: '',
     learningTreeQuestionsInNonLearningTree: '',
     nonLearningTreeQuestions: '',
@@ -237,6 +243,10 @@ export default {
       }
     },
     openRemoveQuestionModal (questionId) {
+      if (this.isBetaAssignment){
+        this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
+        return false
+      }
       this.questionId = questionId
       this.$bvModal.show('modal-remove-question')
     },
@@ -281,6 +291,8 @@ export default {
           return false
         }
         this.assessmentType = data.assessment_type
+        this.betaAssignmentsExist = data.beta_assignments_exist
+        this.isBetaAssignment = data.is_beta_assignment
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {

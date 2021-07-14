@@ -1,5 +1,12 @@
 <template>
   <div>
+    <b-tooltip target="alpha_course_tooltip"
+               delay="250"
+    >
+      If you designate this course as an Alpha course, other instructors will be able to create Beta courses which
+      are tethered to the Alpha course.  Assignments in Alpha courses will then be replicated in the associated Beta courses.
+      Because of the tethering feature, Alpha courses cannot be deleted unless all associated Beta courses are deleted.
+    </b-tooltip>
     <b-tooltip target="public_tooltip"
                delay="250"
     >
@@ -234,6 +241,27 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <b-form-group
+        id="alpha"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="alpha"
+      >
+        <template slot="label">
+          Alpha
+          <span id="alpha_course_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.alpha" stacked>
+          <b-form-radio name="alpha" value="1">
+            Yes
+          </b-form-radio>
+
+          <b-form-radio name="alpha" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
     </b-form>
   </div>
 </template>
@@ -281,4 +309,3 @@ export default {
 <style scoped>
 
 </style>
-

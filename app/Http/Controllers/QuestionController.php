@@ -58,7 +58,7 @@ class QuestionController extends Controller
             $question->private_description = $request->private_description;
             $question->save();
             $response['type'] = 'success';
-            $response['message']= "The question's properties have been updated.";
+            $response['message'] = "The question's properties have been updated.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -159,27 +159,30 @@ class QuestionController extends Controller
                 $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
                 $questions_to_add[$question_id] = "$library_text-$page_id";
             }
-
-            $assignment_questions = $assignment->questions->pluck('id')->toArray();
-
+           $assignments = $assignment->addBetaAssignments();
             DB::beginTransaction();
-            foreach ($questions_to_add as $question_id => $library_text_page_id) {
-                if (!in_array($question_id, $assignment_questions)) {
-                    DB::table('assignment_question')
-                        ->insert([
-                            'assignment_id' => $assignment->id,
-                            'question_id' => $question_id,
-                            'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                            'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                            'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                            'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
-                    array_push($library_page_ids_added_to_assignment, $library_text_page_id);
-                } else {
-                    array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
+            foreach ($assignments as $key => $assignment) {
+                $assignment_questions = $assignment->questions->pluck('id')->toArray();
+                foreach ($questions_to_add as $question_id => $library_text_page_id) {
+                    if (!in_array($question_id, $assignment_questions)) {
+                        DB::table('assignment_question')
+                            ->insert([
+                                'assignment_id' => $assignment->id,
+                                'question_id' => $question_id,
+                                'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
+                                'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                                'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                                'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
+                        if ($key === 0) {//just do this for the alpha assignment
+                            array_push($library_page_ids_added_to_assignment, $library_text_page_id);
+                        }
+                    } else {
+                        if ($key === 0) { //just do this for the alpha assignment
+                            array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
+                        }
+                    }
+                    array_push($assignment_questions, $question_id);
                 }
-                array_push($assignment_questions, $question_id);
-
-
             }
             DB::commit();
             $response['page_ids_added_to_assignment'] = implode(', ', $library_page_ids_added_to_assignment);

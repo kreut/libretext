@@ -44,6 +44,7 @@ export default {
       private_description: '',
       start_date: '',
       end_date: '',
+      alpha: '0',
       public: '1'
     })
   }),
@@ -78,6 +79,7 @@ export default {
         this.editCourseForm.start_date = course.start_date
         this.editCourseForm.end_date = course.end_date
         this.editCourseForm.public = course.public
+        this.editCourseForm.alpha = course.alpha
         if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve the course information.')
           return false

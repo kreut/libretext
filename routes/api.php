@@ -98,6 +98,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::get('/courses', 'CourseController@index');
+    Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
@@ -186,6 +187,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/default-import-library', 'QuestionController@storeDefaultImportLibrary');
     Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
+
+
+    Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
+    Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
+
+    Route::get('/alpha-course-import-codes/{course}', 'AlphaCourseImportCodeController@show');
+    Route::post('/alpha-course-import-codes/refresh/{course}', 'AlphaCourseImportCodeController@refresh');
+
 
 
     Route::get('/questions/{question}', 'QuestionController@show');

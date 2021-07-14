@@ -196,14 +196,30 @@
         </b-button>
       </template>
     </b-modal>
+    <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
-      ok-title="Yes, remove question"
-      @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
     </b-modal>
 
     <b-modal
@@ -640,6 +656,10 @@
             <strong>This problem is locked. Since students have already submitted responses, you cannot update the
               points per question nor change the open-ended submission type.</strong>
           </b-alert>
+        </div>
+        <div v-if="user.role === 2">
+          <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"
+          />
         </div>
         <div v-if="questions.length">
           <div :class="assignmentInformationMarginBottom">
@@ -1479,8 +1499,6 @@ import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
 
-import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
-
 import { ToggleButton } from 'vue-js-toggle-button'
 
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
@@ -1512,6 +1530,9 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import Vue from 'vue'
 
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
+import CannotDeleteAssessmentFromBetaAssignmentModal from '../components/CannotDeleteAssessmentFromBetaAssignmentModal'
+
+import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1521,6 +1542,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
     EnrollInCourse,
     Scores,
@@ -1532,9 +1554,11 @@ export default {
     RemoveQuestion,
     ckeditor: CKEditor.component,
     FileUpload: VueUploadComponent,
-    LoggedInAsStudent
+    LoggedInAsStudent,
+    AssessmentTypeWarnings
   },
   data: () => ({
+    betaAssignmentsExist: false,
     autoAttributionHTML: '',
     autoAttribution: true,
     isInstructorLoggedInAsStudent: false,
@@ -1783,7 +1807,8 @@ export default {
       this.originalOpenEndedSubmissionType = oldVal
     }
   },
-  created () {
+  async created () {
+    await this.reloadIfBetaAssignment(this.$route.params.assignmentId)
     this.doCopy = doCopy
     try {
       this.inIFrame = window.self !== window.top
@@ -1866,6 +1891,30 @@ export default {
     }
   },
   methods: {
+    async reloadIfBetaAssignment (assignmentId) {
+      try {
+        let questionId = this.$route.params.questionId
+        let shownSections = this.$route.params.shownSections
+        const { data } = await axios.get(`/api/beta-assignments/get-from-alpha-assignment/${assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.beta_assignment_id) {
+          let url = `/assignments/${data.beta_assignment_id}/questions/view`
+          if (questionId) {
+            url += `/${questionId}`
+          }
+          if (shownSections) {
+            url += `/${shownSections}`
+          }
+          await this.$router.push(url)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateLicenseVersions () {
       this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.propertiesForm.license))
       if (this.propertiesForm.license === 'gnufdl' && !['1.1', '1.2', '1.3'].includes(this.propertiesForm.licenseVersion)) {
@@ -2891,6 +2940,8 @@ export default {
           return false
         }
         let assignment = data.assignment
+        this.betaAssignmentsExist = assignment.beta_assignments_exist
+        this.isBetaAssignment = assignment.is_beta_assignment
         if (this.user.role === 3 && !assignment.shown) {
           this.showAssessmentClosedMessage = true
         }
@@ -3038,6 +3089,11 @@ export default {
         : this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
     },
     openRemoveQuestionModal () {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
+        alert('sdf')
+        return false
+      }
       this.$bvModal.show('modal-remove-question')
     },
     async submitRemoveQuestion () {
