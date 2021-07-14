@@ -20,6 +20,7 @@ import iFrameResize from 'iframe-resizer/js/iframeResizer'
 import VueMoment from 'vue-moment'
 
 import { asset } from '@codinglabs/laravel-asset'
+import axios from 'axios'
 
 Vue.mixin({
   methods: {
@@ -50,9 +51,46 @@ Vue.use(AudioRecorder)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
-new Vue({
-  i18n,
-  store,
-  router,
-  ...App
-})
+if (window.location.pathname.search('questions/view') !== -1) {
+  let urlPieces = window.location.pathname.split('/')
+  // ["", "assignments", "1193", "questions", "view"]
+  let assignmentId = urlPieces[2]
+  let questionId = urlPieces[5] ? urlPieces[5] : null
+  let shownSections = urlPieces[6] ? urlPieces[6] : null
+  axios.get(
+    `/api/beta-assignments/get-from-alpha-assignment/${assignmentId}`)
+    .then(function (response) {
+      if (response.data.type !== 'success') {
+        let message = response.data.message ? response.data.message : response.data
+        alert(message)
+        console.log(response)
+        window.location = '/beta-assignments/redirect-error'
+      }
+      if (response.data.beta_assignment_id) {
+        let url = `/assignments/${response.data.beta_assignment_id}/questions/view`
+        if (questionId) {
+          url += `/${questionId}`
+        }
+        if (shownSections) {
+          url += `/${shownSections}`
+        }
+        window.location = url
+      }
+      new Vue({
+        i18n,
+        store,
+        router,
+        ...App
+      })
+    }).catch(error => {
+      window.location = '/beta-assignments/redirect-error'
+      console.log(error)
+    })
+} else {
+  new Vue({
+    i18n,
+    store,
+    router,
+    ...App
+  })
+}

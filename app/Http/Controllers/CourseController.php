@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
-use App\Assignment;
+use App\AlphaCourseImportCode;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
+use App\BetaAssignment;
+use App\BetaCourse;
+use App\BetaCourseApproval;
 use App\Course;
 use App\FinalGrade;
+use App\Http\Requests\ImportCourse;
 use App\Http\Requests\UpdateCourse;
 use App\School;
 use App\Section;
@@ -32,6 +36,63 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+
+    public function updateBetaApprovalNotifications(Course $course)
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateBetaApprovalNotifications', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $course->beta_approval_notifications = !$course->beta_approval_notifications;
+            $course->save();
+            $message_text = $course->beta_approval_notifications ? "now" : "no longer";
+            $response['type'] = 'info';
+            $response['message'] = "You will $message_text receive daily email notifications of pending approvals.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see whether this course is an Alpha course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function getBetaApprovalNotifications(Course $course)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $response['beta_approval_notifications'] = $course->beta_approval_notifications;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see whether this course is an Alpha course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public function isAlpha(Course $course)
+    {
+        $response['type'] = 'error';
+        try {
+            $response['alpha'] = $course->alpha;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see whether this course is an Alpha course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     public function getLastSchool(Request $request, School $school)
     {
@@ -130,7 +191,7 @@ class CourseController extends Controller
     }
 
     /**
-     * @param Request $request
+     * @param ImportCourse $request
      * @param Course $course
      * @param AssignmentGroup $assignmentGroup
      * @param AssignmentGroupWeight $assignmentGroupWeight
@@ -138,13 +199,13 @@ class CourseController extends Controller
      * @param Enrollment $enrollment
      * @param FinalGrade $finalGrade
      * @param Section $section
-     * @param AssignToTiming $assignToTiming
-     * @param AssignToGroup $assignToGroup
+     * @param School $school
+     * @param BetaCourse $betaCourse
      * @return array
      * @throws Exception '
      */
     public
-    function import(Request $request,
+    function import(ImportCourse $request,
                     Course $course,
                     AssignmentGroup $assignmentGroup,
                     AssignmentGroupWeight $assignmentGroupWeight,
@@ -152,8 +213,10 @@ class CourseController extends Controller
                     Enrollment $enrollment,
                     FinalGrade $finalGrade,
                     Section $section,
-                    School $school)
+                    School $school,
+                    BetaCourse $betaCourse): array
     {
+
         $response['type'] = 'error';
 
         $authorized = Gate::inspect('import', $course);
@@ -161,20 +224,24 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $import_as_beta = (int)$request->import_as_beta;
         $school = $this->getLastSchool($request, $school);
         try {
             DB::beginTransaction();
             $imported_course = $course->replicate();
             $imported_course->name = "$imported_course->name Import";
             $imported_course->shown = 0;
+            $imported_course->alpha = 0;
             $imported_course->school_id = $school['last_school_id'];
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
-
             $imported_course->save();
-
+            if ($import_as_beta) {
+                $betaCourse->id = $imported_course->id;
+                $betaCourse->alpha_course_id = $course->id;
+                $betaCourse->save();
+            }
             foreach ($course->assignments as $assignment) {
                 $imported_assignment_group_id = $assignmentGroup->importAssignmentGroupToCourse($imported_course, $assignment);
                 $assignmentGroupWeight->importAssignmentGroupWeightToCourse($course, $imported_course, $imported_assignment_group_id, false);
@@ -190,6 +257,12 @@ class CourseController extends Controller
                 $imported_assignment->students_can_view_assignment_statistics = 0;
                 $imported_assignment->assignment_group_id = $imported_assignment_group_id;
                 $imported_assignment->save();
+                if ($import_as_beta) {
+                    BetaAssignment::create([
+                        'id' => $imported_assignment->id,
+                        'alpha_assignment_id' => $assignment->id
+                    ]);
+                }
                 $assignment->saveAssignmentTimingAndGroup($imported_assignment);
                 $assignmentSyncQuestion->importAssignmentQuestionsAndLearningTrees($assignment->id, $imported_assignment->id);
             }
@@ -284,6 +357,7 @@ class CourseController extends Controller
         }
         try {
             $response['courses'] = $this->getCourses(auth()->user());
+            $response['show_beta_course_dates_warning'] = !$request->hasCookie('show_beta_course_dates_warning');
 
             $response['type'] = 'success';
         } catch (Exception $e) {
@@ -382,8 +456,10 @@ class CourseController extends Controller
                 'graders' => $course->graderInfo(),
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
-                'public' => $course->public];
-
+                'public' => $course->public,
+                'alpha' => $course->alpha,
+                'is_beta_course' => $course->isBetaCourse(),
+                'beta_courses_info' => $course->betaCoursesInfo()];
             $response['type'] = 'success';
 
         } catch (Exception $e) {
@@ -403,7 +479,7 @@ class CourseController extends Controller
      * @throws Exception
      */
     public
-    function showCourse(Request $request, Course $course, int $shown)
+    function showCourse(Course $course, int $shown): array
     {
 
         $response['type'] = 'error';
@@ -446,7 +522,8 @@ class CourseController extends Controller
         switch ($user->role) {
             case(2):
                 return DB::table('courses')
-                    ->select('*')
+                    ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
+                    ->leftJoin('beta_courses', 'courses.id', '=', 'beta_courses.id')
                     ->where('user_id', $user->id)->orderBy('start_date', 'desc')
                     ->get();
             case(4):
@@ -568,13 +645,17 @@ class CourseController extends Controller
      * Update the specified resource in storage.
      *
      *
-     * @param StoreCourse $request
+     * @param UpdateCourse $request
      * @param Course $course
+     * @param School $school
      * @return mixed
      * @throws Exception
      */
     public
-    function update(UpdateCourse $request, Course $course, School $school)
+    function update(UpdateCourse $request,
+                    Course $course,
+                    School $school,
+                    BetaCourse $betaCourse)
     {
         $response['type'] = 'error';
 
@@ -583,17 +664,27 @@ class CourseController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $is_beta_course = $betaCourse->where('id', $course->id)->first();
+        if ($message = $this->failsTetherCourseValidation($request, $course, $is_beta_course)) {
+            $response['message'] = $message;
+            return $response;
+        }
         try {
             $data = $request->validated();
+            DB::beginTransaction();
             $data['school_id'] = $this->getSchoolIdFromRequest($request, $school);
             $data['start_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['start_date'], auth()->user()->time_zone);
             $data['end_date'] = $this->convertLocalMysqlFormattedDateToUTC($data['end_date'], auth()->user()->time_zone);
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
+            if ($is_beta_course && $request->untether_beta_course) {
+                $betaCourse->untether($course);
+            }
             $course->update($data);
+            DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The course <strong>$course->name</strong> has been updated.";
+            $response['is_beta_course'] = $betaCourse->where('id', $course->id)->first();
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -603,16 +694,44 @@ class CourseController extends Controller
     }
 
     /**
+     * @param $request
+     * @param $course
+     * @param $is_beta_course
+     * @return string
+     */
+    public function failsTetherCourseValidation($request, $course, $is_beta_course): string
+    {
+        $message = '';
+        $at_least_one_beta_course_exists = BetaCourse::where('alpha_course_id', $course->id)->first();
+        if ($course->alpha && (int)$request->alpha === 0 && $at_least_one_beta_course_exists) {
+            $message = "You are trying to change an Alpha course into a non-Alpha course but Beta courses are currently tethered to this course.";
+        }
+        if ((int)$request->alpha === 1 && $is_beta_course) {
+            $message = "You can't change a Beta course into an Alpha course.";
+        }
+        return $message;
+    }
+
+    /**
      *
      * Delete a course
      *
      * @param Course $course
      * @param AssignToTiming $assignToTiming
+     * @param AlphaCourseImportCode $alphaCourseImportCode
+     * @param BetaAssignment $betaAssignment
+     * @param BetaCourse $betaCourse
+     * @param BetaCourseApproval $betaCourseApproval
      * @return mixed
      * @throws Exception
      */
     public
-    function destroy(Course $course, AssignToTiming $assignToTiming)
+    function destroy(Course $course,
+                     AssignToTiming $assignToTiming,
+                     AlphaCourseImportCode $alphaCourseImportCode,
+                     BetaAssignment $betaAssignment,
+                     BetaCourse $betaCourse,
+                     BetaCourseApproval $betaCourseApproval)
     {
 
         $response['type'] = 'error';
@@ -620,6 +739,11 @@ class CourseController extends Controller
         $authorized = Gate::inspect('delete', $course);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        if (BetaCourse::where('alpha_course_id', $course->id)->first()) {
+            $response['message'] = "You cannot delete an Alpha course with tethered Beta courses.";
             return $response;
         }
 
@@ -642,6 +766,8 @@ class CourseController extends Controller
                 $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
                 $assignment->graders()->detach();
+                $betaAssignment->where('id', $assignment->id)->delete();
+                $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
             }
             $course->extensions()->delete();
             $course->assignments()->delete();
@@ -656,6 +782,8 @@ class CourseController extends Controller
             }
 
             $course->finalGrades()->delete();
+            $alphaCourseImportCode->where('course_id', $course->id)->delete();
+            $betaCourse->where('id', $course->id)->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'success';

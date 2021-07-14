@@ -67,6 +67,11 @@ export default {
         },
         {
           icon: '',
+          name: 'Tethered Courses',
+          route: 'course_properties.tethered_courses'
+        },
+        {
+          icon: '',
           name: 'Assignment Group Weights',
           route: 'course_properties.assignment_group_weights'
         },

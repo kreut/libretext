@@ -90,6 +90,16 @@
            type="contact_grader"
            :subject="getSubject()"
     />
+    <CannotAddAssessmentToBetaAssignmentModal />
+    <b-modal
+      id="modal-should-not-edit-question-source-if-beta-assignment"
+      ref="modalShouldNotEditQuestionSourceIfBetaAssignment"
+      title="Should Not Edit"
+      hide-footer
+    >
+      You are trying to edit a question that is part of a Beta assignment.  If you edit the question source, it will
+      affect all other Beta assignments.  Please get in touch with the Alpha instructor to see if an edit is possible.
+    </b-modal>
     <b-modal
       id="modal-properties"
       ref="modalProperties"
@@ -196,14 +206,30 @@
         </b-button>
       </template>
     </b-modal>
+    <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
-      ok-title="Yes, remove question"
-      @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
     </b-modal>
 
     <b-modal
@@ -640,6 +666,10 @@
             <strong>This problem is locked. Since students have already submitted responses, you cannot update the
               points per question nor change the open-ended submission type.</strong>
           </b-alert>
+        </div>
+        <div v-if="user.role === 2">
+          <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"
+          />
         </div>
         <div v-if="questions.length">
           <div :class="assignmentInformationMarginBottom">
@@ -1449,7 +1479,7 @@
       </div>
       <div v-if="!initializing && !questions.length" class="mt-4">
         <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
-          <b-button variant="success">
+          <b-button variant="primary" size="sm">
             Add {{ capitalFormattedAssessmentType }}
           </b-button>
         </div>
@@ -1462,7 +1492,7 @@
         </b-alert>
       </div>
       <div v-if="showQuestionDoesNotExistMessage">
-        <b-alert show variant="warning" class="mt-3">
+        <b-alert :show="true" variant="warning" class="mt-3">
           We could not find any questions associated with this assignment linked to:
           <p class="text-center m-2">
             <strong>{{ getWindowLocation() }}</strong>
@@ -1478,8 +1508,6 @@
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
-
-import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 
 import { ToggleButton } from 'vue-js-toggle-button'
 
@@ -1512,6 +1540,10 @@ import RemoveQuestion from '~/components/RemoveQuestion'
 import Vue from 'vue'
 
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
+import CannotDeleteAssessmentFromBetaAssignmentModal from '../components/CannotDeleteAssessmentFromBetaAssignmentModal'
+
+import AssessmentTypeWarnings from '~/components/AssessmentTypeWarnings'
+import CannotAddAssessmentToBetaAssignmentModal from '~/components/CannotAddAssessmentToBetaAssignmentModal'
 
 Vue.prototype.$http = axios // needed for the audio player
 
@@ -1521,6 +1553,7 @@ Vue.component('file-upload', VueUploadComponent)
 export default {
   middleware: 'auth',
   components: {
+    CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
     EnrollInCourse,
     Scores,
@@ -1532,9 +1565,12 @@ export default {
     RemoveQuestion,
     ckeditor: CKEditor.component,
     FileUpload: VueUploadComponent,
-    LoggedInAsStudent
+    LoggedInAsStudent,
+    AssessmentTypeWarnings,
+    CannotAddAssessmentToBetaAssignmentModal
   },
   data: () => ({
+    betaAssignmentsExist: false,
     autoAttributionHTML: '',
     autoAttribution: true,
     isInstructorLoggedInAsStudent: false,
@@ -1783,7 +1819,7 @@ export default {
       this.originalOpenEndedSubmissionType = oldVal
     }
   },
-  created () {
+  async created () {
     this.doCopy = doCopy
     try {
       this.inIFrame = window.self !== window.top
@@ -2191,7 +2227,9 @@ export default {
       this.isLoadingPieChart = false
     },
     editQuestionSource (currentPage) {
-      window.open(this.questions[currentPage - 1].mindtouch_url)
+      this.isBetaAssignment
+      ? this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
+      : window.open(this.questions[currentPage - 1].mindtouch_url)
     },
     openUploadSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
@@ -2708,6 +2746,11 @@ export default {
       }
     },
     async changePage (currentPage) {
+      if (!this.questions[currentPage - 1]) {
+        console.log('No question exists')
+        this.isLoading = false
+        return false
+      }
       if (this.user.role === 2) {
         this.title = `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
       }
@@ -2891,6 +2934,8 @@ export default {
           return false
         }
         let assignment = data.assignment
+        this.betaAssignmentsExist = assignment.beta_assignments_exist
+        this.isBetaAssignment = assignment.is_beta_assignment
         if (this.user.role === 3 && !assignment.shown) {
           this.showAssessmentClosedMessage = true
         }
@@ -3033,11 +3078,19 @@ export default {
       console.log('To do!!!')
     },
     getAssessmentsForAssignment () {
-      this.assessmentType === 'learning tree'
-        ? this.$router.push(`/assignments/${this.assignmentId}/learning-trees/get`)
-        : this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-add-assessment-to-beta-assignment')
+      } else {
+        this.assessmentType === 'learning tree'
+          ? this.$router.push(`/assignments/${this.assignmentId}/learning-trees/get`)
+          : this.$router.push(`/assignments/${this.assignmentId}/questions/get`)
+      }
     },
     openRemoveQuestionModal () {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
+        return false
+      }
       this.$bvModal.show('modal-remove-question')
     },
     async submitRemoveQuestion () {
@@ -3048,6 +3101,7 @@ export default {
           return false
         }
         this.$noty.info(data.message)
+        this.$bvModal.hide('modal-remove-question')
         this.questions.splice(this.currentPage - 1, 1)
         if (this.currentPage !== 1) {
           this.currentPage = this.currentPage - 1

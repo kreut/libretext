@@ -44,6 +44,7 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('dataShop:toS3')->twiceDaily();
 
+            $schedule->command('notify:BetaCourseApprovals')->daily();
             /* grader notifications */
             $schedule->command('notify:gradersForDueAssignments')->hourly();
             $schedule->command('notify:gradersForLateSubmissions')->Daily();

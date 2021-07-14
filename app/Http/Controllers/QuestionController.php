@@ -5,7 +5,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
-use App\Http\Requests\UpdateQuestionProperties;
+use App\BetaCourseApproval;
 use App\Libretext;
 use App\Question;
 use Illuminate\Http\Request;
@@ -58,7 +58,7 @@ class QuestionController extends Controller
             $question->private_description = $request->private_description;
             $question->save();
             $response['type'] = 'success';
-            $response['message']= "The question's properties have been updated.";
+            $response['message'] = "The question's properties have been updated.";
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -102,7 +102,12 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function directImportQuestions(Request $request, Question $Question, Assignment $assignment, AssignmentSyncQuestion $assignmentSyncQuestion, Libretext $libretext)
+    public function directImportQuestions(Request $request,
+                                          Question $Question,
+                                          Assignment $assignment,
+                                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                                          Libretext $libretext,
+                                          BetaCourseApproval $betaCourseApproval)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -159,10 +164,8 @@ class QuestionController extends Controller
                 $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
                 $questions_to_add[$question_id] = "$library_text-$page_id";
             }
-
-            $assignment_questions = $assignment->questions->pluck('id')->toArray();
-
             DB::beginTransaction();
+            $assignment_questions = $assignment->questions->pluck('id')->toArray();
             foreach ($questions_to_add as $question_id => $library_text_page_id) {
                 if (!in_array($question_id, $assignment_questions)) {
                     DB::table('assignment_question')
@@ -173,13 +176,12 @@ class QuestionController extends Controller
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                             'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
                             'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
+                    $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
                     array_push($library_page_ids_added_to_assignment, $library_text_page_id);
                 } else {
                     array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
                 }
                 array_push($assignment_questions, $question_id);
-
-
             }
             DB::commit();
             $response['page_ids_added_to_assignment'] = implode(', ', $library_page_ids_added_to_assignment);

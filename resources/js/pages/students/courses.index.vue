@@ -3,7 +3,7 @@
     <PageTitle title="My Courses"/>
     <div class="row mb-4 float-right">
       <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
-      <b-button v-b-modal.modal-enroll-in-course variant="primary">
+      <b-button v-b-modal.modal-enroll-in-course variant="primary" size="sm">
         Enroll In Course
       </b-button>
     </div>

@@ -10,6 +10,44 @@
                color="#007BFF"
                background="#FFFFFF"
       />
+
+      <b-modal
+        id="modal-confirm-add-untethered-assignment"
+        ref="modal"
+        title="Confirm New Untethered Assignment"
+      >
+        <p>
+          You are about to {{ addAssignmentIsImport ? 'import' : 'add' }} an untethered assignment to a tethered course. If you are presenting the course within
+          the context
+          of a Libretext book, you will have to manually create a page with this assignment so that your students can
+          access it.
+        </p>
+        <p>
+          If, on the other hand, you are presenting your assignments within the Adapt platform, the only consequence of
+          adding an
+          untethered assignment is that these will not be auto-updated via an Alpha course.
+        </p>
+        <template #modal-footer="{ cancel, ok }">
+          <b-button size="sm" @click="$bvModal.hide('modal-confirm-add-untethered-assignment')">
+            Cancel
+          </b-button>
+          <b-button size="sm" variant="primary"
+                    @click="$bvModal.hide('modal-confirm-add-untethered-assignment');addUntetheredAssignment()"
+          >
+            {{ addAssignmentIsImport ? 'Import' : 'Add' }} Untethered Assignment
+          </b-button>
+        </template>
+      </b-modal>
+      <b-modal
+        id="modal-cannot-delete-beta-assignment"
+        ref="modal"
+        title="Cannot Delete"
+        size="sm"
+        hide-footer
+      >
+        This assignment is a Beta assignment. Since it is tethered to a corresponding assigment in an
+        Alpha course, it cannot be deleted.
+      </b-modal>
       <b-modal
         id="modal-assignment-properties"
         ref="modal"
@@ -116,8 +154,6 @@
         id="modal-import-assignment"
         ref="modal"
         title="Import Assignment"
-        ok-title="Yes, import assignment!"
-        @ok="handleImportAssignment"
       >
         <b-form-group
           id="import_level"
@@ -142,6 +178,23 @@
           :data="allAssignments"
           placeholder="Enter an assignment from one of your courses"
         />
+        <template #modal-footer>
+          <b-button
+            size="sm"
+            class="float-right"
+            @click="$bvModal.hide('modal-import-assignment')"
+          >
+            Cancel
+          </b-button>
+          <b-button
+            variant="primary"
+            size="sm"
+            class="float-right"
+            @click="handleImportAssignment"
+          >
+            Yes, import assignment!
+          </b-button>
+        </template>
       </b-modal>
 
       <b-modal
@@ -149,8 +202,23 @@
         ref="modal"
         title="Confirm Delete Assignment"
       >
-        <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
-        <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+        <div v-show="betaCoursesInfo.length === 0">
+          <p>
+            By deleting the assignment, you will also delete all student scores associated with the assignment.
+          </p>
+          <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+        </div>
+        <b-alert :show="betaCoursesInfo.length>0" variant="danger">
+          <div class="font-weight-bold font-italic">
+            <p>
+              Since this is an Alpha course with tethered Beta courses, if you delete this
+              assignment, you will delete all student scores associated with this assignment in the Alpha course and you
+              will also delete
+              all associated student scores in the associated Beta assignments.
+            </p>
+            <p>This action cannot be undone!</p>
+          </div>
+        </b-alert>
         <template #modal-footer>
           <b-button
             size="sm"
@@ -172,6 +240,14 @@
 
       <b-container>
         <b-row v-if="canViewAssignments" class="mb-4" align-h="between">
+          <div v-show="betaCoursesInfo.length>0">
+            <b-alert variant="info" :show="true">
+              <span class="font-weight-bold">
+                This is an Alpha course with tethered Beta courses.  Any new assignments that are created/removed in
+                this course will be created/removed in the associated Beta courses.
+              </span>
+            </b-alert>
+          </div>
           <b-col lg="3">
             <b-form-select v-if="assignmentGroupOptions.length>1"
                            v-model="chosenAssignmentGroup"
@@ -184,7 +260,7 @@
                       class="ml-5 mr-1"
                       size="sm"
                       variant="primary"
-                      @click="assignmentId=0;initAddAssignment(form, courseId, assignmentGroups, $noty, $moment, course.start_date, course.end_date, $bvModal, assignmentId)"
+                      @click="addAssignmentIsImport=false;confirmInitAddAssignment()"
             >
               New Assignment
             </b-button>
@@ -192,7 +268,7 @@
                       class="mr-1"
                       size="sm"
                       variant="outline-primary"
-                      @click="initImportAssignment"
+                      @click="addAssignmentIsImport=true;confirmInitImportAssignment()"
             >
               Import Assignment
             </b-button>
@@ -240,6 +316,17 @@
           >
             <td style="width:300px">
               <b-icon icon="list"/>
+              <span v-show="assignment.is_beta_assignment"
+                    :id="getTooltipTarget('betaAssignment',assignment.id)"
+                    class="text-muted"
+              >&beta; </span>
+              <b-tooltip :target="getTooltipTarget('betaAssignment',assignment.id)"
+                         delay="500"
+              >
+                This Beta assignment was automatically generated from its corresponding Alpha course. Because of the
+                tethered
+                nature, you cannot remove the assignment nor add/remove assessments.
+              </b-tooltip>
               <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"
@@ -333,7 +420,7 @@
                     </b-tooltip>
                     <b-icon :id="getTooltipTarget('deleteAssignment',assignment.id)"
                             icon="trash"
-                            @click="deleteAssignment(assignment.id)"
+                            @click="deleteAssignment(assignment)"
                     />
                   </span>
               </div>
@@ -395,6 +482,9 @@ export default {
     draggable
   },
   data: () => ({
+    addAssignmentIsImport: false,
+    isBetaCourse: false,
+    betaCoursesInfo: [],
     allFormErrors: [],
     assignmentGroups: [],
     form: assignmentForm,
@@ -477,6 +567,23 @@ export default {
     }
   },
   methods: {
+    addUntetheredAssignment () {
+      this.$bvModal.hide('modal-confirm-add-untethered-assignment')
+      this.addAssignmentIsImport
+        ? this.initImportAssignment()
+        : this.initAddAssignment(this.form, this.courseId, this.assignmentGroups, this.$noty, this.$moment, this.course.start_date, this.course.end_date, this.$bvModal, this.assignmentId)
+    },
+    confirmInitAddAssignment () {
+      this.assignmentId = 0
+      this.isBetaCourse
+        ? this.$bvModal.show('modal-confirm-add-untethered-assignment')
+        : this.initAddAssignment(this.form, this.courseId, this.assignmentGroups, this.$noty, this.$moment, this.course.start_date, this.course.end_date, this.$bvModal, this.assignmentId)
+    },
+    confirmInitImportAssignment () {
+      this.isBetaCourse
+        ? this.$bvModal.show('modal-confirm-add-untethered-assignment')
+        : this.initImportAssignment()
+    },
     async getAssignmentGroupFilter (courseId) {
       try {
         const { data } = await axios.get(`/api/assignmentGroups/get-assignment-group-filter/${courseId}`)
@@ -622,6 +729,8 @@ export default {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
         this.course = data.course
+        this.betaCoursesInfo = this.course.beta_courses_info
+        this.isBetaCourse = this.course.is_beta_course
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)
@@ -664,8 +773,12 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    deleteAssignment (assignmentId) {
-      this.assignmentId = assignmentId
+    deleteAssignment (assignment) {
+      if (assignment.is_beta_assignment) {
+        this.$bvModal.show('modal-cannot-delete-beta-assignment')
+        return false
+      }
+      this.assignmentId = assignment.id
       this.$bvModal.show('modal-delete-assignment')
     },
     async resetAll (modalId) {

@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentSyncQuestion;
+use App\BetaCourseApproval;
 use App\Question;
 use App\LearningTree;
 use Carbon\Carbon;
@@ -16,7 +17,20 @@ use \Exception;
 
 class AssignmentQuestionSyncLearningTreeController extends Controller
 {
-    public function store(Assignment $assignment, LearningTree $learningTree, AssignmentSyncQuestion $assignmentSyncQuestion, Question $Question)
+    /**
+     * @param Assignment $assignment
+     * @param LearningTree $learningTree
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Question $Question
+     * @param BetaCourseApproval $betaCourseApproval
+     * @return array
+     * @throws Exception
+     */
+    public function store(Assignment $assignment,
+                          LearningTree $learningTree,
+                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                          Question $Question,
+                          BetaCourseApproval $betaCourseApproval)
     {
 
         $response['type'] = 'error';
@@ -54,6 +68,7 @@ class AssignmentQuestionSyncLearningTreeController extends Controller
                     'created_at' => Carbon::now(),
                     'updated_at' => Carbon::now()
                 ]);
+            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id,'add',$learningTree->id);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The Learning Tree has been added to the assignment.';

@@ -3,13 +3,64 @@
     <b-modal
       id="modal-import-course"
       ref="modal"
+      title="Import Course"
     >
       <vue-bootstrap-typeahead
         ref="queryTypeahead"
         v-model="courseToImport"
+        class="mb-2"
         :data="formattedImportableCourses"
         placeholder="Enter a course or instructor name"
+        @hit="checkIfAlpha($event)"
       />
+      <b-form-group
+        v-if="showImportAsBeta"
+        id="beta"
+        label-cols-sm="7"
+        label-cols-lg="6"
+        label-for="beta"
+      >
+        <template slot="label">
+          Import as a Beta Course
+          <span id="beta_course_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+          <b-tooltip target="beta_course_tooltip"
+                     delay="250"
+          >
+            The course you are importing has been designated as an Alpha course. If you import the course as
+            a Beta course, then the two courses will be tethered. This means that new assignments and associated
+            assessments in the Alpha course will
+            automatically be created in the Beta course. While you will be able to add/remove custom assignments in your
+            Beta course, you will not
+            be able to update/remove assignments that were created in the Alpha course.
+          </b-tooltip>
+        </template>
+        <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
+          <b-form-radio name="beta" value="1">
+            Yes
+          </b-form-radio>
+          <b-form-radio name="beta" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-show="showImportAsBeta && parseInt(courseToImportForm.import_as_beta) === 1"
+        id="alpha_course_import_code"
+        label-cols-sm="7"
+        label-cols-lg="6"
+        label="Alpha Course Import Code"
+        label-for="alpha_course_import_code"
+      >
+        <b-form-input
+          id="alpha_course_import_code"
+          v-model="courseToImportForm.alpha_course_import_code"
+          type="text"
+          :class="{ 'is-invalid': courseToImportForm.errors.has('alpha_course_import_code') }"
+          @keydown="courseToImportForm.errors.clear('alpha_course_import_code')"
+        />
+        <has-error :form="courseToImportForm" field="alpha_course_import_code"/>
+      </b-form-group>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -22,6 +73,7 @@
           variant="primary"
           size="sm"
           class="float-right"
+          :disabled="disableYesImportCourse"
           @click="handleImportCourse"
         >
           Yes, import course!
@@ -71,8 +123,6 @@
       id="modal-delete-course"
       ref="modal"
       title="Confirm Delete Course"
-      ok-title="Yes, delete course!"
-      @ok="handleDeleteCourse"
       @hidden="resetModalForms"
     >
       <p>By deleting the course, you will also delete:</p>
@@ -82,6 +132,23 @@
         <li>All student scores</li>
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-delete-course')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleDeleteCourse"
+        >
+          Yes, delete course!
+        </b-button>
+      </template>
     </b-modal>
 
     <div v-if="user && user.role === 4">
@@ -121,6 +188,19 @@
     </b-modal>
 
     <div v-if="hasCourses">
+      <div v-if="user.role === 2 && hasBetaCourses && showBetaCourseDatesWarning">
+        <b-alert variant="info" :show="true">
+          <p>
+            <span class="font-weight-bold">
+              You currently have at least one Beta course.  Double check that the course
+              dates are accurate as Adapt uses this information to tether the Alpha assignments to your Beta assignments.
+            </span>
+          </p>
+          <b-button size="sm" variant="info" @click="doNotShowBetaCourseDatesWarnings()">
+            Don't Show This Again
+          </b-button>
+        </b-alert>
+      </div>
       <b-table striped hover
                :fields="fields"
                :items="courses"
@@ -132,6 +212,26 @@
         </template>
         <template v-slot:cell(name)="data">
           <div class="mb-0">
+            <span v-show="parseInt(data.item.alpha) === 1"
+                  :id="getTooltipTarget('alphaCourse',data.item.id)"
+                  class="text-muted"
+            >&alpha; </span>
+            <b-tooltip :target="getTooltipTarget('alphaCourse',data.item.id)"
+                       delay="500"
+            >
+              This course is an Alpha course. Adding/removing assignments or assessments from this
+              course will be directly reflected in the associated Beta courses.
+            </b-tooltip>
+            <span v-show="parseInt(data.item.is_beta_course) === 1"
+                  :id="getTooltipTarget('betaCourse',data.item.id)"
+                  class="text-muted"
+            >&beta; </span>
+            <b-tooltip :target="getTooltipTarget('betaCourse',data.item.id)"
+                       delay="500"
+            >
+              This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which are
+              added/removed in the Alpha course will be directly reflected in this course.
+            </b-tooltip>
             <a href="" @click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
         </template>
@@ -214,6 +314,11 @@ export default {
   components: { CourseForm, ToggleButton, VueBootstrapTypeahead },
   middleware: 'auth',
   data: () => ({
+    showBetaCourseDatesWarning: true,
+    hasBetaCourses: false,
+    disableYesImportCourse: true,
+    importAsBeta: 0,
+    showImportAsBeta: false,
     formattedImportableCourses: [],
     importableCourses: [],
     courseToImport: '',
@@ -233,9 +338,15 @@ export default {
     graderForm: new Form({
       access_code: ''
     }),
+    courseToImportForm: new Form({
+      alpha_course_import_code: '',
+      import_as_beta: 0
+    }),
     newCourseForm: new Form({
       school: '',
       name: '',
+      beta: '0',
+      alpha: '0',
       public_description: '',
       private_description: '',
       section: '',
@@ -247,6 +358,16 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    courseToImport (newValue, oldValue) {
+      if (newValue !== oldValue) {
+        this.courseToImportForm.import_as_beta = 0
+        this.courseToImportForm.alpha_course_import_code = ''
+        this.showImportAsBeta = false
+        this.disableYesImportCourse = true
+      }
+    }
+  },
   mounted () {
     this.getCourses()
     this.getLastCourseSchool()
@@ -287,6 +408,35 @@ export default {
       ]
   },
   methods: {
+    async doNotShowBetaCourseDatesWarnings () {
+      try {
+        const { data } = await axios.post(`/api/beta-courses/do-not-show-beta-course-dates-warning`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.showBetaCourseDatesWarning = false
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async checkIfAlpha (courseToImport) {
+      this.importAsBeta = 0
+      let courseId = this.getIdOfCourseToImport(courseToImport)
+      try {
+        const { data } = await axios.get(`/api/courses/is-alpha/${courseId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.alpha === 1) {
+          this.showImportAsBeta = true
+        }
+        this.disableYesImportCourse = false
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getLastCourseSchool () {
       try {
         const { data } = await axios.get(`/api/courses/last-school`)
@@ -295,12 +445,14 @@ export default {
           return false
         }
         this.newCourseForm.school = data.last_school_name
-
       } catch (error) {
         this.$noty.error(error.message)
       }
     },
     async initImportCourse () {
+      this.disableYesImportCourse = true
+      this.importAsBeta = 0
+      this.showImportAsBeta = false
       try {
         const { data } = await axios.get(`/api/courses/importable`)
         if (data.type === 'error') {
@@ -317,20 +469,17 @@ export default {
       }
     },
     getIdOfCourseToImport (courseToImport) {
-      console.log(this.importableCourses)
       for (let i = 0; i < this.importableCourses.length; i++) {
-        console.log(this.importableCourses[i].formatted_course, courseToImport)
         if (this.importableCourses[i]['formatted_course'] === courseToImport) {
           return this.importableCourses[i]['course_id']
         }
       }
       return 0
     },
-    async handleImportCourse (bvEvt) {
-      bvEvt.preventDefault()
+    async handleImportCourse () {
       try {
         let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
-        const { data } = await axios.post(`/api/courses/import/${IdOfCourseToImport}`)
+        const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false
@@ -338,7 +487,9 @@ export default {
         this.$bvModal.hide('modal-import-course')
         await this.getCourses()
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     },
     async submitShowCourse (course) {
@@ -440,7 +591,9 @@ export default {
           this.canViewCourses = true
           this.hasCourses = data.courses.length > 0
           this.showNoCoursesAlert = !this.hasCourses
+          this.showBetaCourseDatesWarning = data.showBetaCourseDatesWarning
           this.courses = data.courses
+          this.hasBetaCourses = this.courses.filter(course => course.is_beta_course).length
           console.log(data.courses)
         }
       } catch (error) {
