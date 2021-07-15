@@ -19,6 +19,8 @@ environments:
         memory: 1024
         cli-memory: 512
         runtime: docker
+        firewall:
+          rate-limit: 1000
         database: staging
         cache: staging
         domain: staging-adapt.libretexts.org
