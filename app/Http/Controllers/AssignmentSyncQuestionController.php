@@ -1383,7 +1383,7 @@ class AssignmentSyncQuestionController extends Controller
                             $custom_claims['webwork']['showSolution'] = 0;
                             $custom_claims['webwork']['showDebug'] = 0;
 
-                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?" width="100%"></iframe>';
+                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/render-api?" width="100%"></iframe>';
                         } else {
                             $custom_claims['webwork']['showSummary'] = 1;
                             $custom_claims['webwork']['displayMode'] = 'MathJax';
