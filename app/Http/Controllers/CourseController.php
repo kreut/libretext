@@ -170,8 +170,7 @@ class CourseController extends Controller
                     FinalGrade $finalGrade,
                     Section $section,
                     School $school,
-                    BetaCourse $betaCourse,
-                    BetaAssignment $betaAssignment)
+                    BetaCourse $betaCourse)
     {
 
         $response['type'] = 'error';
@@ -189,6 +188,7 @@ class CourseController extends Controller
             $imported_course = $course->replicate();
             $imported_course->name = "$imported_course->name Import";
             $imported_course->shown = 0;
+            $imported_course->alpha = 0;
             $imported_course->school_id = $school['last_school_id'];
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
