@@ -1035,8 +1035,11 @@
                   <div v-if="questions[currentPage-1].attribution !== null">
                     <b-alert variant="info" :show="true" class="mt-2">
                       <span class="font-italic"
-                            v-html="questions[currentPage-1].attribution.replace('<p>','<p class=&quot;mb-0&quot;><strong>Attribution:</strong> ')"
-                      />
+                            &quot;mb-0&quot;"
+                            v-html="questions[currentPage-1].attribution.replace('<p>','<p class="
+                      ><strong>Attribution:</strong> ')"
+                        />
+                      </span>
                     </b-alert>
                   </div>
                   <div v-if="questions[currentPage-1].auto_attribution && autoAttributionHTML">
@@ -1698,7 +1701,11 @@ export default {
       { value: 'gnu', text: 'GNU GPL', url: 'https://www.gnu.org/licenses/gpl-' },
       { value: 'arr', text: 'All Rights Reserved' },
       { value: 'gnufdl', text: 'GNU FDL', url: 'https://www.gnu.org/licenses/fdl-' },
-      { value: 'opl_license', text: 'OPL', url: 'https://github.com/openwebwork/webwork-open-problem-library/blob/master/OPL_LICENSE' }
+      {
+        value: 'opl_license',
+        text: 'OPL',
+        url: 'https://github.com/openwebwork/webwork-open-problem-library/blob/master/OPL_LICENSE'
+      }
     ],
     licenseVersionOptions: [],
     defaultLicenseVersionOptions: [
@@ -1775,7 +1782,8 @@ export default {
       this.originalOpenEndedSubmissionType = oldVal
     }
   },
-  created () {
+  async created () {
+    await this.reloadIfBetaAssignment(this.$route.params.assignmentId)
     this.doCopy = doCopy
     try {
       this.inIFrame = window.self !== window.top
@@ -1855,6 +1863,30 @@ export default {
     }
   },
   methods: {
+    async reloadIfBetaAssignment (assignmentId) {
+      try {
+        let questionId = this.$route.params.questionId
+        let shownSections = this.$route.params.shownSections
+        const { data } = await axios.get(`/api/beta-assignments/get-from-alpha-assignment/${assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        if (data.beta_assignment_id) {
+          let url = `/assignments/${data.beta_assignment_id}/questions/view`
+          if (questionId) {
+            url += `/${questionId}`
+          }
+          if (shownSections) {
+            url += `/${shownSections}`
+          }
+          await this.$router.push(url)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateLicenseVersions () {
       this.licenseVersionOptions = this.defaultLicenseVersionOptions.filter(version => version.licenses.includes(this.propertiesForm.license))
       if (this.propertiesForm.license === 'gnufdl' && !['1.1', '1.2', '1.3'].includes(this.propertiesForm.licenseVersion)) {

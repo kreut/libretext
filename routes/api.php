@@ -189,6 +189,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/{assignment}/direct-import-questions', 'QuestionController@directImportQuestions');
 
 
+
+     Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getFromAlphaAssignment');
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
     Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
