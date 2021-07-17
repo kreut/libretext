@@ -200,10 +200,25 @@
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
-      ok-title="Yes, remove question"
-      @ok="submitRemoveQuestion"
     >
-      <RemoveQuestion />
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
     </b-modal>
 
     <b-modal
@@ -1534,6 +1549,7 @@ export default {
     LoggedInAsStudent
   },
   data: () => ({
+    betaAssignmentsExist: false,
     autoAttributionHTML: '',
     autoAttribution: true,
     isInstructorLoggedInAsStudent: false,
@@ -2912,6 +2928,7 @@ export default {
           return false
         }
         let assignment = data.assignment
+        this.betaAssignmentsExist = assignment.beta_assignments_exist
         if (this.user.role === 3 && !assignment.shown) {
           this.showAssessmentClosedMessage = true
         }

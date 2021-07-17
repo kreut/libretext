@@ -872,6 +872,7 @@ class AssignmentController extends Controller
      * @param Request $request
      * @param Assignment $assignment
      * @param Score $score
+     * @param SubmissionFile $submissionFile
      * @return array
      * @throws Exception
      */
@@ -915,7 +916,8 @@ class AssignmentController extends Controller
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
                 'scores' => $can_view_assignment_statistics
                     ? $score->where('assignment_id', $assignment->id)->get()->pluck('score')
-                    : []
+                    : [],
+                'beta_assignments_exist' => $assignment->betaAssignments() !== []
             ];
 
             if (Auth::user()->role === 3) {
