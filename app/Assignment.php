@@ -484,14 +484,28 @@ class Assignment extends Model
         return $this->hasMany('App\Seed');
     }
 
-    public function betaAssignments(){
-        $beta_assignment_ids= DB::table('beta_assignments')->where('alpha_assignment_id',$this->id)
+    public function betaAssignments()
+    {
+        $beta_assignment_ids = DB::table('beta_assignments')->where('alpha_assignment_id', $this->id)
             ->get();
 
-        if ($beta_assignment_ids->isNotEmpty()){
-            $beta_assignment_ids=  $beta_assignment_ids->pluck('id')->toArray();
+        if ($beta_assignment_ids->isNotEmpty()) {
+            $beta_assignment_ids = $beta_assignment_ids->pluck('id')->toArray();
         }
         return $this->whereIn('id', $beta_assignment_ids)->get();
+    }
+
+    /**
+     * @return Assignment[]
+     */
+    public function addBetaAssignments()
+    {
+        $assignments = [$this];
+        $beta_assignments = $this->betaAssignments();
+        foreach ($beta_assignments as $beta_assignment) {
+            $assignments[] = $beta_assignment;
+        }
+        return $assignments;
     }
 
     public function course()

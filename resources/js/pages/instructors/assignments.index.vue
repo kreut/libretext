@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" :title="title"/>
+    <PageTitle v-if="canViewAssignments" :title="title" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -47,7 +47,7 @@
         title="Assigned To"
         size="lg"
       >
-        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
+        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView" />
       </b-modal>
 
       <b-modal
@@ -149,8 +149,22 @@
         ref="modal"
         title="Confirm Delete Assignment"
       >
-        <p>By deleting the assignment, you will also delete all student scores associated with the assignment.</p>
-        <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+        <div v-show="betaCourseInfo.length === 0">
+          <p>
+            By deleting the assignment, you will also delete all student scores associated with the assignment.
+          </p>
+          <p><strong>Once an assignment is deleted, it can not be retrieved!</strong></p>
+        </div>
+        <b-alert :show="betaCourseInfo.length>0" variant="danger">
+          <div class="font-weight-bold font-italic">
+            <p>
+              Since this is an Alpha course with tethered Beta courses, if you delete this
+              assignment, you will delete all student scores associated with this assignment in the Alpha course and you will also delete
+              all associated student scores in the associated Beta assignments.
+            </p>
+            <p>This action cannot be undone!</p>
+          </div>
+        </b-alert>
         <template #modal-footer>
           <b-button
             size="sm"
@@ -171,6 +185,7 @@
       </b-modal>
 
       <b-container>
+
         <b-row v-if="canViewAssignments" class="mb-4" align-h="between">
           <b-col lg="3">
             <b-form-select v-if="assignmentGroupOptions.length>1"
@@ -209,45 +224,45 @@
       <div v-show="hasAssignments" class="table-responsive">
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th scope="col">
-              Assignment Name
-            </th>
-            <th scope="col">
-              Shown
-            </th>
-            <th scope="col">
-              Group
-            </th>
-            <th scope="col">
-              Available On
-            </th>
-            <th scope="col">
-              Due
-            </th>
-            <th scope="col">
-              Status
-            </th>
-            <th scope="col">
-              Actions
-            </th>
-          </tr>
+            <tr>
+              <th scope="col">
+                Assignment Name
+              </th>
+              <th scope="col">
+                Shown
+              </th>
+              <th scope="col">
+                Group
+              </th>
+              <th scope="col">
+                Available On
+              </th>
+              <th scope="col">
+                Due
+              </th>
+              <th scope="col">
+                Status
+              </th>
+              <th scope="col">
+                Actions
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
-          <tr v-for="assignment in assignments"
-              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-              :key="assignment.id"
-          >
-            <td style="width:300px">
-              <b-icon icon="list"/>
-              <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
+            <tr v-for="assignment in assignments"
+                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+                :key="assignment.id"
+            >
+              <td style="width:300px">
+                <b-icon icon="list" />
+                <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"
                     :id="getTooltipTarget('getQuestions',assignment.id)"
                     icon="lock-fill"
                   />
                 </span><a href="" @click.prevent="getAssignmentView(user.role, assignment)">{{ assignment.name }}</a>
-              <span v-if="user && [2,4].includes(user.role)">
+                <span v-if="user && [2,4].includes(user.role)">
                   <b-tooltip :target="getTooltipTarget('getQuestions',assignment.id)"
                              delay="500"
                   >
@@ -255,56 +270,56 @@
                   </b-tooltip>
 
                 </span>
-            </td>
-            <td>
-              <toggle-button
-                :width="57"
-                :value="Boolean(assignment.shown)"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitShowAssignment(assignment)"
-              />
-            </td>
-            <td>{{ assignment.assignment_group }}</td>
-            <td>
+              </td>
+              <td>
+                <toggle-button
+                  :width="57"
+                  :value="Boolean(assignment.shown)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitShowAssignment(assignment)"
+                />
+              </td>
+              <td>{{ assignment.assignment_group }}</td>
+              <td>
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-              <span v-if="assignment.assign_tos.length > 1">
+                <span v-if="assignment.assign_tos.length > 1">
                   <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                 </span>
-            </td>
-            <td style="width:200px">
+              </td>
+              <td style="width:200px">
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-            </td>
-            <td>
-              <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
-              <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status"/>
-            </td>
-            <td>
-              <div class="mb-0">
-                <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                           delay="500"
-                >
-                  Grading
-                </b-tooltip>
-                <span v-show="assignment.source === 'a'" class="pr-1"
-                      @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
-                >
+              </td>
+              <td>
+                <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
+                <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
+              </td>
+              <td>
+                <div class="mb-0">
+                  <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
+                             delay="500"
+                  >
+                    Grading
+                  </b-tooltip>
+                  <span v-show="assignment.source === 'a'" class="pr-1"
+                        @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
+                  >
                     <b-icon
                       v-show="assignment.submission_files !== '0'"
                       :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                       icon="check2"
                     />
                   </span>
-                <span v-show="user && user.role === 2">
+                  <span v-show="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('editAssignment',assignment.id)"
                                delay="500"
                     >
@@ -336,9 +351,9 @@
                             @click="deleteAssignment(assignment.id)"
                     />
                   </span>
-              </div>
-            </td>
-          </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -395,6 +410,7 @@ export default {
     draggable
   },
   data: () => ({
+    betaCourseInfo: [],
     allFormErrors: [],
     assignmentGroups: [],
     form: assignmentForm,
@@ -622,6 +638,7 @@ export default {
         const { data } = await axios.get(`/api/courses/${this.courseId}`)
         this.title = `${data.course.name} Assignments`
         this.course = data.course
+        this.betaCourseInfo = this.course.beta_course_info
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

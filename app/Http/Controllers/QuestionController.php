@@ -159,12 +159,7 @@ class QuestionController extends Controller
                 $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
                 $questions_to_add[$question_id] = "$library_text-$page_id";
             }
-            $assignments = [$assignment];
-            $beta_assignments = $assignment->betaAssignments();
-
-            foreach ($beta_assignments as $beta_assignment) {
-                $assignments[] = $beta_assignment;
-            }
+           $assignments = $assignment->addBetaAssignments();
             DB::beginTransaction();
             foreach ($assignments as $key => $assignment) {
                 $assignment_questions = $assignment->questions->pluck('id')->toArray();

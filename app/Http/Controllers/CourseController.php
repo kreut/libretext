@@ -413,8 +413,8 @@ class CourseController extends Controller
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
                 'public' => $course->public,
-                'alpha' => $course->alpha];
-
+                'alpha' => $course->alpha,
+                'beta_course_info' => $course->betaCourseInfo()];
             $response['type'] = 'success';
 
         } catch (Exception $e) {

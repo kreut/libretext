@@ -10,6 +10,12 @@ use Illuminate\Support\Facades\DB;
 
 class BetaAssignmentController extends Controller
 {
+    /**
+     * @param Request $request
+     * @param Assignment $alpha_assignment
+     * @return array
+     * @throws Exception
+     */
     public function getFromAlphaAssignment(Request $request, Assignment $alpha_assignment)
     {
         $response['type'] = 'error';

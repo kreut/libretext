@@ -23,7 +23,25 @@ class Course extends Model
         return $this->hasManyThrough('App\Score', 'App\Assignment');
     }
 
-    public function school() {
+    /**
+     * @return \Illuminate\Support\Collection
+     */
+    public function betaCourseInfo()
+    {
+        return DB::table('beta_courses')
+            ->join('courses', 'beta_courses.id', '=', 'courses.id')
+            ->join('users', 'courses.user_id', '=', 'users.id')
+            ->where('alpha_course_id', $this->id)
+            ->select('courses.name',
+                DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS user_name"),
+                'users.email'
+            )
+            ->get();
+
+    }
+
+    public function school()
+    {
         return $this->belongsTo('App\School');
     }
 
@@ -35,15 +53,18 @@ class Course extends Model
     public function headGrader()
     {
         return $this->hasOne('App\HeadGrader');
-}
+    }
+
     public function sections()
     {
         return $this->hasMany('App\Section');
     }
 
-    public function graderNotifications() {
+    public function graderNotifications()
+    {
         return $this->hasOne('App\GraderNotification');
     }
+
     public function assignmentGroups()
     {
 
@@ -110,7 +131,7 @@ class Course extends Model
             $enrolled_users_by_section[$enrollment->user_id] = [
                 'crn' => $enrollment->crn,
                 'course_section' => "$this->name - $enrollment->name"
-                ];
+            ];
         }
         return $enrolled_users_by_section;
     }
@@ -202,23 +223,23 @@ class Course extends Model
     {
 
 
-        $cannot_access_assignments  = DB::table('assignment_grader_access')
+        $cannot_access_assignments = DB::table('assignment_grader_access')
             ->whereIn('assignment_id', $this->assignments->pluck('id')->toArray())
             ->where('user_id', $user_id)
-            ->where('access_level',0)
+            ->where('access_level', 0)
             ->select('assignment_id')
             ->get();
         $cannot_access_assignment_ids = [];
-        foreach ($cannot_access_assignments as $cannot_access_assignment){
+        foreach ($cannot_access_assignments as $cannot_access_assignment) {
             $cannot_access_assignment_ids[] = $cannot_access_assignment->assignment_id;
         }
         $accessible_assignment_ids = [];
 
-        foreach ($this->assignments as $assignment){
+        foreach ($this->assignments as $assignment) {
 
-            $accessible_assignment_ids[$assignment->id] = !in_array($assignment->id,  $cannot_access_assignment_ids);
+            $accessible_assignment_ids[$assignment->id] = !in_array($assignment->id, $cannot_access_assignment_ids);
         }
-        return  $accessible_assignment_ids;
+        return $accessible_assignment_ids;
 
     }
 

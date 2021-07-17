@@ -727,11 +727,7 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-            $assignments = [$assignment];
-            $beta_assignments = $assignment->betaAssignments();
-            foreach ($beta_assignments as $beta_assignment){
-                $assignments[] = $beta_assignment;
-            }
+            $assignments = $assignment->addBetaAssignments();
             DB::beginTransaction();
             foreach ($assignments as $assignment) {
                 DB::table('assignment_question')
