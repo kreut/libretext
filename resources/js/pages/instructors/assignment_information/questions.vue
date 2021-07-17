@@ -5,7 +5,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -189,6 +189,7 @@ export default {
     RemoveQuestion
   },
   data: () => ({
+    betaAssignmentsExist: false,
     openEndedQuestionsInRealTime: '',
     learningTreeQuestionsInNonLearningTree: '',
     nonLearningTreeQuestions: '',
@@ -281,6 +282,7 @@ export default {
           return false
         }
         this.assessmentType = data.assessment_type
+        this.betaAssignmentsExist = data.beta_assignments_exist
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {
