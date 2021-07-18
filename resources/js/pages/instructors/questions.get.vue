@@ -1082,9 +1082,9 @@ export default {
       this.$bvModal.hide('modal-remove-question')
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${question.id}`)
-        if (data.type === 'success') {
+        if (data.type === 'info') {
           this.$noty.info(data.message)
-          question.inAssignment = false
+          this.questions[this.currentPage - 1].inAssignment = false
         } else {
           this.$noty.error(data.message)
         }
