@@ -1,6 +1,30 @@
 <template>
   <div>
     <b-modal
+      id="modal-remove-question"
+      ref="modal"
+      title="Confirm Remove Question"
+    >
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-remove-question')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="submitRemoveQuestion()"
+        >
+          Yes, remove question!
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-upload-file"
       ref="solutionFileInput"
       title="Upload File"
@@ -534,12 +558,14 @@ import {
   updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
 
+import RemoveQuestion from '~/components/RemoveQuestion'
 export default {
   components: {
     VueBootstrapTypeahead,
     draggable,
     AssessmentTypeWarnings,
-    Loading
+    Loading,
+    RemoveQuestion
   },
   middleware: 'auth',
   data: () => ({
@@ -640,6 +666,9 @@ export default {
     this.getQuestionWarningInfo()
   },
   methods: {
+    openRemoveQuestionModal () {
+      this.$bvModal.show('modal-remove-question')
+    },
     async getQuestionWarningInfo () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
