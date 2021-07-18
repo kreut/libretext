@@ -109,7 +109,7 @@
           size="sm"
           class="float-right"
           variant="danger"
-          @click="removeQuestionFromAssignment(questionToView.id)"
+          @click="removeQuestionFromRemixedAssignment(questionToView.id)"
         >
           Remove Question
         </b-button>
@@ -335,7 +335,7 @@
                             <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
                               {{ question.title ? question.title : 'No title' }}
                             </a>
-                            <b-icon icon="trash" @click="removeQuestionFromAssignment(question.question_id)"/>
+                            <b-icon icon="trash" @click="removeQuestionFromRemixedAssignment(question.question_id)"/>
                           </td>
                           <td class="dragArea">
                             {{ question.submission }}
@@ -753,7 +753,7 @@ export default {
       }
       return true
     },
-    async removeQuestionFromAssignment (questionId) {
+    async removeQuestionFromRemixedAssignment (questionId) {
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${questionId}`)
         this.$noty[data.type](data.message)
