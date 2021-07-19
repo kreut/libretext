@@ -1,5 +1,5 @@
-<link rel="stylesheet" href="https://adapt.libretexts.org/assets/css/libretext.css?v=2">
-<script type="text/javascript" src="https://adapt.libretexts.org/assets/js/hostIFrameResizer.js"></script>
+<link rel="stylesheet" href="https://dev.adapt.libretexts.org/assets/css/libretext.css?v=2">
+<script type="text/javascript" src="https://dev.adapt.libretexts.org/assets/js/hostIFrameResizer.js"></script>
 <?php
 if (isset($extras['glMol'])  && $extras['glMol']) {
     ?>
