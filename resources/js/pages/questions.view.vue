@@ -1416,7 +1416,7 @@
                               Upload New File
                             </b-button>
                           </b-row>
-                          <b-row v-show="(compiledPDF || bothFileUploadMode) && user.role === 3" class="mt-2">
+                          <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3" class="mt-2">
                             <span class="font-italic">
                               {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
                               :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
