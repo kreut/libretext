@@ -1,5 +1,5 @@
 <template>
-  <div style="min-height:400px; margin-bottom:100px">
+  <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
     <b-modal
       id="modal-not-updated"
       ref="modalNotUpdated"
@@ -1416,7 +1416,9 @@
                               Upload New File
                             </b-button>
                           </b-row>
-                          <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3" class="mt-2">
+                          <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3"
+                                 class="mt-2"
+                          >
                             <span class="font-italic">
                               {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
                               :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
@@ -1564,7 +1566,7 @@ export default {
     learningTreeSrc: '',
     assignmentInformationMarginBottom: 'mb-3',
     showSubmissionInformation: true,
-    showAssignmentInformation: true,
+    showAssignmentInformation: false,
     showAttribution: true,
     showInvalidAssignmentMessage: false,
     presentationMode: false,
