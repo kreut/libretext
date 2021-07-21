@@ -2,6 +2,52 @@
   <div>
     <CannotDeleteAssessmentFromBetaAssignmentModal/>
     <b-modal
+      v-if="alphaAssignmentQuestion"
+      id="modal-view-question"
+      ref="modalViewQuestion"
+      title="View Question"
+      size="lg"
+    >
+      <div>
+        <iframe v-show="alphaAssignmentQuestion.non_technology"
+                :key="`non-technology-iframe-${alphaAssignmentQuestion.id}`"
+                v-resize="{checkOrigin: false }"
+                width="100%"
+                :src="alphaAssignmentQuestion.non_technology_iframe_src"
+                frameborder="0"
+        />
+      </div>
+
+      <div v-if="alphaAssignmentQuestion.technology_iframe">
+        <iframe
+          :key="`technology-iframe-${alphaAssignmentQuestion.id}`"
+          v-resize="{ checkOrigin: false }"
+          width="100%"
+          :src="alphaAssignmentQuestion.technology_iframe"
+          frameborder="0"
+        />
+      </div>
+      <template #modal-footer>
+        <b-button
+          v-show="viewQuestionAction==='add'"
+          size="sm"
+          class="float-right"
+          variant="primary"
+          @click="addQuestionFromAlphaAssignment()"
+        >
+          Add Question
+        </b-button>
+        <b-button
+          v-show="viewQuestionAction==='remove'"
+          size="sm"
+          class="float-right"
+          variant="danger"
+        >
+          Remove Question
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
@@ -61,7 +107,8 @@
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-italic font-weight-bold">{{ assessmentType }}</span> assessments.
+            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
+          >{{ assessmentType }}</span> assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
             </span>
@@ -75,6 +122,39 @@
               Students answer questions within a short timeframe and instructors get up-to-date statistics on submissions.
             </span>
           </p>
+          <b-card v-show="betaCourseApprovals.length" header="default" header-html="Beta Course Approvals">
+            <p>
+              The Alpha course instructor has either added or removed assessments on the tethered assignment.
+              By approving any changes here, your own students' assignments will reflect the changes.
+              In addition, their scores will be automatically updated to reflect the change.
+            </p>
+            <b-card-text>
+              <b-table striped hover
+                       :fields="fields"
+                       :items="betaCourseApprovals"
+              >
+                <template v-slot:cell(title)="data">
+                  <a href="#" @click="viewQuestionInModal(data.item,'add')"
+                  >{{ data.item.title !== null ? data.item.title : 'None provided' }}</a>
+                </template>
+                <template v-slot:cell(action)="data">
+                  <b-button v-if="data.item.action === 'add'"
+                            variant="primary"
+                            size="sm"
+                            @click="alphaAssignmentQuestion=data.item;addQuestionFromAlphaAssignment()"
+                  >
+                    Add
+                  </b-button>
+                  <b-button v-if="data.item.action === 'remove'"
+                            variant="danger"
+                            size="sm"
+                            @click="alphaAssignmentQuestion=data.item;removeQuestionFromBetaAssignment()">
+                    Remove
+                  </b-button>
+                </template>
+              </b-table>
+            </b-card-text>
+          </b-card>
           <table class="table table-striped">
             <thead>
             <tr>
@@ -165,6 +245,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import draggable from 'vuedraggable'
+import { h5pResizer } from '~/helpers/H5PResizer'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
@@ -193,6 +274,13 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal
   },
   data: () => ({
+    viewQuestionAction: '',
+    alphaAssignmentQuestion: {},
+    fields: [
+      'title',
+      'action'
+    ],
+    betaCourseApprovals: [],
     isBetaAssignment: false,
     betaAssignmentsExist: false,
     openEndedQuestionsInRealTime: '',
@@ -226,8 +314,53 @@ export default {
     initTooltips(this)
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfo()
+    this.getBetaCourseApprovals()
+    h5pResizer()
   },
   methods: {
+    viewQuestionInModal (question, action) {
+      this.alphaAssignmentQuestion = question
+      this.viewQuestionAction = action
+      this.$bvModal.show('modal-view-question')
+    },
+    async removeQuestionFromBetaAssignment (){
+      try {
+        const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.alphaAssignmentQuestion.question_id}`)
+        this.$noty[data.type](data.message)
+        if (data.type !== 'error') {
+          this.betaCourseApprovals = this.betaCourseApprovals.filter(question => question.question_id !== this.alphaAssignmentQuestion.question_id)
+          await this.getAssignmentInfo()
+        }
+      } catch (error) {
+        this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+
+    async addQuestionFromAlphaAssignment () {
+      try {
+        const { data } = await axios.post(`/api/assignments/${this.assignmentId}/questions/${this.alphaAssignmentQuestion.question_id}`,
+          { alpha_assignment_question_id: this.alphaAssignmentQuestion.alpha_assignment_question_id })
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.betaCourseApprovals = this.betaCourseApprovals.filter(question => question.question_id !== this.alphaAssignmentQuestion.question_id)
+          await this.getAssignmentInfo()
+        }
+      } catch (error) {
+        this.$noty.error('We could not add the question to the assignment.  Please try again or contact us for assistance.')
+      }
+    },
+    async getBetaCourseApprovals () {
+      try {
+        const { data } = await axios.get(`/api/beta-course-approvals/${this.assignmentId}`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.betaCourseApprovals = data.beta_course_approvals
+      } catch (error) {
+        this.$noty.error('We could not retrieve your Beta course approvals.  Please try again or contact us for assistance.')
+      }
+    },
     async submitRemoveQuestion () {
       try {
         const { data } = await axios.delete(`/api/assignments/${this.assignmentId}/questions/${this.questionId}`)
@@ -243,7 +376,7 @@ export default {
       }
     },
     openRemoveQuestionModal (questionId) {
-      if (this.isBetaAssignment){
+      if (this.isBetaAssignment) {
         this.$bvModal.show('modal-cannot-delete-assessment-from-beta-assignment')
         return false
       }

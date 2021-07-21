@@ -849,9 +849,8 @@ export default {
           return false
         }
         this.questionToView = data.question
-        this.questionToView.question_id = data.question.id //to make it consistent for easier removal
+        this.questionToView.question_id = data.question.id
         this.showQuestion = true
-        console.log(`#${this.questionToView.iframe_id}`)
       } catch (error) {
         this.$noty.error(error.message)
       }

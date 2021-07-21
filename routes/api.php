@@ -197,6 +197,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/alpha-course-import-codes/{course}', 'AlphaCourseImportCodeController@show');
     Route::post('/alpha-course-import-codes/refresh/{course}', 'AlphaCourseImportCodeController@refresh');
 
+    Route::get('/beta-course-approvals/{assignment}', 'BetaCourseApprovalController@getByAssignment');
 
 
     Route::get('/questions/{question}', 'QuestionController@show');

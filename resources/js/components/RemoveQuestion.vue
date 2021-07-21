@@ -1,21 +1,16 @@
 <template>
   <div>
-    <b-alert :show="betaAssignmentsExist" variant="danger">
-      <div class="font-weight-bold font-italic">
-        <p>
-          Since this assessment is an Alpha course with tethered Beta courses, by removing this
-          assessment, you will delete all student scores associated with this assessment in the Alpha course
-          as well as in the associated Beta courses.
-        </p>
-        <p>This action cannot be undone!</p>
-      </div>
-    </b-alert>
-    <div v-show="!betaAssignmentsExist"><p>
+      <p v-show="betaAssignmentsExist">
+        Since this assessment is an Alpha course with tethered Beta courses, by removing this
+        assessment, instructors in associated Beta courses will be prompted to approve the removal in their own courses.
+      </p>
+    <p>
       By removing the question, you will also delete all student submissions for this question. In addition,
       the scores will be re-computed.
     </p>
-      <p><strong>Once a question is removed, the scores cannot be reverted!</strong></p>
-    </div>
+    <p class="font-weight-bold">
+      Once a question is removed, the scores cannot be reverted!
+    </p>
   </div>
 </template>
 

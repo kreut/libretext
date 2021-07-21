@@ -3,8 +3,8 @@
     <b-alert :show="betaAssignmentsExist">
       <span class="font-italic font-weight-bold">
         This is an assignment that is part of an Alpha course which has Beta assignments which
-        are tethered to it.  Adding/removing assessments from this assignment will automatically be reflected
-            in the associated Beta assignment including an update of student scores.
+        are tethered to it.  If you add/remove assessments from this assignment Beta instructors will have to approve the changes
+        if they would like to be reflected in their assignments.
           </span>
     </b-alert>
     <b-alert :show="assessmentType === 'clicker'">

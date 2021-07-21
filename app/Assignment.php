@@ -81,9 +81,11 @@ class Assignment extends Model
         return $graders;
     }
 
-public function isBetaAssignment(){
+    public function isBetaAssignment()
+    {
         return DB::table('beta_assignments')->where('id', $this->id)->first();
-}
+    }
+
     public function assignToUsers()
     {
         return $this->hasManyThrough(AssignToUser::class, AssignToTiming::class);
@@ -149,7 +151,7 @@ public function isBetaAssignment(){
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
                 $assignments_info[$key]['shown'] = $assignment->shown;
-                $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id,  $course_beta_assignment_ids );
+                $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
 
                 if (Auth::user()->role === 3) {
                     $is_extension = isset($extensions_by_assignment[$assignment->id]);
@@ -489,16 +491,18 @@ public function isBetaAssignment(){
 
     public function betaAssignments()
     {
-        if (!$this->course->alpha){
+        if (!$this->course->alpha) {
             return [];
         }
-        $beta_assignment_ids = DB::table('beta_assignments')->where('alpha_assignment_id', $this->id)
+        $beta_assignment_ids = DB::table('beta_assignments')
+            ->where('alpha_assignment_id', $this->id)
             ->get();
 
         if ($beta_assignment_ids->isNotEmpty()) {
             $beta_assignment_ids = $beta_assignment_ids->pluck('id')->toArray();
         }
-        return $this->whereIn('id', $beta_assignment_ids)->get();
+        return $this->whereIn('assignments.id', $beta_assignment_ids)
+            ->get();
     }
 
     /**
