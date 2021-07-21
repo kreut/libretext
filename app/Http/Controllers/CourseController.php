@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AlphaCourseImportCode;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
@@ -644,11 +645,16 @@ class CourseController extends Controller
      *
      * @param Course $course
      * @param AssignToTiming $assignToTiming
+     * @param AlphaCourseImportCode $alphaCourseImportCode
      * @return mixed
      * @throws Exception
      */
     public
-    function destroy(Course $course, AssignToTiming $assignToTiming)
+    function destroy(Course $course,
+                     AssignToTiming $assignToTiming,
+                     AlphaCourseImportCode $alphaCourseImportCode,
+                     BetaAssignment $betaAssignment,
+                     BetaCourse $betaCourse)
     {
 
         $response['type'] = 'error';
@@ -678,6 +684,7 @@ class CourseController extends Controller
                 $assignment->cutups()->delete();
                 $assignment->seeds()->delete();
                 $assignment->graders()->detach();
+                $betaAssignment->where('id', $assignment->id)->delete();
             }
             $course->extensions()->delete();
             $course->assignments()->delete();
@@ -692,6 +699,8 @@ class CourseController extends Controller
             }
 
             $course->finalGrades()->delete();
+            $alphaCourseImportCode->where('course_id', $course->id)->delete();
+            $betaCourse->where('id', $course->id)->delete();
             $course->delete();
             DB::commit();
             $response['type'] = 'success';

@@ -123,8 +123,6 @@
       id="modal-delete-course"
       ref="modal"
       title="Confirm Delete Course"
-      ok-title="Yes, delete course!"
-      @ok="handleDeleteCourse"
       @hidden="resetModalForms"
     >
       <p>By deleting the course, you will also delete:</p>
@@ -134,6 +132,23 @@
         <li>All student scores</li>
       </ol>
       <p><strong>Once a course is deleted, it can not be retrieved!</strong></p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-delete-course')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleDeleteCourse"
+        >
+          Yes, delete course!
+        </b-button>
+      </template>
     </b-modal>
 
     <div v-if="user && user.role === 4">
