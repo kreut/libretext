@@ -3,7 +3,6 @@
 namespace App\Http\Controllers;
 
 use App\AlphaCourseImportCode;
-use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
@@ -483,7 +482,8 @@ class CourseController extends Controller
         switch ($user->role) {
             case(2):
                 return DB::table('courses')
-                    ->select('*')
+                    ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
+                    ->leftJoin('beta_courses','courses.id','=','beta_courses.id')
                     ->where('user_id', $user->id)->orderBy('start_date', 'desc')
                     ->get();
             case(4):

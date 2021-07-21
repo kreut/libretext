@@ -200,14 +200,24 @@
         <template v-slot:cell(name)="data">
           <div class="mb-0">
             <span v-show="parseInt(data.item.alpha) === 1"
-                  :id="getTooltipTarget('betaAssignment',data.item.id)"
+                  :id="getTooltipTarget('alphaCourse',data.item.id)"
                   class="text-muted"
             >&alpha; </span>
-            <b-tooltip :target="getTooltipTarget('betaAssignment',data.item.id)"
+            <b-tooltip :target="getTooltipTarget('alphaCourse',data.item.id)"
                        delay="500"
             >
               This course is an Alpha course. Adding/removing assignments or assessments from this
               course will be directly reflected in the associated Beta courses.
+            </b-tooltip>
+            <span v-show="parseInt(data.item.is_beta_course) === 1"
+                  :id="getTooltipTarget('betaCourse',data.item.id)"
+                  class="text-muted"
+            >&beta; </span>
+            <b-tooltip :target="getTooltipTarget('betaCourse',data.item.id)"
+                       delay="500"
+            >
+              This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which are
+              added/removed in the Alpha course will be directly reflected in this course.
             </b-tooltip>
             <a href="" @click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
           </div>
