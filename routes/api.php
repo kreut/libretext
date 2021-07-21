@@ -191,6 +191,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
+    Route::get('/beta-courses/get-tethered-to-alpha-course/{course}', 'BetaCourseController@getTetheredToAlphaCourse');
+    Route::delete('/beta-courses/untether/{course}', 'BetaCourseController@untetherBetaCourseFromAlphaCourse');
 
     Route::get('/alpha-course-import-codes/{course}', 'AlphaCourseImportCodeController@show');
     Route::post('/alpha-course-import-codes/refresh/{course}', 'AlphaCourseImportCodeController@refresh');
