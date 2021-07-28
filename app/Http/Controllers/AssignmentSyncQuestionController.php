@@ -126,10 +126,10 @@ class AssignmentSyncQuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function remixAssignmentWithChosenQuestions(Request $request,
-                                                       Assignment $assignment,
+    public function remixAssignmentWithChosenQuestions(Request                $request,
+                                                       Assignment             $assignment,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       BetaCourseApproval $betaCourseApproval): array
+                                                       BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -509,13 +509,7 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
-                    try {
-                        $contents = $Libretext->getContentsByPageId($value->page_id);
-                    } catch (Exception $e) {
-
-                    }
-                    $columns['title'] = $contents['@title'] ?? 'Private title: contact us';
-                    Question::where('id', $value->question_id)->update(['title' => $columns['title']]);
+                    $columns['title'] = $Libretext->updateTitle($value->page_id, $value->question_id);
                 }
                 if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
@@ -541,7 +535,8 @@ class AssignmentSyncQuestionController extends Controller
             $response['rows'] = $rows;
 
 
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the questions summary for this assignment.  Please try again or contact us for assistance.";
@@ -620,9 +615,9 @@ class AssignmentSyncQuestionController extends Controller
 
     public
     function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
-                                           Assignment $assignment,
-                                           Question $question,
-                                           AssignmentSyncQuestion $assignmentSyncQuestion)
+                                           Assignment                    $assignment,
+                                           Question                      $question,
+                                           AssignmentSyncQuestion        $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -723,10 +718,10 @@ class AssignmentSyncQuestionController extends Controller
      * @throws Exception
      */
     public
-    function store(Assignment $assignment,
-                   Question $question,
+    function store(Assignment             $assignment,
+                   Question               $question,
                    AssignmentSyncQuestion $assignmentSyncQuestion,
-                   BetaCourseApproval $betaCourseApproval)
+                   BetaCourseApproval     $betaCourseApproval)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('add', [$assignmentSyncQuestion, $assignment]);
@@ -764,13 +759,13 @@ class AssignmentSyncQuestionController extends Controller
 
 
     public
-    function destroy(Request $request,
-                     Assignment $assignment,
-                     Question $question,
+    function destroy(Request                $request,
+                     Assignment             $assignment,
+                     Question               $question,
                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                     LtiLaunch $ltiLaunch,
-                     LtiGradePassback $ltiGradePassback,
-                     BetaCourseApproval $betaCourseApproval)
+                     LtiLaunch              $ltiLaunch,
+                     LtiGradePassback       $ltiGradePassback,
+                     BetaCourseApproval     $betaCourseApproval)
     {
 
         $response['type'] = 'error';
@@ -947,11 +942,11 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     public
-    function updateLastSubmittedAndLastResponse(Request $request,
-                                                Assignment $assignment,
-                                                Question $question,
-                                                Submission $Submission,
-                                                Extension $Extension,
+    function updateLastSubmittedAndLastResponse(Request                $request,
+                                                Assignment             $assignment,
+                                                Question               $question,
+                                                Submission             $Submission,
+                                                Extension              $Extension,
                                                 AssignmentSyncQuestion $assignmentSyncQuestion)
     {
         /**helper function to get the response info from server side technologies...*/
@@ -1002,11 +997,11 @@ class AssignmentSyncQuestionController extends Controller
 
     public
     function getResponseInfo(Assignment $assignment,
-                             $Extension,
+                                        $Extension,
                              Submission $Submission,
-                             $submissions_by_question_id,
-                             $question_technologies,
-                             $question_id)
+                                        $submissions_by_question_id,
+                                        $question_technologies,
+                                        $question_id)
     {
         //$Extension will be the model when returning the information to the user at the individual level
         //it will be the actual date when doing it for the assignment since I just need to do it once

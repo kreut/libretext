@@ -78,6 +78,7 @@ class Libretext extends Model
         }
     }
 
+
     /**
      * @param string $library
      * @param int $pageId
@@ -88,6 +89,31 @@ class Libretext extends Model
         $response = Http::get("https://{$library}.libretexts.org/@api/deki/pages/{$pageId}/contents");
         $xml = simplexml_load_string($response->body());
         return $xml->attributes()->title[0];
+    }
+
+    /**
+     * @param int $page_id
+     * @param int $question_id
+     * @return mixed|string
+     */
+    public function updateTitle(int $page_id, int $question_id){
+        try {
+            $contents = $this->getContentsByPageId($page_id);
+            $title= $contents['@title'] ?? 'No title.';
+        } catch (Exception $e) {
+            try {
+                $contents = $this->getBodyFromPrivatePage($page_id);
+                $attribute = '@title';
+                $title = $contents->$attribute;
+            } catch (Exception $e) {
+                $title = 'No title';
+            }
+        }
+        if (!$title) {
+            $title = 'No title';
+        }
+        Question::where('id', $question_id)->update(['title' => $title]);
+        return $title;
     }
 
     public function import()

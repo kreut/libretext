@@ -298,6 +298,9 @@ class Question extends Model
                     'technology_iframe' => $technology_iframe
                 ]);
 
+            $Libretext = new Libretext(['library' => $library]);
+            $Libretext->updateTitle($page_id, $question->id);
+
             if ($technology_and_tags['tags']) {
                 $Libretext->addTagsToQuestion($question, $technology_and_tags['tags']);
             }
