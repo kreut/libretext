@@ -408,8 +408,8 @@
                 </b-card>
               </b-col>
             </b-tab>
-            <b-tab title="Direct Import By Page Id" @click="showQuestions = false">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" class="h-100">
+            <b-tab title="Direct Import By Page Id" class="pb-8" @click="showQuestions = false">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
@@ -458,14 +458,34 @@
                           max-rows="5"
                         />
                         <div class="float-right mt-2">
+                          <span v-if="directImportingQuestions" class="mr-3 font-italic">
+                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
+                          </span>
                           <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions()">
-                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                            <b-spinner v-if="directImportingQuestions" small type="grow" />
                             Import Questions
                           </b-button>
                         </div>
                       </b-col>
                     </b-row>
                   </b-container>
+                  <div class="pt-4">
+                    <div v-if="errorPageIdsMessage.length>0">
+                      <b-alert :show="true" variant="danger">
+                        <span class="font-weight-bold">{{ errorPageIdsMessage }}</span>
+                      </b-alert>
+                    </div>
+                    <div v-if="pageIdsAddedToAssignmentMessage.length>0">
+                      <b-alert :show="true" variant="success">
+                        <span class="font-weight-bold">{{ pageIdsAddedToAssignmentMessage }}</span>
+                      </b-alert>
+                    </div>
+                    <div v-if="pageIdsNotAddedToAssignmentMessage.length>0">
+                      <b-alert :show="true" variant="info">
+                        <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
+                      </b-alert>
+                    </div>
+                  </div>
                 </b-card-text>
               </b-card>
             </b-tab>
@@ -474,16 +494,7 @@
 
         <hr>
       </div>
-      <div v-if="pageIdsAddedToAssignmentMessage.length>0">
-        <b-alert show variant="success">
-          <span class="font-weight-bold">{{ pageIdsAddedToAssignmentMessage }}</span>
-        </b-alert>
-      </div>
-      <div v-if="pageIdsNotAddedToAssignmentMessage.length>0">
-        <b-alert show variant="info">
-          <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
-        </b-alert>
-      </div>
+
       <div v-if="questions.length>0 && showQuestions" class="overflow-auto">
         <b-pagination
           v-model="currentPage"
@@ -577,6 +588,9 @@ export default {
     betaAssignmentsExist: false,
     questionToRemove: {},
     isRemixerTab: false,
+    errorPageIdsMessage: '',
+    directImportCount: '',
+    directImportIndex: '',
     openEndedQuestionsInRealTime: '',
     learningTreeQuestionsInNonLearningTree: '',
     nonLearningTreeQuestions: '',
@@ -958,25 +972,44 @@ export default {
       this.pageIdsAddedToAssignmentMessage = ''
       this.pageIdsNotAddedToAssignmentMessage = ''
       this.directImportingQuestions = true
-      try {
-        const { data } = await axios.post(`/api/questions/${this.assignmentId}/direct-import-questions`, { 'direct_import': this.directImport })
-        this.directImportingQuestions = false
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
+      let directImport = this.directImport.split(',')
+      this.directImportCount = directImport.length
+      let pageIdsAddedToAssignment = []
+      let pageIdsNotAddedToAssignment = []
+      let errorPageIds = []
+      for (this.directImportIndex = 0; this.directImportIndex < directImport.length; this.directImportIndex++) {
+        try {
+          const { data } = await axios.post(`/api/questions/${this.assignmentId}/direct-import-questions`, { 'direct_import': directImport[this.directImportIndex] })
+          if (data.type === 'error') {
+            errorPageIds.push(directImport[this.directImportIndex])
+            this.$noty.error(data.message)
+          }
+          if (data.page_ids_added_to_assignment) {
+            pageIdsAddedToAssignment.push(data.page_ids_added_to_assignment)
+          }
+          if (data.page_ids_not_added_to_assignment) {
+            pageIdsNotAddedToAssignment.push(data.page_ids_not_added_to_assignment)
+          }
+        } catch (error) {
+          this.$noty.error(error.message)
         }
-        if (data.page_ids_added_to_assignment) {
-          let verb = data.page_ids_added_to_assignment.includes(',') ? 'were' : 'was'
-          this.pageIdsAddedToAssignmentMessage = `${data.page_ids_added_to_assignment} ${verb} added to this assignment.`
-        }
-        if (data.page_ids_not_added_to_assignment) {
-          let verb = data.page_ids_not_added_to_assignment.includes(',') ? 'were' : 'was'
-          let pronoun = data.page_ids_not_added_to_assignment.includes(',') ? 'they' : 'it'
-          this.pageIdsNotAddedToAssignmentMessage = `${data.page_ids_not_added_to_assignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-        this.directImportingQuestions = false
+      }
+      console.log(pageIdsNotAddedToAssignment)
+      this.directImportingQuestions = false
+      pageIdsAddedToAssignment = pageIdsAddedToAssignment.join(', ')
+      pageIdsNotAddedToAssignment = pageIdsNotAddedToAssignment.join(', ')
+      let verb
+      verb = pageIdsAddedToAssignment.includes(',') ? 'were' : 'was'
+      if (pageIdsAddedToAssignment !== '') {
+        this.pageIdsAddedToAssignmentMessage = `${pageIdsAddedToAssignment} ${verb} added to this assignment.`
+      }
+      if (errorPageIds.length) {
+        this.errorPageIdsMessage = `Errors found with: ${errorPageIds}`
+      }
+      verb = pageIdsNotAddedToAssignment.includes(',') ? 'were' : 'was'
+      let pronoun = pageIdsNotAddedToAssignment.includes(',') ? 'they' : 'it'
+      if (pageIdsNotAddedToAssignment !== '') {
+        this.pageIdsNotAddedToAssignmentMessage = `${pageIdsNotAddedToAssignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
       }
       this.directImport = ''
     },

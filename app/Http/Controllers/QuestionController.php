@@ -124,6 +124,8 @@ class QuestionController extends Controller
                 $response['message'] = "You didn't submit any library-page id's for direct import.";
                 return $response;
             }
+            //works for both multiple and single inputs.  In Vue, this was changed to single inputs to get around
+            //AWS lamba timeout issues
             $library_text_page_ids = explode(',', $direct_import);
 
             $library_page_ids_added_to_assignment = [];
