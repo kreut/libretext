@@ -14,23 +14,25 @@
       >
     </b-navbar-brand>
     <div v-if="logoLoaded" class="float-right p-2">
-      <toggle-button
-        v-if="showToggleStudentView && (user !== null)"
-        class="mt-2"
-        :width="140"
-        :value="isInstructorView"
-        :sync="true"
-        :font-size="14"
-        :margin="4"
-        :color="{checked: '#28a745', unchecked: '#6c757d'}"
-        :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
-        @change="toggleStudentView()"
-      />
-      <span v-if="isMe && (user !== null)">
+      <div v-if="$route.name !== 'instructors.learning_trees.editor'">
+        <toggle-button
+          v-if="showToggleStudentView && (user !== null)"
+          class="mt-2"
+          :width="140"
+          :value="isInstructorView"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
+          @change="toggleStudentView()"
+        />
+        <span v-if="isMe && (user !== null)">
         <router-link :to="{ name: 'login.as'}">
           <b-button size="sm" variant="outline-primary">Login As</b-button>
         </router-link>
       </span>
+      </div>
     </div>
 
     <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
@@ -124,6 +126,7 @@ export default {
   },
 
   data: () => ({
+    isLearningTreeView: true,
     isInstructorsMyCoursesView: true,
     showToggleStudentView: false,
     originalRole: 0,

@@ -42,7 +42,7 @@
               :class="{ 'is-invalid': betaCourseToUntetherForm.errors.has('name') }"
               @keydown="betaCourseToUntetherForm.errors.clear('name')"
             />
-            <has-error :form="betaCourseToUntetherForm" field="name"/>
+            <has-error :form="betaCourseToUntetherForm" field="name" />
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -82,12 +82,14 @@
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Tethered Courses" class="mb-5">
           <b-card-text>
-        <p>
-          Tethered courses are courses that remain in sync. An instructor in the Alpha course will create
-          assignments/assessments and these will automatically be reflected in the tethered Beta courses. To create an
-          Alpha course, you can use <router-link :to="{ name: 'course_properties.general_info'}" :params="{courseId: courseId}"> this form</router-link> and select Alpha course. Beta courses, can be created at the
-          time of import when you import a new course.
-        </p>
+            <p>
+              Tethered courses are courses that remain in sync. An instructor in the Alpha course will create
+              assignments/assessments and these will automatically be reflected in the tethered Beta courses. To create an
+              Alpha course, you can use <router-link :to="{ name: 'course_properties.general_info'}">
+                this form
+              </router-link> and select Alpha course. Beta courses, can be created at the
+              time of import when you import a new course.
+            </p>
           </b-card-text>
         </b-card>
 
@@ -102,7 +104,7 @@
               >
                 <template slot="label">
                   Notify when there are pending approvals <span id="pending_approvals_tooltip">
-                <b-icon class="text-muted" icon="question-circle"/></span>
+                    <b-icon class="text-muted" icon="question-circle" /></span>
                   <b-tooltip target="pending_approvals_tooltip"
                              delay="250"
                   >

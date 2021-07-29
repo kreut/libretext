@@ -348,7 +348,7 @@ class LearningTreeController extends Controller
 
 
             $learningTree->user_id = Auth::user()->id;
-            $shortened_title = strlen($validated_node['title']) < 28 ? $validated_node['title'] : substr($validated_node['title'], 0, 28) . '...';
+            $shortened_title = $this->shortenTitle($validated_node['title']);
             DB::beginTransaction();
             $learningTree->learning_tree = $this->getRootNode($shortened_title, $data['library'], $request->text, $request->color, $data['page_id']);
             $learningTree->save();
@@ -369,6 +369,16 @@ class LearningTreeController extends Controller
         return $response;
 
 
+    }
+
+    /**
+     * @param $title
+     * @return string
+     */
+    public function shortenTitle($title): string
+    {
+        $title = trim($title);
+        return strlen($title) < 28 ? $title : substr($title, 0, 23) . '...';
     }
 
     public function getRootNode(string $title, string $library_value, string $library_text, string $library_color, int $page_id)
@@ -574,6 +584,7 @@ EOT;
                 $h = new Handler(app());
                 $h->report($e);
                 $response['message'] = "We were not able to validate this Learning Tree node.  Please double check your library and page id or contact us for assistance.";
+                return $response;
             } else {
                 try {
                     $contents = $Libretext->getBodyFromPrivatePage($pageId);
@@ -589,6 +600,7 @@ EOT;
                 }
             }
         }
+        $response['title'] = $this->shortenTitle($response['title']);
         return $response;
     }
 }

@@ -3,32 +3,40 @@
     <b-modal
       id="modal-update-node"
       ref="modal"
-      title="Update Node"
-      ok-title="Submit"
-      @ok="submitUpdateNode"
+      title="Node Contents"
+      size="xl"
+      hide-footer
     >
+      <iframe
+        :key="`node-iframe-${nodeIframeId}`"
+        v-resize="{ log: false }"
+        width="100%"
+        :src="nodeSrc"
+        frameborder="0"
+      />
+      <hr>
       <b-form ref="form">
         <b-form-group
           id="node_library"
-          label-cols-sm="5"
-          label-cols-lg="4"
+          label-cols-sm="2"
+          label-cols-lg="1"
           label="Library"
           label-for="library"
         >
-          <div class="mb-2 mr-2">
+          <div class="mb-2 mr-2" style="width: 300px">
             <b-form-select v-model="nodeForm.library"
                            :options="libraryOptions"
                            :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                            @change="nodeForm.errors.clear('library')"
             />
-            <has-error :form="nodeForm" field="library" />
+            <has-error :form="nodeForm" field="library"/>
           </div>
         </b-form-group>
         <b-form-group>
           <b-form-group
             id="node_page_id"
-            label-cols-sm="5"
-            label-cols-lg="4"
+            label-cols-sm="2"
+            label-cols-lg="1"
             label="Page Id"
             label-for="page_id"
           >
@@ -36,14 +44,22 @@
               id="page_id"
               v-model="nodeForm.page_id"
               type="text"
-              style="width: 80px"
+              style="width: 100px"
               :class="{ 'is-invalid': nodeForm.errors.has('page_id') }"
               @keydown="nodeForm.errors.clear('page_id')"
             />
-            <has-error :form="nodeForm" field="page_id" />
+            <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
         </b-form-group>
       </b-form>
+      <div>
+        <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="submitUpdateNode">
+          Update
+        </b-button>
+      </div>
     </b-modal>
 
     <b-modal
@@ -75,7 +91,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('title') }"
             @keydown="learningTreeForm.errors.clear('title')"
           />
-          <has-error :form="learningTreeForm" field="title" />
+          <has-error :form="learningTreeForm" field="title"/>
         </b-form-group>
 
         <b-form-group
@@ -92,7 +108,7 @@
             :class="{ 'is-invalid': learningTreeForm.errors.has('description') }"
             @keydown="learningTreeForm.errors.clear('description')"
           />
-          <has-error :form="learningTreeForm" field="description" />
+          <has-error :form="learningTreeForm" field="description"/>
         </b-form-group>
         <b-form-group
           v-if="!learningTreeId"
@@ -108,7 +124,7 @@
                            :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
                            @change="learningTreeForm.errors.clear('library')"
             />
-            <has-error :form="learningTreeForm" field="library" />
+            <has-error :form="learningTreeForm" field="library"/>
           </div>
         </b-form-group>
         <b-form-group>
@@ -128,7 +144,7 @@
               :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
               @keydown="learningTreeForm.errors.clear('page_id')"
             />
-            <has-error :form="learningTreeForm" field="page_id" />
+            <has-error :form="learningTreeForm" field="page_id"/>
           </b-form-group>
         </b-form-group>
       </b-form>
@@ -144,7 +160,7 @@
         <b-button
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('modal-delete-learninig-tree')"
+          @click="$bvModal.hide('modal-delete-learning-tree')"
         >
           Cancel
         </b-button>
@@ -158,16 +174,29 @@
         </b-button>
       </template>
     </b-modal>
-
-    <div v-if="user.role === 2" id="leftcard">
+    <div style="margin-left:-100px;">
+      <toggle-button
+        v-if="(user !== null)"
+        class="mt-2"
+        :width="170"
+        :value="!isLearningTreeView"
+        :sync="true"
+        :font-size="14"
+        :margin="4"
+        :color="{checked: '#6c757d', unchecked: '#28a745'}"
+        :labels="{checked: 'Editor/Learning Tree', unchecked: 'Learning Tree Only'}"
+        @change="toggleLearningTreeView()"
+      />
+    </div>
+    <div v-show="user.role === 2 && !isLearningTreeView" id="leftcard">
       <div id="actions">
         <b-button variant="success" size="sm" @click="initCreateNew">
           Create New
         </b-button>
-        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="this.editLearningTree">
+        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
           Update Info
         </b-button>
-        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="this.deleteLearningTree">
+        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
           Delete
         </b-button>
         <div id="search">
@@ -175,7 +204,7 @@
             <b-form-select v-model="library" :options="libraryOptions" class="mt-3" />
           </div>
           <div class="d-flex flex-row">
-            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id" />
+            <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"/>
             <b-button id="add"
                       class="ml-2 mr-2"
                       variant="secondary"
@@ -183,7 +212,7 @@
                       :disabled="learningTreeId === 0"
                       @click="addRemediation"
             >
-              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning" />
+              <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               Get Node
             </b-button>
             <b-button size="sm"
@@ -192,15 +221,15 @@
                       :disabled="!canUndo"
                       @click="undo()"
             >
-              <font-awesome-icon :icon="undoIcon" />
+              <font-awesome-icon :icon="undoIcon"/>
             </b-button>
           </div>
         </div>
       </div>
-      <div id="blocklist" />
+      <div id="blocklist"/>
     </div>
 
-    <div id="canvas" />
+    <div id="canvas" :class="isLearningTreeView ? 'learningTreeView' : 'learningTreeAndEditorView'"/>
   </div>
 </template>
 
@@ -215,6 +244,7 @@ import libraries from '~/helpers/Libraries'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import Loading from 'vue-loading-overlay'
+import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
 
@@ -222,9 +252,13 @@ export default {
     return { title: this.$t('home') }
   },
   components: {
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    ToggleButton
   },
   data: () => ({
+    isLearningTreeView: false,
+    nodeSrc: '',
+    nodeIframeId: '',
     canUndo: false,
     undoIcon: faUndo,
     nodeForm: new Form({
@@ -387,6 +421,10 @@ export default {
     }
   },
   methods: {
+    toggleLearningTreeView () {
+      this.$emit('toggle-learning-tree-view', this.isLearningTreeView)
+      this.isLearningTreeView = !this.isLearningTreeView
+    },
     async undo () {
       try {
         const { data } = await axios.patch(`/api/learning-tree-histories/${this.learningTreeId}`)
@@ -403,8 +441,15 @@ export default {
     openUpdateNodeModal (nodeToUpdate) {
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
+
+      let pageId = this.nodeToUpdate.querySelector('input[name="page_id"]').value
+
       this.nodeForm.page_id = ''
-      this.nodeForm.library = this.nodeToUpdate.querySelector('input[name="library"]').value
+      let library = this.nodeToUpdate.querySelector('input[name="library"]').value
+      this.nodeForm.library = library
+
+      this.nodeSrc = `https://${library}.libretexts.org/@go/page/${pageId}?adaptView`
+      this.nodeIframeId = `remediation-${library}-${pageId}`
     },
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()
@@ -1171,7 +1216,7 @@ body, html {
   background-color: #F0F2F9;
   opacity: .5;
 }
-
+/*
 #canvas {
   position: absolute;
   width: calc(100% - 361px);
@@ -1180,6 +1225,25 @@ body, html {
   left: 341px;
   z-index: 0;
   overflow: auto;
+}*/
+
+.learningTreeAndEditorView {
+  position: absolute;
+  width: calc(100% - 361px);
+  height: 900px;
+  top: 0px;
+  left: 341px;
+  z-index: 0;
+  overflow: auto;
+}
+
+.learningTreeView {
+  position: absolute;
+  width: calc(100% - 361px);
+  height: 900px;
+  top: 0px;
+  left: 341px;
+  z-index: 500;
 }
 
 #properties {

@@ -188,7 +188,7 @@ class AssignmentSyncQuestionController extends Controller
                             ->update($assignment_question_arr);
                     } else {
                         DB::table('assignment_question')->insertGetId($assignment_question_arr);
-                        if (!$assignment_question_learning_tree){
+                        if (!$assignment_question_learning_tree) {
                             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add');
                         }
                     }
@@ -199,7 +199,7 @@ class AssignmentSyncQuestionController extends Controller
                             DB::table('assignment_question_learning_tree')
                                 ->insert(['assignment_question_id' => $assignment_question->id,
                                     'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id]);
-                            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add',$assignment_question_learning_tree->learning_tree_id);
+                            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add', $assignment_question_learning_tree->learning_tree_id);
                         }
                     }
                 }
@@ -473,6 +473,7 @@ class AssignmentSyncQuestionController extends Controller
             $assignment_questions = DB::table('assignment_question')
                 ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                 ->leftJoin('assignment_question_learning_tree', 'assignment_question.id', '=', 'assignment_question_learning_tree.assignment_question_id')
+                ->leftJoin('learning_trees', 'assignment_question_learning_tree.learning_tree_id', '=', 'learning_trees.id')
                 ->where('assignment_id', $assignment->id)
                 ->orderBy('order')
                 ->select('assignment_question.*',
@@ -481,8 +482,10 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.technology_iframe',
                     'questions.technology',
                     'questions.title', DB::raw('questions.id AS question_id'),
-                    'learning_tree_id')
+                    'learning_tree_id',
+                    'learning_trees.description AS learning_tree_description')
                 ->get();
+
 
             $question_ids = [];
             foreach ($assignment_questions as $key => $value) {
@@ -501,9 +504,9 @@ class AssignmentSyncQuestionController extends Controller
                     'file' => $value->file];
             }
 
-            foreach ($assignment_questions as $key => $value) {
+            foreach ($assignment_questions as $value) {
                 $columns = [];
-                $columns['title'] = $value->title;
+                $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
                     try {
@@ -744,7 +747,7 @@ class AssignmentSyncQuestionController extends Controller
                     'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
                     'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
             $assignmentSyncQuestion->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
-            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id,'add');
+            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The question has been added to the assignment.';
@@ -836,7 +839,7 @@ class AssignmentSyncQuestionController extends Controller
             $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->first();
-            $learning_tree_id =  $assignment_question_learning_tree ?  $assignment_question_learning_tree->learning_tree_id : 0;//needed for the course approvals piece
+            $learning_tree_id = $assignment_question_learning_tree ? $assignment_question_learning_tree->learning_tree_id : 0;//needed for the course approvals piece
             DB::table('assignment_question_learning_tree')
                 ->where('assignment_question_id', $assignment_question_id)
                 ->delete();

@@ -1,6 +1,6 @@
 <template>
   <div :style="!inIFrame ? 'minbvModal-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
-    <div v-if="modalEnrollInCourseIsShown" style="height: 300px" />
+    <div v-if="modalEnrollInCourseIsShown" style="height: 300px"/>
     <b-modal
       id="modal-not-updated"
       ref="modalNotUpdated"
@@ -91,15 +91,15 @@
            type="contact_grader"
            :subject="getSubject()"
     />
-    <CannotAddAssessmentToBetaAssignmentModal />
+    <CannotAddAssessmentToBetaAssignmentModal/>
     <b-modal
       id="modal-should-not-edit-question-source-if-beta-assignment"
       ref="modalShouldNotEditQuestionSourceIfBetaAssignment"
       title="Should Not Edit"
       hide-footer
     >
-      You are trying to edit a question that is part of a Beta assignment.  If you edit the question source, it will
-      affect all other Beta assignments.  Please get in touch with the Alpha instructor to see if an edit is possible.
+      You are trying to edit a question that is part of a Beta assignment. If you edit the question source, it will
+      affect all other Beta assignments. Please get in touch with the Alpha instructor to see if an edit is possible.
     </b-modal>
     <b-modal
       id="modal-properties"
@@ -1173,12 +1173,14 @@
                   </div>
                 </div>
                 <iframe
-                  v-if="!showQuestion" v-show="iframeLoaded"
-                  :id="remediationIframeId"
+                  v-show="!showQuestion && iframeLoaded"
+                  :key="remediationIframeId"
+                  v-resize="{ log: false }"
+                  width="100%"
                   allowtransparency="true"
                   frameborder="0"
                   :src="remediationSrc"
-                  style="width: 1px;min-width: 100%;" @load="showIframe(remediationIframeId)"
+                  @load="showIframe(remediationIframeId)"
                 />
               </b-col>
               <b-col v-if="assessmentType === 'clicker' && piechartdata && user.role === 2">
@@ -1571,7 +1573,7 @@ export default {
     CannotAddAssessmentToBetaAssignmentModal
   },
   data: () => ({
-    modalEnrollInCourseIsShown:false,
+    modalEnrollInCourseIsShown: false,
     betaAssignmentsExist: false,
     autoAttributionHTML: '',
     autoAttribution: true,
@@ -2230,8 +2232,8 @@ export default {
     },
     editQuestionSource (currentPage) {
       this.isBetaAssignment
-      ? this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
-      : window.open(this.questions[currentPage - 1].mindtouch_url)
+        ? this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
+        : window.open(this.questions[currentPage - 1].mindtouch_url)
     },
     openUploadSolutionModal (question) {
       this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`

@@ -1,5 +1,30 @@
 <template>
   <div>
+    <b-modal
+      id="modal-view-node"
+      ref="modal"
+      title="View Node"
+      size="lg"
+      hide-footer
+    >
+      <iframe
+        :key="`node-iframe-${nodeIframeId}`"
+        v-resize="{ log: false }"
+        width="100%"
+        :src="nodeSrc"
+        frameborder="0"
+      />
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-view-node')"
+        >
+          OK
+        </b-button>
+      </template>
+    </b-modal>
     <div v-if="user.role === 2" class="font-italic">
       <b-row>
         <b-col class="col-md-3"/>
@@ -28,6 +53,8 @@ export default {
     return { title: this.$t('home') }
   },
   data: () => ({
+    nodeSrc: '',
+    nodeIframeId: '',
     learningTreeId: 0,
     title: '',
     description: ''
@@ -36,11 +63,64 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    flowy(document.getElementById('canvas'))
+    flowy(document.getElementById('canvas'), drag, release, snapping, rearranging, 40, 50)
+
+    function addEventListenerMulti (type, listener, capture, selector) {
+      let nodes = document.querySelectorAll(selector)
+      for (let i = 0; i < nodes.length; i++) {
+        nodes[i].addEventListener(type, listener, capture)
+      }
+    }
+
+    function rearranging (block, parent) {
+      // Needed so that I could redefine the y distance in flowy
+    }
+
+    function snapping (block, parent) {
+      // Needed so that I could redefine the y distance in flowy
+    }
+
+    function drag (block, parent) {
+      // Needed so that I could redefine the y distance in flowy
+    }
+
+    function release (block, parent) {
+      // Needed so that I could redefine the y distance in flowy
+    }
+
+    let aclick = false
+    let vm = this
+    let beginTouch = function (event) {
+      aclick = true
+    }
+    let checkTouch = function (event) {
+      aclick = false
+    }
+    let doneTouch = function (event) {
+      if (event.type === 'mouseup' && aclick) {
+        if (event.target.closest('.block') && !event.target.closest('.block').classList.contains('dragging')) {
+
+          vm.openViewNodeModal(event.target.closest('.block'))
+        }
+      }
+    }
+    addEventListener('mousedown', beginTouch, false)
+    addEventListener('mousemove', checkTouch, false)
+    addEventListener('mouseup', doneTouch, false)
+    addEventListenerMulti('touchstart', beginTouch, false, '.block')
+
     this.learningTreeId = parseInt(this.$route.params.learningTreeId)
     this.getLearningTreeLearningByTreeId(this.learningTreeId)
   },
   methods: {
+    openViewNodeModal (nodeToUpdate) {
+      this.$bvModal.show('modal-view-node')
+      let nodeToView = nodeToUpdate.closest('.block')
+      let pageId = nodeToView.querySelector('input[name="page_id"]').value
+      let library = nodeToView.querySelector('input[name="library"]').value
+      this.nodeSrc = `https://${library}.libretexts.org/@go/page/${pageId}?adaptView`
+      this.nodeIframeId = `remediation-${library}-${pageId}`
+    },
     async getLearningTreeLearningByTreeId (learningTreeId) {
       try {
         const { data } = await axios.get(`/api/learning-trees/${learningTreeId}`)

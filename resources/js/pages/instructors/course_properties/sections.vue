@@ -108,7 +108,7 @@
                 <span class="font-weight-bold">{{ $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}</span>.
                 The access codes will only be valid within the start and end dates of
                 this course.  If you need to change these dates, you can always do so
-                <router-link :to="{name: 'course_properties.general_info'}" :params="{courseId: courseId}">
+                <router-link :to="{name: 'course_properties.general_info'}">
                   here</router-link>.
               </p>
               <b-table striped hover :fields="fields" :items="sections">

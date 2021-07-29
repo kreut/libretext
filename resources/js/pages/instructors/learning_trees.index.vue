@@ -89,26 +89,22 @@
                  :fields="fields"
                  :items="learningTrees"
         >
+          <template v-slot:cell(title)="data">
+            <router-link :to="{name: 'instructors.learning_trees.editor', params: {learningTreeId: data.item.id}}">
+              {{ data.item.title }}
+            </router-link>
+          </template>
           <template v-slot:cell(created_at)="data">
-            {{ $moment(data.item.created_at, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+            {{ $moment(data.item.created_at, 'YYYY-MM-DD').format('MMMM D, YYYY') }}
           </template>
           <template v-slot:cell(actions)="data">
             <div class="mb-0">
-              <b-tooltip ref="tooltip"
-                         :target="getTooltipTarget('editLearningTree',data.item.id)"
-                         delay="500"
-              >
-                Edit Learning Tree
-              </b-tooltip>
               <b-tooltip :target="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
                          triggers="hover"
                          delay="500"
               >
                 Create Learning Tree From Template
               </b-tooltip>
-              <span class="pr-1" @click="editLearningTree(data.item.id)">
-                <b-icon :id="getTooltipTarget('editLearningTree',data.item.id)" icon="pencil"/>
-              </span>
               <span class="pr-1" @click="createLearningTreeFromTemplate(data.item.id)">
                 <b-icon :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
                         icon="clipboard-check"
@@ -223,9 +219,6 @@ export default {
     deleteLearningTree (learningTreeId) {
       this.learningTreeId = learningTreeId
       this.$bvModal.show('modal-delete-learning-tree')
-    },
-    editLearningTree (learningTreeId) {
-      this.$router.push(`/instructors/learning-trees/editor/${learningTreeId}`)
     },
     createLearningTree () {
       this.$router.push(`/instructors/learning-trees/editor/0`)
