@@ -71,7 +71,7 @@ class Handler extends ExceptionHandler
         $error_info = sprintf(
             "Exception '%s'\r\n\tMessage: '%s'\r\n\tFile: %s:%d \r\n\tMethod: '%s' \r\n\tEndpoint: '%s' \r\n\tRequest: '%s'\r\n\tUser: '%s'",
             get_class($exception),
-            $exception->getMessage(),
+            $exception->getTraceAsString(),
             $file,
             $line,
             $method,
