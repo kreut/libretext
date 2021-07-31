@@ -6,6 +6,7 @@ use App\Assignment;
 use App\Exceptions\Handler;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
 class checkAssignTos extends Command
 {
@@ -38,21 +39,19 @@ class checkAssignTos extends Command
      */
     public function handle()
     {
-        ini_set('memory_limit', '16MB');
         try {
-            $counts = Assignment::join('assign_to_timings', 'assignments.id', '=', 'assign_to_timings.assignment_id')
-                ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
-                ->where('course_id', 45)
-                ->get();
+            $counts = DB::select(DB::raw("
+                            SELECT COUNT(*) AS count, user_id
+                            FROM assign_to_users
+                            INNER JOIN assign_to_timings
+                            ON (assign_to_users.assign_to_timing_id = assign_to_timings.id)
+                            WHERE user_id IN (SELECT user_id FROM enrollments WHERE course_id = 45)
+                            AND assignment_id IN (select id FROM assignments WHERE assignments.course_id = 45)
+                            GROUP BY user_id"));
             $assign_to_by_users = [];
             foreach ($counts as $count) {
-                if (!isset($assign_to_by_users[$count->user_id])) {
-                    $assign_to_by_users[$count->user_id] = 1;
-                } else {
-                    $assign_to_by_users[$count->user_id]++;
-                }
+                    $assign_to_by_users[$count->user_id] = $count->count;
             }
-
             $count = $assign_to_by_users[$count->user_id];
             $problem_users = [];
             foreach ($assign_to_by_users as $user_id => $user_count) {
