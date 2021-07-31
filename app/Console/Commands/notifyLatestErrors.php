@@ -50,7 +50,7 @@ class notifyLatestErrors extends Command
             Telegram::sendMessage([
                 'chat_id' => config('myconfig.telegram_channel_id'),
                 'parse_mode' => 'HTML',
-                'text' =>  $latest_error . 'notify'
+                'text' =>  $latest_error
             ]);
         }
     }
