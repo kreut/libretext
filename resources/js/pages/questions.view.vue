@@ -662,7 +662,13 @@
         <div v-show="isInstructorLoggedInAsStudent">
           <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
         </div>
-        <div v-if="isLocked() && !presentationMode">
+        <div v-if="inIFrame && (user.role === 2)">
+          <b-alert variant="info" :show="true">
+            <strong>You are current logged in as an instructor.  No responses will be saved.</strong>
+          </b-alert>
+        </div>
+        </div>
+        <div v-if="isLocked() && !presentationMode && !inIFrame">
           <b-alert variant="info" :show="true">
             <strong>This problem is locked. Since students have already submitted responses, you cannot update the
               points per question nor change the open-ended submission type.</strong>
@@ -696,7 +702,7 @@
                     GO!
                   </b-button>
                 </div>
-                <div v-if="isInstructor() && assessmentType !== 'clicker'" class="mb-2 text-center font-italic">
+                <div v-if="isInstructor() && assessmentType !== 'clicker' && !inIFrame" class="mb-2 text-center font-italic">
                   <span class="font-italic">Question View</span>
                   <toggle-button
                     :width="100"
@@ -808,7 +814,7 @@
                       </template>
                     </countdown>
                   </div>
-                  <div v-if="isInstructor() && !presentationMode && questionView !== 'basic'" class="mt-1">
+                  <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' && !inIFrame" class="mt-1">
                     <b-button
                       variant="info"
                       size="sm"
@@ -841,7 +847,7 @@
                       Statistics
                     </b-button>
                   </div>
-                  <div v-if="isInstructor() && !presentationMode">
+                  <div v-if="isInstructor() && !presentationMode && !inIFrame">
                     <b-button class="mt-1 mb-2 mr-2"
                               variant="success"
                               size="sm"
@@ -908,7 +914,7 @@
                 }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
             </b-alert>
           </div>
-          <div v-if="isInstructor() && !presentationMode" class="d-flex flex-row">
+          <div v-if="isInstructor() && !presentationMode && !inIFrame" class="d-flex flex-row">
             <div class="p-2">
               <b-button v-if="questionView !== 'basic'"
                         class="mt-1 mb-2"
@@ -1234,7 +1240,7 @@
                 </div>
               </b-col>
               <b-col
-                v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2"
+                v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2  && !inIFrame"
                 cols="4"
               >
                 <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>"

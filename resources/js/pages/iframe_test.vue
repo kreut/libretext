@@ -1,6 +1,16 @@
 <template>
   <div>
-    <iframe id="adapt-16-7" allowtransparency="true" frameborder="0" scrolling="no" src="https://local.adapt:8890/assignments/16/questions/view/7" style="width: 1200px;height:1200px;" />
+    <b-container>
+      <b-row>
+        <iframe
+          :key="`non-technology-iframe-${currentPage}`"
+          v-resize="{ log: false }"
+          width="100%"
+          src="https://local.adapt:8890/assignments/949/questions/view/102428"
+          frameborder="0"
+        />
+      </b-row>
+    </b-container>
   </div>
 </template>
 <script>
