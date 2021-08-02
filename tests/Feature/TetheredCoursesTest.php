@@ -7,8 +7,10 @@ use App\BetaAssignment;
 use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
+use App\Enrollment;
 use App\LearningTree;
 use App\Question;
+use App\Section;
 use App\User;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\Model;
@@ -50,6 +52,11 @@ class TetheredCoursesTest extends TestCase
     private $assignment_remixer;
     private $learning_tree;
 
+    /**
+     * @var Collection|Model|mixed
+     */
+
+
     public function setup(): void
     {
 
@@ -70,7 +77,7 @@ class TetheredCoursesTest extends TestCase
         BetaCourse::create(['id' => $this->beta_course->id, 'alpha_course_id' => $this->course->id]);
         BetaAssignment::create(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
         $this->question = factory(Question::class)->create(['page_id' => 3123123]);
-        $this->question_2 = factory(Question::class)->create(['page_id' => 123812]);
+
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
 
@@ -83,6 +90,30 @@ class TetheredCoursesTest extends TestCase
         ]);
 
     }
+
+    /** @test */
+    public function correctly_gets_beta_assignment_for_instructors()
+    {
+        $this->actingAs($this->beta_user)->getJson("/api/beta-assignments/get-from-alpha-assignment/{$this->assignment->id}")
+            ->assertJson(['beta_assignment_id' => $this->beta_assignment->id]);
+    }
+
+    /** @test */
+    public function correctly_gets_beta_assignment_for_students()
+    {
+        $beta_student_user = factory(User::class)->create();
+        $beta_student_user->role = 3;
+        $beta_section = factory(Section::class)->create(['course_id' => $this->beta_course->id]);
+        factory(Enrollment::class)->create([
+            'user_id' => $beta_student_user->id,
+            'course_id' => $this->beta_course->id,
+            'section_id' => $beta_section->id
+        ]);
+        $this->actingAs($beta_student_user)->getJson("/api/beta-assignments/get-from-alpha-assignment/{$this->assignment->id}")
+            ->assertJson(['beta_assignment_id' => $this->beta_assignment->id]);
+    }
+
+
     /** @test */
     public function cannot_remove_alpha_assignment_if_it_has_beta_assignment()
     {
@@ -115,10 +146,10 @@ class TetheredCoursesTest extends TestCase
     {
 
 
-    /* $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
-            ->assertJson([
-                'message' => 'The Learning Tree has been added to the assignment.'
-            ]);*/
+        /* $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/learning-trees/{$this->learning_tree->id}")
+                ->assertJson([
+                    'message' => 'The Learning Tree has been added to the assignment.'
+                ]);*/
 
         $Question = new Question();
         $question_id = $Question->getQuestionIdsByPageId($this->learning_tree->root_node_page_id, $this->learning_tree->root_node_library, false)[0];
