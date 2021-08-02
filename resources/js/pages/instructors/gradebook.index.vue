@@ -13,6 +13,21 @@
       <div v-if="hasAssignments">
         <div v-if="canViewScores">
           <b-container>
+            <div v-if="user.id === 5">
+              <span class="font-italic">FERPA Mode: </span>
+              <toggle-button
+                class="mt-2"
+                :width="55"
+                :value="ferpaMode"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'On', unchecked: 'Off'}"
+                @change="submitFerpaMode()"
+              />
+              <br>
+            </div>
             <div class="font-italic">
               <p>
                 To compute the weighted averages, we first compute the percent score on each assignment, then take a
@@ -302,6 +317,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
 import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
+import { ToggleButton } from 'vue-js-toggle-button'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -309,10 +325,12 @@ import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
 export default {
   components: {
     ExtensionAndOverrideScore,
-    Loading
+    Loading,
+    ToggleButton
   },
   middleware: 'auth',
   data: () => ({
+    ferpaMode: false,
     form: new Form({
       extension_date: '',
       extension_time: '',
@@ -384,9 +402,38 @@ export default {
     this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
     this.isLoading = true
+    if (this.user.id === 5) {
+      this.getFerpaMode()
+    }
     this.getScores()
   },
   methods: {
+    async getFerpaMode () {
+      try {
+        const { data } = await axios.get(`/api/scores/get-ferpa-mode`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.ferpaMode = Boolean(data.ferpa_mode)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitFerpaMode () {
+      try {
+        const { data } = await axios.patch(`/api/cookie/set-ferpa-mode/${+this.ferpaMode}`)
+        if (data.type === 'success') {
+          this.isLoading = true
+          this.ferpaMode = !this.ferpaMode
+          this.$bvModal.hide('modal-override-assignment-scores')
+          await this.getScores()
+          this.isLoading = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     updateScoreExtension (assignmentId, studentUserId, cellContents) {
       this.form.score = null
       this.form.extension_date = ''

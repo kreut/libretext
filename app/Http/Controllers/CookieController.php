@@ -46,4 +46,42 @@ class CookieController extends Controller
         }
         return response($response)->withCookie($cookie);
     }
+
+    /**
+     * @param Request $request
+     * @param string $ferpaMode
+     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @throws Exception
+     */
+    public function setFerpaMode(Request $request, string $ferpaMode)
+    {
+        try {
+            $response['type'] = 'error';
+            $cookie = $request->cookie('ferpa_mode');
+            $cookie = cookie()->forever('ferpa_mode', !$ferpaMode);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return response($response)->withCookie($cookie);
+    }
+
+
+
+    /**
+     * @param Request $request
+     * @return mixed
+     */
+    public function updateFerpaMode(Request $request)
+    {
+        $cookie = ($request->hasCookie('ferpa') === false || $request->cookie('ferpa') === false)
+            ? cookie()->forever('ferpa', 1)
+            : cookie()->forever('ferpa', 0);
+        $response['type'] = 'success';
+        return response($response)->withCookie($cookie);
+    }
+
+
+
 }

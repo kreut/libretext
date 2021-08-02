@@ -63,6 +63,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
+    Route::patch('/cookie/set-ferpa-mode/{ferpaMode}', 'CookieController@setFerpaMode');
 
     Route::post('logout', 'Auth\LoginController@logout');
 
@@ -173,9 +174,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/scores/{assignment}/{user}', 'ScoreController@update');//just doing a patch here because "no score" is consider a score
     Route::get('/scores/summary/{assignment}/{question}', 'ScoreController@getScoresByAssignmentAndQuestion');
-
     Route::get('/scores/assignment/{assignment}/get-assignment-questions-scores-by-user', 'ScoreController@getAssignmentQuestionScoresByUser');
 
+    Route::get('/scores/get-ferpa-mode', 'ScoreController@getFerpaMode');
 
     Route::get('/extensions/{assignment}/{user}', 'ExtensionController@show');
     Route::post('/extensions/{assignment}/{user}', 'ExtensionController@store');

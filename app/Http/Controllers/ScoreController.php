@@ -37,8 +37,26 @@ class ScoreController extends Controller
 {
     use Statistics;
 
+
+    public function getFerpaMode(Request $request)
+    {
+        $response['type'] = 'error';
+        try {
+            $ferpa_mode = $request->hasCookie('ferpa_mode')
+                ? $request->cookie('ferpa_mode')
+                : 0;
+            $response['ferpa_mode'] = $ferpa_mode;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $response['message'] = 'We were unable to retrieve your FERPA mode coookie.';
+            $h = new Handler(app());
+            $h->report($e);
+        }
+        return $response;
+    }
+
     /**
-     * @param Request $request
+     * @param UpdateScoresRequest $request
      * @param Assignment $assignment
      * @param Question $question
      * @param Score $score
@@ -48,11 +66,11 @@ class ScoreController extends Controller
      * @throws Exception
      */
     public function overTotalPoints(UpdateScoresRequest $request,
-                                    Assignment $assignment,
-                                    Question $question,
-                                    Score $score,
-                                    SubmissionFile $submissionFile,
-                                    Submission $submission)
+                                    Assignment          $assignment,
+                                    Question            $question,
+                                    Score               $score,
+                                    SubmissionFile      $submissionFile,
+                                    Submission          $submission)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('overTotalPoints', [$score, $assignment]);
@@ -330,9 +348,8 @@ class ScoreController extends Controller
      * @param array $include_in_weighted_average_by_assignment_id_and_user_id
      * @return array[]
      */
-    public function getScoresByUserIdAndAssignment(Course $course, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id)
+    public function getScoresByUserIdAndAssignment(Course $course, $scores, array $assignment_groups_by_assignment_id, array $total_points_by_assignment_id, array $include_in_weighted_average_by_assignment_id_and_user_id): array
     {
-
         //organize the scores by user_id and assignment
         $scores_by_user_and_assignment = [];
         $proportion_scores_by_user_and_assignment_group = [];
@@ -349,7 +366,7 @@ class ScoreController extends Controller
             //init if needed
             $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
 
-            if (!isset($total_points_by_assignment_id[$assignment_id])){
+            if (!isset($total_points_by_assignment_id[$assignment_id])) {
                 $total_points_by_assignment_id[$assignment_id] = 0; //if they have an Adapt assignment without questions
             }
             $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
@@ -363,10 +380,10 @@ class ScoreController extends Controller
         return [$scores_by_user_and_assignment, $proportion_scores_by_user_and_assignment_group];
     }
 
-    public function getFinalWeightedScoresAndLetterGrades(Course $course,
+    public function getFinalWeightedScoresAndLetterGrades(Course     $course,
                                                           Collection $enrolled_users,
-                                                          array $proportion_scores_by_user_and_assignment_group,
-                                                          array $assignment_group_weights_info)
+                                                          array      $proportion_scores_by_user_and_assignment_group,
+                                                          array      $assignment_group_weights_info)
     {
         $letter_grades = explode(',', $course->finalGrades->letter_grades);
         $letter_grades_array = [];
@@ -459,16 +476,16 @@ class ScoreController extends Controller
      * @return array
      */
     public function getFinalTableInfo(Course $course,
-                                      array $assignment_ids,
-                                      array $enrolled_users,
-                                      $assignments,
-                                      array $extensions,
-                                      array $extra_credit,
-                                      array $final_weighted_scores,
-                                      array $letter_grades,
-                                      array $final_weighted_scores_without_extra_credit,
-                                      array $scores_by_user_and_assignment,
-                                      array $total_points_by_assignment_id): array
+                                      array  $assignment_ids,
+                                      array  $enrolled_users,
+                                             $assignments,
+                                      array  $extensions,
+                                      array  $extra_credit,
+                                      array  $final_weighted_scores,
+                                      array  $letter_grades,
+                                      array  $final_weighted_scores_without_extra_credit,
+                                      array  $scores_by_user_and_assignment,
+                                      array  $total_points_by_assignment_id): array
     {
         {
             $with_download_rows = Auth::user()->role === 2;
@@ -488,7 +505,7 @@ class ScoreController extends Controller
             $download_fields = new \stdClass();
             foreach ($enrolled_users as $user_id => $user_info) {
                 $columns = [];
-                if (  $with_download_rows ) {
+                if ($with_download_rows) {
                     $download_row_data = [
                         'first_name' => $user_info['first_name'],
                         'last_name' => $user_info['last_name'],
@@ -505,7 +522,7 @@ class ScoreController extends Controller
                         $score .= ' (E)';
                     }
                     $columns[$assignment->id] = $score;
-                    if (  $with_download_rows ) {
+                    if ($with_download_rows) {
                         $download_row_data["{$assignment->id}"] = str_replace(' (E)', '', $score);//get rid of the extension info
                     }
                 }
@@ -738,13 +755,13 @@ class ScoreController extends Controller
      * @param Enrollment $enrollment
      * @return array|false[]
      */
-    public function getCourseScoresByUser(Course $course,
-                                          Extension $extension,
-                                          Score $Score,
-                                          Submission $Submission,
-                                          Solution $Solution,
+    public function getCourseScoresByUser(Course          $course,
+                                          Extension       $extension,
+                                          Score           $Score,
+                                          Submission      $Submission,
+                                          Solution        $Solution,
                                           AssignmentGroup $AssignmentGroup,
-                                          Enrollment $enrollment): array
+                                          Enrollment      $enrollment): array
     {
 
 
@@ -790,7 +807,7 @@ class ScoreController extends Controller
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection(Auth::user()->role, $course, 0);
             if ($course->show_z_scores || $course->finalGrades->letter_grades_released || $course->students_can_view_weighted_average) {
-                foreach ($enrolled_users as  $enrolled_user) {//ignore the test student
+                foreach ($enrolled_users as $enrolled_user) {//ignore the test student
                     $enrolled_users_by_id[$enrolled_user->id] =
                         ['name' => "$enrolled_user->first_name $enrolled_user->last_name",
                             'email' => $user->email,
@@ -869,8 +886,8 @@ class ScoreController extends Controller
         $final_weighted_scores_and_letter_grades = $this->getFinalWeightedScoresAndLetterGrades($course, $enrolled_users, $proportion_scores_by_user_and_assignment_group, $assignment_group_weights_info);
 
         [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->getFinalTableInfo(
-           $course,
-           $assignment_ids,
+            $course,
+            $assignment_ids,
             $enrolled_users_by_id,
             $assignments,
             $extensions,
@@ -911,16 +928,20 @@ class ScoreController extends Controller
         $enrolled_users = $course->enrolledUsers;
         $course_section_enrollments_by_user = $course->sectionEnrollmentsByUser();
 
-
-
-        foreach ($enrolled_users as  $user) {
-            $enrolled_users_by_id[$user->id] = ['name' => "$user->first_name $user->last_name",
-                'email' => $user->email,
+        $ferpa_mode = (int) request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
+        $faker = \Faker\Factory::create();
+        foreach ($enrolled_users as $user) {
+            $first_name = $ferpa_mode ? $faker->firstName : $user->first_name;
+            $last_name =  $ferpa_mode  ? $faker->lastName : $user->last_name;
+            $student_id =  $ferpa_mode  ? rand(pow(10, 4), pow(10, 4) - 1) : $user->student_id;
+            $email =  $ferpa_mode  ? $faker->email : $user->email;
+            $enrolled_users_by_id[$user->id] = ['name' => "$first_name $last_name",
+                'email' => $email,
                 'crn' => $course_section_enrollments_by_user[$user->id]['crn'],
-                'first_name' => $user->first_name,
-                'last_name' => $user->last_name,
-                'student_id' => $user->student_id,
-                'course_section' =>  $course_section_enrollments_by_user[$user->id]['course_section']];
+                'first_name' => $first_name,
+                'last_name' => $last_name,
+                'student_id' => $student_id,
+                'course_section' => $course_section_enrollments_by_user[$user->id]['course_section']];
         }
 
         //get all assignments in the course
@@ -955,7 +976,7 @@ class ScoreController extends Controller
             $extensions[$value->user_id][$value->assignment_id] = 'Extension';
         }
 
-        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id,$total_points_by_assignment_id);
+        [$rows, $fields, $download_rows, $download_fields, $extra_credit_assignment_id, $weighted_score_assignment_id, $z_score_assignment_id, $letter_grade_assignment_id] = $this->processAllScoreInfo($course, $assignments, $assignment_ids, $scores, $extensions, $enrolled_users, $enrolled_users_by_id, $total_points_by_assignment_id);
 
         $viewable_rows = [];
         $viewable_download_rows = [];
@@ -989,11 +1010,11 @@ class ScoreController extends Controller
      * @throws Exception
      */
     public
-    function update(Request $request,
-                    Assignment $assignment,
-                    User $user,
-                    Score $score,
-                    LtiLaunch $ltiLaunch,
+    function update(Request          $request,
+                    Assignment       $assignment,
+                    User             $user,
+                    Score            $score,
+                    LtiLaunch        $ltiLaunch,
                     LtiGradePassback $ltiGradePassback)
     {
 
@@ -1053,9 +1074,9 @@ class ScoreController extends Controller
      * @throws Exception
      */
     public function getScoreByAssignmentAndStudent(Assignment $assignment,
-                                                   User $user,
-                                                   Score $Score,
-                                                   Extension $extension)
+                                                   User       $user,
+                                                   Score      $Score,
+                                                   Extension  $extension)
     {
 
         $response['type'] = 'error';
