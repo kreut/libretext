@@ -186,7 +186,7 @@ class SubmissionFile extends Model
 
 
         $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
-
+        $ferpa_mode = (int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
 
             foreach ($users as $key => $user) {
@@ -229,7 +229,11 @@ class SubmissionFile extends Model
                     $date_graded = isset($questionFilesByUser[$question->question_id][$user->id]->date_graded)
                         ? $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($questionFilesByUser[$question->question_id][$user->id]->date_graded, Auth::user()->time_zone)
                         : null;
-                    $grader_name = $questionFilesByUser[$question->question_id][$user->id]->grader_name ?? null;
+                    if ($ferpa_mode) {
+                        $grader_name = "Fake Grader";
+                    } else {
+                        $grader_name = $questionFilesByUser[$question->question_id][$user->id]->grader_name ?? null;
+                    }
                 }
 
                 $file_submission_score = $questionFilesByUser[$question->question_id][$user->id]->score ?? "N/A";

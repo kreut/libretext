@@ -121,6 +121,26 @@
             </b-row>
           </b-container>
           <b-form-group
+            v-if="user.id === 5"
+            id="ferpa"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label="FERPA Mode"
+            label-for="FERPA Mode"
+          >
+            <toggle-button
+              class="mt-2"
+              :width="55"
+              :value="ferpaMode"
+              :sync="true"
+              :font-size="14"
+              :margin="4"
+              :color="{checked: '#28a745', unchecked: '#6c757d'}"
+              :labels="{checked: 'On', unchecked: 'Off'}"
+              @change="submitFerpaMode()"
+            />
+          </b-form-group>
+          <b-form-group
             v-if="hasMultipleSections"
             id="sections"
             label-cols-sm="3"
@@ -282,7 +302,9 @@
                             + (1 * submissionFiles[currentStudentPage - 1]['file_submission_score'] || 0)
                           }} out of {{ submissionFiles[currentStudentPage - 1]['points'] * 1 }}
                           <br>
-                          <b-input-group size="sm" :prepend="`${capitalize(openEndedType)}  Submission Score:`" class="mt-3">
+                          <b-input-group size="sm" :prepend="`${capitalize(openEndedType)}  Submission Score:`"
+                                         class="mt-3"
+                          >
                             <b-form-input v-model="scoreForm.score"
                                           type="text"
                                           :class="{ 'is-invalid': scoreForm.errors.has('score') }"
@@ -503,6 +525,7 @@ import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import Vue from 'vue'
 import { ToggleButton } from 'vue-js-toggle-button'
 import CKEditor from 'ckeditor4-vue'
+import { mapGetters } from 'vuex'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -514,6 +537,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    ferpaMode: false,
     message: '',
     processing: false,
     questionView: '',
@@ -587,6 +611,9 @@ export default {
       score: ''
     })
   }),
+  computed: mapGetters({
+    user: 'auth/user'
+  }),
   created () {
     this.downloadSubmissionFile = downloadSubmissionFile
     this.downloadSolutionFile = downloadSolutionFile
@@ -600,8 +627,34 @@ export default {
   mounted () {
     this.assignmentId = this.$route.params.assignmentId
     this.getAssignmentInfoForGrading()
+    this.getFerpaMode()
   },
   methods: {
+    async getFerpaMode () {
+      try {
+        const { data } = await axios.get(`/api/scores/get-ferpa-mode`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.ferpaMode = Boolean(data.ferpa_mode)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async submitFerpaMode () {
+      try {
+        const { data } = await axios.patch(`/api/cookie/set-ferpa-mode/${+this.ferpaMode}`)
+        if (data.type === 'success') {
+          this.isLoading = true
+          this.ferpaMode = !this.ferpaMode
+          await this.getSubmissionFiles(false)
+          this.isLoading = false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     arrowListener (event) {
       if (event.key === 'ArrowRight' && this.currentStudentPage < this.numStudents) {
         this.currentStudentPage++

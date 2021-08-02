@@ -426,7 +426,6 @@ export default {
         if (data.type === 'success') {
           this.isLoading = true
           this.ferpaMode = !this.ferpaMode
-          this.$bvModal.hide('modal-override-assignment-scores')
           await this.getScores()
           this.isLoading = false
         }

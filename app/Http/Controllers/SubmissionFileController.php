@@ -317,7 +317,16 @@ class SubmissionFileController extends Controller
             $role = Auth::user()->role;
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
-            if ($role === 4 && $sectionId === 0) {
+            $ferpa_mode = (int) request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
+            if ($ferpa_mode) {
+                $faker = \Faker\Factory::create();
+                foreach ($enrolled_users as $key => $user){
+                    $enrolled_users[$key]['first_name'] =  $faker->firstName;
+                    $enrolled_users[$key]['last_name'] =  $faker->lastName;
+                }
+           }
+
+           if ($role === 4 && $sectionId === 0) {
                 $access_level_override = $assignment->graders()
                     ->where('assignment_grader_access.user_id', Auth::user()->id)
                     ->first();
