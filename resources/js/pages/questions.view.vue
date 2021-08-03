@@ -1478,7 +1478,7 @@
         </div>
         <div v-else>
           <div v-if="questions !== ['init']">
-            <div v-if="isInstructor()" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
+            <div v-if="isInstructor() && !inIFrame" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
               <b-button variant="success">
                 Get More {{ capitalFormattedAssessmentType }}
               </b-button>
