@@ -33,7 +33,15 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
-        $schedule->command('notify:LatestErrors')->everyFiveMinutes();
+        if (env('APP_ENV') === 'local') {
+            $schedule->command('backup:VaporDB')
+                ->daily()
+                ->emailOutputOnFailure('kreut@hotmail.com');
+
+        }
+        if (env('APP_ENV') !== 'local') {
+            $schedule->command('notify:LatestErrors')->everyFiveMinutes();
+        }
 
         if (env('APP_ENV') === 'production') {
             if (!env('APP_VAPOR')) {
