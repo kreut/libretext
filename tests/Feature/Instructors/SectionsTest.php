@@ -185,7 +185,7 @@ class SectionsTest extends TestCase
         $section_2_submissions = Submission::whereIn('user_id', $section_2_user_ids)->get()->count();
 
         $this->assertEquals(0, $section_1_submissions, 'new section 1 submissions');
-        $this->assertEquals(1, $section_2_submissions,'new section 2 submissions', );
+        $this->assertEquals(1, $section_2_submissions, 'new section 2 submissions', );
 
         $section_1_submission_files = SubmissionFile::whereIn('user_id', $section_1_user_ids)->get()->count();
         $section_2_submission_files = SubmissionFile::whereIn('user_id', $section_2_user_ids)->get()->count();
@@ -237,7 +237,15 @@ class SectionsTest extends TestCase
 
     }
 
+    /** @test */
 
+    public function commons_owner_cannot_create_a_section()
+    {
+        $this->user_2->email = 'commons@libretexts.org';
+        $this->user_2->save();
+        $this->actingAs($this->user_2)->postJson("/api/sections/{$this->course->id}", $this->section_info)
+            ->assertJson(['message' => 'You are not allowed to create a section for this course.']);
+    }
 
     /** @test */
 
@@ -288,7 +296,6 @@ class SectionsTest extends TestCase
         $this->assertEquals('new name', $section_name);
 
     }
-
 
 
 }

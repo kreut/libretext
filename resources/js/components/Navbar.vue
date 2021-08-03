@@ -50,7 +50,7 @@
         :labels="{checked: 'My Courses', unchecked: 'My Learning Trees'}"
         @change="toggleCourseLearningTreeView()"
       />
-      <span v-if="oneBreadcrumb && (user !== null) && !showLearningTreeCourseToggle()"
+      <span v-if="(user === null) || (oneBreadcrumb && (user !== null) && !showLearningTreeCourseToggle())"
             style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
       ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
       <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
@@ -167,11 +167,8 @@ export default {
       this.canToggleStudentView = Boolean(this.assignmentId + this.courseId)
       this.isInstructorsMyCoursesView = to.name === 'instructors.courses.index'
       this.isLearningTreesEditor = (to.name === 'instructors.learning_trees.editor') ? 'color:#E9ECEF !important;' : ''
-      if (this.user) {
-        this.getBreadcrumbs(this.$router.history.current)
-      } else {
-        this.breadcrumbs = []
-      }
+      this.getBreadcrumbs(this.$router.history.current)
+
       this.breadcrumbsLoaded = true
       this.getSession()
       this.isInstructorView = this.user !== null && this.user.role === 2
@@ -238,14 +235,22 @@ export default {
       }
     },
     async getBreadcrumbs (router) {
-      try {
-        console.log(router.name)
-        console.log({ 'name': router.name, 'params': router.params })
-        const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
-        this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
-        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
-      } catch (error) {
-        this.$noty(error.message)
+      if (!this.user) {
+        this.breadcrumbs = [{
+          text: 'Commons',
+          href: '/commons'
+        }]
+        this.oneBreadcrumb = true
+      } else {
+        try {
+          console.log(router.name)
+          console.log({ 'name': router.name, 'params': router.params })
+          const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
+          this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
+          this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['commons', 'welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
+        } catch (error) {
+          this.$noty(error.message)
+        }
       }
     },
     openSendEmailModal () {

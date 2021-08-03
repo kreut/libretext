@@ -166,7 +166,7 @@ class CoursesIndexTest extends TestCase
         $this->actingAs($this->user_2)->postJson("/api/invitations/grader",
             ['course_id' => $this->course->id,
                 'email' => 'some@email.com'])
-            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to invite users to this course.']);
+            ->assertJson(['type' => 'error', 'message' => 'You are not allowed to invite graders to this course.']);
     }
 
 

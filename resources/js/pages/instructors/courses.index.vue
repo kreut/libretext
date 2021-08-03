@@ -23,16 +23,11 @@
         <template slot="label">
           Import as a Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
-            The course you are importing has been designated as an Alpha course. If you import the course as
-            a Beta course, then the two courses will be tethered. This means that new assignments and associated
-            assessments in the Alpha course will
-            automatically be created in the Beta course. While you will be able to add/remove custom assignments in your
-            Beta course, you will not
-            be able to update/remove assignments that were created in the Alpha course.
+            <ImportAsBetaText/>
           </b-tooltip>
         </template>
         <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
@@ -63,7 +58,7 @@
         </b-button>
       </template>
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses" />
+    <PageTitle v-if="canViewCourses" title="My Courses"/>
     <b-container v-if="canViewCourses && user && user.role === 2">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -74,6 +69,9 @@
         <b-button variant="outline-primary" size="sm" class="mr-1" @click="initImportCourse">
           Import Course
         </b-button>
+        <b-button variant="outline-info" size="sm" class="mr-1" @click="$router.push({name: 'commons'})">
+          Visit Commons
+        </b-button>
       </b-row>
     </b-container>
 
@@ -83,7 +81,7 @@
       title="Course Details"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm" />
+      <CourseForm :form="newCourseForm"/>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -200,7 +198,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code" />
+          <has-error :form="graderForm" field="access_code"/>
         </b-form-group>
       </b-form>
     </b-modal>
@@ -226,7 +224,7 @@
         <template v-slot:head(shown)="data">
           Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
                                                                    icon="question-circle"
-          /></span>
+        /></span>
         </template>
         <template v-slot:cell(name)="data">
           <div class="mb-0">
@@ -282,7 +280,7 @@
               >
                 Gradebook
               </b-tooltip>
-              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
+              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet"/></span>
             <span v-if="user && user.role === 2">
 
               <span class="pr-1" @click="getProperties(data.item)">
@@ -291,7 +289,7 @@
                 >
                   Course Properties
                 </b-tooltip>
-                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
+                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear"/>
               </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"
@@ -327,9 +325,15 @@ import CourseForm from '~/components/CourseForm'
 import Form from 'vform'
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { ToggleButton } from 'vue-js-toggle-button'
+import ImportAsBetaText from '~/components/ImportAsBetaText'
 
 export default {
-  components: { CourseForm, ToggleButton, VueBootstrapTypeahead },
+  components: {
+    CourseForm,
+    ToggleButton,
+    VueBootstrapTypeahead,
+    ImportAsBetaText
+  },
   middleware: 'auth',
   data: () => ({
     showBetaCourseDatesWarning: true,
@@ -395,32 +399,32 @@ export default {
         label: 'Course',
         sortable: true
       },
-      'shown',
-      {
-        key: 'start_date',
-        sortable: true
-      },
-      {
-        key: 'end_date',
-        sortable: true
-      },
-      'actions'
+        'shown',
+        {
+          key: 'start_date',
+          sortable: true
+        },
+        {
+          key: 'end_date',
+          sortable: true
+        },
+        'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-      'sections',
-      {
-        key: 'start_date',
-        sortable: true
-      },
-      {
-        key: 'end_date',
-        sortable: true
-      },
-      'actions'
+        'sections',
+        {
+          key: 'start_date',
+          sortable: true
+        },
+        {
+          key: 'end_date',
+          sortable: true
+        },
+        'actions'
       ]
   },
   methods: {
@@ -445,7 +449,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        if (data.alpha === 1) {
+        if (data.alpha === 1 && this.user.email !== 'commons@libertexts.org') {
           this.showImportAsBeta = true
         }
         this.disableYesImportCourse = false

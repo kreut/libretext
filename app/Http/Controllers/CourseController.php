@@ -36,6 +36,28 @@ class CourseController extends Controller
     use DateFormatter;
 
 
+    public function getCommonsCourses()
+    {
+        $response['type'] = 'error';
+        try {
+            $commons_user = User::where('email', 'commons@libretexts.org')->first();
+            $commons_courses = DB::table('courses')
+                ->where('courses.user_id', $commons_user->id)
+                ->select('id',
+                    'courses.name AS name',
+                    'courses.public_description AS description',
+                    'alpha')
+                ->get();
+            $response['commons_courses'] = $commons_courses;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see get the courses from the Commons.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
     public function updateBetaApprovalNotifications(Course $course)
     {
 
@@ -203,17 +225,16 @@ class CourseController extends Controller
      * @return array
      * @throws Exception '
      */
-    public
-    function import(Request                $request,
-                    Course                 $course,
-                    AssignmentGroup        $assignmentGroup,
-                    AssignmentGroupWeight  $assignmentGroupWeight,
-                    AssignmentSyncQuestion $assignmentSyncQuestion,
-                    Enrollment             $enrollment,
-                    FinalGrade             $finalGrade,
-                    Section                $section,
-                    School                 $school,
-                    BetaCourse             $betaCourse): array
+    public function import(Request                $request,
+                           Course                 $course,
+                           AssignmentGroup        $assignmentGroup,
+                           AssignmentGroupWeight  $assignmentGroupWeight,
+                           AssignmentSyncQuestion $assignmentSyncQuestion,
+                           Enrollment             $enrollment,
+                           FinalGrade             $finalGrade,
+                           Section                $section,
+                           School                 $school,
+                           BetaCourse             $betaCourse): array
     {
 
         $response['type'] = 'error';
@@ -729,11 +750,14 @@ class CourseController extends Controller
      * @return array
      * @throws Exception
      */
-    public function destroy(Course             $course,
-                            AssignToTiming     $assignToTiming,
-                            BetaAssignment     $betaAssignment,
-                            BetaCourse         $betaCourse,
-                            BetaCourseApproval $betaCourseApproval)
+
+    public
+    function destroy(Course             $course,
+                     AssignToTiming     $assignToTiming,
+                     BetaAssignment     $betaAssignment,
+                     BetaCourse         $betaCourse,
+                     BetaCourseApproval $betaCourseApproval)
+
     {
 
 
