@@ -1476,15 +1476,6 @@
             </b-row>
           </b-container>
         </div>
-        <div v-else>
-          <div v-if="questions !== ['init']">
-            <div v-if="isInstructor() && !initializing && !inIFrame" class="mt-1 mb-2" @click="getAssessmentsForAssignment()">
-              <b-button variant="success">
-                Get More {{ capitalFormattedAssessmentType }}
-              </b-button>
-            </div>
-          </div>
-        </div>
       </div>
       <div v-if="!initializing && !questions.length" class="mt-4">
         <div v-if="isInstructor()" class="mb-0" @click="getAssessmentsForAssignment()">
