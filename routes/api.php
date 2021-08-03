@@ -59,6 +59,10 @@ Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
 Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
 
+
+Route::get('/courses/commons', 'CourseController@getCommonsCourses');
+Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');
+
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');

@@ -40,6 +40,32 @@ class AssignmentController extends Controller
     use S3;
 
 
+    public function getCommonsCourseAssignments(Course $course)
+    {
+        $response['type'] = 'error';
+        if (User::where('email','commons@libretexts.org')->first()->id !== $course->user_id) {
+            $response['message'] = 'You are not allowed to access the assignments in that course.';
+            return $response;
+        }
+        try {
+            $assignments = DB::table('assignments')
+                ->where('course_id', $course->id)
+                ->select('assignments.id AS assignment_id',
+                    'name',
+                    'public_description AS description')
+                ->orderBy('order')
+                ->get();
+            $response['assignments'] = $assignments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getAssignmentNamesForPublicCourse(Course $course, AssignmentGroup $assignmentGroup)
     {
         $response['type'] = 'error';
@@ -212,14 +238,14 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function importAssignment(Request $request,
-                                     Course $course,
-                                     Assignment $assignment,
-                                     AssignmentGroup $assignmentGroup,
+    public function importAssignment(Request                $request,
+                                     Course                 $course,
+                                     Assignment             $assignment,
+                                     AssignmentGroup        $assignmentGroup,
                                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                                     AssignmentGroupWeight $assignmentGroupWeight,
-                                     AssignToTiming $assignToTiming,
-                                     AssignToGroup $assignToGroup
+                                     AssignmentGroupWeight  $assignmentGroupWeight,
+                                     AssignToTiming         $assignToTiming,
+                                     AssignToGroup          $assignToGroup
     )
     {
 
@@ -284,7 +310,7 @@ class AssignmentController extends Controller
 
 
     public function getImportableAssignmentsByUser(Request $request,
-                                                   Course $course)
+                                                   Course  $course)
     {
 
         $response['type'] = 'error';
@@ -319,8 +345,8 @@ class AssignmentController extends Controller
      * @return array
      * @throws Exception
      */
-    public function createAssignmentFromTemplate(Request $request,
-                                                 Assignment $assignment,
+    public function createAssignmentFromTemplate(Request                $request,
+                                                 Assignment             $assignment,
                                                  AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -540,12 +566,12 @@ class AssignmentController extends Controller
      * @return array
      */
     public
-    function index(Course $course,
-                   Extension $extension,
-                   Score $Score, Submission $Submission,
-                   Solution $Solution,
+    function index(Course          $course,
+                   Extension       $extension,
+                   Score           $Score, Submission $Submission,
+                   Solution        $Solution,
                    AssignmentGroup $AssignmentGroup,
-                   Assignment $assignment)
+                   Assignment      $assignment)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('view', $course);
@@ -598,11 +624,11 @@ class AssignmentController extends Controller
      */
 
     public
-    function store(StoreAssignment $request, Assignment $assignment,
+    function store(StoreAssignment       $request, Assignment $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
-                   Section $section,
-                   User $user,
-                   BetaCourse $betaCourse)
+                   Section               $section,
+                   User                  $user,
+                   BetaCourse            $betaCourse)
     {
         $response['type'] = 'error';
         $course = Course::find(['course_id' => $request->input('course_id')])->first();
@@ -877,9 +903,9 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function viewQuestionsInfo(Request $request,
-                               Assignment $assignment,
-                               Score $score,
+    function viewQuestionsInfo(Request        $request,
+                               Assignment     $assignment,
+                               Score          $score,
                                SubmissionFile $submissionFile)
     {
 
@@ -1107,9 +1133,9 @@ class AssignmentController extends Controller
      */
 
     public
-    function getAssignmentSummary(Assignment $assignment,
-                                  AssignmentGroup $assignmentGroup,
-                                  SubmissionFile $submissionFile,
+    function getAssignmentSummary(Assignment             $assignment,
+                                  AssignmentGroup        $assignmentGroup,
+                                  SubmissionFile         $submissionFile,
                                   AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -1249,11 +1275,11 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function update(StoreAssignment $request,
-                    Assignment $assignment,
+    function update(StoreAssignment       $request,
+                    Assignment            $assignment,
                     AssignmentGroupWeight $assignmentGroupWeight,
-                    Section $section,
-                    User $user)
+                    Section               $section,
+                    User                  $user)
     {
 
         $response['type'] = 'error';
@@ -1337,7 +1363,7 @@ class AssignmentController extends Controller
      * @throws Exception
      */
     public
-    function destroy(Assignment $assignment,
+    function destroy(Assignment     $assignment,
                      AssignToTiming $assignToTiming,
                      BetaAssignment $betaAssignment)
     {

@@ -37,7 +37,17 @@ class PeopleTest extends TestCase
     {
 
         $this->actingAs($this->user_2)->postJson("/api/invitations/grader", $this->invite_info)
-            ->assertJson(['message' => 'You are not allowed to invite users to this course.']);
+            ->assertJson(['message' => 'You are not allowed to invite graders to this course.']);
+
+    }
+
+    /** @test */
+    public function commons_owner_cannot_invite_a_grader_to_a_section()
+    {
+        $this->user_2->email = 'commons@libretexts.org';
+        $this->user_2->save();
+        $this->actingAs($this->user_2)->postJson("/api/invitations/grader", $this->invite_info)
+            ->assertJson(['message' => 'You are not allowed to invite graders to this course.']);
 
     }
 

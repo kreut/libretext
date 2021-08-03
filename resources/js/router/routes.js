@@ -42,6 +42,7 @@ let general_paths  = [
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
   { path: '/home', name: 'home', component: page('instructors/courses.index.vue') },
+  { path: '/commons', name: 'commons', component: page('commons.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [
