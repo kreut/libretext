@@ -23,7 +23,7 @@
         <template slot="label">
           Import as a Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
@@ -44,23 +44,6 @@
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
-      <b-form-group
-        v-show="showImportAsBeta && parseInt(courseToImportForm.import_as_beta) === 1"
-        id="alpha_course_import_code"
-        label-cols-sm="7"
-        label-cols-lg="6"
-        label="Alpha Course Import Code"
-        label-for="alpha_course_import_code"
-      >
-        <b-form-input
-          id="alpha_course_import_code"
-          v-model="courseToImportForm.alpha_course_import_code"
-          type="text"
-          :class="{ 'is-invalid': courseToImportForm.errors.has('alpha_course_import_code') }"
-          @keydown="courseToImportForm.errors.clear('alpha_course_import_code')"
-        />
-        <has-error :form="courseToImportForm" field="alpha_course_import_code"/>
-      </b-form-group>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -80,7 +63,7 @@
         </b-button>
       </template>
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses"/>
+    <PageTitle v-if="canViewCourses" title="My Courses" />
     <b-container v-if="canViewCourses && user && user.role === 2">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -100,7 +83,7 @@
       title="Course Details"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm"/>
+      <CourseForm :form="newCourseForm" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -217,7 +200,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code"/>
+          <has-error :form="graderForm" field="access_code" />
         </b-form-group>
       </b-form>
     </b-modal>
@@ -243,7 +226,7 @@
         <template v-slot:head(shown)="data">
           Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
                                                                    icon="question-circle"
-        /></span>
+          /></span>
         </template>
         <template v-slot:cell(name)="data">
           <div class="mb-0">
@@ -299,7 +282,7 @@
               >
                 Gradebook
               </b-tooltip>
-              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet"/></span>
+              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
             <span v-if="user && user.role === 2">
 
               <span class="pr-1" @click="getProperties(data.item)">
@@ -308,7 +291,7 @@
                 >
                   Course Properties
                 </b-tooltip>
-                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear"/>
+                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
               </span>
               <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
                          delay="500"
@@ -374,7 +357,6 @@ export default {
       access_code: ''
     }),
     courseToImportForm: new Form({
-      alpha_course_import_code: '',
       import_as_beta: 0
     }),
     newCourseForm: new Form({
@@ -397,7 +379,6 @@ export default {
     courseToImport (newValue, oldValue) {
       if (newValue !== oldValue) {
         this.courseToImportForm.import_as_beta = 0
-        this.courseToImportForm.alpha_course_import_code = ''
         this.showImportAsBeta = false
         this.disableYesImportCourse = true
       }
@@ -414,32 +395,32 @@ export default {
         label: 'Course',
         sortable: true
       },
-        'shown',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'shown',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-        'sections',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'sections',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
   },
   methods: {
@@ -651,8 +632,7 @@ export default {
         this.$noty.error(error.message)
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: this.$t('home') }
   }
