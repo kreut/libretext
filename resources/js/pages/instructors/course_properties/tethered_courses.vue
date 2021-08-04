@@ -151,36 +151,6 @@
             </div>
           </b-card-text>
         </b-card>
-        <b-card header="default" header-html="Alpha Course Import Code" class="mb-5">
-          <b-card-text>
-            <div v-if="alphaCourse">
-              <p>
-                Instructors who create Alpha courses control which assignments and assessments are created in their
-                associated Beta Courses. If the Alpha course instructor removes an assignment or assessment, this will
-                impact
-                the scores of the students in the Beta courses. With great power comes great responsibility!
-              </p>
-              <p>
-                To maintain control over who can tether Beta courses to your Alpha course, please provide potential
-                instructors with the following import code:
-              </p>
-              <p class="text-center">
-                <span class="font-weight-bold font-italic pr-2">{{ alphaCourseImportCode }}</span>
-                <b-button variant="primary" size="sm" @click="refreshImportCode">
-                  Refresh
-                </b-button>
-              </p>
-            </div>
-            <div v-else>
-              <b-alert :show="true" variant="info">
-                <span class="font-weight-bold">
-                  Alpha course instructors control which courses can become Beta courses by providing an Alpha course import code.
-                  Since this is not an Alpha course, this panel is not applicable.
-                </span>
-              </b-alert>
-            </div>
-          </b-card-text>
-        </b-card>
         <b-card header="default" header-html="Tethered Alpha Course" class="mb-5">
           <b-card-text>
             <div v-if="tetheredToAlphaCourseWithInstructorName.length">
@@ -247,7 +217,6 @@ export default {
     betaCourse: '',
     tetheredToAlphaCourse: '',
     tetheredToAlphaCourseWithInstructorName: '',
-    alphaCourseImportCode: '',
     isLoading: true,
     courseId: 0,
     betaCourses: [],
@@ -271,7 +240,6 @@ export default {
     this.getBetaApprovalNotifications()
     this.getBetaCourses()
     this.getPendingBetaCourseApprovals()
-    this.getAlphaCourseImportCode()
     this.getTetheredToAlphaCourse()
   },
   methods: {
@@ -345,31 +313,6 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         }
-      }
-    },
-    async refreshImportCode () {
-      try {
-        const { data } = await axios.post(`/api/alpha-course-import-codes/refresh/${this.courseId}`)
-        this.$noty[data.type](data.message)
-        if (data.type === 'error') {
-          return false
-        }
-        this.alphaCourseImportCode = data.import_code
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async getAlphaCourseImportCode () {
-      try {
-        const { data } = await axios.get(`/api/alpha-course-import-codes/${this.courseId}`)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-        this.alphaCourseImportCode = data.import_code
-        this.alphaCourse = data.is_alpha_course
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     },
     async getBetaCourses () {

@@ -198,10 +198,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/beta-courses/do-not-show-beta-course-dates-warning', 'BetaCourseController@doNotShowBetaCourseDatesWarning');
 
-
-    Route::get('/alpha-course-import-codes/{course}', 'AlphaCourseImportCodeController@show');
-    Route::post('/alpha-course-import-codes/refresh/{course}', 'AlphaCourseImportCodeController@refresh');
-
     Route::get('/beta-course-approvals/assignment/{assignment}', 'BetaCourseApprovalController@getByAssignment');
     Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 

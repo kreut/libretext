@@ -324,6 +324,16 @@
                   tethered
                   nature, you cannot remove the assignment nor add/remove assessments.
                 </b-tooltip>
+                <span v-show="Boolean(course.alpha)"
+                      :id="getTooltipTarget('alphaCourse',assignment.id)"
+                      class="text-muted"
+                >&alpha; </span>
+                <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
+                           delay="500"
+                >
+                  This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
+                  be reflected in the tethered Beta courses.
+                </b-tooltip>
                 <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"

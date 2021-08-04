@@ -2,7 +2,6 @@
 
 namespace App\Http\Controllers;
 
-use App\AlphaCourseImportCode;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
@@ -11,7 +10,6 @@ use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\Course;
 use App\FinalGrade;
-use App\Http\Requests\ImportCourse;
 use App\Http\Requests\UpdateCourse;
 use App\School;
 use App\Section;
@@ -206,16 +204,16 @@ class CourseController extends Controller
      * @throws Exception '
      */
     public
-    function import(ImportCourse $request,
-                    Course $course,
-                    AssignmentGroup $assignmentGroup,
-                    AssignmentGroupWeight $assignmentGroupWeight,
+    function import(Request                $request,
+                    Course                 $course,
+                    AssignmentGroup        $assignmentGroup,
+                    AssignmentGroupWeight  $assignmentGroupWeight,
                     AssignmentSyncQuestion $assignmentSyncQuestion,
-                    Enrollment $enrollment,
-                    FinalGrade $finalGrade,
-                    Section $section,
-                    School $school,
-                    BetaCourse $betaCourse): array
+                    Enrollment             $enrollment,
+                    FinalGrade             $finalGrade,
+                    Section                $section,
+                    School                 $school,
+                    BetaCourse             $betaCourse): array
     {
 
         $response['type'] = 'error';
@@ -226,6 +224,10 @@ class CourseController extends Controller
             return $response;
         }
         $import_as_beta = (int)$request->import_as_beta;
+        if ($import_as_beta && !$course->alpha) {
+            $response['message'] = "You cannot import this course as a Beta course since the original course is not an Alpha course.";
+            return $response;
+        }
         $school = $this->getLastSchool($request, $school);
         try {
             DB::beginTransaction();
@@ -582,11 +584,11 @@ class CourseController extends Controller
 
     public
     function store(StoreCourse $request,
-                   Course $course,
-                   Enrollment $enrollment,
-                   FinalGrade $finalGrade,
-                   Section $section,
-                   School $school)
+                   Course      $course,
+                   Enrollment  $enrollment,
+                   FinalGrade  $finalGrade,
+                   Section     $section,
+                   School      $school)
     {
         //todo: check the validation rules
         $response['type'] = 'error';
@@ -656,9 +658,9 @@ class CourseController extends Controller
      */
     public
     function update(UpdateCourse $request,
-                    Course $course,
-                    School $school,
-                    BetaCourse $betaCourse)
+                    Course       $course,
+                    School       $school,
+                    BetaCourse   $betaCourse)
     {
         $response['type'] = 'error';
 
@@ -721,21 +723,19 @@ class CourseController extends Controller
      *
      * @param Course $course
      * @param AssignToTiming $assignToTiming
-     * @param AlphaCourseImportCode $alphaCourseImportCode
      * @param BetaAssignment $betaAssignment
      * @param BetaCourse $betaCourse
      * @param BetaCourseApproval $betaCourseApproval
-     * @return mixed
+     * @return array
      * @throws Exception
      */
-    public
-    function destroy(Course $course,
-                     AssignToTiming $assignToTiming,
-                     AlphaCourseImportCode $alphaCourseImportCode,
-                     BetaAssignment $betaAssignment,
-                     BetaCourse $betaCourse,
-                     BetaCourseApproval $betaCourseApproval)
+    public function destroy(Course             $course,
+                            AssignToTiming     $assignToTiming,
+                            BetaAssignment     $betaAssignment,
+                            BetaCourse         $betaCourse,
+                            BetaCourseApproval $betaCourseApproval)
     {
+
 
         $response['type'] = 'error';
 
@@ -785,7 +785,6 @@ class CourseController extends Controller
             }
 
             $course->finalGrades()->delete();
-            $alphaCourseImportCode->where('course_id', $course->id)->delete();
             $betaCourse->where('id', $course->id)->delete();
             $course->delete();
             DB::commit();

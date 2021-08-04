@@ -374,37 +374,24 @@ class TetheredCoursesTest extends TestCase
 
 
     /** @test */
-    public function must_have_correct_alpha_course_access_code_v1()
+    public function must_be_an_alpha_course_to_import_as_a_beta_course()
     {
-
-        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
-            'alpha_course_import_code' => 'some bad code',
+        $this->course->alpha = 0;
+        $this->course->save();
+        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course->id}", [
             'import_as_beta' => 1
-        ])->assertJsonValidationErrors('alpha_course_import_code');
+        ])->assertJson(['message' => 'You cannot import this course as a Beta course since the original course is not an Alpha course.']);
     }
 
-    /** @test */
-    public function must_have_correct_alpha_course_access_code_v2()
-    {
-
-        $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
-            'alpha_course' => 'some bad code', //doesn't even supply the alpha_course_import_code in the form
-            'import_as_beta' => 1
-        ])->assertJsonValidationErrors('alpha_course_import_code');
-    }
 
 
     /** @test */
     public function creates_a_beta_course_when_importing_an_alpha_course()
     {
         $current_num = count(BetaCourse::all());
-        $alpha_course_import_code = '12345';
-        DB::table('alpha_course_import_codes')->insert([
-            'import_code' => $alpha_course_import_code,
-            'course_id' => $this->course_2->id
-        ]);
+        $this->course_2->alpha = 1;
+        $this->course_2->save();
         $this->actingAs($this->user)->postJson("/api/courses/import/{$this->course_2->id}", [
-            'alpha_course_import_code' => $alpha_course_import_code,
             'import_as_beta' => 1
         ]);
         $this->assertEquals($current_num + 1, count(BetaCourse::all()));

@@ -531,6 +531,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['assessment_type'] = $assignment->assessment_type;
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
+            $response['is_alpha_course'] = $assignment->course->alpha === 1;
             $response['type'] = 'success';
             $response['rows'] = $rows;
 

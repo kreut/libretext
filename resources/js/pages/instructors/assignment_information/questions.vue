@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <b-modal
       v-if="alphaAssignmentQuestion"
       id="modal-view-question"
@@ -53,7 +53,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -79,7 +79,7 @@
     >
       <b-alert :show="true" variant="danger">
         <span class="font-weight-bold font-italic">
-        {{ h5pText }}
+          {{ h5pText }}
         </span>
       </b-alert>
       <template #modal-footer="{ ok }">
@@ -99,7 +99,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Questions"/>
+        <PageTitle title="Questions" />
         <AssessmentTypeWarnings :assessment-type="assessmentType"
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
@@ -108,8 +108,7 @@
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
-          >{{ assessmentType }}</span> assessments.
+            The assessments that make up this assignment are <span class="font-italic font-weight-bold">{{ assessmentType }}</span> assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
             </span>
@@ -170,75 +169,83 @@
         <div v-if="items.length">
           <table class="table table-striped">
             <thead>
-            <tr>
-              <th scope="col">
-                Order
-              </th>
-              <th scope="col">
-                Title
-              </th>
-              <th scope="col" style="width: 150px;">
-                Adapt ID
-                <b-icon id="adapt-id-tooltip"
-                        v-b-tooltip.hover
-                        class="text-muted"
-                        icon="question-circle"
-                />
-                <b-tooltip target="adapt-id-tooltip" triggers="hover">
-                  This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
-                </b-tooltip>
-              </th>
-              <th scope="col">
-                Submission
-              </th>
-              <th scope="col">
-                Points
-              </th>
-              <th scope="col">
-                Solution
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+              <tr>
+                <th scope="col">
+                  Order
+                </th>
+                <th scope="col">
+                  Title
+                </th>
+                <th scope="col" style="width: 150px;">
+                  Adapt ID
+                  <b-icon id="adapt-id-tooltip"
+                          v-b-tooltip.hover
+                          class="text-muted"
+                          icon="question-circle"
+                  />
+                  <b-tooltip target="adapt-id-tooltip" triggers="hover">
+                    This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                  </b-tooltip>
+                </th>
+                <th scope="col">
+                  Submission
+                </th>
+                <th scope="col">
+                  Points
+                </th>
+                <th scope="col">
+                  Solution
+                </th>
+                <th scope="col">
+                  Actions
+                </th>
+              </tr>
             </thead>
             <tbody is="draggable" v-model="items" tag="tbody" @end="saveNewOrder">
-            <tr v-for="item in items" :key="item.id">
-              <td>
-                <b-icon icon="list"/>
-                {{ item.order }}
-              </td>
-              <td><a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a></td>
-              <td>
-                {{ item.assignment_id_question_id }}
-                <span class="text-info">
-                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)"/>
+              <tr v-for="item in items" :key="item.id">
+                <td>
+                  <b-icon icon="list" />
+                  {{ item.order }}
+                </td>
+                <td>
+                  <span v-show="isBetaAssignment"
+                        class="text-muted"
+                  >&beta; </span>
+                  <span v-show="isAlphaCourse"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                </td>
+                <td>
+                  {{ item.assignment_id_question_id }}
+                  <span class="text-info">
+                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)" />
                   </span>
-              </td>
-              <td>
-                {{ item.submission }}
-              </td>
-              <td>{{ item.points }}</td>
-              <td><span v-html="item.solution"/></td>
-              <td>
+                </td>
+                <td>
+                  {{ item.submission }}
+                </td>
+                <td>{{ item.points }}</td>
+                <td><span v-html="item.solution" /></td>
+                <td>
                   <span class="pr-1" @click="editQuestionSource(item.mind_touch_url)">
                     <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                                delay="500"
                     >
                       Edit question source
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil"/>
+                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil" />
                   </span>
-                <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
+                  <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
                     <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
                                delay="500"
                     >
                       Remove the question from the assignment
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash"/>
+                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash" />
                   </span>
-              </td>
-            </tr>
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -246,7 +253,7 @@
       <div v-if="!items.length && !isLoading" class="mt-5">
         <b-alert variant="warning" :show="true">
           <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-          <strong/>
+          <strong />
         </b-alert>
       </div>
     </div>
@@ -287,6 +294,7 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal
   },
   data: () => ({
+    isAlphaCourse: false,
     viewQuestionAction: '',
     alphaAssignmentQuestion: {},
     fields: [
@@ -440,6 +448,7 @@ export default {
         this.assessmentType = data.assessment_type
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.isBetaAssignment = data.is_beta_assignment
+        this.isAlphaCourse = data.is_alpha_course
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {
