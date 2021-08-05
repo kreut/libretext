@@ -139,6 +139,7 @@ export async function initAddAssignment (form, courseId, assignmentGroups, noty,
 
 export async function editAssignment (assignment) {
   this.originalAssignment = assignment
+  this.isBetaAssignment = assignment.is_beta_assignment
   this.has_submissions_or_file_submissions = (assignment.has_submissions_or_file_submissions === 1)
   this.solutionsReleased = assignment.solutions_released
   this.assignmentId = assignment.id

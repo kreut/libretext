@@ -58,7 +58,7 @@ Route::get('jwt/init', 'JWTController@init');
 Route::get('jwt/secret', 'JWTController@signWithNewSecret');
 
 Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'BetaAssignmentController@getBetaCourseFromAlphaAssignment');
-
+Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
 
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');

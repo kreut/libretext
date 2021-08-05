@@ -93,6 +93,23 @@
     />
     <CannotAddAssessmentToBetaAssignmentModal/>
     <b-modal
+      id="modal-cannot-update-solution"
+      ref="modalCannotUpdateSolutionIfBetaAssignment"
+      title="Cannot Update Solution"
+      hide-footer
+    >
+      Since this a Beta assignment tethered to an Alpha assignment, you cannot update update the solution.
+    </b-modal>
+    <b-modal
+      id="modal-cannot-update-points-if-beta-assignment"
+      ref="modalCannotUpdatePointsIfBetaAssignment"
+      title="Cannot Update Points"
+      hide-footer
+    >
+      You are trying to update the points on a Beta assignment. Since this assignment is tethered to an Alpha
+      assignment, you cannot update this value.
+    </b-modal>
+    <b-modal
       id="modal-should-not-edit-question-source-if-beta-assignment"
       ref="modalShouldNotEditQuestionSourceIfBetaAssignment"
       title="Should Not Edit"
@@ -799,9 +816,9 @@
               <b-col>
                 <div v-if="assessmentType === 'learning tree'">
                   <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
-                      <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                          questions[currentPage - 1].last_submitted
-                        }}</span>
+                    <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
+                        questions[currentPage - 1].last_submitted
+                      }}</span>
                   </div>
                   <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                       <span class="font-weight-bold">You had a late penalty of </span> {{
@@ -950,7 +967,9 @@
               class="mt-1 mb-2 ml-1"
               variant="dark"
               size="sm"
-              @click="openUploadSolutionModal(questions[currentPage-1])"
+              @click="isBetaAssignment
+                ? $bvModal.show('modal-cannot-update-solution')
+                : openUploadSolutionModal(questions[currentPage-1])"
             >
               Upload Solution
             </b-button>
@@ -959,7 +978,9 @@
               class="mt-1 mb-2 ml-1"
               variant="danger"
               size="sm"
-              @click="$bvModal.show('modal-remove-solution')"
+              @click="isBetaAssignment
+                ? $bvModal.show('modal-cannot-update-solution')
+                : $bvModal.show('modal-remove-solution')"
             >
               Remove Solution
             </b-button>
@@ -2642,6 +2663,10 @@ export default {
       return technology
     },
     async updatePoints (questionId) {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-update-points-if-beta-assignment')
+        return false
+      }
       try {
         const { data } = await this.questionPointsForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-points`)
         this.$noty[data.type](data.message)

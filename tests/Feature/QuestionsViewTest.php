@@ -47,10 +47,12 @@ class QuestionsViewTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
+        $this->beta_user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
 
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->beta_course = factory(Course::class)->create(['user_id' => $this->beta_user->id]);
         $this->section = factory(Section::class)->create(['course_id' => $this->course->id]);
         factory(Enrollment::class)->create([
             'user_id' => $this->student_user->id,
@@ -60,6 +62,11 @@ class QuestionsViewTest extends TestCase
 
 
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id, 'solutions_released' => 0]);
+        $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
+        $this->non_beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
+
+        DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id'=> $this->assignment->id]);
+
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
         $this->question = factory(Question::class)->create(['page_id' => 1]);
@@ -75,6 +82,14 @@ class QuestionsViewTest extends TestCase
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question_2->id,
+            'points' => $this->question_points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->non_beta_assignment->id,
+            'question_id' => $this->question->id,
             'points' => $this->question_points,
             'order' => 1,
             'open_ended_submission_type' => 'file'
@@ -112,6 +127,94 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function alpha_course_cannot_switch_open_ended_submission_type_if_beta_submission_exists()
+    {
+
+        $this->course->alpha = 1;
+        $this->course->save();
+
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->beta_assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'user_id' => $this->student_user->id,
+            'date_submitted' => Carbon::now()];
+        SubmissionFile::create($data);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => "There is at least one submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type."]);
+    }
+
+    /** @test */
+    public function alpha_course_switch_open_ended_submission_type_only_affects_beta_courses()
+    {
+
+        $this->course->alpha = 1;
+        $this->course->save();
+
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->beta_assignment->id,
+            'question_id' => $this->question->id,
+            'points' => $this->question_points,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        $before_change_count = count(DB::table('assignment_question')
+            ->where('open_ended_submission_type','file')
+            ->where('question_id',$this->question->id)
+            ->get());
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'rich text'])
+            ->assertJson(['type' => "success"]);
+
+        //start with 1 alpha, 1 beta, and 1 other with the same question
+        $this->assertEquals($before_change_count-2,1);
+
+    }
+
+
+      /** @test */
+    public function cannot_switch_open_ended_submission_type_if_is_beta_course()
+    {
+        $this->actingAs($this->beta_user)
+            ->patchJson("/api/assignments/{$this->beta_assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => "This is an assignment in a Beta course so you can't change the open-ended submission type."]);
+
+    }
+
+
+    /** @test */
+    public function cannot_switch_open_ended_submission_type_if_submission_exists()
+    {
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'user_id' => $this->student_user->id,
+            'date_submitted' => Carbon::now()];
+        SubmissionFile::create($data);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => "There is at least one submission to this question so you can't change the open-ended submission type."]);
+    }
+
+    /** @test */
+    public function owner_can_switch_open_ended_submission_type()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
+            ->assertJson(['message' => 'The open-ended submission type has been updated.']);
+
+    }
+
+    /** @test */
 
     public function non_instructor_cannot_update_properties(){
 
@@ -119,6 +222,8 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => "You are not allowed to update the question's properties."]);
 
     }
+
+
 
 
 
@@ -167,38 +272,13 @@ class QuestionsViewTest extends TestCase
     {
         $this->actingAs($this->student_user)
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
-            ->assertJson(['message' => 'You are not allowed to update the open ended submission type.']);
+            ->assertJson(['message' => 'You are not allowed to update the open-ended submission type.']);
 
     }
 
-    /** @test */
-    public function owner_can_switch_open_ended_submission_type()
-    {
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
-            ->assertJson(['message' => 'The open-ended submission type has been updated.']);
-
-    }
-
-    /** @test */
-    public function cannot_switch_open_ended_submission_type_if_submission_exists()
-    {
-        $data = [
-            'type' => 'q',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'fake_1.pdf',
-            'original_filename' => 'orig_fake_1.pdf',
-            'user_id' => $this->student_user->id,
-            'date_submitted' => Carbon::now()];
-        SubmissionFile::create($data);
-
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'file'])
-            ->assertJson(['message' => "There is at least one submission to this question so you can't change the open-ended submission type."]);
 
 
-    }
+
 
     /** @test */
     public function cannot_store_a_file_if_the_number_of_uploads_exceeds_the_max_number_of_uploads()

@@ -618,12 +618,13 @@ class AssignmentSyncQuestionController extends Controller
     function updateOpenEndedSubmissionType(UpdateOpenEndedSubmissionType $request,
                                            Assignment                    $assignment,
                                            Question                      $question,
-                                           AssignmentSyncQuestion        $assignmentSyncQuestion)
+                                           AssignmentSyncQuestion        $assignmentSyncQuestion,
+                                           SubmissionFile                $submissionFile): array
     {
 
         $response['type'] = 'error';
 
-        $authorized = Gate::inspect('updateOpenEndedSubmissionType', [$assignmentSyncQuestion, $assignment]);
+        $authorized = Gate::inspect('updateOpenEndedSubmissionType', [$assignmentSyncQuestion, $assignment, $question, $submissionFile]);
 
         if (!$authorized->allowed()) {
 
@@ -631,14 +632,9 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
         try {
-            if (DB::table('submission_files')
-                ->join('users', 'submission_files.user_id', '=', 'users.id')
-                ->where('assignment_id', $assignment->id)
-                ->where('question_id', $question->id)
-                ->where('fake_student', 0)
-                ->first()) {
-                $response['message'] = "There is at least one submission to this question so you can't change the open-ended submission type.";
-                return $response;
+            $assignment_ids = [$assignment->id];
+            if ($assignment->course->alpha) {
+                $assignment_ids = $assignment->addBetaAssignmentIds();
             }
 
             $data = $request->validated();
@@ -648,7 +644,8 @@ class AssignmentSyncQuestionController extends Controller
                 $data['open_ended_submission_type'] = 'text';
 
             }
-            DB::table('assignment_question')->where('assignment_id', $assignment->id)
+            DB::table('assignment_question')
+                ->whereIn('assignment_id', $assignment_ids)
                 ->where('question_id', $question->id)
                 ->update(['open_ended_submission_type' => $data['open_ended_submission_type'],
                     'open_ended_text_editor' => $open_ended_text_editor]);
@@ -662,7 +659,14 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
-
+    /**
+     * @param UpdateAssignmentQuestionPointsRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public
     function updatePoints(UpdateAssignmentQuestionPointsRequest $request, Assignment $assignment, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion)
     {
@@ -677,19 +681,23 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
 
+
+        $assignment_ids = [$assignment->id];
+        if ($assignment->course->alpha) {
+            $assignment_ids = $assignment->addBetaAssignmentIds();
+        }
         try {
             $is_randomized_assignment = $assignment->number_of_randomized_assessments;
-
             if ($is_randomized_assignment) {
                 DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
+                    ->whereIn('assignment_id', $assignment_ids)
                     ->update(['points' => $data['points']]);
                 $assignment->default_points_per_question = $data['points'];
                 $assignment->save();
                 $message = 'Since this is a randomized assignment, all question points have been updated to the same value.';
             } else {
                 DB::table('assignment_question')
-                    ->where('assignment_id', $assignment->id)
+                    ->whereIn('assignment_id', $assignment_ids)
                     ->where('question_id', $question->id)
                     ->update(['points' => $data['points']]);
                 $message = 'The number of points have been updated.';
@@ -710,7 +718,6 @@ class AssignmentSyncQuestionController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param Question $question
      * @param AssignmentSyncQuestion $assignmentSyncQuestion

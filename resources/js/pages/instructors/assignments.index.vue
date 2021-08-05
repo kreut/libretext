@@ -58,6 +58,17 @@
         @hidden="resetAssignmentForm"
         @shown="updateModalToggleIndex"
       >
+        <AssignmentProperties
+          :key="assignmentId"
+          :assignment-groups="assignmentGroups"
+          :form="form"
+          :course-id="parseInt(courseId)"
+          :course-start-date="course.start_date"
+          :course-end-date="course.end_date"
+          :all-form-errors="allFormErrors"
+          :assignment-id="assignmentId"
+          :is-beta-assignment="isBetaAssignment"
+        />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
             Cancel
@@ -69,16 +80,6 @@
           </b-button>
         </template>
 
-        <AssignmentProperties
-          :key="assignmentId"
-          :assignment-groups="assignmentGroups"
-          :form="form"
-          :course-id="parseInt(courseId)"
-          :course-start-date="course.start_date"
-          :course-end-date="course.end_date"
-          :all-form-errors="allFormErrors"
-          :assignment-id="assignmentId"
-        />
       </b-modal>
       <b-modal
         id="modal-assign-tos-to-view"
@@ -504,6 +505,7 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    isBetaAssignment:false,
     copyIcon: faCopy,
     addAssignmentIsImport: false,
     isBetaCourse: false,

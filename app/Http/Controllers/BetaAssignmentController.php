@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\BetaAssignment;
 use App\Exceptions\Handler;
 use Carbon\Carbon;
 use Exception;
@@ -13,13 +14,32 @@ use Illuminate\Support\Facades\Log;
 
 class BetaAssignmentController extends Controller
 {
+
+    public function isBetaAssignment(Assignment $assignment, BetaAssignment $betaAssignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $response['is_beta_assignment'] = $betaAssignment->where('id', $assignment->id)->get()->isNotEmpty();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error checking if this is a Beta assignment.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+
+    }
+
     /**
      * @param Request $request
      * @param Assignment $alpha_assignment
      * @return array
      * @throws Exception
      */
-    public function getBetaCourseFromAlphaAssignment(Request $request, Assignment $alpha_assignment): array
+    public
+    function getBetaCourseFromAlphaAssignment(Request $request, Assignment $alpha_assignment): array
     {
         $response['type'] = 'error';
 

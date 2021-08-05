@@ -5,18 +5,20 @@ namespace App\Policies;
 use App\Assignment;
 
 use App\AssignmentSyncQuestion;
+use App\SubmissionFile;
 use App\User;
 use App\Question;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
+use Illuminate\Support\Facades\DB;
 
 class AssignmentSyncQuestionPolicy
 {
     use HandlesAuthorization;
 
-    public function remixAssignmentWithChosenQuestions(User $user,
+    public function remixAssignmentWithChosenQuestions(User                   $user,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       Assignment $assignment)
+                                                       Assignment             $assignment)
     {
 
         return (int)$user->id === $assignment->course->user_id
@@ -80,9 +82,9 @@ class AssignmentSyncQuestionPolicy
      * @param Question $question
      * @return Response
      */
-    public function add(User $user,
+    public function add(User                   $user,
                         AssignmentSyncQuestion $assignmentSyncQuestion,
-                        Assignment $assignment)
+                        Assignment             $assignment)
     {
 
 
@@ -93,13 +95,27 @@ class AssignmentSyncQuestionPolicy
 
     public function update(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
     {
-        $authorized = (!$assignment->hasFileOrQuestionSubmissions()) && ($user->id === ((int)$assignment->course->user_id));
+        $authorized = true;
         $message = '';
-        if (!$authorized) {
-            $message = $assignment->hasFileOrQuestionSubmissions()
-                ? "This cannot be updated since students have already submitted responses."
-                : "You are not allowed to update that resource.";
+
+        /*** IMPORTANT: What will you do about the update points business with the randomized questions??? ***/
+        if (($user->id !== ((int)$assignment->course->user_id))) {
+            $message = "You are not allowed to update that resource.";
+            $authorized = false;
+        } else if ($assignment->course->alpha
+            && $assignment->hasNonFakeStudentFileOrQuestionSubmissions($assignment->addBetaAssignmentIds())) {
+            {
+                $message = "There is at least one submission to this question in one of the Beta assignments so you can't change the points.";
+                $authorized = false;
+            }
+        } else if ($assignment->isBetaAssignment()) {
+            $message = "This is an assignment in a Beta course so you can't change the points.";
+            $authorized = false;
+        } else if ($assignment->hasNonFakeStudentFileOrQuestionSubmissions()) {
+            $authorized = false;
+            $message = "This cannot be updated since students have already submitted responses to this assignment.";
         }
+
         return $authorized
             ? Response::allow()
             : Response::deny($message);
@@ -111,12 +127,34 @@ class AssignmentSyncQuestionPolicy
      * @param Assignment $assignment
      * @return Response
      */
-    public function updateOpenEndedSubmissionType(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)
+    public function updateOpenEndedSubmissionType(User                   $user,
+                                                  AssignmentSyncQuestion $assignmentSyncQuestion,
+                                                  Assignment             $assignment,
+                                                  Question               $question,
+                                                  SubmissionFile         $submissionFile)
     {
+        $message = '';
+        $authorized = true;
+        if (($user->id !== ((int)$assignment->course->user_id))) {
+            $message = "You are not allowed to update the open-ended submission type.";
+            $authorized = false;
+        } else if ($assignment->course->alpha
+            && $submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion($assignment->addBetaAssignmentIds(), $question->id)) {
+            {
+                $message = "There is at least one submission to this question in either the Alpha assignment or one of the Beta assignments so you can't change the open-ended submission type.";
+                $authorized = false;
+            }
+        } else if ($assignment->isBetaAssignment()) {
+            $message = "This is an assignment in a Beta course so you can't change the open-ended submission type.";
+            $authorized = false;
+        } else if ($submissionFile->hasNonFakeStudentFileSubmissionsForAssignmentQuestion([$assignment->id], $question->id)) {
+            $authorized = false;
+            $message = "There is at least one submission to this question so you can't change the open-ended submission type.";
+        }
 
-        return $user->id === ((int)$assignment->course->user_id)
+        return $authorized
             ? Response::allow()
-            : Response::deny("You are not allowed to update the open ended submission type.");
+            : Response::deny($message);
     }
 
     public function updateClickerResultsReleased(User $user, AssignmentSyncQuestion $assignmentSyncQuestion, Assignment $assignment)

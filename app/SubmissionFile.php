@@ -292,4 +292,23 @@ class SubmissionFile extends Model
         }
         return $re_keyed_by_question_and_user_info;
     }
+
+    /**
+     * @param array $assignment_ids
+     * @param $question_id
+     * @return bool
+     */
+    public function hasNonFakeStudentFileSubmissionsForAssignmentQuestion(array $assignment_ids, int $question_id)
+    {
+      return  DB::table('submission_files')
+            ->join('users', 'submission_files.user_id', '=', 'users.id')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('question_id', $question_id)
+            ->where('fake_student', 0)
+            ->get()
+            ->isNotEmpty();
+
+
+
+    }
 }

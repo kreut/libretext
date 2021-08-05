@@ -176,7 +176,13 @@
           <span class="font-weight-bold">{{ isLockedMessage() }}</span>
         </b-alert>
       </div>
-
+      <div v-if="isBetaAssignment">
+        <b-alert variant="info" show>
+          <span class="font-weight-bold">This is a Beta assignment which is tethered to an Alpha assignment.
+            You will only be able to change items specific to your course such as the assignment group,
+            the late policy (if appropriate), whether you include this in the final score, student notifications, and the assign to information.</span>
+        </b-alert>
+      </div>
       <b-form-group
         id="name"
         label-cols-sm="4"
@@ -190,6 +196,7 @@
               id="name"
               v-model="form.name"
               lg="7"
+              :disabled="isBetaAssignment"
               type="text"
               :class="{ 'is-invalid': form.errors.has('name') }"
               @keydown="form.errors.clear('name')"
@@ -211,7 +218,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="public-description-tooltip" triggers="hover">
-            An optional description for the assignment.  This description will be viewable by your students.
+            An optional description for the assignment. This description will be viewable by your students.
           </b-tooltip>
         </template>
         <b-form-textarea
@@ -220,6 +227,7 @@
           style="margin-bottom: 23px"
           rows="2"
           max-rows="2"
+          :disabled="isBetaAssignment"
         />
       </b-form-group>
       <b-form-group
@@ -235,7 +243,7 @@
                   icon="question-circle"
           />
           <b-tooltip target="private-description-tooltip" triggers="hover">
-            An optional description for the assignment.  This description will only be viewable by you.
+            An optional description for the assignment. This description will only be viewable by you.
           </b-tooltip>
         </template>
         <b-form-textarea
@@ -244,6 +252,7 @@
           style="margin-bottom: 23px"
           rows="2"
           max-rows="2"
+          :disabled="isBetaAssignment"
         />
       </b-form-group>
       <b-form-group
@@ -302,7 +311,7 @@
         <b-form-radio-group
           v-model="form.source"
           stacked
-          :disabled="isLocked()"
+          :disabled="isLocked() || isBetaAssignment"
           @change="initInternalExternalSwitch()"
         >
           <b-form-radio name="source" value="a">
@@ -327,7 +336,7 @@
         label-for="Scoring Type"
       >
         <b-form-radio-group v-model="form.scoring_type" stacked
-                            :disabled="isLocked()"
+                            :disabled="isLocked() || isBetaAssignment"
         >
             <span @click="form.students_can_view_assignment_statistics = 1">
               <b-form-radio value="p">Performance <span id="performance" class="text-muted"><b-icon
@@ -360,7 +369,7 @@
                 type="text"
                 placeholder=""
                 :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                :disabled="isLocked()"
+                :disabled="isLocked() || isBetaAssignment"
                 @keydown="form.errors.clear('default_points_per_question')"
               />
               <has-error :form="form" field="default_points_per_question"/>
@@ -380,7 +389,7 @@
     >
       <b-form-radio-group v-model="form.assessment_type"
                           stacked
-                          :disabled="isLocked()"
+                          :disabled="isLocked() || isBetaAssignment"
                           @change="initAssessmentTypeSwitch($event)"
       >
         <b-form-radio name="assessment_type" value="real time">
@@ -434,6 +443,7 @@
               type="text"
               placeholder=""
               :class="{ 'is-invalid': form.errors.has('default_clicker_time_to_submit') }"
+              :disabled="isBetaAssignment"
               @keydown="form.errors.clear('default_clicker_time_to_submit')"
             />
             <has-error :form="form" field="default_clicker_time_to_submit"/>
@@ -466,7 +476,7 @@
               v-model="form.min_time_needed_in_learning_tree"
               type="text"
               placeholder="In Minutes"
-              :disabled="isLocked()"
+              :disabled="isLocked() || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
               @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
             />
@@ -498,7 +508,7 @@
               v-model="form.percent_earned_for_exploring_learning_tree"
               type="text"
               placeholder="Out of 100"
-              :disabled="isLocked()"
+              :disabled="isLocked() || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
               @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
             />
@@ -527,7 +537,7 @@
               v-model="form.submission_count_percent_decrease"
               type="text"
               placeholder="Out of 100"
-              :disabled="isLocked()"
+              :disabled="isLocked() || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
               @keydown="form.errors.clear('submission_count_percent_decrease')"
             />
@@ -546,7 +556,7 @@
     >
       <b-form-radio-group v-model="form.file_upload_mode"
                           stacked
-                          :disabled="isLocked()"
+                          :disabled="isLocked() || isBetaAssignment"
                           name="file_upload_mode"
                           :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
                           @keydown="form.errors.clear('file_upload_mode')"
@@ -585,7 +595,7 @@
       </template>
       <b-form-radio-group v-model="form.default_open_ended_submission_type"
                           stacked
-                          :disabled="isLocked()"
+                          :disabled="isLocked() || isBetaAssignment"
                           name="default_open_ended_submission_type"
                           :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
                           @keydown="form.errors.clear('default_open_ended_submission_type')"
@@ -683,7 +693,7 @@
             </span>
           <b-form-radio class="mt-2" value="0">
             <b-row>
-              <b-col lg="2" class="mt-1">
+              <b-col lg="4" class="mt-1">
                 Every
               </b-col>
               <b-col lg="6">
@@ -735,6 +745,7 @@
           <b-form-input
             id="external_source_points"
             v-model="form.external_source_points"
+            :disabled="isBetaAssignment"
             type="text"
             placeholder=""
             :class="{ 'is-invalid': form.errors.has('external_source_points') }"
@@ -759,6 +770,7 @@
                   rows="4"
                   :config="richEditorConfig"
                   max-rows="4"
+                  :read-only="isBetaAssignment"
                   @namespaceloaded="onCKEditorNamespaceLoaded"
         />
       </b-form-row>
@@ -772,7 +784,7 @@
       label-for="Randomizations"
     >
       <b-form-radio-group v-model="form.randomizations" stacked
-                          :disabled="isLocked()"
+                          :disabled="isLocked() || isBetaAssignment"
       >
         <b-form-radio value="0" @change="resetRandomizations">
           No
@@ -802,7 +814,7 @@
             id="number_of_randomized_assessments"
             v-model="form.number_of_randomized_assessments"
             type="text"
-            :disabled="isLocked()"
+            :disabled="isLocked() || isBetaAssignment"
             :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
             @keydown="form.errors.clear('number_of_randomized_assessments')"
           />
@@ -1000,6 +1012,7 @@ export default {
       default: function () {
       }
     },
+    isBetaAssignment: { type: Boolean, default: false },
     courseId: { type: Number, default: 0 },
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },

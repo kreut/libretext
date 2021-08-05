@@ -12,17 +12,18 @@
       <div v-if="!isLoading">
         <PageTitle title="Assignment Properties"/>
         <b-card class="mb-4">
-        <AssignmentProperties
-          :key="assignment.course_start_date"
-          :assignment-groups="assignmentGroups"
-          :form="form"
-          :course-id="parseInt(courseId)"
-          :course-start-date="courseStartDate"
-          :course-end-date="assignment.course_end_date"
-          :all-form-errors="allFormErrors"
-          :assignment-id="parseInt(assignmentId)"
-        />
-        <hr>
+          <AssignmentProperties
+            :key="assignment.course_start_date"
+            :assignment-groups="assignmentGroups"
+            :form="form"
+            :course-id="parseInt(courseId)"
+            :course-start-date="courseStartDate"
+            :course-end-date="assignment.course_end_date"
+            :all-form-errors="allFormErrors"
+            :assignment-id="parseInt(assignmentId)"
+            :is-beta-assignment="assignment.is_beta_assignment"
+          />
+          <hr>
           <span class="float-right">
             <b-button size="sm" variant="primary" @click="handleSubmitAssignmentInfo">
               Submit

@@ -97,10 +97,10 @@ class Assignment extends Model
     }
 
 
-    public function getAssignmentsByCourse(Course $course,
-                                           Extension $extension,
-                                           Score $Score, Submission $Submission,
-                                           Solution $Solution,
+    public function getAssignmentsByCourse(Course          $course,
+                                           Extension       $extension,
+                                           Score           $Score, Submission $Submission,
+                                           Solution        $Solution,
                                            AssignmentGroup $AssignmentGroup)
     {
 
@@ -507,6 +507,24 @@ class Assignment extends Model
     }
 
     /**
+     * @return array
+     */
+    public function betaAssignmentIds()
+    {
+        if (!$this->course->alpha) {
+            return [];
+        }
+        $beta_assignments = DB::table('beta_assignments')
+            ->where('alpha_assignment_id', $this->id)
+            ->get();
+
+        return $beta_assignments->isNotEmpty()
+            ? $beta_assignments->pluck('id')->toArray()
+            : [];
+
+    }
+
+    /**
      * @return Assignment[]
      */
     public function addBetaAssignments()
@@ -517,6 +535,19 @@ class Assignment extends Model
             $assignments[] = $beta_assignment;
         }
         return $assignments;
+    }
+
+    /**
+     * @return Assignment[]
+     */
+    public function addBetaAssignmentIds(): array
+    {
+        $assignment_ids = [$this->id];
+        $beta_assignment_ids = $this->betaAssignmentIds();
+        foreach ($beta_assignment_ids as $beta_assignment_id) {
+            $assignment_ids[] = $beta_assignment_id;
+        }
+        return $assignment_ids;
     }
 
     public function course()
@@ -540,6 +571,32 @@ class Assignment extends Model
         return $this->submissions->isNotEmpty() + $this->fileSubmissions->isNotEmpty();
     }
 
+    /**
+     * @param array $assignment_ids
+     * @return bool
+     */
+    public function hasNonFakeStudentFileOrQuestionSubmissions($assignment_ids = [])
+    {
+        if (!$assignment_ids) {
+            $assignment_ids = [$this->id];
+        }
+        $submission_files_not_empty = DB::table('submission_files')
+            ->join('users', 'submission_files.user_id', '=', 'users.id')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('fake_student', 0)
+            ->get()
+            ->isNotEmpty();
+
+        $submissions_not_empty = DB::table('submissions')
+            ->join('users', 'submissions.user_id', '=', 'users.id')
+            ->whereIn('assignment_id', $assignment_ids)
+            ->where('fake_student', 0)
+            ->get()
+            ->isNotEmpty();
+        return $submission_files_not_empty || $submissions_not_empty;
+
+
+    }
 
     public function questionFileSubmissions()
     {
@@ -591,16 +648,16 @@ class Assignment extends Model
         return $this->hasMany('App\Extension');
     }
 
-    public function removeUserInfo(User $user,
-                                   $assignments_to_remove_ids,
-                                   $assign_to_timings_to_remove_ids,
-                                   Submission $submission,
-                                   SubmissionFile $submissionFile,
-                                   Score $score,
-                                   AssignToUser $assignToUser,
-                                   Extension $extension,
+    public function removeUserInfo(User             $user,
+                                                    $assignments_to_remove_ids,
+                                                    $assign_to_timings_to_remove_ids,
+                                   Submission       $submission,
+                                   SubmissionFile   $submissionFile,
+                                   Score            $score,
+                                   AssignToUser     $assignToUser,
+                                   Extension        $extension,
                                    LtiGradePassback $ltiGradePassback,
-                                   Seed $seed)
+                                   Seed             $seed)
     {
         $submission->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();
         $submissionFile->where('user_id', $user->id)->whereIn('assignment_id', $assignments_to_remove_ids)->delete();

@@ -51,10 +51,17 @@ class QuestionsGetTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
+        $this->beta_user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
         $this->user_2->role = 3;
         $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->beta_course = factory(Course::class)->create(['user_id' => $this->beta_user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+
+        $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
+
+        DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
+
         $this->question = factory(Question::class)->create();
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
@@ -93,15 +100,92 @@ class QuestionsGetTest extends TestCase
 
     }
 
+
+    /** @test */
+    public function alpha_course_update_points_only_affects_beta_courses()
+    {
+
+        $this->course->alpha = 1;
+        $this->course->save();
+
+        /**alpha and beta assignments**/
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->beta_assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+        $this->course_2 = factory(Course::class)->create(['user_id' => $this->user_2->id]);
+        $this->assignment_2 = factory(Assignment::class)->create(['course_id' => $this->course_2->id]);
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment_2->id,
+            'question_id' => $this->question->id,
+            'points' => 5,
+            'order' => 1,
+            'open_ended_submission_type' => 'file'
+        ]);
+
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points",
+                ['points' => 32.15])
+            ->assertJson(['type' => "success"]);
+        $num_with_32_5_points = count(DB::table('assignment_question')->where('points', '32.15')->get());
+        $this->assertEquals(2, $num_with_32_5_points);
+
+
+    }
+
+    /** @test */
+    public function cannot_update_points_if_is_beta_course()
+    {
+        $this->actingAs($this->beta_user)
+            ->patchJson("/api/assignments/{$this->beta_assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
+            ->assertJson(['message' => "This is an assignment in a Beta course so you can't change the points."]);
+    }
+
+    /** @test */
+    public function alpha_course_cannot_update_points_if_beta_submission_exists()
+    {
+
+        $this->course->alpha = 1;
+        $this->course->save();
+
+        $data = [
+            'type' => 'q',
+            'assignment_id' => $this->beta_assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'fake_1.pdf',
+            'original_filename' => 'orig_fake_1.pdf',
+            'user_id' => $this->student_user->id,
+            'date_submitted' => Carbon::now()];
+        SubmissionFile::create($data);
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
+            ->assertJson(['message' => "There is at least one submission to this question in one of the Beta assignments so you can't change the points."]);
+    }
+
+
     /** @test */
 
-    public function cannot_add_non_file_questions_to_a_compiled_assignment(){
+    public function cannot_add_non_file_questions_to_a_compiled_assignment()
+    {
         $this->assignment->file_upload_mode = 'compiled_pdf';
         $this->assignment->save();
 
-        DB::table('assignment_question')->where('question_id' ,$this->question->id)
-               ->where('assignment_id', $this->assignment_remixer->id)
-            ->update(['open_ended_submission_type'=>'audio']);
+        DB::table('assignment_question')->where('question_id', $this->question->id)
+            ->where('assignment_id', $this->assignment_remixer->id)
+            ->update(['open_ended_submission_type' => 'audio']);
         $data['chosen_questions'] = [
             ['question_id' => $this->question->id,
                 'assignment_id' => $this->assignment_remixer->id]
@@ -332,7 +416,7 @@ class QuestionsGetTest extends TestCase
         Submission::create($this->h5pSubmission);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['type' => 'error',
-                'message' => "This cannot be updated since students have already submitted responses."]);
+                'message' => "This cannot be updated since students have already submitted responses to this assignment."]);
 
     }
 
@@ -343,7 +427,7 @@ class QuestionsGetTest extends TestCase
         SubmissionFile::create($this->submission_file);
         $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-points", ['points' => 10])
             ->assertJson(['type' => 'error',
-                'message' => "This cannot be updated since students have already submitted responses."]);
+                'message' => "This cannot be updated since students have already submitted responses to this assignment."]);
 
     }
 
