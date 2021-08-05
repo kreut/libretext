@@ -476,6 +476,7 @@ export default {
           return false
         }
         this.importableCourses = data.importable_courses
+        this.formattedImportableCourses = []
         for (let i = 0; i < data.importable_courses.length; i++) {
           this.formattedImportableCourses.push(data.importable_courses[i].formatted_course)
         }
