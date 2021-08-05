@@ -46,17 +46,11 @@
       title="Assignments"
       hide-footer
     >
-      <b-table striped
-               hover
-               responsive="true"
-               :no-border-collapse="true"
-               :items="assignments"
-               :fields="fields"
-      >
-        <template v-slot:cell(description)="data">
-          {{ data.item.description ? data.item.description : 'None provided' }}
-        </template>
-      </b-table>
+      <ul>
+        <li v-for="assignment in assignments" :key="assignment.id">
+          {{ assignment.name }}
+        </li>
+      </ul>
     </b-modal>
     <PageTitle title="Commons"/>
     <div class="vld-parent">
