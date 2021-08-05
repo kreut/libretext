@@ -43,6 +43,7 @@ class CourseController extends Controller
             $commons_user = User::where('email', 'commons@libretexts.org')->first();
             $commons_courses = DB::table('courses')
                 ->where('courses.user_id', $commons_user->id)
+                ->where('shown', 1)
                 ->select('id',
                     'courses.name AS name',
                     'courses.public_description AS description',
@@ -524,9 +525,10 @@ class CourseController extends Controller
 
             $response['type'] = !$shown ? 'success' : 'info';
             $shown_message = !$shown ? 'can' : 'cannot';
-            $access_code_message = !$shown ? '' : '  In addition, all course access codes have been revoked.';
-
-            $response['message'] = "Your students <strong>{$shown_message}</strong> view this course.{$access_code_message}";
+            $is_commons_user = Auth::user()->email === 'commons@libretexts.org';
+            $access_code_message = !$shown || $is_commons_user ? '' : '  In addition, all course access codes have been revoked.';
+            $people = $is_commons_user ? "Visitors to the Commons " : "Your students";
+            $response['message'] = "$people <strong>{$shown_message}</strong> view this course.{$access_code_message}";
             DB::commit();
         } catch (Exception $e) {
             DB::rollback();

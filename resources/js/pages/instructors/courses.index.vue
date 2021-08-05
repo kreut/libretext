@@ -515,7 +515,7 @@ export default {
     },
     showCourseWarning (course) {
       this.course = course
-      this.course.shown
+      this.course.shown || this.user.email === 'commons@libretexts.org'
         ? this.submitShowCourse()
         : this.$bvModal.show('modal-show-course-warning')
     },
