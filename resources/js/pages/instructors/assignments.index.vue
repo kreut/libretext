@@ -212,7 +212,8 @@
         </div>
         <div v-show="betaCoursesInfo.length>0">
           <p>
-            Since this is an Alpha course with tethered Beta courses, you cannot delete this assignment.  However, you can always hide this
+            Since this is an Alpha course with tethered Beta courses, you cannot delete this assignment. However, you
+            can always hide this
             assignment from your own students.
           </p>
         </div>
@@ -236,7 +237,7 @@
       </b-modal>
 
       <b-container>
-        <b-row v-if="canViewAssignments" class="mb-4" align-h="between">
+        <b-row v-if="canViewAssignments" class="mb-4" align-h="end">
           <div v-show="betaCoursesInfo.length>0">
             <b-alert variant="info" :show="true">
               <span class="font-weight-bold">
@@ -252,30 +253,40 @@
                            @change="updateAssignmentGroupFilter(courseId)"
             />
           </b-col>
-          <b-col lg="5">
-            <b-button v-if="(user && user.role === 2)"
-                      class="ml-5 mr-1"
-                      size="sm"
-                      variant="primary"
-                      @click="addAssignmentIsImport=false;confirmInitAddAssignment()"
-            >
-              New Assignment
-            </b-button>
-            <b-button v-if="(user && user.role === 2)"
-                      class="mr-1"
-                      size="sm"
-                      variant="outline-primary"
-                      @click="addAssignmentIsImport=true;confirmInitImportAssignment()"
-            >
-              Import Assignment
-            </b-button>
-            <b-button
-              :class="(user && user.role === 4) ? 'float-right' : ''"
-              size="sm"
-              @click="getGradeBook()"
-            >
-              Gradebook
-            </b-button>
+          <b-col lg="9">
+            <span class="float-right">
+              <b-button v-if="(user && user.role === 2)"
+                        class="ml-5 mr-1"
+                        size="sm"
+                        variant="primary"
+                        @click="addAssignmentIsImport=false;confirmInitAddAssignment()"
+              >
+                New Assignment
+              </b-button>
+              <b-button v-if="(user && user.role === 2)"
+                        class="mr-1"
+                        size="sm"
+                        variant="outline-primary"
+                        @click="addAssignmentIsImport=true;confirmInitImportAssignment()"
+              >
+                Import Assignment
+              </b-button>
+              <b-button
+                :class="(user && user.role === 4) ? 'float-right' : ''"
+                size="sm"
+                @click="getGradeBook()"
+              >
+                Course Gradebook
+              </b-button>
+              <b-button
+                :class="(user && user.role === 4) ? 'float-right' : ''"
+                size="sm"
+                variant="info"
+                @click="$router.push(`/instructors/courses/${courseId}/properties`)"
+              >
+                Course Properties
+              </b-button>
+            </span>
           </b-col>
         </b-row>
       </b-container>
