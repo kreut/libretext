@@ -417,8 +417,9 @@
                       Create Assignment From Template
                     </b-tooltip>
                     <span class="pr-1" @click="initCreateAssignmentFromTemplate(assignment.id)">
-                      <b-icon :id="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
-                              icon="clipboard-check"
+                      <font-awesome-icon :id="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
+                                         :icon="copyIcon"
+                                         class="text-muted"
                       />
                     </span>
                     <b-tooltip :target="getTooltipTarget('deleteAssignment',assignment.id)"
@@ -478,6 +479,8 @@ import AssignTosToView from '~/components/AssignTosToView'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import draggable from 'vuedraggable'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
 
 export default {
   middleware: 'auth',
@@ -487,9 +490,11 @@ export default {
     AssignmentProperties,
     AssignTosToView,
     VueBootstrapTypeahead,
-    draggable
+    draggable,
+    FontAwesomeIcon
   },
   data: () => ({
+    copyIcon: faCopy,
     addAssignmentIsImport: false,
     isBetaCourse: false,
     betaCoursesInfo: [],
