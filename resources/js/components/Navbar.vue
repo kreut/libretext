@@ -235,22 +235,14 @@ export default {
       }
     },
     async getBreadcrumbs (router) {
-      if (!this.user) {
-        this.breadcrumbs = [{
-          text: 'Commons',
-          href: '/commons'
-        }]
-        this.oneBreadcrumb = true
-      } else {
-        try {
-          console.log(router.name)
-          console.log({ 'name': router.name, 'params': router.params })
-          const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
-          this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
-          this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['commons', 'welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
-        } catch (error) {
-          this.$noty(error.message)
-        }
+      try {
+        console.log(router.name)
+        console.log({ 'name': router.name, 'params': router.params })
+        const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
+        this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
+        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['commons', 'welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
+      } catch (error) {
+        this.$noty(error.message)
       }
     },
     openSendEmailModal () {

@@ -7,9 +7,12 @@
         <div class="title font-italic text-white">
           {{ title }}
         </div>
-        <h5 class="text-white">
+        <h5 class="text-white pb-5">
           The Libretexts Adaptive Learning Assessment System
         </h5>
+        <b-button size="lg" variant="primary" @click="$router.push({name:'commons'})">
+          The Commons
+        </b-button>
       </div>
     </div>
   </div>
