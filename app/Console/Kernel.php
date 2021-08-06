@@ -35,7 +35,7 @@ class Kernel extends ConsoleKernel
 
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
-                ->daily()
+                ->dailyAt('13:00')
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
         }
@@ -55,8 +55,8 @@ class Kernel extends ConsoleKernel
             $schedule->command('notify:BetaCourseApprovals')->daily();
             /* grader notifications */
             $schedule->command('notify:gradersForDueAssignments')->hourly();
-            $schedule->command('notify:gradersForLateSubmissions')->Daily();
-            $schedule->command('notify:gradersReminders')->Daily();
+            $schedule->command('notify:gradersForLateSubmissions')->daily();
+            $schedule->command('notify:gradersReminders')->daily();
             /* end grader notifications */
             $schedule->command('check:AssignTos')->twiceDaily();
 
