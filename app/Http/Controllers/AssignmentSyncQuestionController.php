@@ -1195,6 +1195,30 @@ class AssignmentSyncQuestionController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->get();
 
+            $at_least_one_submission = DB::table('submissions')
+                ->join('users','submissions.user_id','=','users.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('users.fake_student',0)
+                ->select('question_id')
+                ->groupBy('question_id')
+                ->get();
+
+            $at_least_one_submission_file = DB::table('submission_files')
+                ->join('users','submission_files.user_id','=','users.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('users.fake_student',0)
+                ->select('question_id')
+                ->groupBy('question_id')
+                ->get();
+            $questions_with_at_least_one_submission = [];
+            foreach ($at_least_one_submission as $question){
+                $questions_with_at_least_one_submission[] = $question->question_id;
+            }
+            foreach ($at_least_one_submission_file as $question){
+                $questions_with_at_least_one_submission[] = $question->question_id;
+            }
+
+
 
             $submissions_by_question_id = [];
             if ($submissions) {
@@ -1278,6 +1302,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
                 $assignment->questions[$key]['author'] = $question->author;
+                $assignment->questions[$key]['has_at_least_one_submission'] = in_array($question->id, $questions_with_at_least_one_submission);
                 $assignment->questions[$key]['private_description'] = $request->user()->role === 2
                     ? $question->private_description
                     : '';

@@ -689,7 +689,7 @@
           </b-alert>
         </div>
       </div>
-      <div v-if="isLocked() && !presentationMode && !inIFrame">
+      <div v-if="questions[currentPage-1].has_at_least_one_submission && !presentationMode && !inIFrame">
         <b-alert variant="info" :show="true">
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the
             points per question nor change the open-ended submission type.</strong>
@@ -804,7 +804,7 @@
                         <b-button variant="primary"
                                   size="sm"
                                   class="m-1"
-                                  :disabled="isLocked()"
+                                  :disabled="questions[currentPage-1].has_at_least_one_submission"
                                   @click="updatePoints(questions[currentPage-1].id)"
                         >
                           Update Points
@@ -1540,7 +1540,6 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import { getAcceptedFileTypes, submitUploadFile } from '~/helpers/UploadFiles'
 import { h5pResizer } from '~/helpers/H5PResizer'
 
-import { isLocked } from '~/helpers/Assignments'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 
@@ -1859,7 +1858,6 @@ export default {
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
-    this.isLocked = isLocked
     window.addEventListener('keydown', this.arrowListener)
   },
   destroyed () {
