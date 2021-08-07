@@ -2,6 +2,9 @@
 
 namespace App\Policies;
 
+use App\Assignment;
+use App\AssignmentSyncQuestion;
+use App\Helpers\Helper;
 use App\User;
 use App\Question;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -13,6 +16,28 @@ class QuestionPolicy
 {
     use HandlesAuthorization;
 
+
+    public function refreshQuestion(User $user, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion, $assignment)
+    {
+        $has_access = true;
+        $message = '';
+        if ($user->role !== 2) {
+            $message = "You are not allowed to refresh questions.";
+            $has_access = false;
+        } else if (!Helper::isAdmin()
+            && $assignmentSyncQuestion->questionExistsInOtherAssignments($assignment, $question)
+            && $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
+            $has_access = false;
+            $message = "You cannot refresh this question since there are already submissions in other assignments.";
+
+        } else if (!Helper::isAdmin() && $assignment->isBetaAssignment()) {
+            $has_access = false;
+            $message = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
+        }
+        return ($has_access)
+            ? Response::allow()
+            : Response::deny($message);
+    }
 
     public function updateProperties(User $user)
     {

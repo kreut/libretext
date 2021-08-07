@@ -3,23 +3,35 @@
 
 namespace App\Traits;
 
+use App\Question;
 use App\User;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+
 
 trait GeneralSubmissionPolicy
+
+
 {
     /**
      * @param User $user
      * @param $assignment
      * @param int $assignment_id
      * @param int $question_id
+     * @param string $level
      * @return array
      */
-    public function canSubmitBasedOnGeneralSubmissionPolicy(User $user, $assignment, int $assignment_id, int $question_id, $level = 'question')
+    public function canSubmitBasedOnGeneralSubmissionPolicy(User $user, $assignment, int $assignment_id, int $question_id, $level = 'question'): array
     {
         $response['type'] = 'error';
         $response['message'] = '';
 
+       /** $db_question_updated_at = Question::find($question_id)->updated_at->timestamp;
+        if ((int) $db_question_updated_at !==  (int) (request()->cookie('loaded_question_updated_at'))) {
+            $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
+            return $response;
+        }**/
         $assign_to_timing = $assignment->assignToTimingByUser();
         if (!$assign_to_timing) {
             $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
@@ -46,10 +58,10 @@ trait GeneralSubmissionPolicy
             $response['message'] = 'No responses will be saved since the assignment is `not` part of your course.';
             return $response;
         }
-        if (session()->get('instructor_user_id')){
+        if (session()->get('instructor_user_id')) {
             //logged in as student
-           $response['type'] = 'success';
-           return $response;
+            $response['type'] = 'success';
+            return $response;
         }
 
         if (strtotime($assign_to_timing->available_from) > time()) {

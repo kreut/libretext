@@ -6,26 +6,139 @@ namespace App\Http\Controllers;
 use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
+use App\Helpers\Helper;
 use App\Libretext;
+use App\LtiGradePassback;
+use App\LtiLaunch;
 use App\Question;
+use App\RefreshQuestionRequest;
+use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
 use App\Solution;
 use App\Traits\IframeFormatter;
 use App\Traits\LibretextFiles;
-
 use App\Exceptions\Handler;
 use \Exception;
 
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Session;
+
 
 class QuestionController extends Controller
 {
     use IframeFormatter;
     use LibretextFiles;
+
+    /**
+     * @param Request $request
+     * @return Application|ResponseFactory|Response
+     */
+    public function setQuestionUpdatedAtSession(Request $request)
+    {
+        $cookie = cookie()->forever('loaded_question_updated_at', $request->loaded_question_updated_at);
+        $response['loaded_question_updated_at'] = $request->loaded_question_updated_at;
+        return response($response)->withCookie($cookie);
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function initRefreshQuestion(Assignment             $assignment,
+                                        Question               $question,
+                                        AssignmentSyncQuestion $assignmentSyncQuestion): array
+    {
+        $response['type'] = 'error';
+
+        try {
+            $response['type'] = 'error';
+            if (!Helper::isAdmin() && $assignment->isBetaAssignment()) {
+                $response['message'] = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
+                return $response;
+            }
+
+            $response['question_has_auto_graded_or_file_submissions_in_other_assignments'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question);
+            $response['question_has_auto_graded_or_file_submissions_in_this_assignment'] = $assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInThisAssignment($assignment, $question);
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to determine the submission and assignment status for this question.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @param Assignment $assignment
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param LtiLaunch $ltiLaunch
+     * @param LtiGradePassback $ltiGradePassback
+     * @param RefreshQuestionRequest $refreshQuestionRequest
+     * @return array
+     * @throws Exception
+     */
+    public function refresh(Request                $request,
+                            Question               $question,
+                            Assignment             $assignment,
+                            AssignmentSyncQuestion $assignmentSyncQuestion,
+                            LtiLaunch              $ltiLaunch,
+                            LtiGradePassback       $ltiGradePassback,
+                            RefreshQuestionRequest $refreshQuestionRequest)
+    {
+
+        try {
+
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('refreshQuestion', [$question, $assignmentSyncQuestion, $assignment]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
+            DB::beginTransaction();
+            if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question) ) {
+                $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
+
+                DB::table('submissions')->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->delete();
+                DB::table('submission_files')->where('assignment_id', $assignment->id)
+                    ->where('question_id', $question->id)
+                    ->delete();
+            }
+            $question->getQuestionIdsByPageId($question->page_id, $question->library, 1);
+
+            $refreshed_question = $refreshQuestionRequest->where('question_id', $question->id)->first();
+            if ($refreshed_question) {
+                //it may not be there if the Admin does it right from a page
+                $refreshed_question->status = 'approved';
+                $refreshed_question->save();
+            }
+
+            DB::commit();
+            $updated_scores_message = $request->update_scores
+                ? "All submissions have been removed and your students will need to re-submit."
+                : '';
+            $response['message'] = "The question has been refreshed.  $updated_scores_message ";
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
 
     /**
      * @param Request $request
@@ -38,7 +151,7 @@ class QuestionController extends Controller
     }
 
     /**
-     * @param UpdateQuestionProperties $request
+     * @param Request $request
      * @param Question $question
      * @return array
      * @throws Exception
@@ -99,15 +212,16 @@ class QuestionController extends Controller
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param Libretext $libretext
+     * @param BetaCourseApproval $betaCourseApproval
      * @return array
      * @throws Exception
      */
-    public function directImportQuestions(Request $request,
-                                          Question $Question,
-                                          Assignment $assignment,
+    public function directImportQuestions(Request                $request,
+                                          Question               $Question,
+                                          Assignment             $assignment,
                                           AssignmentSyncQuestion $assignmentSyncQuestion,
-                                          Libretext $libretext,
-                                          BetaCourseApproval $betaCourseApproval)
+                                          Libretext              $libretext,
+                                          BetaCourseApproval     $betaCourseApproval): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -163,7 +277,7 @@ class QuestionController extends Controller
                     return $response;
                 }
 
-                $question_id = $Question->getQuestionIdsByPageId($page_id, $library, true)[0];//returned as an array
+                $question_id = $Question->getQuestionIdsByPageId($page_id, $library, false)[0];//returned as an array
                 $questions_to_add[$question_id] = "$library_text-$page_id";
             }
             DB::beginTransaction();
@@ -276,7 +390,42 @@ class QuestionController extends Controller
 
     }
 
-    public function show(Request $request, Question $Question)
+    /**
+     * @param Question $question
+     * @param RefreshQuestionRequest $refreshQuestionRequest
+     * @return array
+     * @throws Exception
+     */
+    public function compareCachedAndNonCachedQuestions(Question               $question,
+                                                       RefreshQuestionRequest $refreshQuestionRequest)
+    {
+        $response['type'] = 'error';
+        /* $authorized = Gate::inspect('refreshQuestion', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }*/
+        try {
+            $question_info = Question::select('*')
+                ->where('id', $question->id)->first();
+            $response['cached_question'] = $this->_formatQuestionFromDatabase($question_info);
+            $response['uncached_question_src'] = "https://{$question_info['library']}.libretexts.org/@go/page/{$question_info['page_id']}";
+            $response['nature_of_update'] = $refreshQuestionRequest->where('question_id', $question->id)
+                ->select('nature_of_update')
+                ->pluck('nature_of_update')
+                ->first();
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve the old and new questions.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    public function show(Question $Question)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
@@ -286,32 +435,48 @@ class QuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-        $question = [];
+
         $response['type'] = 'error';
-        $question_info = Question::select('*')
-            ->where('id', $Question->id)->first();
+        try {
+            $question_info = Question::select('*')
+                ->where('id', $Question->id)->first();
 
-        if ($question_info) {
-
-            $question['id'] = $question_info['id'];
-            $question['iframe_id'] = $this->createIframeId();
-            $question['non_technology'] = $question_info['non_technology'];
-            $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
-            $question['technology_iframe'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
-            if ($question_info['technology'] === 'webwork') {
-                //since it's the instructor, show the answer stuff
-                $question['technology_iframe'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
-                    '',
-                    $question['technology_iframe']);
+            if ($question_info) {
+                $question = $this->_formatQuestionFromDataBase($question_info);
+                $response['type'] = 'success';
+                $response['question'] = $question;
+            } else {
+                $response['message'] = 'We were not able to locate that question in our database.';
             }
-            $response['type'] = 'success';
-            $response['question'] = $question;
-        } else {
-            $response['message'] = 'We were not able to locate that question in our database.';
-        }
 
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting that question.  Please try again or contact us for assistance.";
+        }
         return $response;
 
+    }
+
+    /**
+     * @param object $question_info
+     * @return array
+     */
+    private function _formatQuestionFromDatabase(object $question_info): array
+    {
+        $question['title'] = $question_info['title'];
+        $question['id'] = $question_info['id'];
+        $question['iframe_id'] = $this->createIframeId();
+        $question['non_technology'] = $question_info['non_technology'];
+        $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question_info);
+        $question['technology_iframe'] = $this->formatIframeSrc($question_info['technology_iframe'], $question['iframe_id']);
+        if ($question_info['technology'] === 'webwork') {
+            //since it's the instructor, show the answer stuff
+            $question['technology_iframe'] = str_replace('&amp;showScoreSummary=0&amp;showAnswerTable=0',
+                '',
+                $question['technology_iframe']);
+        }
+        return $question;
     }
 
 

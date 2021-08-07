@@ -29,7 +29,7 @@
         />
         <span v-if="isMe && (user !== null)">
         <router-link :to="{ name: 'login.as'}">
-          <b-button size="sm" variant="outline-primary">Login As</b-button>
+          <b-button size="sm" variant="outline-primary">Admin</b-button>
         </router-link>
       </span>
       </div>
@@ -192,7 +192,7 @@ export default {
           console.log(data)
           this.originalRole = data.original_role
         } catch (error) {
-          this.$noty(error.message)
+          this.$noty.error(error.message)
         }
         this.showToggleStudentView = parseInt(this.originalRole) === 2
       }
@@ -240,9 +240,11 @@ export default {
         console.log({ 'name': router.name, 'params': router.params })
         const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
         this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
-        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['commons', 'welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as'].includes(router.name)
+        this.oneBreadcrumb = this.breadcrumbs.length === 1 && ['commons', 'welcome', 'instructors.learning_trees.index', 'instructors.courses.index', 'login.as', 'refresh.question.requests'].includes(router.name)
       } catch (error) {
-        this.$noty(error.message)
+        if (!error.message.includes('status code 401')) {
+          this.$noty.error(error.message)
+        }
       }
     },
     openSendEmailModal () {

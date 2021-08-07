@@ -198,9 +198,9 @@ class Question extends Model
      */
     public function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting)
     {
-        $question = Question::where('page_id',$page_id)
-                            ->where('library', $library)
-                            ->first();
+        $question = Question::where('page_id', $page_id)
+            ->where('library', $library)
+            ->first();
 
         if ($question && !$cache_busting) {
             return [$question->id]; ///just part of the search....

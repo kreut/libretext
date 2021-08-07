@@ -583,8 +583,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['rows'] = $rows;
 
 
-        } catch
-        (Exception $e) {
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "There was an error getting the questions summary for this assignment.  Please try again or contact us for assistance.";
@@ -874,7 +873,7 @@ class AssignmentSyncQuestionController extends Controller
                     $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
                 }
             }
-            $this->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->first()
@@ -927,55 +926,6 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
 
     }
-
-    public
-    function updateAssignmentScoreBasedOnRemovedQuestion(Assignment $assignment, Question $question, LtiLaunch $ltiLaunch, LtiGradePassback $ltiGradePassback)
-    {
-
-        $scores = DB::table('scores')->where('assignment_id', $assignment->id)
-            ->select('user_id', 'score')
-            ->get();
-
-        $lti_launches = DB::table('lti_launches')->where('assignment_id', $assignment->id)
-            ->select('user_id', 'launch_id')
-            ->get();
-
-        //just remove the one...
-        $submissions = DB::table('submissions')->where('question_id', $question->id)
-            ->where('assignment_id', $assignment->id)
-            ->select('user_id', 'score')
-            ->get();
-        $submissions_by_user_id = [];
-        foreach ($submissions as $submission) {
-            $submissions_by_user_id[$submission->user_id] = $submission->score;
-        }
-        $submission_files = DB::table('submission_files')->where('question_id', $question->id)
-            ->where('assignment_id', $assignment->id)
-            ->where('score', '<>', null)
-            ->select('user_id', 'score')
-            ->get();
-        $submission_files_by_user_id = [];
-        foreach ($submission_files as $submission_file) {
-            $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
-        }
-        $lti_launches_by_user_id = [];
-        foreach ($lti_launches as $lti_launch) {
-            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch->launch_id;
-        }
-        foreach ($scores as $score) {
-            $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
-            $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
-            $new_score = $score->score - $submission_file_score - $submission_score;
-            DB::table('scores')->where('assignment_id', $assignment->id)
-                ->where('user_id', $score->user_id)
-                ->update(['score' => $new_score]);
-            if (isset($lti_launches_by_user_id[$score->user_id])) {
-                $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $score->user_id, $new_score, $ltiLaunch);
-            }
-        }
-
-    }
-
 
     public
     function getIframeSrcFromHtml(\DOMDocument $domd, string $html)
@@ -1298,6 +1248,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $technology_src = '';
+                $assignment->questions[$key]['loaded_question_updated_at'] =  $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;

@@ -631,7 +631,7 @@
           </b-alert>
         </div>
       </div>
-      <div v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading">
+      <div v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading && user.role === 2">
         <b-alert variant="info" :show="true">
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the
             points per question nor change the open-ended submission type.</strong>
@@ -812,6 +812,10 @@
                   </b-button>
                 </div>
                 <div v-if="isInstructor() && !presentationMode && !inIFrame">
+                  <RefreshQuestion :assignment-id="parseInt(assignmentId)"
+                                   :question-id="questions[currentPage - 1].id"
+                                   :reload-question-parent="reloadQuestionParent"
+                  />
                   <b-button class="mt-1 mb-2 mr-2"
                             variant="success"
                             size="sm"
@@ -1020,7 +1024,7 @@
                 <div class="border border-gray p-0">
                   <div v-if="questions[currentPage-1].non_technology">
                     <iframe
-                      :key="`non-technology-iframe-${currentPage}`"
+                      :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
                       v-resize="{ log: false }"
                       width="100%"
                       :src="questions[currentPage-1].non_technology_iframe_src"
@@ -1031,8 +1035,8 @@
                     v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                   >
                     <iframe
-                      :key="`technology-iframe-${currentPage}`"
-                      v-resize="{ log: true }"
+                      :key="`technology-iframe-${currentPage}-${cacheIndex}`"
+                      v-resize="{ log: false }"
                       width="100%"
                       :src="questions[currentPage-1].technology_iframe"
                       frameborder="0"
@@ -1079,7 +1083,9 @@
                       />
                     </div>
                   </div>
-                  <div v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame">
+                  <div
+                    v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame"
+                  >
                     <div class="mt-3">
                       <b-card header-html="<h6 class=&quot;font-weight-bold&quot;>Default Text</h6>">
                         <p>
@@ -1502,6 +1508,7 @@ import { doCopy } from '~/helpers/Copy'
 import Email from '~/components/Email'
 import Scores from '~/components/Scores'
 import EnrollInCourse from '~/components/EnrollInCourse'
+import RefreshQuestion from '~/components/RefreshQuestion'
 import { getScoresSummary } from '~/helpers/Scores'
 import CKEditor from 'ckeditor4-vue'
 
@@ -1547,14 +1554,16 @@ export default {
     FileUpload: VueUploadComponent,
     LoggedInAsStudent,
     AssessmentTypeWarnings,
+    IframeInformation,
     CannotAddAssessmentToBetaAssignmentModal,
-    IframeInformation
+    RefreshQuestion
   },
   data: () => ({
     hasAtLeastOneSubmission: false,
     assignmentInformationShownInIFrame: false,
     submissionInformationShownInIFrame: false,
     attributionInformationShownInIFrame: false,
+    cacheIndex: 1,
     modalEnrollInCourseIsShown: false,
     betaAssignmentsExist: false,
     autoAttributionHTML: '',
@@ -1925,6 +1934,28 @@ export default {
             this.attributionInformationShownInIFrame = !newValue
             break
         }
+      }
+    },
+    refreshQuestionParent (message) {
+      this.$noty.success(message)
+    },
+    async reloadQuestionParent (questionId) {
+      try {
+        const { data } = await axios.get(`/api/questions/${questionId}`)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questions[this.currentPage - 1].non_technology_iframe_src = data.question.non_technology_iframe_src
+        this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe
+        this.questions[this.currentPage - 1].title = data.question.title
+        this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
+        await this.changePage(this.currentPage)
+        this.cacheIndex++
+        this.$noty.success('The question has been refreshed.')
+        console.log(this.cacheIndex)
+      } catch (error) {
+        this.$noty.error(error.message)
       }
     },
     getCurrentAttributeValue () {
@@ -2763,6 +2794,9 @@ export default {
         this.learningTreeAsList[i].show = remediationObject.children.includes(this.learningTreeAsList[i].id)
       }
     },
+    getTitle (currentPage) {
+      return `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
+    },
     async changePage (currentPage) {
       if (!this.questions[currentPage - 1]) {
         console.log('No question exists')
@@ -2770,7 +2804,7 @@ export default {
         return false
       }
       if (this.user.role === 2) {
-        this.title = `${this.questions[currentPage - 1].title}` ? this.questions[currentPage - 1].title : `Question #${currentPage - 1}`
+        this.title = this.getTitle(currentPage)
       }
       this.clickerStatus = this.questions[currentPage - 1].clicker_status
       this.showSolutionTextForm = false
@@ -2828,6 +2862,19 @@ export default {
       this.autoAttributionHTML = ''
       this.updateAutoAttribution(this.questions[this.currentPage - 1].license, this.questions[this.currentPage - 1].license_version, this.questions[this.currentPage - 1].author)
       this.isLoading = false
+      await this.setQuestionUpdatedAtSession(this.questions[this.currentPage - 1].loaded_question_updated_at)
+    },
+    async setQuestionUpdatedAtSession (loadedQuestionUpdatedAt) {
+      try {
+        const { data } = await axios.post(`/api/questions/set-question-updated-at-session`,
+          { loaded_question_updated_at: loadedQuestionUpdatedAt })
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async getTextFromS3 (question) {
       try {
@@ -3129,7 +3176,8 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  },
+  }
+  ,
   metaInfo () {
     return { title: this.$t('home') }
   }

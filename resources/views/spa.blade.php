@@ -6,7 +6,8 @@
       'locales' => config('app.locales'),
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
-      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present')
+      'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
+      'isAdmin' => \App\Helpers\Helper::isAdmin()
   ];
 
   if (!\Auth::user() && !session()->has('landing_page')){

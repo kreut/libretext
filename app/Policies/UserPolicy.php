@@ -18,8 +18,8 @@ class UserPolicy
 
     }
 
-    private function isAdmin($user){
-        $admins = ['kreut@hotmail.com', 'adapt@libretexts.org','dlarsen@ucdavis.edu'];
+    private function isAdminWithCookie($user){
+        $admins = ['adapt@libretexts.org','dlarsen@ucdavis.edu'];
         if (app()->environment('local', 'testing')){
             $admins[] = 'me@me.com';
         }
@@ -32,7 +32,7 @@ class UserPolicy
     public function getAll(User $user)
     {
 
-        return $this->isAdmin($user)
+        return $this->isAdminWithCookie($user)
             ? Response::allow()
             : Response::deny('You are not allowed to retrieve the users from the database.');
     }
@@ -41,7 +41,7 @@ class UserPolicy
     function loginAs(User $user)
     {
 
-        return $this->isAdmin($user)
+        return $this->isAdminWithCookie($user)
             ? Response::allow()
             : Response::deny('You are not allowed to log in as a different user.');
     }

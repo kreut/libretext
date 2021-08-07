@@ -4,12 +4,73 @@ namespace App;
 
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Collection;
 
 class AssignmentSyncQuestion extends Model
 {
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    public function questionExistsInOtherAssignments(Assignment $assignment, Question $question)
+    {
+        return DB::table('assignment_question')
+            ->where('assignment_id', '<>', $assignment->id)
+            ->where('question_id', $question->id)
+            ->get()
+            ->isNotEmpty();
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    public function questionHasAutoGradedOrFileSubmissionsInOtherAssignments(Assignment $assignment, Question $question): bool
+    {
+        $auto_graded_submissions = DB::table('submissions')
+            ->join('users', 'submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', '<>', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+        $submission_files = DB::table('submission_files')
+            ->join('users', 'submission_files.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', '<>', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+        return $auto_graded_submissions || $submission_files;
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return bool
+     */
+    public function questionHasAutoGradedOrFileSubmissionsInThisAssignment(Assignment $assignment, Question $question): bool
+    {
+        $auto_graded_submissions = DB::table('submissions')
+            ->join('users', 'submissions.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+        $submission_files = DB::table('submission_files')
+            ->join('users', 'submission_files.user_id', '=', 'users.id')
+            ->where('fake_student', 0)
+            ->where('assignment_id', $assignment->id)
+            ->where('question_id', $question->id)
+            ->first();
+        return $auto_graded_submissions || $submission_files;
+
+    }
 
     public function addLearningTreeIfBetaAssignment(int $assignment_question_id,
                                                     int $assignment_id,
@@ -18,7 +79,7 @@ class AssignmentSyncQuestion extends Model
         $beta_learning_tree = DB::table('beta_course_approvals')
             ->where('beta_assignment_id', $assignment_id)
             ->where('beta_question_id', $question_id)
-            ->where('beta_learning_tree_id','<>',0)
+            ->where('beta_learning_tree_id', '<>', 0)
             ->first();
         if ($beta_learning_tree) {
             DB::table('assignment_question_learning_tree')
@@ -141,6 +202,63 @@ class AssignmentSyncQuestion extends Model
             DB::table('assignment_question')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question_id)
                 ->update(['order' => $key + 1]);
+        }
+
+    }
+
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param LtiLaunch $ltiLaunch
+     * @param LtiGradePassback $ltiGradePassback
+     */
+    public
+    function updateAssignmentScoreBasedOnRemovedQuestion(Assignment       $assignment,
+                                                         Question         $question,
+                                                         LtiLaunch        $ltiLaunch,
+                                                         LtiGradePassback $ltiGradePassback)
+    {
+
+        $scores = DB::table('scores')->where('assignment_id', $assignment->id)
+            ->select('user_id', 'score')
+            ->get();
+
+        $lti_launches = DB::table('lti_launches')->where('assignment_id', $assignment->id)
+            ->select('user_id', 'launch_id')
+            ->get();
+
+        //just remove the one...
+        $submissions = DB::table('submissions')->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->select('user_id', 'score')
+            ->get();
+        $submissions_by_user_id = [];
+        foreach ($submissions as $submission) {
+            $submissions_by_user_id[$submission->user_id] = $submission->score;
+        }
+        $submission_files = DB::table('submission_files')->where('question_id', $question->id)
+            ->where('assignment_id', $assignment->id)
+            ->where('score', '<>', null)
+            ->select('user_id', 'score')
+            ->get();
+        $submission_files_by_user_id = [];
+        foreach ($submission_files as $submission_file) {
+            $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
+        }
+        $lti_launches_by_user_id = [];
+        foreach ($lti_launches as $lti_launch) {
+            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch->launch_id;
+        }
+        foreach ($scores as $score) {
+            $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
+            $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
+            $new_score = $score->score - $submission_file_score - $submission_score;
+            DB::table('scores')->where('assignment_id', $assignment->id)
+                ->where('user_id', $score->user_id)
+                ->update(['score' => $new_score]);
+            if (isset($lti_launches_by_user_id[$score->user_id])) {
+                $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $score->user_id, $new_score, $ltiLaunch);
+            }
         }
 
     }

@@ -1,16 +1,16 @@
 <template>
   <div>
-    <PageTitle v-if="canViewLoginAs" title="Log In As Another User" />
-    <div class="vld-parent">
-      <loading :active.sync="isLoading"
-               :can-cancel="true"
-               :is-full-page="true"
-               :width="128"
-               :height="128"
-               color="#007BFF"
-               background="#FFFFFF"
-      />
-      <b-card v-if="canViewLoginAs" header="default" header-html="Login As user">
+    <div v-if="hasAccess">
+      <PageTitle title="Log In As Another User"/>
+      <div class="vld-parent">
+        <loading :active.sync="isLoading"
+                 :can-cancel="true"
+                 :is-full-page="true"
+                 :width="128"
+                 :height="128"
+                 color="#007BFF"
+                 background="#FFFFFF"
+        />
         <b-form ref="form">
           <p>Use the form below to login as another user:</p>
           <div class="col-7 pb-2">
@@ -22,13 +22,15 @@
               :class="{ 'is-invalid': form.errors.has('user') }"
               @keydown="form.errors.clear('user')"
             />
-            <has-error :form="form" field="user" />
-          </div>
-          <b-button variant="primary" @click="submitLoginAs">
+            <has-error :form="form" field="user"/>
+            <span class="float-right">
+          <b-button variant="primary" size="sm" class="mt-2" @click="submitLoginAs">
             Submit
           </b-button>
+            </span>
+          </div>
         </b-form>
-      </b-card>
+      </div>
     </div>
   </div>
 </template>
@@ -51,14 +53,18 @@ export default {
     }),
     users: [],
     isLoading: true,
-    canViewLoginAs: false
+    hasAccess: false
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    isMe: () => window.config.isMe
+  },
   mounted () {
-    if (this.user === null) {
-      this.$router.go(-1)
+    this.hasAccess = this.isMe && (this.user !== null)
+    if (!this.hasAccess) {
+      this.$noty.error('You do not have access to the Login As page.')
       return false
     }
     this.getAllUsers()
@@ -73,8 +79,7 @@ export default {
           return false
         } else {
           this.users = data.users
-          this.canViewLoginAs = true
-          console.log(this.users)
+          this.hasAccess = true
         }
       } catch (error) {
         this.$noty.error(error.message)

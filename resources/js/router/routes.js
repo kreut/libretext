@@ -24,8 +24,13 @@ let instructor_paths = [
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
 ]
 let admin_paths = [
-
-  { path: '/login-as', name: 'login.as', component: page('admin/login.as.vue') }
+  { path: '/admin',
+    component: page('admin/index.vue'),
+    children: [
+      { path: '', redirect: { name: 'login.as' } },
+      { path: 'login-as', name: 'login.as', component: page('admin/login.as.vue') },
+      { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('admin/refresh.question.requests.vue') }
+    ] }
 ]
 let general_paths  = [
   { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },

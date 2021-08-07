@@ -125,6 +125,7 @@ class UserController extends Controller
      * @param Request $request
      * @param User $user
      * @return array|bool
+     * @throws Exception
      */
     public function loginAs(LoginAsRequest $request, User $user)
     {

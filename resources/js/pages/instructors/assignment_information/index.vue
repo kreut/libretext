@@ -56,7 +56,7 @@ export default {
   },
   data: () => ({
     isBetaAssignment: false,
-    courseId: 0,
+    courseId: 0
   }),
   computed: {
     ...mapGetters({
