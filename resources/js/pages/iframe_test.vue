@@ -3,10 +3,9 @@
     <b-container>
       <b-row>
         <iframe
-          :key="`non-technology-iframe-${currentPage}`"
           v-resize="{ log: false }"
           width="100%"
-          src="https://local.adapt:8890/assignments/949/questions/view/102428"
+          src="https://local.adapt:8890/assignments/298/questions/view/98505"
           frameborder="0"
         />
       </b-row>

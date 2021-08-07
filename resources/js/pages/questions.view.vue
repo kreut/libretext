@@ -257,70 +257,74 @@
       ok-title="OK"
       size="xl"
     >
-      Attribution:
-      <toggle-button
-        :width="80"
-        class="mt-1"
-        :value="iFrameAttribution"
-        :sync="true"
-        :font-size="14"
-        :margin="4"
-        :color="{checked: '#28a745', unchecked: '#6c757d'}"
-        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-        @change="iFrameAttribution = !iFrameAttribution;updateShare()"
-      />
-      <b-icon id="attribution-tooltip"
-              v-b-tooltip.hover
-              class="text-muted"
-              icon="question-circle"
-      />
-      <b-tooltip target="attribution-tooltip" triggers="hover">
-        The attribution includes who authored the question and the license associated with the question.
-      </b-tooltip>
-      <br>
-      Submission Information:
-      <toggle-button
-        class="mt-1"
-        :width="80"
-        :value="iFrameSubmissionInformation"
-        :sync="true"
-        :font-size="14"
-        :margin="4"
-        :color="{checked: '#28a745', unchecked: '#6c757d'}"
-        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-        @change="iFrameSubmissionInformation = !iFrameSubmissionInformation;updateShare()"
-      />
-      <b-icon id="submissionInformation-tooltip"
-              v-b-tooltip.hover
-              class="text-muted"
-              icon="question-circle"
-      />
-      <b-tooltip target="submissionInformation-tooltip" triggers="hover">
-        The submission information includes when the question was submitted, the score on the question, and the last
-        submitted.
-      </b-tooltip>
-      <br>
-      Assignment Information:
-      <toggle-button
-        class="mt-1"
-        :width="80"
-        :value="iFrameAssignmentInformation"
-        :sync="true"
-        :font-size="14"
-        :margin="4"
-        :color="{checked: '#28a745', unchecked: '#6c757d'}"
-        :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-        @change="iFrameAssignmentInformation = !iFrameAssignmentInformation; updateShare()"
-      />
-      <b-icon id="assignmentInformation-tooltip"
-              v-b-tooltip.hover
-              class="text-muted"
-              icon="question-circle"
-      />
-      <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
-        This information includes the name of the assignment, the question number in the assignment, and the time left
-        in the assignment.
-      </b-tooltip>
+      <div v-if="questions && questions[currentPage-1]">
+        Attribution:
+        <toggle-button
+          :width="80"
+          class="mt-1"
+          :value="questions[currentPage-1].attribution_information_shown_in_iframe"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+          @change="updateShownInIFrame('attribution',!questions[currentPage-1].attribution_information_shown_in_iframe)"
+        />
+        <b-icon id="attribution-tooltip"
+                v-b-tooltip.hover
+                class="text-muted"
+                icon="question-circle"
+        />
+        <b-tooltip target="attribution-tooltip" triggers="hover">
+          The attribution includes who authored the question and the license associated with the question.
+        </b-tooltip>
+        <br>
+        Submission Information:
+        <toggle-button
+          class="mt-1"
+          :width="80"
+          :value="questions[currentPage-1].submission_information_shown_in_iframe"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+          @change="updateShownInIFrame('submission',!questions[currentPage-1].submission_information_shown_in_iframe)"
+        />
+        <b-icon id="submissionInformation-tooltip"
+                v-b-tooltip.hover
+                class="text-muted"
+                icon="question-circle"
+        />
+        <b-tooltip target="submissionInformation-tooltip" triggers="hover">
+          The submission information includes when the question was submitted, the score on the question, and the last
+          submitted. Please note that for open-ended questions with file uploads, this information will always be shown
+          so the
+          student can verify that their uploads were successful.
+        </b-tooltip>
+        <br>
+        Assignment Information:
+        <toggle-button
+          class="mt-1"
+          :width="80"
+          :value="questions[currentPage-1].assignment_information_shown_in_iframe"
+          :sync="true"
+          :font-size="14"
+          :margin="4"
+          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :labels="{checked: 'Shown', unchecked: 'Hidden'}"
+          @change="updateShownInIFrame('assignment',!questions[currentPage-1].assignment_information_shown_in_iframe)"
+        />
+        <b-icon id="assignmentInformation-tooltip"
+                v-b-tooltip.hover
+                class="text-muted"
+                icon="question-circle"
+        />
+        <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
+          This information includes the name of the assignment, the question number in the assignment, and the time left
+          in the assignment.
+        </b-tooltip>
+      </div>
       <div class="mb-2">
         <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
         <span class="text-info">
@@ -692,8 +696,7 @@
         </b-alert>
       </div>
       <div v-if="user.role === 2">
-        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"
-        />
+        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
       </div>
       <div v-if="questions.length">
         <div :class="assignmentInformationMarginBottom">
@@ -755,24 +758,24 @@
                   v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1"
                   class="text-center"
                 >
-                    <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
-                      A penalty of
-                      {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
-                    </span>
+                  <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
+                    A penalty of
+                    {{ submissionCountPercentDecrease }}% will applied for each attempt starting with the 3rd.
+                  </span>
                   <span v-if="parseInt(questions[currentPage - 1].submission_count) > 1" class="text-bold text-info">
-                      With the penalty, the maximum score that you can receive for this question is
-                      {{
+                    With the penalty, the maximum score that you can receive for this question is
+                    {{
                       parseFloat(questions[currentPage - 1].points) * (100 - parseFloat(submissionCountPercentDecrease) * (parseFloat(questions[currentPage - 1].submission_count) - 1)) / 100
                     }}
-                      points.</span>
+                    points.</span>
                 </div>
                 <div
                   v-show="!isInstructor && (parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'deduction' && timeLeft === 0"
                   class="text-center"
                 >
                   <b-alert variant="warning" show>
-                      <span class="alert-link">
-                        This submission will be marked late.</span>
+                    <span class="alert-link">
+                      This submission will be marked late.</span>
                   </b-alert>
                 </div>
                 <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' " class="text-center">
@@ -821,10 +824,10 @@
                       }}</span>
                   </div>
                   <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
-                      <span class="font-weight-bold">You had a late penalty of </span> {{
+                    <span class="font-weight-bold">You had a late penalty of </span> {{
                       questions[currentPage - 1].late_penalty_percent
                     }}%
-                    </span>
+                  </span>
                 </div>
                 <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
                   <countdown :time="timeLeft" @end="cleanUpClickerCounter">
@@ -928,9 +931,9 @@
         </div>
         <div v-if="assessmentType === 'learning tree'">
           <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
-              <span class="font-weight-bold">You achieved a score of {{
-                  questions[currentPage - 1].submission_score
-                }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+            <span class="font-weight-bold">You achieved a score of {{
+                questions[currentPage - 1].submission_score
+              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
         <div v-if="isInstructor() && !presentationMode && !inIFrame" class="d-flex flex-row">
@@ -985,18 +988,18 @@
               Remove Solution
             </b-button>
             <span v-if="questions[currentPage-1].solution">
-                <span v-if="!showUploadedAudioSolutionMessage">
-                  <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
-                                    :assignment-name="name"
-                  />
+              <span v-if="!showUploadedAudioSolutionMessage">
+                <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
+                                  :assignment-name="name"
+                />
 
-                  <span v-if="showUploadedAudioSolutionMessage"
-                        :class="uploadedAudioSolutionDataType"
-                  >
-                    {{ uploadedAudioSolutionDataMessage }}</span>
-                </span>
-                <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+                <span v-if="showUploadedAudioSolutionMessage"
+                      :class="uploadedAudioSolutionDataType"
+                >
+                  {{ uploadedAudioSolutionDataMessage }}</span>
               </span>
+              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+            </span>
           </div>
         </div>
         <b-container
@@ -1028,23 +1031,23 @@
               <b-alert :show="timerSetToGetLearningTreePoints && !showLearningTreePointsMessage" variant="info">
                 <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                   <template slot-scope="props">
-                      <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                          props.seconds
-                        }} seconds, then re-submit.
-                      </span>
+                    <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
+                        props.seconds
+                      }} seconds, then re-submit.
+                    </span>
                   </template>
                 </countdown>
               </b-alert>
               <b-alert variant="info" :show="!showSubmissionMessage &&
-                  !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
-                  !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
-                  && (user.role === 3)"
+                !(Number(questions[currentPage - 1].learning_tree_exploration_points) > 0 ) &&
+                !timerSetToGetLearningTreePoints && showLearningTreePointsMessage
+                && (user.role === 3)"
               >
-                  <span class="font-weight-bold"> Try again and you will receive
-                    {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
-                      v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
-                    >s</span> just for exploring the Learning
-                    Tree.</span>
+                <span class="font-weight-bold"> Try again and you will receive
+                  {{ (percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points) }} point<span
+                    v-if="(this.percentEarnedForExploringLearningTree / 100) * (questions[currentPage - 1].points)>1"
+                  >s</span> just for exploring the Learning
+                  Tree.</span>
               </b-alert>
               <b-alert variant="info"
                        :show="!showSubmissionMessage && showDidNotAnswerCorrectlyMessage && !timerSetToGetLearningTreePoints"
@@ -1093,17 +1096,19 @@
                     />
                   </div>
                 </div>
-                <div v-if="questions[currentPage-1].attribution !== null">
-                  <b-alert variant="info" :show="true" class="mt-2">
+                <div v-if="!inIFrame || showAttribution">
+                  <div v-if="questions[currentPage-1].attribution !== null">
+                    <b-alert variant="info" :show="true" class="mt-2">
                       <span class="font-italic"
                             v-html="getCurrentAttribution()"
                       />
-                  </b-alert>
-                </div>
-                <div v-if="questions[currentPage-1].auto_attribution && autoAttributionHTML">
-                  <b-alert variant="info" :show="true" class="mt-2">
-                    <span class="font-italic" v-html="autoAttributionHTML"/>
-                  </b-alert>
+                    </b-alert>
+                  </div>
+                  <div v-if="questions[currentPage-1].auto_attribution && autoAttributionHTML">
+                    <b-alert variant="info" :show="true" class="mt-2">
+                      <span class="font-italic" v-html="autoAttributionHTML"/>
+                    </b-alert>
+                  </div>
                 </div>
                 <div v-if="assessmentType === 'clicker'">
                   <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
@@ -1262,7 +1267,7 @@
               </div>
             </b-col>
             <b-col
-              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2  && !inIFrame"
+              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame"
               cols="4"
             >
               <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>"
@@ -1315,9 +1320,9 @@
                       </b-row>
                     </div>
                     <b-row align-h="center" class="p-2">
-                        <span class="font-weight-bold font-italic text-muted">{{
-                            activeNode.title
-                          }}</span>
+                      <span class="font-weight-bold font-italic text-muted">{{
+                          activeNode.title
+                        }}</span>
                     </b-row>
                     <div v-if="futureNodes.length>0">
                       <b-row align-h="center">
@@ -1342,23 +1347,23 @@
                         class="sidebar-card"
                 >
                   <b-card-text>
-                      <span
-                        v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                      >
-                        <b-alert variant="warning" show>
-                          <span class="alert-link">
-                            Your question submission will be marked late.</span>
-                        </b-alert>
-                      </span>
+                    <span
+                      v-show="(parseInt(questions[currentPage - 1].submission_count) === 0 || questions[currentPage - 1].late_question_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                    >
+                      <b-alert variant="warning" show>
+                        <span class="alert-link">
+                          Your question submission will be marked late.</span>
+                      </b-alert>
+                    </span>
                     <span v-if="!questions[currentPage-1].open_ended_submission_type">
-                        <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
-                                                                                          :current-page="currentPage"
-                                                                                          :assignment-name="name"
+                      <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
+                                                                                        :current-page="currentPage"
+                                                                                        :assignment-name="name"
                     /><br>
-                      </span>
+                    </span>
                     <span v-if="assessmentType==='learning tree'">
-                        <span class="font-weight-bold">Number of attempts: </span>
-                        {{
+                      <span class="font-weight-bold">Number of attempts: </span>
+                      {{
                         questions[currentPage - 1].submission_count
                       }}<br></span>
 
@@ -1404,27 +1409,27 @@
               >
                 <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
                   <b-card-text>
-                      <span
-                        v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
-                      >
-                        <b-alert variant="warning" show>
-                          <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
-                        </b-alert>
-                        <br>
-                      </span>
+                    <span
+                      v-if="(!questions[currentPage-1].submission_file_exists ||questions[currentPage-1].late_file_submission) && latePolicy === 'marked late' && timeLeft === 0"
+                    >
+                      <b-alert variant="warning" show>
+                        <a href="#" class="alert-link">Your {{ openEndedSubmissionType }} submission will be marked late.</a>
+                      </b-alert>
+                      <br>
+                    </span>
                     <span v-if="isOpenEndedFileSubmission || isOpenEndedAudioSubmission">
-                        <strong> Uploaded file:</strong>
-                        <span v-if="questions[currentPage-1].submission_file_exists">
-                          <a
-                            :href="questions[currentPage-1].submission_file_url"
-                            target="”_blank”"
-                          >
-                            View Submission
-                          </a>
-                        </span>
-                        <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
-                          No files have been uploaded.</span><br>
+                      <strong> Uploaded file:</strong>
+                      <span v-if="questions[currentPage-1].submission_file_exists">
+                        <a
+                          :href="questions[currentPage-1].submission_file_url"
+                          target="”_blank”"
+                        >
+                          View Submission
+                        </a>
                       </span>
+                      <span v-if="!questions[currentPage-1].submission_file_exists" class="text-danger">
+                        No files have been uploaded.</span><br>
+                    </span>
                     <strong>Submitted At:</strong>
                     <span
                       :class="{ 'text-danger': questions[currentPage - 1].date_submitted === 'N/A' }"
@@ -1440,31 +1445,31 @@
                     </div>
                     <br>
                     <span v-if="showScores">
-                        <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
-                      </span>
+                      <strong>Date Graded:</strong> {{ questions[currentPage - 1].date_graded }}<br>
+                    </span>
                     <span v-if="showScores">
-                        <span v-if="questions[currentPage-1].file_feedback">
-                          <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
-                          <a :href="questions[currentPage-1].file_feedback_url"
-                             target="”_blank”"
-                          >
-                            {{
-                              questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
-                            }}
-                          </a>
-                          <br>
-                        </span>
-                        <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback"/><br>
-
-                        <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                        <span v-if="questions[currentPage - 1].grader_id">
-                          <b-button size="sm" variant="outline-primary"
-                                    @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                          >Contact Grader</b-button>
-                        </span>
+                      <span v-if="questions[currentPage-1].file_feedback">
+                        <strong>{{ capitalize(questions[currentPage - 1].file_feedback_type) }} Feedback:</strong>
+                        <a :href="questions[currentPage-1].file_feedback_url"
+                           target="”_blank”"
+                        >
+                          {{
+                            questions[currentPage - 1].file_feedback_type === 'audio' ? 'Listen To Feedback' : 'View Feedback'
+                          }}
+                        </a>
                         <br>
-                        <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
                       </span>
+                      <strong>Comments:</strong> <span v-html="questions[currentPage - 1].text_feedback"/><br>
+
+                      <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
+                      <span v-if="questions[currentPage - 1].grader_id">
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                        >Contact Grader</b-button>
+                      </span>
+                      <br>
+                      <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
+                    </span>
                     <div v-if="isOpenEndedFileSubmission">
                       <hr>
                       <b-container>
@@ -1480,11 +1485,11 @@
                         <b-row v-show="!inIFrame && (compiledPDF || bothFileUploadMode) && user.role === 3"
                                class="mt-2"
                         >
-                            <span class="font-italic">
-                              {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
-                              :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
-                            >summary page</router-link>.
-                            </span>
+                          <span class="font-italic">
+                            {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
+                            :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
+                          >summary page</router-link>.
+                          </span>
                         </b-row>
                       </b-container>
                     </div>
@@ -1507,10 +1512,10 @@
       </div>
 
       <b-alert show variant="warning" class="mt-3">
-          <span class="alert-link">
-            <span v-show="source === 'a'">This assignment currently has no assessments.</span>
-            <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
-          </span>
+        <span class="alert-link">
+          <span v-show="source === 'a'">This assignment currently has no assessments.</span>
+          <span v-show="source === 'x'">This is an external assignment.  Please contact your instructor for more information.</span>
+        </span>
       </b-alert>
     </div>
     <div v-if="showQuestionDoesNotExistMessage">
@@ -1522,7 +1527,6 @@
         Please ask your instructor to update this link so that it matches a question in the assignment.
       </b-alert>
     </div>
-  </div>
   </div>
 </template>
 
@@ -1892,21 +1896,19 @@ export default {
         this.questionId = this.questions[0].id
       }
       await this.changePage(this.currentPage)
+      console.log(this.questions[this.currentPage - 1])
       if (this.inIFrame) {
-        if (!this.shownSections) {
-          this.showSubmissionInformation = false
-          this.showAssignmentInformation = false
-          this.showAttribution = false
-        } else {
-          this.showSubmissionInformation = this.shownSections.includes('submissionInformation')
-          this.showAssignmentInformation = this.shownSections.includes('assignmentInformation')
-          this.showAttribution = this.shownSections.includes('attribution')
-        }
+        this.showSubmissionInformation = this.questions[this.currentPage - 1].submission_information_shown_in_iframe &&
+          this.user.role !== 2
+        this.showAssignmentInformation = this.questions[this.currentPage - 1].assignment_information_shown_in_iframe
+        this.showAttribution = this.questions[this.currentPage - 1].attribution_information_shown_in_iframe
         if (!this.showAssignmentInformation) {
           this.assignmentInformationMarginBottom = 'mb-0'
         }
         // have to show this for open ended
-        this.showSubmissionInformation = parseInt(this.questions[this.currentPage - 1].open_ended_submission_type) !== 0
+        if (this.questions[this.currentPage - 1].open_ended_submission_type === 'file') {
+          this.showSubmissionInformation = true
+        }
       }
       this.questionCol = this.assessmentType === 'clicker' || !this.showSubmissionInformation ? 12 : 8
 
@@ -1925,6 +1927,20 @@ export default {
     }
   },
   methods: {
+    async updateShownInIFrame (item, newValue) {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/iframe-properties`,
+          { item: item })
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.questions[this.currentPage - 1][`${item}_information_shown_in_iframe`] = newValue
+      } catch (error) {
+        this.$noty.error(error.message)
+        this.questions[this.currentPage - 1][`${item}_information_shown_in_iframe`] = !newValue
+      }
+    },
     getCurrentAttributeValue () {
       return this.questions[this.currentPage - 1].attribution.replace('<p>', '<p class=" &quot;mb-0&quot;"><strong>Attribution:</strong> ')
     },
@@ -2356,24 +2372,7 @@ export default {
       return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
     },
     getCurrentUrl () {
-      let url = `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
-      let extras = []
-      if (this.iFrameAssignmentInformation) {
-        extras.push('assignmentInformation')
-      }
-      if (this.iFrameSubmissionInformation) {
-        extras.push('submissionInformation')
-      }
-      if (this.iFrameAttribution) {
-        extras.push('attribution')
-      }
-      url += '/'
-      if (extras.length) {
-        for (let i = 0; i < extras.length; i++) {
-          url += extras[i] + '-'
-        }
-      }
-      return url.slice(0, -1)
+      return `${window.location.origin}/assignments/${this.assignmentId}/questions/view/${this.questions[this.currentPage - 1].id}`
     },
     getInitialCurrentPage (questionId) {
       for (let i = 1; i <= this.questions.length; i++) {

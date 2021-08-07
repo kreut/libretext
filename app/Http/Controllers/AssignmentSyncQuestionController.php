@@ -60,6 +60,53 @@ class AssignmentSyncQuestionController extends Controller
     use LatePolicy;
     use Statistics;
 
+
+    public function updateIFrameProperties(Request $request,
+                                           Assignment $assignment,
+                                           Question $question,
+                                           AssignmentSyncQuestion $assignmentSyncQuestion)
+    {
+
+        $response['type'] = 'error';
+          $authorized = Gate::inspect('updateIFrameProperties', [$assignmentSyncQuestion, $assignment, $question]);
+          if (!$authorized->allowed()) {
+              $response['message'] = $authorized->message();
+              return $response;
+          }
+        try {
+            $item = $request->item;
+            if (!in_array($item, ['assignment', 'submission', 'attribution'])) {
+                $response['message'] = "$item is not a valid iframe item.";
+                return $response;
+            }
+            $column = "{$item}_information_shown_in_iframe";
+            $current_value = DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first()
+                ->$column;
+
+            DB::table('assignment_question')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->update([$column => !$current_value]);
+            $response['type'] = $current_value ? 'info' : 'success';
+            $current_value_text = $current_value ? 'will not' : 'will';
+            $response['message'] = "The $item information $current_value_text be shown in the iframe.";
+
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the iframe properties.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+
+    }
+
     /**
      * @param Assignment $assignment
      * @return array
@@ -1102,6 +1149,7 @@ class AssignmentSyncQuestionController extends Controller
             $clicker_status = [];
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
+            $iframe_showns = [];
 
 
             foreach ($assignment_question_info['questions'] as $question) {
@@ -1109,6 +1157,10 @@ class AssignmentSyncQuestionController extends Controller
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $open_ended_text_editors[$question->question_id] = $question->open_ended_text_editor;
                 $open_ended_default_texts[$question->question_id] = $question->open_ended_default_text;
+                $iframe_showns[$question->question_id] = ['attribution_information_shown_in_iframe' =>(Boolean) $question->attribution_information_shown_in_iframe,
+                'submission_information_shown_in_iframe' => (Boolean) $question->submission_information_shown_in_iframe,
+                'assignment_information_shown_in_iframe' =>(Boolean)  $question->assignment_information_shown_in_iframe];
+
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
                 $clicker_status[$question->question_id] = $assignmentSyncQuestion->getFormattedClickerStatus($question);
@@ -1231,6 +1283,9 @@ class AssignmentSyncQuestionController extends Controller
                     : '';
                 $assignment->questions[$key]['license'] = $question->license;
                 $assignment->questions[$key]['attribution'] = $question->attribution;
+                $assignment->questions[$key]['assignment_information_shown_in_iframe'] = $iframe_showns[$question->id]['assignment_information_shown_in_iframe'];
+                $assignment->questions[$key]['submission_information_shown_in_iframe'] = $iframe_showns[$question->id]['submission_information_shown_in_iframe'];
+                $assignment->questions[$key]['attribution_information_shown_in_iframe'] = $iframe_showns[$question->id]['attribution_information_shown_in_iframe'];
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];

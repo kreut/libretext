@@ -16,7 +16,28 @@ class AssignmentSyncQuestionPolicy
 {
     use HandlesAuthorization;
 
-    public function remixAssignmentWithChosenQuestions(User                   $user,
+
+    /**
+     * @param User $user
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Assignment $assignment
+     * @param Question $question
+     * @return Response
+     */
+    public function updateIFrameProperties(User $user,
+                                           AssignmentSyncQuestion $assignmentSyncQuestion,
+                                           Assignment $assignment,
+                                           Question $question)
+    {
+
+        return (int) $user->id === $assignment->course->user_id && in_array($question->id, $assignment->questions->pluck('id')->toArray())
+            ? Response::allow()
+            : Response::deny('You are not allowed to update the iframe properties for that question.');
+
+
+    }
+
+    public function remixAssignmentWithChosenQuestions(User $user,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
                                                        Assignment             $assignment)
     {

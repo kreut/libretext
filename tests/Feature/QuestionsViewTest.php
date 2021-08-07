@@ -216,20 +216,42 @@ class QuestionsViewTest extends TestCase
 
     /** @test */
 
-    public function non_instructor_cannot_update_properties(){
+    public function non_owner_cannot_update_iframe_properties()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/iframe-properties",
+            ['item' => 'submission'])
+            ->assertJson(['message' => "You are not allowed to update the iframe properties for that question."]);
+    }
+
+    /** @test */
+
+    public function owner_can_update_iframe_properties()
+    {
+        $this->actingAs($this->user)->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/iframe-properties",
+            ['item' => 'submission'])
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseHas('assignment_question',
+            ['assignment_id' => $this->assignment->id,
+                'question_id' => $this->question->id,
+                'submission_information_shown_in_iframe' => 1]);
+
+    }
+
+
+    /** @test */
+
+    public function non_instructor_cannot_update_properties()
+    {
 
         $this->actingAs($this->student_user)->patchJson("/api/questions/properties/{$this->question->id}")
             ->assertJson(['message' => "You are not allowed to update the question's properties."]);
 
     }
 
-
-
-
-
     /** @test */
 
-    public function instructor_can_update_properties(){
+    public function instructor_can_update_properties()
+    {
         $this->actingAs($this->user)->patchJson("/api/questions/properties/{$this->question->id}", ['auto_attribution' => 1])
             ->assertJson(['message' => "The question's properties have been updated."]);
     }
