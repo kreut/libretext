@@ -36,6 +36,56 @@ class CourseController extends Controller
     use DateFormatter;
 
 
+    public function updateIFrameProperties(Request $request, Course $course)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('updateIFrameProperties', $course);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $item = $request->item;
+            if (!in_array($item, ['attribution', 'assignment', 'submission'])) {
+                $response['message'] = "$item is not a valid iframe property.";
+                return $response;
+            }
+            $action = $request->action;
+            if (!in_array($action, ['show', 'hide'])) {
+                $response['message'] = "$action isn't a valid action.";
+                return $response;
+            }
+            $value = ($action === 'show') ? 1 : 0;
+            $assignments = DB::table('assignments')->where('course_id', $course->id)->get('id');
+            $message = "This course has no assignments.";
+            $type = "info";
+            if ($assignments) {
+                $assignment_ids = $assignments->pluck('id');
+                DB::table('assignment_question')
+                    ->whereIn('assignment_id', $assignment_ids)
+                    ->update(["{$item}_information_shown_in_iframe" => $value]);
+                $type = ($action === 'show') ? 'success' : 'info';
+                $action_message = ($action === 'show') ? 'shown' : 'hidden';
+                $message = "The $item information will now be $action_message when embedded in an iframe.";
+            }
+            $response['message'] = $message;
+            $response['type'] = $type;
+            return $response;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to update the iframe properties for your course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
     public function getCommonsCourses()
     {
         $response['type'] = 'error';
@@ -213,7 +263,7 @@ class CourseController extends Controller
     }
 
     /**
-     * @param ImportCourse $request
+     * @param Request $request
      * @param Course $course
      * @param AssignmentGroup $assignmentGroup
      * @param AssignmentGroupWeight $assignmentGroupWeight

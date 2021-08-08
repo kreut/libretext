@@ -14,6 +14,15 @@ class CoursePolicy
     use CommonPolicies;
 
 
+
+    public function updateIFrameProperties(User $user, Course $course)
+    {
+        return ((int)$course->user_id === (int)$user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to update what is shown in the iframe.');
+
+
+    }
     public function getAssignmentNamesForPublicCourse(User $user, Course $course)
     {
         return $user->role === 2 && $course->public

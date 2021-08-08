@@ -102,8 +102,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/schools', 'SchoolController@index');
     Route::get('/schools/public-courses', 'SchoolController@getSchoolsWithPublicCourses');
 
-
     Route::get('/courses', 'CourseController@index');
+    Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');

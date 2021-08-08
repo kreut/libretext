@@ -77,7 +77,8 @@ let general_paths  = [
       { path: 'graders', name: 'course_properties.graders', component: page('instructors/course_properties/graders.vue') },
       { path: 'ungraded-submissions', name: 'course_properties.ungraded_submissions', component: page('instructors/course_properties/ungraded_submissions.vue') },
       { path: 'grader-notifications', name: 'course_properties.grader_notifications', component: page('instructors/course_properties/grader_notifications.vue') },
-      { path: 'students', name: 'course_properties.students', component: page('instructors/course_properties/students.vue') }
+      { path: 'students', name: 'course_properties.students', component: page('instructors/course_properties/students.vue') },
+      { path: 'iframe-properties', name: 'course_properties.iframe_properties', component: page('instructors/course_properties/iframe_properties.vue') }
     ] },
   { path: '*', component: page('errors/404.vue') }
 ]

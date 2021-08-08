@@ -1,24 +1,25 @@
 <template>
   <div>
-    Attribution:
+    Assignment Information:
     <toggle-button
-      :width="80"
       class="mt-1"
-      :value="attributionInformationShownInIFrame"
+      :width="80"
+      :value="assignmentInformationShownInIFrame"
       :sync="true"
       :font-size="14"
       :margin="4"
       :color="{checked: '#28a745', unchecked: '#6c757d'}"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-      @change="updateShownInIFrame('attribution',!attributionInformationShownInIFrame)"
+      @change="updateShownInIFrame('assignment',!assignmentInformationShownInIFrame)"
     />
-    <b-icon id="attribution-tooltip"
+    <b-icon id="assignmentInformation-tooltip"
             v-b-tooltip.hover
             class="text-muted"
             icon="question-circle"
     />
-    <b-tooltip target="attribution-tooltip" triggers="hover">
-      The attribution includes who authored the question and the license associated with the question.
+    <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
+      This information includes the name of the assignment, the question number in the assignment, and the time left
+      in the assignment.
     </b-tooltip>
     <br>
     Submission Information:
@@ -45,26 +46,25 @@
       student can verify that their uploads were successful.
     </b-tooltip>
     <br>
-    Assignment Information:
+    Attribution:
     <toggle-button
-      class="mt-1"
       :width="80"
-      :value="assignmentInformationShownInIFrame"
+      class="mt-1"
+      :value="attributionInformationShownInIFrame"
       :sync="true"
       :font-size="14"
       :margin="4"
       :color="{checked: '#28a745', unchecked: '#6c757d'}"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-      @change="updateShownInIFrame('assignment',!assignmentInformationShownInIFrame)"
+      @change="updateShownInIFrame('attribution',!attributionInformationShownInIFrame)"
     />
-    <b-icon id="assignmentInformation-tooltip"
+    <b-icon id="attribution-tooltip"
             v-b-tooltip.hover
             class="text-muted"
             icon="question-circle"
     />
-    <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
-      This information includes the name of the assignment, the question number in the assignment, and the time left
-      in the assignment.
+    <b-tooltip target="attribution-tooltip" triggers="hover">
+      The attribution includes who authored the question and the license associated with the question.
     </b-tooltip>
   </div>
 </template>

@@ -84,6 +84,11 @@ export default {
           icon: '',
           name: 'Ungraded Submissions',
           route: 'course_properties.ungraded_submissions'
+        },
+        {
+          icon: '',
+          name: 'Iframe Properties',
+          route: 'course_properties.iframe_properties'
         }
       ]
     }
