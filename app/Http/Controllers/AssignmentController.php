@@ -43,7 +43,7 @@ class AssignmentController extends Controller
     public function getCommonsCourseAssignments(Course $course)
     {
         $response['type'] = 'error';
-        if (User::where('email','commons@libretexts.org')->first()->id !== $course->user_id) {
+        if (User::where('email', 'commons@libretexts.org')->first()->id !== $course->user_id) {
             $response['message'] = 'You are not allowed to access the assignments in that course.';
             return $response;
         }
@@ -1309,38 +1309,53 @@ class AssignmentController extends Controller
                 $response['message'] = $repeated_groups;
                 return $response;
             }
-            $data['public_description'] = $request->public_description;
-            $data['private_description'] = $request->private_description;
-            $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
-            $data['instructions'] = $request->instructions ? $request->instructions : '';
-            $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
-            $data['default_open_ended_text_editor'] = $default_open_ended_text_editor;
-            $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
-            $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
-            $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
-            $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
-            $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
-            unset($data['available_frovm_date']);
-            unset($data['available_from_time']);
-            unset($data['final_submission_deadline']);
-            unset($data['open_ended_response']);
-            //submissions exist so don't let them change the things below
-            $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
-            foreach ($assign_tos as $key => $assign_to) {
-                unset($data['groups_' . $key]);
-                unset($data['due_' . $key]);
-                unset($data['final_submission_deadline_' . $key]);
-                unset($data['available_from_date_' . $key]);
-                unset($data['available_from_time_' . $key]);
-                unset($data['due_time_' . $key]);
-                unset($data['final_submission_deadline_date' . $key]);
-                unset($data['final_submission_deadline_time_' . $key]);
-            }
-            DB::beginTransaction();
-            $assignment->update($data);
 
-            $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
-            $this->addAssignTos($assignment, $assign_tos, $section, $user);
+            $assignments = $assignment->course->alpha
+                ? $assignment->addBetaAssignments()
+                : [$assignment];
+            DB::beginTransaction();
+            foreach ($assignments as $assignment) {
+                if (!$assignment->isBetaAssignment()) {
+                    //either the alpha assignment, so set these
+                    //OR it's just a regular assignment so set these
+                    $data['public_description'] = $request->public_description;
+                    $data['private_description'] = $request->private_description;
+                    $data['assessment_type'] = ($request->assessment_type && $request->source === 'a') ? $request->assessment_type : '';
+                    $data['instructions'] = $request->instructions ? $request->instructions : '';
+                    $default_open_ended_text_editor = $this->getDefaultOpenEndedTextEditor($request, $data);//do it this way because I reset the data
+                    $data['default_open_ended_text_editor'] = $default_open_ended_text_editor;
+                    $data['default_open_ended_submission_type'] = $this->getDefaultOpenEndedSubmissionType($request, $data);
+                    $data['default_clicker_time_to_submit'] = $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data);
+                    $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
+                    $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
+                    $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
+                }
+                $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
+
+                //submissions exist so don't let them change the things below
+                if (isset($assign_tos)) {
+                    unset($data['available_from_date']);
+                    unset($data['available_from_time']);
+                    unset($data['final_submission_deadline']);
+                    unset($data['open_ended_response']);
+                    foreach ($assign_tos as $key => $assign_to) {
+                        unset($data['groups_' . $key]);
+                        unset($data['due_' . $key]);
+                        unset($data['final_submission_deadline_' . $key]);
+                        unset($data['available_from_date_' . $key]);
+                        unset($data['available_from_time_' . $key]);
+                        unset($data['due_time_' . $key]);
+                        unset($data['final_submission_deadline_date' . $key]);
+                        unset($data['final_submission_deadline_time_' . $key]);
+                    }
+                }
+                $assignment->update($data);
+                $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
+                if (isset($assign_tos)) {
+                    $this->addAssignTos($assignment, $assign_tos, $section, $user);
+                }
+                unset($assign_tos);//should just be done for the alpha course if it is an alpha course
+            }
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "The assignment <strong>{$data['name']}</strong> has been updated.";
