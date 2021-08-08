@@ -1,5 +1,5 @@
 <template>
-  <div :style="!inIFrame ? 'minbvModal-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
+  <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
     <div v-if="modalEnrollInCourseIsShown" style="height: 300px" />
     <b-modal
       id="modal-not-updated"
@@ -622,18 +622,21 @@
           <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
         </div>
         <div v-if="inIFrame && (user.role === 2)">
+          <b-button variant="primary" size="sm" class="mb-3" @click="viewInAdapt">
+            View in Adapt
+          </b-button>
           <b-alert variant="info" :show="true">
             <strong>You are current logged in as an instructor. No responses will be saved.</strong>
           </b-alert>
         </div>
       </div>
-      <div v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame">
+      <div v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading">
         <b-alert variant="info" :show="true">
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the
             points per question nor change the open-ended submission type.</strong>
         </b-alert>
       </div>
-      <div v-if="user.role === 2">
+      <div v-if="user.role === 2 && !inIFrame && !isLoading">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist" />
       </div>
       <div v-if="questions.length">
@@ -1027,7 +1030,8 @@
                     v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
                   >
                     <iframe
-                      v-resize="{ log: false }"
+                      :key="`technology-iframe-${currentPage}`"
+                      v-resize="{ log: true }"
                       width="100%"
                       :src="questions[currentPage-1].technology_iframe"
                       frameborder="0"
@@ -1665,7 +1669,7 @@ export default {
     maintainAspectRatio: false,
     showAssignmentStatisticsModal: false,
     showAssignmentStatistics: false,
-    questionCol: 0,
+    questionCol: 8,
     loaded: false,
     chartdata: null,
     assignmentInfo: {},
@@ -1871,6 +1875,10 @@ export default {
     }
   },
   methods: {
+    viewInAdapt () {
+      let link = window.location.href
+      window.open(link)
+    },
     async parentUpdateShownInIFrame (item, newValue) {
       try {
         const { data } = await axios.patch(`/api/assignments/${this.assignmentId}/questions/${this.questions[this.currentPage - 1].id}/iframe-properties`,
