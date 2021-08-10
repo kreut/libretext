@@ -44,11 +44,8 @@ class backupVaporDB extends Command
 
         $start_time = microtime(true);
         $backup_path = storage_path() . '/app/db_backups/';
-        $files = scandir($backup_path, SCANDIR_SORT_DESCENDING);
-        $newest_file = $files[0];
 
-        $filesize = filesize($backup_path . $newest_file); // bytes
-        $filesize = round($filesize / 1024 / 1024, 1) . ' mb';
+
         $key = new RSA();
         $key->loadKey(file_get_contents('/Users/franciscaparedes/.ssh/vapor-jump-production'));
 
@@ -61,6 +58,18 @@ class backupVaporDB extends Command
         echo $ssh->exec('mysqldump --single-transaction --quick -h production.cluster-civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor vapor | gzip > dump.sql.gz');
         shell_exec('scp -i ~/.ssh/vapor-jump-production ec2-user@ec2-54-183-249-159.us-west-1.compute.amazonaws.com:dump.sql.gz ' . $backup_path . '"$(date +%Y-%m-%d)".sql.gz');
         $total_time = microtime(true) - $start_time;
+
+        foreach (new \DirectoryIterator($backup_path) as $item) {
+            if ($item->isFile() && (empty($file) || $item->getMTime() > $file->getMTime())) {
+                $file = clone $item;
+            }
+        }
+
+        $newest_file = $file->getPathname();
+
+        $filesize = filesize( $newest_file); // bytes
+        //$filesize = round($filesize / 1024 / 1024, 2) . ' mb';
+
         Telegram::sendMessage([
             'chat_id' => config('myconfig.telegram_channel_id'),
             'parse_mode' => 'HTML',
