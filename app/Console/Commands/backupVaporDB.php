@@ -68,7 +68,7 @@ class backupVaporDB extends Command
         $newest_file = $file->getPathname();
 
         $filesize = filesize( $newest_file); // bytes
-        //$filesize = round($filesize / 1024 / 1024, 2) . ' mb';
+        $filesize = round($filesize / 1000 / 1000, 2) . ' mb';
 
         Telegram::sendMessage([
             'chat_id' => config('myconfig.telegram_channel_id'),
