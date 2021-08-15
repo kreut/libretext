@@ -35,10 +35,39 @@ class Assignment extends Model
         $assignToGroup->save();
     }
 
+    /**
+     * @param User $user
+     * @return bool
+     */
+    public function ltiLaunchExists(User $user): bool
+    {
+        return DB::table('lti_launches')
+            ->where('assignment_id', $this->id)
+            ->where('user_id', $user->id)
+            ->get()
+            ->isNotEmpty();
+
+    }
+    /**
+     * @return array
+     */
+    public function ltiLaunchesByUserId(): array
+    {
+
+        $lti_launches = DB::table('lti_launches')->where('assignment_id', $this->id)->get();
+
+        $lti_launches_by_user_id = [];
+        foreach ($lti_launches as $lti_launch) {
+            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch;
+        }
+        return $lti_launches_by_user_id;
+    }
+
     public function assignToTimings()
     {
         return $this->hasMany(AssignToTiming::class);
     }
+
 
     public function assignToTimingByUser($key = '')
     {
@@ -150,6 +179,7 @@ class Assignment extends Model
                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
+                $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
 
@@ -216,6 +246,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
+
                     $assignments_info[$key]['number_of_questions'] = $number_of_questions;
 
 

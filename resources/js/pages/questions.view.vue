@@ -1,6 +1,6 @@
 <template>
   <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
-    <div v-if="modalEnrollInCourseIsShown" style="height: 300px"/>
+    <div v-if="modalEnrollInCourseIsShown" style="height: 375px"/>
     <b-modal
       id="modal-not-updated"
       ref="modalNotUpdated"
@@ -82,7 +82,7 @@
         </p>
       </div>
     </b-alert>
-    <EnrollInCourse/>
+    <EnrollInCourse :is-lms="isLMS"/>
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -638,6 +638,15 @@
           </span>
         </b-alert>
       </div>
+      <div v-if="user.role === 3 && launchThroughLMSMessage">
+        <b-alert variant="info" show>
+          <span class="font-weight-bold">
+            This assessment is part of an assignment which should be initially launched through your LMS
+            so that Adapt can pass back your score.  Please log into your LMS and lanuch the assignment
+            "{{ name }}".
+          </span>
+        </b-alert>
+      </div>
       <div v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading && user.role === 2">
         <b-alert variant="info" :show="true">
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the
@@ -647,7 +656,7 @@
       <div v-if="user.role === 2 && !inIFrame && !isLoading">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
       </div>
-      <div v-if="questions.length && !cannotViewAssessmentMessage">
+      <div v-if="questions.length && !cannotViewAssessmentMessage && !launchThroughLMSMessage">
         <div :class="assignmentInformationMarginBottom">
           <b-container>
             <b-col>
@@ -1567,6 +1576,8 @@ export default {
     RefreshQuestion
   },
   data: () => ({
+    launchThroughLMSMessage: false,
+    isLMS: false,
     availableOn: '',
     assignmentShown: true,
     hasAtLeastOneSubmission: false,
@@ -3009,9 +3020,9 @@ export default {
     async getAssignmentInfo () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/view-questions-info`)
-
         if (data.type === 'error') {
           if (data.message === 'You are not allowed to access this assignment.') {
+            this.isLMS = data.is_lms
             this.$bvModal.show('modal-enroll-in-course')
             this.modalEnrollInCourseIsShown = true
           } else {
@@ -3022,16 +3033,20 @@ export default {
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
-        if (this.user.role === 3 && (!assignment.available || !assignment.shown)) {
-          this.availableOn = assignment.available_on
-          this.assignmentShown = assignment.shown
-          this.cannotViewAssessmentMessage = true
-        }
+
         if (this.user.role === 3) {
+          if (this.isLMS && !assignment.lti_launch_exists) {
+            this.launchThroughLMSMessage = true
+          } else if (!assignment.available || !assignment.shown) {
+            this.availableOn = assignment.available_on
+            this.assignmentShown = assignment.shown
+            this.cannotViewAssessmentMessage = true
+          }
           this.title = `${assignment.name}`
           this.fullPdfUrl = assignment.full_pdf_url
           this.showCurrentFullPDF = !!this.fullPdfUrl.length
         }
+
         if (this.user.role === 2) {
           this.questionView = assignment.question_view
         }
@@ -3198,7 +3213,8 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  },
+  }
+  ,
   metaInfo () {
     return { title: this.$t('home') }
   }

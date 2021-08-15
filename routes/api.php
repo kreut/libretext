@@ -23,32 +23,11 @@ Route:*/
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
-Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
-Route::get('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
 
-Route::post('/lti/configure-2/{launchId}', 'LTIController@configure');
-Route::get('/lti/configure-2/{launchId}', 'LTIController@configure');
-
-
-Route::get('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
-Route::post('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
-
-Route::post('/lti/game', 'LTIController@authenticationResponse');
-Route::get('/lti/game', 'LTIController@authenticationResponse');
-
-Route::post('/lti/login', 'GameController@login');
-Route::get('/lti/login', 'GameController@login');
-
-Route::post('/lti/configure/{launchId}', 'LTIController@configure');
-Route::get('/lti/configure/{launchId}', 'LTIController@configure');
-
-
+Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
+Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
 Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
-
-Route::get('/lti/target-link-uri', 'LTIController@finalTarget');
-Route::post('/lti/target-link-uri', 'LTIController@finalTarget');
-
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
@@ -148,6 +127,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/{assignment}/view-questions-info', 'AssignmentController@viewQuestionsInfo');
     Route::get('/assignments/{assignment}/get-info-for-grading', 'AssignmentController@getInfoForGrading');
     Route::post('/assignments/{assignment}/validate-assessment-type', 'AssignmentController@validateAssessmentType');
+    Route::get('/assignments/{assignment}/start-page-info', 'AssignmentController@startPageInfo');
+
 
     Route::post('/sso/finish-registration', 'Auth\SSOController@finishRegistration');
     Route::get('/sso/completed-registration', 'Auth\SSOController@completedRegistration');
@@ -249,6 +230,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');
     Route::post('/questions/set-question-updated-at-session', 'QuestionController@setQuestionUpdatedAtSession');
+
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');

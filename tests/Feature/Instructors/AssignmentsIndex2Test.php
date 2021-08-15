@@ -141,6 +141,24 @@ class AssignmentsIndex2Test extends TestCase
 
     }
 
+
+
+/** @test */
+    public
+    function the_correct_user_is_assigned_an_assignment_with_sections()
+    {
+
+        $assignment_info = $this->assignment_info;
+        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
+        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
+
+        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
+            ->assertJson(['type' => 'success']);
+        $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');
+
+    }
+
+
     /**  @test */
 
     public function cannot_change_from_individual_to_compiled_or_vice_versa_if_there_are_any_submissions()
@@ -265,21 +283,7 @@ class AssignmentsIndex2Test extends TestCase
         $this->assertEquals(count($student_user_ids), AssignToUser::whereIn('user_id', $student_user_ids)->get()->count());
     }
 
-    /** @test */
-    public
-    function the_correct_user_is_assigned_an_assignment_with_sections()
-    {
 
-        $assignment_info = $this->assignment_info;
-        $groups = [['value' => ['section_id' => $this->section->id], 'text' => $this->section->name]];
-        $assignment_info = $this->createAssignTosFromGroups($assignment_info, $groups);
-
-
-        $this->actingAs($this->user)->postJson("/api/assignments", $assignment_info)
-            ->assertJson(['type' => 'success']);
-        $this->assertEquals(1, AssignToUser::all()->count(), 'Only one of the two users has been assigned');
-
-    }
 
 
     /** @test */

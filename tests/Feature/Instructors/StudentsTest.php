@@ -100,8 +100,9 @@ class StudentsTest extends TestCase
                 'score' => 10]);
             LtiGradePassback::create(['user_id' => $student_id,
                 'assignment_id' => $this->assignment->id,
+                'score' => 5,
                 'launch_id' => 1,
-                'success' => true,
+                'status' => 'success',
                 'message' => 'blah']);
             Seed::create(['user_id' => $student_id,
                 'assignment_id' => $this->assignment->id,

@@ -368,6 +368,7 @@ export default {
       name: '',
       beta: '0',
       alpha: '0',
+      lms: '0',
       public_description: '',
       private_description: '',
       section: '',

@@ -27,16 +27,23 @@ trait GeneralSubmissionPolicy
         $response['type'] = 'error';
         $response['message'] = '';
 
-       /** $db_question_updated_at = Question::find($question_id)->updated_at->timestamp;
-        if ((int) $db_question_updated_at !==  (int) (request()->cookie('loaded_question_updated_at'))) {
-            $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
-            return $response;
-        }**/
-        $assign_to_timing = $assignment->assignToTimingByUser();
-        if (!$assign_to_timing) {
-            $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
-            return $response;
-        }
+        /** $db_question_updated_at = Question::find($question_id)->updated_at->timestamp;
+         * if ((int) $db_question_updated_at !==  (int) (request()->cookie('loaded_question_updated_at'))) {
+         * $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
+         * return $response;
+         * }**/
+
+
+            $assign_to_timing = $assignment->assignToTimingByUser();
+            if (!$assign_to_timing) {
+                $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
+                return $response;
+            }
+            $available_from = $assign_to_timing->available_from;
+            $due = $assign_to_timing->due;
+
+
+
         if ($assignment->assessment_type === 'clicker') {
             $assignment_question = DB::table('assignment_question')
                 ->where('assignment_id', $assignment_id)
@@ -64,7 +71,7 @@ trait GeneralSubmissionPolicy
             return $response;
         }
 
-        if (strtotime($assign_to_timing->available_from) > time()) {
+        if (strtotime($available_from) > time()) {
             $response['message'] = 'No responses will be saved since this assignment is not yet available.';
             return $response;
         }
@@ -87,7 +94,7 @@ trait GeneralSubmissionPolicy
             ->where('assignment_id', $assignment_id)
             ->where('user_id', $user->id)
             ->first('extension');
-        $past_due = time() > strtotime($assign_to_timing->due);
+        $past_due = time() > strtotime($due);
         //check to see if the instructor accidentally released scores (which will have comments) or released solutions
         switch ($past_due) {
             case(false):

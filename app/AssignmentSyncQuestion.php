@@ -2,6 +2,7 @@
 
 namespace App;
 
+use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Query\Builder;
@@ -214,18 +215,15 @@ class AssignmentSyncQuestion extends Model
      */
     public
     function updateAssignmentScoreBasedOnRemovedQuestion(Assignment       $assignment,
-                                                         Question         $question,
-                                                         LtiLaunch        $ltiLaunch,
-                                                         LtiGradePassback $ltiGradePassback)
+                                                         Question         $question)
     {
 
         $scores = DB::table('scores')->where('assignment_id', $assignment->id)
             ->select('user_id', 'score')
             ->get();
 
-        $lti_launches = DB::table('lti_launches')->where('assignment_id', $assignment->id)
-            ->select('user_id', 'launch_id')
-            ->get();
+        $lti_launches_by_user_id = $assignment->ltiLaunchesByUserId();
+        $ltiGradePassBack = new LtiGradePassback();
 
         //just remove the one...
         $submissions = DB::table('submissions')->where('question_id', $question->id)
@@ -245,10 +243,7 @@ class AssignmentSyncQuestion extends Model
         foreach ($submission_files as $submission_file) {
             $submission_files_by_user_id[$submission_file->user_id] = $submission_file->score;
         }
-        $lti_launches_by_user_id = [];
-        foreach ($lti_launches as $lti_launch) {
-            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch->launch_id;
-        }
+
         foreach ($scores as $score) {
             $submission_file_score = $submission_files_by_user_id[$score->user_id] ?? 0;
             $submission_score = $submissions_by_user_id[$score->user_id] ?? 0;
@@ -257,7 +252,7 @@ class AssignmentSyncQuestion extends Model
                 ->where('user_id', $score->user_id)
                 ->update(['score' => $new_score]);
             if (isset($lti_launches_by_user_id[$score->user_id])) {
-                $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $score->user_id, $new_score, $ltiLaunch);
+                $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($new_score, $lti_launches_by_user_id[$score->user_id]);
             }
         }
 

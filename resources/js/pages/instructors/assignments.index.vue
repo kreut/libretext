@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -68,6 +68,7 @@
           :all-form-errors="allFormErrors"
           :assignment-id="assignmentId"
           :is-beta-assignment="isBetaAssignment"
+          :lms="!!lms"
         />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
@@ -87,7 +88,7 @@
         title="Assigned To"
         size="lg"
       >
-        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView" />
+        <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
       </b-modal>
 
       <b-modal
@@ -247,6 +248,14 @@
               </span>
             </b-alert>
           </div>
+          <div v-show="lms">
+            <b-alert variant="info" :show="true">
+              <span class="font-weight-bold">
+                This is a course which is being served through your LMS.  You will create your assignments
+                in Adapt including determining due dates, but will use your LMS's gradebook.
+              </span>
+            </b-alert>
+          </div>
           <b-col lg="3">
             <b-form-select v-if="assignmentGroupOptions.length>1"
                            v-model="chosenAssignmentGroup"
@@ -294,66 +303,66 @@
       <div v-show="hasAssignments" class="table-responsive">
         <table class="table table-striped">
           <thead>
-            <tr>
-              <th scope="col">
-                Assignment Name
-              </th>
-              <th scope="col">
-                Shown
-              </th>
-              <th scope="col">
-                Group
-              </th>
-              <th scope="col">
-                Available On
-              </th>
-              <th scope="col">
-                Due
-              </th>
-              <th scope="col">
-                Status
-              </th>
-              <th scope="col">
-                Actions
-              </th>
-            </tr>
+          <tr>
+            <th scope="col">
+              Assignment Name
+            </th>
+            <th scope="col">
+              Shown
+            </th>
+            <th scope="col">
+              Group
+            </th>
+            <th scope="col">
+              Available On
+            </th>
+            <th scope="col">
+              Due
+            </th>
+            <th scope="col">
+              Status
+            </th>
+            <th scope="col">
+              Actions
+            </th>
+          </tr>
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
-            <tr v-for="assignment in assignments"
-                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-                :key="assignment.id"
-            >
-              <td style="width:300px">
-                <b-icon icon="list" />
-                <span v-show="assignment.is_beta_assignment"
-                      :id="getTooltipTarget('betaAssignment',assignment.id)"
-                      class="text-muted"
-                >&beta; </span>
-                <b-tooltip :target="getTooltipTarget('betaAssignment',assignment.id)"
-                           delay="500"
-                >
-                  This Beta assignment was automatically generated from its corresponding Alpha course. Because of the
-                  tethered
-                  nature, you cannot remove the assignment nor add/remove assessments.
-                </b-tooltip>
-                <span v-show="Boolean(course.alpha)"
-                      :id="getTooltipTarget('alphaCourse',assignment.id)"
-                      class="text-muted"
-                >&alpha; </span>
-                <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
-                           delay="500"
-                >
-                  This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
-                  be reflected in the tethered Beta courses.
-                </b-tooltip>
-                <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
+          <tr v-for="assignment in assignments"
+              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+              :key="assignment.id"
+          >
+            <td style="width:300px">
+              <b-icon icon="list"/>
+              <span v-show="assignment.is_beta_assignment"
+                    :id="getTooltipTarget('betaAssignment',assignment.id)"
+                    class="text-muted"
+              >&beta; </span>
+              <b-tooltip :target="getTooltipTarget('betaAssignment',assignment.id)"
+                         delay="500"
+              >
+                This Beta assignment was automatically generated from its corresponding Alpha course. Because of the
+                tethered
+                nature, you cannot remove the assignment nor add/remove assessments.
+              </b-tooltip>
+              <span v-show="Boolean(course.alpha)"
+                    :id="getTooltipTarget('alphaCourse',assignment.id)"
+                    class="text-muted"
+              >&alpha; </span>
+              <b-tooltip :target="getTooltipTarget('alphaCourse',assignment.id)"
+                         delay="500"
+              >
+                This assignment is part of an Alpha course. Any assignments/assessments that you create or remove will
+                be reflected in the tethered Beta courses.
+              </b-tooltip>
+              <span v-show="assignment.source === 'a'" class="pr-1" @click="getQuestions(assignment)">
                   <b-icon
                     v-show="isLocked(assignment)"
                     :id="getTooltipTarget('getQuestions',assignment.id)"
                     icon="lock-fill"
                   />
                 </span><a href="" @click.prevent="getAssignmentView(user.role, assignment)">{{ assignment.name }}</a>
-                <span v-if="user && [2,4].includes(user.role)">
+              <span v-if="user && [2,4].includes(user.role)">
                   <b-tooltip :target="getTooltipTarget('getQuestions',assignment.id)"
                              delay="500"
                   >
@@ -361,56 +370,56 @@
                   </b-tooltip>
 
                 </span>
-              </td>
-              <td>
-                <toggle-button
-                  :width="57"
-                  :value="Boolean(assignment.shown)"
-                  :sync="true"
-                  :font-size="14"
-                  :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                  :labels="{checked: 'Yes', unchecked: 'No'}"
-                  @change="submitShowAssignment(assignment)"
-                />
-              </td>
-              <td>{{ assignment.assignment_group }}</td>
-              <td>
+            </td>
+            <td>
+              <toggle-button
+                :width="57"
+                :value="Boolean(assignment.shown)"
+                :sync="true"
+                :font-size="14"
+                :margin="4"
+                :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                :labels="{checked: 'Yes', unchecked: 'No'}"
+                @change="submitShowAssignment(assignment)"
+              />
+            </td>
+            <td>{{ assignment.assignment_group }}</td>
+            <td>
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-                <span v-if="assignment.assign_tos.length > 1">
+              <span v-if="assignment.assign_tos.length > 1">
                   <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                 </span>
-              </td>
-              <td style="width:200px">
+            </td>
+            <td style="width:200px">
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
-              </td>
-              <td>
-                <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
-                <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
-              </td>
-              <td>
-                <div class="mb-0">
-                  <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                             delay="500"
-                  >
-                    Grading
-                  </b-tooltip>
-                  <span v-show="assignment.source === 'a'" class="pr-1"
-                        @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
-                  >
+            </td>
+            <td>
+              <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
+              <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status"/>
+            </td>
+            <td>
+              <div class="mb-0">
+                <b-tooltip :target="getTooltipTarget('viewSubmissionFiles',assignment.id)"
+                           delay="500"
+                >
+                  Grading
+                </b-tooltip>
+                <span v-show="assignment.source === 'a'" class="pr-1"
+                      @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
+                >
                     <b-icon
                       v-show="assignment.submission_files !== '0'"
                       :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                       icon="check2"
                     />
                   </span>
-                  <span v-show="user && user.role === 2">
+                <span v-show="user && user.role === 2">
                     <b-tooltip :target="getTooltipTarget('editAssignment',assignment.id)"
                                delay="500"
                     >
@@ -443,9 +452,9 @@
                             @click="deleteAssignment(assignment)"
                     />
                   </span>
-                </div>
-              </td>
-            </tr>
+              </div>
+            </td>
+          </tr>
           </tbody>
         </table>
       </div>
@@ -505,7 +514,8 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
-    isBetaAssignment:false,
+    lms: false,
+    isBetaAssignment: false,
     copyIcon: faCopy,
     addAssignmentIsImport: false,
     isBetaCourse: false,
@@ -742,7 +752,9 @@ export default {
       }
     },
     getGradeBook () {
-      this.$router.push(`/courses/${this.courseId}/gradebook`)
+      this.lms
+        ? this.$noty.info('This course is beind served through an LMS.  Please use your LMS to view the course gradebook.')
+        : this.$router.push(`/courses/${this.courseId}/gradebook`)
     },
     getLockedQuestionsMessage (assignment) {
       if ((Number(assignment.has_submissions_or_file_submissions))) {
@@ -756,6 +768,7 @@ export default {
         this.course = data.course
         this.betaCoursesInfo = this.course.beta_courses_info
         this.isBetaCourse = this.course.is_beta_course
+        this.lms = this.course.lms
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

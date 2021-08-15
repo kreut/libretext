@@ -496,7 +496,7 @@ class SubmissionFileController extends Controller
                     'date_graded' => Carbon::now(),
                     'updated_at' => Carbon::now(),
                     'grader_id' => Auth::user()->id]);
-            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type, $ltiLaunch, $ltiGradePassback);
+            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type);
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = 'The score has been saved.';

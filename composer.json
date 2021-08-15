@@ -83,7 +83,9 @@
   },
   "autoload": {
     "psr-4": {
-      "App\\": "app/"
+      "App\\": "app/",
+      "Overrides\\IMSGlobal\\LTI\\": "app/Overrides/imsglobal/lti",
+      "Overrides\\IMSGlobal\\LTI\\MessageValidators\\": "app/Overrides/imsglobal/lti/message_validators"
     },
     "classmap": [
       "database/seeds",

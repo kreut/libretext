@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignToGroup;
-use App\AssignToTiming;
 use App\AssignToUser;
 use App\Enrollment;
 use App\Course;
@@ -21,7 +20,10 @@ use App\Submission;
 use App\SubmissionFile;
 use App\User;
 use Carbon\Carbon;
+use Illuminate\Contracts\Foundation\Application;
+use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\StoreEnrollment;
@@ -30,28 +32,28 @@ use \Exception;
 
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Storage;
-use IMSGlobal\LTI\LTI_Grade;
-use phpDocumentor\Reflection\Types\Collection;
 
 class EnrollmentController extends Controller
 {
 
     use DateFormatter;
 
+    /**
+     * @param UpdateEnrollment $request
+     * @param Course $course
+     * @param User $user
+     * @param Enrollment $enrollment
+     * @param Section $section
+     * @param AssignToUser $assignToUser
+     * @return array
+     * @throws Exception
+     */
     public function update(UpdateEnrollment $request,
-                           Course $course,
-                           User $user,
-                           Assignment $assignment,
-                           Enrollment $enrollment,
-                           Section $section,
-                           AssignToTiming $assignToTiming,
-                           Score $score,
-                           Submission $submission,
-                           SubmissionFile $submissionFile,
-                           Extension $extension,
-                           AssignToUser $assignToUser,
-                           Seed $seed,
-                           LtiGradePassback $ltiGradePassback)
+                           Course           $course,
+                           User             $user,
+                           Enrollment       $enrollment,
+                           Section          $section,
+                           AssignToUser     $assignToUser): array
     {
 
         $response['type'] = 'error';
@@ -143,20 +145,37 @@ class EnrollmentController extends Controller
 
     }
 
+    /**
+     * @param DestroyEnrollment $request
+     * @param Section $section
+     * @param User $user
+     * @param Assignment $assignment
+     * @param Enrollment $enrollment
+     * @param Submission $submission
+     * @param SubmissionFile $submissionFile
+     * @param Score $score
+     * @param AssignToUser $assignToUser
+     * @param Extension $extension
+     * @param ExtraCredit $extraCredit
+     * @param LtiGradePassback $ltiGradePassback
+     * @param Seed $seed
+     * @return array
+     * @throws Exception
+     */
     public
     function destroy(DestroyEnrollment $request,
-                     Section $section,
-                     User $user,
-                     Assignment $assignment,
-                     Enrollment $enrollment,
-                     Submission $submission,
-                     SubmissionFile $submissionFile,
-                     Score $score,
-                     AssignToUser $assignToUser,
-                     Extension $extension,
-                     ExtraCredit $extraCredit,
-                     LtiGradePassback $ltiGradePassback,
-                     Seed $seed
+                     Section           $section,
+                     User              $user,
+                     Assignment        $assignment,
+                     Enrollment        $enrollment,
+                     Submission        $submission,
+                     SubmissionFile    $submissionFile,
+                     Score             $score,
+                     AssignToUser      $assignToUser,
+                     Extension         $extension,
+                     ExtraCredit       $extraCredit,
+                     LtiGradePassback  $ltiGradePassback,
+                     Seed              $seed
     )
     {
         $response['type'] = 'error';
@@ -246,6 +265,7 @@ class EnrollmentController extends Controller
             }
             $response['sections'] = $sections;
             $response['enrollments'] = $enrollments;
+            $response['lms'] = $course->lms;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -300,14 +320,14 @@ class EnrollmentController extends Controller
      * @param Enrollment $enrollment
      * @param Section $Section
      * @param AssignToUser $assignToUser
-     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
+     * @return array|Application|ResponseFactory|Response
      * @throws Exception
      */
     public
     function store(StoreEnrollment $request,
-                   Enrollment $enrollment,
-                   Section $Section,
-                   AssignToUser $assignToUser)
+                   Enrollment      $enrollment,
+                   Section         $Section,
+                   AssignToUser    $assignToUser)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $enrollment);
@@ -320,13 +340,18 @@ class EnrollmentController extends Controller
         try {
             DB::beginTransaction();
             $data = $request->validated();
+            if ($request->is_lms) {
+                $user = request()->user();
+                $user->time_zone = $data['time_zone'];
+                $user->save();
+            }
             $section = $Section->where('access_code', '=', $data['access_code'])
-                                ->where('access_code', '<>', null)
-                                ->first();
-            if (!$section){
+                ->where('access_code', '<>', null)
+                ->first();
+            if (!$section) {
                 //not sure I even need this but I'm being extra cautious
                 $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
-                return response($response,422);
+                return response($response, 422);
             }
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();

@@ -38,7 +38,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('name') }"
           @keydown="sectionForm.errors.clear('name')"
         />
-        <has-error :form="sectionForm" field="name"/>
+        <has-error :form="sectionForm" field="name" />
       </b-form-group>
       <b-form-group
         id="crn"
@@ -64,7 +64,7 @@
           :class="{ 'is-invalid': sectionForm.errors.has('crn') }"
           @keydown="sectionForm.errors.clear('crn')"
         />
-        <has-error :form="sectionForm" field="crn"/>
+        <has-error :form="sectionForm" field="crn" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -105,11 +105,12 @@
               <div v-if="user.email !== 'commons@libretexts.org'">
                 <p>
                   This course currently runs from
-                  <span class="font-weight-bold"
-                  >{{ $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}</span> to
                   <span class="font-weight-bold">{{
-                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span>.
+                    $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span> to
+                  <span class="font-weight-bold">{{
+                    $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                  }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
                   <router-link :to="{name: 'course_properties.general_info'}">
@@ -138,34 +139,34 @@
                   </template>
                   <template v-slot:cell(actions)="data">
                     <div class="mb-0">
-                    <span class="pr-1" @click="initEditSection(data.item)">
-                      <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
-                                 delay="500"
-                      >
-                        Edit Section
-                      </b-tooltip>
-                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
-                    </span>
+                      <span class="pr-1" @click="initEditSection(data.item)">
+                        <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
+                                   delay="500"
+                        >
+                          Edit Section
+                        </b-tooltip>
+                        <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
+                      </span>
                       <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
-                      <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
-                                 delay="500"
-                      >
-                        Delete Section
-                      </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
-                    </span>
+                        <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
+                                   delay="500"
+                        >
+                          Delete Section
+                        </b-tooltip>
+                        <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
+                      </span>
                       <span class="text-info">
-                      <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                 delay="500"
-                      >
+                        <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                   delay="500"
+                        >
 
-                        You can refresh the access code if you would like to render the current access code invalid.
+                          You can refresh the access code if you would like to render the current access code invalid.
 
-                      </b-tooltip>
-                      <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                           variant="dark"
-                                           @click="refreshAccessCode(data.item.id)"
-                      />
+                        </b-tooltip>
+                        <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                             variant="dark"
+                                             @click="refreshAccessCode(data.item.id)"
+                        />
                       </span>
                     </div>
                   </template>
@@ -179,7 +180,6 @@
                   <span class="font-weight-bold">You cannot invite students to courses in the Commons.</span>
                 </b-alert>
               </div>
-
             </b-card-text>
           </b-card>
         </div>

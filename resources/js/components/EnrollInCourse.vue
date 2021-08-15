@@ -14,7 +14,7 @@
         Enroll In Course
       </template>
       <b-form ref="form" @submit="submitEnrollInCourse">
-        <p>To access this assignment, please provide the course access code given to you by your instructor.</p>
+        <p>Please provide the course access code given to you by your instructor.</p>
         <b-form-group
           id="access_code"
           label-cols-sm="4"
@@ -29,8 +29,18 @@
             :class="{ 'is-invalid': form.errors.has('access_code') }"
             @keydown="form.errors.clear('access_code')"
           />
-          <has-error :form="form" field="access_code" />
+          <has-error :form="form" field="access_code"/>
         </b-form-group>
+        <div v-show="isLms" class="form-group row">
+          <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+          <div class="col-md-7" @change="form.errors.clear('time_zone')">
+            <b-form-select v-model="form.time_zone"
+                           :options="timeZones"
+                           :class="{ 'is-invalid': form.errors.has('time_zone') }"
+            />
+            <has-error :form="form" field="time_zone"/>
+          </div>
+        </div>
       </b-form>
     </b-modal>
   </div>
@@ -39,14 +49,31 @@
 <script>
 import Form from 'vform'
 import { mapGetters } from 'vuex'
+import { getTimeZones } from '@vvo/tzdb'
+import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 
 export default {
-  props: { getEnrolledInCourses: { type: Function, default: function () {} } },
+  props: {
+    getEnrolledInCourses: {
+      type: Function,
+      default: function () {
+      }
+    },
+    isLms: {
+      type: Boolean,
+      default: false
+    }
+  },
   data: () => ({
     inIFrame: false,
     form: new Form({
-      access_code: ''
-    })
+      access_code: '',
+      time_zone: '',
+      is_lms: false
+    }),
+    timeZones: [
+      { value: null, text: 'Please select a time zone' }
+    ]
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -58,6 +85,10 @@ export default {
     } catch (e) {
       this.inIFrame = true
     }
+    // don't know the user's timezone yet since they were auto enrolled
+    let timeZones = getTimeZones()
+    populateTimeZoneSelect(timeZones, this)
+    this.form.time_zone = null
   },
   methods: {
     submitEnrollInCourse (bvModalEvt) {
@@ -97,6 +128,7 @@ export default {
       }
     },
     async enrollInCourseViaIFrame () {
+      this.form.is_lms = this.isLms
       try {
         const { data } = await this.form.post('/api/enrollments')
         if (data.validated) {

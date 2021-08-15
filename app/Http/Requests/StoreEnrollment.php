@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Rules\IsValidTimeZone;
 use Illuminate\Foundation\Http\FormRequest;
 
 class StoreEnrollment extends FormRequest
@@ -23,6 +24,11 @@ class StoreEnrollment extends FormRequest
      */
     public function rules()
     {
-       return ['access_code' => 'required|exists:sections,access_code'];
+
+        $rules['access_code'] = 'required|exists:sections,access_code';
+        if ($this->is_lms) {
+            $rules['time_zone'] = new IsValidTimeZone();
+        }
+        return $rules;
     }
 }

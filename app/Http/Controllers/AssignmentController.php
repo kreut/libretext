@@ -40,6 +40,23 @@ class AssignmentController extends Controller
     use S3;
 
 
+    public function startPageInfo(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $libretexts_url = $assignment->libretexts_url;
+            $response['adapt_launch'] = !$libretexts_url;
+            $response['start_page_url'] = $libretexts_url;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment start page information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getCommonsCourseAssignments(Course $course)
     {
         $response['type'] = 'error';
@@ -619,12 +636,14 @@ class AssignmentController extends Controller
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
      * @param User $user
+     * @param BetaCourse $betaCourse
      * @return array
      * @throws Exception
      */
 
     public
-    function store(StoreAssignment       $request, Assignment $assignment,
+    function store(StoreAssignment       $request,
+                   Assignment            $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
                    Section               $section,
                    User                  $user,
@@ -643,6 +662,7 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
+
             $assign_tos = $request->assign_tos;
             $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
             if ($repeated_groups) {
@@ -680,6 +700,7 @@ class AssignmentController extends Controller
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
+                    'libretexts_url' => $data['libretexts_url'] ?? null,
                     'notifications' => $data['notifications'],
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
@@ -695,15 +716,21 @@ class AssignmentController extends Controller
                         'course_id' => $beta_course->id
                     ]);
                     $beta_assignment->save();
+
                     $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+
                     BetaAssignment::create([
                         'id' => $beta_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
+
                     $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+
                 }
             }
+
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
+
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';
@@ -913,6 +940,7 @@ class AssignmentController extends Controller
         $authorized = Gate::inspect('view', $assignment);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
+            $response['is_lms'] = (bool) $assignment->course->lms;//if no access, need this to determine whether to show the time zones
             return $response;
         }
         $is_fake_student = Auth::user()->fake_student;
@@ -947,7 +975,9 @@ class AssignmentController extends Controller
                     ? $score->where('assignment_id', $assignment->id)->get()->pluck('score')
                     : [],
                 'beta_assignments_exist' => $assignment->betaAssignments() !== [],
-                'is_beta_assignment' => $assignment->isBetaAssignment()
+                'is_beta_assignment' => $assignment->isBetaAssignment(),
+                'is_lms' => (bool) $assignment->course->lms,
+                'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
             ];
 
             if (Auth::user()->role === 3) {
@@ -1161,7 +1191,7 @@ class AssignmentController extends Controller
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
-                    ?: "none"
+                    ?: "N/A"
             ];
             if (auth()->user()->role === 3) {
                 $extension = DB::table('extensions')
@@ -1181,6 +1211,8 @@ class AssignmentController extends Controller
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
+                $lms = $assignment->course->lms;
+                $formatted_items['lms'] = $lms;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;

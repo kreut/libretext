@@ -30,7 +30,8 @@ class UpdateCourse extends FormRequest
             'end_date' => 'required|date|after:start_date',
             'term' => 'required',
             'alpha' => Rule::in([0, 1]),
-            'public' => Rule::in([0, 1])
+            'public' => Rule::in([0, 1]),
+            'lms' => Rule::in([0, 1])
         ];
     }
 }

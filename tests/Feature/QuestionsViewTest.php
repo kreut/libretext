@@ -8,6 +8,7 @@ use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
+use App\LtiLaunch;
 use App\Section;
 use App\Solution;
 use App\User;
@@ -65,7 +66,7 @@ class QuestionsViewTest extends TestCase
         $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
         $this->non_beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
 
-        DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id'=> $this->assignment->id]);
+        DB::table('beta_assignments')->insert(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);
 
         $this->assignUserToAssignment($this->assignment->id, 'course', $this->course->id, $this->student_user->id);
 
@@ -127,6 +128,23 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+
+    public function submission_with_lti_launch_is_entered_as_pending()
+    {
+        LTiLaunch::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'launch_id' => '12345'
+        ]);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $this->assertDatabaseHas('lti_grade_passbacks',['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'launch_id' => '12345',
+            'status' => 'pending'
+        ]);
+    }
+
+    /** @test */
     public function alpha_course_cannot_switch_open_ended_submission_type_if_beta_submission_exists()
     {
 
@@ -164,20 +182,20 @@ class QuestionsViewTest extends TestCase
         ]);
 
         $before_change_count = count(DB::table('assignment_question')
-            ->where('open_ended_submission_type','file')
-            ->where('question_id',$this->question->id)
+            ->where('open_ended_submission_type', 'file')
+            ->where('question_id', $this->question->id)
             ->get());
         $this->actingAs($this->user)
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-open-ended-submission-type", ['open_ended_submission_type' => 'rich text'])
             ->assertJson(['type' => "success"]);
 
         //start with 1 alpha, 1 beta, and 1 other with the same question
-        $this->assertEquals($before_change_count-2,1);
+        $this->assertEquals($before_change_count - 2, 1);
 
     }
 
 
-      /** @test */
+    /** @test */
     public function cannot_switch_open_ended_submission_type_if_is_beta_course()
     {
         $this->actingAs($this->beta_user)
@@ -297,9 +315,6 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['message' => 'You are not allowed to update the open-ended submission type.']);
 
     }
-
-
-
 
 
     /** @test */

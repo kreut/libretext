@@ -106,7 +106,7 @@ class AssignmentsIndex3Test extends TestCase
     }
 
     /** @test */
-    public function delayed_assignment_cannot_switch_to_real_time_or_clicker_if_there_are_no_technology_questions()
+    public function delayed_assignment_cannot_switch_to_clicker_if_there_are_no_technology_questions()
     {
         DB::table('assignment_question')
             ->where('id',$this->assignment_question_id)
@@ -114,11 +114,6 @@ class AssignmentsIndex3Test extends TestCase
 
         $this->question->technology_iframe = '';
         $this->question->save();
-        $this->assignment_info['assessment_type'] = 'real time';
-        $new_assessment_type = ucfirst( $this->assignment_info['assessment_type']);
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['message' => "If you would like to change this assignment to $new_assessment_type, all of your assessments must have an associated auto-graded component H5P or Webwork.  Please remove any assessments that don't have auto-graded component."]);
 
         $this->assignment_info['assessment_type'] = 'clicker';
         $new_assessment_type = ucfirst( $this->assignment_info['assessment_type']);
@@ -142,13 +137,8 @@ class AssignmentsIndex3Test extends TestCase
     }
 
     /** @test */
-    public function delayed_assignment_cannot_switch_to_real_time_or_clicker_if_there_are_open_ended_questions()
+    public function delayed_assignment_cannot_switch_to_clicker_if_there_are_open_ended_questions()
     {
-        $this->assignment_info['assessment_type'] = 'real time';
-        $assessment_type = ucfirst($this->assignment_info['assessment_type']);//didn't work if I just wrote Real Time --- maybe weird PHP quirk
-        $this->actingAs($this->user)
-            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
-            ->assertJson(['message' => "If you would like to change this assignment to $assessment_type, please first remove any assessments that require an open-ended submission."]);
 
         $this->assignment_info['assessment_type'] = 'clicker';
         $this->actingAs($this->user)

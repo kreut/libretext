@@ -827,12 +827,9 @@ class AssignmentSyncQuestionController extends Controller
 
 
     public
-    function destroy(Request                $request,
-                     Assignment             $assignment,
+    function destroy(Assignment             $assignment,
                      Question               $question,
                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                     LtiLaunch              $ltiLaunch,
-                     LtiGradePassback       $ltiGradePassback,
                      BetaCourseApproval     $betaCourseApproval)
     {
 
@@ -887,7 +884,7 @@ class AssignmentSyncQuestionController extends Controller
                     $response['message'] = "As this is a randomized assignment, please ask your students to revisit their assignment as a question may have been updated.";
                 }
             }
-            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);
+            $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
             $assignment_question_id = DB::table('assignment_question')->where('question_id', $question->id)
                 ->where('assignment_id', $assignment->id)
                 ->first()
