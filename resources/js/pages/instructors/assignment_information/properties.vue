@@ -22,6 +22,7 @@
             :all-form-errors="allFormErrors"
             :assignment-id="parseInt(assignmentId)"
             :is-beta-assignment="assignment.is_beta_assignment"
+            :lms="Boolean(lms)"
           />
           <hr>
           <span class="float-right">
@@ -63,6 +64,7 @@ export default {
     AssignmentProperties
   },
   data: () => ({
+    lms: false,
     courseStartDate: '',
     assignmentGroups: [],
     allFormErrors: [],
@@ -97,6 +99,7 @@ export default {
     const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)
     this.courseId = data.assignment.course_id
     this.courseStartDate = data.assignment.course_start_date
+    this.lms = data.assignment.lms
     this.assignmentGroups = await getAssignmentGroups(this.courseId, this.$noty)
     await this.getAssignments()
 

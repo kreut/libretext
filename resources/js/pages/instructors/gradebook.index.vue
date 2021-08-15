@@ -10,52 +10,61 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <div v-if="hasAssignments">
-        <div v-if="canViewScores">
-          <b-container>
-            <div v-if="user.id === 5">
-              <span class="font-italic">FERPA Mode: </span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="ferpaMode"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'On', unchecked: 'Off'}"
-                @change="submitFerpaMode()"
-              />
-              <br>
-            </div>
-            <div class="font-italic">
-              <p>
-                To compute the weighted averages, we first compute the percent score on each assignment, then take a
-                straight average of all assignments within an assignment group. The averages by assignment
-                group are weighted by the
-                <span><router-link
-                  :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}"
-                >
+      <div v-if="lms">
+        <b-alert variant="info" :show="true">
+              <span class="font-weight-bold">
+                This is a course which is being served through your LMS.  Please see the LMS gradebook for your students' scores.
+              </span>
+        </b-alert>
+      </div>
+      <div v-else>
+        <div v-if="hasAssignments">
+          <div v-if="canViewScores">
+            <b-container>
+              <div v-if="user.id === 5">
+                <span class="font-italic">FERPA Mode: </span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="ferpaMode"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'On', unchecked: 'Off'}"
+                  @change="submitFerpaMode()"
+                />
+                <br>
+              </div>
+              <div class="font-italic">
+                <p>
+                  To compute the weighted averages, we first compute the percent score on each assignment, then take a
+                  straight average of all assignments within an assignment group. The averages by assignment
+                  group are weighted by the
+                  <span><router-link
+                    :to="{name: 'course_properties.assignment_group_weights', params: { courseId: courseId }}"
+                  >
                   assignment group weights</router-link></span> which determine the
-                <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">
-                  letter grades
-                </router-link>
-                for the course. Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included
-                in the score computation.
-              </p>
-              <p>
-                If you prefer a different grading methodology, please download the scores and input them into a
-                spreadsheet.
-              </p>
-              <ul>
-                <li>
-                  Click on any student name to log in as them and get a better understanding of that student's
-                  performance
-                </li>
-                <li>Click on any item in the Gradebook if you need to offer an extension or enter a score override</li>
-              </ul>
-            </div>
-            <b-row align-h="end">
+                  <router-link :to="{name: 'course_properties.letter_grades', params: { courseId: courseId }}">
+                    letter grades
+                  </router-link>
+                  for the course. Marked assignments (<span style="font-size: 12px;color:red">*</span>) are not included
+                  in the score computation.
+                </p>
+                <p>
+                  If you prefer a different grading methodology, please download the scores and input them into a
+                  spreadsheet.
+                </p>
+                <ul>
+                  <li>
+                    Click on any student name to log in as them and get a better understanding of that student's
+                    performance
+                  </li>
+                  <li>Click on any item in the Gradebook if you need to offer an extension or enter a score override
+                  </li>
+                </ul>
+              </div>
+              <b-row align-h="end">
               <span v-show="user.role ===2 ">
                 <b-button variant="info" size="sm" class="mr-2"
                           @click="openOverrideAssignmentScoresModal"
@@ -63,55 +72,55 @@
                   Override Assignment Scores
                 </b-button>
               </span>
-              <download-excel
-                class="float-right mb-2"
-                :data="downloadRows"
-                :fetch="fetchData"
-                :fields="downloadFields"
-                worksheet="My Worksheet"
-                type="csv"
-                name="all_scores.csv"
+                <download-excel
+                  class="float-right mb-2"
+                  :data="downloadRows"
+                  :fetch="fetchData"
+                  :fields="downloadFields"
+                  worksheet="My Worksheet"
+                  type="csv"
+                  name="all_scores.csv"
+                >
+                  <b-button variant="success" size="sm">
+                    Download Scores
+                  </b-button>
+                </download-excel>
+              </b-row>
+              <b-form-group
+                v-if="hasMultipleSections"
+                id="sections"
+                label-cols-sm="3"
+                label-cols-lg="2"
+                label="Section View"
+                label-for="Section View"
               >
-                <b-button variant="success" size="sm">
-                  Download Scores
-                </b-button>
-              </download-excel>
-            </b-row>
-            <b-form-group
-              v-if="hasMultipleSections"
-              id="sections"
-              label-cols-sm="3"
-              label-cols-lg="2"
-              label="Section View"
-              label-for="Section View"
-            >
-              <b-form-row>
-                <b-col lg="3">
-                  <b-form-select
-                    id="section-view"
-                    v-model="sectionId"
-                    :options="sections"
-                    @change="getScores"
-                  />
-                </b-col>
-              </b-form-row>
-            </b-form-group>
-            <b-row>
-              <b-table striped
-                       hover
-                       responsive="true"
-                       :no-border-collapse="true"
-                       :items="items"
-                       :fields="fields"
-                       :sort-by.sync="sortBy"
-                       primary-key="userId"
-                       :sort-desc.sync="sortDesc"
-                       sort-icon-left
-              >
-                <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
-                  <span :key="field.key" v-html="data.field.label"/>
-                </template>
-                <template v-slot:cell()="data">
+                <b-form-row>
+                  <b-col lg="3">
+                    <b-form-select
+                      id="section-view"
+                      v-model="sectionId"
+                      :options="sections"
+                      @change="getScores"
+                    />
+                  </b-col>
+                </b-form-row>
+              </b-form-group>
+              <b-row>
+                <b-table striped
+                         hover
+                         responsive="true"
+                         :no-border-collapse="true"
+                         :items="items"
+                         :fields="fields"
+                         :sort-by.sync="sortBy"
+                         primary-key="userId"
+                         :sort-desc.sync="sortDesc"
+                         sort-icon-left
+                >
+                  <template v-for="field in fields" v-slot:[`head(${field.key})`]="data">
+                    <span :key="field.key" v-html="data.field.label"/>
+                  </template>
+                  <template v-slot:cell()="data">
                   <span v-if="['name'].includes(data.field.key)">
                     <a href=""
                        @click.prevent="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
@@ -119,20 +128,21 @@
                       {{ data.value }}
                     </a>
                   </span>
-                  <span v-if="!['name'].includes(data.field.key)"
-                        @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
-                  >{{ data.value }}
+                    <span v-if="!['name'].includes(data.field.key)"
+                          @click="getStudentAction(data.value,data.item.userId, data.field.key, data.item.name)"
+                    >{{ data.value }}
                   </span>
-                </template>
-              </b-table>
-            </b-row>
-          </b-container>
+                  </template>
+                </b-table>
+              </b-row>
+            </b-container>
+          </div>
         </div>
-      </div>
-      <div v-else>
-        <b-alert v-if="!isLoading" show variant="warning">
-          <a href="#" class="alert-link">You have no assignments or students yet.</a>
-        </b-alert>
+        <div v-else>
+          <b-alert v-if="!isLoading" show variant="warning">
+            <a href="#" class="alert-link">You have no assignments or students yet.</a>
+          </b-alert>
+        </div>
       </div>
       <b-modal
         id="modal-update-extra-credit"
@@ -330,6 +340,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    lms: false,
     ferpaMode: false,
     form: new Form({
       extension_date: '',
@@ -395,19 +406,32 @@ export default {
     originalDueDateTime: '',
     currentScore: null
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    isAdmin: () => window.config.isAdmin
+  },
   mounted () {
     this.loginAsStudentInCourse = loginAsStudentInCourse
     this.courseId = this.$route.params.courseId
     this.isLoading = true
-    if (this.user.id === 5) {
+    if (this.isAdmin) {
       this.getFerpaMode()
     }
-    this.getScores()
+    this.initGetScores()
   },
   methods: {
+    async initGetScores () {
+      try {
+        const { data } = await axios.get(`/api/courses/${this.courseId}`)
+        this.lms = data.course.lms
+        this.lms ? this.isLoading = false
+          : await this.getScores()
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getFerpaMode () {
       try {
         const { data } = await axios.get(`/api/scores/get-ferpa-mode`)

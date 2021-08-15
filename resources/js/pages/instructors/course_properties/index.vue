@@ -9,9 +9,9 @@
             </router-link>
           </li>
           <li>
-            <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
-              Gradebook
-            </a>
+          <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
+            Gradebook
+          </a>
           </li>
         </ul>
       </card>
@@ -36,6 +36,7 @@ export default {
       user: 'auth/user'
     }),
     data: () => ({
+      lms: false,
       courseId: 0
     }),
     tabs () {

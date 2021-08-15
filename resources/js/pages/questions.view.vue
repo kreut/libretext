@@ -3022,11 +3022,14 @@ export default {
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
-        if (this.user.role === 3 && (!assignment.available || !assignment.shown)) {
+
+        if (this.user.role === 3 && (!assignment.available || !assignment.shown) && !assignment.lms_resource_link_id)
+        {
           this.availableOn = assignment.available_on
           this.assignmentShown = assignment.shown
           this.cannotViewAssessmentMessage = true
         }
+
         if (this.user.role === 3) {
           this.title = `${assignment.name}`
           this.fullPdfUrl = assignment.full_pdf_url

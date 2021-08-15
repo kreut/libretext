@@ -23,32 +23,11 @@ Route:*/
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
-Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
-Route::get('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
 
-Route::post('/lti/configure-2/{launchId}', 'LTIController@configure');
-Route::get('/lti/configure-2/{launchId}', 'LTIController@configure');
-
-
-Route::get('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
-Route::post('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
-
-Route::post('/lti/game', 'LTIController@authenticationResponse');
-Route::get('/lti/game', 'LTIController@authenticationResponse');
-
-Route::post('/lti/login', 'GameController@login');
-Route::get('/lti/login', 'GameController@login');
-
-Route::post('/lti/configure/{launchId}', 'LTIController@configure');
-Route::get('/lti/configure/{launchId}', 'LTIController@configure');
-
-
+Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
+Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
 Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
-
-Route::get('/lti/target-link-uri', 'LTIController@finalTarget');
-Route::post('/lti/target-link-uri', 'LTIController@finalTarget');
-
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');

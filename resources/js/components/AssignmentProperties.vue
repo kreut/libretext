@@ -302,6 +302,7 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
+        v-if="!lms"
         id="source"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -715,6 +716,7 @@
       </b-form-group>
     </div>
     <b-form-group
+      v-if="!lms"
       id="include_in_weighted_average"
       label-cols-sm="4"
       label-cols-lg="3"
@@ -757,7 +759,7 @@
     </b-form-group>
 
     <b-form-group
-      v-show="form.source === 'a'"
+      v-show="form.source === 'a' && !lms"
       id="instructions"
       label-cols-sm="4"
       label-cols-lg="3"
@@ -823,6 +825,7 @@
       </b-form-row>
     </b-form-group>
     <b-form-group
+      v-if="!lms"
       id="notifications"
       label-cols-sm="4"
       label-cols-lg="3"
@@ -842,145 +845,146 @@
         </b-form-radio>
       </b-form-radio-group>
     </b-form-group>
-    <div v-for="(assignTo,index) in form.assign_tos"
-         :key="index"
-    >
-      <b-form-group
-        id="assign_to"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="Assign to"
+    <div v-if="!lms">
+      <div v-for="(assignTo,index) in form.assign_tos"
+           :key="index"
       >
-        <template slot="label">
-          Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
-        </template>
-        <b-form-row>
-          <b-col lg="5">
-            <b-form-select v-model="assignTo.selectedGroup"
-                           :options="assignToGroups"
-                           :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
-                           @change="updateAssignTos(assignTo)"
-            />
-            <has-error :form="form" :field="`groups_${index}`"/>
-          </b-col>
-          <b-col>
-            <ul
-              v-for="(group,group_index) in assignTo.groups"
-              :key="group_index"
-              class="flex-column align-items-start"
-            >
-              <li>
-                {{ group.text }}
-                <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"/>
-              </li>
-            </ul>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        :id="`available_from_${index}`"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label="Available on"
-        label-for="Available on"
-      >
-        <b-form-row>
-          <b-col lg="7">
-            <b-form-datepicker
-              v-model="assignTo.available_from_date"
-              :min="min"
-              :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
-            />
-            <has-error :form="form" :field="`available_from_date_${index}`"/>
-          </b-col>
-          <b-col>
-            <b-form-timepicker v-model="assignTo.available_from_time"
-                               locale="en"
-                               :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
-            />
-            <has-error :form="form" :field="`available_from_time_${index}`"/>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
+        <b-form-group
+          id="assign_to"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="Assign to"
+        >
+          <template slot="label">
+            Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+          </template>
+          <b-form-row>
+            <b-col lg="5">
+              <b-form-select v-model="assignTo.selectedGroup"
+                             :options="assignToGroups"
+                             :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
+                             @change="updateAssignTos(assignTo)"
+              />
+              <has-error :form="form" :field="`groups_${index}`"/>
+            </b-col>
+            <b-col>
+              <ul
+                v-for="(group,group_index) in assignTo.groups"
+                :key="group_index"
+                class="flex-column align-items-start"
+              >
+                <li>
+                  {{ group.text }}
+                  <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"/>
+                </li>
+              </ul>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          :id="`available_from_${index}`"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Available on"
+          label-for="Available on"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.available_from_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
+              />
+              <has-error :form="form" :field="`available_from_date_${index}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.available_from_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
+              />
+              <has-error :form="form" :field="`available_from_time_${index}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
 
-      <b-form-group
-        id="due"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label="Due Date"
-        label-for="Due Date"
-      >
-        <b-form-row>
-          <b-col lg="7">
-            <b-form-datepicker
-              v-model="assignTo.due_date"
-              :min="min"
-              :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
-              @shown="form.errors.clear(`due_${index}`)"
-            />
-            <has-error :form="form" :field="`due_${index}`"/>
-          </b-col>
-          <b-col>
-            <b-form-timepicker v-model="assignTo.due_time"
-                               locale="en"
-                               :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
-                               @shown="form.errors.clear(`due_time_${index}`)"
-            />
-            <has-error :form="form" :field="`due_time_${index}`"/>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-show="form.late_policy !== 'not accepted'"
-        id="last"
-        label-cols-sm="4"
-        label-cols-lg="3"
-        label-for="Final Submission Deadline"
-      >
-        <template slot="label">
-          Final Submission Deadline <span id="final_submission_deadline_tooltip"
-                                          class="text-muted"
-        ><b-icon
-          icon="question-circle"
-        /></span>
-        </template>
-        <b-form-row>
-          <b-col lg="7">
-            <b-form-datepicker
-              v-model="assignTo.final_submission_deadline_date"
-              :min="min"
-              :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
-              :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-              @shown="form.errors.clear(`final_submission_deadline_${index}`)"
-            />
-            <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
-          </b-col>
-          <b-col>
-            <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
-                               locale="en"
-                               :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
-                               :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
-                               @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
-            />
-            <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
-          </b-col>
-        </b-form-row>
-      </b-form-group>
-      <div v-if="form.assign_tos.length>1">
-        <b-row align-h="end">
-          <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
-            Remove Assign
-            to
-          </b-button>
-        </b-row>
-        <hr>
+        <b-form-group
+          id="due"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Due Date"
+          label-for="Due Date"
+        >
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.due_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
+                @shown="form.errors.clear(`due_${index}`)"
+              />
+              <has-error :form="form" :field="`due_${index}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.due_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
+                                 @shown="form.errors.clear(`due_time_${index}`)"
+              />
+              <has-error :form="form" :field="`due_time_${index}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-show="form.late_policy !== 'not accepted'"
+          id="last"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label-for="Final Submission Deadline"
+        >
+          <template slot="label">
+            Final Submission Deadline <span id="final_submission_deadline_tooltip"
+                                            class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
+          </template>
+          <b-form-row>
+            <b-col lg="7">
+              <b-form-datepicker
+                v-model="assignTo.final_submission_deadline_date"
+                :min="min"
+                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
+                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                @shown="form.errors.clear(`final_submission_deadline_${index}`)"
+              />
+              <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
+            </b-col>
+            <b-col>
+              <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
+                                 locale="en"
+                                 :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
+                                 :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
+                                 @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
+              />
+              <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
+            </b-col>
+          </b-form-row>
+        </b-form-group>
+        <div v-if="form.assign_tos.length>1">
+          <b-row align-h="end">
+            <b-button variant="outline-danger" class="mr-4" size="sm" @click="removeAssignTo(assignTo)">
+              Remove Assign
+              to
+            </b-button>
+          </b-row>
+          <hr>
+        </div>
       </div>
+      <b-button variant="outline-primary" size="sm" @click="addAssignTo">
+        Add Assign to
+      </b-button>
+      <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
     </div>
-    <b-button variant="outline-primary" size="sm" @click="addAssignTo">
-      Add Assign to
-    </b-button>
-    <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
-
   </div>
 </template>
 
@@ -1013,6 +1017,7 @@ export default {
       }
     },
     isBetaAssignment: { type: Boolean, default: false },
+    lms: { type: Boolean, default: false },
     courseId: { type: Number, default: 0 },
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },

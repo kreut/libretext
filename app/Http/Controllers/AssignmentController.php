@@ -624,7 +624,8 @@ class AssignmentController extends Controller
      */
 
     public
-    function store(StoreAssignment       $request, Assignment $assignment,
+    function store(StoreAssignment       $request,
+                   Assignment            $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
                    Section               $section,
                    User                  $user,
@@ -643,11 +644,15 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-            $assign_tos = $request->assign_tos;
-            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
-            if ($repeated_groups) {
-                $response['message'] = $repeated_groups;
-                return $response;
+
+            $lms = Course::find($request->course_id)->lms;
+            if (!$lms) {
+                $assign_tos = $request->assign_tos;
+                $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+                if ($repeated_groups) {
+                    $response['message'] = $repeated_groups;
+                    return $response;
+                }
             }
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
@@ -680,10 +685,15 @@ class AssignmentController extends Controller
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
-                    'notifications' => $data['notifications'],
+                    'notifications' => !$lms ? $data['notifications'] : 0,
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
+            if ($lms) {
+                //assign tos won't be used since the LMS will take care of assigning.  However, in the event they
+                //switch back to a non-LMS, something needs to be there
+                $assign_tos = $this->_defaultAssigntos($course->id);
+            }
             if ($course->alpha) {
                 $beta_assign_tos[0] = $assign_tos[0];
                 $beta_assign_tos[0]['groups'] = [];
@@ -695,15 +705,21 @@ class AssignmentController extends Controller
                         'course_id' => $beta_course->id
                     ]);
                     $beta_assignment->save();
+
                     $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+
                     BetaAssignment::create([
                         'id' => $beta_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
+
                     $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+
                 }
             }
+
             $this->addAssignTos($assignment, $assign_tos, $section, $user);
+
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';
@@ -744,6 +760,25 @@ class AssignmentController extends Controller
             }
         }
 
+
+    }
+
+    private function _defaultAssignTos(int $course_id)
+    {
+        $default_assigntos[0] = [
+            'groups' => [
+                ['value' =>
+                    ['course_id' => $course_id],
+                    'text' => 'Everybody'
+                ]
+            ],
+            'selectedGroup' => null,
+            'available_from_date' => Carbon::now()->isoFormat('YYYY-MM-DD'),
+            'available_from_time' => '09:00:00',
+            'due_date' => Carbon::now()->addDay()->isoFormat('YYYY-MM-DD'),
+            'due_time' => '09:00:00'
+        ];
+        return $default_assigntos;
 
     }
 
@@ -1181,22 +1216,26 @@ class AssignmentController extends Controller
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
+                $lms = $assignment->course->lms;
+                $formatted_items['lms'] = $lms;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
-                $formatted_items['assign_tos'] = $assignment->assignToGroups();
-                foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
-                    $available_from = $assign_to['available_from'];
-                    $due = $assign_to['due'];
-                    $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
-                    $final_submission_deadline = $assign_to['final_submission_deadline'];
-                    $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
-                    $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
-                    $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
-                    $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                if (!$lms) {
+                    $formatted_items['assign_tos'] = $assignment->assignToGroups();
+                    foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
+                        $available_from = $assign_to['available_from'];
+                        $due = $assign_to['due'];
+                        $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
+                        $final_submission_deadline = $assign_to['final_submission_deadline'];
+                        $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
+                        $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
+                        $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
+                        $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                    }
                 }
             }
             foreach ($formatted_items as $key => $value) {

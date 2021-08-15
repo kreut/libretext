@@ -246,6 +246,7 @@ class EnrollmentController extends Controller
             }
             $response['sections'] = $sections;
             $response['enrollments'] = $enrollments;
+            $response['lms']= $course->lms;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

@@ -68,6 +68,7 @@
           :all-form-errors="allFormErrors"
           :assignment-id="assignmentId"
           :is-beta-assignment="isBetaAssignment"
+          :lms="!!lms"
         />
         <template #modal-footer="{ cancel, ok }">
           <b-button size="sm" @click="$bvModal.hide('modal-assignment-properties')">
@@ -247,6 +248,14 @@
               </span>
             </b-alert>
           </div>
+          <div v-show="lms">
+            <b-alert variant="info" :show="true">
+              <span class="font-weight-bold">
+                This is a course which is being served through your LMS.  You will create your assignments
+                in Adapt but use your LMS to assign students as well as your LMS's gradebook.
+              </span>
+            </b-alert>
+          </div>
           <b-col lg="3">
             <b-form-select v-if="assignmentGroupOptions.length>1"
                            v-model="chosenAssignmentGroup"
@@ -273,6 +282,7 @@
                 Import Assignment
               </b-button>
               <b-button
+                v-if="!lms"
                 :class="(user && user.role === 4) ? 'float-right' : ''"
                 size="sm"
                 @click="getGradeBook()"
@@ -298,19 +308,19 @@
               <th scope="col">
                 Assignment Name
               </th>
-              <th scope="col">
+              <th scope="col" v-if="!lms">
                 Shown
               </th>
               <th scope="col">
                 Group
               </th>
-              <th scope="col">
+              <th scope="col" v-if="!lms">
                 Available On
               </th>
-              <th scope="col">
+              <th scope="col" v-if="!lms">
                 Due
               </th>
-              <th scope="col">
+              <th scope="col" v-if="!lms">
                 Status
               </th>
               <th scope="col">
@@ -362,7 +372,7 @@
 
                 </span>
               </td>
-              <td>
+              <td v-if="!lms">
                 <toggle-button
                   :width="57"
                   :value="Boolean(assignment.shown)"
@@ -375,7 +385,7 @@
                 />
               </td>
               <td>{{ assignment.assignment_group }}</td>
-              <td>
+              <td v-if="!lms">
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].available_from, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
@@ -384,13 +394,13 @@
                   <b-button variant="primary" size="sm" @click="viewAssignTos(assignment.assign_tos)">View</b-button>
                 </span>
               </td>
-              <td style="width:200px">
+              <td style="width:200px" v-if="!lms">
                 <span v-if="assignment.assign_tos.length === 1">
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY') }}
                   {{ $moment(assignment.assign_tos[0].due, 'YYYY-MM-DD HH:mm:ss A').format('h:mm A') }}
                 </span>
               </td>
-              <td>
+              <td v-if="!lms">
                 <span v-if="assignment.assign_tos.length === 1">{{ assignment.assign_tos[0].status }}</span>
                 <span v-if="assignment.assign_tos.length > 1" v-html="assignment.overall_status" />
               </td>
@@ -505,6 +515,7 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    lms: false,
     isBetaAssignment:false,
     copyIcon: faCopy,
     addAssignmentIsImport: false,
@@ -756,6 +767,7 @@ export default {
         this.course = data.course
         this.betaCoursesInfo = this.course.beta_courses_info
         this.isBetaCourse = this.course.is_beta_course
+        this.lms = this.course.lms
         console.log(data)
       } catch (error) {
         this.$noty.error(error.message)

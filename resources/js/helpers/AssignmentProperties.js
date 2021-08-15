@@ -150,11 +150,14 @@ export async function editAssignment (assignment) {
   this.form.private_description = assignment.private_description
   this.form.assessment_type = this.assessmentType = assignment.assessment_type
 
-  this.form.assign_tos = assignment.assign_tos
-  for (let i = 0; i < assignment.assign_tos.length; i++) {
-    this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
-    this.form.assign_tos[i].selectedGroup = null
+  if (!assignment.is_in_lms_course) {
+    this.form.assign_tos = assignment.assign_tos
+    for (let i = 0; i < assignment.assign_tos.length; i++) {
+      this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
+      this.form.assign_tos[i].selectedGroup = null
+    }
   }
+
   this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
   this.form.percent_earned_for_exploring_learning_tree = assignment.percent_earned_for_exploring_learning_tree
   this.form.submission_count_percent_decrease = assignment.submission_count_percent_decrease
