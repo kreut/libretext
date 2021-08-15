@@ -87,7 +87,7 @@ class LTIController extends Controller
 
 
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
-            ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-2", $request->all())
+            ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-3", $request->all())
             ->do_redirect();
 
     }
@@ -109,6 +109,9 @@ class LTIController extends Controller
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
 
+            if ($launch->is_deep_link_launch()) {
+            //    $this->configure($launch->get_launch_id());
+            }
             $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $launch_id = $launch->get_launch_id();
 
@@ -188,14 +191,14 @@ class LTIController extends Controller
     public function configure($launch_id)
     {
 
-        $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
+       $launch = LTI\LTI_Message_Launch::from_cache($launch_id, new LTIDatabase());
         if (!$launch->is_deep_link_launch()) {
             echo "Not a deep link.";
             exit;
         }
         file_put_contents(base_path() . '//lti_log.text', "Launch id: $launch_id", FILE_APPEND);
         $resource = LTI\LTI_Deep_Link_Resource::new()
-            ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-2")
+            ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri-3")
             ->set_title('Adapt');
         file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
         $launch->get_deep_link()

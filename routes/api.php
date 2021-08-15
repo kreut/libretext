@@ -23,15 +23,15 @@ Route:*/
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
-Route::post('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
-Route::get('/lti/oidc-initiation-url-2', 'LTIController@initiateLoginRequest');
+Route::post('/lti/oidc-initiation-url-3', 'LTIController@initiateLoginRequest');
+Route::get('/lti/oidc-initiation-url-3', 'LTIController@initiateLoginRequest');
 
 Route::post('/lti/configure-2/{launchId}', 'LTIController@configure');
 Route::get('/lti/configure-2/{launchId}', 'LTIController@configure');
 
 
-Route::get('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
-Route::post('/lti/redirect-uri-2', 'LTIController@authenticationResponse');
+Route::get('/lti/redirect-uri-3', 'LTIController@authenticationResponse');
+Route::post('/lti/redirect-uri-3', 'LTIController@authenticationResponse');
 
 Route::post('/lti/game', 'LTIController@authenticationResponse');
 Route::get('/lti/game', 'LTIController@authenticationResponse');
