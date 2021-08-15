@@ -2,12 +2,16 @@
 
 namespace App\Http\Controllers;
 
+use App\Enrollment;
 use App\Exceptions\Handler;
 use App\LtiLaunch;
 use App\User;
 use Exception;
+use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use \IMSGlobal\LTI;
@@ -93,11 +97,14 @@ class LTIController extends Controller
      * @param Assignment $assignment
      * @param User $user
      * @param LtiLaunch $ltiLaunch
-     * @return \Illuminate\Contracts\Foundation\Application|\Illuminate\Http\RedirectResponse|\Illuminate\Routing\Redirector
+     * @return Application|RedirectResponse|Redirector
      * @throws Exception
      */
-    public function authenticationResponse(Request $request, Assignment $assignment, User $user, LtiLaunch $ltiLaunch)
+    public function authenticationResponse(Assignment $assignment,
+                                           User       $user,
+                                           LtiLaunch  $ltiLaunch)
     {
+
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
@@ -105,9 +112,11 @@ class LTIController extends Controller
             $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $launch_id = $launch->get_launch_id();
 
-
-
-            $email = $launch->get_launch_data()['email'];
+            $email = $launch->get_launch_data()['email'] ?? null;
+            if (!$email) {
+                echo "This external tool can only be accessed by a valid student.  It looks like you're trying to access it in Test Student mode.";
+                exit;
+            }
 
             $lti_user = $user->where('email', $email)->first();
             if (!$lti_user) {
@@ -120,6 +129,7 @@ class LTIController extends Controller
                     'email_verified_at' => now(),
                 ]);
             }
+
 
             session()->put('lti_user_id', $lti_user->id);
 
@@ -153,7 +163,15 @@ class LTIController extends Controller
                     //enroll them in the course
                     $enrollments = $lti_user->enrollments->pluck('id')->toArray();
                     if (!in_array($course_id, $enrollments)) {
-                        $lti_user->enrollments()->attach(['course_id' => $course_id]);
+                        $section_id = DB::table('enrollments')->where('course_id', $course_id)
+                            ->select('section_id')
+                            ->first()
+                            ->section_id;
+                        $enrollment = new Enrollment();
+                        $enrollment->course_id = $course_id;
+                        $enrollment->section_id = $section_id;
+                        $enrollment->user_id = $lti_user->id;
+                        $enrollment->save();
                     }
                 }
                 return redirect("/init-lms-assignment/$linked_assignment->id");
@@ -163,9 +181,8 @@ class LTIController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            echo "There was an error logging you in via LTI.  Please try again by refreshing the page or contact us for assistance.";
+            echo "There was an error logging you in via LTI.  Please refresh the page and try again or contact us for assistance.";
         }
-
     }
 
     public function configure($launch_id)
