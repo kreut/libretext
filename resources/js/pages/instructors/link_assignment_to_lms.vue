@@ -3,10 +3,14 @@
     <b-alert :show="errorMessage !==''" variant="danger">
       <span class="font-weight-bold">{{ errorMessage }}</span>
     </b-alert>
+    <b-alert :show="showNoAssignments" variant="info">
+      <span class="font-weight-bold">You have no assignments that you can link to your LMS.</span>
+    </b-alert>
     <b-modal
       id="link-assignment"
       ref="modal"
       title="Link Assignment"
+      size="lg"
       @ok="linkAssignmentToLMS"
     >
       <p>
@@ -59,7 +63,8 @@ export default {
     assignmentId: 0,
     courseAssignments: [],
     courses: [],
-    assignments: []
+    assignments: [],
+    showNoAssignments: false
   }),
   created () {
     this.getLTIUser = getLTIUser
@@ -81,6 +86,10 @@ export default {
         const { data } = await axios.get('/api/courses/assignments')
         if (data.type === 'success') {
           this.courses = data.courses
+          if (!this.courses.length) {
+            this.showNoAssignments = true
+            return false
+          }
           this.courseId = this.courses[0]['value']
           this.assignments = data.assignments
           this.initCourseAssignments()
