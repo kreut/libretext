@@ -1191,22 +1191,26 @@ class AssignmentController extends Controller
                 $formatted_items['available_on'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assign_to_timing->available_from, Auth::user()->time_zone);
 
             } else {
+                $lms = $assignment->course->lms;
+                $formatted_items['lms'] = $lms;
                 $formatted_items['is_beta_assignment'] = $assignment->isBetaAssignment();
                 $formatted_items['course_end_date'] = $assignment->course->end_date;
                 $formatted_items['course_start_date'] = $assignment->course->start_date;
-                $formatted_items['assign_tos'] = $assignment->assignToGroups();
-                foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
-                    $available_from = $assign_to['available_from'];
-                    $due = $assign_to['due'];
-                    $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
-                    $final_submission_deadline = $assign_to['final_submission_deadline'];
-                    $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
-                    $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
-                    $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
-                    $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
-                    $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                if (!$lms) {
+                    $formatted_items['assign_tos'] = $assignment->assignToGroups();
+                    foreach ($formatted_items['assign_tos'] as $assign_to_key => $assign_to) {
+                        $available_from = $assign_to['available_from'];
+                        $due = $assign_to['due'];
+                        $formatted_items['formatted_late_policy'] = $this->formatLatePolicy($assignment, null);
+                        $final_submission_deadline = $assign_to['final_submission_deadline'];
+                        $formatted_items['assign_tos'][$assign_to_key]['status'] = $assignment->getStatus($available_from, $due);
+                        $formatted_items['assign_tos'][$assign_to_key]['available_from_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($available_from, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['available_from_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($available_from, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_date'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalDate($final_submission_deadline, Auth::user()->time_zone) : null;
+                        $formatted_items['assign_tos'][$assign_to_key]['final_submission_deadline_time'] = $final_submission_deadline ? $this->convertUTCMysqlFormattedDateToLocalTime($final_submission_deadline, Auth::user()->time_zone) : null;
+                        $formatted_items['assign_tos'][$assign_to_key]['due_date'] = $this->convertUTCMysqlFormattedDateToLocalDate($due, Auth::user()->time_zone);
+                        $formatted_items['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
+                    }
                 }
             }
             foreach ($formatted_items as $key => $value) {

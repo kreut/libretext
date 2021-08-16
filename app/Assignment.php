@@ -150,6 +150,7 @@ class Assignment extends Model
                     continue;
                 }
                 $assignments_info[$key] = $assignment->attributesToArray();
+                $assignments_info[$key]['is_in_lms_course'] = $assignment->course->lms;
                 $assignments_info[$key]['shown'] = $assignment->shown;
                 $assignments_info[$key]['is_beta_assignment'] = in_array($assignment->id, $course_beta_assignment_ids);
 
