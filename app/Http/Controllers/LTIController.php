@@ -85,7 +85,6 @@ class LTIController extends Controller
 
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
 
-
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
             ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri", $request->all())
             ->do_redirect();
@@ -93,7 +92,6 @@ class LTIController extends Controller
     }
 
     /**
-     * @param Request $request
      * @param Assignment $assignment
      * @param User $user
      * @param LtiLaunch $ltiLaunch
@@ -108,10 +106,15 @@ class LTIController extends Controller
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
-
             if ($launch->is_deep_link_launch()) {
-                $this->configure($launch->get_launch_id());
+                $resource = LTI\LTI_Deep_Link_Resource::new()
+                    ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
+                    ->set_title('Adapt');
+                // file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
+                $launch->get_deep_link()
+                    ->output_response_form([$resource]);
             }
+
             $resource_link_id = $launch->get_launch_data()['https://purl.imsglobal.org/spec/lti/claim/resource_link']['id'];
             $launch_id = $launch->get_launch_id();
 
@@ -177,6 +180,7 @@ class LTIController extends Controller
                         $enrollment->save();
                     }
                 }
+                dd($launch);
                 return redirect("/init-lms-assignment/$linked_assignment->id");
             } else {
                 return redirect("/instructors/link-assignment-to-lms/$resource_link_id");
@@ -200,7 +204,7 @@ class LTIController extends Controller
         $resource = LTI\LTI_Deep_Link_Resource::new()
             ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
             ->set_title('Adapt');
-        file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
+       // file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
         $launch->get_deep_link()
             ->output_response_form([$resource]);
     }
