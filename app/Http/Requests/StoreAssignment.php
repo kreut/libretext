@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 
 use App\Assignment;
+use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
 use App\Rules\IsValidPeriodOfTime;
@@ -50,17 +51,18 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed'){
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf','individual_assessment','both']);
         }
-        foreach ($this->assign_tos as $key => $assign_to) {
-            if ($this->late_policy !== 'not accepted') {
-                $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
-            }
-            $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
-            $rules['available_from_date_' . $key] = 'required|date';
-            $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
-            $rules['due_time_' . $key] = 'required|date_format:H:i:00';
-            $rules['groups_' . $key] = 'required';
-        }
-
+      if (!Course::find($this->course_id)->lms) {
+          foreach ($this->assign_tos as $key => $assign_to) {
+              if ($this->late_policy !== 'not accepted') {
+                  $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
+              }
+              $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
+              $rules['available_from_date_' . $key] = 'required|date';
+              $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
+              $rules['due_time_' . $key] = 'required|date_format:H:i:00';
+              $rules['groups_' . $key] = 'required';
+          }
+      }
         switch ($this->source) {
             case('a'):
                 $rules['default_points_per_question'] = 'required|integer|min:0|max:100';

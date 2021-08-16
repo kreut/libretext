@@ -534,6 +534,7 @@ class CourseController extends Controller
                 'start_date' => $course->start_date,
                 'end_date' => $course->end_date,
                 'public' => $course->public,
+                'lms' => $course->lms,
                 'alpha' => $course->alpha,
                 'is_beta_course' => $course->isBetaCourse(),
                 'beta_courses_info' => $course->betaCoursesInfo()];

@@ -37,6 +37,12 @@
       courses.
       Because of the tethering feature, Alpha courses cannot be deleted unless all associated Beta courses are deleted.
     </b-tooltip>
+    <b-tooltip target="lms_course_tooltip"
+               delay="250"
+    >
+      If you would like to serve your assignments through an LMS, we'll let your LMS handle assigning students and the
+      course gradebook.  Currently we support Canvas but will be expanding per instructor request.
+    </b-tooltip>
     <b-tooltip target="public_tooltip"
                delay="250"
     >
@@ -310,6 +316,27 @@
           </b-form-radio></span>
 
           <b-form-radio name="untether_beta_course" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        id="alpha"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="alpha"
+      >
+        <template slot="label">
+          LMS
+          <span id="lms_course_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.lms" stacked>
+          <b-form-radio name="alpha" value="1">
+            Yes
+          </b-form-radio>
+
+          <b-form-radio name="alpha" value="0">
             No
           </b-form-radio>
         </b-form-radio-group>

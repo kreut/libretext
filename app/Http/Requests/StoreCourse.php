@@ -34,7 +34,8 @@ class StoreCourse extends FormRequest
             'end_date' => 'required|date|after:start_date',
             'school' => new IsValidSchoolName(),
             'alpha' => Rule::in([0, 1]),
-            'public' => Rule::in([0, 1])
+            'public' => Rule::in([0, 1]),
+            'lms' => Rule::in([0, 1])
         ];
     }
 

@@ -624,7 +624,8 @@ class AssignmentController extends Controller
      */
 
     public
-    function store(StoreAssignment       $request, Assignment $assignment,
+    function store(StoreAssignment       $request,
+                   Assignment            $assignment,
                    AssignmentGroupWeight $assignmentGroupWeight,
                    Section               $section,
                    User                  $user,
@@ -643,11 +644,15 @@ class AssignmentController extends Controller
         try {
 
             $data = $request->validated();
-            $assign_tos = $request->assign_tos;
-            $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
-            if ($repeated_groups) {
-                $response['message'] = $repeated_groups;
-                return $response;
+
+            $lms = Course::find($request->course_id)->lms;
+            if (!$lms) {
+                $assign_tos = $request->assign_tos;
+                $repeated_groups = $this->groupsMustNotRepeat($assign_tos);
+                if ($repeated_groups) {
+                    $response['message'] = $repeated_groups;
+                    return $response;
+                }
             }
             $learning_tree_assessment = $request->assessment_type === 'learning tree';
             DB::beginTransaction();
@@ -680,14 +685,16 @@ class AssignmentController extends Controller
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
-                    'notifications' => $data['notifications'],
+                    'notifications' => !$lms ? $data['notifications'] : 0,
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
             if ($course->alpha) {
-                $beta_assign_tos[0] = $assign_tos[0];
-                $beta_assign_tos[0]['groups'] = [];
-                $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
+                if (!$lms) {
+                    $beta_assign_tos[0] = $assign_tos[0];
+                    $beta_assign_tos[0]['groups'] = [];
+                    $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
+                }
 
                 $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
                 foreach ($beta_courses as $beta_course) {
@@ -695,15 +702,21 @@ class AssignmentController extends Controller
                         'course_id' => $beta_course->id
                     ]);
                     $beta_assignment->save();
-                    $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+                    if (!$lms) {
+                        $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+                    }
                     BetaAssignment::create([
                         'id' => $beta_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
-                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+                    if (!$lms) {
+                        $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+                    }
                 }
             }
-            $this->addAssignTos($assignment, $assign_tos, $section, $user);
+            if (!$lms) {
+                $this->addAssignTos($assignment, $assign_tos, $section, $user);
+            }
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';
