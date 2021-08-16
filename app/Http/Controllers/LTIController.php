@@ -17,7 +17,7 @@ use Illuminate\Support\Facades\Gate;
 use \IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
-
+use Carbon\Carbon;
 
 class LTIController extends Controller
 {
@@ -180,7 +180,11 @@ class LTIController extends Controller
                         $enrollment->save();
                     }
                 }
-                dd($launch);
+                //TO DO --- why aren' these saved? is it the redirect?
+                session()->put('lti_user_id', $lti_user->id);
+                $due_date =  Carbon::now()->addHour()->toDateTimeString();
+                session()->put('lti_due_date',$due_date );
+
                 return redirect("/init-lms-assignment/$linked_assignment->id");
             } else {
                 return redirect("/instructors/link-assignment-to-lms/$resource_link_id");

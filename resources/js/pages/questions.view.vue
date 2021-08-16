@@ -3002,7 +3002,7 @@ export default {
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
-        if (this.user.role === 3 && !assignment.shown) {
+        if (this.user.role === 3 && !assignment.shown && !assignment.lms_resource_link_id) {
           this.showAssessmentClosedMessage = true
         }
         if (this.user.role === 3) {
