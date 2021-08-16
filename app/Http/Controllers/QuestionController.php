@@ -105,6 +105,8 @@ class QuestionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
+
+
             DB::beginTransaction();
             if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question) ) {
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question, $ltiLaunch, $ltiGradePassback);

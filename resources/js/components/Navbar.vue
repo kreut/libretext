@@ -29,7 +29,7 @@
         />
         <span v-if="isMe && (user !== null)">
         <router-link :to="{ name: 'login.as'}">
-          <b-button size="sm" variant="outline-primary">Admin</b-button>
+          <b-button size="sm" variant="outline-primary">Control Panel</b-button>
         </router-link>
       </span>
       </div>

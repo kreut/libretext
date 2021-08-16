@@ -3,7 +3,7 @@
     <div v-if="hasAccess">
       <div class="row">
         <div class="mt-2 mb-2">
-          <card title="Admin" class="properties-card mt-3">
+          <card title="Control Panel" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">

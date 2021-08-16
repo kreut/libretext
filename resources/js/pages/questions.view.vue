@@ -1939,7 +1939,7 @@ export default {
     refreshQuestionParent (message) {
       this.$noty.success(message)
     },
-    async reloadQuestionParent (questionId) {
+    async reloadQuestionParent (questionId, message) {
       try {
         const { data } = await axios.get(`/api/questions/${questionId}`)
         if (data.type !== 'success') {
@@ -1952,7 +1952,7 @@ export default {
         this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
         await this.changePage(this.currentPage)
         this.cacheIndex++
-        this.$noty.success('The question has been refreshed.')
+        this.$noty.success(message)
         console.log(this.cacheIndex)
       } catch (error) {
         this.$noty.error(error.message)

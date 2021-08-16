@@ -23,13 +23,13 @@ let instructor_paths = [
   { path: '/courses/:courseId/gradebook', name: 'gradebook.index', component: page('instructors/gradebook.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
 ]
-let admin_paths = [
-  { path: '/admin',
-    component: page('admin/index.vue'),
+let control_panel_paths = [
+  { path: '/control-panel',
+    component: page('control_panel/index.vue'),
     children: [
       { path: '', redirect: { name: 'login.as' } },
-      { path: 'login-as', name: 'login.as', component: page('admin/login.as.vue') },
-      { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('admin/refresh.question.requests.vue') }
+      { path: 'login-as', name: 'login.as', component: page('control_panel/login.as.vue') },
+      { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('control_panel/refresh.question.requests.vue') }
     ] }
 ]
 let general_paths  = [
@@ -88,4 +88,4 @@ let general_paths  = [
   { path: '*', component: page('errors/404.vue') }
 ]
 
-export default _.concat( [{ path: '/h5p', name: 'h5p', component: page('h5p.vue') }], general_paths, student_paths, instructor_paths, admin_paths)
+export default _.concat( [{ path: '/h5p', name: 'h5p', component: page('h5p.vue') }], general_paths, student_paths, instructor_paths, control_panel_paths)

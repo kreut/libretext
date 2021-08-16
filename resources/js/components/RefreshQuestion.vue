@@ -48,27 +48,37 @@
       </template>
     </b-modal>
     <b-modal
-      id="modal-question-exists-in-multiple-assignments"
-      ref="modalSubmissionsInOtherAssignment"
-      hide-footer
-      title="Question Used In Assignment"
-    >
-      Submissions in other assignment.
-    </b-modal>
-    <b-modal
       id="modal-question-has-submissions-in-this-assignment"
       ref="modalSubmissionsInThisAssignment"
       title="Question Used In Assignment"
     >
       <p>
-        You are trying to refresh a question in one of your assignments that already has student submissions. If you
-        refresh the question,
-        the original question will be removed from the assignment with your new question replacing it. As a result, any
-        student submissions
-        will be removed and students will subsequently receive no points for this question until they resubmit.
+        You are trying to refresh a question in one of your assignments that already has student submissions. If this is a material
+        change, we can refresh the question and remove current student submissions.</p>
+      <p>However, if the change is purely cosmetic, we can refresh while leaving student submissions intact.
       </p>
-      <p><span class="font-weight-bold font-italic">This action cannot be undone.</span></p>
-      <p>Are you sure that you would like to refresh this question?</p>
+      <b-form-group
+        id="refresh_option"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label="Refresh Option"
+        label-for="Refresh Option"
+      >
+        <b-form-radio-group class="mt-2"
+          v-model="refreshAndRemoveStudentSubmissions"
+          stacked
+        >
+          <b-form-radio :value="true">
+            Refresh and remove student submissions
+          </b-form-radio>
+          <b-form-radio :value="false">
+            Refresh but do not remove student submissions
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-alert :show="refreshAndRemoveStudentSubmissions">
+        <span class="font-weight-bold font-italic">Removing student submissions cannot be undone</span>
+      </b-alert>
       <template #modal-footer>
         <b-button
           size="sm"
@@ -82,7 +92,7 @@
           size="sm"
           class="float-right"
           :disabled="processingQuestionRefresh"
-          @click="processingQuestionRefresh=true;refreshQuestion(true)"
+          @click="processingQuestionRefresh=true;refreshQuestion(refreshAndRemoveStudentSubmissions)"
         >
           <span v-if="!processingQuestionRefresh">Refresh Question</span>
           <span v-if="processingQuestionRefresh"><b-spinner small type="grow"/>
@@ -131,6 +141,7 @@ export default {
     }
   },
   data: () => ({
+    refreshAndRemoveStudentSubmissions: true,
     natureOfUpdateForEditForm: new Form({
       nature_of_update: ''
     }),
@@ -162,7 +173,7 @@ export default {
           this.$noty.error(data.message)
           return false
         }
-        await this.reloadQuestionParent(this.questionId)
+        await this.reloadQuestionParent(this.questionId, data.message)
       } catch (error) {
         this.$noty.error(error.message)
       }
