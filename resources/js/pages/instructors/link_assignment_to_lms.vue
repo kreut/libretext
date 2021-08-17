@@ -4,15 +4,21 @@
       <span class="font-weight-bold">{{ errorMessage }}</span>
     </b-alert>
     <b-alert :show="showNoAssignments" variant="info">
-      <span class="font-weight-bold">You have no assignments that you can link to your LMS.</span>
+      <span class="font-weight-bold">
+        You can link assignments from courses where you have indicated that they
+        are LMS courses under Course Properties in your Adapt Account.
+        Currently, you have no assignments that you can link to your LMS.</span>
     </b-alert>
     <b-modal
       id="link-assignment"
       ref="modal"
-      title="Link Assignment"
+      title="Link Assignment To LMS"
       size="lg"
-      @ok="linkAssignmentToLMS"
     >
+      <p>
+        Below you can find the list of courses which you have enabled as LMS courses in the Course Properties panel
+        within Adapt.
+      </p>
       <p>
         Once your assignment is linked, your students will be able to complete the assignment within your LMS with
         scores automatically passed back from Adapt to your LMS.
@@ -48,6 +54,16 @@
           </b-col>
         </b-form-row>
       </b-form-group>
+      <template #modal-footer>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="linkAssignmentToLMS"
+        >
+          Link Assignment
+        </b-button>
+      </template>
     </b-modal>
   </div>
 </template>
@@ -85,7 +101,8 @@ export default {
       try {
         const { data } = await axios.get('/api/courses/assignments')
         if (data.type === 'success') {
-          this.courses = data.courses
+          this.courses = data.courses.filter(course => parseInt(course.lms) === 1)
+          console.log(this.courses)
           if (!this.courses.length) {
             this.showNoAssignments = true
             return false

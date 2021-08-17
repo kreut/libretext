@@ -234,15 +234,18 @@ class CourseController extends Controller
                 ->where('courses.user_id', $request->user()->id)
                 ->select(DB::raw('courses.id AS course_id'),
                     DB::raw('courses.name AS course_name'),
+                    'lms',
                     DB::raw('assignments.id AS assignment_id'),
                     DB::raw('assignments.name AS assignment_name'))
                 ->orderBy('courses.start_date', 'desc')
                 ->get();
             $course_ids = [];
-            foreach ($results as $key => $value) {
+            foreach ($results as $value) {
                 $course_id = $value->course_id;
                 if (!in_array($course_id, $course_ids)) {
-                    $courses[] = ['value' => $course_id, 'text' => $value->course_name];
+                    $courses[] = ['value' => $course_id,
+                                'text' => $value->course_name,
+                            'lms' => $value->lms];
                     $course_ids[] = $course_id;
                 }
                 $assignments[$course_id][] = ['value' => $value->assignment_id, 'text' => $value->assignment_name];
@@ -309,6 +312,7 @@ class CourseController extends Controller
             $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
             $imported_course->shown = 0;
             $imported_course->alpha = 0;
+            $imported_course->lms = 0;
             $imported_course->school_id = $school['last_school_id'];
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
