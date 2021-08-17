@@ -102,84 +102,93 @@
         <div v-else>
           <b-card header="default" header-html="Sections">
             <b-card-text>
-              <div v-if="user.email !== 'commons@libretexts.org'">
-                <p>
-                  This course currently runs from
-                  <span class="font-weight-bold"
-                  >{{ $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}</span> to
-                  <span class="font-weight-bold">{{
-                      $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
-                    }}</span>.
-                  The access codes will only be valid within the start and end dates of
-                  this course. If you need to change these dates, you can always do so
-                  <router-link :to="{name: 'course_properties.general_info'}">
-                    here
-                  </router-link>
-                  .
-                </p>
-                <b-table striped hover :fields="fields" :items="sections">
-                  <template v-slot:head(crn)>
-                    CRN
-                    <b-icon id="crn-tooltip"
-                            v-b-tooltip.hover
-                            class="text-muted"
-                            icon="question-circle"
-                    />
-                    <b-tooltip target="crn-tooltip" triggers="hover">
-                      The Course Reference Number is the number that identifies a specific section of a course being
-                      offered.
-                    </b-tooltip>
-                  </template>
-                  <template v-slot:cell(access_code)="data">
-                    {{ data.item.access_code ? data.item.access_code : 'None Available' }}
-                  </template>
-                  <template v-slot:cell(crn)="data">
-                    {{ data.item.crn ? data.item.crn : 'None Provided' }}
-                  </template>
-                  <template v-slot:cell(actions)="data">
-                    <div class="mb-0">
-                    <span class="pr-1" @click="initEditSection(data.item)">
-                      <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
-                                 delay="500"
-                      >
-                        Edit Section
-                      </b-tooltip>
-                      <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
-                    </span>
-                      <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
-                      <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
-                                 delay="500"
-                      >
-                        Delete Section
-                      </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
-                    </span>
-                      <span class="text-info">
-                      <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                 delay="500"
-                      >
-
-                        You can refresh the access code if you would like to render the current access code invalid.
-
-                      </b-tooltip>
-                      <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                           variant="dark"
-                                           @click="refreshAccessCode(data.item.id)"
-                      />
-                      </span>
-                    </div>
-                  </template>
-                </b-table>
-                <b-button class="float-right" size="sm" variant="primary" @click="initAddSection">
-                  Add Section
-                </b-button>
-              </div>
-              <div v-else>
-                <b-alert :show="true" variant="info">
-                  <span class="font-weight-bold">You cannot invite students to courses in the Commons.</span>
+              <div v-if="lms">
+                <b-alert variant="info" :show="true">
+              <span class="font-weight-bold font-italic">
+                This course is run through an LMS.  Sections should be created within the LMS.
+              </span>
                 </b-alert>
               </div>
+              <div v-else>
+                <div v-if="user.email !== 'commons@libretexts.org'">
+                  <p>
+                    This course currently runs from
+                    <span class="font-weight-bold">{{
+                        $moment(courseStartDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                      }}</span> to
+                    <span class="font-weight-bold">{{
+                        $moment(courseEndDate, 'YYYY-MM-DD').format('MMMM DD, YYYY')
+                      }}</span>.
+                    The access codes will only be valid within the start and end dates of
+                    this course. If you need to change these dates, you can always do so
+                    <router-link :to="{name: 'course_properties.general_info'}">
+                      here
+                    </router-link>
+                    .
+                  </p>
+                  <b-table striped hover :fields="fields" :items="sections">
+                    <template v-slot:head(crn)>
+                      CRN
+                      <b-icon id="crn-tooltip"
+                              v-b-tooltip.hover
+                              class="text-muted"
+                              icon="question-circle"
+                      />
+                      <b-tooltip target="crn-tooltip" triggers="hover">
+                        The Course Reference Number is the number that identifies a specific section of a course being
+                        offered.
+                      </b-tooltip>
+                    </template>
+                    <template v-slot:cell(access_code)="data">
+                      {{ data.item.access_code ? data.item.access_code : 'None Available' }}
+                    </template>
+                    <template v-slot:cell(crn)="data">
+                      {{ data.item.crn ? data.item.crn : 'None Provided' }}
+                    </template>
+                    <template v-slot:cell(actions)="data">
+                      <div class="mb-0">
+                        <span class="pr-1" @click="initEditSection(data.item)">
+                          <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
+                                     delay="500"
+                          >
+                            Edit Section
+                          </b-tooltip>
+                          <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil"/>
+                        </span>
+                        <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
+                          <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
+                                     delay="500"
+                          >
+                            Delete Section
+                          </b-tooltip>
+                          <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash"/>
+                        </span>
+                        <span class="text-info">
+                          <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                     delay="500"
+                          >
 
+                            You can refresh the access code if you would like to render the current access code invalid.
+
+                          </b-tooltip>
+                          <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
+                                               variant="dark"
+                                               @click="refreshAccessCode(data.item.id)"
+                          />
+                        </span>
+                      </div>
+                    </template>
+                  </b-table>
+                  <b-button class="float-right" size="sm" variant="primary" @click="initAddSection">
+                    Add Section
+                  </b-button>
+                </div>
+                <div v-else>
+                  <b-alert :show="true" variant="info">
+                    <span class="font-weight-bold">You cannot invite students to courses in the Commons.</span>
+                  </b-alert>
+                </div>
+              </div>
             </b-card-text>
           </b-card>
         </div>
@@ -201,6 +210,7 @@ export default {
     Loading
   },
   data: () => ({
+    lms: false,
     courseId: '',
     courseStartDate: '',
     courseEndDate: '',
@@ -317,6 +327,7 @@ export default {
       this.sections = data.sections
       this.courseStartDate = data.course_start_date
       this.courseEndDate = data.course_end_date
+      this.lms = data.lms
     },
     async refreshAccessCode (sectionId) {
       try {

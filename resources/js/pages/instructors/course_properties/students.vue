@@ -31,9 +31,8 @@
             type="text"
             :class="{ 'is-invalid': unenrollStudentForm.errors.has('confirmation') }"
             @keydown="unenrollStudentForm.errors.clear('confirmation')"
-          >
-          </b-form-input>
-          <has-error :form="unenrollStudentForm" field="confirmation"></has-error>
+          />
+          <has-error :form="unenrollStudentForm" field="confirmation"/>
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -88,7 +87,7 @@
       </b-form>
       <template #modal-footer>
         <span v-if="processingMoveStudent">
-                    <b-spinner small type="grow"/>
+          <b-spinner small type="grow"/>
                     Processing...
                   </span>
         <b-button
@@ -137,7 +136,7 @@
           <font-awesome-icon :icon="copyIcon" @click="doCopy(`email-${data.item.id}}`)"/>
         </span>
                 </template>
-                <template v-slot:cell(actions)="data">
+                <template v-slot:cell(actions)="data" v-if="!lms">
                   <b-icon v-show="sectionOptions.length>1" icon="truck" @click="initMoveStudent(data.item)"/>
                   <b-icon icon="trash" @click="initUnenrollStudent(data.item)"/>
                 </template>
@@ -173,6 +172,7 @@ export default {
     FontAwesomeIcon
   },
   data: () => ({
+    lms: false,
     processingMoveStudent: false,
     copyIcon: faCopy,
     studentToUnenroll: {},
@@ -191,17 +191,7 @@ export default {
     enrollments: [],
     sectionOptions: [],
     graderFormType: 'addGrader',
-    fields: [
-      'name',
-      'email',
-      'enrollment_date',
-      {
-        key: 'section',
-        label: 'Section'
-      },
-      'actions'
-
-    ],
+    fields: [],
     isLoading: true,
     students: []
   }),
@@ -288,6 +278,17 @@ export default {
         }
         this.enrollments = data.enrollments
         this.sectionOptions = data.sections
+        this.fields = ['name',
+          'email',
+          'enrollment_date',
+          {
+            key: 'section',
+            label: 'Section'
+          }]
+        this.lms = data.lms
+        if (!this.lms){
+          this.fields.push('actions')
+        }
       } catch (error) {
         this.$noty.error(error.message)
       }

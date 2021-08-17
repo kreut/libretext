@@ -11,70 +11,82 @@
       />
       <div v-if="!isLoading && user.role === 2">
         <b-card header="default" header-html="Assignment Group Weights">
+
           <b-card-text>
-            <p>
-              Tell Adapt how you would like to weight your assignment groups which are currently associated with your
-              assignments.
-            </p>
-            <p v-if="hasExtraCredit">
-              Your assignment weights must sum to 100. The Extra Credit will be applied after the score is computed
-              using the assignment weights. For example,
-              if a student has an average of 90 and you provide up to 3 points for extra credit, the student can receive
-              up to 93 points total for the course.
-            </p>
-            <b-alert :show="weightsTotal !== 100 || weightHas0Entry" variant="info">
+            <div v-if="lms">
+              <b-alert variant="info" :show="true">
+                <span class="font-weight-bold font-italic">
+                  This course is run through an LMS.  You should use the LMS to assign weights to assignment groups.
+                </span>
+              </b-alert>
+            </div>
+            <div v-else>
+              <p>
+                Tell Adapt how you would like to weight your assignment groups which are currently associated with your
+                assignments.
+              </p>
+              <p v-if="hasExtraCredit">
+                Your assignment weights must sum to 100. The Extra Credit will be applied after the score is computed
+                using the assignment weights. For example,
+                if a student has an average of 90 and you provide up to 3 points for extra credit, the student can
+                receive
+                up to 93 points total for the course.
+              </p>
+              <b-alert :show="weightsTotal !== 100 || weightHas0Entry" variant="info">
               <span class="font-weight-bold font-italic">
-                <span v-show="weightsTotal !== 100"> The total of your assignment group weights does not sum to 100.</span>
+                <span v-show="weightsTotal !== 100"
+                > The total of your assignment group weights does not sum to 100.</span>
                 <span v-show="weightHas0Entry">  At least one of your weights has a 0 entry.</span>
               </span>
-            </b-alert>
-            <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
-                     class="border border-1 rounded"
-            >
-              <template v-slot:cell(assignment_group_weight)="data">
-                <b-col lg="5">
+              </b-alert>
+              <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
+                       class="border border-1 rounded"
+              >
+                <template v-slot:cell(assignment_group_weight)="data">
+                  <b-col lg="5">
+                    <b-form-input
+                      :id="`assignment_group_id_${data.item.id}}`"
+                      v-model="assignmentGroupWeightsForm[data.item.id]"
+                      type="text"
+                      :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
+                      @keydown="assignmentGroupWeightsFormWeightError = ''"
+                      @keyup="validateWeightsSumTo100"
+                    />
+                  </b-col>
+                </template>
+              </b-table>
+
+              <b-form-group v-if="extraCreditId>0"
+                            id="extra_credit"
+                            label-cols-sm="5"
+                            label-cols-lg="4"
+                            label-for="Extra Credit Weight"
+              >
+                <template slot="label">
+                  <b-icon-star-fill varient="info" variant="warning"/>
+                  Extra Credit Weight
+                </template>
+                <b-col lg="3">
                   <b-form-input
-                    :id="`assignment_group_id_${data.item.id}}`"
-                    v-model="assignmentGroupWeightsForm[data.item.id]"
+                    id="extra_credit"
+                    v-model="assignmentGroupWeightsForm[extraCreditId]"
                     type="text"
                     :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
                     @keydown="assignmentGroupWeightsFormWeightError = ''"
-                    @keyup="validateWeightsSumTo100"
                   />
                 </b-col>
-              </template>
-            </b-table>
+              </b-form-group>
 
-            <b-form-group v-if="extraCreditId>0"
-                          id="extra_credit"
-                          label-cols-sm="5"
-                          label-cols-lg="4"
-                          label-for="Extra Credit Weight"
-            >
-              <template slot="label">
-                <b-icon-star-fill varient="info" variant="warning" />
-                Extra Credit Weight
-              </template>
-              <b-col lg="3">
-                <b-form-input
-                  id="extra_credit"
-                  v-model="assignmentGroupWeightsForm[extraCreditId]"
-                  type="text"
-                  :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
-                  @keydown="assignmentGroupWeightsFormWeightError = ''"
-                />
-              </b-col>
-            </b-form-group>
-
-            <div class="ml-5">
-              <b-form-invalid-feedback :state="false">
-                {{ assignmentGroupWeightsFormWeightError }}
-              </b-form-invalid-feedback>
+              <div class="ml-5">
+                <b-form-invalid-feedback :state="false">
+                  {{ assignmentGroupWeightsFormWeightError }}
+                </b-form-invalid-feedback>
+              </div>
+              <b-button class="float-right" variant="primary" size="sm" @click="submitAssignmentGroupWeights">
+                Update Assignment Group Weights
+              </b-button>
             </div>
           </b-card-text>
-          <b-button class="float-right" variant="primary" size="sm" @click="submitAssignmentGroupWeights">
-            Update Assignment Group Weights
-          </b-button>
         </b-card>
       </div>
     </div>
@@ -94,6 +106,7 @@ export default {
     Loading
   },
   data: () => ({
+    lms: false,
     weightHas0Entry: false,
     weightsTotal: 0,
     course: {},
@@ -140,6 +153,7 @@ export default {
           return false
         }
         this.assignmentGroupWeights = data.assignment_group_weights
+        this.lms = data.lms
 
         let formInputs = {}
         for (let i = 0; i < data.assignment_group_weights.length; i++) {

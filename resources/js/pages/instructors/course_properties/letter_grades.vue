@@ -31,7 +31,7 @@
             :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
             @keydown="letterGradesForm.errors.clear('letter_grades')"
           />
-          <has-error :form="letterGradesForm" field="letter_grades" />
+          <has-error :form="letterGradesForm" field="letter_grades"/>
           <div slot="modal-footer">
             <b-btn @click="$bvModal.hide('modal-letter-grades-editor')">
               Cancel
@@ -46,75 +46,84 @@
         </b-modal>
         <b-card header="default" header-html="Letter Grades">
           <b-card-text>
-            <p>
-              Let us know how you would like to convert your students' weighted scores into letter grades or grade
-              categories.
-              Some examples might be "A+, A, A-,..." or
-              "Excellent, Good, Unsatisfactory". You can use the
-              <b-link @click="openLetterGradesEditorModal">
-                letter grade editor
-              </b-link>
+            <div v-if="lms">
+              <b-alert variant="info" :show="true">
+                <span class="font-weight-bold font-italic">
+                  This course is run through an LMS.  You should use the LMS to determine how you determine letter grades.
+                </span>
+              </b-alert>
+            </div>
+            <div v-else>
+              <p>
+                Let us know how you would like to convert your students' weighted scores into letter grades or grade
+                categories.
+                Some examples might be "A+, A, A-,..." or
+                "Excellent, Good, Unsatisfactory". You can use the
+                <b-link @click="openLetterGradesEditorModal">
+                  letter grade editor
+                </b-link>
 
-              to customize the letter grades.
-            </p>
-            <p>
-              <span class="font-italic">Show z-scores: </span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="showZScores"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitShowZScores()"
+                to customize the letter grades.
+              </p>
+              <p>
+                <span class="font-italic">Show z-scores: </span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="showZScores"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitShowZScores()"
+                />
+                <br>
+                <span class="font-italic">Release weighted averages: </span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="studentsCanViewWeightedAverage"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitShowWeightedAverage()"
+                />
+                <br>
+                <span class="font-italic">Release letter grades: </span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="letterGradesReleased"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitReleaseLetterGrades()"
+                />
+                <br>
+                <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
+                <toggle-button
+                  class="mt-2"
+                  :width="55"
+                  :value="Boolean(this.roundScores)"
+                  :sync="true"
+                  :font-size="14"
+                  :margin="4"
+                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :labels="{checked: 'Yes', unchecked: 'No'}"
+                  @change="submitRoundScores()"
+                />
+              </p>
+              <b-table striped
+                       hover
+                       :sticky-header="true"
+                       :fields="letterGradeFields" :items="letterGradeItems"
               />
-              <br>
-              <span class="font-italic">Release weighted averages: </span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="studentsCanViewWeightedAverage"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitShowWeightedAverage()"
-              />
-              <br>
-              <span class="font-italic">Release letter grades: </span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="letterGradesReleased"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitReleaseLetterGrades()"
-              />
-              <br>
-              <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
-              <toggle-button
-                class="mt-2"
-                :width="55"
-                :value="Boolean(this.roundScores)"
-                :sync="true"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#28a745', unchecked: '#6c757d'}"
-                :labels="{checked: 'Yes', unchecked: 'No'}"
-                @change="submitRoundScores()"
-              />
-            </p>
-            <b-table striped
-                     hover
-                     :sticky-header="true"
-                     :fields="letterGradeFields" :items="letterGradeItems"
-            />
+            </div>
           </b-card-text>
         </b-card>
       </div>
@@ -137,6 +146,7 @@ export default {
     Loading
   },
   data: () => ({
+    lms: false,
     showZScores: false,
     isLoading: true,
     letterGradeFields: [
@@ -349,6 +359,7 @@ export default {
       this.letterGradesReleased = Boolean(data.course.letter_grades_released)
       this.studentsCanViewWeightedAverage = Boolean(data.course.students_can_view_weighted_average)
       this.showZScores = Boolean(data.course.show_z_scores)
+      this.lms = data.course.lms
     }
   }
 }

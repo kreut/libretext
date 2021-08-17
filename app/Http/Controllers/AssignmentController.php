@@ -689,12 +689,15 @@ class AssignmentController extends Controller
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
             );
+            if ($lms) {
+                //assign tos won't be used since the LMS will take care of assigning.  However, in the event they
+                //switch back to a non-LMS, something needs to be there
+                $assign_tos = $this->_defaultAssigntos($course->id);
+            }
             if ($course->alpha) {
-                if (!$lms) {
-                    $beta_assign_tos[0] = $assign_tos[0];
-                    $beta_assign_tos[0]['groups'] = [];
-                    $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
-                }
+                $beta_assign_tos[0] = $assign_tos[0];
+                $beta_assign_tos[0]['groups'] = [];
+                $beta_assign_tos[0]['groups'][0]['text'] = 'Everybody';
 
                 $beta_courses = $betaCourse->where('alpha_course_id', $course->id)->get();
                 foreach ($beta_courses as $beta_course) {
@@ -702,21 +705,21 @@ class AssignmentController extends Controller
                         'course_id' => $beta_course->id
                     ]);
                     $beta_assignment->save();
-                    if (!$lms) {
-                        $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
-                    }
+
+                    $beta_assign_tos[0]['groups'][0]['value']['course_id'] = $beta_course->id;
+
                     BetaAssignment::create([
                         'id' => $beta_assignment->id,
                         'alpha_assignment_id' => $assignment->id
                     ]);
-                    if (!$lms) {
-                        $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
-                    }
+
+                    $this->addAssignTos($beta_assignment, $beta_assign_tos, $section, $user);
+
                 }
             }
-            if (!$lms) {
-                $this->addAssignTos($assignment, $assign_tos, $section, $user);
-            }
+
+            $this->addAssignTos($assignment, $assign_tos, $section, $user);
+
             $this->addAssignmentGroupWeight($assignment, $data['assignment_group_id'], $assignmentGroupWeight);
             DB::commit();
             $response['type'] = 'success';
@@ -757,6 +760,25 @@ class AssignmentController extends Controller
             }
         }
 
+
+    }
+
+    private function _defaultAssignTos(int $course_id)
+    {
+        $default_assigntos[0] = [
+            'groups' => [
+                ['value' =>
+                    ['course_id' => $course_id],
+                    'text' => 'Everybody'
+                ]
+            ],
+            'selectedGroup' => null,
+            'available_from_date' => Carbon::now()->isoFormat('YYYY-MM-DD'),
+            'available_from_time' => '09:00:00',
+            'due_date' => Carbon::now()->addDay()->isoFormat('YYYY-MM-DD'),
+            'due_time' => '09:00:00'
+        ];
+        return $default_assigntos;
 
     }
 
