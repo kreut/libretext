@@ -51,7 +51,6 @@ class StoreAssignment extends FormRequest
         if ($this->assessment_type === 'delayed'){
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf','individual_assessment','both']);
         }
-      if (!Course::find($this->course_id)->lms) {
           foreach ($this->assign_tos as $key => $assign_to) {
               if ($this->late_policy !== 'not accepted') {
                   $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
@@ -62,7 +61,6 @@ class StoreAssignment extends FormRequest
               $rules['due_time_' . $key] = 'required|date_format:H:i:00';
               $rules['groups_' . $key] = 'required';
           }
-      }
         switch ($this->source) {
             case('a'):
                 $rules['default_points_per_question'] = 'required|integer|min:0|max:100';

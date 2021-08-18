@@ -3,9 +3,8 @@
 namespace App\Custom;
 
 use App\LtiRegistration;
-use App\LtiKey;
 use App\LtiDeployment;
-use \IMSGlobal\LTI;
+use Overrides\IMSGlobal\LTI;
 
 class LTIDatabase implements LTI\Database
 {

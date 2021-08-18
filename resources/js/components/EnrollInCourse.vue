@@ -41,7 +41,13 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 export default {
-  props: { getEnrolledInCourses: { type: Function, default: function () {} } },
+  props: {
+    getEnrolledInCourses: {
+      type: Function,
+      default: function () {
+      }
+    }
+  },
   data: () => ({
     inIFrame: false,
     form: new Form({

@@ -5,7 +5,7 @@ namespace App;
 use App\Custom\LTIDatabase;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
-use \IMSGlobal\LTI;
+use Overrides\IMSGlobal\LTI;
 
 class LtiGradePassback extends Model
 {

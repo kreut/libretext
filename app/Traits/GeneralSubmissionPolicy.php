@@ -33,12 +33,7 @@ trait GeneralSubmissionPolicy
          * return $response;
          * }**/
 
-        if ($assignment->lms_resource_link_id) {
-            //let the LMS handle it
-            $available_from = Carbon::now()->toDateTimeString();
-            $due = Carbon::now()->addHour()->toDateTimeString();
 
-        } else {
             $assign_to_timing = $assignment->assignToTimingByUser();
             if (!$assign_to_timing) {
                 $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
@@ -47,7 +42,7 @@ trait GeneralSubmissionPolicy
             $available_from = $assign_to_timing->available_from;
             $due = $assign_to_timing->due;
 
-        }
+
 
         if ($assignment->assessment_type === 'clicker') {
             $assignment_question = DB::table('assignment_question')

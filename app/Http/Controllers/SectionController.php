@@ -122,7 +122,6 @@ class SectionController extends Controller
             $response['sections'] = $course->sections;
             $response['course_start_date'] = $course->start_date;
             $response['course_end_date'] = $course->end_date;
-            $response['lms'] = $course->lms;
             $response['type'] = 'success';
 
         } catch (Exception $e) {

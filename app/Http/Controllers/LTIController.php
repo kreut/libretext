@@ -14,7 +14,7 @@ use Illuminate\Http\Request;
 use Illuminate\Routing\Redirector;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
-use \IMSGlobal\LTI;
+use Overrides\IMSGlobal\LTI;
 use App\Custom\LTIDatabase;
 use App\Assignment;
 use Carbon\Carbon;
@@ -106,6 +106,8 @@ class LTIController extends Controller
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
+
+
             if ($launch->is_deep_link_launch()) {
                 $resource = LTI\LTI_Deep_Link_Resource::new()
                     ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
@@ -127,8 +129,8 @@ class LTIController extends Controller
             $lti_user = $user->where('email', $email)->first();
             if (!$lti_user) {
                 $lti_user = User::create([
-                    'first_name' => $launch->get_launch_data()['first_name'],
-                    'last_name' => $launch->get_launch_data()['given_name'],
+                    'first_name' => $launch->get_launch_data()['given_name'],
+                    'last_name' => $launch->get_launch_data()['family_name'],
                     'email' => $email,
                     'role' => 3,
                     'time_zone' => 'America/Los_Angeles',
@@ -167,7 +169,7 @@ class LTIController extends Controller
 
                     $course_id = $linked_assignment->course_id;
                     //enroll them in the course
-                    $enrollments = $lti_user->enrollments->pluck('id')->toArray();
+                   /* $enrollments = $lti_user->enrollments->pluck('id')->toArray();
                     if (!in_array($course_id, $enrollments)) {
                         $section_id = DB::table('enrollments')->where('course_id', $course_id)
                             ->select('section_id')
@@ -178,7 +180,7 @@ class LTIController extends Controller
                         $enrollment->section_id = $section_id;
                         $enrollment->user_id = $lti_user->id;
                         $enrollment->save();
-                    }
+                    }*/
                 }
                 //TO DO --- why aren' these saved? is it the redirect?
                 session()->put('lti_user_id', $lti_user->id);
@@ -187,6 +189,7 @@ class LTIController extends Controller
 
                 return redirect("/init-lms-assignment/$linked_assignment->id");
             } else {
+
                 return redirect("/instructors/link-assignment-to-lms/$resource_link_id");
             }
         } catch (Exception $e) {
