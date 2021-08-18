@@ -44,7 +44,7 @@ class LibretextController extends Controller
                 if (!is_dir($storage_path . $library)) {
                     mkdir($storage_path . $library);
                 }
-                if (!file_exists($file)) {
+             /**   if (!file_exists($file)) {
                     $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
                     if ($is_efs) {
                         if (!file_exists("{$efs_dir}libretext.config.php")) {
@@ -54,7 +54,19 @@ class LibretextController extends Controller
                             'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
                     }
                     file_put_contents($file, $contents);
-                }
+                }**/
+
+                    $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
+                    if ($is_efs) {
+                        if (!file_exists("{$efs_dir}libretext.config.php")) {
+                            file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
+                        }
+                        $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
+                            'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
+                    }
+                    file_put_contents($file, $contents);
+
+
                 require_once($file);
 
             }
