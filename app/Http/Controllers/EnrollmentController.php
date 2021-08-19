@@ -300,7 +300,7 @@ class EnrollmentController extends Controller
      * @param Enrollment $enrollment
      * @param Section $Section
      * @param AssignToUser $assignToUser
-     * @return array
+     * @return array|\Illuminate\Contracts\Foundation\Application|\Illuminate\Contracts\Routing\ResponseFactory|\Illuminate\Http\Response
      * @throws Exception
      */
     public
@@ -320,7 +320,14 @@ class EnrollmentController extends Controller
         try {
             DB::beginTransaction();
             $data = $request->validated();
-            $section = $Section->where('access_code', '=', $data['access_code'])->first();
+            $section = $Section->where('access_code', '=', $data['access_code'])
+                                ->where('access_code', '<>', null)
+                                ->first();
+            if (!$section){
+                //not sure I even need this but I'm being extra cautious
+                $response = '{"message":"The given data was invalid.","errors":{"access_code":["The selected access code is invalid."]}}';
+                return response($response,422);
+            }
             if ($section->course->enrollments->isNotEmpty()) {
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
                 if (in_array($request->user()->id, $enrolled_user_ids)) {

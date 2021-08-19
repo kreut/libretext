@@ -23,6 +23,6 @@ class StoreEnrollment extends FormRequest
      */
     public function rules()
     {
-       return ['access_code' => 'exists:sections,access_code'];
+       return ['access_code' => 'required|exists:sections,access_code'];
     }
 }
