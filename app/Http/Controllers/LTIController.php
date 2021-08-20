@@ -207,7 +207,7 @@ class LTIController extends Controller
             echo "Not a deep link.";
             exit;
         }
-        file_put_contents(base_path() . '//lti_log.text', "Launch id: $launch_id", FILE_APPEND);
+        //file_put_contents(base_path() . '//lti_log.text', "Launch id: $launch_id", FILE_APPEND);
         $resource = LTI\LTI_Deep_Link_Resource::new()
             ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
             ->set_title('Adapt');

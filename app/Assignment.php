@@ -35,10 +35,26 @@ class Assignment extends Model
         $assignToGroup->save();
     }
 
+    /**
+     * @return array
+     */
+    public function ltiLaunchesByUserId(): array
+    {
+
+        $lti_launches = DB::table('lti_launches')->where('assignment_id', $this->id)->get();
+
+        $lti_launches_by_user_id = [];
+        foreach ($lti_launches as $lti_launch) {
+            $lti_launches_by_user_id[$lti_launch->user_id] = $lti_launch;
+        }
+        return $lti_launches_by_user_id;
+    }
+
     public function assignToTimings()
     {
         return $this->hasMany(AssignToTiming::class);
     }
+
 
     public function assignToTimingByUser($key = '')
     {

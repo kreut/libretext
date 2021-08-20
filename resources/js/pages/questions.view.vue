@@ -3023,8 +3023,7 @@ export default {
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
 
-        if (this.user.role === 3 && (!assignment.available || !assignment.shown) && !assignment.lms_resource_link_id)
-        {
+        if (this.user.role === 3 && (!assignment.available || !assignment.shown)) {
           this.availableOn = assignment.available_on
           this.assignmentShown = assignment.shown
           this.cannotViewAssessmentMessage = true

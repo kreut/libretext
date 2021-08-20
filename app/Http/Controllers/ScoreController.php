@@ -5,13 +5,11 @@ namespace App\Http\Controllers;
 use App\AssignmentGroup;
 use App\Enrollment;
 use App\Extension;
-use App\Grader;
 use App\Http\Requests\UpdateScoresRequest;
+use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use App\LtiGradePassback;
-use App\LtiLaunch;
 use App\Score;
 use App\Course;
-use App\Section;
 use App\Solution;
 use App\SubmissionFile;
 use App\User;
@@ -1008,7 +1006,8 @@ class ScoreController extends Controller
      * @param Assignment $assignment
      * @param User $user
      * @param Score $score
-     * @return mixed
+     * @param LtiGradePassback $ltiGradePassback
+     * @return array
      * @throws Exception
      */
     public
@@ -1016,7 +1015,6 @@ class ScoreController extends Controller
                     Assignment       $assignment,
                     User             $user,
                     Score            $score,
-                    LtiLaunch        $ltiLaunch,
                     LtiGradePassback $ltiGradePassback)
     {
 
@@ -1051,7 +1049,14 @@ class ScoreController extends Controller
                 ['user_id' => $user->id, 'assignment_id' => $assignment->id],
                 ['score' => $request->score]
             );
-            $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $user->id, $request->score, $ltiLaunch);
+
+            $ltiLaunch = DB::table('lti_launches')
+                ->where('assignment_id', $assignment->id)
+                ->where('user_id', $user->id)
+                ->first();
+            if ($ltiLaunch) {
+                ProcessPassBackByUserIdAndAssignment::dispatch($request->score, $ltiLaunch);
+            }
             DB::commit();
             $response['type'] = $score_updated ? 'success' : 'info';
             $response['message'] = $score_updated

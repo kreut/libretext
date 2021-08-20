@@ -33,11 +33,11 @@ class LTI_Assignments_Grades_Service {
         }
 
         // Place '/scores' before url params
-        file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $lineitem, FILE_APPEND);
+       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $lineitem, FILE_APPEND);
         $pos = strpos($score_url, '?');
         $score_url = $pos === false ? $score_url . '/scores' : substr_replace($score_url, '/scores', $pos, 0);
-        file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $score_url, FILE_APPEND);
-        file_put_contents('/var/www/dev.adapt/lti_log.text', 'Grade: ' . strval($grade), FILE_APPEND);
+       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Line Item: ' . $score_url, FILE_APPEND);
+       // file_put_contents('/var/www/dev.adapt/lti_log.text', 'Grade: ' . strval($grade), FILE_APPEND);
         return $this->service_connector->make_service_request(
             $this->service_data['scope'],
             'POST',
@@ -59,9 +59,9 @@ class LTI_Assignments_Grades_Service {
             null,
             'application/vnd.ims.lis.v2.lineitemcontainer+json'
         );
-        file_put_contents('/var/www/dev.adapt/lti_log.text', "Line items: " .print_r($line_items,true),FILE_APPEND );
+       // file_put_contents('/var/www/dev.adapt/lti_log.text', "Line items: " .print_r($line_items,true),FILE_APPEND );
         foreach ($line_items['body'] as $line_item) {
-            file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID:"  .$new_line_item->get_resource_id(), FILE_APPEND);
+           // file_put_contents('/var/www/dev.adapt/lti_log.text', "Resource ID:"  .$new_line_item->get_resource_id(), FILE_APPEND);
 
             if (empty($new_line_item->get_resource_id()) || (isset($line_item['resourceId']) && $line_item['resourceId'] == $new_line_item->get_resource_id())) {
                 if (empty($new_line_item->get_tag()) || $line_item['tag'] == $new_line_item->get_tag()) {

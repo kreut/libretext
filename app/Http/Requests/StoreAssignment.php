@@ -48,6 +48,10 @@ class StoreAssignment extends FormRequest
             'notifications' => Rule::in([0, 1]),
         ];
 
+        if ($this->libretexts_url){
+            $rules['libretexts_url'] = 'url';
+        }
+
         if ($this->assessment_type === 'delayed'){
             $rules['file_upload_mode'] = Rule::in(['compiled_pdf','individual_assessment','both']);
         }
@@ -121,6 +125,7 @@ class StoreAssignment extends FormRequest
             $messages["available_from_time_{$key}.required"] = 'This time is required: H:i:00';
             $messages["due_time_{$key}.required"] = 'This time is required: H:i:00';
         }
+        $messages['libretexts_url.url'] = "The URL should be of the form https://some-library.libretexts.org/some-page.";
         return $messages;
     }
 }

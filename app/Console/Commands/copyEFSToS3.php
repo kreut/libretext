@@ -44,14 +44,10 @@ class copyEFSToS3 extends Command
         $file= $this->argument('file');
         $dir = '/mnt/local';
         try {
-            $filename = $dir . '/' . $file;
-            echo $filename;
-            echo (print_r(scandir($dir),1));
-            $contents =  file_get_contents($filename);
-            Storage::disk('s3')->put('efs_contents.txt',$contents);
-            echo $contents;
-            echo "\r\n$dir/$file";
 
+            $file_contents = file_get_contents($dir . '/' . $file);
+            Storage::disk('s3')->put('efs_file_contents.txt', $file_contents);
+            echo $file_contents;
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);

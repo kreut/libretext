@@ -149,13 +149,10 @@ export async function editAssignment (assignment) {
   this.form.public_description = assignment.public_description
   this.form.private_description = assignment.private_description
   this.form.assessment_type = this.assessmentType = assignment.assessment_type
-
-  if (!assignment.is_in_lms_course) {
-    this.form.assign_tos = assignment.assign_tos
-    for (let i = 0; i < assignment.assign_tos.length; i++) {
-      this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
-      this.form.assign_tos[i].selectedGroup = null
-    }
+  this.form.assign_tos = assignment.assign_tos
+  for (let i = 0; i < assignment.assign_tos.length; i++) {
+    this.form.assign_tos[i].groups = this.form.assign_tos[i].formatted_groups
+    this.form.assign_tos[i].selectedGroup = null
   }
 
   this.form.min_time_needed_in_learning_tree = assignment.min_time_needed_in_learning_tree
@@ -183,6 +180,7 @@ export async function editAssignment (assignment) {
   this.form.scoring_type = assignment.scoring_type
   this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
   this.form.external_source_points = assignment.source === 'x' ? assignment.external_source_points : ''
+  this.form.libretexts_url = assignment.libretexts_url
   this.form.notifications = assignment.notifications
   this.$bvModal.show('modal-assignment-properties')
 }

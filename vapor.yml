@@ -7,6 +7,7 @@ environments:
         runtime: docker
         database: production
         cache: production
+        queue-concurrency: 1
         domain: adapt.libretexts.org
         network: vapor-network-1622550320
         deploy:
@@ -23,6 +24,7 @@ environments:
           rate-limit: 1000
         database: staging
         cache: staging
+        queue-concurrency: 1
         domain: staging-adapt.libretexts.org
         network: vapor-network-1622550320
         deploy:

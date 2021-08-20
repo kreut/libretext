@@ -147,6 +147,13 @@
       The minimum time a student must be in a Learning Tree before they can earn a percent of the
       original question points.
     </b-tooltip>
+    <b-tooltip target="libretexts_url_tooltip"
+               delay="250"
+    >
+      If your assignment is integrated into a Libretexts, provide the URL for the start of the assignment.  When your
+      students open the assignment in your LMS, they will be re-directed to this URL.
+    </b-tooltip>
+
     <b-tooltip target="percent_earned_for_exploring_learning_tree_tooltip"
                delay="250"
     >
@@ -843,6 +850,27 @@
           Off
         </b-form-radio>
       </b-form-radio-group>
+    </b-form-group>
+    <b-form-group
+      v-if="lms"
+      id="libretexts_url"
+      label-cols-sm="4"
+      label-cols-lg="3"
+      label-for="libretexts_url"
+    >
+      <template slot="label">
+        Libretexts URL <span id="libretexts_url_tooltip" class="text-muted"><b-icon
+          icon="question-circle"
+        /></span>
+      </template>
+      <b-form-textarea
+        id="libretexts_url"
+        v-model="form.libretexts_url"
+        :class="{ 'is-invalid': form.errors.has('libretexts_url') }"
+        rows="4"
+        max-rows="4"
+      />
+      <has-error :form="form" field="libretexts_url" />
     </b-form-group>
     <div v-for="(assignTo,index) in form.assign_tos"
          :key="index"

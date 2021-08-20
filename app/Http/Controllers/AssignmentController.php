@@ -40,6 +40,23 @@ class AssignmentController extends Controller
     use S3;
 
 
+    public function startPageInfo(Assignment $assignment)
+    {
+        $response['type'] = 'error';
+        try {
+            $libretexts_url = $assignment->libretexts_url;
+            $response['adapt_launch'] = !$libretexts_url;
+            $response['start_page_url'] = $libretexts_url;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignment start page information.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getCommonsCourseAssignments(Course $course)
     {
         $response['type'] = 'error';
@@ -619,6 +636,7 @@ class AssignmentController extends Controller
      * @param AssignmentGroupWeight $assignmentGroupWeight
      * @param Section $section
      * @param User $user
+     * @param BetaCourse $betaCourse
      * @return array
      * @throws Exception
      */
@@ -682,6 +700,7 @@ class AssignmentController extends Controller
                     'late_deduction_application_period' => $this->getLateDeductionApplicationPeriod($request, $data),
                     'include_in_weighted_average' => $data['include_in_weighted_average'],
                     'course_id' => $course->id,
+                    'libretexts_url' => $data['libretexts_url'] ?? null,
                     'notifications' => $data['notifications'],
                     'order' => $assignment->getNewAssignmentOrder($course)
                 ]
@@ -1189,7 +1208,7 @@ class AssignmentController extends Controller
                 'can_view_assignment_statistics' => $can_view_assignment_statistics,
                 'number_of_questions' => count($assignment->questions),
                 'number_of_randomized_questions_chosen' => $assignment->number_of_randomized_assessments
-                    ?: "none"
+                    ?: "N/A"
             ];
             if (auth()->user()->role === 3) {
                 $extension = DB::table('extensions')

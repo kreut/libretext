@@ -34,7 +34,8 @@
               </p>
               <p>
                 <span class="font-weight-bold">Late Policy: </span>
-                <span class="font-italic">{{ assignment.formatted_late_policy ? assignment.formatted_late_policy : 'None.' }}</span>
+                <span class="font-italic"
+                >{{ assignment.formatted_late_policy ? assignment.formatted_late_policy : 'None.' }}</span>
               </p>
             </b-card-text>
           </b-card>
@@ -44,13 +45,23 @@
             :no-border-collapse="true"
             :items="items"
           >
-            <template v-slot:cell(value)="data" v-if="!lms">
+            <template v-slot:cell(value)="data">
               <span v-if="data.item.property ==='Assigned To'">
                 <span v-if="assignment.assign_tos.length ===1">{{ assignment.assign_tos[0].groups.toString() }}</span>
                 <b-button v-if="assignment.assign_tos.length > 1" variant="primary" size="sm" @click="viewAssignTos">View Assigned To</b-button>
               </span>
               <span v-if="data.item.property !=='Assigned To'">
                 {{ data.item.value }}
+              </span>
+              <span v-if="data.item.property ==='Libretexts URL'">
+                <span v-if="assignment.libretexts_url">
+                  <a :href="assignment.libretexts_url" target="_blank">{{
+                      assignment.libretexts_url.slice(0, 40)
+                    }}...</a>
+                </span>
+                  <span v-if="!assignment.libretexts_url">
+                    N/A. This LMS assignment is served through Adapt.
+                    </span>
               </span>
             </template>
           </b-table>
@@ -61,6 +72,7 @@
 </template>
 
 <script>
+import _ from 'lodash'
 import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
@@ -98,6 +110,7 @@ export default {
     this.getAssignmentSummary()
   },
   methods: {
+
     getPropertiesView () {
       this.$router.push(`/instructors/assignments/${this.assignmentId}/information/properties`)
     },
@@ -120,32 +133,30 @@ export default {
         this.courseEndDate = this.assignment.course_end_date
         this.courseStartDate = this.assignment.course_start_date
         this.lms = this.assignment.lms
-        if (!this.lms) {
-          this.items = [{
-            property: 'Assigned To',
-            value: ''
-          }]
-          if (this.assignment.assign_tos.length === 1) {
-            this.items.push(
-              {
-                property: 'Available On',
-                value: this.$moment(this.assignment.assign_tos[0].available_from_date + this.assignment.assign_tos[0].available_from_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
-              })
-            this.items.push({
-              property: 'Due',
-              value: this.$moment(this.assignment.assign_tos[0].due_date + this.assignment.assign_tos[0].due_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+        this.items = [{
+          property: 'Assigned To',
+          value: ''
+        }]
+        if (this.assignment.assign_tos.length === 1) {
+          this.items.push(
+            {
+              property: 'Available On',
+              value: this.$moment(this.assignment.assign_tos[0].available_from_date + this.assignment.assign_tos[0].available_from_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
             })
-            if (this.assignment.late_policy !== 'not accepted') {
-              this.items.push({
-                property: 'Final Submission Deadline',
-                value: this.$moment(this.assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
-              })
-            }
+          this.items.push({
+            property: 'Due',
+            value: this.$moment(this.assignment.assign_tos[0].due_date + this.assignment.assign_tos[0].due_time, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+          })
+          if (this.assignment.late_policy !== 'not accepted') {
+            this.items.push({
+              property: 'Final Submission Deadline',
+              value: this.$moment(this.assignment.assign_tos[0].final_submission_deadline, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A')
+            })
           }
         }
 
         this.items.push(
-          { property: 'Assessment Type', value: this.assignment.assessment_type },
+          { property: 'Assessment Type', value: _.startCase(this.assignment.assessment_type) },
           {
             property: 'Students Can View Assignment Statistics',
             value: this.students_can_view_assignment_statistics ? 'Yes' : 'No'
@@ -169,6 +180,13 @@ export default {
             value: this.assignment.default_clicker_time_to_submit
           })
         }
+        if (this.lms) {
+          this.items.push({
+            property: 'Libretexts URL',
+            value: ''
+          })
+        }
+        console.log(this.items)
       } catch (error) {
         this.$noty.error(error.message)
       }

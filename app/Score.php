@@ -4,6 +4,7 @@ namespace App;
 
 
 use App\Http\Requests\UpdateScoresRequest;
+use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Exceptions\Handler;
@@ -57,6 +58,8 @@ class Score extends Model
                     ->whereNotIn('user_id', $request->user_ids)
                     ->get();
             DB::beginTransaction();
+            $lti_launches_by_user_id = $assignment->ltiLaunchesByUserId();
+
             foreach ($submissions as $submission) {
                 $adjustment = $new_score - $submission->score;
                 $submission->score = $new_score;
@@ -72,6 +75,9 @@ class Score extends Model
                 }
                 $assignment_score->score += $adjustment;
                 $assignment_score->save();
+                if (isset($lti_launches_by_user_id[$submission->user_id])) {
+                    ProcessPassBackByUserIdAndAssignment::dispatch($assignment_score->score, $lti_launches_by_user_id[$submission->user_id]);
+                }
             }
             DB::commit();
             $response['type'] = 'success';
@@ -88,9 +94,7 @@ class Score extends Model
 
     public function updateAssignmentScore(int $student_user_id,
                                           int $assignment_id,
-                                          string $assessment_type,
-                                          LtiLaunch $ltiLaunch,
-                                          LtiGradePassback $ltiGradePassback)
+                                          string $assessment_type)
     {
 
         //files are for extra credit
@@ -152,8 +156,14 @@ class Score extends Model
             ->updateOrInsert(
                 ['user_id' => $student_user_id, 'assignment_id' => $assignment_id],
                 ['score' => $assignment_score, 'updated_at' => Carbon::now()]);
-        $ltiGradePassback->passBackByUserIdAndAssignmentId($assignment, $student_user_id, $assignment_score, $ltiLaunch);
 
+        $lti_launch = DB::table('lti_launches')
+            ->where('assignment_id', $assignment->id)
+            ->where('user_id',  $student_user_id)
+            ->first();
+        if ($lti_launch) {
+            ProcessPassBackByUserIdAndAssignment::dispatch($assignment_score, $lti_launch);
+        }
     }
 
     public function getUserScoresByAssignment(Course $course, User $user)
