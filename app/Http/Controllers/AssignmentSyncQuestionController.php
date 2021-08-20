@@ -61,18 +61,18 @@ class AssignmentSyncQuestionController extends Controller
     use Statistics;
 
 
-    public function updateIFrameProperties(Request $request,
-                                           Assignment $assignment,
-                                           Question $question,
+    public function updateIFrameProperties(Request                $request,
+                                           Assignment             $assignment,
+                                           Question               $question,
                                            AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
-          $authorized = Gate::inspect('updateIFrameProperties', [$assignmentSyncQuestion, $assignment, $question]);
-          if (!$authorized->allowed()) {
-              $response['message'] = $authorized->message();
-              return $response;
-          }
+        $authorized = Gate::inspect('updateIFrameProperties', [$assignmentSyncQuestion, $assignment, $question]);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         try {
             $item = $request->item;
             if (!in_array($item, ['assignment', 'submission', 'attribution'])) {
@@ -787,14 +787,28 @@ class AssignmentSyncQuestionController extends Controller
         }
         try {
             DB::beginTransaction();
+
+            $points = $assignment->default_points_per_question;
+            $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+            $open_ended_text_editor = $assignment->default_open_ended_text_editor;
+            if ($assignment->isBetaAssignment()) {
+                $alpha_assignment_id = BetaAssignment::find($assignment->id)->alpha_assignment_id;
+                $alpha_assignment_question = DB::table('assignment_question')
+                    ->where('assignment_id', $alpha_assignment_id)
+                    ->where('question_id', $question->id)
+                    ->first();
+                $points = $alpha_assignment_question->points;
+                $open_ended_submission_type = $alpha_assignment_question->open_ended_submission_type;
+                $open_ended_text_editor = $alpha_assignment_question->open_ended_text_editor;
+            }
             $assignment_question_id = DB::table('assignment_question')
                 ->insertGetId([
                     'assignment_id' => $assignment->id,
                     'question_id' => $question->id,
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                    'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                    'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                    'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
+                    'points' => $points, //don't need to test since tested already when creating an assignment
+                    'open_ended_submission_type' => $open_ended_submission_type,
+                    'open_ended_text_editor' => $open_ended_text_editor]);
             $assignmentSyncQuestion->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
             $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question->id, 'add');
             DB::commit();
@@ -1107,9 +1121,9 @@ class AssignmentSyncQuestionController extends Controller
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $open_ended_text_editors[$question->question_id] = $question->open_ended_text_editor;
                 $open_ended_default_texts[$question->question_id] = $question->open_ended_default_text;
-                $iframe_showns[$question->question_id] = ['attribution_information_shown_in_iframe' =>(Boolean) $question->attribution_information_shown_in_iframe,
-                'submission_information_shown_in_iframe' => (Boolean) $question->submission_information_shown_in_iframe,
-                'assignment_information_shown_in_iframe' =>(Boolean)  $question->assignment_information_shown_in_iframe];
+                $iframe_showns[$question->question_id] = ['attribution_information_shown_in_iframe' => (boolean)$question->attribution_information_shown_in_iframe,
+                    'submission_information_shown_in_iframe' => (boolean)$question->submission_information_shown_in_iframe,
+                    'assignment_information_shown_in_iframe' => (boolean)$question->assignment_information_shown_in_iframe];
 
                 $points[$question->question_id] = $question->points;
                 $solutions_by_question_id[$question->question_id] = false;//assume they don't exist
@@ -1146,28 +1160,27 @@ class AssignmentSyncQuestionController extends Controller
                 ->get();
 
             $at_least_one_submission = DB::table('submissions')
-                ->join('users','submissions.user_id','=','users.id')
+                ->join('users', 'submissions.user_id', '=', 'users.id')
                 ->where('assignment_id', $assignment->id)
-                ->where('users.fake_student',0)
+                ->where('users.fake_student', 0)
                 ->select('question_id')
                 ->groupBy('question_id')
                 ->get();
 
             $at_least_one_submission_file = DB::table('submission_files')
-                ->join('users','submission_files.user_id','=','users.id')
+                ->join('users', 'submission_files.user_id', '=', 'users.id')
                 ->where('assignment_id', $assignment->id)
-                ->where('users.fake_student',0)
+                ->where('users.fake_student', 0)
                 ->select('question_id')
                 ->groupBy('question_id')
                 ->get();
             $questions_with_at_least_one_submission = [];
-            foreach ($at_least_one_submission as $question){
+            foreach ($at_least_one_submission as $question) {
                 $questions_with_at_least_one_submission[] = $question->question_id;
             }
-            foreach ($at_least_one_submission_file as $question){
+            foreach ($at_least_one_submission_file as $question) {
                 $questions_with_at_least_one_submission[] = $question->question_id;
             }
-
 
 
             $submissions_by_question_id = [];
@@ -1248,7 +1261,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
                 $iframe_technology = true;//assume there's a technology --- will be set to false once there isn't
                 $technology_src = '';
-                $assignment->questions[$key]['loaded_question_updated_at'] =  $question->updated_at->timestamp;
+                $assignment->questions[$key]['loaded_question_updated_at'] = $question->updated_at->timestamp;
                 $assignment->questions[$key]['library'] = $question->library;
                 $assignment->questions[$key]['page_id'] = $question->page_id;
                 $assignment->questions[$key]['title'] = $question->title;
