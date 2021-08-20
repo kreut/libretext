@@ -47,12 +47,12 @@
       >
         <template slot="label">
           CRN
-          <b-icon id="crn-tooltip-2"
+          <b-icon id="crn-tooltip"
                   v-b-tooltip.hover
                   class="text-muted"
                   icon="question-circle"
           />
-          <b-tooltip target="crn-tooltip-2" triggers="hover">
+          <b-tooltip target="crn-tooltip" triggers="hover">
             The Course Reference Number is the number that identifies a specific section of a course being offered.
           </b-tooltip>
         </template>
