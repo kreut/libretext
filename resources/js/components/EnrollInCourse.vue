@@ -41,7 +41,7 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 
 export default {
-  props: { getEnrolledInCourses: Function },
+  props: { getEnrolledInCourses: { type: Function, default: function () {} } },
   data: () => ({
     inIFrame: false,
     form: new Form({
@@ -91,7 +91,9 @@ export default {
         }
         console.log(data)
       } catch (error) {
-        this.$noty.error(error.message)
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        }
       }
     },
     async enrollInCourseViaIFrame () {
