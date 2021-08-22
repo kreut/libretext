@@ -644,7 +644,9 @@ class ScoreController extends Controller
 
     }
 
-    public function getAssignmentQuestionScoresByUser(Assignment $assignment, Score $score)
+    public function getAssignmentQuestionScoresByUser(Assignment $assignment,
+                                                      Score      $score,
+                                                      Enrollment $enrollment)
     {
 
         $response['type'] = 'error';
@@ -654,9 +656,8 @@ class ScoreController extends Controller
             return $response;
         }
         try {
-
-            $enrolled_users = [];
-            foreach ($assignment->course->enrolledUsers as $key => $value) {
+            $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection(request()->user()->role, $assignment->course, 0);
+            foreach ($viewable_users as $value) {
                 $enrolled_users[$value->id] = "{$value->last_name}, {$value->first_name}";
             }
 
@@ -928,13 +929,13 @@ class ScoreController extends Controller
         $enrolled_users = $course->enrolledUsers;
         $course_section_enrollments_by_user = $course->sectionEnrollmentsByUser();
 
-        $ferpa_mode = (int) request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
+        $ferpa_mode = (int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
         $faker = \Faker\Factory::create();
         foreach ($enrolled_users as $user) {
             $first_name = $ferpa_mode ? $faker->firstName : $user->first_name;
-            $last_name =  $ferpa_mode  ? $faker->lastName : $user->last_name;
-            $student_id =  $ferpa_mode  ? rand(pow(10, 4), pow(10, 4) - 1) : $user->student_id;
-            $email =  $ferpa_mode  ? $faker->email : $user->email;
+            $last_name = $ferpa_mode ? $faker->lastName : $user->last_name;
+            $student_id = $ferpa_mode ? rand(pow(10, 4), pow(10, 4) - 1) : $user->student_id;
+            $email = $ferpa_mode ? $faker->email : $user->email;
             $enrolled_users_by_id[$user->id] = ['name' => "$first_name $last_name",
                 'email' => $email,
                 'crn' => $course_section_enrollments_by_user[$user->id]['crn'],
