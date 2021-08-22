@@ -249,6 +249,17 @@ class Question extends Model
             }
         }
 
+        $dom = new \DOMDocument();
+        $dom->loadHTML($body);
+
+        $selector = new \DOMXPath($dom);
+        foreach($selector->query('//div[contains(attribute::class, "adapt-hidden")]') as $e ) {
+            $e->parentNode->removeChild($e);
+        }
+
+       // $body = $doc->saveHTML($doc->documentElement);
+        $rootnode = $dom->getELementsByTagName('body')->item(0);
+        $body =  $this->DOMinnerHTML($rootnode);
         try {
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
@@ -264,7 +275,6 @@ class Question extends Model
 
                 $non_technology = str_replace($technology_iframe, '', $body);
                 $has_non_technology = trim($non_technology) !== '';
-
 
                 if ($has_non_technology) {
                     //Frankenstein type problem
@@ -315,6 +325,18 @@ class Question extends Model
         }
 
 
+    }
+    function DOMinnerHTML(\DOMNode $element)
+    {
+        $innerHTML = "";
+        $children  = $element->childNodes;
+
+        foreach ($children as $child)
+        {
+            $innerHTML .= $element->ownerDocument->saveHTML($child);
+        }
+
+        return $innerHTML;
     }
 
 }
