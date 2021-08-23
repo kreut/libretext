@@ -283,6 +283,14 @@ class TetheredCoursesTest extends TestCase
     public function when_you_approve_adding_an_assessment_it_gets_stored_in_your_course()
     {
 
+        DB::table('assignment_question')->insert([
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'points' => 10,
+            'order' => 1,
+            'open_ended_submission_type' => '0'
+        ]);
+
         DB::table('beta_course_approvals')->insert(['beta_assignment_id' => $this->beta_assignment->id,
             'beta_question_id' => $this->question->id,
             'beta_learning_tree_id' => 0,
