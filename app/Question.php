@@ -224,6 +224,9 @@ class Question extends Model
             $technology_and_tags = $Libretext->getTechnologyAndTags($page_info);
             $contents = $Libretext->getContentsByPageId($page_id);
             $body = $contents['body'][0];
+            if (!$body) {
+                throw new exception ("This page has no HTML.");
+            }
         } catch (Exception $e) {
 
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
@@ -239,6 +242,9 @@ class Question extends Model
                 $contents = $Libretext->getBodyFromPrivatePage($page_id);
                 $body = $contents->body;
                 $body = $body[0];
+                if (!$body) {
+                    throw new exception ("This page has no HTML.");
+                }
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
@@ -248,18 +254,17 @@ class Question extends Model
                 exit;
             }
         }
-
         $dom = new \DOMDocument();
         $dom->loadHTML($body);
 
         $selector = new \DOMXPath($dom);
-        foreach($selector->query('//div[contains(attribute::class, "hidden-adapt")]') as $e ) {
+        foreach ($selector->query('//div[contains(attribute::class, "hidden-adapt")]') as $e) {
             $e->parentNode->removeChild($e);
         }
 
-       // $body = $doc->saveHTML($doc->documentElement);
+        // $body = $doc->saveHTML($doc->documentElement);
         $rootnode = $dom->getELementsByTagName('body')->item(0);
-        $body =  $this->DOMinnerHTML($rootnode);
+        $body = $this->DOMinnerHTML($rootnode);
         try {
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
@@ -326,13 +331,13 @@ class Question extends Model
 
 
     }
+
     function DOMinnerHTML(\DOMNode $element)
     {
         $innerHTML = "";
-        $children  = $element->childNodes;
+        $children = $element->childNodes;
 
-        foreach ($children as $child)
-        {
+        foreach ($children as $child) {
             $innerHTML .= $element->ownerDocument->saveHTML($child);
         }
 
