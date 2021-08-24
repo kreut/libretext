@@ -1021,7 +1021,7 @@
               </div>
 
               <div v-if="showQuestion">
-                <div class="border border-gray p-0">
+                <div :class="nonTechnologyClass">
                   <div v-if="questions[currentPage-1].non_technology">
                     <iframe
                       :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
@@ -1113,7 +1113,7 @@
                     </div>
                   </div>
                   <div v-if="isOpenEndedTextSubmission && user.role === 3">
-                    <div class="mt-3">
+                    <div class="mt-1">
                       <ckeditor
                         ref="textSubmissionEditor"
                         :key="questions[currentPage-1].id"
@@ -1808,9 +1808,18 @@ export default {
     questionId: false,
     originalOpenEndedSubmissionType: ''
   }),
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
+  computed: {
+    ...mapGetters({
+      user: 'auth/user'
+    }),
+    nonTechnologyClass: function () {
+      return {
+        border: !this.isOpenEndedTextSubmission,
+        'border-gray': !this.isOpenEndedTextSubmission,
+        'p-0': !this.isOpenEndedTextSubmission
+      }
+    }
+  },
   watch: {
     openEndedSubmissionType: function (newVal, oldVal) {
       this.originalOpenEndedSubmissionType = oldVal
