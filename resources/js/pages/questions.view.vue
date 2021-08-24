@@ -1638,7 +1638,8 @@ export default {
     plainEditorConfig: {
       toolbar: [],
       removePlugins: 'elementspath',
-      resize_enabled: false
+      resize_enabled: false,
+      height: 100
     },
     richEditorConfig: {
       toolbar: [
