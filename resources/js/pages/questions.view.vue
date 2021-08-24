@@ -1026,6 +1026,7 @@
                     <iframe
                       :key="`non-technology-iframe-${currentPage}-${cacheIndex}`"
                       v-resize="{ log: false }"
+                      style="height: 10px"
                       width="100%"
                       :src="questions[currentPage-1].non_technology_iframe_src"
                       frameborder="0"
