@@ -253,7 +253,7 @@ class Question extends Model
         $dom->loadHTML($body);
 
         $selector = new \DOMXPath($dom);
-        foreach($selector->query('//div[contains(attribute::class, "adapt-hidden")]') as $e ) {
+        foreach($selector->query('//div[contains(attribute::class, "hidden-adapt")]') as $e ) {
             $e->parentNode->removeChild($e);
         }
 
