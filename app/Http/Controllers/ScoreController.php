@@ -656,6 +656,7 @@ class ScoreController extends Controller
             return $response;
         }
         try {
+            $enrolled_users = [];
             $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection(request()->user()->role, $assignment->course, 0);
             foreach ($viewable_users as $value) {
                 $enrolled_users[$value->id] = "{$value->last_name}, {$value->first_name}";

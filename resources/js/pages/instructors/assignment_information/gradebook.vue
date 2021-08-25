@@ -9,16 +9,24 @@
                color="#007BFF"
                background="#FFFFFF"
       />
-      <PageTitle v-if="!isLoading" title="Assignment Gradebook" />
-      <b-table
-        striped
-        hover
-        responsive
-        sticky-header="800px"
-        :no-border-collapse="true"
-        :fields="fields"
-        :items="items"
-      />
+      <div v-if="!isLoading">
+        <PageTitle title="Assignment Gradebook"/>
+        <b-table
+          v-show="items.length"
+          striped
+          hover
+          responsive
+          sticky-header="800px"
+          :no-border-collapse="true"
+          :fields="fields"
+          :items="items"
+        />
+        <b-alert :show="!items.length">
+          <span class="font-weight-bold font-italic">
+            This course has no enrolled users so there is no gradebook to show.
+          </span>
+        </b-alert>
+      </div>
     </div>
   </div>
 </template>
