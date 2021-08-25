@@ -1278,7 +1278,9 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['clicker_status'] = $clicker_status[$question->id];
                 $assignment->questions[$key]['clicker_time_left'] = $clicker_time_left[$question->id];
                 $assignment->questions[$key]['points'] = $points[$question->id];
-                $assignment->questions[$key]['mindtouch_url'] = "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
+                $assignment->questions[$key]['mindtouch_url'] = $request->user()->role === 3
+                    ? ''
+                    : "https://{$question->library}.libretexts.org/@go/page/{$question->page_id}";
 
                 $response_info = $this->getResponseInfo($assignment, $extension, $Submission, $submissions_by_question_id, $question_technologies, $question->id);
 
@@ -1522,7 +1524,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 if ($iframe_technology) {
                     $assignment->questions[$key]->iframe_id = $this->createIframeId();
-                    $assignment->questions[$key]->technology_iframe = $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT);
+                    //don't return if not available yet!
+                    $assignment->questions[$key]->technology_iframe = !(Auth::user()->role === 3 && !Auth::user()->fake_student) || ($assignment->shown && time() > strtotime($assignment->assignToTimingByUser('available_from')))
+                        ? $this->formatIframeSrc($question['technology_iframe'], $assignment->questions[$key]->iframe_id, $problemJWT)
+                        : '';
                     $assignment->questions[$key]->technology_src = Auth::user()->role === 2 ? $technology_src : '';
 
                 }

@@ -915,6 +915,7 @@ class AssignmentController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
+        $is_fake_student = Auth::user()->fake_student;
         try {
             $assignment = Assignment::find($assignment->id);
             $can_view_assignment_statistics = Auth::user()->role === 2 || (Auth::user()->role === 3 && $assignment->students_can_view_assignment_statistics);
@@ -927,6 +928,8 @@ class AssignmentController extends Controller
                 'time_left' => Auth::user()->role === 3 ? $this->getTimeLeft($assignment) : '',
                 'late_policy' => $assignment->late_policy,
                 'past_due' => Auth::user()->role === 3 ? time() > strtotime($assignment->assignToTimingByUser('due')) : '',
+                'available' => !(Auth::user()->role === 3 && !$is_fake_student) || time() > strtotime($assignment->assignToTimingByUser('available_from')),
+                'available_on' => (Auth::user()->role === 3 && !$is_fake_student) ? $this->convertUTCMysqlFormattedDateToLocalDateAndTime($assignment->assignToTimingByUser('available_from'), Auth::user()->time_zone) : '',
                 'total_points' => $this->getTotalPoints($assignment),
                 'source' => $assignment->source,
                 'default_clicker_time_to_submit' => $assignment->default_clicker_time_to_submit,
@@ -936,7 +939,7 @@ class AssignmentController extends Controller
                 'show_points_per_question' => $assignment->show_points_per_question,
                 'solutions_released' => $assignment->solutions_released,
                 'show_scores' => $assignment->show_scores,
-                'shown' => $assignment->shown,
+                'shown' => !(Auth::user()->role === 3 && !$is_fake_student) || $assignment->shown,
                 'submission_count_percent_decrease' => $assignment->submission_count_percent_decrease,
                 'scoring_type' => $assignment->scoring_type,
                 'students_can_view_assignment_statistics' => $assignment->students_can_view_assignment_statistics,
