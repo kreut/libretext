@@ -64,7 +64,11 @@ class Handler extends ExceptionHandler
         $endpoint = request()->path();
         $request = json_encode(request()->all());
         $dontReportFiles = in_array($file, ['dns-query']);
-        $dontReportEndpoints = in_array($endpoint, ['api/jsonws/invoke', 'Autodiscover/Autodiscover.xml']);
+        $dontReportEndpoints = in_array($endpoint, [
+            'api/jsonws/invoke',
+            'Autodiscover/Autodiscover.xml',
+            'api/oauth/libretexts/callback'
+        ]);
         $dontReportRequests = strpos($request, '{"0x":["androxgh0st"]}') !== false;
         $dontReports = $logoutError || $dontReportException || $dontReportFiles || $dontReportEndpoints || $dontReportRequests;
 
