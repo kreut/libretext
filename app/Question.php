@@ -255,9 +255,11 @@ class Question extends Model
             }
         }
         $dom = new \DOMDocument();
+        libxml_use_internal_errors(true);
         $dom->loadHTML($body);
-
+        libxml_clear_errors();
         $selector = new \DOMXPath($dom);
+
         foreach ($selector->query('//div[contains(attribute::class, "hidden-adapt")]') as $e) {
             $e->parentNode->removeChild($e);
         }
