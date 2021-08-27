@@ -167,7 +167,7 @@ class AssignmentController extends Controller
                 return $response;
             }
 
-            if (in_array($assessment_type, ['real time', 'clicker']) && $open_ended !== null) {
+            if ($assessment_type == 'clicker' && $open_ended !== null) {
                 $response['message'] = "You can't switch to a $assessment_type assessment type until you remove the open-ended questions from the assignment.";
                 return $response;
             }
@@ -1474,7 +1474,7 @@ class AssignmentController extends Controller
                     $message = "This assignment already has non-Learning Tree assessments in it.  If you would like to change the assessment type, please first remove those assessments.";
                     break;
                 case('delayed'):
-                    if (in_array($new_assessment_type, ['real time', 'clicker'])) {
+                    if ($new_assessment_type == 'clicker') {
                         $new_assessment_type = ucfirst($new_assessment_type);
                         foreach ($assignment->questions as $question) {
                             if (!$question->technology_iframe) {

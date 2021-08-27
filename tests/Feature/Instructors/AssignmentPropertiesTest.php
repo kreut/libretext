@@ -17,7 +17,7 @@ use App\Traits\Test;
 
 class AssignmentPropertiesTest extends TestCase
 {
-  use Test;
+    use Test;
 
     public function setup(): void
     {
@@ -43,8 +43,6 @@ class AssignmentPropertiesTest extends TestCase
         $this->student_user_2->role = 3;
 
     }
-
-
 
 
     /** @test * */
@@ -78,24 +76,6 @@ class AssignmentPropertiesTest extends TestCase
             ->assertJson(['message' => "You can't switch to an external assignment until you remove all Adapt questions from the assignment."]);
     }
 
-    /** @test */
-
-    public function user_cannot_change_to_non_delayed_if_there_are_open_ended_questions()
-    {
-        $this->question = factory(Question::class)->create(['page_id' => 1]);
-
-        DB::table('assignment_question')->insert([
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'points' => 10,
-            'order' => 1,
-            'open_ended_submission_type' => 'file'
-        ]);
-
-        $this->actingAs($this->user)->postJson("/api/assignments/{$this->assignment->id}/validate-assessment-type",
-            ['assessment_type' => 'real time'])
-            ->assertJson(['message' => "You can't switch to a real time assessment type until you remove the open-ended questions from the assignment."]);
-    }
 
     /** @test */
 
@@ -129,7 +109,7 @@ class AssignmentPropertiesTest extends TestCase
     {
         $this->question = factory(Question::class)->create(['page_id' => 1]);
 
-      DB::table('assignment_question')->insertGetId([
+        DB::table('assignment_question')->insertGetId([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'points' => 10,
@@ -141,8 +121,6 @@ class AssignmentPropertiesTest extends TestCase
             ['assessment_type' => 'learning tree'])
             ->assertJson(['message' => "You can't switch to a learning tree assessment type since this is not a learning tree assignment and you already have non-learning tree questions."]);
     }
-
-
 
 
 }
