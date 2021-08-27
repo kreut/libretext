@@ -4,7 +4,7 @@
                                   :parent-get-refresh-questions="parentGetRefreshQuestions"
     />
     <div v-if="hasAccess">
-      <PageTitle title="Question Refresh Requests"/>
+      <PageTitle title="Refresh Question Requests"/>
       <div class="vld-parent">
         <loading :active.sync="isLoading"
                  :can-cancel="true"
@@ -15,7 +15,7 @@
                  background="#FFFFFF"
         />
         <div>
-          <b-tabs content-class="mt-3">
+          <b-tabs content-class="mt-3" v-show="!isLoading">
             <b-tab title="Pending" active>
               <div v-if="pending.length">
                 <b-table striped hover :fields="fields" :items="pending"
@@ -135,7 +135,6 @@ export default {
       return false
     }
     this.parentGetRefreshQuestions()
-    this.isLoading = false
   },
   methods: {
     openCompareQuestionsModal (questionId, status) {
@@ -147,6 +146,7 @@ export default {
     async parentGetRefreshQuestions () {
       try {
         const { data } = await axios.get('/api/refresh-question-requests')
+        this.isLoading = false
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false
@@ -157,6 +157,7 @@ export default {
         this.denied = data.refresh_question_requests_by_status.denied
       } catch (error) {
         this.$noty.error(error.message)
+        this.isLoading = false
       }
     }
   }
