@@ -69,6 +69,7 @@ class BreadcrumbController extends Controller
                             $breadcrumbs[0] = ['text' => '', 'href' => ""];
                             break;
                         case('login.as'):
+                        case('refresh.question.requests'):
                             $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/$users/courses"];
                             break;
                         case('instructors.learning_trees.editor'):
