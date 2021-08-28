@@ -4,6 +4,7 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\Course;
+use App\Helpers\Helper;
 use App\Score;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -81,7 +82,8 @@ class AssignmentPolicy
                 $has_access = $this->ownsCourseByUser($assignment->course, $user);
                 break;
             case(3):
-                $has_access = $assignment->course->enrollments->contains('user_id', $user->id);
+                $has_access =($assignment->course->anonymous_users && Helper::isAnonymousUser())
+                    || $assignment->course->enrollments->contains('user_id', $user->id);
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();

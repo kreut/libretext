@@ -35,6 +35,7 @@ class StoreCourse extends FormRequest
             'school' => new IsValidSchoolName(),
             'alpha' => Rule::in([0, 1]),
             'public' => Rule::in([0, 1]),
+            'anonymous_users' => Rule::in([0, 1]),
             'lms' => Rule::in([0, 1])
         ];
     }

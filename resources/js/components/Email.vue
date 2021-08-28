@@ -107,8 +107,8 @@ export default {
   }),
   methods: {
     resetSendEmailModal () {
-      this.sendEmailForm.name = this.fromUser ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
-      this.sendEmailForm.email = this.fromUser ? this.fromUser.email : ''
+      this.sendEmailForm.name = this.fromUser && this.fromUser.email !== 'anonymous' ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
+      this.sendEmailForm.email = this.fromUser && this.fromUser.email !== 'anonymous' ? this.fromUser.email : ''
       this.sendEmailForm.text = ''
       this.sendEmailForm.errors.clear()
     },

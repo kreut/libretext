@@ -251,7 +251,8 @@ class CoursesIndexTest extends TestCase
             'term' => 'Some term',
             'crn' => 'Some CRN',
             'public' => 1,
-            'alpha' => 0
+            'alpha' => 0,
+            'anonymous_users' =>0
         ])->assertJson(['type' => 'success']);
     }
 

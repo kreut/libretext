@@ -40,6 +40,35 @@ class AssignmentController extends Controller
     use DateFormatter;
     use S3;
 
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function getAssignmentsForAnonymousUser(Course $course): array
+    {
+
+        $response['type'] = 'error';
+         $authorized = Gate::inspect('getAssignmentsForAnonymousUser', $course);
+
+         if (!$authorized->allowed()) {
+             $response['message'] = $authorized->message();
+             return $response;
+         }
+
+        try {
+            $response['assignments'] = $course->assignments;
+            $response['course_name'] = $course->name;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the assignments for this course.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     public function startPageInfo(Assignment $assignment)
     {

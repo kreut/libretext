@@ -1,6 +1,6 @@
 <template>
   <div>
-    <RefreshQuestionOrDenyRequest ref="refreshQuestionOrDenyRequest"/>
+    <RefreshQuestionOrDenyRequest ref="refreshQuestionOrDenyRequest" />
     <b-modal
       id="modal-question-has-submissions-in-other-assignments"
       ref="modalSubmissionsInOtherAssignment"
@@ -27,7 +27,7 @@
           rows="3"
           @keydown="natureOfUpdateForEditForm.errors.clear('nature_of_update')"
         />
-        <has-error :form="natureOfUpdateForEditForm" field="nature_of_update"/>
+        <has-error :form="natureOfUpdateForEditForm" field="nature_of_update" />
       </b-form-group>
       <template #modal-footer>
         <b-button
@@ -54,8 +54,10 @@
     >
       <p>
         You are trying to refresh a question in one of your assignments that already has student submissions. If this is a material
-        change, we can refresh the question and remove current student submissions.</p>
-      <p>However, if the change is purely cosmetic, we can refresh while leaving student submissions intact.
+        change, we can refresh the question and remove current student submissions.
+      </p>
+      <p>
+        However, if the change is purely cosmetic, we can refresh while leaving student submissions intact.
       </p>
       <b-form-group
         id="refresh_option"
@@ -64,9 +66,9 @@
         label="Refresh Option"
         label-for="Refresh Option"
       >
-        <b-form-radio-group class="mt-2"
-          v-model="refreshAndRemoveStudentSubmissions"
-          stacked
+        <b-form-radio-group v-model="refreshAndRemoveStudentSubmissions"
+                            class="mt-2"
+                            stacked
         >
           <b-form-radio :value="true">
             Refresh and remove student submissions
@@ -95,9 +97,9 @@
           @click="processingQuestionRefresh=true;refreshQuestion(refreshAndRemoveStudentSubmissions)"
         >
           <span v-if="!processingQuestionRefresh">Refresh Question</span>
-          <span v-if="processingQuestionRefresh"><b-spinner small type="grow"/>
-        Refreshing...
-      </span>
+          <span v-if="processingQuestionRefresh"><b-spinner small type="grow" />
+            Refreshing...
+          </span>
         </b-button>
       </template>
     </b-modal>
@@ -109,7 +111,7 @@
       @click="initRefreshQuestionQuestion"
     >
       <span v-if="!processingQuestionRefresh">Refresh Question</span>
-      <span v-if="processingQuestionRefresh"><b-spinner small type="grow"/>
+      <span v-if="processingQuestionRefresh"><b-spinner small type="grow" />
         Refreshing...
       </span>
     </b-button>

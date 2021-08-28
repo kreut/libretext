@@ -49,6 +49,12 @@
       Public courses can be imported by other instructors; non-public can only be imported by you. Note that student
       grades will never be made public nor copied from a course.
     </b-tooltip>
+    <b-tooltip target="anonymous_users_tooltip"
+               delay="250"
+    >
+      If you allow anonymous users, then anybody can view all assessments in your course.  Submissions from
+      anonymous users won't be saved.
+    </b-tooltip>
     <b-tooltip target="school_tooltip"
                delay="250"
     >
@@ -268,6 +274,27 @@
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
         <b-form-radio-group v-model="form.public" stacked>
+          <b-form-radio name="public" value="1">
+            Yes
+          </b-form-radio>
+
+          <b-form-radio name="public" value="0">
+            No
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        id="anonymous_users"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="Public"
+      >
+        <template slot="label">
+          Anonymous Users
+          <span id="anonymous_users_tooltip">
+            <b-icon class="text-muted" icon="question-circle"/></span>
+        </template>
+        <b-form-radio-group v-model="form.anonymous_users" stacked>
           <b-form-radio name="public" value="1">
             Yes
           </b-form-radio>

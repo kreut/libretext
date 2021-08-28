@@ -11,6 +11,9 @@ class Helper
         return Auth::user() && in_array(Auth::user()->id, [1, 5]);
 
     }
+    public static function isAnonymousUser(): bool {
+        return Auth::user() && Auth::user()->email === 'anonymous';
+    }
 
     public static function removeZerosAfterDecimal($num)
     {
@@ -21,4 +24,6 @@ class Helper
             return rtrim(rtrim($num, '0'), '.');
         }
     }
+
+
 }

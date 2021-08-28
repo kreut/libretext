@@ -700,8 +700,15 @@
                   @change="toggleQuestionView()"
                 />
               </div>
-              <div v-if="source === 'a'">
-                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
+
+              <div v-if="source === 'a' && !inIFrame && !isAnonymousUser">
+                <div
+                  v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')"
+                  class="text-center"
+                >
+                  <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
+                </div>
+                <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'  && !isAnonymousUser"
                      class="text-center"
                 >
                   <h5>
@@ -810,7 +817,7 @@
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
-                  <div v-if="user.role === 3 && showScores && isOpenEnded">
+                  <div v-if="user.role === 3 && showScores && isOpenEnded  && !isAnonymousUser">
                     <p>
                       You achieved a total score of
                       {{ questions[currentPage - 1].total_score * 1 }}
@@ -1378,7 +1385,8 @@
               </b-row>
               <b-row v-if="isOpenEnded
                        && (user.role === 3)
-                       && (showSubmissionInformation || openEndedSubmissionType === 'file')"
+                       && (showSubmissionInformation || openEndedSubmissionType === 'file')
+                       && !isAnonymousUser"
                      :class="{ 'mt-3': questions[currentPage-1].technology_iframe && showSubmissionInformation, 'mb-3': true }"
               >
                 <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
@@ -1574,6 +1582,7 @@ export default {
     RefreshQuestion
   },
   data: () => ({
+    isAnonymousUser: false,
     launchThroughLMSMessage: false,
     isLMS: false,
     availableOn: '',
@@ -1862,6 +1871,7 @@ export default {
     window.removeEventListener('keydown', this.arrowListener)
   },
   async mounted () {
+    this.isAnonymousUser = this.user.email === 'anonymous'
     this.isLoading = true
 
     this.uploadFileType = (this.user.role === 2) ? 'solution' : 'submission' // students upload question submissions and instructors upload solutions
@@ -1903,11 +1913,15 @@ export default {
           this.assignmentInformationMarginBottom = 'mb-0'
         }
       }
+      if (this.isAnonymousUser) {
+        this.showSubmissionInformation = false
+        this.showAssignmentInformation = false
+      }
       this.questionCol = this.assessmentType === 'clicker' ||
       !this.showSubmissionInformation
         ? 12 : 8
       // override this for files
-      if (this.questions[this.currentPage - 1].open_ended_submission_type === 'file' && this.user.role === 3) {
+      if (this.questions[this.currentPage - 1].open_ended_submission_type === 'file' && this.user.role === 3 && !this.isAnonymousUser) {
         this.questionCol = 8
       }
       if (this.user.role === 2) {
@@ -2595,7 +2609,7 @@ export default {
       }
     },
     async receiveMessage (event) {
-      if (this.user.role === 3) {
+      if (this.user.role === 3 && !this.isAnonymousUser) {
         let technology = this.getTechnology(event.origin)
 
         if (technology === 'imathas') {
@@ -3217,8 +3231,7 @@ export default {
         this.$noty.error('We could not remove the question from the assignment.  Please try again or contact us for assistance.')
       }
     }
-  }
-  ,
+  },
   metaInfo () {
     return { title: this.$t('home') }
   }

@@ -3,11 +3,9 @@
 
 namespace App\Traits;
 
-use App\Question;
 use App\User;
-use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
-use Illuminate\Support\Facades\Log;
+use App\Helpers\Helper;
 
 
 trait GeneralSubmissionPolicy
@@ -32,16 +30,18 @@ trait GeneralSubmissionPolicy
          * $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
          * return $response;
          * }**/
+        if ($assignment->course->anonymous_users && Helper::isAnonymousUser()) {
+            $response['type'] = 'success';
+            return $response;
+        }
 
-
-            $assign_to_timing = $assignment->assignToTimingByUser();
-            if (!$assign_to_timing) {
-                $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
-                return $response;
-            }
-            $available_from = $assign_to_timing->available_from;
-            $due = $assign_to_timing->due;
-
+        $assign_to_timing = $assignment->assignToTimingByUser();
+        if (!$assign_to_timing) {
+            $response['message'] = "No responses will be saved since you were not assigned to this assignment.";
+            return $response;
+        }
+        $available_from = $assign_to_timing->available_from;
+        $due = $assign_to_timing->due;
 
 
         if ($assignment->assessment_type === 'clicker') {

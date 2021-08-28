@@ -84,6 +84,7 @@ export default {
         this.editCourseForm.public = course.public
         this.editCourseForm.alpha = course.alpha
         this.editCourseForm.lms = course.lms
+        this.editCourseForm.anonymous_users = course.anonymous_users
         this.editCourseForm.untether_beta_course = 0
         if (data.type === 'error') {
           this.$noty.error('We were not able to retrieve the course information.')

@@ -63,7 +63,7 @@ class QuestionPolicy
                 $has_access = true;
                 break;
             case(3):
-                $has_access = DB::table('assignment_question')
+                $has_access = Helper::isAnonymousUser() || DB::table('assignment_question')
                     ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
                     ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
                     ->join('enrollments', 'assignments.course_id', '=', 'enrollments.course_id')

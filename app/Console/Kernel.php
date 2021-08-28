@@ -15,11 +15,11 @@ class Kernel extends ConsoleKernel
      * @var array
      */
     protected $commands = [
-        Commands\storeQuestions::class,
-        Commands\storeH5P::class,
-        Commands\storeWebwork::class,
-        Commands\DbBackup::class,
-        Commands\sendAssignmentDueReminderEmails::class,
+        Commands\OneTimers\storeQuestions::class,
+        Commands\H5P\storeH5P::class,
+        Commands\OneTimers\storeWebwork::class,
+        Commands\Database\DbBackup::class,
+        Commands\Notifications\sendAssignmentDueReminderEmails::class,
         Commands\dataShopToS3::class
 
     ];

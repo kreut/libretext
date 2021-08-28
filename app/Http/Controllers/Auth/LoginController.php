@@ -64,6 +64,7 @@ class LoginController extends Controller
         $token = (string) $this->guard()->getToken();
         $expiration = $this->guard()->getPayload()->get('exp');
         return response()->json([
+            'landing_page' => session()->get('landing_page'),
             'token' => $token,
             'token_type' => 'bearer',
             'expires_in' => $expiration - time(),
@@ -108,6 +109,10 @@ class LoginController extends Controller
 
         if ($request->session()->has('instructor_user_id')) {
             $request->session()->forget('instructor_user_id');
+        }
+
+        if ($request->session()->has('landing_page')) {
+            $request->session()->forget('landing_page');
         }
         $this->guard()->logout();
     }

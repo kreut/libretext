@@ -92,7 +92,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');
 
+    Route::get('/courses/anonymous-user','CourseController@getAnonymousUserCourses');
+
     Route::get('/courses/{course}', 'CourseController@show');
+
     Route::patch('/courses/{course}/show-course/{shown}', 'CourseController@showCourse');
 
     Route::post('/courses', 'CourseController@store');
@@ -120,6 +123,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/assignments/importable-by-user/{course}', 'AssignmentController@getImportableAssignmentsByUser');
     Route::post('/assignments/import/{course}', 'AssignmentController@importAssignment');
     Route::get('/assignments/courses/{course}', 'AssignmentController@index');
+    Route::get('/assignments/courses/{course}/anonymous-user', 'AssignmentController@getAssignmentsForAnonymousUser');
+
+
     Route::get('/assignments/courses/public/{course}/names', 'AssignmentController@getAssignmentNamesForPublicCourse');
     Route::get('/assignments/{assignment}/get-questions-info', 'AssignmentController@getQuestionsInfo');
     Route::get('/assignments/{assignment}/summary', 'AssignmentController@getAssignmentSummary');
@@ -341,6 +347,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
 
+    Route::get('/courses/anonymous-user/can-log-in','CourseController@canLogInAsAnonymousUser');
     Route::post('login', 'Auth\LoginController@login');
     Route::post('register', 'Auth\RegisterController@register');
 

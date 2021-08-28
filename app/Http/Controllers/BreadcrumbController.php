@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Helpers\Helper;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -113,22 +114,27 @@ class BreadcrumbController extends Controller
                             break;
                         case('questions.view'):
                             //My courses / The assignment's course / that assignment summary / the assignment questions
-                            $breadcrumbs[] = ['text' => $assignment->course->name,
-                                'href' => "/$users/courses/{$assignment->course->id}/assignments"];
-
-                            if (Auth::user()->role === 3) {
-                                $breadcrumbs[] = ['text' => "{$assignment->name}",
-                                    'href' => "/students/assignments/{$assignment_id}/summary"];
+                            if (Helper::isAnonymousUser()) {
+                                $breadcrumbs[] = ['text' => $assignment->course->name,
+                                    'href' => "/students/courses/{$assignment->course->id}/assignments/anonymous-user"];
                             } else {
-                                $breadcrumbs[] = ['text' => "{$assignment->name}",
-                                    'href' => "/instructors/assignments/{$assignment_id}/information"];
+                                $breadcrumbs[] = ['text' => $assignment->course->name,
+                                    'href' => "/$users/courses/{$assignment->course->id}/assignments"];
+                                if (Auth::user()->role === 3) {
+                                    $breadcrumbs[] = ['text' => "{$assignment->name}",
+                                        'href' => "/students/assignments/{$assignment_id}/summary"];
+                                } else {
+                                    $breadcrumbs[] = ['text' => "{$assignment->name}",
+                                        'href' => "/instructors/assignments/{$assignment_id}/information"];
+                                }
                             }
                             $breadcrumbs[] = ['text' => "View Assessments",
                                 'href' => "#",
                                 'active' => true];
                             break;
 //My courses / The assignment's course / that assignment / questions get
-                        case('gradebook.index'):
+                        case
+                        ('gradebook.index'):
                             //My courses / that course
                             $breadcrumbs[] = ['text' => $course->name,
                                 'href' => "/instructors/courses/{$course->id}/assignments"];
@@ -159,7 +165,8 @@ class BreadcrumbController extends Controller
             }
             $response['type'] = 'success';
             $response['breadcrumbs'] = $breadcrumbs;
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             //no message for the user: just for me
 
         }

@@ -6,6 +6,7 @@ use App\Exceptions\Handler;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Profile;
 use \Exception;
+use Illuminate\Support\Facades\Gate;
 
 class ProfileController extends Controller
 {
@@ -13,13 +14,20 @@ class ProfileController extends Controller
 
     /**
      * @param Profile $request
-     * @return mixed
-     * @throws \Exception
+     * @return array
+     * @throws Exception
      */
-    public function update(Profile $request)
+    public function update(Profile $request): array
     {
         $user = $request->user();
         $response['type'] = 'error';
+        $profileModel = new \App\Profile();
+        $authorized = Gate::inspect('update',$profileModel);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
         try {
             $data = $request->validated();
             $user->update($data);

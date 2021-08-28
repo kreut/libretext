@@ -3,22 +3,34 @@
 namespace App\Http\Controllers\Settings;
 
 use App\Exceptions\Handler;
+use App\Password;
 use \Exception;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\ValidationException;
 
 class PasswordController extends Controller
 {
     /**
      * @param Request $request
-     * @throws \Illuminate\Validation\ValidationException
+     * @return array
+     * @throws ValidationException
      */
-    public function update(Request $request)
+    public function update(Request $request): array
     {
         $this->validate($request, [
             'password' => 'required|confirmed|min:6',
         ]);
         $response['type'] = 'error';
+
+        $authorized = Gate::inspect('update', new Password());
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
         try {
             $request->user()->update([
                 'password' => bcrypt($request->password),

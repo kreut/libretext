@@ -1286,8 +1286,10 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
-                $show_solution = ($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
-                    || ($assignment->assessment_type === 'real time' && $submission_count);
+                $show_solution = !Helper::isAnonymousUser()
+                    &&
+                    (($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
+                    || ($assignment->assessment_type === 'real time' && $submission_count));
                 if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
@@ -1614,7 +1616,6 @@ class AssignmentSyncQuestionController extends Controller
         }
         return $seed;
     }
-
 
     function getOtherRandomizedQuestionId(array $user_question_ids, array $question_ids, int $question_id_to_remove)
     {

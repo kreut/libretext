@@ -59,17 +59,26 @@
         />
         <b-navbar-nav class="ml-auto mt-0 mb-0">
           <b-row>
-            <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
+            <b-nav-item v-if="isAnonymousUser" right class="mr-2">
+              <span class="nav-link" active-class="active" @click="logout">  Log Out
+              </span>
+            </b-nav-item>
+            <b-nav-item v-if="isAnonymousUser" right class="mr-2">
+              <span class="nav-link" active-class="active" @click="openSendEmailModal">
+                Contact Us
+              </span>
+            </b-nav-item>
+            <b-nav-item-dropdown v-if="user && !isLearningTreesEditor && !isAnonymousUser" right class="mr-2">
               <!-- Using 'button-content' slot -->
               <template v-slot:button-content>
                 <em>Hi, {{ user.first_name }}!</em>
               </template>
               <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
-                <fa icon="cog" fixed-width />
+                <fa icon="cog" fixed-width/>
                 {{ $t('settings') }}
               </router-link>
               <a href="#" class="dropdown-item pl-3" @click.prevent="logout">
-                <fa icon="sign-out-alt" fixed-width />
+                <fa icon="sign-out-alt" fixed-width/>
                 {{ $t('logout') }}
               </a>
             </b-nav-item-dropdown>
@@ -85,7 +94,7 @@
 
             <b-navbar-nav class="ml-2 mr-2 mb-1">
               <b-nav-item>
-                <span class="nav-link" active-class="active" @click="openSendEmailModal">
+                <span v-show="!isAnonymousUser" class="nav-link" active-class="active" @click="openSendEmailModal">
                   <span :style="isLearningTreesEditor">Contact Us</span>
                 </span>
               </b-nav-item>
@@ -128,6 +137,7 @@ export default {
   },
 
   data: () => ({
+    isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
     isInstructorsMyCoursesView: true,
@@ -177,6 +187,7 @@ export default {
       }
       this.getSession()
       this.isInstructorView = this.user !== null && this.user.role === 2
+      this.isAnonymousUser = this.user !== null && this.user.email === 'anonymous'
     }
   },
   methods: {
@@ -243,8 +254,19 @@ export default {
       try {
         console.log(router.name)
         console.log({ 'name': router.name, 'params': router.params })
-        const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
-        this.breadcrumbs = (data.type === 'success') ? data.breadcrumbs : []
+        this.breadcrumbs = [
+          {
+            text: '',
+            href: '#',
+            active: true
+          }
+        ]
+        if (this.user) {
+          const { data } = await axios.post('/api/breadcrumbs', { 'name': router.name, 'params': router.params })
+          if (data.type === 'success') {
+            this.breadcrumbs = data.breadcrumbs
+          }
+        }
         this.oneBreadcrumb = this.breadcrumbs.length === 1 &&
           [
             'commons',
@@ -253,7 +275,8 @@ export default {
             'instructors.courses.index',
             'login.as',
             'refresh.question.requests',
-            'manual.grade.passbacks'
+            'manual.grade.passbacks',
+            'students.assignments.anonymous.user.index'
           ].includes(router.name)
       } catch (error) {
         if (!error.message.includes('status code 401')) {

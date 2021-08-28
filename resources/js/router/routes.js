@@ -8,6 +8,7 @@ let student_paths  = [
   { path: '/students/courses', name: 'students.courses.index', component: page('students/courses.index.vue')},
   { path: '/students/assignments/:assignmentId/summary', name: 'students.assignments.summary', component: page('students/assignments.summary.vue') },
   { path: '/students/courses/:courseId/assignments', name: 'students.assignments.index', component: page('students/assignments.index.vue') },
+  { path: '/students/courses/:courseId/assignments/anonymous-user', name: 'students.assignments.anonymous.user.index', component: page('students/assignments.anonymous.user.index.vue') },
 ]
 
 let instructor_paths = [

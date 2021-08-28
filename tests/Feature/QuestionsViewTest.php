@@ -1223,6 +1223,25 @@ class QuestionsViewTest extends TestCase
             ->assertJson(['type' => 'error', 'message' => 'You are not allowed to access this assignment.']);
     }
 
+
+    /** @test */
+
+    public function anonymous_student_can_view_questions_info_if_not_enrolled_in_the_course()
+    {
+        $this->course->anonymous_users = 1;
+        $this->course->save();
+        $this->student_user_2->email = 'anonymous';
+        $this->student_user_2->save();
+
+        //student_user_2 isn't enrolled but I made them anonymous
+        $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
+            ->assertJson(['type' => 'success']);
+    }
+
+
+
+
+
     /** @test */
 
     public function owner_can_view_questions_info_if_owner_of_the_course()

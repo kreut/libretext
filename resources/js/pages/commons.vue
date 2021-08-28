@@ -1,6 +1,28 @@
 <template>
   <div>
     <b-modal
+      id="modal-enter-course-as-anonymous-user"
+      ref="modalEnterCourseAsAnonymousUser"
+      title="Enter Course"
+      hide-footer
+    >
+      <p>
+        <span class="font-weight-bold">
+          {{ openCourseName }}
+        </span> is one of our open courses. You can enter this course, view all of the assignments, and try
+        the assessments without your submissions being recorded.
+      </p>
+      <p>
+        After exploring this course, you can also
+        explore the other open courses we have available by visiting My Courses,
+        which will be located in the navigation bar after you
+        <a href=""
+           @click.prevent="enterOpenCourseAsAnonymousUser"
+        >log in</a>.
+      </p>
+    </b-modal>
+
+    <b-modal
       id="modal-import-course-as-beta"
       ref="modalImportCourseAsBeta"
       title="Import As Beta"
@@ -79,8 +101,13 @@
               <b-button variant="primary" size="sm" @click="openAssignmentsModal(commonsCourse.id)">
                 View Assignments
               </b-button>
+              <b-button v-if="commonsCourse.anonymous_users" variant="success" size="sm"
+                        @click="openEnterCourseAsAnonymousUser(commonsCourse.id, commonsCourse.name)"
+              >
+                Enter Course
+              </b-button>
               <b-button v-if="user && user.role === 2" variant="outline-primary" size="sm"
-                        @click="IdOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
+                        @click="idOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
               >
                 Import Course
               </b-button>
@@ -106,13 +133,20 @@ export default {
     ImportAsBetaText
   },
   data: () => ({
-    IdOfCourseToImport: 0,
+    loggingIn: true,
+    idOfCourseToImport: 0,
     courseToImportForm: new Form({
       import_as_beta: 0
     }),
     isLoading: true,
     commonsCourses: [],
     assignments: [],
+    openCourseId: 0,
+    loginForm: new Form({
+      username: '',
+      password: ''
+    }),
+    openCourseName: '',
     fields: [
       'name',
       'description'
@@ -125,12 +159,39 @@ export default {
     this.getCommonsCourses()
   },
   methods: {
+    async enterOpenCourseAsAnonymousUser () {
+      this.isLoading = true
+      try {
+        this.loginForm.email = 'anonymous'
+        this.loginForm.password = 'anonymous'
+        const { data } = await this.loginForm.post('/api/login')
+
+        // Save the token.
+        await this.$store.dispatch('auth/saveToken', {
+          token: data.token,
+          remember: this.remember
+        })
+
+        // Fetch the user.
+        await this.$store.dispatch('auth/fetchUser')
+        // Redirect to the correct home page
+        await this.$router.push(`/students/courses/${this.openCourseId}/assignments/anonymous-user`)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+      this.isLoading = false
+    },
+    openEnterCourseAsAnonymousUser (courseId, courseName) {
+      this.openCourseId = courseId
+      this.openCourseName = courseName
+      this.$bvModal.show('modal-enter-course-as-anonymous-user')
+    },
     openImportCourseAsBetaModal () {
       this.$bvModal.show('modal-import-course-as-beta')
     },
     async handleImportCourse () {
       try {
-        const { data } = await this.courseToImportForm.post(`/api/courses/import/${this.IdOfCourseToImport}`)
+        const { data } = await this.courseToImportForm.post(`/api/courses/import/${this.idOfCourseToImport}`)
         this.$bvModal.hide('modal-import-course-as-beta')
         this.courseToImportForm.import_as_beta = 0 // reset
         this.$noty[data.type](data.message)
@@ -173,7 +234,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>

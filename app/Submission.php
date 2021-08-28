@@ -88,7 +88,6 @@ class Submission extends Model
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
-
         // $data = $request->validated();//TODO: validate here!!!!!
         // $data = $request->all(); ///maybe request->all() flag in the model or let it equal request???
         // Log::info(print_r($request->all(), true));
@@ -96,6 +95,11 @@ class Submission extends Model
 
         $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
+
+        if ($assignment->course->anonymous_users && Helper::isAnonymousUser()){
+            $response['type'] = 'success';
+            return $response;
+        }
 
         $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
             ->where('question_id', $data['question_id'])

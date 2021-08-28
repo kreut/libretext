@@ -19,6 +19,21 @@ class SettingsTest extends TestCase
     }
 
     /** @test */
+    public function anonymous_user_cannot_change_profile(){
+        $this->user->email = 'anonymous';
+        $this->user->save();
+        $this->actingAs($this->user)
+            ->patchJson('/api/settings/profile', [
+                'first_name' => 'some other name',
+                'last_name' => 'some other last name',
+                'email' => 'some@other-email.com',
+            ])
+            ->assertJson(['message' => 'You are not allowed to update the profile.']);
+    }
+
+
+
+    /** @test */
 
     public function first_name_must_be_valid(){
         $this->actingAs($this->user)
@@ -62,6 +77,8 @@ class SettingsTest extends TestCase
             ])
             ->assertJsonValidationErrors(['email']);
     }
+
+
 /** @test */
     public function update_profile_info()
     {

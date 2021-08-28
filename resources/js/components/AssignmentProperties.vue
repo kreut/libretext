@@ -1,21 +1,6 @@
 <template>
   <div>
-    <b-modal
-      id="modal-form-errors"
-      ref="formErrorsModal"
-      title="Form Errors"
-      hide-footer
-    >
-      <p class="font-weight-bold font-italic">
-        Please fix the following errors in your form:
-      </p>
-      <ul>
-        <li v-for="formError in allFormErrors" :key="formError">
-          <span class="text-danger">{{ formError }}</span>
-        </li>
-      </ul>
-    </b-modal>
-
+    <AllFormErrors :all-form-errors="allFormErrors" />
     <b-tooltip target="compiled_pdf_tooltip"
                delay="250"
     >
@@ -1024,10 +1009,12 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
+import AllFormErrors from './AllFormErrors'
 
 export default {
   components: {
-    ckeditor: CKEditor.component
+    ckeditor: CKEditor.component,
+    AllFormErrors
   },
   middleware: 'auth',
   props: {

@@ -1,5 +1,5 @@
 <template>
-  <b-button v-if="libretextsAuth" class="btn btn-dark ml-auto" type="button" @click="login">
+  <b-button v-if="libretextsAuth" class="btn btn-dark" type="button" @click="login">
     <span class="icon-SSO" /> Campus {{ action }}
   </b-button>
 </template>

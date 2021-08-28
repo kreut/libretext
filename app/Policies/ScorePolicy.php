@@ -2,7 +2,9 @@
 
 namespace App\Policies;
 
+use App\Helpers\Helper;
 use App\Score;
+use App\Traits\CommonPolicies;
 use App\User;
 use App\Assignment;
 use Illuminate\Auth\Access\HandlesAuthorization;
@@ -11,7 +13,7 @@ use Illuminate\Auth\Access\Response;
 class ScorePolicy
 {
     use HandlesAuthorization;
-    use \App\Traits\CommonPolicies;
+    use CommonPolicies;
 
 
     public function overrideScores(User $user, Score $score, Assignment $assignment, array $override_scores)
@@ -39,9 +41,11 @@ class ScorePolicy
     /**
      * Determine whether the user can update the score.
      *
-     * @param \App\User $user
-     * @param \App\Score $score
-     * @return mixed
+     * @param User $user
+     * @param Score $score
+     * @param int $assignment_id
+     * @param int $student_user_id
+     * @return Response
      */
     public function update(User $user, Score $score, int $assignment_id, int $student_user_id)
     {
@@ -83,7 +87,8 @@ class ScorePolicy
                 $has_access = $assignment->course->user_id === $user->id;
                 break;
             case(3):
-                $has_access = $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
+                $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
+                || $assignment->course->enrollments->contains('user_id', $user->id) && $assignment->students_can_view_assignment_statistics;
                 break;
         }
         return $has_access

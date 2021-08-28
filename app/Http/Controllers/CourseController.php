@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\AssignToGroup;
 use App\AssignToTiming;
@@ -35,6 +36,74 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @return array
+     * @throws Exception
+     */
+    public function canLogInAsAnonymousUser(Request $request, Assignment $assignment): array
+    {
+        try {
+            $response['type'] = 'error';
+            $landing_page = $request->session()->get('landing_page');
+            if ($landing_page) {
+                $landing_page_array = explode('/', $landing_page);
+                /*      0 => ""
+                        1 => "assignments"
+                        2 => "298"
+                        3 => "questions"
+                        4 => "view"
+                        5 => "98505"
+                */
+                $anonymous_users = false;
+                if (count($landing_page_array) === 6
+                    && $landing_page_array[1] === 'assignments'
+                    && is_numeric($landing_page_array[2])
+                    && $landing_page_array[3] === 'questions'
+                    && $landing_page_array[4] === 'view'
+                    && is_numeric($landing_page_array[5])) {
+                    $course = DB::table('assignments')
+                        ->join('courses', 'assignments.course_id', '=', 'courses.id')
+                        ->where('assignments.id', $landing_page_array[2])
+                        ->first();
+                    $anonymous_users = (boolean)$course->anonymous_users;
+                }
+                $response['type'] = 'success';
+                $response['anonymous_users'] = $anonymous_users;
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not determine whether this course allowed anonymous users.';
+        }
+        return $response;
+
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function getAnonymousUserCourses(): array
+    {
+        try {
+            $response['enrollments'] = DB::table('courses')
+                ->where('courses.anonymous_users', 1)
+                ->where('courses.shown', 1)
+                ->select('id',
+                    'courses.name AS course_section_name',
+                    'public_description')
+                ->get();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the courses with anonymous users.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
 
     public function updateIFrameProperties(Request $request, Course $course)
     {
@@ -97,7 +166,8 @@ class CourseController extends Controller
                 ->select('id',
                     'courses.name AS name',
                     'courses.public_description AS description',
-                    'alpha')
+                    'alpha',
+                    'anonymous_users')
                 ->get();
             $response['commons_courses'] = $commons_courses;
             $response['type'] = 'success';
@@ -245,8 +315,8 @@ class CourseController extends Controller
                 $course_id = $value->course_id;
                 if (!in_array($course_id, $course_ids)) {
                     $courses[] = ['value' => $course_id,
-                                'text' => $value->course_name,
-                            'lms' => $value->lms];
+                        'text' => $value->course_name,
+                        'lms' => $value->lms];
                     $course_ids[] = $course_id;
                 }
                 $assignments[$course_id][] = ['value' => $value->assignment_id,
@@ -316,6 +386,7 @@ class CourseController extends Controller
             $imported_course->shown = 0;
             $imported_course->alpha = 0;
             $imported_course->lms = 0;
+            $imported_course->anonymous_users = 0;
             $imported_course->school_id = $school['last_school_id'];
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
@@ -543,6 +614,7 @@ class CourseController extends Controller
                 'public' => $course->public,
                 'lms' => $course->lms,
                 'alpha' => $course->alpha,
+                'anonymous_users' => $course->anonymous_users,
                 'is_beta_course' => $course->isBetaCourse(),
                 'beta_courses_info' => $course->betaCoursesInfo()];
             $response['type'] = 'success';
@@ -734,6 +806,7 @@ class CourseController extends Controller
      * @param UpdateCourse $request
      * @param Course $course
      * @param School $school
+     * @param BetaCourse $betaCourse
      * @return mixed
      * @throws Exception
      */

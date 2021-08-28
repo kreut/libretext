@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 use App\Course;
+use App\Helpers\Helper;
 use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
@@ -14,14 +15,27 @@ class CoursePolicy
     use CommonPolicies;
 
 
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
+    public function getAssignmentsForAnonymousUser(User $user, Course $course){
+        return ($course->anonymous_users && Helper::isAnonymousUser())
+            ? Response::allow()
+            : Response::deny('You are not allowed to view these assignments.');
+    }
 
+    /**
+     * @param User $user
+     * @param Course $course
+     * @return Response
+     */
     public function updateIFrameProperties(User $user, Course $course)
     {
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update what is shown in the iframe.');
-
-
     }
     public function getAssignmentNamesForPublicCourse(User $user, Course $course)
     {
