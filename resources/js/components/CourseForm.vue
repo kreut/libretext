@@ -321,10 +321,11 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        id="alpha"
+        v-show="false"
+        id="lms"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="alpha"
+        label-for="lms"
       >
         <template slot="label">
           LMS
@@ -332,11 +333,11 @@
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
         <b-form-radio-group v-model="form.lms" stacked>
-          <b-form-radio name="alpha" value="1">
+          <b-form-radio name="lms" value="1">
             Yes
           </b-form-radio>
 
-          <b-form-radio name="alpha" value="0">
+          <b-form-radio name="lms" value="0">
             No
           </b-form-radio>
         </b-form-radio-group>
