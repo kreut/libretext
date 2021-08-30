@@ -138,8 +138,8 @@ class JWTController extends Controller
             }
             if ($problemJWT->adapt->technology === 'webwork' && isset($answerJWT->score['answers'])) {
                 $answers = $answerJWT->score['answers'];
-                foreach ($answers as $key => $value) {
-                    if ($answers[$key]['error_message']) {
+                foreach ($answers as $value) {
+                    if (isset($value['error_message']) && $value['error_message']) {
                         $log_exception = false;
                         throw new Exception ("At least one of your submitted responses is invalid.  Please fix it and try again.");
                     }
