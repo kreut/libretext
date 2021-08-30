@@ -362,7 +362,7 @@ class Submission extends Model
                     //AnSwEr0003
                     foreach ($answers_arr as $answer_key => $value) {
                         $numeric_key = (int)ltrim(str_replace('AnSwEr', '', $answer_key), 0);
-                        $student_response_arr[$numeric_key] = $value['original_student_ans'];
+                        $student_response_arr[$numeric_key] = $value['original_student_ans'] ?? '';
                     }
 
                 } else {
