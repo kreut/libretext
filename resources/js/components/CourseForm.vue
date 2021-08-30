@@ -321,6 +321,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
+        v-show="false"
         id="alpha"
         label-cols-sm="4"
         label-cols-lg="3"
