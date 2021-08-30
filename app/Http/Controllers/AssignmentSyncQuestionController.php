@@ -987,16 +987,7 @@ class AssignmentSyncQuestionController extends Controller
                 $original_filename = $solution->original_filename;
             }
         }
-        try {
-            session()->get('submission_id');
-            DataShop::where('session_id', session()->get('submission_id'))
-                ->update(['input' => $response_info['student_response']]);
 
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-
-        }
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
             Auth::user()->time_zone, 'M d, Y g:i:s a'),
             'student_response' => $response_info['student_response'],
