@@ -10,21 +10,22 @@ class DataShop extends Model
 {
 
     public $timestamps = false;
+
     /**
      * @param $submission
      * @param $data
+     * @param $assignment
      */
-   public function store($submission, $data){
+   public function store($submission, $data, Assignment $assignment){
        $this->anon_student_id =  Auth::user()->email ? Auth::user()->email : 'test';
        $this->session_id = session()->get('submission_id');
        $this->time = Carbon::now();
-       $this->level = 'some level';
+       $this->level = $assignment->id;
        $this->problem_name = $submission->question_id;
        $this->problem_view = $submission->submission_count;
        $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
-       $this->input = '';
-       $this->school = "some school";
-       $this->class = "some class";
+       $this->school = $assignment->course->school_id;
+       $this->class = $assignment->course->id;
        $this->save();
    }
 

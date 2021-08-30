@@ -39,6 +39,7 @@ class Kernel extends ConsoleKernel
                 ->emailOutputOnFailure('kreut@hotmail.com');
 
         }
+
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
             $schedule->command('retry:FailedGradePassbacks')->everyFiveMinutes();

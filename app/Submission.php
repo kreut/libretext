@@ -269,7 +269,7 @@ class Submission extends Model
             //don't really care if this gets messed up from the user perspective
             try {
                 session()->put('submission_id', md5(uniqid('', true)));
-                $dataShop->store($submission, $data);
+                $dataShop->store($submission, $data, $assignment);
             } catch (Exception $e) {
                 $h = new Handler(app());
                 $h->report($e);
