@@ -1,10 +1,53 @@
 <template>
   <div>
-    <b-modal v-if="questions.length"
-             id="modal-confirm-update-scores"
-             ref="submissionFileModal"
-             title="Confirm Update Scores"
-             size="lg"
+    <b-modal
+      v-if="questions.length"
+      id="modal-confirm-update-scores"
+      ref="confirmUpdateScoresModal"
+      title="Confirm Update Scores"
+      size="lg"
+    >
+      <p>
+        <span class="font-weight-bold">Students:</span> <span class="font-italic">{{ selectedStudentText }}</span><br>
+        <span class="font-weight-bold">Submission:</span> <span class="font-italic">{{
+          selectedSubmissionText
+        }}</span><br>
+        <span class="font-weight-bold">Score:</span> <span class="font-italic">{{ selectedScoreText }}</span><br>
+        <span class="font-weight-bold">Question:</span> <span class="font-italic">{{ selectedQuestionText }}</span><br>
+        <span class="font-weight-bold">Apply To:</span> <span class="font-italic">
+          {{
+            parseInt(questionScoreForm.apply_to) === 1
+              ? 'Submission scores in the filtered group'
+              : 'Submission scores that are not in the filtered group'
+          }}
+        </span><br>
+      </p>
+      <p>
+        Please confirm that you would like to change the student scores which match the above criteria to
+        a new score of <span
+          class="font-weight-bold"
+        >
+          {{ questionScoreForm.new_score }}</span>.
+      </p>
+
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-confirm-update-scores')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary"
+                  @click="handleUpdateScores()"
+        >
+          Update scores
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal
+      v-if="questions.length"
+      id="modal-update-scores-with-over-total-points"
+      ref="invalidScoresModal"
+      title="Invalid Scores"
+      size="lg"
     >
       <p>
         <b-alert variant="danger" :show="true">
@@ -17,7 +60,7 @@
         </b-alert>
       </p>
       <template #modal-footer="{ ok, cancel }">
-        <b-button size="sm" @click="$bvModal.hide('modal-confirm-update-scores')">
+        <b-button size="sm" @click="$bvModal.hide('modal-update-scores-with-over-total-points')">
           Got it!
         </b-button>
       </template>
@@ -48,7 +91,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Edity Submissions" />
+        <PageTitle title="Edit Scores" />
         <div v-if="questions.length">
           <b-container>
             <b-row>
@@ -201,13 +244,15 @@
                   <has-error :form="questionScoreForm" field="new_score" />
                 </b-col>
                 <b-col>
-                  <b-button variant="primary" size="sm" @click="confirmUpdateScores()">
-                    Update
-                  </b-button>
-                  <span v-if="processing">
-                    <b-spinner small type="grow" />
-                    Processing...
-                  </span>
+                  <div class="pt-1">
+                    <b-button variant="primary" size="sm" @click="initUpdateScores()">
+                      Update
+                    </b-button>
+                    <span v-if="processing">
+                      <b-spinner small type="grow" />
+                      Processing...
+                    </span>
+                  </div>
                 </b-col>
               </b-form-row>
             </b-form-group>
@@ -264,6 +309,10 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    selectedStudentText: '',
+    selectedSubmissionText: '',
+    selectedQuestionText: '',
+    selectedScoreText: '',
     numOverMax: 0,
     submissionUrl: '',
     submissionText: '',
@@ -326,15 +375,17 @@ export default {
   },
 
   methods: {
+    getTextFromOptions (value, options) {
+      return options.find(option => option.value === value).text
+    },
     async confirmUpdateScores () {
-
-      Start: first an actual confirm update scores then do the check
-
-
-
-
-
-
+      this.selectedStudentText = this.getTextFromOptions(this.studentId, this.studentsOptions)
+      this.selectedSubmissionText = this.getTextFromOptions(this.submission, this.submissionsOptions)
+      this.selectedQuestionText = this.getTextFromOptions(this.currentQuestionPage, this.questionsOptions)
+      this.selectedScoreText = this.getTextFromOptions(this.score, this.scoresOptions)
+      this.$bvModal.show('modal-confirm-update-scores')
+    },
+    async initUpdateScores () {
       try {
         const { data } = await this.questionScoreForm.post(`/api/scores/over-total-points/${this.assignmentId}/${this.questionId}`)
         this.numOverMax = parseInt(data.num_over_max)
@@ -344,8 +395,8 @@ export default {
         }
 
         this.numOverMax > 0
-          ? this.$bvModal.show('modal-confirm-update-scores')
-          : await this.handleUpdateScores()
+          ? this.$bvModal.show('modal-update-scores-with-over-total-points')
+          : await this.confirmUpdateScores()
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)

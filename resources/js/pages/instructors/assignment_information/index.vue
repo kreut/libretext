@@ -96,8 +96,8 @@ export default {
         },
         {
           icon: '',
-          name: 'Edit Submissions',
-          route: 'instructors.assignments.submissions'
+          name: 'Edit Scores',
+          route: 'instructors.assignments.edit_scores'
         },
         {
           icon: '',
