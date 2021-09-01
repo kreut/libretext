@@ -697,12 +697,6 @@
                 />
               </div>
               <div v-if="source === 'a' && !inIFrame ">
-                <div
-                  v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')"
-                  class="text-center"
-                >
-                  <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
-                </div>
                 <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
                      class="text-center"
                 >

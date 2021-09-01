@@ -96,7 +96,7 @@
                 <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
               </p>
               <p v-if="instructions.length" class="mb-2">
-                 <span v-html="instructions"/>
+                <span v-html="instructions"/>
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
@@ -177,6 +177,9 @@
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
+            <h5 class="font-italic text-center pb-2">
+              This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{ totalPoints }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
+            </h5>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
               striped
@@ -305,6 +308,7 @@ export default {
     isInstructorLoggedInAsStudent: false,
     bothFileUploadMode: false,
     compiledPdf: false,
+    totalPoints: '',
     completedAllAssignmentQuestions: false,
     successMessage: '',
     errorMessage: '',
@@ -582,10 +586,11 @@ export default {
         this.isInstructorLoggedInAsStudent = assignment.is_instructor_logged_in_as_student
         this.public_description = assignment.public_description
         this.instructions = assignment.instructions
-          ? assignment.instructions.replace('<p>','<p><span class="font-weight-bold">Instructions: </span>')
+          ? assignment.instructions.replace('<p>', '<p><span class="font-weight-bold">Instructions: </span>')
           : ''
         this.formattedLatePolicy = assignment.formatted_late_policy
         this.formattedDue = assignment.formatted_due
+        this.totalPoints = assignment.total_points
         this.compiledPdf = assignment.file_upload_mode === 'compiled_pdf' || assignment.file_upload_mode === 'both'
         this.bothFileUploadMode = assignment.file_upload_mode === 'both'
         this.assessmentType = assignment.assessment_type
