@@ -86,11 +86,6 @@ export default {
         },
         {
           icon: '',
-          name: 'Submissions',
-          route: 'instructors.assignments.submissions'
-        },
-        {
-          icon: '',
           name: 'Grader Access',
           route: 'instructors.assignments.grader_access'
         },
@@ -98,6 +93,11 @@ export default {
           icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
+        },
+        {
+          icon: '',
+          name: 'Edit Submissions',
+          route: 'instructors.assignments.submissions'
         },
         {
           icon: '',

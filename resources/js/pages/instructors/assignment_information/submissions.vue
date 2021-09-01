@@ -48,7 +48,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Submissions" />
+        <PageTitle title="Edity Submissions" />
         <div v-if="questions.length">
           <b-container>
             <b-row>
@@ -327,6 +327,14 @@ export default {
 
   methods: {
     async confirmUpdateScores () {
+
+      Start: first an actual confirm update scores then do the check
+
+
+
+
+
+
       try {
         const { data } = await this.questionScoreForm.post(`/api/scores/over-total-points/${this.assignmentId}/${this.questionId}`)
         this.numOverMax = parseInt(data.num_over_max)
