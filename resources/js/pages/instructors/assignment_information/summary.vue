@@ -168,9 +168,9 @@ export default {
             value: this.assignment.include_in_weighted_average ? 'Yes' : 'No'
           },
           { property: 'Total Points', value: this.assignment.total_points },
-          { property: 'Number Of Questions', value: this.assignment.number_of_questions },
+          { property: 'Number of Questions', value: this.assignment.number_of_questions },
           {
-            property: 'Number Of Randomized Questions Chosen',
+            property: 'Number of Randomized Questions Chosen',
             value: this.assignment.number_of_randomized_questions_chosen
           }
         )
