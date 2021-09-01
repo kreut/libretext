@@ -7,6 +7,7 @@ use App\BetaCourse;
 use App\BetaCourseApproval;
 use App\DataShop;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
@@ -566,7 +567,7 @@ class AssignmentSyncQuestionController extends Controller
 
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
-                $columns['points'] = $this->formatDecimals($value->points);
+                $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
@@ -638,7 +639,7 @@ class AssignmentSyncQuestionController extends Controller
             if ($assignment_question_info->isNotEmpty()) {
                 foreach ($assignment_question_info as $question_info) {
                     //for getQuestionsByAssignment (internal)
-                    $question_info->points = $this->formatDecimals($question_info->points);
+                    $question_info->points = Helper::removeZerosAfterDecimal($question_info->points);
 
                     $response['questions'][$question_info->question_id] = $question_info;
                     //for the axios call from questions.get.vue
@@ -1275,7 +1276,7 @@ class AssignmentSyncQuestionController extends Controller
                 $student_response = $response_info['student_response'];
                 $correct_response = $response_info['correct_response'];
                 $answered_correctly_at_least_once = $response_info['answered_correctly_at_least_once'];
-                $submission_score = $this->formatDecimals($response_info['submission_score']);
+                $submission_score = Helper::removeZerosAfterDecimal($response_info['submission_score']);
                 $last_submitted = $response_info['last_submitted'];
                 $submission_count = $response_info['submission_count'];
                 $late_question_submission = $response_info['late_question_submission'];
@@ -1614,14 +1615,6 @@ class AssignmentSyncQuestionController extends Controller
         return $seed;
     }
 
-    /**
-     * @param $value_with_decimal
-     * @return string
-     */
-    function formatDecimals($value_with_decimal)
-    {
-        return rtrim(rtrim($value_with_decimal, "0"), ".");
-    }
 
     function getOtherRandomizedQuestionId(array $user_question_ids, array $question_ids, int $question_id_to_remove)
     {

@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Traits\JWT;
 use \Exception;
 
@@ -51,7 +52,7 @@ class Submission extends Model
                     'email' => $enrolled_user->email,
                     'submission' => $this->getStudentResponse($submission, $question->technology),
                     'submission_count' => $submission->submission_count,
-                    'score' => rtrim(rtrim($submission->score, "0"), ".")
+                    'score' => Helper::removeZerosAfterDecimal($submission->score)
                 ];
             }
 

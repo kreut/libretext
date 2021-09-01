@@ -12,4 +12,13 @@ class Helper
 
     }
 
+    public static function removeZerosAfterDecimal($num)
+    {
+        $pos = strpos($num, '.');
+        if ($pos === false) { // it is integer number
+            return $num;
+        } else { // it is decimal number
+            return rtrim(rtrim($num, '0'), '.');
+        }
+    }
 }

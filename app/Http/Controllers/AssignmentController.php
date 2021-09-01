@@ -9,6 +9,7 @@ use App\AssignToTiming;
 use App\AssignToUser;
 use App\BetaAssignment;
 use App\BetaCourse;
+use App\Helpers\Helper;
 use App\Question;
 use App\Section;
 use App\SubmissionFile;
@@ -940,7 +941,7 @@ class AssignmentController extends Controller
         $authorized = Gate::inspect('view', $assignment);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
-            $response['is_lms'] = (bool) $assignment->course->lms;//if no access, need this to determine whether to show the time zones
+            $response['is_lms'] = (bool)$assignment->course->lms;//if no access, need this to determine whether to show the time zones
             return $response;
         }
         $is_fake_student = Auth::user()->fake_student;
@@ -976,7 +977,7 @@ class AssignmentController extends Controller
                     : [],
                 'beta_assignments_exist' => $assignment->betaAssignments() !== [],
                 'is_beta_assignment' => $assignment->isBetaAssignment(),
-                'is_lms' => (bool) $assignment->course->lms,
+                'is_lms' => (bool)$assignment->course->lms,
                 'lti_launch_exists' => Auth::user()->role === 3 && !$is_fake_student && $assignment->ltiLaunchExists(Auth::user())
             ];
 
@@ -1291,12 +1292,12 @@ class AssignmentController extends Controller
     public
     function getTotalPoints(Assignment $assignment)
     {
-        return $assignment->number_of_randomized_assessments
+        $total_points = $assignment->number_of_randomized_assessments
             ? $assignment->number_of_randomized_assessments * $assignment->default_points_per_question
             : DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
                 ->sum('points');
-
+        return Helper::removeZerosAfterDecimal($total_points);
     }
 
 

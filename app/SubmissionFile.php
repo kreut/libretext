@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use \Exception;
 use Illuminate\Database\Eloquent\Model;
 use Carbon\Carbon;
@@ -50,7 +51,7 @@ class SubmissionFile extends Model
                     'name' => $enrolled_user->first_name . ' ' . $enrolled_user->last_name,
                     'email' => $enrolled_user->email,
                     'type' => $open_ended_submissions_by_user[$enrolled_user->id]->type,
-                    'score' => $open_ended_submissions_by_user[$enrolled_user->id]->score ? rtrim(rtrim($open_ended_submissions_by_user[$enrolled_user->id]->score, "0"), ".") : 'Not Scored.'];
+                    'score' => $open_ended_submissions_by_user[$enrolled_user->id]->score ? Helper::removeZerosAfterDecimal($open_ended_submissions_by_user[$enrolled_user->id]->score) : 'Not Scored.'];
             }
 
         }

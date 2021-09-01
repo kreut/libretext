@@ -3,6 +3,7 @@
 namespace App;
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Database\Eloquent\Model;
@@ -428,7 +429,7 @@ class Assignment extends Model
             ->select(DB::raw('SUM(assignment_question.points) as total_points,assignments.id'))
             ->get();
         foreach ($points_info as $value) {
-            $total_points_by_assignment [$value->id] = rtrim(rtrim($value->total_points, "0"), ".");
+            $total_points_by_assignment [$value->id] = Helper::removeZerosAfterDecimal($value->total_points);
         }
         $points_info = DB::table('assignments')
             ->where('course_id', $course->id)
