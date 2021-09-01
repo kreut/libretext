@@ -613,7 +613,7 @@
           <b-alert variant="success" show>
             <span class="font-weight-bold">
               You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
-              <span v-if="showScores">  You received a score of {{ questions[currentPage - 1].submission_score }}</span>.</span>
+              <span v-if="showScores">  You received a score of {{ questions[currentPage - 1].submission_score }}.</span></span>
           </b-alert>
         </div>
       </div>
@@ -700,14 +700,14 @@
                   @change="toggleQuestionView()"
                 />
               </div>
-              <div v-if="source === 'a' && !inIFrame ">
+              <div v-if="source === 'a'">
                 <div v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker'"
                      class="text-center"
                 >
                   <h5>
                     This question is worth
                     {{ 1 * (questions[currentPage - 1].points) }}
-                    points.
+                    point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
                   </h5>
                 </div>
                 <div
@@ -734,7 +734,7 @@
                       This submission will be marked late.</span>
                   </b-alert>
                 </div>
-                <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' " class="text-center">
+                <div v-if="isInstructor() && !presentationMode && questionView !== 'basic' && !inIFrame" class="text-center">
                   <b-form-row>
                     <b-col/>
                     <h5 class="mt-1">
