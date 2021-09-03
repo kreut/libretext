@@ -84,7 +84,8 @@ class ScorePolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $assignment->course->user_id === $user->id;
+                $has_access = $assignment->course->user_id === $user->id ||
+                    (Helper::isCommonsCourse($assignment->course) && Helper::hasAnonymousUserSession());
                 break;
             case(3):
                 $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())

@@ -82,8 +82,10 @@ export function prepareForm (form) {
   }
 }
 
-export function resetAssignmentForm (form) {
+export function resetAssignmentForm (form, assignmentId) {
   form.name = ''
+  form.public_description = ''
+  form.private_description = ''
   form.available_from_date = ''
   form.available_from_time = '09:00:00'
   form.due_date = ''
@@ -94,22 +96,14 @@ export function resetAssignmentForm (form) {
   form.default_points_per_question = '10'
   form.scoring_type = 'p'
 
-  this.assignmentId = false
+  assignmentId = 0
   form.errors.clear()
 }
-
-async function resetAll (route, bvModal) {
-  switch (route) {
-    case ('instructors.assignments.summary'):
-      await this.getAssignmentSummary()
-      break
-    case ('instructors.assignments.index'):
-      bvModal.hide('modal-assignment-properties')
-      //await this.getAssignments()
-      break
-    default:
-      alert('Please contact support. There is no refresh method for assignment properties.')
-  }
+export function updateModalToggleIndex () {
+  // ckeditor fix for input type text --- wasn't able to click
+  // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
+  let modalAssignmentProperties = document.querySelectorAll('*[id="modal-assignment-properties___BV_modal_content_"]')[0]
+  modalAssignmentProperties.removeAttribute('tabindex')
 }
 
 export async function initAddAssignment (form, courseId, assignmentGroups, noty, moment, courseStartDate, courseEndDate, bvModal) {

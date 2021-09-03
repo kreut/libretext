@@ -33,25 +33,23 @@
               <b-button size="sm" variant="outline-primary">Control Panel</b-button>
             </router-link>
           </span>
+          <span v-if="user && user.role ===2">
+          <b-dropdown id="dropdown-right" right text="Dashboard" variant="primary" class="m-2" size="sm">
+            <b-dropdown-item v-for="location in dashboards" :key="location.routeName"
+                             :active="$route.name === location.routeName"
+                             href="#" @click="$router.push({ name: location.routeName })"
+            >
+              {{ location.text }}
+            </b-dropdown-item>
+          </b-dropdown>
+         </span>
         </div>
       </div>
 
       <b-nav v-if="logoLoaded" aria-label="breadcrumb" class="breadcrumb d-flex justify-content-between"
              style="padding-top:.3em !important;padding-bottom:0 !important; margin-bottom:0 !important;"
       >
-        <toggle-button
-          v-if="showLearningTreeCourseToggle()"
-          class="mt-2"
-          :width="155"
-          :value="isInstructorsMyCoursesView"
-          :sync="true"
-          :font-size="14"
-          :margin="4"
-          :color="{checked: '#007Bff', unchecked: '#28a745'}"
-          :labels="{checked: 'My Courses', unchecked: 'My Learning Trees'}"
-          @change="toggleCourseLearningTreeView()"
-        />
-        <span v-if="(user === null) || (oneBreadcrumb && (user !== null) && !showLearningTreeCourseToggle())"
+        <span v-if="(user === null) || (oneBreadcrumb && (user !== null))"
               style="padding-top:.45em;padding-bottom:0 !important; margin-bottom:0 !important; padding-left:16px"
         ><a :href="breadcrumbs && breadcrumbs[0]['href']">{{ breadcrumbs[0]['text'] }}</a></span>
         <b-breadcrumb v-if="!oneBreadcrumb" :items="breadcrumbs"
@@ -59,21 +57,12 @@
         />
         <b-navbar-nav class="ml-auto mt-0 mb-0">
           <b-row>
-            <b-nav-item v-if="isAnonymousUser" right class="mr-2">
-              <span class="nav-link" active-class="active" @click="logout">  Log Out
-              </span>
-            </b-nav-item>
-            <b-nav-item v-if="isAnonymousUser" right class="mr-2">
-              <span class="nav-link" active-class="active" @click="openSendEmailModal">
-                Contact Us
-              </span>
-            </b-nav-item>
-            <b-nav-item-dropdown v-if="user && !isLearningTreesEditor && !isAnonymousUser" right class="mr-2">
+            <b-nav-item-dropdown v-if="user && !isLearningTreesEditor" right class="mr-2">
               <!-- Using 'button-content' slot -->
               <template v-slot:button-content>
                 <em>Hi, {{ user.first_name }}!</em>
               </template>
-              <router-link :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
+              <router-link v-if="!isAnonymousUser" :to="{ name: 'settings.profile' }" class="dropdown-item pl-3">
                 <fa icon="cog" fixed-width/>
                 {{ $t('settings') }}
               </router-link>
@@ -137,6 +126,9 @@ export default {
   },
 
   data: () => ({
+    dashboards: [{ routeName: 'instructors.courses.index', text: 'My Courses' },
+      { routeName: 'commons', text: 'The Commons' },
+      { routeName: 'instructors.learning_trees.index', text: 'Learning Trees' }],
     isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
@@ -180,7 +172,7 @@ export default {
       this.canToggleStudentView = Boolean(this.assignmentId + this.courseId)
       this.isInstructorsMyCoursesView = to.name === 'instructors.courses.index'
       this.isLearningTreesEditor = (to.name === 'instructors.learning_trees.editor') ? 'color:#E9ECEF !important;' : ''
-      this.showNavBar = this.$router.history.current.name !== 'init_lms_assignment'
+      this.showNavBar = !['init_lms_assignment', 'anonymous-users-entry'].includes(this.$router.history.current.name)
       if (this.showNavBar) {
         this.getBreadcrumbs(this.$router.history.current)
         this.breadcrumbsLoaded = true
@@ -191,15 +183,6 @@ export default {
     }
   },
   methods: {
-    showLearningTreeCourseToggle () {
-      return (this.user !== null) &&
-        this.user.role === 2 &&
-        ['instructors.learning_trees.index', 'instructors.courses.index'].includes(this.currentRouteName)
-    },
-    toggleCourseLearningTreeView () {
-      this.isInstructorsMyCoursesView ? this.$router.push({ name: 'instructors.learning_trees.index' })
-        : this.$router.push({ name: 'instructors.courses.index' })
-    },
     async getSession () {
       console.log(this.user)
       if (this.user !== null) {
@@ -271,12 +254,9 @@ export default {
           [
             'commons',
             'welcome',
-            'instructors.learning_trees.index',
-            'instructors.courses.index',
             'login.as',
             'refresh.question.requests',
-            'manual.grade.passbacks',
-            'students.assignments.anonymous.user.index'
+            'manual.grade.passbacks'
           ].includes(router.name)
       } catch (error) {
         if (!error.message.includes('status code 401')) {

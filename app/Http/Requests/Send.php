@@ -23,11 +23,13 @@ class Send extends FormRequest
      */
     public function rules()
     {
-        return [
+
+       return  [
             'name' => 'required',
             'email' => 'email',
             'subject' => 'required',
-            'text' => 'required|string|min:10'
+            'text' => $this->type === 'instructor_account_request' ? '' :'required|string|min:10'
         ];
+
     }
 }

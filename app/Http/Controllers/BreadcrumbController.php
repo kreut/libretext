@@ -66,7 +66,9 @@ class BreadcrumbController extends Controller
                                 'active' => true];
                             break;
                         case('instructors.learning_trees.index'):
-                        case('instructors.courses.index'):
+                            $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => ""];
+                            break;
+                        case('students.assignments.anonymous.user.index'):
                             $breadcrumbs[0] = ['text' => '', 'href' => ""];
                             break;
                         case('login.as'):
@@ -114,9 +116,11 @@ class BreadcrumbController extends Controller
                             break;
                         case('questions.view'):
                             //My courses / The assignment's course / that assignment summary / the assignment questions
-                            if (Helper::isAnonymousUser()) {
-                                $breadcrumbs[] = ['text' => $assignment->course->name,
-                                    'href' => "/students/courses/{$assignment->course->id}/assignments/anonymous-user"];
+                            if (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession()) {
+                                $breadcrumbs = [
+                                    ['text' => $assignment->course->name,
+                                    'href' => "/students/courses/{$assignment->course->id}/assignments/anonymous-user"]
+                                ];
                             } else {
                                 $breadcrumbs[] = ['text' => $assignment->course->name,
                                     'href' => "/$users/courses/{$assignment->course->id}/assignments"];

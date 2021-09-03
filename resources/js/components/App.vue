@@ -1,6 +1,6 @@
 <template>
   <div id="app">
-    <loading ref="loading" />
+    <loading v-if="showLoading" ref="loading" />
 
     <transition name="page" mode="out-in">
       <component :is="layout" v-if="layout" />
@@ -32,7 +32,8 @@ export default {
 
   data: () => ({
     layout: null,
-    defaultLayout: 'default'
+    defaultLayout: 'default',
+    showLoading: true
   }),
 
   metaInfo () {
@@ -46,6 +47,9 @@ export default {
 
   mounted () {
     this.$loading = this.$refs.loading
+    this.showLoading = false
+    const regex = /^\/courses\/[0-9]+\/anonymous$/
+    this.showLoading = !window.location.pathname.match(regex)
   },
 
   methods: {

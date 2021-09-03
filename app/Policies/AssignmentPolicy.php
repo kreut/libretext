@@ -79,10 +79,11 @@ class AssignmentPolicy
         $has_access = false;
         switch ($user->role) {
             case(2):
-                $has_access = $this->ownsCourseByUser($assignment->course, $user);
+                $has_access = (Helper::isCommonsCourse($assignment->course) && Helper::hasAnonymousUserSession())
+                    || $this->ownsCourseByUser($assignment->course, $user);
                 break;
             case(3):
-                $has_access =($assignment->course->anonymous_users && Helper::isAnonymousUser())
+                $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
                     || $assignment->course->enrollments->contains('user_id', $user->id);
                 break;
             case(4):

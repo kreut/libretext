@@ -29,6 +29,19 @@ class UserPolicy
 
         return $isValidEmail && $isValidCookie;
     }
+
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function setAnonymousUserSession(User $user): Response
+    {
+        return $user->role === 2
+            ? Response::allow()
+            : Response::deny('You are not allowed to set an anonymous user session.');
+
+    }
+
     public function getAll(User $user)
     {
 

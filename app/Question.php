@@ -2,6 +2,7 @@
 
 namespace App;
 
+use DOMDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -13,7 +14,7 @@ use \Exception;
 class Question extends Model
 {
 
-    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology', 'library'];
+    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology', 'library', 'author', 'license', 'license_version'];
 
     public function __construct(array $attributes = [])
     {
@@ -22,7 +23,80 @@ class Question extends Model
 
     }
 
-    public function getUrlLinkText($url)
+    /**
+     * @param DOMDocument $domd
+     * @param Libretext $libretext
+     * @param string $technology_iframe
+     * @return array
+     * @throws Exception
+     */
+    public function getAuthorAndLicense(DOMDocument $domd,
+                                        Libretext   $libretext,
+                                        string      $technology_iframe): array
+    {
+        $technology = $libretext->getTechnologyFromBody($technology_iframe);
+        $author = null;
+        $license = null;
+        $license_version = null;
+
+        if ($technology === 'h5p') {
+            $domd->loadHTML($technology_iframe);
+            $iFrame = $domd->getElementsByTagName('iframe')->item(0);
+            $src = $iFrame->getAttribute('src');
+            $h5p_id = str_replace(['https://studio.libretexts.org/h5p/', '/embed'], ['', ''], $src);
+            $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, $endpoint);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+            $output = curl_exec($ch);
+            curl_close($ch);
+            if ($info = json_decode($output, 1)) {
+                $info = $info[0];
+                $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
+                $author = !$author ? $info['uid'] : ($author[0]->name ?? '');
+                $license = $this->_mapLicenseTextToValue($info['license']);
+                $license_version = $license ? $info['license_version'] : null;
+            }
+        } else {
+            //TODO
+        }
+        return compact('author', 'license', 'license_version');
+    }
+
+    /**
+     * @param string $license_text
+     * @return string|null
+     * @throws Exception
+     */
+    private function _mapLicenseTextToValue(string $license_text): ?string
+    {
+        try {
+            $licenses = ['Public Domain' => 'publicdomain',
+                'PD' => 'publicdomain',
+                'U' => 'publicdomain',
+                'CC BY' => 'ccby',
+                'CC BY-NC' => 'ccbync',
+                'CC BY-ND' => 'ccbynd',
+                'CC BY-NC-ND' => 'ccbyncnd',
+                'CC BY-NC-SA' => 'ccbyncsa',
+                'GNU GPL' => 'gnu',
+                'All Rights Reserved' => 'arr',
+                'GNU FDL' => 'gnufdl'];
+            if ($license_text && !isset($licenses[$license_text])) {
+                throw new Exception("$license_text does not exist; need to update this in the questions view and in the database.");
+            }
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            return $license_text;
+        }
+        return $licenses[$license_text] ?? null;
+    }
+
+    public
+    function getUrlLinkText($url)
     {
         $matches = [];
         preg_match('/\>(.*)<\/a>/', $url, $matches);
@@ -30,7 +104,8 @@ class Question extends Model
         return $matches[1];
     }
 
-    public function getCreatedAt($time)
+    public
+    function getCreatedAt($time)
     {
         $matches = [];
         preg_match('/\>(.*)<\/time>/', $time, $matches);
@@ -38,13 +113,15 @@ class Question extends Model
         return $matches[1];
     }
 
-    public function tags()
+    public
+    function tags()
     {
         return $this->belongsToMany('App\Tag')->withTimestamps();
     }
 
 
-    public function getH5PQuestions(int $offset)
+    public
+    function getH5PQuestions(int $offset)
     {
         /** [
          * "<a href=\"https://h5p.libretexts.org/wp-admin/admin.php?page=h5p&task=show&id=1464\">Cap.5: Videos y actividad.</a>",
@@ -95,7 +172,8 @@ class Question extends Model
         return json_decode($questions);
     }
 
-    public function addTag($key, $tag, $question)
+    public
+    function addTag($key, $tag, $question)
     {
         if ($key) {
             $tag = Tag::firstOrCreate(compact('tag'));
@@ -105,7 +183,8 @@ class Question extends Model
         }
     }
 
-    public function storeWebwork()
+    public
+    function storeWebwork()
     {
         try {
             $webwork = DB::connection('webwork');
@@ -148,7 +227,8 @@ class Question extends Model
 
     }
 
-    public function storeH5P()
+    public
+    function storeH5P()
     {
         $offset = 0;
         $questions = $this->getH5PQuestions($offset);
@@ -183,7 +263,8 @@ class Question extends Model
 
     }
 
-    public function store()
+    public
+    function store()
     {
         $this->storeWebwork();
         $this->storeH5P();
@@ -196,7 +277,8 @@ class Question extends Model
      * @return array
      * @throws Exception
      */
-    public function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting)
+    public
+    function getQuestionIdsByPageId(int $page_id, string $library, bool $cache_busting)
     {
         $question = Question::where('page_id', $page_id)
             ->where('library', $library)
@@ -254,7 +336,7 @@ class Question extends Model
                 exit;
             }
         }
-        $dom = new \DOMDocument();
+        $dom = new DOMDocument();
         libxml_use_internal_errors(true);
         $dom->loadHTML($body);
         libxml_clear_errors();
@@ -307,16 +389,25 @@ class Question extends Model
                 unlink($file);
             }
 
+
+            $author_and_license_info = $this->getAuthorAndLicense($dom,
+                $Libretext,
+                $technology_iframe);
+
             $question = Question::updateOrCreate(
                 ['page_id' => $page_id, 'library' => $library],
                 ['technology' => $technology,
-                    'title' => null, //I'll get the title when the question is re-loaded
+                    'title' => null, //I'll get the title below
                     'non_technology' => $has_non_technology,
+                    'author' => $author_and_license_info['author'],
+                    'license' => $author_and_license_info['license'],
+                    'license_version' => $author_and_license_info['license_version'],
                     'technology_iframe' => $technology_iframe
                 ]);
 
             $Libretext = new Libretext(['library' => $library]);
             $Libretext->updateTitle($page_id, $question->id);
+
 
             if ($technology_and_tags['tags']) {
                 $Libretext->addTagsToQuestion($question, $technology_and_tags['tags']);

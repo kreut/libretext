@@ -55,7 +55,7 @@
         title="Assignment Properties"
         ok-title="Submit"
         size="lg"
-        @hidden="resetAssignmentForm"
+        @hidden="resetAssignmentForm(form,assignmentId)"
         @shown="updateModalToggleIndex"
       >
         <AssignmentProperties
@@ -491,7 +491,9 @@ import {
   editAssignment,
   getAssignmentGroups,
   prepareForm,
-  assignmentForm
+  assignmentForm,
+  resetAssignmentForm,
+  updateModalToggleIndex
 } from '~/helpers/AssignmentProperties'
 import AssignmentProperties from '~/components/AssignmentProperties'
 import AssignTosToView from '~/components/AssignTosToView'
@@ -573,6 +575,8 @@ export default {
     this.isLockedMessage = isLockedMessage
     this.initAssignmentGroupOptions = initAssignmentGroupOptions
     this.updateAssignmentGroupFilter = updateAssignmentGroupFilter
+    this.resetAssignmentForm = resetAssignmentForm
+    this.updateModalToggleIndex = updateModalToggleIndex
   },
   async mounted () {
     this.initAddAssignment = initAddAssignment
@@ -651,30 +655,6 @@ export default {
           this.$bvModal.show('modal-form-errors')
         }
       }
-    },
-
-    resetAssignmentForm () {
-      this.form.name = ''
-      this.form.public_description = ''
-      this.form.private_description = ''
-      this.form.available_from_date = ''
-      this.form.available_from_time = '09:00:00'
-      this.form.due_date = ''
-      this.form.due_time = '09:00:00'
-      this.form.type_of_submission = 'correct'
-      this.form.num_submissions_needed = '2'
-      this.form.default_open_ended_submission_type = 'file'
-      this.form.default_points_per_question = '10'
-      this.form.scoring_type = 'p'
-
-      this.assignmentId = 0
-      this.form.errors.clear()
-    },
-    updateModalToggleIndex () {
-      // ckeditor fix for input type text --- wasn't able to click
-      // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
-      let modalAssignmentProperties = document.querySelectorAll('*[id="modal-assignment-properties___BV_modal_content_"]')[0]
-      modalAssignmentProperties.removeAttribute('tabindex')
     },
     viewAssignTos (assignTosToView) {
       this.assignTosToView = assignTosToView

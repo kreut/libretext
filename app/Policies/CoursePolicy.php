@@ -20,8 +20,19 @@ class CoursePolicy
      * @param Course $course
      * @return Response
      */
-    public function getAssignmentsForAnonymousUser(User $user, Course $course){
-        return ($course->anonymous_users && Helper::isAnonymousUser())
+    public function getAssignmentsForAnonymousUser(User $user, Course $course): Response
+    {
+        switch ($user->role) {
+            case(2):
+                $has_access = Helper::isCommonsCourse($course) && Helper::hasAnonymousUserSession();
+                break;
+            case(3):
+                $has_access = $course->anonymous_users && Helper::isAnonymousUser();
+                break;
+            default:
+                $has_access = false;
+        }
+        return $has_access
             ? Response::allow()
             : Response::deny('You are not allowed to view these assignments.');
     }
@@ -37,6 +48,7 @@ class CoursePolicy
             ? Response::allow()
             : Response::deny('You are not allowed to update what is shown in the iframe.');
     }
+
     public function getAssignmentNamesForPublicCourse(User $user, Course $course)
     {
         return $user->role === 2 && $course->public

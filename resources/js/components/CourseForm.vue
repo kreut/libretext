@@ -1,6 +1,53 @@
 <template>
   <div>
     <b-modal
+      id="modal-h5p-questions-in-course-with-anonymous-users-warning"
+      title="H5P Assessments With Anonymous Users Warning"
+    >
+      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+        You are allowing anonymous users in a course with H5P assessments. Due to the nature of this technology,
+        users will be able to view the solutions to these types of assessments.
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary"
+                  @click="$bvModal.hide('modal-h5p-questions-in-course-with-anonymous-users-warning')"
+        >
+          I understand the consequences
+        </b-button>
+      </template>
+    </b-modal>
+    <b-modal
+      id="modal-alpha-course-anonymous-users-warning"
+      title="Alpha Course With Anonymous Users Warning"
+    >
+      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+        By allowing anonymous users in an alpha course, this course will essentially become an open course for
+        all associated beta courses since anyone will be able to view this course's assignments and assessments.
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-alpha-course-anonymous-users-warning')">
+          I understand the consequences
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal
+      id="modal-beta-course-anonymous-users-warning"
+      title="Beta Course With Anonymous Users Warning"
+    >
+      <b-alert :show="true" variant="danger" class="font-weight-bold font-italic">
+        By allowing anonymous users in a beta course, this course will essentially become an open course for
+        all other associated beta courses and the original alpha course since anyone will be able to view this course's
+        assignments and assessments.
+      </b-alert>
+      <template #modal-footer="{ ok }">
+        <b-button size="sm" variant="primary" @click="$bvModal.hide('modal-beta-course-anonymous-users-warning')">
+          I understand the consequences
+        </b-button>
+      </template>
+    </b-modal>
+
+    <b-modal
       id="modal-untether-beta-course-warning"
       ref="untetherBetaCourseWarning"
       title="Untether Beta Course Warning"
@@ -41,7 +88,7 @@
                delay="250"
     >
       If you would like to serve your assignments through an LMS, we'll let your LMS handle assigning students and the
-      course gradebook.  Currently we support Canvas but will be expanding per instructor request.
+      course gradebook. Currently we support Canvas but will be expanding per instructor request.
     </b-tooltip>
     <b-tooltip target="public_tooltip"
                delay="250"
@@ -52,7 +99,7 @@
     <b-tooltip target="anonymous_users_tooltip"
                delay="250"
     >
-      If you allow anonymous users, then anybody can view all assessments in your course.  Submissions from
+      If you allow anonymous users, then anybody can view all assessments in your course. Submissions from
       anonymous users won't be saved.
     </b-tooltip>
     <b-tooltip target="school_tooltip"
@@ -74,7 +121,7 @@
         <template slot="label">
           School
           <span id="school_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <vue-bootstrap-typeahead
           ref="schoolTypeAhead"
@@ -84,7 +131,7 @@
           :class="{ 'is-invalid': form.errors.has('school') }"
           @keydown="form.errors.clear('school')"
         />
-        <has-error :form="form" field="school"/>
+        <has-error :form="form" field="school" />
       </b-form-group>
       <b-form-group
         id="name"
@@ -100,7 +147,7 @@
           :class="{ 'is-invalid': form.errors.has('name') }"
           @keydown="form.errors.clear('name')"
         />
-        <has-error :form="form" field="name"/>
+        <has-error :form="form" field="name" />
       </b-form-group>
       <b-form-group
         id="public_description"
@@ -174,7 +221,7 @@
             :class="{ 'is-invalid': form.errors.has('section') }"
             @keydown="form.errors.clear('section')"
           />
-          <has-error :form="form" field="section"/>
+          <has-error :form="form" field="section" />
         </b-form-group>
         <b-form-group
           id="crn"
@@ -200,7 +247,7 @@
             :class="{ 'is-invalid': form.errors.has('crn') }"
             @keydown="form.errors.clear('crn')"
           />
-          <has-error :form="form" field="crn"/>
+          <has-error :form="form" field="crn" />
         </b-form-group>
       </div>
       <b-form-group
@@ -227,7 +274,7 @@
           :class="{ 'is-invalid': form.errors.has('term') }"
           @keydown="form.errors.clear('term')"
         />
-        <has-error :form="form" field="term"/>
+        <has-error :form="form" field="term" />
       </b-form-group>
       <b-form-group
         id="start_date"
@@ -242,7 +289,7 @@
           :class="{ 'is-invalid': form.errors.has('start_date') }"
           @shown="form.errors.clear('start_date')"
         />
-        <has-error :form="form" field="start_date"/>
+        <has-error :form="form" field="start_date" />
       </b-form-group>
 
       <b-form-group
@@ -260,7 +307,7 @@
           @click="form.errors.clear('end_date')"
           @shown="form.errors.clear('end_date')"
         />
-        <has-error :form="form" field="end_date"/>
+        <has-error :form="form" field="end_date" />
       </b-form-group>
       <b-form-group
         id="public"
@@ -271,7 +318,7 @@
         <template slot="label">
           Public
           <span id="public_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <b-form-radio-group v-model="form.public" stacked>
           <b-form-radio name="public" value="1">
@@ -287,23 +334,33 @@
         id="anonymous_users"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Public"
+        label-for="Anonymous Users"
       >
         <template slot="label">
           Anonymous Users
           <span id="anonymous_users_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
-        <b-form-radio-group v-model="form.anonymous_users" stacked>
-          <b-form-radio name="public" value="1">
+        <b-form-radio-group v-model="form.anonymous_users" stacked @change="showAnonymousUsersWarning">
+          <b-form-radio name="anonymous_users" value="1">
             Yes
           </b-form-radio>
 
-          <b-form-radio name="public" value="0">
+          <b-form-radio name="anonymous_users" value="0">
             No
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
+      <span v-if="parseInt(form.anonymous_users) === 1">
+        <b-alert type="info" :show="!(course && course.id)">
+          Once your course is created, you can visit the Course properties to obtain a special link for Anonymous Users to access your course.
+        </b-alert>
+        <b-alert type="info" :show="course && course.id" class="font-weight-bold text-center">
+          <p>Your anonymous users will be able to enter your course using the following url:</p>
+          <p>{{ getAnonymousUserEntryUrl() }}</p>
+          <p>If you would like to view this course as an Anonymous User, please log out of this account first before visiting the URL.</p>
+        </b-alert>
+      </span>
       <b-form-group
         id="alpha"
         label-cols-sm="4"
@@ -313,7 +370,7 @@
         <template slot="label">
           Alpha
           <span id="alpha_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <b-form-radio-group v-model="form.alpha" stacked @change="validateCanChange">
           <b-form-radio name="alpha" value="1">
@@ -335,7 +392,7 @@
         <template slot="label">
           Untether Beta Course
           <span id="untether_beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <b-form-radio-group v-model="form.untether_beta_course" stacked>
           <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
@@ -357,7 +414,7 @@
         <template slot="label">
           LMS
           <span id="lms_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
         <b-form-radio-group v-model="form.lms" stacked>
           <b-form-radio name="lms" value="1">
@@ -396,15 +453,49 @@ export default {
       this.$refs.schoolTypeAhead.inputValue = this.form.school
     }
     this.getSchools()
+    console.log(this.course)
   },
   methods: {
+    getAnonymousUserEntryUrl () {
+      if (!this.course) {
+        return
+      }
+      return window.location.origin + `/courses/${this.course.id}/anonymous`
+    },
+    async showAnonymousUsersWarning () {
+      if (parseInt(this.form.anonymous_users) === 0) {
+        if (await this.courseHasH5PAssessments()) {
+          this.$bvModal.show('modal-h5p-questions-in-course-with-anonymous-users-warning')
+        }
+        if (parseInt(this.form.alpha) === 1) {
+          this.$bvModal.show('modal-alpha-course-anonymous-users-warning')
+        }
+        if (this.course && this.course.is_beta_course) {
+          this.$bvModal.show('modal-beta-course-anonymous-users-warning')
+        }
+      }
+    },
+    async courseHasH5PAssessments () {
+      if (this.course && this.course.id) {
+        try {
+          const { data } = await axios.get(`/api/courses/${this.course.id}/has-h5p-questions`)
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          return data.h5p_questions_exist
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      }
+    },
     showUntetherBetaCourseWarning () {
       if (parseInt(this.form.untether_beta_course) === 0) {
         this.$bvModal.show('modal-untether-beta-course-warning')
       }
     },
     async validateCanChange () {
-      if (!this.course) {
+      if (!(this.course && this.course.id)) {
         return
       }
       let valid = true

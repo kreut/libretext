@@ -29,7 +29,7 @@ class Submission extends Model
     /**
      * @throws Exception
      */
-    public function getAutoGradedSubmissionsByUser($enrolled_users, $assignment, $question)
+    public function getAutoGradedSubmissionsByUser($enrolled_users, $assignment, $question): array
     {
         $submissions = $assignment->submissions->where('question_id', $question->id);
 
@@ -96,7 +96,7 @@ class Submission extends Model
         $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
 
-        if ($assignment->course->anonymous_users && Helper::isAnonymousUser()){
+        if ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession())){
             $response['type'] = 'success';
             return $response;
         }

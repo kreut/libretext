@@ -24,18 +24,19 @@ class SubmissionPolicy
      * @param Question $question
      * @return Response
      */
-    public function getSubmissions(User $user, Submission $submission, Assignment $assignment, Question $question){
+    public function getSubmissions(User $user, Submission $submission, Assignment $assignment, Question $question): Response
+    {
 
         $has_access = true;
         $message = '';
 
-        if ($has_access && !in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
-            $message = "You can't get the scores for a question that is not in one of your assignments.";
+        if (!in_array($question->id, $assignment->questions->pluck('id')->toArray())) {
+            $message = "You can't get the submissions for a question that is not in one of your assignments.";
             $has_access = false;
         }
 
-        if ($has_access && $assignment->course->user_id !== $user->id) {
-            $message = "You can't get the scores for an assignment that is not in one of your courses.";
+        if ($assignment->course->user_id !== $user->id) {
+            $message = "You can't get the submissions for an assignment that is not in one of your courses.";
             $has_access = false;
         }
 

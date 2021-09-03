@@ -20,6 +20,10 @@ Route:*/
 //http://www.imsglobal.org/spec/security/v1p0/#step-1-third-party-initiated-login
 //Must support both get and post according to the docs
 
+
+
+
+
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
@@ -40,9 +44,12 @@ Route::get('/beta-assignments/get-from-alpha-assignment/{alpha_assignment}', 'Be
 Route::get('/beta-assignments/is-beta-assignment/{assignment}', 'BetaAssignmentController@isBetaAssignment');
 
 Route::get('/courses/commons', 'CourseController@getCommonsCourses');
+Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
+    Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
+    Route::delete('/users/forget-anonymous-user-session', 'UserController@destroyAnonymousUserSession');
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
@@ -63,6 +70,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
+    Route::post('/saved-questions/{assignment}', 'SavedQuestionController@store');
+    Route::delete('/saved-questions/assignments/{assignment}/questions/{question}', 'SavedQuestionController@destroy');
+    Route::get('/saved-questions/{assignment}', 'SavedQuestionController@getSavedQuestionIdsByAssignment');
+    Route::get('/saved-questions', 'SavedQuestionController@index');
 
     Route::patch('notifications/assignments', 'NotificationController@update');
     Route::get('notifications/assignments', 'NotificationController@show');
@@ -83,9 +94,14 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/courses', 'CourseController@index');
     Route::patch('/courses/{course}/iframe-properties', 'CourseController@updateIFrameProperties');
+    Route::get('/courses/{course}/has-h5p-questions', 'CourseController@hasH5PQuestions');
     Route::get('/courses/is-alpha/{course}', 'CourseController@isAlpha');
     Route::get('/courses/last-school', 'CourseController@getLastSchool');
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
+    Route::get('/courses/assignments/non-beta', 'CourseController@getCoursesAndNonBetaAssignments');
+
+
+
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::post('/courses/import/{course}', 'CourseController@import');
@@ -348,6 +364,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
 
     Route::get('/courses/anonymous-user/can-log-in','CourseController@canLogInAsAnonymousUser');
+    Route::get('/courses/open/index','CourseController@open');
+    Route::get('/courses/{course}/can-log-into-course-as-anonymous-user', 'CourseController@canLogIntoCourseAsAnonymousUser');
+
     Route::post('login', 'Auth\LoginController@login');
     Route::post('register', 'Auth\RegisterController@register');
 

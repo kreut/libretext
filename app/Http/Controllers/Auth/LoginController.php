@@ -7,7 +7,9 @@ use App\Http\Controllers\Controller;
 use App\User;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\AuthenticatesUsers;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\ValidationException;
 
@@ -29,10 +31,10 @@ class LoginController extends Controller
     /**
      * Attempt to log the user into the application.
      *
-     * @param  \Illuminate\Http\Request  $request
+     * @param Request $request
      * @return bool
      */
-    protected function attemptLogin(Request $request)
+    protected function attemptLogin(Request $request): bool
     {
         $token = $this->guard()->attempt($this->credentials($request));
 
@@ -54,8 +56,8 @@ class LoginController extends Controller
     /**
      * Send the response after the user was authenticated.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      */
     protected function sendLoginResponse(Request $request)
     {
@@ -74,8 +76,8 @@ class LoginController extends Controller
     /**
      * Get the failed login response instance.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\JsonResponse
+     * @param Request $request
+     * @return JsonResponse
      *
      * @throws \Illuminate\Validation\ValidationException
      */
@@ -94,26 +96,11 @@ class LoginController extends Controller
     /**
      * Log the user out of the application.
      *
-     * @param  \Illuminate\Http\Request  $request
-     * @return \Illuminate\Http\Response
+     * @param Request $request
      */
     public function logout(Request $request)
     {
-
-        if ($request->session()->has('original_role')) {
-            $request->session()->forget('original_role');
-        }
-        if ($request->session()->has('original_email')) {
-            $request->session()->forget('original_email');
-        }
-
-        if ($request->session()->has('instructor_user_id')) {
-            $request->session()->forget('instructor_user_id');
-        }
-
-        if ($request->session()->has('landing_page')) {
-            $request->session()->forget('landing_page');
-        }
+        $request->session()->flush();
         $this->guard()->logout();
     }
 }

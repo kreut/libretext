@@ -49,15 +49,19 @@ class AssignmentController extends Controller
     {
 
         $response['type'] = 'error';
-         $authorized = Gate::inspect('getAssignmentsForAnonymousUser', $course);
+        $authorized = Gate::inspect('getAssignmentsForAnonymousUser', $course);
 
-         if (!$authorized->allowed()) {
-             $response['message'] = $authorized->message();
-             return $response;
-         }
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
 
         try {
-            $response['assignments'] = $course->assignments;
+            $assignments = DB::table('assignments')
+                ->where('course_id', $course->id)
+                ->orderBy('order')
+                ->get();
+            $response['assignments'] = $assignments;
             $response['course_name'] = $course->name;
             $response['type'] = 'success';
 

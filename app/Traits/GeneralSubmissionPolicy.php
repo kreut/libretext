@@ -30,7 +30,7 @@ trait GeneralSubmissionPolicy
          * $response['message'] = 'It looks like this question has been updated!  Please refresh the page and re-submit.';
          * return $response;
          * }**/
-        if ($assignment->course->anonymous_users && Helper::isAnonymousUser()) {
+        if ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession())) {
             $response['type'] = 'success';
             return $response;
         }

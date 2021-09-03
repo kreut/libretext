@@ -24,16 +24,19 @@ class EmailController extends Controller
      * @return array
      * @throws Exception
      */
-    public function send(Send $request, Email $email)
+    public function send(Send $request, Email $email): array
     {
         $response['type'] = 'error';
         $response['message'] = 'We do not support that email type.';
         switch ($request->type) {
             case('contact_us'):
-               $response =  $this->contactUs($request, $email);
+                $response = $this->contactUs($request, $email);
                 break;
             case('contact_grader'):
-               $response=  $this->contactGrader($request, $email);
+                $response = $this->contactGrader($request, $email);
+                break;
+            case('instructor_account_request'):
+                $response = $this->instructorAccountRequest($request, $email);
                 break;
 
         }
@@ -46,7 +49,7 @@ class EmailController extends Controller
      * @return array
      * @throws Exception
      */
-    public function contactGrader(Send $request, Email $email)
+    public function contactGrader(Send $request, Email $email): array
     {
         $extra_params = $request->extraParams;
         $assignment_id = $extra_params['assignment_id'];
@@ -80,15 +83,14 @@ class EmailController extends Controller
 
     /**
      * @param Send $request
-     * @param Email $email
      * @return array
      * @throws Exception
      */
-    public function contactUs(Send $request, Email $email)
+    public function contactUs(Send $request): array
     {
         $response['type'] = 'error';
         $to_user_id = $request->to_user_id;
-        if ((int) $to_user_id !== 0) {
+        if ((int)$to_user_id !== 0) {
             $response['message'] = 'You are not allowed to send that person an email.';
             return $response;
         }
@@ -98,6 +100,33 @@ class EmailController extends Controller
 
             Mail::to('adapt@libretexts.org')
                 ->send(new \App\Mail\Email($data['subject'], $data['text'], $data['email'], $data['name']));
+
+            $response['type'] = 'success';
+            $response['message'] = 'Thank you for your message!  Please expect a response within 1 business day.';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error sending the email.  Please try again.";
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param Send $request
+     * @return array
+     * @throws Exception
+     */
+    public function instructorAccountRequest(Send $request): array
+    {
+
+        $data = $request->validated();
+
+        try {
+            $text = "{$data['name']} with email address {$data['email']} would like an instructor account.\r\n";
+            $text .= $data['text'] ?? '';
+            Mail::to('delmar@libretexts.org')
+                ->send(new \App\Mail\Email($data['subject'], $text, $data['email'], $data['name']));
 
             $response['type'] = 'success';
             $response['message'] = 'Thank you for your message!  Please expect a response within 1 business day.';

@@ -1,33 +1,44 @@
 <template>
   <div>
+    <Email id="modal-contact-us-for-instructor-account"
+           ref="email"
+           extra-email-modal-text="To obtain an instructor account, please provide your name, your email address, and an optional message."
+           title="Contact Us For Instructor Account"
+           type="instructor_account_request"
+           subject="Instructor Account Request"
+    />
     <b-modal
-      id="modal-enter-course-as-anonymous-user"
-      ref="modalEnterCourseAsAnonymousUser"
+      id="modal-enter-course"
       title="Enter Course"
-      hide-footer
     >
       <p>
-        <span class="font-weight-bold">
-          {{ openCourseName }}
-        </span> is one of our open courses. You can enter this course, view all of the assignments, and try
-        the assessments without your submissions being recorded.
+        To enter this course, you'll need to log in with your instructor account and then visit the Commons from the Dashboard.
+        If you don't already have one, then you can contact us for an instructor account.
       </p>
-      <p>
-        After exploring this course, you can also
-        explore the other open courses we have available by visiting My Courses,
-        which will be located in the navigation bar after you
-        <a href=""
-           @click.prevent="enterOpenCourseAsAnonymousUser"
-        >log in</a>.
-      </p>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$router.push({name: 'login'})"
+        >
+          Log In
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('enter-course');$refs.email.openSendEmailModal()"
+        >
+          Contact Us For Instructor Account
+        </b-button>
+      </template>
     </b-modal>
-
     <b-modal
       id="modal-import-course-as-beta"
       ref="modalImportCourseAsBeta"
       title="Import As Beta"
     >
-      <ImportAsBetaText class="pb-2"/>
+      <ImportAsBetaText class="pb-2" />
       <b-form-group
         id="beta"
         label-cols-sm="7"
@@ -74,7 +85,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle title="Commons"/>
+    <PageTitle title="The Commons" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -101,8 +112,8 @@
               <b-button variant="primary" size="sm" @click="openAssignmentsModal(commonsCourse.id)">
                 View Assignments
               </b-button>
-              <b-button v-if="commonsCourse.anonymous_users" variant="success" size="sm"
-                        @click="openEnterCourseAsAnonymousUser(commonsCourse.id, commonsCourse.name)"
+              <b-button variant="success" size="sm"
+                        @click="initEnterCommonsCourseAsAnonymousUser(commonsCourse.id)"
               >
                 Enter Course
               </b-button>
@@ -125,12 +136,14 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import Form from 'vform'
+import Email from '~/components/Email'
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 
 export default {
   components: {
     Loading,
-    ImportAsBetaText
+    ImportAsBetaText,
+    Email
   },
   data: () => ({
     loggingIn: true,
@@ -159,32 +172,22 @@ export default {
     this.getCommonsCourses()
   },
   methods: {
-    async enterOpenCourseAsAnonymousUser () {
-      this.isLoading = true
-      try {
-        this.loginForm.email = 'anonymous'
-        this.loginForm.password = 'anonymous'
-        const { data } = await this.loginForm.post('/api/login')
-
-        // Save the token.
-        await this.$store.dispatch('auth/saveToken', {
-          token: data.token,
-          remember: this.remember
-        })
-
-        // Fetch the user.
-        await this.$store.dispatch('auth/fetchUser')
-        // Redirect to the correct home page
-        await this.$router.push(`/students/courses/${this.openCourseId}/assignments/anonymous-user`)
-      } catch (error) {
-        this.$noty.error(error.message)
+    async initEnterCommonsCourseAsAnonymousUser (courseId) {
+      if (this.user && this.user.role === 2) {
+        this.isLoading = true
+        try {
+          const { data } = await axios.post('/api/users/set-anonymous-user-session')
+          if (data.type === 'error') {
+            this.$noty.error(data.message)
+            return false
+          }
+          await this.$router.push(`/students/courses/${courseId}/assignments/anonymous-user`)
+        } catch (error) {
+          this.$noty.error(error.message)
+        }
+      } else {
+        this.$bvModal.show('modal-enter-course')
       }
-      this.isLoading = false
-    },
-    openEnterCourseAsAnonymousUser (courseId, courseName) {
-      this.openCourseId = courseId
-      this.openCourseName = courseName
-      this.$bvModal.show('modal-enter-course-as-anonymous-user')
     },
     openImportCourseAsBetaModal () {
       this.$bvModal.show('modal-import-course-as-beta')

@@ -105,6 +105,7 @@
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
                                 :non-learning-tree-questions="nonLearningTreeQuestions"
                                 :beta-assignments-exist="betaAssignmentsExist"
+                                :h5p-questions-with-anonymous-users="h5pQuestionsWithAnonymousUsers"
         />
         <div v-if="items.length">
           <p>
@@ -294,6 +295,7 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal
   },
   data: () => ({
+    h5pQuestionsWithAnonymousUsers: false,
     isAlphaCourse: false,
     viewQuestionAction: '',
     alphaAssignmentQuestion: {},
@@ -449,6 +451,9 @@ export default {
         this.betaAssignmentsExist = data.beta_assignments_exist
         this.isBetaAssignment = data.is_beta_assignment
         this.isAlphaCourse = data.is_alpha_course
+        this.h5pQuestionsWithAnonymousUsers = data.h5p_questions_exist && data.course_has_anonymous_users
+
+
         this.items = data.rows
         let hasNonH5P
         for (let i = 0; i < this.items.length; i++) {
@@ -464,6 +469,7 @@ export default {
         this.updateOpenEndedInRealTimeMessage()
         this.updateLearningTreeInNonLearningTreeMessage()
         this.updateNonLearningTreeInLearningTreeMessage()
+
         if (this.assessment_type === 'clicker' && hasNonH5P) {
           this.$bvModal.show('modal-non-h5p')
         }

@@ -15,6 +15,7 @@ use App\Libretext;
 use App\LtiLaunch;
 use App\LtiGradePassback;
 use App\RandomizedAssignmentQuestion;
+use App\SavedQuestion;
 use App\Solution;
 use App\Traits\LibretextFiles;
 use App\Traits\Statistics;
@@ -171,13 +172,15 @@ class AssignmentSyncQuestionController extends Controller
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
      * @param BetaCourseApproval $betaCourseApproval
+     * @param SavedQuestion $savedQuestion
      * @return array
      * @throws Exception
      */
     public function remixAssignmentWithChosenQuestions(Request                $request,
                                                        Assignment             $assignment,
                                                        AssignmentSyncQuestion $assignmentSyncQuestion,
-                                                       BetaCourseApproval     $betaCourseApproval): array
+                                                       BetaCourseApproval     $betaCourseApproval,
+                                                       SavedQuestion          $savedQuestion): array
     {
 
         $response['type'] = 'error';
@@ -265,8 +268,21 @@ class AssignmentSyncQuestionController extends Controller
 
             }
 
+            if ($request->type_of_remixer === 'saved-questions') {
+                foreach ($chosen_questions as $key => $question) {
+                    $assignment_question = DB::table('assignment_question')
+                        ->where('assignment_id', $question['assignment_id'])
+                        ->where('question_id', $question['question_id'])
+                        ->first();
+                    $savedQuestion->where('assignment_question_id', $assignment_question->id)
+                        ->where('user_id', request()->user()->id)
+                        ->delete();
+                }
+
+            }
 
             DB::commit();
+            $response['message'] = "The assessment has been added to your assignment.";
             $response['type'] = 'success';
         } catch (Exception $e) {
             DB::rollback();
@@ -448,6 +464,7 @@ class AssignmentSyncQuestionController extends Controller
         try {
             $response['type'] = 'success';
             $response['question_ids'] = json_encode($assignment->questions()->pluck('question_id'));//need to do since it's an array
+            $response['question_ids_array'] = $assignment->questions()->pluck('question_id')->toArray();
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
@@ -490,7 +507,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
             foreach ($assignment_questions as $key => $assignment_question) {
 
-                $assignment_questions[$key]->submission = $this->_getSubmissionType($assignment_question);
+                $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
 
             }
             $response['assignment_questions'] = $assignment_questions;
@@ -551,7 +568,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment_solutions_by_question_id[$value->question_id] = ['original_filename' => $value->original_filename,
                     'file' => $value->file];
             }
-
+            $h5p_questions_exists = false;
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
@@ -563,7 +580,7 @@ class AssignmentSyncQuestionController extends Controller
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
                 }
 
-                $columns['submission'] = $this->_getSubmissionType($value);
+                $columns['submission'] = Helper::getSubmissionType($value);
 
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
@@ -572,6 +589,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
                 $columns['technology'] = $value->technology;
+                if ($value->technology === 'h5p') {
+                    $h5p_questions_exists = true;
+                }
                 $columns['assignment_id_question_id'] = "{$assignment->id}-{$value->question_id}";
                 $columns['mind_touch_url'] = "https://{$value->library}.libretexts.org/@go/page/{$value->page_id}";
                 $rows[] = $columns;
@@ -580,6 +600,8 @@ class AssignmentSyncQuestionController extends Controller
             $response['beta_assignments_exist'] = $assignment->betaAssignments() !== [];
             $response['is_beta_assignment'] = $assignment->isBetaAssignment();
             $response['is_alpha_course'] = $assignment->course->alpha === 1;
+            $response['course_has_anonymous_users'] = $assignment->course->anonymous_users === 1;
+            $response['h5p_questions_exist'] = $h5p_questions_exists;
             $response['type'] = 'success';
             $response['rows'] = $rows;
 
@@ -593,20 +615,6 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-    private function _getSubmissionType($value)
-    {
-        $submission = [];
-        if ($value->technology !== 'text') {
-            $submission[] = $value->technology;
-        }
-        if ($value->open_ended_submission_type) {
-            $submission[] = ucwords($value->open_ended_submission_type);
-        }
-        if (!$submission) {
-            $submission = ['Nothing to submit'];
-        }
-        return implode(', ', $submission);
-    }
 
     private
     function _getSolutionLink($assignment, $assignment_solutions_by_question_id, $question_id)
@@ -826,7 +834,14 @@ class AssignmentSyncQuestionController extends Controller
 
     }
 
-
+    /**
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param BetaCourseApproval $betaCourseApproval
+     * @return array
+     * @throws Exception
+     */
     public
     function destroy(Assignment             $assignment,
                      Question               $question,
@@ -1286,10 +1301,10 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
-                $show_solution = !Helper::isAnonymousUser()
+                $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
                     (($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
-                    || ($assignment->assessment_type === 'real time' && $submission_count));
+                        || ($assignment->assessment_type === 'real time' && $submission_count));
                 if ($show_solution) {
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
@@ -1531,6 +1546,7 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
             $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;
+            $response['is_instructor_logged_in_as_anonymous'] = Helper::hasAnonymousUserSession() && request()->user()->role === 2;
 
         } catch (Exception $e) {
             $h = new Handler(app());

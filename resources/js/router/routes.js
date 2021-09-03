@@ -49,6 +49,7 @@ let general_paths  = [
   { path: '/email/resend', name: 'verification.resend', component: page('auth/verification/resend.vue') },
   { path: '/home', name: 'home', component: page('instructors/courses.index.vue') },
   { path: '/commons', name: 'commons', component: page('commons.vue') },
+  { path: '/courses/:courseId/anonymous', name: 'anonymous-users-entry', component: page('anonymous.users.entry.vue') },
   { path: '/settings',
     component: page('settings/index.vue'),
     children: [

@@ -4,11 +4,9 @@
       :id="id"
       ref="modal"
       :title="title"
-      ok-title="Submit"
       type="type"
       extra-params="extraParams"
       size="lg"
-      @ok="submitSendEmail"
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
@@ -27,7 +25,7 @@
             :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
             @keydown="sendEmailForm.errors.clear('name')"
           />
-          <has-error :form="sendEmailForm" field="name" />
+          <has-error :form="sendEmailForm" field="name"/>
         </b-form-group>
         <b-form-group
           id="email"
@@ -44,7 +42,7 @@
             :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
             @keydown="sendEmailForm.errors.clear('email')"
           />
-          <has-error :form="sendEmailForm" field="email" />
+          <has-error :form="sendEmailForm" field="email"/>
         </b-form-group>
         <b-form-group
           id="subject"
@@ -61,7 +59,7 @@
             :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
             @keydown="sendEmailForm.errors.clear('subject')"
           />
-          <has-error :form="sendEmailForm" field="subject" />
+          <has-error :form="sendEmailForm" field="subject"/>
         </b-form-group>
         <b-form-group
           id="message"
@@ -79,22 +77,57 @@
             :class="{ 'is-invalid': sendEmailForm.errors.has('text') }"
             @keydown="sendEmailForm.errors.clear('text')"
           />
-          <has-error :form="sendEmailForm" field="text" />
+          <has-error :form="sendEmailForm" field="text"/>
         </b-form-group>
         <div v-if="sendingEmail" class="float-right">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Sending Email...
         </div>
       </b-form>
+      <template #modal-footer="{  ok }">
+        <b-button size="sm" variant="primary"
+                  @click="submitSendEmail()"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
   </div>
 </template>
 <script>
 
 import Form from 'vform'
+import _ from 'lodash'
 
 export default {
-  props: ['fromUser', 'title', 'subject', 'id', 'extraEmailModalText', 'type'],
+  props: {
+    fromUser: {
+      type: Object,
+      default: function () {
+        return {}
+      }
+    },
+    title: {
+      type: String,
+      default: ''
+    },
+    subject: {
+      type: String,
+      default: ''
+    },
+    id: {
+      type: String,
+      default: ''
+    },
+    extraEmailModalText: {
+      type: String,
+      default: ''
+    },
+    type: {
+      type: String,
+      default: ''
+    }
+  },
   data: () => ({
     showSendEmailModal: false,
     sendEmailForm: new Form({
@@ -107,8 +140,8 @@ export default {
   }),
   methods: {
     resetSendEmailModal () {
-      this.sendEmailForm.name = this.fromUser && this.fromUser.email !== 'anonymous' ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
-      this.sendEmailForm.email = this.fromUser && this.fromUser.email !== 'anonymous' ? this.fromUser.email : ''
+      this.sendEmailForm.name = !_.isEmpty(this.fromUser) && this.fromUser.email !== 'anonymous' ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
+      this.sendEmailForm.email = !_.isEmpty({}) && this.fromUser.email !== 'anonymous' ? this.fromUser.email : ''
       this.sendEmailForm.text = ''
       this.sendEmailForm.errors.clear()
     },
@@ -123,8 +156,7 @@ export default {
     setExtraParams (extraParams) {
       this.sendEmailForm.extraParams = extraParams
     },
-    async submitSendEmail (bvModalEvt) {
-      bvModalEvt.preventDefault()
+    async submitSendEmail () {
       if (this.sendingEmail) {
         this.$noty.info('Please be patient while we send the email.')
         return false

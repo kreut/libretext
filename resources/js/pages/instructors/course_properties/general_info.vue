@@ -46,7 +46,8 @@ export default {
       start_date: '',
       end_date: '',
       alpha: '0',
-      public: '1'
+      public: '1',
+      anonymous_users: '0'
     })
   }),
   computed: mapGetters({
@@ -74,6 +75,7 @@ export default {
         const { data } = await axios.get(`/api/courses/${courseId}`)
         let course = data.course
         this.course = course
+        this.course.id = this.courseId
         this.editCourseForm.school = course.school
         this.editCourseForm.name = course.name
         this.editCourseForm.public_description = course.public_description

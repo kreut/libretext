@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors"/>
+    <AllFormErrors :all-form-errors="allFormErrors" />
     <b-modal
       id="modal-import-course"
       ref="modal"
@@ -70,9 +70,6 @@
         <b-button variant="outline-primary" size="sm" class="mr-1" @click="initImportCourse">
           Import Course
         </b-button>
-        <b-button variant="outline-info" size="sm" class="mr-1" @click="$router.push({name: 'commons'})">
-          Visit Commons
-        </b-button>
       </b-row>
     </b-container>
 
@@ -80,6 +77,7 @@
       id="modal-course-details"
       ref="modal"
       title="Course Details"
+      size="lg"
       @hidden="resetModalForms"
     >
       <CourseForm :form="newCourseForm" />
@@ -397,6 +395,7 @@ export default {
   mounted () {
     this.getCourses()
     this.getLastCourseSchool()
+    this.forgetAnonymousUserSession()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.fields = (this.user.role === 2)
@@ -627,6 +626,13 @@ export default {
       bvModalEvt.preventDefault()
       // Trigger submit handler
       this.createCourse()
+    },
+    async forgetAnonymousUserSession () {
+      try {
+        await axios.delete('/api/users/forget-anonymous-user-session')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async getCourses () {
       try {

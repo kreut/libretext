@@ -36,6 +36,81 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function open(Course $course): array
+    {
+
+        $response['type'] = 'error';
+        try {
+
+            $response['open_courses'] = $course->where('anonymous_users',1)->get();
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not determine whether you can log into the this course as an anonymous user.';
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function canLogIntoCourseAsAnonymousUser(Course $course): array
+    {
+
+        $response['type'] = 'error';
+        try {
+
+            $response['can_log_into_course_as_anonymous_user'] = (boolean)$course->anonymous_users;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not determine whether you can log into the this course as an anonymous user.';
+        }
+        return $response;
+
+
+    }
+
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function hasH5PQuestions(Course $course)
+    {
+
+        $response['type'] = 'error';
+        try {
+            $h5p_questions_exist = DB::table('assignment_question')
+                ->join('assignments', 'assignment_question.assignment_id', '=', 'assignments.id')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->where('assignments.course_id', $course->id)
+                ->where('questions.technology', 'h5p')
+                ->get()
+                ->isNotEmpty();
+            $response['h5p_questions_exist'] = $h5p_questions_exist;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = 'We could not determine whether this course has H5P questions.';
+        }
+        return $response;
+
+    }
+
     /**
      * @param Request $request
      * @param Assignment $assignment
@@ -149,6 +224,34 @@ class CourseController extends Controller
         }
         return $response;
 
+    }
+
+    /**
+     * @return array
+     * @throws Exception
+     */
+    public function getOpenCourses(): array
+    {
+        $response['type'] = 'error';
+        try {
+            $commons_user = User::where('email', 'commons@libretexts.org')->first();
+            $open_courses = DB::table('courses')
+                ->where('courses.user_id', $commons_user->id)
+                ->where('shown', 1)
+                ->where('anonymous_users',1)
+                ->select('id',
+                    'courses.name AS name',
+                    'courses.public_description AS description',
+                    DB::raw('CONCAT("'. config('app.url') .'/courses/",id,"/anonymous") AS url'))
+                ->get();
+            $response['open_courses'] = $open_courses;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to see get the courses from the Commons.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -292,6 +395,55 @@ class CourseController extends Controller
         return $response;
     }
 
+    public function getCoursesAndNonBetaAssignments(Request $request)
+    {
+
+        $response['type'] = 'error';
+        $courses = [];
+        $assignments = [];
+        try {
+            $results = DB::table('courses')
+                ->join('assignments', 'courses.id', '=', 'assignments.course_id')
+                ->leftJoin('beta_assignments', 'assignments.id', '=','beta_assignments.id')
+                ->where('courses.user_id', $request->user()->id)
+                ->select(DB::raw('courses.id AS course_id'),
+                    DB::raw('courses.name AS course_name'),
+                    'courses.start_date',
+                    'courses.end_date',
+                    'beta_assignments.id AS beta_assignment_id',
+                    DB::raw('assignments.id AS assignment_id'),
+                    DB::raw('assignments.name AS assignment_name'))
+                ->orderBy('courses.start_date', 'desc')
+                ->get();
+            $course_ids = [];
+            foreach ($results as $value) {
+                $course_id = $value->course_id;
+                if (!in_array($course_id, $course_ids)) {
+                    $courses[] = ['value' => $course_id,
+                        'text' => $value->course_name,
+                        'start_date' => $value->start_date,
+                        'end_date' => $value->end_date];
+                    $course_ids[] = $course_id;
+                }
+                if (!$value->beta_assignment_id) {
+                    $assignments[$course_id][] = ['value' => $value->assignment_id,
+                        'text' => $value->assignment_name];
+                }
+            }
+
+            $response['type'] = 'success';
+            $response['courses'] = $courses;
+            $response['assignments'] = $assignments;
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to get your courses and assignments.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+    }
+
     public function getCoursesAndAssignments(Request $request)
     {
 
@@ -334,7 +486,6 @@ class CourseController extends Controller
             $response['message'] = "We were not able to get your courses and assignments.  Please try again or contact us for assistance.";
         }
         return $response;
-
 
     }
 
