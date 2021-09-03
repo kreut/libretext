@@ -646,7 +646,7 @@
         <b-alert variant="info" show>
           <span class="font-weight-bold">
             This assessment is part of an assignment which should be initially launched through your LMS
-            so that Adapt can pass back your score.  Please log into your LMS and lanuch the assignment
+            so that Adapt can pass back your score.  Please log into your LMS and launch the assignment
             "{{ name }}".
           </span>
         </b-alert>
@@ -817,7 +817,7 @@
                   </b-button>
                 </div>
                 <div class="font-italic font-weight-bold">
-                  <div v-if="user.role === 3 && showScores && isOpenEnded  && !isAnonymousUser">
+                  <div v-if="user.role === 3 && showScores && isOpenEnded && !isAnonymousUser">
                     <p>
                       You achieved a total score of
                       {{ questions[currentPage - 1].total_score * 1 }}
@@ -851,7 +851,7 @@
 
           <b-modal v-model="showAssignmentStatisticsModal" size="xl" title="Question Level Statistics">
             <b-container>
-              <b-row v-if="showAssignmentStatistics && loaded && user.role === 3">
+              <b-row v-if="showAssignmentStatistics && loaded && user.role === 3 && !isAnonymousUser">
                 <b-col>
                   <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Summary</h6>">
                     <b-card-text>
@@ -1133,7 +1133,7 @@
                       </b-container>
                     </div>
                   </div>
-                  <div v-if="isOpenEndedTextSubmission && user.role === 3">
+                  <div v-if="isOpenEndedTextSubmission && user.role === 3 && !isAnonymousUser">
                     <div class="mt-1">
                       <ckeditor
                         ref="textSubmissionEditor"
@@ -1163,7 +1163,7 @@
                       </b-row>
                     </b-container>
                   </div>
-                  <div v-if="isOpenEndedAudioSubmission && user.role === 3" class="mt-3 mb-3">
+                  <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
                     <audio-recorder
                       ref="uploadRecorder"
                       :key="questions[currentPage-1].id"
