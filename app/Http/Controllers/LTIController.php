@@ -91,7 +91,6 @@ class LTIController extends Controller
     {
 
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
-
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
             ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri", $request->all())
             ->do_redirect();
@@ -115,8 +114,6 @@ class LTIController extends Controller
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
-
-
             if ($launch->is_deep_link_launch()) {
                 //this configures the Deep Link
                 $resource = LTI\LTI_Deep_Link_Resource::new()
@@ -126,7 +123,6 @@ class LTIController extends Controller
                     ->output_response_form([$resource]);
                 exit;
             }
-
 
             $launch_id = $launch->get_launch_id();
 
@@ -191,8 +187,8 @@ class LTIController extends Controller
                 session()->put('lti_user_id', $lti_user->id);
                 $due_date = Carbon::now()->addHour()->toDateTimeString();
                 session()->put('lti_due_date', $due_date);
-
                 return redirect("/init-lms-assignment/$linked_assignment->id");
+
             } else {
 
                 return redirect("/instructors/link-assignment-to-lms/$resource_link_id");

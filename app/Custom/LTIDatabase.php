@@ -2,6 +2,7 @@
 
 namespace App\Custom;
 
+use App\LtiKey;
 use App\LtiRegistration;
 use App\LtiDeployment;
 use Overrides\IMSGlobal\LTI;
@@ -11,8 +12,12 @@ class LTIDatabase implements LTI\Database
 
     public function find_registration_by_issuer($iss)
     {
-        $lti_registration = LtiRegistration::where('iss', $iss)->first();
 
+        $lti_registration = LtiRegistration::where('iss', $iss)->first();
+        if (!$lti_registration) {
+            echo "The issuer $iss does not yet exist in Adapt.  Please contact your LMS Admin and have them contact us with this message.";
+            exit;
+        }
         return LTI\LTI_Registration::new()
             ->set_auth_login_url($lti_registration->auth_login_url)
             ->set_auth_token_url($lti_registration->auth_token_url)
@@ -40,9 +45,8 @@ class LTIDatabase implements LTI\Database
 
     private function private_key($lti_key_id)
     {
-//$private_key_file = LtiKey::where('id',$lti_key_id)->first()->private_key_file;
-
-        return file_get_contents('/var/www/lti/private.key');
+        $private_key_file = LtiKey::where('id', $lti_key_id)->first()->private_key_file;
+        return file_get_contents($private_key_file);
     }
 }
 

@@ -407,7 +407,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        v-show="false"
+        v-show="['adapt@libretexts.org','hagnew@libretexts.org'].includes(user.email)"
         id="lms"
         label-cols-sm="4"
         label-cols-lg="3"
@@ -435,6 +435,7 @@
 <script>
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
+import { mapGetters } from 'vuex'
 
 const now = new Date()
 export default {
@@ -449,6 +450,9 @@ export default {
   data: () => ({
     schools: [],
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   mounted () {
     if (this.form.school) {

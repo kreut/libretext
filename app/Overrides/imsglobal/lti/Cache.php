@@ -30,17 +30,32 @@ class Cache {
         return true;
     }
 
+    private function get_dir(): string
+    {
+        $dir = "dir not defined";
+        switch (app()->environment()){
+            case('dev'):
+                $dir = sys_get_temp_dir();
+                break;
+            case('staging'):
+            case('production'):
+                $dir = '/mnt/local/lti';
+                break;
+        }
+        return $dir;
+    }
     private function load_cache() {
-        $cache = file_get_contents(sys_get_temp_dir() . '/lti_cache.txt');
+
+        $cache = file_get_contents($this->get_dir() . '/lti_cache.txt');
         if (empty($cache)) {
-            file_put_contents(sys_get_temp_dir() . '/lti_cache.txt', '{}');
+            file_put_contents($this->get_dir() . '/lti_cache.txt', '{}');
             $this->cache = [];
         }
         $this->cache = json_decode($cache, true);
     }
 
     private function save_cache() {
-        file_put_contents(sys_get_temp_dir() . '/lti_cache.txt', json_encode($this->cache));
+        file_put_contents($this->get_dir()  . '/lti_cache.txt', json_encode($this->cache));
     }
 }
 ?>

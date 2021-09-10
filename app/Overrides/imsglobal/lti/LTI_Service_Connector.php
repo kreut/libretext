@@ -1,20 +1,24 @@
 <?php
 namespace Overrides\IMSGlobal\LTI;
 
-use Firebase\JWT\JWT;
+use App\LtiRegistration;
+use Firebase\JWT\JWT;use Illuminate\Support\Facades\Storage;
 
-class LTI_Service_Connector {
+class LTI_Service_Connector
+{
 
     const NEXT_PAGE_REGEX = "/^Link:.*<([^>]*)>; ?rel=\"next\"/i";
 
     private $registration;
     private $access_tokens = [];
 
-    public function __construct(LTI_Registration $registration) {
+    public function __construct(LTI_Registration $registration)
+    {
         $this->registration = $registration;
     }
 
-    public function get_access_token($scopes) {
+    public function get_access_token($scopes)
+    {
 
         // Don't fetch the same key more than once.
         sort($scopes);
@@ -25,11 +29,24 @@ class LTI_Service_Connector {
 
         // Build up JWT to exchange for an auth token
         $client_id = $this->registration->get_client_id();
-
+        $lti_registration = LtiRegistration::where('iss', $client_id)->first();
+        //Storage::disk('s3')->put("lti_registration.txt", $this->registration->get_auth_token_url());
+        //Storage::disk('s3')->put("issuer.txt", $this->registration->get_issuer());
+        switch ($this->registration->get_issuer()) {
+            case('https://canvas.instructure.com'):
+                $aud = $this->registration->get_auth_token_url();
+                break;
+            case('https://dev-canvas.libretexts.org'):
+                $aud = $lti_registration ? $lti_registration->auth_token_url: $this->registration->get_auth_token_url();
+                break;
+            default:
+                $aud = "Not valid";
+                Storage::disk('s3')->put("not_valid.txt", "Not valid");
+        }
         $jwt_claim = [
             "iss" => $client_id,
             "sub" => $client_id,
-            "aud" => "https://dev-canvas.libretexts.org/login/oauth2/token", //Adapt: changed from $this->registration->get_auth_server()   */
+            "aud" => $aud, //Adapt: changed from $this->registration->get_auth_server()   */
             "iat" => time() - 5,
             "exp" => time() + 60,
             "jti" => 'lti-service-token' . hash('sha256', random_bytes(64))
@@ -55,12 +72,13 @@ class LTI_Service_Connector {
         curl_setopt($ch, CURLOPT_FOLLOWLOCATION, true);
         $resp = curl_exec($ch);
         $token_data = json_decode($resp, true);
-        curl_close ($ch);
+        curl_close($ch);
 
         return $this->access_tokens[$scope_key] = $token_data['access_token'];
     }
 
-    public function make_service_request($scopes, $method, $url, $body = null, $content_type = 'application/json', $accept = 'application/json') {
+    public function make_service_request($scopes, $method, $url, $body = null, $content_type = 'application/json', $accept = 'application/json')
+    {
         $ch = curl_init();
         $headers = [
             'Authorization: Bearer ' . $this->get_access_token($scopes),
@@ -77,11 +95,11 @@ class LTI_Service_Connector {
         }
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
         $response = curl_exec($ch);
-        if (curl_errno($ch)){
+        if (curl_errno($ch)) {
             echo 'Request Error:' . curl_error($ch);
         }
         $header_size = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        curl_close ($ch);
+        curl_close($ch);
 
         $resp_headers = substr($response, 0, $header_size);
         $resp_body = substr($response, $header_size);
@@ -91,4 +109,5 @@ class LTI_Service_Connector {
         ];
     }
 }
+
 ?>

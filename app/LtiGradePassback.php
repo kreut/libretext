@@ -33,7 +33,9 @@ class LtiGradePassback extends Model
                     ]
                 );
                 if (!app()->environment('testing')) {
-                    ProcessPassBackByUserIdAndAssignment::dispatch($score_to_passback, $ltiLaunch);
+                    $ltiGradePassback = new LtiGradePassback();
+                    $ltiGradePassback->passBackByUserIdAndAssignmentId($score_to_passback, $ltiLaunch);
+                    //ProcessPassBackByUserIdAndAssignment::dispatch($score_to_passback, $ltiLaunch);
                 }
             }
         } catch (Exception $e) {
