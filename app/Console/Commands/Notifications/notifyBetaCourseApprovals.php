@@ -89,7 +89,7 @@ class notifyBetaCourseApprovals extends Command
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            exit;
+          return 1;
         }
         return 0;
     }

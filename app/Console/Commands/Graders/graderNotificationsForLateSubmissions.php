@@ -60,7 +60,7 @@ class graderNotificationsForLateSubmissions extends Command
                 $course_ids[] = '"' . $grader_notification->course_id . '"';
             }
             $course_ids = implode(', ', $course_ids);
-            if (!$course_ids){
+            if (!$course_ids) {
                 exit;
             }
             $last_24_hours = Carbon::now()->subDay()->format('Y-m-d H:i:s');
@@ -82,13 +82,15 @@ class graderNotificationsForLateSubmissions extends Command
             $formatted_ungraded_submissions_by_grader = $process_ungraded_submissions['formatted_ungraded_submissions_by_grader'];
 
             foreach ($graders_by_id as $grader_id => $grader) {
-                $graderNotification->sendReminder($grader, $formatted_ungraded_submissions_by_grader[$grader_id],'emails.late_submission_notification');
+                $graderNotification->sendReminder($grader, $formatted_ungraded_submissions_by_grader[$grader_id], 'emails.late_submission_notification');
 
             }
 
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
+            return 1;
         }
+        return 0;
     }
 }

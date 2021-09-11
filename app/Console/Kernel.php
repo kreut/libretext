@@ -27,7 +27,7 @@ class Kernel extends ConsoleKernel
     /**
      * Define the application's command schedule.
      *
-     * @param \Illuminate\Console\Scheduling\Schedule $schedule
+     * @param Schedule $schedule
      * @return void
      */
     protected function schedule(Schedule $schedule)
@@ -35,14 +35,14 @@ class Kernel extends ConsoleKernel
 
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
-                ->dailyAt('13:00')
-                ->emailOutputOnFailure('kreut@hotmail.com');
+                ->dailyAt('13:00');
 
         }
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
             $schedule->command('retry:FailedGradePassbacks')->everyFiveMinutes();
+
         }
 
         if (env('APP_ENV') === 'production') {

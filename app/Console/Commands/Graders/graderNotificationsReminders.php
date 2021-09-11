@@ -47,7 +47,7 @@ class graderNotificationsReminders extends Command
      * @throws Exception
      */
     public function handle(GraderNotification $graderNotification,
-                           Assignment $assignment)
+                           Assignment         $assignment)
     {
         try {
 
@@ -104,7 +104,7 @@ class graderNotificationsReminders extends Command
             }
             $course_ids = implode(', ', $course_ids);
 
-            if (!$course_ids){
+            if (!$course_ids) {
                 exit;
             }
             $yesterday = Carbon::now()->subDay()->format('Y-m-d H:i:s');
@@ -123,7 +123,7 @@ class graderNotificationsReminders extends Command
 
             //send the emails to the graders
             foreach ($graders_by_id as $grader_id => $grader) {
-                $graderNotification->sendReminder($grader, $formatted_ungraded_submissions_by_grader[$grader_id],'emails.grader_reminder');
+                $graderNotification->sendReminder($grader, $formatted_ungraded_submissions_by_grader[$grader_id], 'emails.grader_reminder');
 
             }
 
@@ -149,12 +149,14 @@ class graderNotificationsReminders extends Command
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
+            return 1;
         }
+        return 0;
     }
 
 
-
-    public function sendCopyTo(array $copy_to, string $formatted_ungraded_submissions_by_course)
+    public
+    function sendCopyTo(array $copy_to, string $formatted_ungraded_submissions_by_course)
     {
 
         $beauty_mail = app()->make(\Snowfire\Beautymail\Beautymail::class);
@@ -167,7 +169,7 @@ class graderNotificationsReminders extends Command
         $beauty_mail->send('emails.summary_of_grader_reminders', $grading_info, function ($message)
         use ($to_email) {
             $message
-                ->from('adapt@noreply.libretexts.org','Adapt')
+                ->from('adapt@noreply.libretexts.org', 'Adapt')
                 ->to($to_email)
                 ->subject("Summary of Ungraded Assignments");
         });
@@ -177,7 +179,8 @@ class graderNotificationsReminders extends Command
      * @param $course_ids
      * @return array
      */
-    public function getCopyToInstructorsByCourseId($course_ids): array
+    public
+    function getCopyToInstructorsByCourseId($course_ids): array
     {
 
         $copy_to_instructors = DB::table('courses')
@@ -199,7 +202,8 @@ class graderNotificationsReminders extends Command
      * @param $course_ids
      * @return array
      */
-    public function getCopyToHeadGradersByCourseId($course_ids): array
+    public
+    function getCopyToHeadGradersByCourseId($course_ids): array
     {
         $copy_to_head_graders = DB::table('courses')
             ->join('head_graders', 'courses.id', '=', 'head_graders.course_id')
