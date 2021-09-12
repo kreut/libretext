@@ -41,7 +41,7 @@ class AutoGradedAndFileSubmissionController extends Controller
             $question = $assignment->questions->where('id', $question->id)->first();
 
             $open_ended_submission_info_by_user = $submissionFile->getOpenEndedSubmissionsByUser($enrolled_users, $assignment, $question);
-            $auto_graded_submission_info_by_user= $Submission->getAutoGradedSubmissionsByUser($enrolled_users, $assignment, $question);
+            $auto_graded_submission_info_by_user= $Submission->getAutoGradedSubmissionsByUser($enrolled_users, $assignment, $question, 'allStudents');
 
             $response['auto_graded_submission_info_by_user'] = array_values($auto_graded_submission_info_by_user);
             $response['open_ended_submission_info_by_user'] = array_values( $open_ended_submission_info_by_user);

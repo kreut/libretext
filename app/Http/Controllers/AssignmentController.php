@@ -1150,7 +1150,6 @@ class AssignmentController extends Controller
 
             $assignment_questions_where_student_can_upload_file = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)
-                ->whereIn('open_ended_submission_type', ['file', 'text', 'audio'])
                 ->orderBy('order')
                 ->get();
             foreach ($assignment_questions_where_student_can_upload_file as $question) {

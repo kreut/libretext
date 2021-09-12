@@ -107,29 +107,16 @@ class SubmissionFile extends Model
 
     }
 
-
+    /**
+     * @param $file
+     * @return string
+     */
     public
-    function inGradeView($file, $grade_view)
+    function submissionStatus($file): string
     {
-        $in_grade_view = false;
-        switch ($grade_view) {
-            case('allStudents'):
-                $in_grade_view = true;
-                break;
-            case('ungradedSubmissions'):
-                $in_grade_view = $file['submission'] && ($file['date_graded'] === NUll);
-                break;
-            case('gradedSubmissions'):
-                $in_grade_view = $file['submission'] && ($file['date_graded'] !== NULL);
-                break;
-            case('studentsWithoutSubmissions'):
-                $in_grade_view = !$file['submission'];
-                break;
-
-        }
-        return $in_grade_view;
-
-
+        if ($file['submission']) {
+            return $file['date_graded'] === NUll ? 'ungradedOpenEndedSubmissions' : 'gradedOpenEndedSubmissions';
+        } else return false;
     }
 
     public
@@ -141,13 +128,19 @@ class SubmissionFile extends Model
         foreach ($assignment->extensions as $extension) {
             $extensions[$extension->user_id] = $extension->extension;
         }
+
+
         foreach ($assignment->submissions as $submission) {
             $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
         }
+
+
+        foreach ($assignment->submissions as $submission) {
+            $question_submission_scores[$submission->question_id][$submission->user_id] = $submission->score;
+        }
+
         foreach ($assignment->questionFileSubmissions() as $key => $question_file) {
-            $question_file->needs_grading = $question_file->date_graded ?
-                Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded)
-                : true;
+            $question_file->needs_grading = !$question_file->date_graded || Carbon::parse($question_file->date_submitted) > Carbon::parse($question_file->date_graded);
             $questionFilesByUser[$question_file->question_id][$question_file->user_id] = $question_file;
         }
         $user_and_submission_file_info = [];
@@ -189,7 +182,6 @@ class SubmissionFile extends Model
         $assign_to_timings_by_user = $assignment->assignToTimingsByUser();
         $ferpa_mode = (int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
         foreach ($assignment_questions_where_student_can_upload_file as $question) {
-
             foreach ($users as $key => $user) {
                 $points[$question->question_id][$user->id] = $question->points;
                 //get the assignment info, getting the temporary url of the first submission for viewing
@@ -246,10 +238,9 @@ class SubmissionFile extends Model
                 $all_info['grader_name'] = $grader_name;
                 $all_info['late_file_submission'] = $late_file_submission ?? false;
                 $all_info['order'] = $question->order;
-                // $all_info['grader_name'] = $grader_name;
-                if ($this->inGradeView($all_info, $grade_view)) {
-                    $user_and_submission_file_info[$question->question_id][$key] = $all_info;
-                }
+                $all_info['submission_status'] = $this->submissionStatus($all_info);
+                $user_and_submission_file_info[$question->question_id][$key] = $all_info;
+
             }
         }
         $reKeyedUserAndSubmissionFileInfo = $this->reKeyUserAndSubmissionFileInfo($user_and_submission_file_info);
@@ -299,16 +290,16 @@ class SubmissionFile extends Model
      * @param $question_id
      * @return bool
      */
-    public function hasNonFakeStudentFileSubmissionsForAssignmentQuestion(array $assignment_ids, int $question_id)
+    public
+    function hasNonFakeStudentFileSubmissionsForAssignmentQuestion(array $assignment_ids, int $question_id)
     {
-      return  DB::table('submission_files')
+        return DB::table('submission_files')
             ->join('users', 'submission_files.user_id', '=', 'users.id')
             ->whereIn('assignment_id', $assignment_ids)
             ->where('question_id', $question_id)
             ->where('fake_student', 0)
             ->get()
             ->isNotEmpty();
-
 
 
     }

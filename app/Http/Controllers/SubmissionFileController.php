@@ -65,10 +65,10 @@ class SubmissionFileController extends Controller
     }
 
     public function updateScores(UpdateScoresRequest $request,
-                                 Assignment $assignment,
-                                 Question $question,
-                                 SubmissionFile $submissionFile,
-                                 Score $score): array
+                                 Assignment          $assignment,
+                                 Question            $question,
+                                 SubmissionFile      $submissionFile,
+                                 Score               $score): array
     {
         return $score->handleUpdateScores($request, $assignment, $question, $submissionFile);
 
@@ -82,10 +82,10 @@ class SubmissionFileController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getUngradedSubmissions(Course $course,
+    public function getUngradedSubmissions(Course             $course,
                                            GraderNotification $graderNotification,
-                                           Assignment $assignment,
-                                           SubmissionFile $submissionFile): array
+                                           Assignment         $assignment,
+                                           SubmissionFile     $submissionFile): array
     {
         $authorized = Gate::inspect('getUngradedSubmissions', [$submissionFile, $course]);
 
@@ -139,11 +139,11 @@ class SubmissionFileController extends Controller
      * @throws Exception
      */
     public function updatePage(UpdateSubmisionFilePage $request,
-                               Assignment $assignment,
-                               Question $question,
-                               SubmissionFile $submissionFile,
-                               Extension $extension,
-                               AssignmentSyncQuestion $assignmentSyncQuestion)
+                               Assignment              $assignment,
+                               Question                $question,
+                               SubmissionFile          $submissionFile,
+                               Extension               $extension,
+                               AssignmentSyncQuestion  $assignmentSyncQuestion)
     {
         $response['type'] = 'error';
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
@@ -215,12 +215,12 @@ class SubmissionFileController extends Controller
      * @return array
      * @throws Exception
      */
-    public function getFilesFromS3(Request $request,
-                                   Assignment $assignment,
-                                   Question $question,
-                                   User $studentUser,
+    public function getFilesFromS3(Request        $request,
+                                   Assignment     $assignment,
+                                   Question       $question,
+                                   User           $studentUser,
                                    SubmissionFile $submissionFile,
-                                   Grader $grader)
+                                   Grader         $grader)
     {
         $response['type'] = 'error';
 
@@ -280,81 +280,6 @@ class SubmissionFileController extends Controller
 
     }
 
-    /**
-     * @param Request $request
-     * @param Assignment $assignment
-     * @param int $sectionId
-     * @param string $gradeView
-     * @param Section $section
-     * @param Grader $grader
-     * @param SubmissionFile $submissionFile
-     * @param Enrollment $enrollment
-     * @return array
-     * @throws Exception
-     */
-    public function getSubmissionFilesByAssignment(Request $request,
-                                                   Assignment $assignment,
-                                                   Question $question,
-                                                   int $sectionId,
-                                                   string $gradeView,
-                                                   Section $section,
-                                                   Grader $grader,
-                                                   SubmissionFile $submissionFile,
-                                                   Enrollment $enrollment)
-    {
-
-        $response['type'] = 'error';
-
-        $authorized = Gate::inspect('viewAssignmentFilesByAssignment', [$submissionFile, $assignment, $sectionId]);
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-        try {
-            $course = $assignment->course;
-            $role = Auth::user()->role;
-
-            $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
-            $ferpa_mode = (int) request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
-            if ($ferpa_mode) {
-                $faker = \Faker\Factory::create();
-                foreach ($enrolled_users as $key => $user){
-                    $enrolled_users[$key]['first_name'] =  $faker->firstName;
-                    $enrolled_users[$key]['last_name'] =  $faker->lastName;
-                }
-           }
-
-           if ($role === 4 && $sectionId === 0) {
-                $access_level_override = $assignment->graders()
-                    ->where('assignment_grader_access.user_id', Auth::user()->id)
-                    ->first();
-                if ($access_level_override && $access_level_override->pivot->access_level) {
-                    $enrolled_users = $course->enrolledUsers;
-                }
-            }
-
-
-            $user_ids = [];
-            foreach ($enrolled_users as $user) {
-
-                $user_ids[] = $user->id;
-            }
-            sort($user_ids);
-
-            $response['type'] = 'success';
-            $response['user_and_submission_file_info'] = $enrolled_users->isNotEmpty() ? $submissionFile->getUserAndQuestionFileInfo($assignment, $gradeView, $enrolled_users, $question->id) : [];
-            $response['message'] = "Your view has been updated.";
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
-        }
-
-        return $response;
-
-    }
 
     public
     function downloadSubmissionFile(Request $request, AssignmentFile $assignmentFile, SubmissionFile $submissionFile)
@@ -397,120 +322,6 @@ class SubmissionFileController extends Controller
             $response['message'] = "We were not able to retrieve the file.  Please try again or contact us for assistance.";
         }
         return $response;
-    }
-
-
-    public
-    function storeTextFeedback(StoreTextFeedback $request, AssignmentFile $assignmentFile, User $user, Assignment $assignment)
-    {
-        $response['type'] = 'error';
-        $assignment_id = $request->assignment_id;
-        $question_id = $request->question_id;
-        $student_user_id = $request->user_id;
-
-        $authorized = Gate::inspect('storeTextFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
-
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-        $data = $request->validated();
-
-        try {
-            $text_feedback = $request->textFeedback ? trim($request->textFeedback) : '';
-            DB::table('submission_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
-                ->where('question_id', $question_id)
-                ->update(['text_feedback' => $text_feedback,
-                    'text_feedback_editor' => $data['text_feedback_editor'],
-                    'date_graded' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'grader_id' => Auth::user()->id]);
-
-            $response['type'] = 'success';
-            $response['message'] = $text_feedback ? 'Your comments have been saved.' : 'This student will not see any comments.';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to save your assignment submission.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
-    }
-
-    public
-    function storeScore(StoreScore $request,
-                        AssignmentFile $assignmentFile,
-                        User $user,
-                        Assignment $Assignment,
-                        Score $score,
-                        LtiLaunch $ltiLaunch,
-                        LtiGradePassback $ltiGradePassback)
-    {
-
-
-        $response['type'] = 'error';
-        $assignment_id = $request->assignment_id;
-        $question_id = $request->question_id;
-        $student_user_id = $request->user_id;
-
-        $assignment = $Assignment->find($assignment_id);
-        $authorized = Gate::inspect('storeScore', [$assignmentFile, $user->find($student_user_id), $assignment]);
-
-
-        if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
-        }
-
-
-        $max_points = DB::table('assignment_question')
-            ->where('question_id', $question_id)
-            ->where('assignment_id', $assignment_id)
-            ->first()
-            ->points;
-        $submission_info = DB::table('submissions')
-            ->where('question_id', $question_id)
-            ->where('assignment_id', $assignment_id)
-            ->where('user_id', $student_user_id)
-            ->first();
-        $submission_points = $submission_info->score ?? 0;
-        if ($submission_points + $request->score > $max_points) {
-            $response['message'] = "The total of your Question Submission Score and File Submission score can't be greater than the total number of points for this question.";
-            return $response;
-        }
-
-
-        $data = $request->validated();
-        try {
-
-
-            DB::beginTransaction();
-            DB::table('submission_files')
-                ->where('user_id', $student_user_id)
-                ->where('assignment_id', $assignment_id)
-                ->where('question_id', $question_id)
-                ->update(['score' => $data['score'],
-                    'date_graded' => Carbon::now(),
-                    'updated_at' => Carbon::now(),
-                    'grader_id' => Auth::user()->id]);
-            $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type);
-            DB::commit();
-            $response['type'] = 'success';
-            $response['message'] = 'The score has been saved.';
-            $response['grader_name'] = Auth::user()->first_name . ' ' . Auth::user()->last_name;
-            $response['date_graded'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
-        } catch (Exception $e) {
-
-            DB::rollback();
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We were not able to save the score.  Please try again or contact us for assistance.";
-        }
-        return $response;
-
     }
 
 
@@ -576,9 +387,9 @@ class SubmissionFileController extends Controller
      */
 
 
-    function storeSubmissionFile(Request $request,
-                                 Extension $extension,
-                                 SubmissionFile $submissionFile,
+    function storeSubmissionFile(Request                $request,
+                                 Extension              $extension,
+                                 SubmissionFile         $submissionFile,
                                  AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 

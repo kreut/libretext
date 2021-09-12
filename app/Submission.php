@@ -65,6 +65,8 @@ class Submission extends Model
         return $auto_graded_submission_info_by_user;
     }
 
+
+
     /**
      * @param StoreSubmission $request
      * @param Submission $submission
@@ -77,13 +79,13 @@ class Submission extends Model
      * @return array
      * @throws Exception
      */
-    public function store(StoreSubmission $request,
-                          Submission $submission,
-                          Assignment $Assignment,
-                          Score $score,
-                          LtiLaunch $ltiLaunch,
-                          LtiGradePassback $ltiGradePassback,
-                          DataShop $dataShop,
+    public function store(StoreSubmission        $request,
+                          Submission             $submission,
+                          Assignment             $Assignment,
+                          Score                  $score,
+                          LtiLaunch              $ltiLaunch,
+                          LtiGradePassback       $ltiGradePassback,
+                          DataShop               $dataShop,
                           AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
@@ -95,6 +97,7 @@ class Submission extends Model
 
         $data['user_id'] = Auth::user()->id;
         $assignment = $Assignment->find($data['assignment_id']);
+
 
         if ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession())){
             $response['type'] = 'success';

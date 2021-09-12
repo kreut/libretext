@@ -320,7 +320,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/submission-files/{assignment}/{question}/page', 'SubmissionFileController@updatePage');
     Route::patch('/submission-files/{assignment}/{question}/scores', 'SubmissionFileController@updateScores');
     Route::get('/assignment-files/assignment-file-info-by-student/{assignment}', 'AssignmentFileController@getAssignmentFileInfoByStudent');
-    Route::get('/submission-files/{assignment}/{question}/{sectionId}/{gradeView}', 'SubmissionFileController@getSubmissionFilesByAssignment');
     Route::post('/submission-files/get-files-from-s3/{assignment}/{question}/{studentUser}', 'SubmissionFileController@getFilesFromS3');
     Route::post('/submission-files/can-submit-file-submission', 'SubmissionFileController@canSubmitFileSubmission');
 
@@ -335,10 +334,12 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::delete('/submission-texts/{assignment}/{question}', 'SubmissionTextController@destroy');
 
     Route::put('/submission-files/file-feedback', 'SubmissionFileController@storeFileFeedback');
-    Route::post('/submission-files/text-feedback', 'SubmissionFileController@storeTextFeedback');
+
+    Route::post('/grading', 'GradingController@store');
+    Route::get('/grading/{assignment}/{question}/{sectionId}/{gradeView}', 'GradingController@index');
 
 
-    Route::post('/submission-files/score', 'SubmissionFileController@storeScore');
+
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');

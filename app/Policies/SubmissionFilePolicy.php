@@ -133,15 +133,16 @@ class SubmissionFilePolicy
     {
         //student is enrolled in the course containing the assignment
         //the person doing the upload is the owner of the course or a grader
+
         return $assignment->course->enrollments->contains('user_id', $student_user_id) && ((int)$assignment->course->user_id === $instructor_user_id);
     }
 
-    public function storeTextFeedback(User $user, SubmissionFile $submissionFile, User $student_user, Assignment $assignment)
+    public function storeGrading(User $user, SubmissionFile $submissionFile, User $student_user, Assignment $assignment)
     {
 
         return $this->canProvideFeedback($assignment, $student_user->id, $user->id)
             ? Response::allow()
-            : Response::deny('You are not allowed to submit comments for this assignment.');
+            : Response::deny('You are not allowed to store the score or provide feedback for this student.');
 
     }
 

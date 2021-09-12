@@ -32,8 +32,6 @@ class AssignmentFilePolicy
             case(4):
                 $has_access = (int)Assignment::find($assignment_id)->course->isGrader();
                 break;
-
-                break;
         }
 
         return ($has_access) ?
@@ -120,13 +118,21 @@ class AssignmentFilePolicy
             : Response::deny('You are not allowed to upload feedback for this assignment.');
 
     }
-
     public function storeScore(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
     {
 
         return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to provide a score for this assignment.');
+
+    }
+
+    public function viewGrading(User $user, AssignmentFile $assignmentFile, User $student_user, Assignment $assignment)
+    {
+
+        return $this->canProvideFeedback($user, $assignment, $student_user->id, $user->id)
+            ? Response::allow()
+            : Response::deny('You are not allowed to grade this assignment.');
 
     }
 

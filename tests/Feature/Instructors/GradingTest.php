@@ -69,7 +69,9 @@ class GradingTest extends TestCase
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
             'user_id' => $this->student_user->id,
-            'score' => 10];
+            'question_submission_score' => 10,
+            'file_submission_score' => 0,
+            'text_feedback_editor' => 'plain'];
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment->id,
             'question_id' => $this->question->id,
@@ -97,14 +99,131 @@ class GradingTest extends TestCase
         $this->getFilesFromS3Data = ['open_ended_submission_type' => 'text'];
     }
 
+
+    /** @test */
+
+    public function can_get_assignment_files_if_owner()
+    {
+
+        $this->actingAs($this->user)->getJson("/api/grading/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
+            ->assertJson(['type' => 'success']);
+
+    }
+
+    /** @test */
+    public function can_store_text_feedback_if_owner()
+    {
+        $this->actingAs($this->user)->postJson("/api/grading",
+            [
+                'assignment_id' => $this->assignment->id,
+                'question_id' => $this->question->id,
+                'user_id' => $this->student_user->id,
+                'text_feedback_editor' => 'plain',
+                'file_submission_score' => 0,
+                'question_submission_score' =>0,
+                'textFeedback' => 'Some text feedback'
+            ]
+        )
+            ->assertJson(['type' => 'success']);
+
+    }
+
+
+    /** @test */
+    public function cannot_get_assignment_files_if_not_owner()
+    {
+        $this->actingAs($this->user_2)->getJson("/api/grading/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
+            ->assertJson([
+                'type' => 'error',
+                'message' => 'You are not allowed to access these submissions for grading.'
+            ]);
+
+    }
+
+
+    /** @test */
+    public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_will_use_min_of_the_points_per_question_compared_to_the_sum_of_the_question_and_file_points()
+    {
+
+
+        $question_score = 5;
+
+        $file_submission_score = 2.0;
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'some other submission',
+            'score' => $question_score,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+
+
+        //Now submit a question_file score
+        $this->actingAs($this->user)->postJson("/api/grading", [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'file_submission_score' => $file_submission_score,
+            'question_submission_score' => $question_score,
+            'text_feedback_editor' => 'plain'])
+            ->assertJson(['type' => 'success']);
+
+
+        $score = DB::table('scores')->where('user_id', $this->student_user->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+
+        $this->assertEquals((float)$score->score, $question_score + $file_submission_score);
+    }
+
+
+    /** @test */
+    public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_cannot_submit_a_score_greater_than_the_total_number_of_points_in_the_question()
+    {
+
+
+        $question_score = 5;
+
+        $file_submission_score = 30;
+        DB::table('assignment_question')
+            ->where('question_id', $this->question->id)
+            ->where('assignment_id', $this->assignment->id)
+            ->first();
+
+        Submission::create([
+            'user_id' => $this->student_user->id,
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'submission' => 'some other submission',
+            'score' => $question_score,
+            'answered_correctly_at_least_once' => 0,
+            'submission_count' => 1]);
+
+
+        //Now submit a question_file score
+        $this->actingAs($this->user)->postJson("/api/grading", [
+            'type' => 'question',
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'file_submission_score' => $file_submission_score,
+            'question_submission_score' => $question_score,
+            'text_feedback_editor' => 'plain'])
+            ->assertJson(['message' => "The total of your Auto-Graded Score and Open-Ended Submission score can't be greater than the total number of points for this question."]);
+    }
+
     /** @test */
     public function owner_or_grader_can_submit_score()
     {
 
-        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
+        $this->actingAs($this->grader_user)->postJson("/api/grading", $this->score_data)
             ->assertJson(['type' => 'success']);
 
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", $this->score_data)
+        $this->actingAs($this->user)->postJson("/api/grading", $this->score_data)
             ->assertJson(['type' => 'success']);
 
     }
@@ -115,19 +234,31 @@ class GradingTest extends TestCase
     public function non_owner_can_not_submit_score()
     {
 
-        $this->actingAs($this->user_2)->postJson("/api/submission-files/score", $this->score_data)
+        $this->actingAs($this->user_2)->postJson("/api/grading", $this->score_data)
             ->assertJson(['message' => 'You are not allowed to provide a score for this assignment.']);
 
     }
 
     /** @test */
 
-    public function score_must_be_valid()
+    public function question_submission_score_must_be_valid()
     {
 
-        $this->score_data['score'] = 'a';
-        $this->actingAs($this->grader_user)->postJson("/api/submission-files/score", $this->score_data)
-            ->assertJsonValidationErrors('score');
+        $this->score_data['question_submission_score'] = 'a';
+        $this->actingAs($this->grader_user)->postJson("/api/grading", $this->score_data)
+            ->assertJsonValidationErrors('question_submission_score');
+
+
+    }
+
+    /** @test */
+
+    public function file_submission_score_must_be_valid()
+    {
+
+        $this->score_data['file_submission_score'] = 'a';
+        $this->actingAs($this->grader_user)->postJson("/api/grading", $this->score_data)
+            ->assertJsonValidationErrors('file_submission_score');
 
 
     }
@@ -294,98 +425,7 @@ class GradingTest extends TestCase
 
     }
 
-    /** @test */
-    public function cannot_get_assignment_files_if_not_owner()
-    {
-        $this->actingAs($this->user_2)->getJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
-            ->assertJson([
-                'type' => 'error',
-                'message' => 'You are not allowed to access these submissions for grading.'
-            ]);
 
-    }
-
-    /** @test */
-    public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_will_use_min_of_the_points_per_question_compared_to_the_sum_of_the_question_and_file_points()
-    {
-
-
-        $question_score = 5;
-
-        $file_submission_score = 2.0;
-
-        Submission::create([
-            'user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some other submission',
-            'score' => $question_score,
-            'answered_correctly_at_least_once' => 0,
-            'submission_count' => 1]);
-
-
-        //Now submit a question_file score
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
-            'type' => 'question',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' => $file_submission_score])
-            ->assertJson(['type' => 'success']);
-
-
-        $score = DB::table('scores')->where('user_id', $this->student_user->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-
-        $this->assertEquals((float)$score->score, $question_score + $file_submission_score);
-    }
-
-
-    /** @test */
-    public function assignments_of_scoring_type_p_and_submission_files_at_the_question_level_cannot_submit_a_score_greater_than_the_total_number_of_points_in_the_question()
-    {
-
-
-        $question_score = 5;
-
-        $file_submission_score = 30;
-        DB::table('assignment_question')
-            ->where('question_id', $this->question->id)
-            ->where('assignment_id', $this->assignment->id)
-            ->first();
-
-        Submission::create([
-            'user_id' => $this->student_user->id,
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'submission' => 'some other submission',
-            'score' => $question_score,
-            'answered_correctly_at_least_once' => 0,
-            'submission_count' => 1]);
-
-
-        //Now submit a question_file score
-        $this->actingAs($this->user)->postJson("/api/submission-files/score", [
-            'type' => 'question',
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'user_id' => $this->student_user->id,
-            'score' => $file_submission_score])
-            ->assertJson(['message' => 'The total of your Question Submission Score and File Submission score can\'t be greater than the total number of points for this question.']);
-    }
-
-
-    /** @test */
-
-    public function can_get_assignment_files_if_owner()
-    {
-
-        $this->actingAs($this->user)->getJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/{$this->section->id}/all_students")
-            ->assertJson(['type' => 'success']);
-
-    }
 
 
     /** @test */
@@ -432,7 +472,6 @@ class GradingTest extends TestCase
 
     }
 
-
     /** @test */
     public function cannot_get_temporary_url_if_not_owner()
     {
@@ -446,37 +485,5 @@ class GradingTest extends TestCase
                 'message' => 'You are not allowed to create a temporary URL.']);
 
     }
-
-    /** @test */
-    public function can_store_text_feedback_if_owner()
-    {
-        $this->actingAs($this->user)->postJson("/api/submission-files/text-feedback",
-            [
-                'assignment_id' => $this->assignment->id,
-                'user_id' => $this->student_user->id,
-                'type' => 'assignment',
-                'text_feedback_editor' => 'plain',
-                'textFeedback' => 'Some text feedback'
-            ]
-        )
-            ->assertJson(['type' => 'success']);
-
-    }
-
-    /** @test */
-    public function cannot_store_text_feedback_if_not_owner()
-    {
-        $this->actingAs($this->user_2)->postJson("/api/submission-files/text-feedback",
-            [
-                'assignment_id' => $this->assignment->id,
-                'user_id' => $this->student_user->id,
-                'textFeedback' => 'Some text feedback'
-            ]
-        )
-            ->assertJson(['type' => 'error',
-                'message' => 'You are not allowed to submit comments for this assignment.']);
-
-    }
-
 
 }

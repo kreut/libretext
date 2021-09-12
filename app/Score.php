@@ -127,19 +127,17 @@ class Score extends Model
                 $assignment_question_scores_info[$submission->question_id]['question'] = $submission->score;
             }
         }
-        if ($assessment_type === 'delayed') {
-            $submission_files = DB::table('submission_files')
-                ->where('assignment_id', $assignment_id)
-                ->whereIn('type', ['q', 'text', 'audio']) //'q', 'a', or 0
-                ->whereIn('question_id', $question_ids)
-                ->where('user_id', $student_user_id)->get();
 
-            if ($submission_files->isNotEmpty()) {
-                foreach ($submission_files as $submission_file) {
-                    $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
-                        ? $submission_file->score
-                        : 0;
-                }
+        $submission_files = DB::table('submission_files')
+            ->where('assignment_id', $assignment_id)
+            ->whereIn('type', ['q', 'text', 'audio']) //'q', 'a', or 0
+            ->whereIn('question_id', $question_ids)
+            ->where('user_id', $student_user_id)->get();
+
+        if ($submission_files->isNotEmpty()) {
+            foreach ($submission_files as $submission_file) {
+                $assignment_question_scores_info[$submission_file->question_id]['file'] = $submission_file->score
+                    ?: 0;
             }
 
             foreach ($assignment_question_scores_info as $score) {
