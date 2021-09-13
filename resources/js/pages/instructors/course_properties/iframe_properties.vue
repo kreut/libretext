@@ -1,6 +1,6 @@
 <template>
   <div>
-    <b-card header="default" header-html="Iframe Information">
+    <b-card header="default" header-html="Embed Information">
       <b-card-text>
         <p>
           If you embed Adapt in another webpage, such as a Libretext, you can control how much information is shown

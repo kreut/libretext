@@ -309,12 +309,6 @@
           <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
         </span>
       </div>
-      <div class="mb-2">
-        <span class="font-weight-bold">iframe:</span> <span id="embedCode" class="font-italic">{{ embedCode }}</span>
-        <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('embedCode')" />
-        </span>
-      </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
                                                                     v-html="technologySrc"

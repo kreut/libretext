@@ -88,7 +88,7 @@ export default {
         },
         {
           icon: '',
-          name: 'Iframe Properties',
+          name: 'Embed Properties',
           route: 'course_properties.iframe_properties'
         }
       ]
