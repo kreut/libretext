@@ -662,14 +662,14 @@
         </b-alert>
       </div>
       <div
-        v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading && user.role === 2 && !isInstructorLoggedInAsAnonymous"
+        v-if="hasAtLeastOneSubmission && !presentationMode && !inIFrame && !isLoading && user.role === 2 && !isInstructorWithAnonymousView"
       >
         <b-alert variant="info" :show="true">
           <strong>This problem is locked. Since students have already submitted responses, you cannot update the
             points per question nor change the open-ended submission type.</strong>
         </b-alert>
       </div>
-      <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorLoggedInAsAnonymous">
+      <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
         <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist" />
       </div>
       <div v-if="questions.length && !cannotViewAssessmentMessage && !launchThroughLMSMessage">
@@ -697,7 +697,7 @@
                 </b-button>
               </div>
               <div
-                v-if="isInstructor() && !isInstructorLoggedInAsAnonymous && assessmentType !== 'clicker' && !inIFrame"
+                v-if="isInstructor() && !isInstructorWithAnonymousView && assessmentType !== 'clicker' && !inIFrame"
                 class="mb-2 text-center font-italic"
               >
                 <span class="font-italic">Question View</span>
@@ -714,7 +714,7 @@
                 />
               </div>
 
-              <div v-if="source === 'a' && !inIFrame && !isAnonymousUser && !isInstructorLoggedInAsAnonymous">
+              <div v-if="source === 'a' && !inIFrame && !isAnonymousUser && !isInstructorWithAnonymousView">
                 <div
                   v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')"
                   class="text-center"
@@ -722,7 +722,7 @@
                   <h4>This assignment is worth {{ totalPoints.toString() }} points.</h4>
                 </div>
                 <div
-                  v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker' && !isAnonymousUser && !isInstructorLoggedInAsAnonymous"
+                  v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker' && !isAnonymousUser && !isInstructorWithAnonymousView"
                   class="text-center"
                 >
                   <h5>
@@ -732,7 +732,7 @@
                   </h5>
                 </div>
                 <div
-                  v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1 && !isInstructorLoggedInAsAnonymous"
+                  v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1 && !isInstructorWithAnonymousView"
                   class="text-center"
                 >
                   <span v-if="parseInt(questions[currentPage - 1].submission_count) <= 1" class="text-bold">
@@ -756,7 +756,7 @@
                   </b-alert>
                 </div>
                 <div
-                  v-if="isInstructor() && !isInstructorLoggedInAsAnonymous && !presentationMode && questionView !== 'basic' && !inIFrame"
+                  v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
                   class="text-center"
                 >
                   <b-form-row>
@@ -817,7 +817,7 @@
                   </countdown>
                 </div>
                 <div
-                  v-if="isInstructor() && !isInstructorLoggedInAsAnonymous && !presentationMode && questionView !== 'basic' && !inIFrame"
+                  v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
                   class="mt-1"
                 >
                   <b-button
@@ -852,7 +852,7 @@
                     Statistics
                   </b-button>
                 </div>
-                <div v-if="isInstructor() && !isInstructorLoggedInAsAnonymous && !presentationMode && !inIFrame">
+                <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame">
                   <RefreshQuestion :assignment-id="parseInt(assignmentId)"
                                    :question-id="questions[currentPage - 1].id"
                                    :reload-question-parent="reloadQuestionParent"
@@ -903,7 +903,7 @@
             </b-container>
           </b-modal>
         </div>
-        <div v-if="isInstructorLoggedInAsAnonymous && questions.length && !isLoading" class="pb-3">
+        <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <b-card
             header-html="<span class='font-weight-bold'>Save Questions From The Commons</span>"
           >
@@ -926,7 +926,7 @@
             @input="changePage(currentPage)"
           />
         </div>
-        <div v-if="isInstructorLoggedInAsAnonymous && questions.length && !isLoading" class="pb-3">
+        <div v-if="isInstructorWithAnonymousView && questions.length && !isLoading" class="pb-3">
           <span v-if="!savedQuestionIds.includes(questions[currentPage-1].id)">
             <b-button size="sm" variant="primary" @click="saveQuestion()">
               Save Question
@@ -948,7 +948,7 @@
             }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
-        <div v-if="isInstructor() && !isInstructorLoggedInAsAnonymous && !presentationMode && !inIFrame"
+        <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame"
              class="d-flex flex-row"
         >
           <div class="p-2">
@@ -1150,7 +1150,7 @@
                     </div>
                   </div>
                   <div
-                    v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame && !isInstructorLoggedInAsAnonymous"
+                    v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
                   >
                     <div class="mt-3">
                       <b-card header-html="<h6 class=&quot;font-weight-bold&quot;>Default Text</h6>">
@@ -1282,7 +1282,7 @@
               </div>
             </b-col>
             <b-col
-              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorLoggedInAsAnonymous "
+              v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView "
               cols="4"
             >
               <b-card header="default" header-html="<h6 class=&quot;font-weight-bold&quot;>Question Statistics</h6>"
@@ -1629,7 +1629,7 @@ export default {
     savedQuestions: [],
     savedQuestionIds: [],
     isAnonymousUser: false,
-    isInstructorLoggedInAsAnonymous: false,
+    isInstructorWithAnonymousView: false,
     launchThroughLMSMessage: false,
     isLMS: false,
     availableOn: '',
@@ -1961,7 +1961,7 @@ export default {
           this.assignmentInformationMarginBottom = 'mb-0'
         }
       }
-      if (this.isAnonymousUser || this.isInstructorLoggedInAsAnonymous) {
+      if (this.isAnonymousUser || this.isInstructorWithAnonymousView) {
         this.showSubmissionInformation = false
         this.showAssignmentInformation = false
       }
@@ -1970,7 +1970,7 @@ export default {
         ? 12 : 8
       // override this for files
       if (this.questions[this.currentPage - 1].open_ended_submission_type === 'file' &&
-        ((this.user.role === 3 && !this.isAnonymousUser) || (this.isInstructor() && !this.isInstructorLoggedInAsAnonymous))) {
+        ((this.user.role === 3 && !this.isAnonymousUser) || (this.isInstructor() && !this.isInstructorWithAnonymousView))) {
         this.questionCol = 8
       }
       if (this.user.role === 2) {
@@ -3255,8 +3255,8 @@ export default {
 
         this.questions = data.questions
         this.isInstructorLoggedInAsStudent = data.is_instructor_logged_in_as_student
-        this.isInstructorLoggedInAsAnonymous = data.is_instructor_logged_in_as_anonymous
-        if (this.isInstructorLoggedInAsAnonymous) {
+        this.isInstructorWithAnonymousView = data.is_instructor_with_anonymous_view
+        if (this.isInstructorWithAnonymousView) {
           await this.getSavedQuestions()
         }
         if (!this.questions.length) {

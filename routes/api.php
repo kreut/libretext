@@ -49,7 +49,6 @@ Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCour
 
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
-    Route::delete('/users/forget-anonymous-user-session', 'UserController@destroyAnonymousUserSession');
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');

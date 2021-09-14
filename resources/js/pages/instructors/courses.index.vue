@@ -395,7 +395,6 @@ export default {
   mounted () {
     this.getCourses()
     this.getLastCourseSchool()
-    this.forgetAnonymousUserSession()
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     this.fields = (this.user.role === 2)
@@ -626,13 +625,6 @@ export default {
       bvModalEvt.preventDefault()
       // Trigger submit handler
       this.createCourse()
-    },
-    async forgetAnonymousUserSession () {
-      try {
-        await axios.delete('/api/users/forget-anonymous-user-session')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
     },
     async getCourses () {
       try {

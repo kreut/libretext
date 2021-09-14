@@ -1054,7 +1054,12 @@ class AssignmentSyncQuestionController extends Controller
 
 
     public
-    function getQuestionsToView(Request $request, Assignment $assignment, Submission $Submission, SubmissionFile $SubmissionFile, Extension $Extension, AssignmentSyncQuestion $assignmentSyncQuestion)
+    function getQuestionsToView(Request                $request,
+                                Assignment             $assignment,
+                                Submission             $Submission,
+                                SubmissionFile         $SubmissionFile,
+                                Extension              $Extension,
+                                AssignmentSyncQuestion $assignmentSyncQuestion)
     {
 
         $response['type'] = 'error';
@@ -1546,7 +1551,9 @@ class AssignmentSyncQuestionController extends Controller
             $response['type'] = 'success';
             $response['questions'] = $assignment->questions->values();
             $response['is_instructor_logged_in_as_student'] = session()->get('instructor_user_id') && request()->user()->role === 3;
-            $response['is_instructor_logged_in_as_anonymous'] = Helper::hasAnonymousUserSession() && request()->user()->role === 2;
+            $response['is_instructor_with_anonymous_view'] = Helper::hasAnonymousUserSession()
+                && request()->user()->role === 2
+                && $assignment->course->user_id !== request()->user()->id;
 
         } catch (Exception $e) {
             $h = new Handler(app());

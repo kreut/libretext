@@ -116,7 +116,8 @@ class BreadcrumbController extends Controller
                             break;
                         case('questions.view'):
                             //My courses / The assignment's course / that assignment summary / the assignment questions
-                            if (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession()) {
+                            if (Helper::isAnonymousUser()
+                                || (Helper::hasAnonymousUserSession() && $assignment->course->user_id !== request()->user()->id)) {
                                 $breadcrumbs = [
                                     ['text' => $assignment->course->name,
                                     'href' => "/students/courses/{$assignment->course->id}/assignments/anonymous-user"]

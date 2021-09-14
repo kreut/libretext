@@ -40,23 +40,6 @@ class UserController extends Controller
         return $response;
     }
 
-    /**
-     * @return array
-     * @throws Exception
-     */
-    public function destroyAnonymousUserSession(): array
-    {
-        $response['type'] = 'error';
-        try {
-            session()->forget('anonymous_user');
-            $response['type'] = 'success';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "We could not remove your anonymous user session.  Please try again or contact us for assistance.";
-        }
-        return $response;
-    }
 
     /**
      * @param Request $request

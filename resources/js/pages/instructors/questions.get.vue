@@ -716,16 +716,6 @@ export default {
       this.gettingQuestions = false
     },
     async getStudentView (assignmentId) {
-      try {
-        const { data } = await axios.delete('/api/users/forget-anonymous-user-session')
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-        return false
-      }
       await this.$router.push(`/assignments/${assignmentId}/questions/view`)
     }
   },
@@ -733,7 +723,6 @@ export default {
     return { title: this.$t('home') }
   }
 }
-
 </script>
 <style>
 body, html {
