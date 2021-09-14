@@ -937,8 +937,6 @@ class AssignmentController extends Controller
     {
         if ($request->source === 'x' || $request->assessment_type !== 'delayed') {
             return 0;
-        } elseif ($data['file_upload_mode'] === 'compiled_pdf') {
-            return 'file';
         } elseif (strpos($data['default_open_ended_submission_type'], 'text') !== false) {
             return 'text';
         } else {

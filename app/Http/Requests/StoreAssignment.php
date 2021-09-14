@@ -48,6 +48,10 @@ class StoreAssignment extends FormRequest
             'notifications' => Rule::in([0, 1]),
         ];
 
+
+        if ($this->file_upload_mode === 'compiled_pdf'){
+            $rules['default_open_ended_submission_type'] = Rule::in(['file',  0]);
+        }
         if ($this->libretexts_url){
             $rules['libretexts_url'] = 'url';
         }
