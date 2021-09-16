@@ -21,7 +21,7 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input v-model="cannedResponseForm.canned_response"
@@ -34,7 +34,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response"/>
+          <has-error :form="cannedResponseForm" field="canned_response" />
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -74,7 +74,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow"/>
+              <b-spinner small type="grow" />
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -104,7 +104,7 @@
         </div>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -118,7 +118,7 @@
                 move through the course roster by using the right/left arrows, searching for students by name, or by
                 clicking on individual student numbers.
               </p>
-              <p>
+              <p v-if="user.role === 2">
                 If you would like to change multiple scores at once, then you can do so through the
                 <a href="" @click.prevent="gotoMassGrading"> mass grading view</a>.
               </p>
@@ -199,7 +199,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow"/>
+                  <b-spinner small type="grow" />
                   Processing...
                 </span>
               </b-col>
@@ -226,7 +226,7 @@
             <div class="text-center">
               <b-container>
                 <b-row class="justify-content-md-center mb-2">
-                  <b-col lg="3">
+                  <b-col v-if="user.role === 2 || (user.role === 4 && gradersCanSeeStudentNames)" lg="3">
                     <vue-bootstrap-typeahead
                       ref="queryTypeahead"
                       v-model="jumpToStudent"
@@ -235,6 +235,12 @@
                       @hit="setQuestionAndStudentByStudentName"
                     />
                   </b-col>
+                  <b-alert :show="user.role === 4 && !gradersCanSeeStudentNames" variant="info">
+                    <span class="font-weight-bold font-weight-bold">
+                      Your instructor has chosen to keep student names anonymous.  The names
+                      you see below are randomly generated.
+                    </span>
+                  </b-alert>
                 </b-row>
               </b-container>
               <h5 class="font-italic">
@@ -270,16 +276,16 @@
                   :show="true"
                   variant="warning"
                 >
-                    <span class="alert-link">
-                      The file submission was late by  {{
-                        grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
-                      }}.
-                      <span v-if="latePolicy === 'deduction'">
-                        According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
-                        <span v-if="lateDeductionApplicationPeriod !== 'once'">
-                          per "{{ lateDeductionApplicationPeriod }}"</span>.
-                      </span>
+                  <span class="alert-link">
+                    The file submission was late by  {{
+                      grading[currentStudentPage - 1]['open_ended_submission']['late_file_submission']
+                    }}.
+                    <span v-if="latePolicy === 'deduction'">
+                      According to the late policy, a deduction of {{ lateDeductionPercent }}% should be applied once
+                      <span v-if="lateDeductionApplicationPeriod !== 'once'">
+                        per "{{ lateDeductionApplicationPeriod }}"</span>.
                     </span>
+                  </span>
                 </b-alert>
               </b-row>
               <b-row>
@@ -312,7 +318,7 @@
                                           :class="{ 'is-invalid': gradingForm.errors.has('question_submission_score') }"
                                           @keydown="gradingForm.errors.clear('question_submission_score')"
                             />
-                            <has-error :form="gradingForm" field="question_submission_score"/>
+                            <has-error :form="gradingForm" field="question_submission_score" />
                             <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
                                  class="pt-1"
                             >
@@ -329,9 +335,9 @@
                           label-cols-lg="4"
                         >
                           <template slot="label">
-                              <span class="font-weight-bold">
-                                Open-ended score:
-                              </span>
+                            <span class="font-weight-bold">
+                              Open-ended score:
+                            </span>
                           </template>
                           <div v-show="isOpenEnded" class="pt-1">
                             <b-form-input
@@ -343,7 +349,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('file_submission_score') }"
                               @keydown="gradingForm.errors.clear('file_submission_score')"
                             />
-                            <has-error :form="gradingForm" field="file_submission_score"/>
+                            <has-error :form="gradingForm" field="file_submission_score" />
                             <div v-show="!grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                                  class="pt-1"
                             >
@@ -357,7 +363,7 @@
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
-                          + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
+                            + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
                         }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                         <br>
                         <hr>
@@ -434,7 +440,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback"/>
+                            <has-error :form="gradingForm" field="textFeedback" />
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -473,9 +479,9 @@
                       </div>
                       <div v-show="!isOpenEnded">
                         <h4 class="pt-5">
-                            <span class="text-muted">
-                              This panel is applicable to open-ended assessments.
-                            </span>
+                          <span class="text-muted">
+                            This panel is applicable to open-ended assessments.
+                          </span>
                         </h4>
                       </div>
                     </b-card-text>
@@ -515,8 +521,7 @@
                     </b-row>
                   </div>
                 </div>
-                <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                >
+                <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
                   <b-row align-h="center">
                     <span class="font-weight-bold font-italic">Open-Ended Submission</span>
                   </b-row>
@@ -561,8 +566,9 @@
                   height="600"
                   :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
                 />
-                <b-card  v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
-                         sub-title="Audio Feedback">
+                <b-card v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
+                        sub-title="Audio Feedback"
+                >
                   <audio-player
                     v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
                     :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
@@ -609,6 +615,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    gradersCanSeeStudentNames: false,
     isIndividualGrading: true,
     noSubmission: false,
     isAutoGraded: false,
@@ -708,8 +715,8 @@ export default {
     this.getFerpaMode()
   },
   methods: {
-    gotoMassGrading(){
-      this.$router.push({name: 'assignment.mass_grading.index', params: {assignmentId: this.assignmentId}})
+    gotoMassGrading () {
+      this.$router.push({ name: 'assignment.mass_grading.index', params: { assignmentId: this.assignmentId } })
     },
     async getFerpaMode () {
       try {
@@ -1127,6 +1134,7 @@ export default {
         this.grading = data.grading
         this.isOpenEnded = data.is_open_ended
         this.isAutoGraded = data.is_auto_graded
+        this.gradersCanSeeStudentNames = data.graders_can_see_student_names
         this.students = []
         this.numStudents = Object.keys(this.grading).length
         for (let i = 0; i < this.numStudents; i++) {

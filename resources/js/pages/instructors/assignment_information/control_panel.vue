@@ -166,6 +166,35 @@
             />
           </b-form-row>
         </b-form-group>
+        <b-form-group
+          id="graders_can_see_student_names"
+          label-cols-sm="5"
+          label-cols-lg="4"
+        >
+          <template slot="label">
+            Graders can see student names
+            <b-icon id="viewable-by-graders-tooltip"
+                    v-b-tooltip.hover
+                    class="text-muted"
+                    icon="question-circle"
+            />
+            <b-tooltip target="viewable-by-graders-tooltip" triggers="hover">
+              You can optionally hide your students' names from your graders to avoid any sort of
+              conscious or subconscious bias.
+            </b-tooltip>
+          </template>
+          <b-form-row v-if="user.role === 2" class="mt-2">
+            <toggle-button
+              :width="60"
+              :value="Boolean(assignment.graders_can_see_student_names)"
+              :sync="true"
+              :font-size="14"
+              :color="{checked: '#28a745', unchecked: '#6c757d'}"
+              :labels="{checked: 'Yes', unchecked: 'No'}"
+              @change="submitGradersCanSeeStudentNames(assignment)"
+            />
+          </b-form-row>
+        </b-form-group>
       </div>
     </div>
   </div>
@@ -202,6 +231,18 @@ export default {
     await this.getAssignmentSummary()
   },
   methods: {
+    async submitGradersCanSeeStudentNames () {
+      try {
+        const { data } = await axios.patch(`/api/assignments/${this.assignment.id}/graders-can-see-student-names/${Number(this.assignment.graders_can_see_student_names)}`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'error') {
+          return false
+        }
+        this.assignment.graders_can_see_student_names = !this.assignment.graders_can_see_student_names
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async getAssignmentSummary () {
       try {
         const { data } = await axios.get(`/api/assignments/${this.assignmentId}/summary`)

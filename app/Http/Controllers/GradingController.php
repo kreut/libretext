@@ -216,7 +216,8 @@ class GradingController extends Controller
             $role = Auth::user()->role;
 
             $enrolled_users = $enrollment->getEnrolledUsersByRoleCourseSection($role, $course, $sectionId);
-            $ferpa_mode = (int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5;
+            $ferpa_mode = ((int)request()->cookie('ferpa_mode') === 1 && Auth::user()->id === 5)
+            || ($role === 4 && !$assignment->graders_can_see_student_names);
             if ($ferpa_mode) {
                 $faker = \Faker\Factory::create();
                 foreach ($enrolled_users as $key => $user) {
@@ -281,6 +282,7 @@ class GradingController extends Controller
             $response['type'] = 'success';
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";
+            $response['graders_can_see_student_names'] = (bool) $assignment->graders_can_see_student_names;
         } catch
         (Exception $e) {
             $h = new Handler(app());
@@ -315,8 +317,7 @@ class GradingController extends Controller
             $last_graded = false;
         }
         if ($last_graded){
-            $last_graded->setTimezone(Auth::user()->timezone);
-            $last_graded = $last_graded->format('F d, Y \a\t g:i A');
+            $last_graded = $last_graded->setTimezone(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
         }
         return $last_graded;
     }

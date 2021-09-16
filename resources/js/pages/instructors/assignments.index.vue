@@ -289,6 +289,7 @@
                 Course Gradebook
               </b-button>
               <b-button
+                v-if="user && user.role === 2"
                 :class="(user && user.role === 4) ? 'float-right' : ''"
                 size="sm"
                 variant="info"

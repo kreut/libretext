@@ -506,6 +506,37 @@ class AssignmentController extends Controller
         return $response;
     }
 
+    /**
+     * @param Assignment $assignment
+     * @param int $gradersCanSeeStudentNames
+     * @return array
+     * @throws Exception
+     */
+    public
+    function gradersCanSeeStudentNames(Assignment $assignment, int $gradersCanSeeStudentNames): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('gradersCanSeeStudentNames', $assignment);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $assignment->update(['graders_can_see_student_names' => !$gradersCanSeeStudentNames]);
+            $response['type'] = !$gradersCanSeeStudentNames ? 'success' : 'info';
+            $graders_can_see_student_names = !$gradersCanSeeStudentNames ? 'can' : 'cannot';
+            $response['message'] = "Graders <strong>$graders_can_see_student_names</strong> see their students' names.";
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error changing the option of graders being able to view their students' names <strong>{$assignment->name}</strong>.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
 
     public
     function showScores(Request $request, Assignment $assignment, int $showScores)

@@ -150,6 +150,23 @@ class AssignmentsIndex1Test extends TestCase
     }
 
     /** @test */
+    public function nonowner_cannot_toggle_graders_seeing_student_names()
+    {
+        $this->actingAs($this->user_2)
+            ->patchJson("/api/assignments/{$this->assignment->id}/graders-can-see-student-names/1")
+            ->assertJson(['message' => "You are not allowed to switch whether graders can view their students' names."]);
+    }
+
+    /** @test */
+    public function owner_cannot_toggle_graders_seeing_student_names()
+    {
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/graders-can-see-student-names/1")
+            ->assertJson(['message' => "Graders <strong>cannot</strong> see their students' names."]);
+    }
+
+
+    /** @test */
     public function owner_can_toggle_showing_assignment_statistics()
     {
 

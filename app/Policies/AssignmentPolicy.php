@@ -223,6 +223,14 @@ class AssignmentPolicy
 
     }
 
+
+
+    public function gradersCanSeeStudentNames(User $user, Assignment $assignment)
+    {
+        return $this->ownsCourseByUser($assignment->course, $user)
+            ? Response::allow()
+            : Response::deny("You are not allowed to switch whether graders can view their students' names.");
+    }
     public function showScores(User $user, Assignment $assignment)
     {
         $has_access = false;
