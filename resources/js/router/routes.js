@@ -20,6 +20,8 @@ let instructor_paths = [
   { path: '/instructors/learning-trees', name: 'instructors.learning_trees.index', component: page('instructors/learning_trees.index.vue') },
   { path: '/assignments/:assignmentId/questions/:questionId/view', name: 'question.view', component: page('instructors/question.view.vue') },
   { path: '/assignments/:assignmentId/grading/:questionId?/:studentUserId?', name: 'assignment.grading.index', component: page('instructors/assignments.grading.vue') },
+  { path: '/assignments/:assignmentId/mass-grading', name: 'assignment.mass_grading.index', component: page('instructors/assignments.mass_grading.vue') },
+
   { path: '/instructors/courses', name: 'instructors.courses.index', component: page('instructors/courses.index.vue') },
   { path: '/courses/:courseId/gradebook', name: 'gradebook.index', component: page('instructors/gradebook.index.vue') },
   { path: '/instructors/courses/:courseId/assignments', name: 'instructors.assignments.index', component: page('instructors/assignments.index.vue') }
@@ -66,7 +68,6 @@ let general_paths  = [
       { path: 'summary', name: 'instructors.assignments.summary', component: page('instructors/assignment_information/summary.vue') },
       { path: 'properties', name: 'instructors.assignments.properties', component: page('instructors/assignment_information/properties.vue') },
       { path: 'control_panel', name: 'instructors.assignments.control_panel', component: page('instructors/assignment_information/control_panel.vue') },
-      { path: 'edit_scores', name: 'instructors.assignments.edit_scores', component: page('instructors/assignment_information/edit_scores.vue') },
       { path: 'grader-access', name: 'instructors.assignments.grader_access', component: page('instructors/assignment_information/grader_access.vue') },
       { path: 'statistics', name: 'instructors.assignments.statistics', component: page('instructors/assignment_information/statistics.vue') },
       { path: 'gradebook', name: 'instructors.assignments.gradebook', component: page('instructors/assignment_information/gradebook.vue') },

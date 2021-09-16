@@ -16,17 +16,17 @@
         <span class="font-weight-bold">Question:</span> <span class="font-italic">{{ selectedQuestionText }}</span><br>
         <span class="font-weight-bold">Apply To:</span> <span class="font-italic">
           {{
-            parseInt(questionScoreForm.apply_to) === 1
-              ? 'Submission scores in the filtered group'
-              : 'Submission scores that are not in the filtered group'
-          }}
+          parseInt(questionScoreForm.apply_to) === 1
+            ? 'Submission scores in the filtered group'
+            : 'Submission scores that are not in the filtered group'
+        }}
         </span><br>
       </p>
       <p>
         Please confirm that you would like to change the student scores which match the above criteria to
         a new score of <span
-          class="font-weight-bold"
-        >
+        class="font-weight-bold"
+      >
           {{ questionScoreForm.new_score }}</span>.
       </p>
 
@@ -52,8 +52,8 @@
       <p>
         <b-alert variant="danger" :show="true">
           <span class="font-weight-bold font-italic">By updating the score to {{
-            questionScoreForm.new_score
-          }}, {{ numOverMax }} students will
+              questionScoreForm.new_score
+            }}, {{ numOverMax }} students will
             be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
             of points allotted to this question. Please reduce the score provided.
           </span>
@@ -79,7 +79,7 @@
           allowfullscreen
         />
       </div>
-      <div v-show="submissionText" v-html=" submissionText" />
+      <div v-show="submissionText" v-html=" submissionText"/>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -91,9 +91,20 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Edit Scores" />
+        <PageTitle :title="`Mass Grading For ${assignmentName}`"/>
         <div v-if="questions.length">
           <b-container>
+            <p>
+              <span class="font-weight-bold">Instructions:</span> Using the filters below, you can perform a mass update
+              on the scores for any of the questions.
+              This can be particularly useful if you would like to give everyone full credit or no credit on a
+              particular question.
+              For grading submissions at the individual level, you can also use the <a href=""
+                                                                                       @click.prevent="gotoIndividualGrading"
+            >
+              individual grading view</a>.
+            </p>
+            <hr>
             <b-row>
               <span class="font-weight-bold mr-2">Title: </span>
               <a href="" @click.stop.prevent="viewQuestion(questions[currentQuestionPage-1].question_id)">
@@ -241,7 +252,7 @@
                     :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"
                     @keydown="questionScoreForm.errors.clear('new_score')"
                   />
-                  <has-error :form="questionScoreForm" field="new_score" />
+                  <has-error :form="questionScoreForm" field="new_score"/>
                 </b-col>
                 <b-col>
                   <div class="pt-1">
@@ -249,7 +260,7 @@
                       Update
                     </b-button>
                     <span v-if="processing">
-                      <b-spinner small type="grow" />
+                      <b-spinner small type="grow"/>
                       Processing...
                     </span>
                   </div>
@@ -309,6 +320,8 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    assignmentName: '',
+    isIndividualGrading: false,
     selectedStudentText: '',
     selectedSubmissionText: '',
     selectedQuestionText: '',
@@ -342,7 +355,7 @@ export default {
     questions: [],
     fields: [],
     isLoading: true,
-    assignmentId: 0
+    assignmentId: '0'
   }),
   computed:
     {
@@ -375,6 +388,9 @@ export default {
   },
 
   methods: {
+    gotoIndividualGrading () {
+      this.$router.push({ name: 'assignment.grading.index', params: { assignmentId: this.assignmentId } })
+    },
     getTextFromOptions (value, options) {
       return options.find(option => option.value === value).text
     },
@@ -527,33 +543,34 @@ export default {
           this.$noty.error(data.message)
           return false
         }
+        this.assignmentName = data.assignment_name
         this.items = []
         this.fields = [{
           key: 'name',
           sortable: true,
           shown: true
         },
-        {
-          key: 'email',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'submission',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'submission_count',
-          label: 'Count',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'score',
-          sortable: true,
-          shown: true
-        }]
+          {
+            key: 'email',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission_count',
+            label: 'Count',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'score',
+            sortable: true,
+            shown: true
+          }]
         this.autoGradedView = false
         this.openEndedView = false
         let hasAutoGraded = data.auto_graded_submission_info_by_user.length > 0

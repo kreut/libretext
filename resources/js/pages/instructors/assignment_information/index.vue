@@ -24,6 +24,14 @@
                 </router-link>
               </li>
               <li>
+                <a href="" class="nav-link" @click.prevent="gotoAssignmentGrading()">
+                  Assignment Grading
+                </a>
+              </li>
+              <router-link :to="{ name: 'instructors.assignments.gradebook' }" class="nav-link" active-class="active">
+                Assignment Gradebook
+              </router-link>
+              <li>
                 <a :href="`/courses/${courseId}/gradebook`" class="nav-link">
                   Course Gradebook
                 </a>
@@ -93,16 +101,6 @@ export default {
           icon: '',
           name: 'Statistics',
           route: 'instructors.assignments.statistics'
-        },
-        {
-          icon: '',
-          name: 'Edit Scores',
-          route: 'instructors.assignments.edit_scores'
-        },
-        {
-          icon: '',
-          name: 'Assignment Gradebook',
-          route: 'instructors.assignments.gradebook'
         }
       ]
     }
@@ -117,6 +115,9 @@ export default {
   },
   methods:
     {
+      gotoAssignmentGrading () {
+        this.$router.push(`/assignments/${this.assignmentId}/grading`)
+      },
       getAssessmentsForAssignment (assignmentId) {
         this.isBetaAssignment
           ? this.$bvModal.show('modal-cannot-add-assessment-to-beta-assignment')

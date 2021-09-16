@@ -52,7 +52,8 @@ class Submission extends Model
                     'email' => $enrolled_user->email,
                     'submission' => $this->getStudentResponse($submission, $question->technology),
                     'submission_count' => $submission->submission_count,
-                    'score' => Helper::removeZerosAfterDecimal($submission->score)
+                    'score' => Helper::removeZerosAfterDecimal($submission->score),
+                    'updated_at' => $submission->updated_at
                 ];
             }
 

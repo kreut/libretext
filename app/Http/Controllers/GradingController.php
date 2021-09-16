@@ -96,9 +96,9 @@ class GradingController extends Controller
             $score->updateAssignmentScore($student_user_id, $assignment_id, $assignment->assessment_type);
             DB::commit();
             $response['type'] = 'success';
+            $response['last_graded'] =  Carbon::now(Auth::user()->time_zone)->format('F d, Y \a\t g:i A');
             $response['message'] = 'The score and feedback have been updated.';
             $response['grader_name'] = Auth::user()->first_name . ' ' . Auth::user()->last_name;
-            $response['date_graded'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
         } catch (Exception $e) {
 
             DB::rollback();
@@ -173,7 +173,7 @@ class GradingController extends Controller
 
         if ($current_file_submission_score == $request->file_submission_score
             && $current_question_submission_score == $request->question_submission_score
-        && $current_text_feedback == $request->textFeedback) { // == in case of null vs ''
+            && $current_text_feedback == $request->textFeedback) { // == in case of null vs ''
             $response['type'] = 'info';
             $response['message'] = "Nothing was updated.";
             return $response;
@@ -265,6 +265,8 @@ class GradingController extends Controller
                         'user_id' => $user->id];
                     $grading[$user->id]['open_ended_submission'] = $submission_files_by_user[$user->id] ?? false;
                     $grading[$user->id]['auto_graded_submission'] = $submissions_by_user[$user->id] ?? false;
+
+                    $grading[$user->id]['last_graded'] = $this->_getLastGraded($grading[$user->id]);
                 }
             }
 
@@ -279,7 +281,8 @@ class GradingController extends Controller
             $response['type'] = 'success';
             $response['grading'] = array_values($grading);
             $response['message'] = "Your view has been updated.";
-        } catch (Exception $e) {
+        } catch
+        (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to retrieve the file submissions for this assignment.  Please try again or contact us for assistance.";
@@ -287,6 +290,35 @@ class GradingController extends Controller
 
         return $response;
 
+    }
+
+    private function _getLastGraded($user_grading)
+    {
+        $open_ended_date_graded = $user_grading['open_ended_submission'] && $user_grading['open_ended_submission']['date_graded']
+            ? new Carbon($user_grading['open_ended_submission']['date_graded'])
+            : false;
+        $auto_graded_date_graded = $user_grading['auto_graded_submission']
+            ? new Carbon($user_grading['auto_graded_submission']['updated_at'])
+            : false;
+
+
+        if ($open_ended_date_graded && $auto_graded_date_graded) {
+            $last_graded = $open_ended_date_graded > $auto_graded_date_graded ? $open_ended_date_graded : $auto_graded_date_graded;
+
+        } elseif ($open_ended_date_graded && !$auto_graded_date_graded) {
+            $last_graded = $open_ended_date_graded;
+
+        } elseif (!$open_ended_date_graded && $auto_graded_date_graded) {
+            $last_graded = $auto_graded_date_graded;
+
+        } else {
+            $last_graded = false;
+        }
+        if ($last_graded){
+            $last_graded->setTimezone(Auth::user()->timezone);
+            $last_graded = $last_graded->format('F d, Y \a\t g:i A');
+        }
+        return $last_graded;
     }
 
 }

@@ -118,6 +118,10 @@
                 move through the course roster by using the right/left arrows, searching for students by name, or by
                 clicking on individual student numbers.
               </p>
+              <p>
+                If you would like to change multiple scores at once, then you can do so through the
+                <a href="" @click.prevent="gotoMassGrading"> mass grading view</a>.
+              </p>
             </b-row>
           </b-container>
           <b-form-group
@@ -220,6 +224,19 @@
               />
             </div>
             <div class="text-center">
+              <b-container>
+                <b-row class="justify-content-md-center mb-2">
+                  <b-col lg="3">
+                    <vue-bootstrap-typeahead
+                      ref="queryTypeahead"
+                      v-model="jumpToStudent"
+                      :data="students"
+                      placeholder="Enter A Student's Name"
+                      @hit="setQuestionAndStudentByStudentName"
+                    />
+                  </b-col>
+                </b-row>
+              </b-container>
               <h5 class="font-italic">
                 This question is out of
                 {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }} points.
@@ -237,19 +254,6 @@
                     Download Solution
                   </b-button>
                 </span>
-                <b-container>
-                  <b-row class="justify-content-md-center mt-2">
-                    <b-col lg="3">
-                      <vue-bootstrap-typeahead
-                        ref="queryTypeahead"
-                        v-model="jumpToStudent"
-                        :data="students"
-                        placeholder="Enter A Student's Name"
-                        @hit="setQuestionAndStudentByStudentName"
-                      />
-                    </b-col>
-                  </b-row>
-                </b-container>
               </div>
               <span v-if="!grading[currentStudentPage - 1]['open_ended_submission']['solution'] "
                     class="font-italic mt-2"
@@ -280,9 +284,17 @@
               </b-row>
               <b-row>
                 <b-col>
-                  <b-card header="default" :header-html="getStudentSubmissionTitle()" class="h-100">
+                  <b-card header="default" :header-html="getStudentScoresTitle()" class="h-100">
                     <b-card-text>
                       <b-form ref="form">
+                        <span v-if="grading[currentStudentPage - 1]['last_graded']" class="font-italic">
+                          This score was last updated on {{ grading[currentStudentPage - 1]['last_graded'] }}.
+                        </span>
+                        <span v-if="!grading[currentStudentPage - 1]['last_graded']" class="font-italic">
+                          A score has yet to be entered for this student.
+                        </span>
+                        <br>
+                        <br>
                         <b-form-group
                           id="auto_graded_score"
                           label-cols-sm="5"
@@ -387,6 +399,7 @@
                             <b-col>
                               <b-form-select v-model="textFeedbackMode"
                                              :options="textFeedbackModeOptions"
+                                             size="sm"
                               />
                             </b-col>
                             <b-col>
@@ -405,8 +418,8 @@
                                       v-model="richTextFeedback"
                                       :config="richEditorConfig"
                                       style="margin-bottom: 23px"
-                                      rows="4"
-                                      max-rows="4"
+                                      rows="5"
+                                      max-rows="5"
                                       :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                                       @namespaceloaded="onCKEditorNamespaceLoaded"
                             />
@@ -416,8 +429,8 @@
                               v-model="plainTextFeedback"
                               style="margin-bottom: 23px"
                               placeholder="Enter something..."
-                              rows="4"
-                              max-rows="4"
+                              rows="5"
+                              max-rows="5"
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
@@ -436,7 +449,7 @@
                                 size="sm"
                                 @click="openUploadFileModal()"
                               >
-                                Upload Feedback
+                                Upload Feedback File
                               </b-button>
 
                               <b-button
@@ -445,7 +458,7 @@
                                 class="ml-2 mr-4"
                                 @click="toggleView(currentStudentPage)"
                               >
-                                View Feedback
+                                View Feedback File
                               </b-button>
                             </b-row>
                           </b-form>
@@ -542,30 +555,22 @@
                 </b-container>
               </div>
               <div v-show="!viewSubmission">
-                <div
-                  v-if="grading.length>0 && (grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url'] !== null)"
-                >
-                  <iframe
-                    v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] !== 'audio'"
-                    width="600"
-                    height="600"
+                <iframe
+                  v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] !== 'audio'"
+                  width="600"
+                  height="600"
+                  :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
+                />
+                <b-card  v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
+                         sub-title="Audio Feedback">
+                  <audio-player
+                    v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
                     :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
                   />
-                  <b-card sub-title="Feedback">
-                    <audio-player
-                      v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
-
-                      :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
-                    />
-                  </b-card>
-                  <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
-                    <span class="font-weight-bold">{{ audioFeedbackDataMessage }}</span>
-                  </b-alert>
-                </div>
-
-                <div v-else>
-                  <span class="text-info">You have not uploaded a feedback file.</span>
-                </div>
+                </b-card>
+                <b-alert class="mt-1" :variant="audioFeedbackDataType" :show="showAudioFeedbackMessage">
+                  <span class="font-weight-bold">{{ audioFeedbackDataMessage }}</span>
+                </b-alert>
               </div>
             </div>
           </div>
@@ -604,6 +609,7 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    isIndividualGrading: true,
     noSubmission: false,
     isAutoGraded: false,
     isOpenEnded: false,
@@ -702,6 +708,9 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    gotoMassGrading(){
+      this.$router.push({name: 'assignment.mass_grading.index', params: {assignmentId: this.assignmentId}})
+    },
     async getFerpaMode () {
       try {
         const { data } = await axios.get(`/api/scores/get-ferpa-mode`)
@@ -861,8 +870,8 @@ export default {
         : ''
       return `<h5>Grader Feedback ${grader}</h5>`
     },
-    getStudentSubmissionTitle () {
-      return `<h5>Submission Information for  ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h5>`
+    getStudentScoresTitle () {
+      return `<h5>Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h5>`
     },
     viewQuestion (questionId) {
       window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)
@@ -907,6 +916,10 @@ export default {
       }
     },
     async toggleView () {
+      if (this.grading.length > 0 && (this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_feedback_url'] === null)) {
+        this.$noty.info('You have not uploaded a feedback file.')
+        return false
+      }
       this.viewSubmission = !this.viewSubmission
     },
     async submitGradingForm (next) {
@@ -932,10 +945,10 @@ export default {
         if (data.type === 'success') {
           this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
           this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] = this.gradingForm.question_submission_score
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['date_graded'] = data.date_graded
           this.grading[this.currentStudentPage - 1]['open_ended_submission']['grader_name'] = data.grader_name
           this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback_editor'] = this.gradingForm.text_feedback_editor
           this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback'] = this.gradingForm.textFeedback
+          this.grading[this.currentStudentPage - 1]['last_graded'] = data.last_graded
           if (next) {
             this.currentStudentPage++
             await this.changePage()

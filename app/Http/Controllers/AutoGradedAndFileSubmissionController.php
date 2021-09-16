@@ -45,6 +45,7 @@ class AutoGradedAndFileSubmissionController extends Controller
 
             $response['auto_graded_submission_info_by_user'] = array_values($auto_graded_submission_info_by_user);
             $response['open_ended_submission_info_by_user'] = array_values( $open_ended_submission_info_by_user);
+            $response['assignment_name'] = $assignment->name;
             $response['type'] = 'success';
 
         } catch (Exception $e) {
