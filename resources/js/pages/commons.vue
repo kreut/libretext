@@ -27,7 +27,7 @@
           variant="primary"
           size="sm"
           class="float-right"
-          @click="$bvModal.hide('enter-course');$refs.email.openSendEmailModal()"
+          @click="$bvModal.hide('modal-enter-course');$refs.email.openSendEmailModal()"
         >
           Contact Us For Instructor Account
         </b-button>
