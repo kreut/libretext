@@ -88,7 +88,8 @@ class SubmissionController extends Controller
                     ->select('question_id')
                     ->first();
                 $response['type'] = 'success';
-                $response['redirect_question'] = $clicker_question->question_id;
+                $response['redirect_question'] =  $clicker_question ? $clicker_question->question_id : false;
+                $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
                 return $response;
             }
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
@@ -104,12 +105,9 @@ class SubmissionController extends Controller
                 }
 
             }
-            $number_enrolled = count($assignment->course->enrollments) - 1;//don't include Fake Student
+            $number_enrolled = $assignment->course->enrolledUsers()->count();
 
-            $fake_student_user_id = DB::table('enrollments')->where('course_id', $assignment->course->id)
-                ->orderBy('user_id')
-                ->first()
-                ->user_id;
+
             $submission_results = DB::table('submissions')
                 ->join('questions', 'submissions.question_id', '=', 'questions.id')
                 ->where('submissions.assignment_id', $assignment->id)
@@ -120,6 +118,7 @@ class SubmissionController extends Controller
 
             $choices = [];
             $counts = [];
+
             foreach ($submission_results as $key => $value) {
                 $submission = json_decode($value->submission, true);
                 //Log::info(print_r($submission, true));
@@ -134,12 +133,12 @@ class SubmissionController extends Controller
                             case('choice'):
                                 if (!$choices) {
                                     $choices = $this->getChoices($technology, $object['definition']);
-                                    foreach ($choices as $choice) {
+                                    foreach ($choices as $choice){
                                         $counts[] = 0;
                                     }
-                                    $response['choices'] = $choices;
+
                                     $correct_answer_index = $object['definition']['correctResponsesPattern'][0];
-                                    $response['correct_answer'] = $choices[$correct_answer_index];
+                                    $response['correct_answer'] = $this->getCorrectAnswer($technology,$object['definition'], $correct_answer_index );
                                 }
                                 if (isset($submission['result']['response'])) {
                                     $h5p_response = $submission['result']['response'];
@@ -151,7 +150,7 @@ class SubmissionController extends Controller
                                 if (!$choices) {
                                     $choices = ['True', 'False'];
                                     $counts = [0, 0];
-                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0] ? 0 : 1;
+                                    $correct_answer_index = $object['definition']['correctResponsesPattern'][0] === 'true' ? 0 : 1;
                                     $response['correct_answer'] = $choices[$correct_answer_index];
                                 }
                                 if (isset($submission['result']['response'])) {
@@ -172,14 +171,16 @@ class SubmissionController extends Controller
                 }
             }
 
-            $response['pie_chart_data']['labels'] = $choices;
+            $response['pie_chart_data']['labels'] = array_values($choices);
             $response['pie_chart_data']['datasets']['borderWidth'] = 1;
             foreach ($choices as $key => $choice) {
                 $percent = 90 - 10 * $key;
                 $first = 197 - 20 * $key;
                 $response['pie_chart_data']['datasets']['backgroundColor'][$key] = "hsla($first, 85%, ${percent}%, 0.9)";
             }
+
             $total = array_sum($counts);
+            ksort($counts);
             if ($total) {
                 foreach ($counts as $key => $count) {
                     $counts[$key] = Round(100 * $count / $total);
@@ -199,18 +200,33 @@ class SubmissionController extends Controller
         return $response;
     }
 
+    public function getCorrectAnswer($technology, $object, $correct_answer_index){
+        $correct_answer = 'Could not determine.';
+        switch ($technology) {
+            case('h5p'):
+                foreach ($object['choices'] as  $choice) {
+                    if ($choice['id'] === $correct_answer_index)
+                 $correct_answer =   trim(array_values($choice['description'])[0]);
+                }
+                break;
+        }
+        return $correct_answer;
+
+
+    }
     public
     function getChoices($technology, $object)
     {
         $choices = [];
         switch ($technology) {
             case('h5p'):
-                foreach ($object['choices'] as $key => $choice) {
-                    $choices[] = array_values($choice['description'])[0];
+                foreach ($object['choices'] as  $choice) {
+                    $choices[$choice['id']] = array_values($choice['description'])[0];
                 }
                 break;
 
         }
+        ksort($choices);
         return $choices;
     }
 

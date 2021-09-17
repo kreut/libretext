@@ -185,16 +185,22 @@ class AssignmentSyncQuestion extends Model
         return $questions_count_by_assignment_id;
     }
 
-    public function getFormattedClickerStatus($question_info)
+    /**
+     * @param $question_info
+     * @return string
+     */
+    public function getFormattedClickerStatus($question_info): string
     {
+        $formatted_clicker_status = 'Error with formatted clicker status logic';
+        if (!$question_info->clicker_start && !$question_info->clicker_end){
+            $formatted_clicker_status = 'neither_view_nor_submit';
+        } else if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
+            $formatted_clicker_status = 'view_and_submit';
+        } else if (time() > strtotime($question_info->clicker_end)) {
+            $formatted_clicker_status = 'view_and_not_submit';
+        }
+        return $formatted_clicker_status;
 
-        if (time() >= strtotime($question_info->clicker_start) && time() <= strtotime($question_info->clicker_end)) {
-            return 'view_and_submit';
-        }
-        if (time() > strtotime($question_info->clicker_end)) {
-            return 'view_and_not_submit';
-        }
-        return 'neither_view_nor_submit';
     }
 
     public function orderQuestions(array $ordered_questions, Assignment $assignment)
