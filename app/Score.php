@@ -93,8 +93,7 @@ class Score extends Model
 
 
     public function updateAssignmentScore(int    $student_user_id,
-                                          int    $assignment_id,
-                                          string $assessment_type)
+                                          int    $assignment_id)
     {
 
         //files are for extra credit

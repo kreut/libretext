@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\Question;
+use App\Score;
 use App\Submission;
 use \Exception;
 use App\SubmissionFile;
@@ -16,6 +17,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\SubmissionFiles;
 use App\Traits\DateFormatter;
 use Illuminate\Support\Facades\Storage;
 
@@ -25,6 +27,7 @@ class SubmissionTextController extends Controller
     use GeneralSubmissionPolicy;
 
     use DateFormatter;
+    use SubmissionFiles;
 
 
     public function destroy(Request $request, Assignment $assignment, Question $question, Submission $submission, SubmissionFile $submissionFile)
@@ -66,13 +69,15 @@ class SubmissionTextController extends Controller
      * @param SubmissionFile $submissionFile
      * @param Submission $submission
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Score $score
      * @return array
      * @throws Exception
      */
-    public function store(Request $request,
-                          SubmissionFile $submissionFile,
-                          Submission $submission,
-                          AssignmentSyncQuestion $assignmentSyncQuestion)
+    public function store(Request                $request,
+                          SubmissionFile         $submissionFile,
+                          Submission             $submission,
+                          AssignmentSyncQuestion $assignmentSyncQuestion,
+                          Score                  $score)
     {
 
         $response['type'] = 'error';
@@ -125,13 +130,14 @@ class SubmissionTextController extends Controller
                 'score' => null,
                 'upload_count' => $upload_count,
                 'date_submitted' => Carbon::now()];
+            DB::beginTransaction();
             $submissionFile->updateOrCreate(
                 ['user_id' => $user->id,
                     'assignment_id' => $assignment->id,
                     'question_id' => $question_id],
                 $submission_text_data
             );
-
+            $this->updateScoreIfCompletedScoringType($assignment, $question_id);
             $response['type'] = 'success';
             $response['message'] = 'Your text submission was saved.';
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);

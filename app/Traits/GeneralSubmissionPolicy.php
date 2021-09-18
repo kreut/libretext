@@ -83,7 +83,7 @@ trait GeneralSubmissionPolicy
             ->select('date_graded')
             ->first();
 
-        if ($file_submission && $file_submission->date_graded) {
+        if ($file_submission && $file_submission->date_graded && $assignment->scoring_type === 'p') {
             $response['message'] = 'Your submission has already been graded and may not be re-submitted.';
             return $response;
         }

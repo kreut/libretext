@@ -521,8 +521,11 @@
                     </b-row>
                   </div>
                 </div>
+                <div v-if="isOpenEnded && isAutoGraded">
+                  <hr>
+                </div>
                 <div v-if="isOpenEnded && grading[currentStudentPage - 1]['open_ended_submission']['submission']">
-                  <b-row align-h="center">
+                  <b-row align-h="center" class="pb-2">
                     <span class="font-weight-bold font-italic">Open-Ended Submission</span>
                   </b-row>
                 </div>

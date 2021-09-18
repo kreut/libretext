@@ -4,17 +4,12 @@ namespace App\Http\Controllers;
 
 use App\AssignmentSyncQuestion;
 use App\Course;
-use App\Enrollment;
 use App\Grader;
 use App\GraderNotification;
-use App\Http\Requests\StoreTextFeedback;
 use App\Http\Requests\UpdateScoresRequest;
 use App\Http\Requests\UpdateSubmisionFilePage;
-use App\LtiLaunch;
-use App\LtiGradePassback;
 use App\Question;
 use App\Score;
-use App\Section;
 use App\User;
 use App\AssignmentFile;
 use App\SubmissionFile;
@@ -25,7 +20,7 @@ use App\Traits\S3;
 use App\Traits\DateFormatter;
 use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
-use App\Http\Requests\StoreScore;
+use App\Traits\SubmissionFiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
@@ -47,6 +42,7 @@ class SubmissionFileController extends Controller
     use DateFormatter;
     use GeneralSubmissionPolicy;
     use LatePolicy;
+    use SubmissionFiles;
 
 
     /**
@@ -182,6 +178,7 @@ class SubmissionFileController extends Controller
                     'type' => 'q'],
                 $submission_file_data
             );
+            $this->updateScoreIfCompletedScoringType($assignment, $question->id);
 
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['original_filename'] = $full_file->original_filename;
@@ -382,6 +379,7 @@ class SubmissionFileController extends Controller
      * @param Extension $extension
      * @param SubmissionFile $submissionFile
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param Score $score
      * @return array
      * @throws Exception
      */
@@ -390,7 +388,7 @@ class SubmissionFileController extends Controller
     function storeSubmissionFile(Request                $request,
                                  Extension              $extension,
                                  SubmissionFile         $submissionFile,
-                                 AssignmentSyncQuestion $assignmentSyncQuestion)
+                                 AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';
@@ -471,6 +469,8 @@ class SubmissionFileController extends Controller
                             'type' => 'q'],
                         $submission_file_data
                     );
+                    $this->updateScoreIfCompletedScoringType($assignment, $question_id);
+
                     $response['submission'] = basename($submission);
                     $response['original_filename'] = $original_filename;
                     $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));

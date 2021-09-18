@@ -260,7 +260,7 @@ class Submission extends Model
             }
             //update the score if it's supposed to be updated
 
-            $score->updateAssignmentScore($data['user_id'], $assignment->id, $assignment->assessment_type);
+            $score->updateAssignmentScore($data['user_id'], $assignment->id);
 
 
             $score_not_updated = ($learning_tree->isNotEmpty() && !$data['all_correct']);

@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentFile;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
+use App\Score;
 use App\User;
 use \Exception;
 use App\Extension;
@@ -14,6 +15,7 @@ use App\SubmissionFile;
 use App\Traits\LatePolicy;
 use App\Traits\S3;
 use App\Traits\GeneralSubmissionPolicy;
+use App\Traits\SubmissionFiles;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -30,6 +32,7 @@ class SubmissionAudioController extends Controller
     use LatePolicy;
     use S3;
     use GeneralSubmissionPolicy;
+    use SubmissionFiles;
 
     public function logError(Request $request)
     {
@@ -37,12 +40,22 @@ class SubmissionAudioController extends Controller
 
     }
 
-    public function store(Request $request,
-                          Assignment $assignment,
-                          Question $question,
-                          SubmissionFile $submissionFile,
-                          Extension $extension,
-                            AssignmentSyncQuestion $assignmentSyncQuestion)
+    /**
+     * @param Request $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param SubmissionFile $submissionFile
+     * @param Extension $extension
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public function store(Request                $request,
+                          Assignment             $assignment,
+                          Question               $question,
+                          SubmissionFile         $submissionFile,
+                          Extension              $extension,
+                          AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         $assignment_id = $assignment->id;
@@ -91,17 +104,16 @@ class SubmissionAudioController extends Controller
                 'upload_count' => $upload_count + 1,
                 'date_submitted' => Carbon::now()];
             DB::beginTransaction();
-
             $submissionFile->updateOrCreate(
                 ['user_id' => $user_id,
                     'assignment_id' => $assignment_id,
                     'question_id' => $question_id],
                 $submission_file_data
             );
-
+            $this->updateScoreIfCompletedScoringType($assignment, $question_id);
 
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
-            $response['submission_file_url'] =$this->getTemporaryUrl($assignment_id, basename($submission));
+            $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
             $response['message'] = "Your audio submission has been saved.";
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
@@ -130,7 +142,7 @@ class SubmissionAudioController extends Controller
         $student_user_id = $user->id;
 
 
-         $authorized = Gate::inspect('uploadAudioFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
+        $authorized = Gate::inspect('uploadAudioFeedback', [$assignmentFile, $user->find($student_user_id), $assignment->find($assignment_id)]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -153,7 +165,7 @@ class SubmissionAudioController extends Controller
             $response['type'] = 'success';
             $response['message'] = 'Your audio feedback has been saved.';
             $response['file_feedback_url'] = $this->getTemporaryUrl($assignment_id, basename($audioFeedback));
-$response['file_feedback_type'] = 'audio';
+            $response['file_feedback_type'] = 'audio';
 
         } catch (Exception $e) {
             $h = new Handler(app());

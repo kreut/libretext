@@ -3,14 +3,46 @@
 
 namespace App\Traits;
 
-use App\SubmissionFile;
+use App\Assignment;
+use App\Score;
+use App\Submission;
+use Carbon\Carbon;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 trait SubmissionFiles
 {
+    /**
+     * @param Assignment $assignment
+     * @param int $question_id
+     * @return void
+     */
+    function updateScoreIfCompletedScoringType(Assignment $assignment,
+                                               int        $question_id)
+    {
+        $Score = new Score();
+        if ($assignment->scoring_type === 'c') {
+            $assignment_question = DB::table('assignment_question')
+                ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question_id)
+                ->select('assignment_question.points', 'questions.technology')
+                ->first();
+            $score = ($assignment_question->technology === 'text')
+                ? floatval($assignment_question->points)
+                : .5 * floatval($assignment_question->points);
+            DB::table('submission_files')
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question_id)
+                ->where('user_id', Auth::user()->id)
+                ->update(['score' => $score,
+                    'grader_id' => $assignment->course->user_id,
+                    'date_graded' => Carbon::now()]);
+            $Score->updateAssignmentScore(Auth::user()->id, $assignment->id);
+        }
+    }
 
-
-    function getFormattedSubmissionFileInfo($submission_file, int $assignment_id, $helpers)
+    function getFormattedSubmissionFileInfo($submission_file, int $assignment_id, $helpers): array
     {
 
 
@@ -31,12 +63,12 @@ trait SubmissionFiles
         $formatted_submission_file_info['submission_file_score'] = $submission_file['file_submission_score'] ?? 'N/A';
         $formatted_submission_file_info['temporary_url'] = null;
         $formatted_submission_file_info['file_feedback_url'] = null;
-            if ($submission_file) {
-                $formatted_submission_file_info['temporary_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['submission']);
-                if ($submission_file['file_feedback']) {
-                    $formatted_submission_file_info['file_feedback_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['file_feedback']);
-                }
+        if ($submission_file) {
+            $formatted_submission_file_info['temporary_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['submission']);
+            if ($submission_file['file_feedback']) {
+                $formatted_submission_file_info['file_feedback_url'] = $helpers->getTemporaryUrl($assignment_id, $submission_file['file_feedback']);
             }
-        return   $formatted_submission_file_info;
+        }
+        return $formatted_submission_file_info;
     }
 }

@@ -21,6 +21,7 @@ use App\Traits\Statistics;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
 use App\Traits\Test;
 
@@ -97,15 +98,11 @@ class QuestionsViewTest extends TestCase
         ]);
 
 
-        $cutup = factory(Cutup::class)->create(['user_id' => $this->student_user->id, 'assignment_id' => $this->assignment->id]);
-
-
         $this->student_user_2 = factory(User::class)->create();
         $this->student_user_2->role = 3;
 
         $this->student_user_3 = factory(User::class)->create();
         $this->student_user_3->role = 3;
-
 
         $this->submission_object = '{"actor":{"account":{"name":"5038b12a-1181-4546-8735-58aa9caef971","homePage":"https://h5p.libretexts.org"},"objectType":"Agent"},"verb":{"id":"http://adlnet.gov/expapi/verbs/answered","display":{"en-US":"answered"}},"object":{"id":"https://h5p.libretexts.org/wp-admin/admin-ajax.php?action=h5p_embed&id=97","objectType":"Activity","definition":{"extensions":{"http://h5p.org/x-api/h5p-local-content-id":97},"name":{"en-US":"1.3 Actividad # 5: comparativos y superlativos"},"interactionType":"fill-in","type":"http://adlnet.gov/expapi/activities/cmi.interaction","description":{"en-US":"<p><strong>Instrucciones: Ponga las palabras en orden. Empiece con el sujeto de la oración.</strong></p>\n<br/>1. de todas las universidades californianas / la / antigua / es / La Universidad del Pacífico / más <br/>__________ __________ __________ __________ __________ __________.<br/><br/>2. el / UC Merced / número de estudiantes / tiene / menor<br/>__________ __________ __________ __________ __________."},"correctResponsesPattern":["La Universidad del Pacífico[,]es[,]la[,]más[,]antigua[,]de todas las universidades californianas[,]UC Merced[,]tiene[,]el[,]menor[,]número de estudiantes"]}},"context":{"contextActivities":{"category":[{"id":"http://h5p.org/libraries/H5P.DragText-1.8","objectType":"Activity"}]}},"result":{"response":"[,][,][,][,][,][,][,]antigua[,][,][,]","score":{"min":0,"raw":11,"max":11,"scaled":0},"duration":"PT3.66S","completion":true}}';
         $this->h5pSubmission = [
@@ -127,6 +124,136 @@ class QuestionsViewTest extends TestCase
             ];
     }
 
+    function getPoints($assignment_id, $question_id)
+    {
+        $points = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->first()
+            ->points;
+        if (!$points || $points === '0.00') {
+            dd('points should be at least 0');
+        }
+        return $points;
+    }
+
+    function getScore($assignment_id, $student_user_id)
+    {
+        return DB::table('scores')
+            ->where('assignment_id', $assignment_id)
+            ->where('user_id', $student_user_id)
+            ->first()
+            ->score;
+    }
+
+    public function getSubmissionFileData()
+    {
+        $original_filename = 'some_file.txt';
+        $upload_file_data = ['assignment_id' => $this->assignment->id,
+            'upload_file_type' => 'submission',
+            'file_name' => $original_filename];
+        $response = $this->actingAs($this->student_user)->postJson("/api/s3/pre-signed-url", $upload_file_data)->original;
+        $s3_key = $response['s3_key'];
+        Storage::disk('s3')->put($s3_key, 'some file contents');
+        return [
+            "submissionFile" => $response['submission'],
+            "assignmentId" => $this->assignment->id,
+            "questionId" => $this->question->id,
+            "type" => "submission",
+            "s3_key" => $s3_key,
+            "original_filename" => $original_filename,
+            "uploadLevel" => "question",
+            "_method" => "put"
+        ];
+    }
+
+    /** @test */
+    public function submitted_file_gets_full_credit_if_scoring_type_is_completed_for_just_text_type_question()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $this->question->technology = 'text';
+        $this->question->save();
+        $submission_file_data = $this->getSubmissionFileData();
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points), floatval($score));//no technology piece
+
+    }
+
+    /** @test */
+
+    public function student_can_submit_a_file_submission()
+    {
+
+        $submission_file_data = $this->getSubmissionFileData();
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['message' => 'Your file submission has been saved.']);
+
+    }
+
+    public function submitted_file_gets_full_credit_if_scoring_type_is_completed()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_file_data = $this->getSubmissionFileData();
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
+
+    }
+
+    /** @test */
+
+    public function update_page_gets_full_credit_if_scoring_type_is_completed()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_file_data = [
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'type' => 'a',
+            'user_id' => $this->student_user->id,
+            'original_filename' => 'blah blah',
+            'submission' => 'sflkjfwlKEKLie.pdf',
+            'date_submitted' => Carbon::now()
+        ];
+        DB::table('submission_files')->insert($submission_file_data);
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
+
+    }
+
+    /** @test */
+    public function text_file_gets_full_credit_if_scoring_type_is_completed()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_text_data = [
+            "text_submission" => "Here is my text!",
+            "assignmentId" => $this->assignment->id,
+            "questionId" => $this->question->id
+        ];
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", $submission_text_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
+
+    }
+
+
     /** @test */
 
     public function submission_with_lti_launch_is_entered_as_pending()
@@ -137,7 +264,7 @@ class QuestionsViewTest extends TestCase
         ]);
         $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $this->assertDatabaseHas('lti_grade_passbacks',['assignment_id' => $this->assignment->id,
+        $this->assertDatabaseHas('lti_grade_passbacks', ['assignment_id' => $this->assignment->id,
             'user_id' => $this->student_user->id,
             'launch_id' => '12345',
             'status' => 'pending'
@@ -1237,9 +1364,6 @@ class QuestionsViewTest extends TestCase
         $this->actingAs($this->student_user_2)->getJson("/api/assignments/{$this->assignment->id}/view-questions-info")
             ->assertJson(['type' => 'success']);
     }
-
-
-
 
 
     /** @test */
