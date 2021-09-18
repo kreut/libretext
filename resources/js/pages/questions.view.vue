@@ -857,13 +857,6 @@
                                    :question-id="questions[currentPage - 1].id"
                                    :reload-question-parent="reloadQuestionParent"
                   />
-                  <b-button class="mt-1 mb-2 mr-2"
-                            variant="success"
-                            size="sm"
-                            @click="getAssessmentsForAssignment()"
-                  >
-                    Add Questions
-                  </b-button>
                 </div>
               </b-col>
             </b-row>
