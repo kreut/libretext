@@ -1530,6 +1530,9 @@ class AssignmentSyncQuestionController extends Controller
                     case('h5p'):
                         $problemJWT = '';
                         $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
+                        if (Auth::user()->role === 2){
+                            $technology_src = str_replace('/embed','', $technology_src);
+                        }
                         break;
                     case('text'):
                         $iframe_technology = false;
