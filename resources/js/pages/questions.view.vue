@@ -1102,8 +1102,9 @@
                     />
                   </div>
                   <div
-                    v-if="questions[currentPage-1].technology_iframe.length && !(user.role === 3 && clickerStatus === 'neither_view_nor_submit')"
+                    v-if="questions[currentPage-1].technology_iframe.length"
                   >
+
                     <iframe
                       :key="`technology-iframe-${currentPage}-${cacheIndex}`"
                       v-resize="{ log: false }"
