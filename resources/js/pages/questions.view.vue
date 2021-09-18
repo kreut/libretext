@@ -809,7 +809,9 @@
                     }}%
                   </span>
                 </div>
-                <div v-if="(!inIFrame && timeLeft>0) || (inIFrame && showAssignmentInformation && timeLeft>0)">
+                <div v-if="(!inIFrame && timeLeft>0)
+                  || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
+                >
                   <countdown :time="timeLeft" @end="cleanUpClickerCounter">
                     <template slot-scope="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)" />
