@@ -912,14 +912,14 @@ export default {
           }
         }
 
-        this.title = `Grade Open-Ended Submissions For ${assignment.name}`
+        this.title = `Grading For ${assignment.name}`
         this.latePolicy = assignment.late_policy
         this.lateDeductionApplicationPeriod = assignment.late_deduction_application_period
         this.lateDeductionPercent = assignment.late_deduction_percent
         await this.getGrading(false)
         await this.getCannedResponses()
       } catch (error) {
-        this.title = 'Grade Open-Ended Submissions'
+        this.title = 'Grade Submissions'
       }
     },
     async toggleView () {
