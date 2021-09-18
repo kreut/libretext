@@ -1452,10 +1452,18 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
+                       /* if (Auth::user()->role === 2
+                            && $assignment->course->user_id !== Auth::user()->id
+                            && Helper::isCommonsCourse($assignment->course)) {
+                            $custom_claims['webwork']['showSubmitButton'] = 0;
+                            $custom_claims['webwork']['showPreviewButton'] = 0;
+                        }
+                       */
                         if ($webwork_url === 'https://wwrenderer.libretexts.org') {
 
                             $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
                             $custom_claims['webwork']['showSummary'] = $assignment->solutions_released;
+
                             $custom_claims['webwork']['outputFormat'] = 'jwe_secure';
                             // $custom_claims['webwork']['answerOutputFormat'] = 'static';
                             $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
@@ -1475,7 +1483,7 @@ class AssignmentSyncQuestionController extends Controller
                             $custom_claims['webwork']['showSolution'] = 0;
                             $custom_claims['webwork']['showDebug'] = 0;
 
-                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?" width="100%"></iframe>';
+                            $question['technology_iframe'] = '<iframe class="webwork_problem" frameborder=0 src="' . $webwork_url . $webwork_base_url . '/rendered?showSubmitButton=0&showPreviewButton=0" width="100%"></iframe>';
                         } else {
                             $custom_claims['webwork']['showSummary'] = 1;
                             $custom_claims['webwork']['displayMode'] = 'MathJax';
