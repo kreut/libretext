@@ -21,7 +21,7 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input v-model="cannedResponseForm.canned_response"
@@ -34,7 +34,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -74,7 +74,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -104,7 +104,7 @@
         </div>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -199,7 +199,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Processing...
                 </span>
               </b-col>
@@ -310,15 +310,40 @@
                             <span class="font-weight-bold">Auto-graded score:</span>
                           </template>
                           <div v-show="isAutoGraded" class="pt-1">
-                            <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
-                                          v-model="gradingForm.question_submission_score"
-                                          type="text"
-                                          size="sm"
-                                          style="width:75px"
-                                          :class="{ 'is-invalid': gradingForm.errors.has('question_submission_score') }"
-                                          @keydown="gradingForm.errors.clear('question_submission_score')"
-                            />
-                            <has-error :form="gradingForm" field="question_submission_score" />
+                            <div class="d-flex">
+                              <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                                            v-model="gradingForm.question_submission_score"
+                                            type="text"
+                                            size="sm"
+                                            style="width:75px"
+                                            :class="{ 'is-invalid': questionSubmissionScoreErrorMessage.length }"
+                                            @keydown="questionSubmissionScoreErrorMessage = ''"
+                              />
+                              <span
+                                v-if="isAutoGraded && !isOpenEnded && grading[currentStudentPage - 1]['auto_graded_submission']"
+                              >
+                                <b-button size="sm"
+                                          class="ml-2"
+                                          variant="outline-success"
+                                          @click="submitGradingForm(true,
+                                                                    {
+                                                                      scoreType: 'question_submission_score',
+                                                                      score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                                                    })"
+                                >Full Score</b-button>
+                                <b-button size="sm"
+                                          class="ml-2"
+                                          variant="outline-danger"
+                                          @click="submitGradingForm(true,
+                                                                    {
+                                                                      scoreType: 'question_submission_score',
+                                                                      score: 0
+                                                                    })"
+                                >
+                                  Zero Score</b-button>
+                              </span>
+                            </div>
+
                             <div v-if="!grading[currentStudentPage - 1]['auto_graded_submission']"
                                  class="pt-1"
                             >
@@ -327,6 +352,9 @@
                           </div>
                           <div v-show="!isAutoGraded" class="pt-2">
                             <span class="font-italic">Not applicable</span>
+                          </div>
+                          <div v-if="questionSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
+                            {{ questionSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
                         <b-form-group
@@ -340,30 +368,57 @@
                             </span>
                           </template>
                           <div v-show="isOpenEnded" class="pt-1">
-                            <b-form-input
-                              v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                              v-model="gradingForm.file_submission_score"
-                              type="text"
-                              size="sm"
-                              style="width:75px"
-                              :class="{ 'is-invalid': gradingForm.errors.has('file_submission_score') }"
-                              @keydown="gradingForm.errors.clear('file_submission_score')"
-                            />
-                            <has-error :form="gradingForm" field="file_submission_score" />
+                            <div class="d-flex">
+                              <b-form-input
+                                v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                                v-model="gradingForm.file_submission_score"
+                                type="text"
+                                size="sm"
+                                style="width:75px"
+                                :class="{ 'is-invalid': fileSubmissionScoreErrorMessage.length }"
+                                @keydown="fileSubmissionScoreErrorMessage=''"
+                              />
+                              <span
+                                v-if="isOpenEnded && !isAutoGraded && grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                              >
+                                <b-button size="sm"
+                                          class="ml-2"
+                                          variant="outline-success"
+                                          @click="submitGradingForm(true,
+                                                                    {
+                                                                      scoreType: 'file_submission_score',
+                                                                      score: grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1
+                                                                    })"
+                                >Full Score</b-button>
+                                <b-button size="sm"
+                                          class="ml-2"
+                                          variant="outline-danger"
+                                          @click="submitGradingForm(true,
+                                                                    {
+                                                                      scoreType: 'file_submission_score',
+                                                                      score: 0
+                                                                    })"
+                                >
+                                  Zero Score</b-button>
+                              </span>
+                            </div>
                             <div v-show="!grading[currentStudentPage - 1]['open_ended_submission']['submission']"
-                                 class="pt-1"
+                                 class="pt-2"
                             >
                               <span class="font-italic">No submission</span>
                             </div>
                           </div>
-                          <div v-show="!isOpenEnded" class="pt-1">
+                          <div v-show="!isOpenEnded" class="pt-2">
                             <span class="font-italic">Not applicable</span>
+                          </div>
+                          <div v-if="fileSubmissionScoreErrorMessage" class="text-danger" style="font-size: 80%">
+                            {{ fileSubmissionScoreErrorMessage }}
                           </div>
                         </b-form-group>
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
-                            + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
+                          + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
                         }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                         <br>
                         <hr>
@@ -440,7 +495,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback" />
+                            <has-error :form="gradingForm" field="textFeedback"/>
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -569,8 +624,9 @@
                   height="600"
                   :src="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_url']"
                 />
-                <b-card v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
-                        sub-title="Audio Feedback"
+                <b-card
+                  v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
+                  sub-title="Audio Feedback"
                 >
                   <audio-player
                     v-if="grading[currentStudentPage - 1]['open_ended_submission']['file_feedback_type'] === 'audio'"
@@ -618,6 +674,8 @@ export default {
     ckeditor: CKEditor.component
   },
   data: () => ({
+    questionSubmissionScoreErrorMessage: '',
+    fileSubmissionScoreErrorMessage: '',
     gradersCanSeeStudentNames: false,
     isIndividualGrading: true,
     noSubmission: false,
@@ -932,7 +990,10 @@ export default {
       }
       this.viewSubmission = !this.viewSubmission
     },
-    async submitGradingForm (next) {
+    async submitGradingForm (next, prepopulatedScore = {}) {
+      if (prepopulatedScore.scoreType) {
+        this.gradingForm[prepopulatedScore.scoreType] = prepopulatedScore.score
+      }
       try {
         if (this.textFeedbackMode === 'canned_response' && this.cannedResponse === null) {
           this.$noty.error('You need to choose a response.')
@@ -951,22 +1012,34 @@ export default {
 
         const { data } = await this.gradingForm.post('/api/grading')
         this.$noty[data.type](data.message)
-        console.log(data)
         if (data.type === 'success') {
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['question_submission_score'] = this.gradingForm.question_submission_score
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['grader_name'] = data.grader_name
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback_editor'] = this.gradingForm.text_feedback_editor
-          this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback'] = this.gradingForm.textFeedback
-          this.grading[this.currentStudentPage - 1]['last_graded'] = data.last_graded
-          if (next) {
+          if (this.isOpenEnded && this.grading[this.currentStudentPage - 1]['open_ended_submission']) {
+            this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] = this.gradingForm.file_submission_score
+            this.grading[this.currentStudentPage - 1]['open_ended_submission']['grader_name'] = data.grader_name
+            this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback_editor'] = this.gradingForm.text_feedback_editor
+            this.grading[this.currentStudentPage - 1]['open_ended_submission']['text_feedback'] = this.gradingForm.textFeedback
+            this.grading[this.currentStudentPage - 1]['last_graded'] = data.last_graded
+          }
+          if (this.isAutoGraded && this.grading[this.currentStudentPage - 1]['auto_graded_submission']) {
+            this.grading[this.currentStudentPage - 1]['auto_graded_submission']['score'] = this.gradingForm.question_submission_score
+          }
+          if (next && this.currentStudentPage < this.numStudents) {
             this.currentStudentPage++
             await this.changePage()
           }
         }
       } catch (error) {
+        console.log(this.gradingForm.errors.errors)
+
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          if (this.gradingForm.errors.errors.question_submission_score) {
+            this.questionSubmissionScoreErrorMessage = this.gradingForm.errors.errors.question_submission_score[0]
+          }
+          if (this.gradingForm.errors.errors.file_submission_score) {
+            this.fileSubmissionScoreErrorMessage = this.gradingForm.errors.errors.file_submission_score[0]
+          }
         }
       }
     },
@@ -1061,7 +1134,7 @@ export default {
       this.gradingForm.file_submission_score = this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score'] === 'N/A'
         ? null
         : 1 * this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_submission_score']
-      this.gradingForm.question_submission_score = this.grading[this.currentStudentPage - 1]['auto_graded_submission']['score'] === null
+      this.gradingForm.question_submission_score = !this.grading[this.currentStudentPage - 1]['auto_graded_submission']
         ? null
         : 1 * this.grading[this.currentStudentPage - 1]['auto_graded_submission']['score']
 
