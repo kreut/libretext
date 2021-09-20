@@ -103,6 +103,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
+    Route::patch('/courses/order', 'CourseController@order');
     Route::post('/courses/import/{course}', 'CourseController@import');
     Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');

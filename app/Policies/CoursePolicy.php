@@ -8,6 +8,7 @@ use App\User;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 use \App\Traits\CommonPolicies;
+use Illuminate\Support\Facades\DB;
 
 class CoursePolicy
 {
@@ -47,6 +48,30 @@ class CoursePolicy
         return ((int)$course->user_id === (int)$user->id)
             ? Response::allow()
             : Response::deny('You are not allowed to update what is shown in the iframe.');
+    }
+
+    /**
+     * @param User $user
+     * @param $courses
+     * @param $ordered_courses
+     * @return Response
+     */
+    public function order(User $user, $courses, $ordered_courses): Response
+    {
+        $owner_courses = DB::table('courses')
+            ->where('user_id', $user->id)
+            ->select('id')
+            ->pluck('id')
+            ->toArray();
+        $has_access = true;
+        foreach ($ordered_courses as $ordered_course) {
+            if (!in_array($ordered_course, $owner_courses)) {
+                $has_access = false;
+            }
+        }
+        return $has_access
+            ? Response::allow()
+            : Response::deny('You are not allowed to re-order a course that is not yours.');
     }
 
     public function getAssignmentNamesForPublicCourse(User $user, Course $course)

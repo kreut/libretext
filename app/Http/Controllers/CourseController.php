@@ -36,6 +36,33 @@ class CourseController extends Controller
 
     use DateFormatter;
 
+    public function order(Request $request, Course $course)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('order', [$course, $request->ordered_courses]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+
+        try {
+            DB::beginTransaction();
+            $course->orderCourses($request->ordered_courses);
+            DB::commit();
+            $response['message'] = 'Your courses have been re-ordered.';
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error re-ordering your courses.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
 
     /**
      * @param Course $course
@@ -48,7 +75,7 @@ class CourseController extends Controller
         $response['type'] = 'error';
         try {
 
-            $response['open_courses'] = $course->where('anonymous_users',1)->get();
+            $response['open_courses'] = $course->where('anonymous_users', 1)->get();
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -238,11 +265,11 @@ class CourseController extends Controller
             $open_courses = DB::table('courses')
                 ->where('courses.user_id', $commons_user->id)
                 ->where('shown', 1)
-                ->where('anonymous_users',1)
+                ->where('anonymous_users', 1)
                 ->select('id',
                     'courses.name AS name',
                     'courses.public_description AS description',
-                    DB::raw('CONCAT("'. config('app.url') .'/courses/",id,"/anonymous") AS url'))
+                    DB::raw('CONCAT("' . config('app.url') . '/courses/",id,"/anonymous") AS url'))
                 ->get();
             $response['open_courses'] = $open_courses;
             $response['type'] = 'success';
@@ -404,7 +431,7 @@ class CourseController extends Controller
         try {
             $results = DB::table('courses')
                 ->join('assignments', 'courses.id', '=', 'assignments.course_id')
-                ->leftJoin('beta_assignments', 'assignments.id', '=','beta_assignments.id')
+                ->leftJoin('beta_assignments', 'assignments.id', '=', 'beta_assignments.id')
                 ->where('courses.user_id', $request->user()->id)
                 ->select(DB::raw('courses.id AS course_id'),
                     DB::raw('courses.name AS course_name'),
@@ -542,6 +569,7 @@ class CourseController extends Controller
             $imported_course->show_z_scores = 0;
             $imported_course->students_can_view_weighted_average = 0;
             $imported_course->user_id = $request->user()->id;
+            $imported_course->order = 0;
             $imported_course->save();
             if ($import_as_beta) {
                 $betaCourse->id = $imported_course->id;
@@ -580,7 +608,7 @@ class CourseController extends Controller
             $course->enrollFakeStudent($imported_course->id, $section->id, $enrollment);
 
             $finalGrade->setDefaultLetterGrades($imported_course->id);
-
+            $this->reorderAllCourses();
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "<strong>$imported_course->name</strong> has been imported.  </br></br>Don't forget to change the dates associated with this course and all of its assignments.";
@@ -594,6 +622,17 @@ class CourseController extends Controller
         return $response;
 
 
+    }
+
+    public function reOrderAllCourses()
+    {
+        $courses = $this->getCourses(Auth::user());
+        $all_course_ids = [];
+        foreach ($courses as $value) {
+            $all_course_ids[] = $value->id;
+        }
+        $course = new Course();
+        $course->orderCourses($all_course_ids);
     }
 
     /**
@@ -833,7 +872,8 @@ class CourseController extends Controller
                 return DB::table('courses')
                     ->select('courses.*', DB::raw("beta_courses.id IS NOT NULL AS is_beta_course"))
                     ->leftJoin('beta_courses', 'courses.id', '=', 'beta_courses.id')
-                    ->where('user_id', $user->id)->orderBy('start_date', 'desc')
+                    ->where('user_id', $user->id)
+                    ->orderBy('order')
                     ->get();
             case(4):
                 $sections = DB::table('graders')
@@ -915,6 +955,7 @@ class CourseController extends Controller
             $data['shown'] = 0;
             $data['public_description'] = $request->public_description;
             $data['private_description'] = $request->private_description;
+            $data['order'] = 0;
             //create the main section
             $section->name = $data['section'];
             $section->crn = $data['crn'];
@@ -922,12 +963,18 @@ class CourseController extends Controller
             unset($data['crn']);
             unset($data['school']);
             //create the course
+
+
             $new_course = $course->create($data);
+            $courses = $this->getCourses(auth()->user());
+
 
             $section->course_id = $new_course->id;
             $section->save();
             $course->enrollFakeStudent($new_course->id, $section->id, $enrollment);
             $finalGrade->setDefaultLetterGrades($new_course->id);
+
+            $this->reOrderAllCourses();
 
             DB::commit();
             $response['type'] = 'success';
@@ -938,10 +985,12 @@ class CourseController extends Controller
             $h->report($e);
             $response['message'] = "There was an error creating <strong>$request->name</strong>.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 
-    public function getSchoolIdFromRequest(Request $request, School $school)
+    public
+    function getSchoolIdFromRequest(Request $request, School $school)
     {
 
         return $request->school
@@ -1009,7 +1058,8 @@ class CourseController extends Controller
      * @param $is_beta_course
      * @return string
      */
-    public function failsTetherCourseValidation($request, $course, $is_beta_course): string
+    public
+    function failsTetherCourseValidation($request, $course, $is_beta_course): string
     {
         $message = '';
         $at_least_one_beta_course_exists = BetaCourse::where('alpha_course_id', $course->id)->first();

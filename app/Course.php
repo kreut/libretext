@@ -138,6 +138,15 @@ class Course extends Model
             ->orderBy('enrollments.id'); //local key in enrollments table
     }
 
+    public function orderCourses(array $ordered_courses)
+    {
+        foreach ($ordered_courses as $key => $course_id) {
+            DB::table('courses')
+                ->where('id', $course_id)//validation step!
+                ->update(['order' => $key + 1]);
+        }
+    }
+
     /**
      * @return array
      */

@@ -216,92 +216,123 @@
           </b-button>
         </b-alert>
       </div>
-      <b-table striped hover
-               :fields="fields"
-               :items="courses"
-      >
-        <template v-slot:head(shown)="data">
-          Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
-                                                                   icon="question-circle"
-          /></span>
-        </template>
-        <template v-slot:cell(name)="data">
-          <div class="mb-0">
-            <span v-show="parseInt(data.item.alpha) === 1"
-                  :id="getTooltipTarget('alphaCourse',data.item.id)"
-                  class="text-muted"
-            >&alpha; </span>
-            <b-tooltip :target="getTooltipTarget('alphaCourse',data.item.id)"
-                       delay="500"
+      <div class="table-responsive">
+        <table class="table table-striped">
+          <thead>
+            <tr>
+              <th>
+                Course
+              </th>
+              <th>
+                <span v-show="user.role === 2">
+                  Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
+                                                                           icon="question-circle"
+                  /></span></span>
+                <span v-show="user.role === 4">
+                  Sections
+                </span>
+              </th>
+              <th>
+                Start Date
+              </th>
+              <th>
+                End Date
+              </th>
+              <th>
+                Actions
+              </th>
+            </tr>
+          </thead>
+          <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}" @end="saveNewOrder">
+            <tr v-for="course in courses"
+                :key="course.id"
             >
-              This course is an Alpha course. Adding/removing assignments or assessments from this
-              course will be directly reflected in the associated Beta courses.
-            </b-tooltip>
-            <span v-show="parseInt(data.item.is_beta_course) === 1"
-                  :id="getTooltipTarget('betaCourse',data.item.id)"
-                  class="text-muted"
-            >&beta; </span>
-            <b-tooltip :target="getTooltipTarget('betaCourse',data.item.id)"
-                       delay="500"
-            >
-              This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which are
-              added/removed in the Alpha course will be directly reflected in this course.
-            </b-tooltip>
-            <a href="" @click.prevent="showAssignments(data.item.id)">{{ data.item.name }}</a>
-          </div>
-        </template>
-        <template v-slot:cell(shown)="data">
-          <toggle-button
-            :width="57"
-            :value="Boolean(data.item.shown)"
-            :sync="true"
-            :font-size="14"
-            :margin="4"
-            :color="{checked: '#28a745', unchecked: '#6c757d'}"
-            :labels="{checked: 'Yes', unchecked: 'No'}"
-            @change="showCourseWarning(data.item)"
-          />
-        </template>
-        <template v-slot:cell(access_code)="data">
-          {{ data.item.access_code ? data.item.access_code : 'None' }}
-        </template>
-        <template v-slot:cell(start_date)="data">
-          {{ $moment(data.item.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
-        </template>
-        <template v-slot:cell(end_date)="data">
-          {{ $moment(data.item.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
-        </template>
-        <template v-slot:cell(actions)="data">
-          <div class="mb-0">
-            <span class="pr-1" @click="showGradebook(data.item.id)">
-              <b-tooltip :target="getTooltipTarget('gradebook',data.item.id)"
-                         delay="500"
-              >
-                Gradebook
-              </b-tooltip>
-              <b-icon :id="getTooltipTarget('gradebook',data.item.id)" icon="file-spreadsheet" /></span>
-            <span v-if="user && user.role === 2">
+              <td>
+                <div class="mb-0">
+                  <b-icon v-if="user.role === 2" icon="list" />
+                  <span v-show="parseInt(course.alpha) === 1"
+                        :id="getTooltipTarget('alphaCourse',course.id)"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is an Alpha course. Adding/removing assignments or assessments from this
+                    course will be directly reflected in the associated Beta courses.
+                  </b-tooltip>
+                  <span v-show="parseInt(course.is_beta_course) === 1"
+                        :id="getTooltipTarget('betaCourse',course.id)"
+                        class="text-muted"
+                  >&beta; </span>
+                  <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
+                    are
+                    added/removed in the Alpha course will be directly reflected in this course.
+                  </b-tooltip>
+                  <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
+                </div>
+              </td>
 
-              <span class="pr-1" @click="getProperties(data.item)">
-                <b-tooltip :target="getTooltipTarget('properties',data.item.id)"
-                           delay="500"
-                >
-                  Course Properties
-                </b-tooltip>
-                <b-icon :id="getTooltipTarget('properties',data.item.id)" icon="gear" />
-              </span>
-              <b-tooltip :target="getTooltipTarget('deleteCourse',data.item.id)"
-                         delay="500"
-              >
-                Delete Course
-              </b-tooltip>
-              <b-icon :id="getTooltipTarget('deleteCourse',data.item.id)" icon="trash"
-                      @click="deleteCourse(data.item.id)"
-              />
-            </span>
-          </div>
-        </template>
-      </b-table>
+              <td>
+                <span v-if="user.role === 2">
+                  <toggle-button
+                    :width="57"
+                    :value="Boolean(course.shown)"
+                    :sync="true"
+                    :font-size="14"
+                    :margin="4"
+                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                    :labels="{checked: 'Yes', unchecked: 'No'}"
+                    @change="showCourseWarning(course)"
+                  />
+                </span>
+                <span v-if="user.role === 4">
+                  {{ course.sections }}
+                </span>
+              </td>
+
+              <td style="width:200px">
+                {{ $moment(course.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+              </td>
+              <td style="width:200px">
+                {{ $moment(course.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+              </td>
+              <td>
+                <div class="mb-0">
+                  <span class="pr-1" @click="showGradebook(course.id)">
+                    <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
+                               delay="500"
+                    >
+                      Gradebook
+                    </b-tooltip>
+                    <b-icon :id="getTooltipTarget('gradebook',course.id)" icon="file-spreadsheet" /></span>
+                  <span v-if="user && user.role === 2">
+
+                    <span class="pr-1" @click="getProperties(course)">
+                      <b-tooltip :target="getTooltipTarget('properties',course.id)"
+                                 delay="500"
+                      >
+                        Course Properties
+                      </b-tooltip>
+                      <b-icon :id="getTooltipTarget('properties',course.id)" icon="gear" />
+                    </span>
+                    <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
+                               delay="500"
+                    >
+                      Delete Course
+                    </b-tooltip>
+                    <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash"
+                            @click="deleteCourse(course.id)"
+                    />
+                  </span>
+                </div>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
     <div v-else>
       <br>
@@ -326,6 +357,7 @@ import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ImportAsBetaText from '~/components/ImportAsBetaText'
 import AllFormErrors from '~/components/AllFormErrors'
+import draggable from 'vuedraggable'
 
 export default {
   components: {
@@ -333,10 +365,12 @@ export default {
     ToggleButton,
     VueBootstrapTypeahead,
     ImportAsBetaText,
-    AllFormErrors
+    AllFormErrors,
+    draggable
   },
   middleware: 'auth',
   data: () => ({
+    currentOrderedCourses: [],
     allFormErrors: [],
     showBetaCourseDatesWarning: true,
     hasBetaCourses: false,
@@ -432,6 +466,34 @@ export default {
       ]
   },
   methods: {
+    async saveNewOrder () {
+      let orderedCourses = []
+      for (let i = 0; i < this.courses.length; i++) {
+        orderedCourses.push(this.courses[i].id)
+      }
+
+      let noChange = true
+      for (let i = 0; i < this.currentOrderedCourses.length; i++) {
+        if (this.currentOrderedCourses[i] !== this.courses[i]) {
+          noChange = false
+        }
+      }
+      if (noChange) {
+        return false
+      }
+      try {
+        const { data } = await axios.patch(`/api/courses/order`, { ordered_courses: orderedCourses })
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          for (let i = 0; i < this.courses.length; i++) {
+            this.courses[i].order = i + 1
+          }
+          this.currentOrderedCourses = this.courses
+        }
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     async doNotShowBetaCourseDatesWarnings () {
       try {
         const { data } = await axios.post(`/api/beta-courses/do-not-show-beta-course-dates-warning`)
@@ -637,6 +699,7 @@ export default {
           this.showNoCoursesAlert = !this.hasCourses
           this.showBetaCourseDatesWarning = data.showBetaCourseDatesWarning
           this.courses = data.courses
+          this.currentOrderedCourses = this.courses
           this.hasBetaCourses = this.courses.filter(course => course.is_beta_course).length
           console.log(data.courses)
         }

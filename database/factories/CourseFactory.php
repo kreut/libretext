@@ -15,6 +15,7 @@ $factory->define(Course::class, function (Faker $faker) {
         'end_date' => '2021-06-10',
         'anonymous_users' => 0,
         'public' => 1,
+        'order' => 1,
         'alpha' => 0
     ];
 

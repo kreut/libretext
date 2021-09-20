@@ -52,6 +52,26 @@ class CoursesIndexTest extends TestCase
 
     /** @test */
 
+    public function non_owner_cannot_order_courses()
+    {
+
+        $this->actingAs($this->user)->patchJson("/api/courses/order/", ['ordered_courses' => [$this->course->id, $this->course_2->id]])
+            ->assertJson(['message' => 'You are not allowed to re-order a course that is not yours.']);
+    }
+
+    /** @test */
+
+    public function owner_can_order_courses()
+    {
+        $course_2 = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->actingAs($this->user)->patchJson("/api/courses/order/", ['ordered_courses' => [$course_2->id, $this->course->id]])
+            ->assertJson(['message' => 'Your courses have been re-ordered.']);
+        $this->assertDatabaseHas('courses', ['id' => $this->course->id, 'order' => 2]);
+    }
+
+
+    /** @test */
+
     public function cannot_import_non_public_course()
     {
         $this->course_2->public = 0;
@@ -252,7 +272,7 @@ class CoursesIndexTest extends TestCase
             'crn' => 'Some CRN',
             'public' => 1,
             'alpha' => 0,
-            'anonymous_users' =>0
+            'anonymous_users' => 0
         ])->assertJson(['type' => 'success']);
     }
 
