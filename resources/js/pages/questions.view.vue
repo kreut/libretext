@@ -1125,25 +1125,14 @@
                   </b-alert>
                 </div>
                 <div>
-                  <div class="vld-parent">
-                    <loading
-                      :active.sync="isLoadingPieChart"
-                      :can-cancel="true"
-                      :is-full-page="false"
-                      :width="128"
-                      :height="128"
-                      color="#007BFF"
-                      background="#FFFFFF"
+                  <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata.length" class="text-center">
+                    <hr>
+                    <h5 v-if="correctAnswer" class="font-italic">
+                      The correct answer is "{{ correctAnswer }}"
+                    </h5>
+                    <pie-chart :key="currentPage" :chartdata="piechartdata"
+                               @pieChartLoaded="updateIsLoadingPieChart"
                     />
-                    <div v-if="assessmentType === 'clicker' && user.role === 3 && piechartdata" class="text-center">
-                      <hr>
-                      <h5 v-if="correctAnswer" class="font-italic">
-                        The correct answer is "{{ correctAnswer }}"
-                      </h5>
-                      <pie-chart :key="currentPage" :chartdata="piechartdata"
-                                 @pieChartLoaded="updateIsLoadingPieChart"
-                      />
-                    </div>
                   </div>
                   <div
                     v-if="['rich text', 'plain text'].includes(openEndedSubmissionType) && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView"
