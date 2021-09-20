@@ -225,8 +225,8 @@
             </div>
             <div class="text-center">
               <b-container>
-                <b-row class="justify-content-md-center mb-2">
-                  <b-col v-if="user.role === 2 || (user.role === 4 && gradersCanSeeStudentNames)" lg="3">
+                <b-row class="justify-content-md-center">
+                  <b-col v-if="user.role === 2 || (user.role === 4 && gradersCanSeeStudentNames)" cols="3">
                     <vue-bootstrap-typeahead
                       ref="queryTypeahead"
                       v-model="jumpToStudent"
@@ -235,7 +235,19 @@
                       @hit="setQuestionAndStudentByStudentName"
                     />
                   </b-col>
-                  <b-alert :show="user.role === 4 && !gradersCanSeeStudentNames" variant="info">
+                </b-row>
+                <b-row class="justify-content-md-center">
+                  <div class="d-flex mt-2 mb-2">
+                    <span class="mt-2 mr-2">Jump To:</span>
+                    <b-form-select v-model="studentNumberToJumpTo"
+                                   style="width:70px"
+                                   :options="jumpToStudentsByNumber"
+                                   @change="jumpToStudentByNumber()"
+                    />
+                  </div>
+                </b-row>
+                <b-row v-if="user.role === 4 && !gradersCanSeeStudentNames" class="justify-content-md-center">
+                  <b-alert :show="true" variant="info">
                     <span class="font-weight-bold font-weight-bold">
                       Your instructor has chosen to keep student names anonymous.  The names
                       you see below are randomly generated.
@@ -676,6 +688,8 @@ export default {
   data: () => ({
     questionSubmissionScoreErrorMessage: '',
     fileSubmissionScoreErrorMessage: '',
+    jumpToStudentsByNumber: [],
+    studentNumberToJumpTo: '--',
     gradersCanSeeStudentNames: false,
     isIndividualGrading: true,
     noSubmission: false,
@@ -776,6 +790,12 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    jumpToStudentByNumber () {
+      if (this.studentNumberToJumpTo !== '--') {
+        this.currentStudentPage = this.studentNumberToJumpTo
+        this.changePage()
+      }
+    },
     gotoMassGrading () {
       this.$router.push({ name: 'assignment.mass_grading.index', params: { assignmentId: this.assignmentId } })
     },
@@ -1213,8 +1233,10 @@ export default {
         this.gradersCanSeeStudentNames = data.graders_can_see_student_names
         this.students = []
         this.numStudents = Object.keys(this.grading).length
+        this.jumpToStudentsByNumber = [{ text: '--', value: '--' }]
         for (let i = 0; i < this.numStudents; i++) {
           this.students.push(this.grading[i]['student'].name)
+          this.jumpToStudentsByNumber.push({ text: i + 1, value: i + 1 })
         }
 
         this.currentStudentPage = 1
