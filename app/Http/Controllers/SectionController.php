@@ -30,8 +30,8 @@ class SectionController extends Controller
         try {
             $email = $request->user()->email;
             $response['can_create_student_access_codes'] = DB::table('no_student_access_codes')
-                ->where('email', $email)
-                ->first() === null;
+                    ->where('email', $email)
+                    ->first() === null;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
@@ -61,10 +61,10 @@ class SectionController extends Controller
 
     }
 
-    public function destroy(Request $request,
-                            Section $section,
-                            Enrollment $enrollment,
-                            Submission $submission,
+    public function destroy(Request        $request,
+                            Section        $section,
+                            Enrollment     $enrollment,
+                            Submission     $submission,
                             SubmissionFile $submissionFile)
     {
         try {
@@ -108,7 +108,12 @@ class SectionController extends Controller
         return $response;
     }
 
-    public function index(Request $request, Course $course)
+    /**
+     * @param Course $course
+     * @return array
+     * @throws Exception
+     */
+    public function index( Course $course): array
     {
         try {
             $response['type'] = 'error';
@@ -118,7 +123,13 @@ class SectionController extends Controller
                 $response['message'] = $authorized->message();
                 return $response;
             }
-
+            $sections = $course->sections;
+            foreach ($sections as $section) {
+                if (!$section->access_code) {
+                    $section->access_code = $this->createSectionAccessCode();
+                    $section->save();
+                }
+            }
             $response['sections'] = $course->sections;
             $response['course_start_date'] = $course->start_date;
             $response['course_end_date'] = $course->end_date;
@@ -161,9 +172,9 @@ class SectionController extends Controller
     }
 
     public function store(StoreSection $request,
-                          Course $course,
-                          Section $section,
-                          Enrollment $enrollment,
+                          Course       $course,
+                          Section      $section,
+                          Enrollment   $enrollment,
                           AssignToUser $assignToUser)
     {
         $response['type'] = 'error';
