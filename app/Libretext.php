@@ -74,7 +74,7 @@ class Libretext extends Model
                 sleep(1);
             }
         } catch (Exception $e) {
-          Log::error($e->getMessage());
+            Log::error($e->getMessage());
         }
     }
 
@@ -96,10 +96,11 @@ class Libretext extends Model
      * @param int $question_id
      * @return mixed|string
      */
-    public function updateTitle(int $page_id, int $question_id){
+    public function updateTitle(int $page_id, int $question_id)
+    {
         try {
             $contents = $this->getContentsByPageId($page_id);
-            $title= $contents['@title'] ?? 'No title.';
+            $title = $contents['@title'] ?? 'No title.';
         } catch (Exception $e) {
             try {
                 $contents = $this->getBodyFromPrivatePage($page_id);
@@ -293,13 +294,16 @@ class Libretext extends Model
         }
     }
 
+    /**
+     * @param $body
+     * @return false|string
+     */
     public function getTechnologyFromBody($body)
     {
-
-        if (strpos($body, 'h5p.libretexts.org') !== false || strpos($body, 'studio.libretexts.org/h5p') !== false) {
+        if ((strpos($body, 'h5p.libretexts.org') !== false) || (strpos($body, 'studio.libretexts.org/h5p') !== false)) {
             return 'h5p';
         }
-        if (strpos($body, 'webwork.libretexts.org') !== false) {
+        if ((strpos($body, 'webwork.libretexts.org') !== false) || (strpos($body, 'wwrenderer.libretexts.org') !== false)) {
             return 'webwork';
         }
         if (strpos($body, 'imathas.libretexts.org') !== false) {
