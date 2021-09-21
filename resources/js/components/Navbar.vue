@@ -117,6 +117,7 @@
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import Email from './Email'
+import { logout } from '~/helpers/Logout'
 import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
@@ -181,6 +182,9 @@ export default {
       this.isInstructorView = this.user !== null && this.user.role === 2
       this.isAnonymousUser = this.user !== null && this.user.email === 'anonymous'
     }
+  },
+  created () {
+    this.logout = logout
   },
   methods: {
     async getSession () {
@@ -266,18 +270,6 @@ export default {
     },
     openSendEmailModal () {
       this.$refs.email.openSendEmailModal()
-    },
-    async logout () {
-      // Log out the user.
-      const { data } = await axios.get('/api/sso/is-sso-user')
-
-      await this.$store.dispatch('auth/logout')
-      if (data.is_sso_user) {
-        window.location = 'https://sso.libretexts.org/cas/logout'
-      } else {
-        // Redirect to login.
-        this.$router.push({ name: 'login' })
-      }
     }
   }
 }

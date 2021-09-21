@@ -57,21 +57,15 @@ export default {
       return false
     },
     async logInAnonymousUserAndRedirect () {
-      if (!this.user) {
-        this.form.email = 'anonymous'
-        this.form.password = 'anonymous'
-        this.form.course_id = this.courseId
-        const { data } = await this.form.post('/api/login')
-        // Save the token.
-        await this.$store.dispatch('auth/saveToken', {
-          token: data.token,
-          remember: this.remember
-        })
-      } else {
-        if (!await this.setAnonymousUserSession()) {
-          return false
-        }
-      }
+      this.form.email = 'anonymous'
+      this.form.password = 'anonymous'
+      this.form.course_id = this.courseId
+      const { data } = await this.form.post('/api/login')
+      // Save the token.
+      await this.$store.dispatch('auth/saveToken', {
+        token: data.token,
+        remember: this.remember
+      })
       window.location.href = `/students/courses/${this.courseId}/assignments/anonymous-user`
     },
     async setAnonymousUserSession () {

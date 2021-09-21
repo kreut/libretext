@@ -12,14 +12,15 @@
       title="Enter Course"
     >
       <p>
-        To enter this course, you'll need to log in with your instructor account and then visit the Commons from the Dashboard.
+        To enter this course, you'll need to log in with your instructor account and then visit the Commons from the
+        Dashboard.
         If you don't already have one, then you can contact us for an instructor account.
       </p>
       <template #modal-footer>
         <b-button
           size="sm"
           class="float-right"
-          @click="$router.push({name: 'login'})"
+          @click="user ? logout(): $router.push({name: 'login'})"
         >
           Log In
         </b-button>
@@ -38,7 +39,7 @@
       ref="modalImportCourseAsBeta"
       title="Import As Beta"
     >
-      <ImportAsBetaText class="pb-2" />
+      <ImportAsBetaText class="pb-2"/>
       <b-form-group
         id="beta"
         label-cols-sm="7"
@@ -85,7 +86,7 @@
         </li>
       </ul>
     </b-modal>
-    <PageTitle title="The Commons" />
+    <PageTitle title="The Commons"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -138,6 +139,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import Form from 'vform'
 import Email from '~/components/Email'
 import ImportAsBetaText from '~/components/ImportAsBetaText'
+import { logout } from '~/helpers/Logout'
 
 export default {
   components: {
@@ -168,6 +170,9 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  created () {
+    this.logout = logout
+  },
   mounted () {
     this.getCommonsCourses()
   },
