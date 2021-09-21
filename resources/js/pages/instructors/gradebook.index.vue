@@ -536,8 +536,8 @@ export default {
       try {
         const { data } = await axios.get(`/api/assignments/${this.courseId}/assignments-and-users`)
         console.log(data)
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
+        if (data.type !== 'success') {
+          this.$noty[data.type](data.message)
           return false
         }
         this.assignmentOptions = data.assignments

@@ -166,8 +166,14 @@ class AssignmentController extends Controller
                 $assignments_by_id[] = ['value' => $assignment->id, 'text' => $assignment->name];
             }
             $enrolled_users = $course->enrolledUsers;
+            $users_by_id = [];
             foreach ($enrolled_users as $enrolled_user) {
                 $users_by_id[] = [$enrolled_user->id, "$enrolled_user->first_name $enrolled_user->last_name", ''];
+            }
+            if (!$users_by_id){
+                $response['type'] = 'info';
+                $response['message'] = 'This course has no students yet.';
+                return $response;
             }
             usort($users_by_id, function ($a, $b) {
                 return $a[1] <=> $b[1];
