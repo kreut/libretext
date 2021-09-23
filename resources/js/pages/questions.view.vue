@@ -812,7 +812,7 @@
                 <div v-if="(!inIFrame && timeLeft>0)
                   || (inIFrame && (showAssignmentInformation || (assessmentType === 'clicker')) && timeLeft>0)"
                 >
-                  <countdown :time="timeLeft" @end="cleanUpClickerCounter">
+                  <countdown v-show="assessmentType !== 'clicker' || user.role === 3" :time="timeLeft" @end="cleanUpClickerCounter">
                     <template slot-scope="props">
                       <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
@@ -1256,6 +1256,11 @@
                     </b-form-row>
                     <div class="text-center">
                       <hr>
+                      <countdown v-show="assessmentType === 'clicker'" :time="timeLeft" @end="cleanUpClickerCounter">
+                        <template slot-scope="props">
+                          <span v-html="getTimeLeftMessage(props, assessmentType)" />
+                        </template>
+                      </countdown>
                       <h4>{{ responsePercent }}% of students have responded</h4>
                       <h5 v-if="responsePercent">
                         The correct answer is "{{ correctAnswer }}"

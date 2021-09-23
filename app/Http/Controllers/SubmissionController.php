@@ -93,12 +93,12 @@ class SubmissionController extends Controller
                 return $response;
             }
             $response['clicker_status'] = $assignmentSyncQuestion->getFormattedClickerStatus($question_info);
+            $now = Carbon::now();
+            $clicker_end = Carbon::parse($question_info->clicker_end);
+            $time_left = $clicker_end > $now ? $clicker_end->diffInMilliseconds($now) : 0;
+            $response['time_left'] = $time_left;
 
             if (Auth::user()->role === 3) {
-                $now = Carbon::now();
-                $clicker_end = Carbon::parse($question_info->clicker_end);
-                $time_left = $clicker_end > $now ? $clicker_end->diffInMilliseconds($now) : 0;
-                $response['time_left'] = $time_left;
                 if (!$past_due) {
                     $response['type'] = 'success';
                     return $response;
