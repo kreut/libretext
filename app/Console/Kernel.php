@@ -33,6 +33,8 @@ class Kernel extends ConsoleKernel
     protected function schedule(Schedule $schedule)
     {
 
+        $schedule->command('fix:dataShopLevelClassAndDueDates')->everyFifteenMinutes();
+
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
                 ->dailyAt('13:00');

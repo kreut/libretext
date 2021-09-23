@@ -41,7 +41,7 @@ class fixDataShopLevelClassAndAddDueDate extends Command
     {
         $data_shops = DB::table('data_shops')
             ->where('status', 'not fixed')
-            ->limit(20000)
+            ->limit(4000)
             ->get();
 
         foreach ($data_shops as $key => $data_shop) {
