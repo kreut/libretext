@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-modal
-      id="modal-form-errors"
+      :id="modalId"
       ref="formErrorsModal"
       title="Form Errors"
       hide-footer
@@ -24,7 +24,13 @@ export default {
   props: {
     allFormErrors: {
       type: Array,
-      default: function () { return [] }
+      default: function () {
+        return []
+      }
+    },
+    modalId: {
+      type: String,
+      default: 'modal-form-errors'
     }
   }
 }
