@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors"/>
     <b-modal
       :id="id"
       ref="modal"
@@ -35,7 +36,7 @@
           label-for="email"
         >
           <b-form-input
-            id="name"
+            id="email"
             v-model="sendEmailForm.email"
             class="col-6"
             type="text"
@@ -97,9 +98,11 @@
 <script>
 
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
 import _ from 'lodash'
 
 export default {
+  components: { AllFormErrors },
   props: {
     fromUser: {
       type: Object,
@@ -129,6 +132,7 @@ export default {
     }
   },
   data: () => ({
+    allFormErrors: [],
     showSendEmailModal: false,
     sendEmailForm: new Form({
       name: '',
@@ -172,6 +176,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.sendEmailForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors')
         }
       }
       this.sendingEmail = false

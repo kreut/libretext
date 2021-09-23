@@ -6,12 +6,12 @@
       title="Form Errors"
       hide-footer
     >
-      <p class="font-weight-bold font-italic">
+      <p>
         Please fix the following errors in your form:
       </p>
       <ul>
         <li v-for="formError in allFormErrors" :key="formError">
-          <span class="text-danger">{{ formError }}</span>
+          {{ formError }}
         </li>
       </ul>
     </b-modal>
