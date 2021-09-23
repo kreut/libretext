@@ -1,5 +1,6 @@
 <template>
   <div class="row pb-5">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-login'"/>
     <div class="col-lg-8 m-auto">
       <form v-if="!inIFrame" @submit.prevent="login" @keydown="form.onKeydown($event)">
         <!-- Email -->
@@ -18,7 +19,8 @@
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
             <div class="col-md-7">
-              <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control"
+              <input id="email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }"
+                     class="form-control"
                      type="email" name="email"
               >
               <has-error :form="form" field="email"/>
@@ -29,7 +31,7 @@
           <div class="form-group row">
             <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
             <div class="col-md-7">
-              <input v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }"
+              <input id="password" v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }"
                      class="form-control"
                      type="password" name="password"
               >
@@ -81,15 +83,15 @@
 
 <script>
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
-import axios from 'axios'
 
 export default {
   middleware: 'guest',
-
   components: {
-    LoginWithLibretexts
+    LoginWithLibretexts,
+    AllFormErrors
   },
 
   metaInfo () {
@@ -97,12 +99,13 @@ export default {
   },
 
   data: () => ({
+    allFormErrors: [],
     form: new Form({
       email: '',
       password: ''
     }),
     remember: false,
-    inIFrame: false,
+    inIFrame: false
   }),
   created () {
     try {
@@ -114,21 +117,28 @@ export default {
   methods: {
     async login () {
       // Submit the form.
-      const { data } = await this.form.post('/api/login')
+      try {
+        const { data } = await this.form.post('/api/login')
 
-      // Save the token.
-      await this.$store.dispatch('auth/saveToken', {
-        token: data.token,
-        remember: this.remember
-      })
+        // Save the token.
+        await this.$store.dispatch('auth/saveToken', {
+          token: data.token,
+          remember: this.remember
+        })
 
-      // mimic the behavior of SSO
-      let landingPage = this.inIFrame && this.form.email === 'anonymous' ? data.landing_page : ''
+        // mimic the behavior of SSO
+        let landingPage = this.inIFrame && this.form.email === 'anonymous' ? data.landing_page : ''
 
-      // Fetch the user.
-      await this.$store.dispatch('auth/fetchUser')
-      // Redirect to the correct home page
-      redirectOnLogin(this.$store, this.$router, landingPage)
+        // Fetch the user.
+        await this.$store.dispatch('auth/fetchUser')
+        // Redirect to the correct home page
+        redirectOnLogin(this.$store, this.$router, landingPage)
+      } catch (error) {
+        if (error.message.includes('status code 422')) {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-login')
+        }
+      }
     }
   }
 }
