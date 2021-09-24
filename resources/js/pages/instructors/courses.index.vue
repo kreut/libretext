@@ -6,6 +6,7 @@
       ref="modal"
       title="Import Course"
     >
+      <div id="course_to_import">
       <vue-bootstrap-typeahead
         ref="queryTypeahead"
         v-model="courseToImport"
@@ -14,6 +15,7 @@
         placeholder="Enter a course or instructor name"
         @hit="checkIfAlpha($event)"
       />
+      </div>
       <b-form-group
         v-if="showImportAsBeta"
         id="beta"
