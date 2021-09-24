@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-email-form'"/>
     <b-modal
       :id="id"
       ref="modal"
@@ -178,7 +178,7 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.allFormErrors = this.sendEmailForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors')
+          this.$bvModal.show('modal-form-errors-email-form')
         }
       }
       this.sendingEmail = false

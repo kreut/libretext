@@ -215,7 +215,7 @@
             </b-tooltip>
           </template>
           <b-form-input
-            id="name"
+            id="section"
             v-model="form.section"
             type="text"
             :class="{ 'is-invalid': form.errors.has('section') }"
@@ -284,6 +284,7 @@
         label-for="Start Date"
       >
         <b-form-datepicker
+          id="start_date"
           v-model="form.start_date"
           :min="min"
           :class="{ 'is-invalid': form.errors.has('start_date') }"
@@ -300,6 +301,7 @@
         label-for="End Date"
       >
         <b-form-datepicker
+          id="end_date"
           v-model="form.end_date"
           :min="min"
           class="mb-2"
@@ -320,7 +322,7 @@
           <span id="public_tooltip">
             <b-icon class="text-muted" icon="question-circle" /></span>
         </template>
-        <b-form-radio-group v-model="form.public" stacked>
+        <b-form-radio-group id="public" v-model="form.public" stacked>
           <b-form-radio name="public" value="1">
             Yes
           </b-form-radio>
