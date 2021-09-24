@@ -1400,7 +1400,7 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.allFormErrors = this.form.errors.flatten()
-          this.$bvModal.show('modal-form-errors')
+          this.$bvModal.show('modal-form-errors-assignment-form')
         }
       }
     },

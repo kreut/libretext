@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-enroll-in-course'"/>
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
@@ -51,8 +52,12 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import AllFormErrors from './AllFormErrors'
 
 export default {
+  components: {
+    AllFormErrors
+  },
   props: {
     getEnrolledInCourses: {
       type: Function,
@@ -65,6 +70,7 @@ export default {
     }
   },
   data: () => ({
+    allFormErrors: [],
     inIFrame: false,
     form: new Form({
       access_code: '',
@@ -124,6 +130,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-enroll-in-course')
         }
       }
     },
