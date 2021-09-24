@@ -1,11 +1,12 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
     <b-modal
       id="modal-delete-section"
       ref="modal"
       title="Confirm Delete Section"
       ok-title="Yes, delete section!"
-      @ok="handleDeleteSection"
+      :no-close-on-esc="true"
     >
       <p>By deleting the section, you will also delete:</p>
       <ol>
@@ -17,11 +18,28 @@
         <span class="font-weight-bold">Warning! You are about to remove {{ numberOfEnrolledUsers }} students from this section along with all of their submission data and scores.  This action cannot be undone.
         </span>
       </b-alert>
+      <template #modal-footer>
+        <b-button
+          size="sm"
+          class="float-right"
+          @click="$bvModal.hide('modal-delete-section')"
+        >
+          Cancel
+        </b-button>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          @click="handleDeleteSection"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
-
     <b-modal id="modal-section"
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
+             :no-close-on-esc="true"
     >
       <b-form-group
         id="section_name"
@@ -113,10 +131,7 @@
                   }}</span>.
                   The access codes will only be valid within the start and end dates of
                   this course. If you need to change these dates, you can always do so
-                  <router-link :to="{name: 'course_properties.general_info'}">
-                    here
-                  </router-link>
-                  .
+                  <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
                 </p>
                 <b-table striped hover :fields="fields" :items="sections">
                   <template v-slot:head(crn)>
@@ -194,13 +209,16 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   middleware: 'auth',
   components: {
-    Loading
+    Loading,
+    AllFormErrors
   },
   data: () => ({
+    allFormErrors: [],
     courseId: '',
     courseStartDate: '',
     courseEndDate: '',
@@ -298,6 +316,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.sectionForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-sections')
         }
       }
     },

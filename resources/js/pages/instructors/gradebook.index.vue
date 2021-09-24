@@ -186,6 +186,7 @@
                ok-variant="success"
                cancel-title="Cancel"
                cancel-variant="danger"
+               :no-close-on-esc="true"
                @ok="submitOverrideAssignmentScores()"
       >
         <p>
