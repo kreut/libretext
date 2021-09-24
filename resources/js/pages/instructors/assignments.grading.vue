@@ -267,7 +267,7 @@
                 </b-button>
                 <span v-if="grading[currentStudentPage - 1]['open_ended_submission']['solution'] " class="ml-2">
                   <b-button variant="outline-primary"
-                            @click.prevent="downloadSolutionFile('q', assignmentId, grading[currentStudentPage - 1].question_id, grading[currentStudentPage - 1]['solution'])"
+                            @click.prevent="downloadSolutionFile('q', assignmentId, grading[currentStudentPage - 1]['open_ended_submission'].question_id, grading[currentStudentPage - 1]['open_ended_submission']['solution'])"
                   >
                     Download Solution
                   </b-button>
