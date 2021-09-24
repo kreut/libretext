@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-invite-graders'"/>
     <b-modal
       id="modal-confirm-remove"
       ref="modal"
@@ -143,7 +144,8 @@
                   </template>
                   <b-form-row>
                     <b-col lg="6">
-                      <b-form-select v-model="headGrader"
+                      <b-form-select id="head_grader"
+                                     v-model="headGrader"
                                      :options="graderOptions"
                                      @change="submitHeadGrader()"
                       />
@@ -187,13 +189,16 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   middleware: 'auth',
   components: {
-    Loading
+    Loading,
+    AllFormErrors
   },
   data: () => ({
+    allFormErrors: [],
     headGrader: null,
     graderOptions: [],
     graderToRemoveId: 0,
@@ -343,6 +348,9 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
           return false
+        } else {
+          this.allFormErrors = this.graderForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-invite-graders')
         }
       }
       this.sendingEmail = false
