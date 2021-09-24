@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'"/>
     <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -56,8 +57,8 @@
         ok-title="Submit"
         size="lg"
         @hidden="resetAssignmentForm(form,assignmentId)"
-        @shown="updateModalToggleIndex"
         :no-close-on-esc="true"
+        @shown="updateModalToggleIndex"
       >
         <AssignmentProperties
           :key="assignmentId"
@@ -66,7 +67,6 @@
           :course-id="parseInt(courseId)"
           :course-start-date="course.start_date"
           :course-end-date="course.end_date"
-          :all-form-errors="allFormErrors"
           :assignment-id="assignmentId"
           :is-beta-assignment="isBetaAssignment"
           :lms="!!lms"
@@ -505,6 +505,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import draggable from 'vuedraggable'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   middleware: 'auth',
@@ -515,7 +516,8 @@ export default {
     AssignTosToView,
     VueBootstrapTypeahead,
     draggable,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    AllFormErrors
   },
   data: () => ({
     lms: false,
@@ -654,7 +656,7 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.allFormErrors = this.form.errors.flatten()
-          this.$bvModal.show('modal-form-errors')
+          this.$bvModal.show('modal-form-errors-assignment-form')
         }
       }
     },

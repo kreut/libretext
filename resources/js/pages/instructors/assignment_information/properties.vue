@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'"/>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -19,7 +20,6 @@
             :course-id="parseInt(courseId)"
             :course-start-date="courseStartDate"
             :course-end-date="assignment.course_end_date"
-            :all-form-errors="allFormErrors"
             :assignment-id="parseInt(assignmentId)"
             :is-beta-assignment="assignment.is_beta_assignment"
             :lms="Boolean(lms)"
@@ -42,6 +42,7 @@ import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
 import AssignmentProperties from '~/components/AssignmentProperties'
+import AllFormErrors from '~/components/AllFormErrors'
 
 import {
   editAssignment,
@@ -61,7 +62,8 @@ export default {
   middleware: 'auth',
   components: {
     Loading,
-    AssignmentProperties
+    AssignmentProperties,
+    AllFormErrors
   },
   data: () => ({
     lms: false,
@@ -120,7 +122,7 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.allFormErrors = this.form.errors.flatten()
-          this.$bvModal.show('modal-form-errors')
+          this.$bvModal.show('modal-form-errors-assignment-form')
         }
       }
     }

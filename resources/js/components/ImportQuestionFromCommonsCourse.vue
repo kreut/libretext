@@ -16,7 +16,6 @@
         :course-id="parseInt(courseId)"
         :course-start-date="courseStartDate"
         :course-end-date="courseEndDate"
-        :all-form-errors="allFormErrors"
         :assignment-id="assignmentId"
         :is-beta-assignment="isBetaAssignment"
         :lms="false"

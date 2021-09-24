@@ -1,6 +1,5 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-assignment-form'"/>
     <b-tooltip target="compiled_pdf_tooltip"
                delay="250"
     >
@@ -1010,12 +1009,11 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
-import AllFormErrors from './AllFormErrors'
+
 
 export default {
   components: {
-    ckeditor: CKEditor.component,
-    AllFormErrors
+    ckeditor: CKEditor.component
   },
   middleware: 'auth',
   props: {
@@ -1035,11 +1033,6 @@ export default {
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },
     courseStartDate: { type: String, default: '' },
-    allFormErrors: {
-      type: Array,
-      default: function () {
-      }
-    }
   },
   data: () => ({
     richEditorConfig: {
@@ -1386,23 +1379,6 @@ export default {
       this.form.external_source_points = 100
       this.form.errors.clear('default_points_per_question')
       this.form.errors.clear('external_source_points')
-    },
-    async updateAssignment () {
-      try {
-        const { data } = await this.form.patch(`/api/assignments/${this.assignmentId}`)
-        let timeout = data.timeout ? data.timeout : 4000
-        this.$noty[data.type](data.message, { timeout: timeout })
-        if (data.type === 'success') {
-          await this.resetAll('modal-assignment-properties')
-        }
-      } catch (error) {
-        if (!error.message.includes('status code 422')) {
-          this.$noty.error(error.message)
-        } else {
-          this.allFormErrors = this.form.errors.flatten()
-          this.$bvModal.show('modal-form-errors-assignment-form')
-        }
-      }
     },
     resetAssignmentGroupForm () {
       this.assignmentGroupForm.errors.clear()
