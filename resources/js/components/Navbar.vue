@@ -82,10 +82,8 @@
             </b-navbar-nav>
 
             <b-navbar-nav class="ml-2 mr-2 mb-1">
-              <b-nav-item>
-                <span v-show="!isAnonymousUser" class="nav-link" active-class="active" @click="openSendEmailModal">
-                  <span :style="isLearningTreesEditor">Contact Us</span>
-                </span>
+              <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor" @click="openSendEmailModal">
+                 Contact Us
               </b-nav-item>
             </b-navbar-nav>
             <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
@@ -269,6 +267,7 @@ export default {
       }
     },
     openSendEmailModal () {
+
       this.$refs.email.openSendEmailModal()
     }
   }
