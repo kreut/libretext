@@ -21,7 +21,7 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input v-model="cannedResponseForm.canned_response"
@@ -34,7 +34,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response"/>
+          <has-error :form="cannedResponseForm" field="canned_response" />
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -74,7 +74,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow"/>
+              <b-spinner small type="grow" />
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -104,7 +104,7 @@
         </div>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -199,7 +199,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow"/>
+                  <b-spinner small type="grow" />
                   Processing...
                 </span>
               </b-col>
@@ -430,7 +430,7 @@
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
-                          + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
+                            + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
                         }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                         <br>
                         <hr>
@@ -507,7 +507,7 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback"/>
+                            <has-error :form="gradingForm" field="textFeedback" />
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
@@ -825,11 +825,17 @@ export default {
       }
     },
     arrowListener (event) {
-      if (event.key === 'ArrowRight' && this.currentStudentPage < this.numStudents) {
+      let inTextArea = document.activeElement.id === 'text_comments'
+      if (event.key === 'ArrowRight' &&
+        this.currentStudentPage < this.numStudents &&
+        !inTextArea) {
         this.currentStudentPage++
         this.changePage()
       }
-      if (event.key === 'ArrowLeft' && this.currentStudentPage > 1) {
+      if (event.key === 'ArrowLeft' &&
+        this.currentStudentPage > 1 &&
+        !inTextArea) {
+        alert(document.activeElement.id)
         this.currentStudentPage--
         this.changePage()
       }
