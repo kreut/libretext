@@ -267,7 +267,6 @@ export default {
       }
     },
     openSendEmailModal () {
-
       this.$refs.email.openSendEmailModal()
     }
   }

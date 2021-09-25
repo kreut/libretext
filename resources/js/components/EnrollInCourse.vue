@@ -6,6 +6,7 @@
       ref="modal"
       ok-title="Submit"
       :ok-only="inIFrame"
+      :no-close-on-esc="true"
       @ok="submitEnrollInCourse"
     >
       <template v-if="inIFrame" #modal-header>

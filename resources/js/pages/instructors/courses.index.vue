@@ -5,6 +5,7 @@
       id="modal-import-course"
       ref="modal"
       title="Import Course"
+      :no-close-on-esc="true"
     >
       <div id="course_to_import">
       <vue-bootstrap-typeahead

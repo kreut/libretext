@@ -57,6 +57,7 @@
         size="lg"
         @hidden="resetAssignmentForm(form,assignmentId)"
         @shown="updateModalToggleIndex"
+        :no-close-on-esc="true"
       >
         <AssignmentProperties
           :key="assignmentId"
