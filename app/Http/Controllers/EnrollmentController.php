@@ -22,6 +22,8 @@ use App\User;
 use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Query\Builder;
 use Illuminate\Http\Request;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
@@ -214,6 +216,11 @@ class EnrollmentController extends Controller
 
             $extraCredit->where('user_id', $user->id)->where('course_id', $course_id)->delete();
             $enrollment->where('user_id', $user->id)->where('section_id', $section->id)->delete();
+
+            if ($this->_assignTosWereNotRemoved($user->id, $course_id)) {
+                throw new Exception("User: $user->id from Course: $course_id did not have all assign tos removed.");
+            }
+
             DB::commit();
             $response['type'] = 'success';
             $response['message'] = "We have unenrolled <strong>$student_name</strong> from the course.";
@@ -224,6 +231,34 @@ class EnrollmentController extends Controller
             $response['message'] = "We were not able to unenroll <strong>$student_name</strong>.  Please try again or contact us for assistance.";
         }
         return $response;
+
+    }
+
+    /**
+     * @param $user_id
+     * @param $course_id
+     * @return false|Model|Builder|object|null
+     */
+    private function _assignTosWereNotRemoved($user_id, $course_id)
+    {
+        /**select *
+        FROM assign_to_timings
+        JOIN assign_to_users
+        ON (assign_to_timings.id = assign_to_users.assign_to_timing_id)
+        WHERE assignment_id IN (SELECT id from assignments where course_id=220)
+        AND user_id = 153
+         ***/
+        $assignments = DB::table('assignments')->where('course_id', $course_id)->get('id');
+        $assign_tos_exist = false;
+        if ($assignments) {
+            $assignment_ids = $assignments->pluck('id')->toArray();
+            $assign_tos_exist = DB::table('assign_to_timings')
+                ->join('assign_to_users', 'assign_to_timings.id', '=', 'assign_to_users.assign_to_timing_id')
+                ->whereIn('assignment_id', $assignment_ids)
+                ->where('user_id', $user_id)
+                ->first();
+        }
+        return $assign_tos_exist;
 
     }
 
