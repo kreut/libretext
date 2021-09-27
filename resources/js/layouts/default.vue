@@ -1,9 +1,26 @@
 <template>
   <div class="main-layout">
+    <b-modal
+      id="modal-accessibility"
+      ref="modal"
+      size="sm"
+      title="Accessibility Cookie"
+      @hidden="$router.go()"
+    >
+      {{ accessibilityMessage }}
+      <template #modal-footer="{ ok }">
+        <b-button size="sm"
+                  variant="primary"
+                  @click="$router.go()"
+        >
+          Got it!
+        </b-button>
+      </template>
+    </b-modal>
     <div v-if="!inIFrame">
-      <navbar />
+      <navbar/>
     </div>
-    <div v-else style="padding-top:30px" />
+    <div v-else style="padding-top:30px"/>
     <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
       <child/>
     </div>
@@ -14,6 +31,10 @@
           <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>.
           Unless otherwise noted, LibreTexts content is licensed by CC BY-NC-SA 3.0. Have questions or comments? For
           more information contact us at <a href="mailto:info@libretexts.org.">info@libretexts.org.</a>
+        </p>
+        <p class="pt-3 pl-3 pr-4">
+          To improve the accessibility of this site, we can add an <a href="" @click.prevent="addAccessibilityCookie">accessibility
+          cookie</a> to your browser.  This cookie can also be <a href="" @click.prevent="removeAccessibilityCookie">removed</a> at any time.
         </p>
 
         <div class="d-flex  justify-content-center flex-wrap">
@@ -36,6 +57,7 @@
 <script>
 import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
+import axios from 'axios'
 
 export default {
   name: 'MainLayout',
@@ -43,7 +65,8 @@ export default {
     Navbar
   },
   data: () => ({
-    inIFrame: true
+    inIFrame: true,
+    accessibilityMessage: ''
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -53,6 +76,26 @@ export default {
       this.inIFrame = window.self !== window.top
     } catch (e) {
       this.inIFrame = true
+    }
+  },
+  methods: {
+    async addAccessibilityCookie () {
+      try {
+        const { data } = await axios.patch(`/api/accessibility/set-cookie`)
+        this.accessibilityMessage = data.message
+        this.$bvModal.show('modal-accessibility')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async removeAccessibilityCookie () {
+      try {
+        const { data } = await axios.delete(`/api/accessibility/delete-cookie`)
+        this.accessibilityMessage = data.message
+        this.$bvModal.show('modal-accessibility')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     }
   }
 }
