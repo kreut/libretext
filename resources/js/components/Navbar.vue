@@ -11,6 +11,7 @@
       <b-navbar-brand href="/">
         <img :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
              class="d-inline-block align-top pl-3"
+             alt="Adapt logo"
              @load="logoLoaded = true"
         >
       </b-navbar-brand>
