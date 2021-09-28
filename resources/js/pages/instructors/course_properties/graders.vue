@@ -32,6 +32,7 @@
       id="modal-edit-sections"
       ref="modal"
       title="Edit Sections"
+      :no-close-on-esc="true"
     >
       <b-form ref="form">
         Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
@@ -59,6 +60,7 @@
       id="modal-invite-grader"
       ref="modal"
       title="Invite Grader"
+      :no-close-on-esc="true"
     >
       <b-form ref="form">
         <b-form-group
