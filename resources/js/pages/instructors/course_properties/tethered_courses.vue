@@ -5,6 +5,7 @@
       ref="modal"
       :title="`Confirm Untether ${betaCourse} From ${tetheredToAlphaCourse}`"
       size="lg"
+      :no-close-on-esc="true"
     >
       <p>
         By untethering <span class="font-italic font-weight-bold">{{ betaCourse }}</span> from
@@ -34,7 +35,7 @@
         <b-form-row>
           <b-col lg="7">
             <b-form-input
-              id="name"
+              id="beta_course_to_untether"
               v-model="betaCourseToUntetherForm.name"
               :placeholder="betaCourse"
               lg="7"
