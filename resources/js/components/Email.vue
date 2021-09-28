@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-email-form'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="modalFormErrorsId"/>
     <b-modal
       :id="id"
       ref="modal"
@@ -133,6 +133,7 @@ export default {
     }
   },
   data: () => ({
+    modalFormErrorsId: '',
     allFormErrors: [],
     showSendEmailModal: false,
     sendEmailForm: new Form({
@@ -143,6 +144,9 @@ export default {
     }),
     sendingEmail: false
   }),
+  created() {
+    this.modalFormErrorsId = 'modal-form-errors-' + this.id
+  },
   methods: {
     resetSendEmailModal () {
       this.sendEmailForm.name = !_.isEmpty(this.fromUser) && this.fromUser.email !== 'anonymous' ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
@@ -179,7 +183,7 @@ export default {
           this.$noty.error(error.message)
         } else {
           this.allFormErrors = this.sendEmailForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors-email-form')
+          this.$bvModal.show(this.modalFormErrorsId)
         }
       }
       this.sendingEmail = false
