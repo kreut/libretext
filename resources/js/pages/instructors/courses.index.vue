@@ -8,14 +8,14 @@
       :no-close-on-esc="true"
     >
       <div id="course_to_import">
-      <vue-bootstrap-typeahead
-        ref="queryTypeahead"
-        v-model="courseToImport"
-        class="mb-2"
-        :data="formattedImportableCourses"
-        placeholder="Enter a course or instructor name"
-        @hit="checkIfAlpha($event)"
-      />
+        <vue-bootstrap-typeahead
+          ref="queryTypeahead"
+          v-model="courseToImport"
+          class="mb-2"
+          :data="formattedImportableCourses"
+          placeholder="Enter a course or instructor name"
+          @hit="checkIfAlpha($event)"
+        />
       </div>
       <b-form-group
         v-if="showImportAsBeta"
@@ -246,7 +246,9 @@
               </th>
             </tr>
           </thead>
-          <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}" @end="saveNewOrder">
+          <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}"
+                 @end="saveNewOrder"
+          >
             <tr v-for="course in courses"
                 :key="course.id"
             >
@@ -281,8 +283,10 @@
               <td>
                 <span v-if="user.role === 2">
                   <toggle-button
+                    tabindex="0"
                     :width="57"
                     :value="Boolean(course.shown)"
+                    :aria-checked="Boolean(course.shown)"
                     :sync="true"
                     :font-size="14"
                     :margin="4"
@@ -321,14 +325,14 @@
                       </b-tooltip>
                       <b-icon :id="getTooltipTarget('properties',course.id)" icon="gear" />
                     </span>
-                    <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
-                               delay="500"
-                    >
-                      Delete Course
-                    </b-tooltip>
-                    <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash"
-                            @click="deleteCourse(course.id)"
-                    />
+                    <span @click="deleteCourse(course.id)">
+                      <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
+                                 delay="500"
+                      >
+                        Delete Course
+                      </b-tooltip>
+                      <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash" />
+                    </span>
                   </span>
                 </div>
               </td>
