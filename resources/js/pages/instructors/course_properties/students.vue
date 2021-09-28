@@ -4,6 +4,7 @@
       id="modal-unenroll-student"
       ref="modal"
       title="Unenroll Student"
+      :no-close-on-esc="true"
       size="lg"
     >
       <b-form ref="form">
