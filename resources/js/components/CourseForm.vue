@@ -407,7 +407,7 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        v-show="['adapt@libretexts.org','hagnew@libretexts.org'].includes(user.email)"
+        v-show="['adapt@libretexts.org','hagnew@libretexts.org','blindsh@ksu.edu'].includes(user.email)"
         id="lms"
         label-cols-sm="4"
         label-cols-lg="3"
