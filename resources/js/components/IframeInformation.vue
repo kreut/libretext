@@ -8,7 +8,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="{checked: '#28a745', unchecked: '#6c757d'}"
+      :color="$toggleCheckedUnchecked""
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('assignment',!assignmentInformationShownInIFrame)"
     />
@@ -30,7 +30,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="{checked: '#28a745', unchecked: '#6c757d'}"
+      :color="$toggleCheckedUnchecked""
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('submission',!submissionInformationShownInIFrame)"
     />
@@ -54,7 +54,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="{checked: '#28a745', unchecked: '#6c757d'}"
+      :color="$toggleCheckedUnchecked""
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('attribution',!attributionInformationShownInIFrame)"
     />

@@ -30,7 +30,7 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                  :color="$toggleCheckedUnchecked""
                   :labels="{checked: 'On', unchecked: 'Off'}"
                   @change="submitFerpaMode()"
                 />

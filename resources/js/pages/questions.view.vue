@@ -182,7 +182,7 @@
               :sync="true"
               :font-size="14"
               :margin="4"
-              :color="{checked: '#28a745', unchecked: '#6c757d'}"
+              :color="$toggleCheckedUnchecked""
               :labels="{checked: 'Auto', unchecked: 'Custom'}"
               @change="autoAttribution = !autoAttribution"
             />
@@ -332,7 +332,7 @@
           :sync="true"
           :font-size="14"
           :margin="4"
-          :color="{checked: '#28a745', unchecked: '#6c757d'}"
+          :color="$toggleCheckedUnchecked""
           :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
           @change="solutionTypeIsPdfImage= !solutionTypeIsPdfImage"
         />
@@ -687,7 +687,7 @@
                     size="lg"
                     :font-size="14"
                     :margin="4"
-                    :color="{checked: '#28a745', unchecked: '#6c757d'}"
+                    :color="$toggleCheckedUnchecked""
                     :labels="{checked: 'On', unchecked: 'Off'}"
                     @change="presentationMode = !presentationMode"
                   />

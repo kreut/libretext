@@ -49,6 +49,7 @@ Vue.use(VueMoment)
 Vue.use(AudioRecorder)
 
 Vue.config.productionTip = false
+Vue.prototype.$toggleCheckedUnchecked = { checked: '#28a745', unchecked: '#6c757d' }
 
 /* eslint-disable no-new */
 if (window.location.pathname.search('questions/view') !== -1) {
