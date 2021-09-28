@@ -182,7 +182,7 @@
               :sync="true"
               :font-size="14"
               :margin="4"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Auto', unchecked: 'Custom'}"
               @change="autoAttribution = !autoAttribution"
             />
@@ -332,7 +332,7 @@
           :sync="true"
           :font-size="14"
           :margin="4"
-          :color="$toggleCheckedUnchecked""
+          :color="toggleColors"
           :labels="{checked: 'PDF/Image', unchecked: 'Audio'}"
           @change="solutionTypeIsPdfImage= !solutionTypeIsPdfImage"
         />
@@ -687,7 +687,7 @@
                     size="lg"
                     :font-size="14"
                     :margin="4"
-                    :color="$toggleCheckedUnchecked""
+                    :color="toggleColors"
                     :labels="{checked: 'On', unchecked: 'Off'}"
                     @change="presentationMode = !presentationMode"
                   />
@@ -1621,6 +1621,7 @@ export default {
     RefreshQuestion
   },
   data: () => ({
+    toggleColors: window.config.toggleColors,
     savedQuestions: [],
     savedQuestionIds: [],
     isAnonymousUser: false,

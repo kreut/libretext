@@ -5,8 +5,11 @@ import i18n from '~/plugins/i18n'
 import App from '~/components/App'
 import { BootstrapVue, BootstrapVueIcons } from 'bootstrap-vue'
 import VueNoty from 'vuejs-noty'
+
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
+
+
 import JsonExcel from 'vue-json-excel'
 import VueCountdown from '@chenfengyuan/vue-countdown'
 import AudioRecorder from 'vue-audio-recorder'
@@ -49,7 +52,6 @@ Vue.use(VueMoment)
 Vue.use(AudioRecorder)
 
 Vue.config.productionTip = false
-Vue.prototype.$toggleCheckedUnchecked = { checked: '#28a745', unchecked: '#6c757d' }
 
 /* eslint-disable no-new */
 if (window.location.pathname.search('questions/view') !== -1) {
@@ -87,10 +89,10 @@ if (window.location.pathname.search('questions/view') !== -1) {
         })
       }
     }).catch(error => {
-      alert(error)
-      window.location = '/beta-assignments/redirect-error'
-      console.log(error)
-    })
+    alert(error)
+    window.location = '/beta-assignments/redirect-error'
+    console.log(error)
+  })
 } else {
   new Vue({
     i18n,

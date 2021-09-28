@@ -290,7 +290,7 @@
                     :sync="true"
                     :font-size="14"
                     :margin="4"
-                    :color="$toggleCheckedUnchecked""
+                    :color="toggleColors"
                     :labels="{checked: 'Yes', unchecked: 'No'}"
                     @change="showCourseWarning(course)"
                   />
@@ -377,6 +377,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    toggleColors: window.config.toggleColors,
     currentOrderedCourses: [],
     allFormErrors: [],
     showBetaCourseDatesWarning: true,

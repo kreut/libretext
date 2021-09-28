@@ -25,7 +25,7 @@
             :sync="true"
             :font-size="14"
             :margin="4"
-            :color="$toggleCheckedUnchecked"
+            :color="toggleColors"
             :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
             @change="toggleStudentView()"
           />
@@ -126,6 +126,7 @@ export default {
   },
 
   data: () => ({
+    toggleColors: window.config.toggleColors,
     dashboards: [{ routeName: 'instructors.courses.index', text: 'My Courses' },
       { routeName: 'commons', text: 'The Commons' },
       { routeName: 'instructors.learning_trees.index', text: 'Learning Trees' }],

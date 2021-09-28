@@ -133,7 +133,7 @@
                 :sync="true"
                 :font-size="14"
                 :margin="4"
-                :color="$toggleCheckedUnchecked""
+                :color="toggleColors"
                 :labels="{checked: 'Auto-graded', unchecked: 'Open-ended'}"
                 @change="toggleSubmissionType()"
               />
@@ -320,6 +320,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    toggleColors: window.config.toggleColors,
     assignmentName: '',
     isIndividualGrading: false,
     selectedStudentText: '',

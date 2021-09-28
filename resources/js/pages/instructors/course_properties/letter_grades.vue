@@ -74,7 +74,7 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="$toggleCheckedUnchecked""
+                  :color="toggleColors"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitShowZScores()"
                 />
@@ -87,7 +87,7 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="$toggleCheckedUnchecked""
+                  :color="toggleColors"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitShowWeightedAverage()"
                 />
@@ -100,7 +100,7 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="$toggleCheckedUnchecked""
+                  :color="toggleColors"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitReleaseLetterGrades()"
                 />
@@ -109,11 +109,11 @@
                 <toggle-button
                   class="mt-2"
                   :width="55"
-                  :value="Boolean(this.roundScores)"
+                  :value="Boolean(roundScores)"
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="$toggleCheckedUnchecked""
+                  :color="toggleColors"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitRoundScores()"
                 />
@@ -146,6 +146,7 @@ export default {
     Loading
   },
   data: () => ({
+    toggleColors: window.config.toggleColors,
     lms: false,
     showZScores: false,
     isLoading: true,

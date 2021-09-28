@@ -8,7 +8,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="$toggleCheckedUnchecked""
+      :color="toggleColors"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('assignment',!assignmentInformationShownInIFrame)"
     />
@@ -30,7 +30,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="$toggleCheckedUnchecked""
+      :color="toggleColors"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('submission',!submissionInformationShownInIFrame)"
     />
@@ -54,7 +54,7 @@
       :sync="true"
       :font-size="14"
       :margin="4"
-      :color="$toggleCheckedUnchecked""
+      :color="toggleColors"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('attribution',!attributionInformationShownInIFrame)"
     />
@@ -98,11 +98,15 @@ export default {
         }
       }
   },
-  methods: {
-    updateShownInIFrame (item, newValue) {
-      this.parentUpdateShownInIFrame(item, newValue)
+  data: () => ({
+    toggleColors: window.config.toggleColors
+  }),
+  methods:
+    {
+      updateShownInIFrame (item, newValue) {
+        this.parentUpdateShownInIFrame(item, newValue)
+      }
     }
-  }
 }
 </script>
 

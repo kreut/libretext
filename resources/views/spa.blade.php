@@ -1,5 +1,4 @@
 @php
-
   $config = [
       'appName' => config('app.name'),
       'locale' => $locale = app()->getLocale(),
@@ -7,7 +6,10 @@
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
       'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
-      'isAdmin' => \App\Helpers\Helper::isAdmin()
+      'isAdmin' => \App\Helpers\Helper::isAdmin(),
+      'toggleColors' => isset($_COOKIE['accessibility'])
+                    ? [  'checked' => '#007E00', 'unchecked' => '#6c757d' ]
+                    : [  'checked' => '#28a745', 'unchecked' =>  '#6c757d']
   ];
 
   if (!\Auth::user() && !session()->has('landing_page')){
@@ -35,6 +37,7 @@
 {{-- Global configuration object --}}
 <script>
   window.config = @json($config);
+  //
 </script>
 {{-- Load the application scripts --}}
 <script src="{{ mix('dist/js/app.js') }}"></script>

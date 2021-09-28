@@ -30,7 +30,7 @@
                   :sync="true"
                   :font-size="14"
                   :margin="4"
-                  :color="$toggleCheckedUnchecked""
+                  :color="toggleColors"
                   :labels="{checked: 'On', unchecked: 'Off'}"
                   @change="submitFerpaMode()"
                 />
@@ -341,6 +341,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    toggleColors: window.config.toggleColors,
     lms: false,
     ferpaMode: false,
     form: new Form({

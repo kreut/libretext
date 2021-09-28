@@ -103,7 +103,7 @@
               :value="Boolean(assignment.show_scores)"
               :sync="true"
               :font-size="14"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Shown', unchecked: 'Hidden'}"
               @change="initShowScores(assignment)"
             />
@@ -122,7 +122,7 @@
               :value="Boolean(assignment.solutions_released)"
               :sync="true"
               :font-size="14"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Shown', unchecked: 'Hidden'}"
               @change="initSolutionsReleased(assignment)"
             />
@@ -141,7 +141,7 @@
               :value="Boolean(assignment.students_can_view_assignment_statistics)"
               :sync="true"
               :font-size="14"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Shown', unchecked: 'Hidden'}"
               @change="initShowAssignmentStatistics(assignment)"
             />
@@ -160,7 +160,7 @@
               :value="Boolean(assignment.show_points_per_question)"
               :sync="true"
               :font-size="14"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Shown', unchecked: 'Hidden'}"
               @change="submitShowPointsPerQuestion(assignment)"
             />
@@ -189,7 +189,7 @@
               :value="Boolean(assignment.graders_can_see_student_names)"
               :sync="true"
               :font-size="14"
-              :color="$toggleCheckedUnchecked""
+              :color="toggleColors"
               :labels="{checked: 'Yes', unchecked: 'No'}"
               @change="submitGradersCanSeeStudentNames(assignment)"
             />
@@ -214,6 +214,7 @@ export default {
     Loading
   },
   data: () => ({
+    toggleColors: window.config.toggleColors,
     isLoading: true,
     assignmentId: 0,
     assignment: {},
