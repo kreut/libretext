@@ -110,7 +110,7 @@ class RefreshQuestionRequestController extends Controller
                 $to_user = User::find($to_user_id);
                 $refresh_question_approval_info = [
                     'first_name' => $to_user->first_name,
-                    'refresh_question_approval_link' => request()->getSchemeAndHttpHost() . '/admin/refresh-question-requests'
+                    'refresh_question_approval_link' => request()->getSchemeAndHttpHost() . '/control-panel/refresh-question-requests'
                 ];
                 $beauty_mail->send('emails.pending_refresh_question_approval', $refresh_question_approval_info, function ($message)
                 use ($to_user) {
