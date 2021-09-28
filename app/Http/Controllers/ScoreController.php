@@ -656,8 +656,20 @@ class ScoreController extends Controller
         try {
             $enrolled_users = [];
             $viewable_users = $enrollment->getEnrolledUsersByRoleCourseSection(request()->user()->role, $assignment->course, 0);
-            foreach ($viewable_users as $value) {
-                $enrolled_users[$value->id] = "{$value->last_name}, {$value->first_name}";
+
+            if ($viewable_users->isNotEmpty()) {
+                foreach ($viewable_users as $value) {
+                    $sorted_users[] = ['name' => "{$value->last_name}, {$value->first_name}",
+                        'id' => $value->id];
+                }
+
+                usort($sorted_users, function ($a, $b) {
+                    return $a['name'] <=> $b['name'];
+                });
+
+                foreach ($sorted_users as $value) {
+                    $enrolled_users[$value['id']] = $value['name'];
+                }
             }
 
             $file_submission_scores = [];
