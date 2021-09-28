@@ -685,15 +685,17 @@ class ScoreController extends Controller
                 $columns = [];
                 $assignment_score = 0;
                 foreach ($questions as $question) {
-                    $score = 0;
-                    $score = $score
-                        + ($submission_scores[$user_id][$question->id] ?? 0)
-                        + ($file_submission_scores[$user_id][$question->id] ?? 0);
-
+                    $score = '-';
+                    if (isset($submission_scores[$user_id][$question->id]) || isset($file_submission_scores[$user_id][$question->id])) {
+                        $score = 0;
+                        $score = $score
+                            + ($submission_scores[$user_id][$question->id] ?? 0)
+                            + ($file_submission_scores[$user_id][$question->id] ?? 0);
+                        $assignment_score += $score;
+                    }
                     $columns[$question->id] = $score;
-                    $assignment_score += $score;
                 }
-                $columns['name'] = $enrolled_users[$user_id];
+                $columns['name'] = $name;
                 if ($total_points) {
                     $columns['percent_correct'] = Round(100 * $assignment_score / $total_points, 1) . '%';
                     $columns['total_points'] = $assignment_score;
