@@ -7,6 +7,7 @@
       ref="modalViewQuestion"
       title="View Question"
       size="lg"
+      :no-close-on-esc="true"
     >
       <div>
         <iframe v-show="alphaAssignmentQuestion.non_technology"
