@@ -7,7 +7,7 @@ require('laravel-mix-versionhash')
 mix
   .js('resources/js/app.js', 'public/dist/js')
   .sass('resources/sass/app.scss', 'public/dist/css')
-
+  .sass('resources/sass/accessible_app.scss', 'public/dist/css')
   .disableNotifications()
 
 const ASSET_URL = process.env.ASSET_URL ? process.env.ASSET_URL + '/' : '/'
