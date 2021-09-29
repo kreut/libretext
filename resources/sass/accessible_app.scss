@@ -2,5 +2,39 @@
 @import 'custom';
 
 .btn-primary {
-  background-color: red!important;
+  background-color: #0369E7 !important;
+}
+
+.commons.btn-primary {
+  background-color: black !important;
+}
+
+
+.btn-info {
+  background-color: #157496 !important;
+}
+
+.btn-success {
+  background-color: #007E00 !important;
+}
+
+a {
+  color: #001AFF !important;
+}
+
+.page-title {
+  color: #2767BE !important;
+}
+
+.btn-outline-primary {
+  color: #0064FF !important;
+}
+
+a.nav-link.router-link-exact-active.active {
+  background-color: #86E9FF !important;
+}
+
+.breadcrumb-item.active {
+  color: #000000 !important;
+
 }
