@@ -85,8 +85,7 @@ class LTI_Message_Launch {
             ->validate_registration()
             ->validate_jwt_signature()
             ->validate_deployment()
-            ->validate_message()
-            ->cache_launch_data();
+            ->validate_message();
     }
 
     /**

@@ -16,6 +16,7 @@ class LtiGradePassback extends Model
 
     function initPassBackByUserIdAndAssignmentId($score_to_passback, $ltiLaunch)
     {
+
         try {
             if (!$ltiLaunch) {
                 throw new Exception ('LTILaunch was empty; cannot pass back grade.');

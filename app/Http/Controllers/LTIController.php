@@ -166,6 +166,7 @@ class LTIController extends Controller
                         $lti_launch_by_user_and_assignment->user_id = $lti_user->id;
                         $lti_launch_by_user_and_assignment->assignment_id = $linked_assignment->id;
                         $lti_launch_by_user_and_assignment->launch_id = $launch_id;
+                        $lti_launch_by_user_and_assignment->jwt_body = json_encode($launch->get_launch_data());
                         $lti_launch_by_user_and_assignment->save();
 
                         //just in case the instructor changed the LMS late, let's passback any score
@@ -177,8 +178,13 @@ class LTIController extends Controller
                             $ltiGradePassback->initPassBackByUserIdAndAssignmentId($score_exists->score, $lti_launch_by_user_and_assignment);
                         }
                     } else {
+                        //use the most recently validated launch information
                         $ltiLaunch
                             ->where('user_id', $lti_user->id)
+                            ->where('assignment_id', $linked_assignment->id)
+                            ->update(['launch_id' => $launch_id,
+                                'jwt_body' => json_encode($launch->get_launch_data())]);
+                        $ltiGradePassback->where('user_id', $lti_user->id)
                             ->where('assignment_id', $linked_assignment->id)
                             ->update(['launch_id' => $launch_id]);
                     }
