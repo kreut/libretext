@@ -11,6 +11,7 @@
       <template #modal-footer="{ ok }">
         <b-button size="sm"
                   variant="primary"
+                  class="accessible-btn"
                   @click="$router.go()"
         >
           Got it!
@@ -33,8 +34,8 @@
           more information contact us at <a href="mailto:info@libretexts.org.">info@libretexts.org.</a>
         </p>
         <p class="pt-3 pl-3 pr-4">
-          To improve the accessibility of this site, we can add an <a href="" @click.prevent="addAccessibilityCookie">accessibility
-          cookie</a> to your browser.  This cookie can also be <a href="" @click.prevent="removeAccessibilityCookie">removed</a> at any time.
+          To improve the accessibility of this site, we can add an <a class="accessible-link" href="" @click.prevent="addAccessibilityCookie">accessibility
+          cookie</a> to your browser.  This cookie can also be <a class="accessible-link" href="" @click.prevent="removeAccessibilityCookie">removed</a> at any time.
         </p>
 
         <div class="d-flex  justify-content-center flex-wrap">
