@@ -254,8 +254,7 @@ class Libretext extends Model
     function getBodyFromPrivatePage(int $page_id)
     {
         $curl = curl_init();
-
-        curl_setopt_array($curl, [
+        $curl_opts = [
             CURLOPT_FAILONERROR => true,
             CURLOPT_URL => "https://api.libretexts.org/endpoint/contents",
             CURLOPT_RETURNTRANSFER => true,
@@ -270,7 +269,12 @@ class Libretext extends Model
                 "Origin: https://adapt.libretexts.org",
                 "Content-Type: text/plain"
             ],
-        ]);
+        ];
+        if (app()->environment('local', 'testing')) {
+            //was having problems with an expired SSL certificate
+            $curl_opts[CURLOPT_SSL_VERIFYPEER] = false;
+        }
+        curl_setopt_array($curl, $curl_opts);
 
         $response = curl_exec($curl);
 
