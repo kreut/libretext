@@ -183,15 +183,21 @@ class ScoreController extends Controller
 
         try {
             $override_scores = $request->overrideScores;
-
+            $lti_launches_by_user_id = $assignment->ltiLaunchesByUserId();
+            $ltiGradePassBack = new LtiGradePassback();
             DB::beginTransaction();
-            $score = new Score();
             foreach ($override_scores as $override_score) {
                 if ($override_score['override_score'] !== null) {
+                    $user_id = $override_score['user_id'];
+                    $override_score = $override_score['override_score'];
                     Score::updateOrCreate(
                         ['assignment_id' => $assignment->id,
-                            'user_id' => $override_score['user_id']],
-                        ['score' => $override_score['override_score']]);
+                            'user_id' => $user_id],
+                        ['score' => $override_score]);
+
+                    if (isset($lti_launches_by_user_id[$user_id])) {
+                        $ltiGradePassBack->initPassBackByUserIdAndAssignmentId($override_score, $lti_launches_by_user_id[$user_id]);
+                    }
                 }
             }
             $response['type'] = 'success';
