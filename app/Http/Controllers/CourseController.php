@@ -562,6 +562,7 @@ class CourseController extends Controller
             $imported_course->start_date = Carbon::now()->startOfDay();
             $imported_course->end_date = Carbon::now()->startOfDay()->addMonths(3);
             $imported_course->shown = 0;
+            $imported_course->public = 0;
             $imported_course->alpha = 0;
             $imported_course->lms = 0;
             $imported_course->anonymous_users = 0;

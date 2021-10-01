@@ -418,7 +418,7 @@ export default {
       section: '',
       start_date: '',
       end_date: '',
-      public: '1',
+      public: '0',
       anonymous_users: '0'
     })
   }),
