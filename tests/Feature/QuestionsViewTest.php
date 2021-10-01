@@ -260,7 +260,8 @@ class QuestionsViewTest extends TestCase
     {
         LTiLaunch::create(['assignment_id' => $this->assignment->id,
             'user_id' => $this->student_user->id,
-            'launch_id' => '12345'
+            'launch_id' => '12345',
+            'jwt_body' => 'some body'
         ]);
         $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
