@@ -270,10 +270,6 @@ class Libretext extends Model
                 "Content-Type: text/plain"
             ],
         ];
-        if (app()->environment('local', 'testing')) {
-            //was having problems with an expired SSL certificate
-            $curl_opts[CURLOPT_SSL_VERIFYPEER] = false;
-        }
         curl_setopt_array($curl, $curl_opts);
 
         $response = curl_exec($curl);
