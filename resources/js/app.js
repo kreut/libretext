@@ -29,7 +29,8 @@ import axios from 'axios'
 
 Vue.mixin({
   methods: {
-    asset: asset
+    asset: asset,
+    htmlToText: str => str.replace(/<[^>]+>/g, '')
   }
 })
 
