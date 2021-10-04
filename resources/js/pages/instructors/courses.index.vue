@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors"/>
+    <AllFormErrors :all-form-errors="allFormErrors" />
     <b-modal
       id="modal-import-course"
       ref="modal"
@@ -27,11 +27,11 @@
         <template slot="label">
           Import as a Beta Course
           <span id="beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+            <b-icon class="text-muted" icon="question-circle" /></span>
           <b-tooltip target="beta_course_tooltip"
                      delay="250"
           >
-            <ImportAsBetaText/>
+            <ImportAsBetaText />
           </b-tooltip>
         </template>
         <b-form-radio-group v-model="courseToImportForm.import_as_beta" class="mt-2">
@@ -62,7 +62,7 @@
         </b-button>
       </template>
     </b-modal>
-    <PageTitle v-if="canViewCourses" title="My Courses"/>
+    <PageTitle v-if="canViewCourses" title="My Courses" />
     <b-container v-if="canViewCourses && user && user.role === 2">
       <b-row align-h="end" class="mb-4">
         <b-button v-b-modal.modal-course-details variant="primary" class="mr-1"
@@ -83,7 +83,7 @@
       size="lg"
       @hidden="resetModalForms"
     >
-      <CourseForm :form="newCourseForm"/>
+      <CourseForm :form="newCourseForm" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -200,7 +200,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('access_code') }"
             @keydown="graderForm.errors.clear('access_code')"
           />
-          <has-error :form="graderForm" field="access_code"/>
+          <has-error :form="graderForm" field="access_code" />
         </b-form-group>
       </b-form>
     </b-modal>
@@ -222,65 +222,65 @@
       <div class="table-responsive">
         <table class="table table-striped">
           <thead>
-          <tr>
-            <th>
-              Course
-            </th>
-            <th>
+            <tr>
+              <th>
+                Course
+              </th>
+              <th>
                 <span v-show="user.role === 2">
                   Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
                                                                            icon="question-circle"
-                /></span></span>
-              <span v-show="user.role === 4">
+                  /></span></span>
+                <span v-show="user.role === 4">
                   Sections
                 </span>
-            </th>
-            <th>
-              Start Date
-            </th>
-            <th>
-              End Date
-            </th>
-            <th>
-              Actions
-            </th>
-          </tr>
+              </th>
+              <th>
+                Start Date
+              </th>
+              <th>
+                End Date
+              </th>
+              <th>
+                Actions
+              </th>
+            </tr>
           </thead>
           <tbody is="draggable" v-model="courses" tag="tbody" :options="{disabled : user.role === 4}"
                  @end="saveNewOrder"
           >
-          <tr v-for="course in courses"
-              :key="course.id"
-          >
-            <td>
-              <div class="mb-0">
-                <b-icon v-if="user.role === 2" icon="list"/>
-                <span v-show="parseInt(course.alpha) === 1"
-                      :id="getTooltipTarget('alphaCourse',course.id)"
-                      class="text-muted"
-                >&alpha; </span>
-                <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is an Alpha course. Adding/removing assignments or assessments from this
-                  course will be directly reflected in the associated Beta courses.
-                </b-tooltip>
-                <span v-show="parseInt(course.is_beta_course) === 1"
-                      :id="getTooltipTarget('betaCourse',course.id)"
-                      class="text-muted"
-                >&beta; </span>
-                <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
-                           delay="500"
-                >
-                  This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
-                  are
-                  added/removed in the Alpha course will be directly reflected in this course.
-                </b-tooltip>
-                <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
-              </div>
-            </td>
+            <tr v-for="course in courses"
+                :key="course.id"
+            >
+              <td>
+                <div class="mb-0">
+                  <b-icon v-if="user.role === 2" icon="list" />
+                  <span v-show="parseInt(course.alpha) === 1"
+                        :id="getTooltipTarget('alphaCourse',course.id)"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <b-tooltip :target="getTooltipTarget('alphaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is an Alpha course. Adding/removing assignments or assessments from this
+                    course will be directly reflected in the associated Beta courses.
+                  </b-tooltip>
+                  <span v-show="parseInt(course.is_beta_course) === 1"
+                        :id="getTooltipTarget('betaCourse',course.id)"
+                        class="text-muted"
+                  >&beta; </span>
+                  <b-tooltip :target="getTooltipTarget('betaCourse',course.id)"
+                             delay="500"
+                  >
+                    This course is a Beta course. Since it is tethered to an Alpha course, assignments/assessments which
+                    are
+                    added/removed in the Alpha course will be directly reflected in this course.
+                  </b-tooltip>
+                  <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
+                </div>
+              </td>
 
-            <td>
+              <td>
                 <span v-if="user.role === 2">
                   <toggle-button
                     tabindex="0"
@@ -295,27 +295,27 @@
                     @change="showCourseWarning(course)"
                   />
                 </span>
-              <span v-if="user.role === 4">
+                <span v-if="user.role === 4">
                   {{ course.sections }}
                 </span>
-            </td>
+              </td>
 
-            <td style="width:200px">
-              {{ $moment(course.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
-            </td>
-            <td style="width:200px">
-              {{ $moment(course.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
-            </td>
-            <td>
-              <div class="mb-0">
+              <td style="width:200px">
+                {{ $moment(course.start_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+              </td>
+              <td style="width:200px">
+                {{ $moment(course.end_date, 'YYYY-MM-DD').format('MMMM DD, YYYY') }}
+              </td>
+              <td>
+                <div class="mb-0">
                   <span class="pr-1" @click="showGradebook(course.id)">
                     <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
                                delay="500"
                     >
                       Gradebook
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('gradebook',course.id)" icon="file-spreadsheet"/></span>
-                <span v-if="user && user.role === 2">
+                    <b-icon :id="getTooltipTarget('gradebook',course.id)" icon="file-spreadsheet" /></span>
+                  <span v-if="user && user.role === 2">
 
                     <span class="pr-1" @click="getProperties(course)">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
@@ -323,7 +323,7 @@
                       >
                         Course Properties
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('properties',course.id)" icon="gear"/>
+                      <b-icon :id="getTooltipTarget('properties',course.id)" icon="gear" />
                     </span>
                     <span @click="deleteCourse(course.id)">
                       <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
@@ -331,12 +331,12 @@
                       >
                         Delete Course
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash"/>
+                      <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash" />
                     </span>
                   </span>
-              </div>
-            </td>
-          </tr>
+                </div>
+              </td>
+            </tr>
           </tbody>
         </table>
       </div>
@@ -445,32 +445,32 @@ export default {
         label: 'Course',
         sortable: true
       },
-        'shown',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'shown',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
       : [{
         key: 'name',
         label: 'Course',
         sortable: true
       },
-        'sections',
-        {
-          key: 'start_date',
-          sortable: true
-        },
-        {
-          key: 'end_date',
-          sortable: true
-        },
-        'actions'
+      'sections',
+      {
+        key: 'start_date',
+        sortable: true
+      },
+      {
+        key: 'end_date',
+        sortable: true
+      },
+      'actions'
       ]
   },
   methods: {
