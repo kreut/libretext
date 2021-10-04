@@ -435,6 +435,7 @@ export default {
     }
   },
   mounted () {
+    this.$announcer.set('jere it is', 'assertive')
     this.getCourses()
     this.getLastCourseSchool()
     this.getTooltipTarget = getTooltipTarget

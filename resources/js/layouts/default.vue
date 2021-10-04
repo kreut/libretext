@@ -1,5 +1,6 @@
 <template>
   <div class="main-layout">
+    <vue-announcer />
     <b-modal
       id="modal-accessibility"
       ref="modal"

@@ -18,6 +18,8 @@ import '~/components'
 import VueClipboard from 'vue-clipboard2'
 import 'vuejs-noty/dist/vuejs-noty.css' // https://github.com/renoguyon/vuejs-noty?ref=madewithvuejs.com
 
+import VueAnnouncer from '@vue-a11y/announcer'
+
 import iFrameResize from 'iframe-resizer/js/iframeResizer'
 
 import VueMoment from 'vue-moment'
@@ -50,6 +52,7 @@ Vue.use(BootstrapVueIcons)
 Vue.use(VueNoty)
 Vue.use(VueMoment)
 Vue.use(AudioRecorder)
+Vue.use(VueAnnouncer)
 
 Vue.config.productionTip = false
 
