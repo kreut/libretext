@@ -12,6 +12,7 @@
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
+        <RequiredText />
         <b-form-group
           id="name"
           label-cols-sm="3"
@@ -19,6 +20,9 @@
           label="Name"
           label-for="name"
         >
+          <template slot="label">
+            Name<Asterisk />
+          </template>
           <b-form-input
             id="name"
             v-model="sendEmailForm.name"
@@ -36,6 +40,9 @@
           label="Email"
           label-for="email"
         >
+          <template slot="label">
+            Email<Asterisk />
+          </template>
           <b-form-input
             id="email"
             v-model="sendEmailForm.email"
@@ -53,6 +60,9 @@
           label="Subject"
           label-for="subject"
         >
+          <template slot="label">
+            Subject<Asterisk />
+          </template>
           <b-form-input
             id="subject"
             v-model="sendEmailForm.subject"
@@ -70,6 +80,9 @@
           label="Message"
           label-for="message"
         >
+          <template slot="label">
+            Message<Asterisk />
+          </template>
           <b-form-textarea
             id="text"
             v-model="sendEmailForm.text"
