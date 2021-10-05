@@ -24,24 +24,29 @@
           >
             <hr>
             <!-- Name -->
+            <RequiredText />
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
-              <div class="col-md-3">
+              <label class="col-md-3 col-form-label text-md-right">First Name<Asterisk /></label>
+              <div class="col-md-7">
                 <input id="first_name" v-model="form.first_name"
                        :class="{ 'is-invalid': form.errors.has('first_name') }" class="form-control" type="text"
                        name="first_name" placeholder="First"
                 >
                 <has-error :form="form" field="first_name"/>
               </div>
-              <div class="col-md-4">
-                <input id="last_name" v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
+              </div>
+            <div class="form-group row">
+              <label class="col-md-3 col-form-label text-md-right">Last Name<Asterisk /></label>
+              <div class="col-md-7">
+                <input id="last_name" v-model="form.last_name"
+                       :class="{ 'is-invalid': form.errors.has('last_name') }"
                        class="form-control" type="text" name="last_name" placeholder="Last"
                 >
                 <has-error :form="form" field="last_name"/>
               </div>
             </div>
             <div v-if="isStudent" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Student ID</label>
+              <label class="col-md-3 col-form-label text-md-right">Student ID<Asterisk /></label>
               <div class="col-md-7">
                 <input id="student_id" v-model="form.student_id"
                        :class="{ 'is-invalid': form.errors.has('student_id') }"
@@ -52,9 +57,10 @@
             </div>
             <!-- Email -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+              <label class="col-md-3 col-form-label text-md-right">Email<Asterisk /></label>
               <div class="col-md-7">
-                <input id="email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }"
+                <input id="email" v-model="form.email"
+                       :class="{ 'is-invalid': form.errors.has('email') }"
                        class="form-control"
                        type="email" name="email"
                 >
@@ -64,9 +70,10 @@
 
             <!-- Password -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
+              <label class="col-md-3 col-form-label text-md-right">Password<Asterisk /></label>
               <div class="col-md-7">
-                <input id="password" v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }"
+                <input id="password" v-model="form.password"
+                       :class="{ 'is-invalid': form.errors.has('password') }"
                        class="form-control"
                        type="password" name="password"
                 >
@@ -76,9 +83,10 @@
 
             <!-- Password Confirmation -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">{{ $t('confirm_password') }}</label>
+              <label class="col-md-3 col-form-label text-md-right">Confirm Password<Asterisk /></label>
               <div class="col-md-7">
-                <input id="password_confirmation" v-model="form.password_confirmation"
+                <input id="password_confirmation"
+                       v-model="form.password_confirmation"
                        :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control"
                        type="password" name="password_confirmation"
                 >
@@ -88,7 +96,7 @@
 
             <!-- Access Code -->
             <div v-if="isInstructor || isGrader" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">{{ $t('access_code') }}</label>
+              <label class="col-md-3 col-form-label text-md-right">Access Code<Asterisk /></label>
               <div class="col-md-7">
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
@@ -98,7 +106,7 @@
               </div>
             </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+              <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk /></label>
               <div class="col-md-7" @change="removeTimeZoneError()">
                 <b-form-select id="time_zone" v-model="form.time_zone"
                                :options="timeZones"
