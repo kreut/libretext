@@ -463,9 +463,6 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    getPublicCourseNameById (courseId) {
-      this.publicCourse = this.publicCoursesOptions.find(course => course.value === courseId).text
-    },
     async getDefaultImportLibrary () {
       try {
         const { data } = await axios.get('/api/questions/default-import-library')

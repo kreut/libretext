@@ -355,6 +355,9 @@ export default {
         this.$noty.error(error.message)
       }
     },
+    getPublicCourseNameById (courseId) {
+      this.publicCourse = this.publicCoursesOptions.find(course => course.value === courseId).text
+    },
     async getSchoolsWithPublicCourses () {
       try {
         const { data } = await axios.get(`/api/schools/public-courses`)
