@@ -38,6 +38,7 @@ VueClipboard.config.autoSetContainer = true // add this line
 Vue.use(VueClipboard)
 Vue.component(VueCountdown.name, VueCountdown)
 
+
 Vue.directive('resize', {
   bind: function (el, { value = {} }) {
     el.addEventListener('load', () => iFrameResize(value, el))
@@ -50,7 +51,17 @@ Vue.directive('resize', {
 Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
-Vue.use(VueNoty)
+
+Vue.use(VueNoty, {
+  callbacks: {
+    onShow: function () {
+      document.getElementsByClassName('noty_body')[0].setAttribute('role', 'alert')
+    },
+    onClose: function () {
+      document.getElementsByClassName('noty_body')[0].setAttribute('role', '')
+    }
+  }
+})
 Vue.use(VueMoment)
 Vue.use(AudioRecorder)
 Vue.use(VueAnnouncer)
