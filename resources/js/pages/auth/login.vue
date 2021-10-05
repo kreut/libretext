@@ -16,8 +16,9 @@
                 header-text-variant="white"
         >
           <hr>
+          <RequiredText/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}<Asterisk/></label>
             <div class="col-md-7">
               <input id="email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
@@ -29,7 +30,7 @@
 
           <!-- Password -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}</label>
+            <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}<Asterisk/></label>
             <div class="col-md-7">
               <input id="password" v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }"
                      class="form-control"
@@ -86,12 +87,16 @@ import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
+import RequiredText from '~/components/RequiredText'
+import Asterisk from '~/components/Asterisk'
 
 export default {
   middleware: 'guest',
   components: {
     LoginWithLibretexts,
-    AllFormErrors
+    AllFormErrors,
+    RequiredText,
+    Asterisk
   },
 
   metaInfo () {

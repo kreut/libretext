@@ -9,7 +9,6 @@ import VueNoty from 'vuejs-noty'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-
 import JsonExcel from 'vue-json-excel'
 import VueCountdown from '@chenfengyuan/vue-countdown'
 import AudioRecorder from 'vue-audio-recorder'
@@ -38,7 +37,6 @@ VueClipboard.config.autoSetContainer = true // add this line
 Vue.use(VueClipboard)
 Vue.component(VueCountdown.name, VueCountdown)
 
-
 Vue.directive('resize', {
   bind: function (el, { value = {} }) {
     el.addEventListener('load', () => iFrameResize(value, el))
@@ -52,6 +50,26 @@ Vue.component('downloadExcel', JsonExcel)
 Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 
+// accessibility stuff
+function getCookie (cname) {
+  let name = cname + '='
+  let decodedCookie = decodeURIComponent(document.cookie)
+  let ca = decodedCookie.split(';')
+  for (let i = 0; i < ca.length; i++) {
+    let c = ca[i]
+    while (c.charAt(0) === ' ') {
+      c = c.substring(1)
+    }
+    if (c.indexOf(name) === 0) {
+      return c.substring(name.length, c.length)
+    }
+  }
+  return ''
+}
+console.log(document.cookie)
+Vue.prototype.$accessibility = getCookie('accessibility') !== ''
+console.log(Vue.prototype.$accessibility)
+
 Vue.use(VueNoty, {
   callbacks: {
     onShow: function () {
@@ -62,6 +80,7 @@ Vue.use(VueNoty, {
     }
   }
 })
+
 Vue.use(VueMoment)
 Vue.use(AudioRecorder)
 Vue.use(VueAnnouncer)
