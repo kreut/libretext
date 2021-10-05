@@ -1,15 +1,19 @@
 <template>
-  <card :title="$t('your_info')">
+  <card title="Your Info">
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Name -->
+      <RequiredText />
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">{{ $t('name') }}</label>
+        <label class="col-md-3 col-form-label text-md-right">First Name<Asterisk /></label>
         <div class="col-md-3">
           <input v-model="form.first_name" :class="{ 'is-invalid': form.errors.has('first_name') }"
                  class="form-control" type="text" name="first_name" placeholder="First"
           >
           <has-error :form="form" field="first_name" />
         </div>
+      </div>
+      <div class="form-group row">
+        <label class="col-md-3 col-form-label text-md-right">Last Name<Asterisk /></label>
         <div class="col-md-4">
           <input v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
                  class="form-control" type="text" name="last_name" placeholder="Last"
@@ -18,7 +22,7 @@
         </div>
       </div>
       <div v-if="user.role === 3" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Student ID</label>
+        <label class="col-md-3 col-form-label text-md-right">Student ID<Asterisk /></label>
         <div class="col-md-7">
           <input v-model="form.student_id" :class="{ 'is-invalid': form.errors.has('student_id') }" class="form-control" type="text" name="student_id">
           <has-error :form="form" field="student_id" />
@@ -26,14 +30,14 @@
       </div>
       <!-- Email -->
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+        <label class="col-md-3 col-form-label text-md-right">Email<Asterisk/></label>
         <div class="col-md-7">
           <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control" type="email" name="email">
           <has-error :form="form" field="email" />
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+        <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk/></label>
         <div class="col-md-7" @change="removeTimeZoneError()">
           <b-form-select v-model="form.time_zone"
                          :options="timeZones"

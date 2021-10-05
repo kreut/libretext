@@ -87,16 +87,12 @@ import Form from 'vform'
 import AllFormErrors from '~/components/AllFormErrors'
 import LoginWithLibretexts from '~/components/LoginWithLibretexts'
 import { redirectOnLogin } from '~/helpers/LoginRedirect'
-import RequiredText from '~/components/RequiredText'
-import Asterisk from '~/components/Asterisk'
 
 export default {
   middleware: 'guest',
   components: {
     LoginWithLibretexts,
-    AllFormErrors,
-    RequiredText,
-    Asterisk
+    AllFormErrors
   },
 
   metaInfo () {
