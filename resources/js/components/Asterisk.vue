@@ -1,5 +1,5 @@
 <template>
-  <span v-if="$accessibility">*</span>
+  <span>*</span>
 </template>
 
 <script>

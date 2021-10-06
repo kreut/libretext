@@ -1,5 +1,5 @@
 <template>
-  <p v-if="$accessibility">
+  <p>
     The field<span v-if="plural">s</span> marked with an asterisk
     <span v-if="plural">are</span><span v-if="!plural">is</span>
     required.
