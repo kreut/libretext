@@ -38,6 +38,7 @@
                      v-model="form.password"
                      :class="{ 'is-invalid': form.errors.has('password') }"
                      :aria-required="true"
+                     type="password"
                      class="form-control"
               >
               <has-error :form="form" field="password"/>

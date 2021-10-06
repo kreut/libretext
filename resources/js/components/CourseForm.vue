@@ -147,7 +147,6 @@
         <has-error :form="form" field="school"/>
       </b-form-group>
       <b-form-group
-        id="name"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Name"
@@ -158,14 +157,15 @@
           v-model="form.name"
           type="text"
           :class="{ 'is-invalid': form.errors.has('name') }"
+          :aria-required="true"
           @keydown="form.errors.clear('name')"
         />
         <has-error :form="form" field="name"/>
       </b-form-group>
       <b-form-group
-        id="public_description"
         label-cols-sm="4"
         label-cols-lg="3"
+        label-for="public_description"
       >
         <template slot="label">
           Public Description
@@ -185,9 +185,9 @@
         />
       </b-form-group>
       <b-form-group
-        id="private_description"
         label-cols-sm="4"
         label-cols-lg="3"
+        label-for="private_description"
       >
         <template slot="label">
           Private Description
@@ -217,12 +217,12 @@
       </b-form-group>
       <div v-if="'section' in form">
         <b-form-group
-          id="section"
           label-cols-sm="4"
           label-cols-lg="3"
+          label-for="section"
         >
           <template slot="label">
-            Section
+            Section<Asterisk/>
             <a id="section-name-tooltip"
                href="#"
             >
@@ -243,17 +243,18 @@
             v-model="form.section"
             type="text"
             :class="{ 'is-invalid': form.errors.has('section') }"
+            :aria-required="true"
             @keydown="form.errors.clear('section')"
           />
           <has-error :form="form" field="section"/>
         </b-form-group>
         <b-form-group
-          id="crn"
           label-cols-sm="4"
           label-cols-lg="3"
+          label-for="crn"
         >
           <template slot="label">
-            CRN
+            CRN<Asterisk/>
             <a id="crn-tooltip"
                href="#"
             >
@@ -274,6 +275,7 @@
             v-model="form.crn"
             type="text"
             placeholder=""
+            :aria-required="true"
             :class="{ 'is-invalid': form.errors.has('crn') }"
             @keydown="form.errors.clear('crn')"
           />
@@ -281,12 +283,12 @@
         </b-form-group>
       </div>
       <b-form-group
-        id="term"
         label-cols-sm="4"
         label-cols-lg="3"
+        label-for="term"
       >
         <template slot="label">
-          Term
+          Term<Asterisk/>
           <a id="term-tooltip"
              href="#"
           >
@@ -308,50 +310,52 @@
           v-model="form.term"
           type="text"
           :class="{ 'is-invalid': form.errors.has('term') }"
+          :aria-required="true"
           @keydown="form.errors.clear('term')"
         />
         <has-error :form="form" field="term"/>
       </b-form-group>
       <b-form-group
-        id="start_date"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Start Date"
-        label-for="Start Date"
+        label-for="start_date"
       >
         <b-form-datepicker
           id="start_date"
           v-model="form.start_date"
           :min="min"
           :class="{ 'is-invalid': form.errors.has('start_date') }"
+          :aria-required="true"
           @shown="form.errors.clear('start_date')"
         />
         <has-error :form="form" field="start_date"/>
       </b-form-group>
 
       <b-form-group
-        id="end_date"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="End Date"
-        label-for="End Date"
+        label-for="end_date"
       >
+        <template slot="label">
+          End Date<Asterisk/>
+        </template>
         <b-form-datepicker
           id="end_date"
           v-model="form.end_date"
           :min="min"
           class="mb-2"
           :class="{ 'is-invalid': form.errors.has('end_date') }"
+          :aria-required="true"
           @click="form.errors.clear('end_date')"
           @shown="form.errors.clear('end_date')"
         />
         <has-error :form="form" field="end_date"/>
       </b-form-group>
       <b-form-group
-        id="public"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Public"
+        label-for="public"
       >
         <template slot="label">
           Public
@@ -361,7 +365,10 @@
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
         </template>
-        <b-form-radio-group id="public" v-model="form.public" stacked>
+        <b-form-radio-group id="public"
+                            v-model="form.public"
+                            stacked
+                            :aria-required="true">
           <b-form-radio name="public" value="1">
             Yes
           </b-form-radio>
@@ -372,13 +379,12 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        id="anonymous_users"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Anonymous Users"
+        label-for="anonymous_users"
       >
         <template slot="label">
-          Anonymous Users
+          Anonymous Users<Asterisk/>
           <a id="anonymous_users_tooltip" href="#">
             <b-icon
               class="text-muted"
@@ -386,7 +392,7 @@
             />
           </a>
         </template>
-        <b-form-radio-group v-model="form.anonymous_users" stacked @change="showAnonymousUsersWarning">
+        <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked @change="showAnonymousUsersWarning">
           <b-form-radio name="anonymous_users" value="1">
             Yes
           </b-form-radio>
@@ -407,18 +413,17 @@
         </b-alert>
       </span>
       <b-form-group
-        id="alpha"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="alpha"
       >
         <template slot="label">
-          Alpha
+          Alpha<Asterisk/>
           <a id="alpha_course_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
         </template>
-        <b-form-radio-group v-model="form.alpha" stacked @change="validateCanChange">
+        <b-form-radio-group id="alpha" v-model="form.alpha" stacked @change="validateCanChange">
           <b-form-radio name="alpha" value="1">
             Yes
           </b-form-radio>
@@ -430,17 +435,16 @@
       </b-form-group>
       <b-form-group
         v-show="course && course.is_beta_course"
-        id="untether_beta_course"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="untether_beta_course"
       >
         <template slot="label">
-          Untether Beta Course
+          Untether Beta Course<Asterisk/>
           <span id="untether_beta_course_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
-        <b-form-radio-group v-model="form.untether_beta_course" stacked>
+        <b-form-radio-group v-model="form.untether_beta_course" stacked :aria-required="true">
           <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
             Yes
           </b-form-radio></span>
@@ -452,13 +456,13 @@
       </b-form-group>
       <b-form-group
         v-show="['adapt@libretexts.org','hagnew@libretexts.org','blindsh@ksu.edu'].includes(user.email)"
-        id="lms"
+
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="lms"
       >
         <template slot="label">
-          LMS
+          LMS<Asterisk/>
           <a id="lms_course_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
