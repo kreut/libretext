@@ -1,16 +1,26 @@
 <template>
   <div class="row">
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-reset-password"/>
     <div class="col-lg-8 m-auto">
       <card :title="$t('reset_password')">
         <form @submit.prevent="send" @keydown="form.onKeydown($event)">
-          <alert-success :form="form" :message="status" />
+          <alert-success :form="form" :message="status"/>
 
           <!-- Email -->
+          <RequiredText :plural="false"/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}</label>
+            <label class="col-md-3 col-form-label text-md-right">Email
+              <Asterisk/>
+            </label>
             <div class="col-md-7">
-              <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control" type="email" name="email">
-              <has-error :form="form" field="email" />
+              <input id="email"
+                     v-model="form.email"
+                     :class="{ 'is-invalid': form.errors.has('email') }"
+                     class="form-control"
+                     type="email"
+                     name="email"
+              >
+              <has-error :form="form" field="email"/>
             </div>
           </div>
 
@@ -18,7 +28,7 @@
           <div class="form-group row">
             <div class="col-md-9 ml-md-auto">
               <v-button :loading="form.busy">
-                {{ $t('send_password_reset_link') }}
+                Send Password Reset Link
               </v-button>
             </div>
           </div>
@@ -30,8 +40,12 @@
 
 <script>
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
+  components: {
+    AllFormErrors
+  },
   middleware: 'guest',
 
   metaInfo () {
@@ -42,16 +56,23 @@ export default {
     status: '',
     form: new Form({
       email: ''
-    })
+    }),
+    allFormErrors: []
   }),
-
   methods: {
     async send () {
-      const { data } = await this.form.post('/api/password/email')
+      try {
+        const { data } = await this.form.post('/api/password/email')
 
-      this.status = data.status
+        this.status = data.status
 
-      this.form.reset()
+        this.form.reset()
+      } catch (error) {
+        if (error.message.includes('status code 422')) {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-reset-password')
+        }
+      }
     }
   }
 }
