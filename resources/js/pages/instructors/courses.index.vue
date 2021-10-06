@@ -228,9 +228,9 @@
               </th>
               <th>
                 <span v-show="user.role === 2">
-                  Shown <span v-b-tooltip="showCourseShownTooltip"><b-icon class="text-muted"
-                                                                           icon="question-circle"
-                  /></span></span>
+                  Shown <a id="course_shown" v-b-tooltip="showCourseShownTooltip" href="#"><b-icon class="text-muted"
+                                                                                                   icon="question-circle"
+                  /></a></span>
                 <span v-show="user.role === 4">
                   Sections
                 </span>
@@ -308,31 +308,49 @@
               </td>
               <td>
                 <div class="mb-0">
-                  <span class="pr-1" @click="showGradebook(course.id)">
+                  <span class="pr-1">
                     <b-tooltip :target="getTooltipTarget('gradebook',course.id)"
                                delay="500"
+                               triggers="hover focus"
                     >
                       Gradebook
                     </b-tooltip>
-                    <b-icon :id="getTooltipTarget('gradebook',course.id)" icon="file-spreadsheet" /></span>
+                    <a :id="getTooltipTarget('gradebook',course.id)"
+                       href="#"
+                       @click.prevent="showGradebook(course.id)"
+                    >
+                      <b-icon class="text-muted" icon="file-spreadsheet" />
+                    </a>
+                  </span>
                   <span v-if="user && user.role === 2">
 
-                    <span class="pr-1" @click="getProperties(course)">
+                    <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
                                  delay="500"
+                                 triggers="hover focus"
                       >
                         Course Properties
                       </b-tooltip>
-                      <b-icon :id="getTooltipTarget('properties',course.id)" icon="gear" />
-                    </span>
-                    <span @click="deleteCourse(course.id)">
-                      <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
-                                 delay="500"
+                      <a :id="getTooltipTarget('properties',course.id)"
+                         href="#"
+                         @click.prevent="getProperties(course)"
                       >
-                        Delete Course
-                      </b-tooltip>
-                      <b-icon :id="getTooltipTarget('deleteCourse',course.id)" icon="trash" />
+                        <b-icon class="text-muted" icon="gear" />
+                      </a>
                     </span>
+                    <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
+                               delay="500"
+                               triggers="hover focus"
+                    >
+                      Delete Course
+                    </b-tooltip>
+                    <a :id="getTooltipTarget('deleteCourse',course.id)"
+                       href="#"
+                       @click.prevent="deleteCourse(course.id)"
+                    >
+                      <b-icon class="text-muted" icon="trash" />
+                    </a>
+
                   </span>
                 </div>
               </td>
