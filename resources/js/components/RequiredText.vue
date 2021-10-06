@@ -1,10 +1,17 @@
 <template>
-<p v-if="$accessibility">The fields marked with an asterisk are required.</p>
+  <p v-if="$accessibility">
+    The field<span v-if="plural">s</span> marked with an asterisk
+    <span v-if="plural">are</span><span v-if="!plural">is</span>
+    required.
+  </p>
 </template>
 
 <script>
 export default {
-  name: 'RequiredText'
+  name: 'RequiredText',
+  props: {
+    plural: { type: Boolean, default: true }
+  }
 }
 </script>
 
