@@ -23,9 +23,9 @@
             Name<Asterisk />
           </template>
           <b-form-input
-            aria-required="true"
             id="name"
             v-model="sendEmailForm.name"
+            aria-required="true"
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
@@ -34,7 +34,6 @@
           <has-error :form="sendEmailForm" field="name"/>
         </b-form-group>
         <b-form-group
-          id="email"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Email"
@@ -46,6 +45,7 @@
           <b-form-input
             id="email"
             v-model="sendEmailForm.email"
+            aria-required="true"
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
@@ -54,7 +54,6 @@
           <has-error :form="sendEmailForm" field="email"/>
         </b-form-group>
         <b-form-group
-          id="subject"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Subject"
@@ -66,6 +65,7 @@
           <b-form-input
             id="subject"
             v-model="sendEmailForm.subject"
+            aria-required="true"
             class="col-8"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
@@ -74,7 +74,6 @@
           <has-error :form="sendEmailForm" field="subject"/>
         </b-form-group>
         <b-form-group
-          id="message"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Message"
@@ -84,8 +83,9 @@
             Message<Asterisk />
           </template>
           <b-form-textarea
-            id="text"
+            id="message"
             v-model="sendEmailForm.text"
+            aria-required="true"
             placeholder="Enter something..."
             rows="6"
             max-rows="6"
