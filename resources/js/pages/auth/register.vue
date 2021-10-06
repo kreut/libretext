@@ -26,30 +26,36 @@
             <!-- Name -->
             <RequiredText />
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">First Name<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name<Asterisk /></label>
               <div class="col-md-7">
                 <input id="first_name" v-model="form.first_name"
-                       :class="{ 'is-invalid': form.errors.has('first_name') }" class="form-control" type="text"
+                       :class="{ 'is-invalid': form.errors.has('first_name') }"
+                       class="form-control"
+                       :aria-required="true"
+                       type="text"
                        name="first_name" placeholder="First"
                 >
                 <has-error :form="form" field="first_name"/>
               </div>
               </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Last Name<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name<Asterisk /></label>
               <div class="col-md-7">
-                <input id="last_name" v-model="form.last_name"
+                <input id="last_name"
+                       v-model="form.last_name"
                        :class="{ 'is-invalid': form.errors.has('last_name') }"
+                       :aria-required="true"
                        class="form-control" type="text" name="last_name" placeholder="Last"
                 >
                 <has-error :form="form" field="last_name"/>
               </div>
             </div>
             <div v-if="isStudent" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Student ID<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk /></label>
               <div class="col-md-7">
                 <input id="student_id" v-model="form.student_id"
                        :class="{ 'is-invalid': form.errors.has('student_id') }"
+                       :aria-required="true"
                        class="form-control" type="text" name="student_id"
                 >
                 <has-error :form="form" field="student_id"/>
@@ -57,11 +63,12 @@
             </div>
             <!-- Email -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Email<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="email">Email<Asterisk /></label>
               <div class="col-md-7">
                 <input id="email" v-model="form.email"
                        :class="{ 'is-invalid': form.errors.has('email') }"
                        class="form-control"
+                       :aria-required="true"
                        type="email" name="email"
                 >
                 <has-error :form="form" field="email"/>
@@ -70,11 +77,12 @@
 
             <!-- Password -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Password<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="password">Password<Asterisk /></label>
               <div class="col-md-7">
                 <input id="password" v-model="form.password"
                        :class="{ 'is-invalid': form.errors.has('password') }"
                        class="form-control"
+                       :aria-required="true"
                        type="password" name="password"
                 >
                 <has-error :form="form" field="password"/>
@@ -83,11 +91,12 @@
 
             <!-- Password Confirmation -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Confirm Password<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="password_confirmation">Confirm Password<Asterisk /></label>
               <div class="col-md-7">
                 <input id="password_confirmation"
                        v-model="form.password_confirmation"
                        :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control"
+                       :aria-required="true"
                        type="password" name="password_confirmation"
                 >
                 <has-error :form="form" field="password_confirmation"/>
@@ -96,21 +105,23 @@
 
             <!-- Access Code -->
             <div v-if="isInstructor || isGrader" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Access Code<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code<Asterisk /></label>
               <div class="col-md-7">
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
+                       :aria-required="true"
                        class="form-control" type="text" name="access_code"
                 >
                 <has-error :form="form" field="access_code"/>
               </div>
             </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone<Asterisk /></label>
               <div class="col-md-7" @change="removeTimeZoneError()">
                 <b-form-select id="time_zone" v-model="form.time_zone"
                                :options="timeZones"
                                :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                               :aria-required="true"
                 />
                 <has-error :form="form" field="time_zone"/>
               </div>

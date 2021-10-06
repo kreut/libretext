@@ -18,11 +18,13 @@
           <hr>
           <RequiredText/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('email') }}<Asterisk/></label>
+            <label class="col-md-3 col-form-label text-md-right" for="email">{{ $t('email') }}<Asterisk/></label>
             <div class="col-md-7">
-              <input id="email" v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }"
+              <input id="email"
+                     v-model="form.email"
+                     :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
-                     type="email" name="email"
+                     :aria-required="true"
               >
               <has-error :form="form" field="email"/>
             </div>
@@ -30,11 +32,13 @@
 
           <!-- Password -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">{{ $t('password') }}<Asterisk/></label>
+            <label class="col-md-3 col-form-label text-md-right" for="password">{{ $t('password') }}<Asterisk/></label>
             <div class="col-md-7">
-              <input id="password" v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }"
+              <input id="password"
+                     v-model="form.password"
+                     :class="{ 'is-invalid': form.errors.has('password') }"
+                     :aria-required="true"
                      class="form-control"
-                     type="password" name="password"
               >
               <has-error :form="form" field="password"/>
             </div>
