@@ -239,7 +239,8 @@
               <template #cell(page)="data">
                 <div v-if="data.item.isOpenEndedFileSubmission">
                   <b-input-group>
-                    <b-form-input v-model="data.item.page"
+                    <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
+                                  v-model="data.item.page"
                                   type="text"
                                   style="width: 50px"
                                   placeholder=""
