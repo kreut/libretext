@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-course" />
     <b-modal
       id="modal-import-course"
       ref="modal"
@@ -492,7 +492,7 @@ export default {
       try {
         const { data } = await axios.patch(`/api/courses/order`, { ordered_courses: orderedCourses })
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         if (data.type === 'success') {
           for (let i = 0; i < this.courses.length; i++) {
             this.courses[i].order = i + 1
@@ -501,7 +501,6 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async doNotShowBetaCourseDatesWarnings () {
@@ -509,13 +508,12 @@ export default {
         const { data } = await axios.post(`/api/beta-courses/do-not-show-beta-course-dates-warning`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
-          this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
           return false
         }
         this.showBetaCourseDatesWarning = false
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async checkIfAlpha (courseToImport) {
@@ -525,7 +523,7 @@ export default {
         const { data } = await axios.get(`/api/courses/is-alpha/${courseId}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
-          this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
           return false
         }
         if (data.alpha === 1 && this.user.email !== 'commons@libertexts.org') {
@@ -534,7 +532,6 @@ export default {
         this.disableYesImportCourse = false
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async getLastCourseSchool () {
@@ -542,13 +539,12 @@ export default {
         const { data } = await axios.get(`/api/courses/last-school`)
         if (data.type !== 'success') {
           this.$noty.error(data.message)
-          this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
           return false
         }
         this.newCourseForm.school = data.last_school_name
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async initImportCourse () {
@@ -559,7 +555,7 @@ export default {
         const { data } = await axios.get(`/api/courses/importable`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
-          this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
           return false
         }
         this.importableCourses = data.importable_courses
@@ -570,7 +566,6 @@ export default {
         this.$bvModal.show('modal-import-course')
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     getIdOfCourseToImport (courseToImport) {
@@ -586,7 +581,7 @@ export default {
         let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         if (data.type === 'error') {
           return false
         }
@@ -595,7 +590,6 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
-          this.$announcer.set(this.htmlToText(error.message), 'assertive')
         }
       }
     },
@@ -609,7 +603,7 @@ export default {
       try {
         const { data } = await axios.patch(`/api/courses/${this.course.id}/show-course/${Number(this.course.shown)}`)
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         if (data.type === 'error') {
           return false
         }
@@ -617,7 +611,6 @@ export default {
         this.course.access_code = data.course_access_code
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async submitAddGraderToCourse (bvModalEvt) {
@@ -625,14 +618,13 @@ export default {
       try {
         const { data } = await this.graderForm.post('/api/graders')
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         if (data.type === 'success') {
           this.resetAll('modal-course-grader-access-code')
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
-          this.$announcer.set(this.htmlToText(error.message), 'assertive')
         }
       }
     },
@@ -640,15 +632,14 @@ export default {
       try {
         const { data } = await this.newCourseForm.post('/api/courses')
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         this.resetAll('modal-course-details')
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
-          this.$announcer.set(this.htmlToText(error.message), 'assertive')
         } else {
           this.allFormErrors = this.newCourseForm.errors.flatten()
-          this.$bvModal.show('modal-form-errors')
+          this.$bvModal.show('modal-form-errors-course')
         }
       }
     },
@@ -673,18 +664,16 @@ export default {
           : this.$bvModal.show('modal-delete-course')
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     async handleDeleteCourse () {
       try {
         const { data } = await axios.delete('/api/courses/' + this.courseId)
         this.$noty[data.type](data.message)
-        this.$announcer.set(this.htmlToText(data.message), 'assertive')
+
         this.resetAll('modal-delete-course')
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     },
     editCourse (course) {
@@ -722,7 +711,6 @@ export default {
         const { data } = await axios.get('/api/courses')
         if (data.type === 'error') {
           this.$noty.error(data.message)
-          this.$announcer.set(this.htmlToText(data.message), 'assertive')
         } else {
           this.canViewCourses = true
           this.hasCourses = data.courses.length > 0
@@ -735,7 +723,6 @@ export default {
         }
       } catch (error) {
         this.$noty.error(error.message)
-        this.$announcer.set(this.htmlToText(error.message), 'assertive')
       }
     }
   },
