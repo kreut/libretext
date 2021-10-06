@@ -1,7 +1,18 @@
 <template>
   <div>
+    <b-tooltip target="private-description-tooltip"
+               delay="250"
+               triggers="hover focus">
+      An optional description for the assignment. This description will only be viewable by you.
+    </b-tooltip>
+    <b-tooltip target="public-description-tooltip"
+               delay="250"
+               triggers="hover focus">
+      An optional description for the assignment. This description will be viewable by your students.
+    </b-tooltip>
     <b-tooltip target="compiled_pdf_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       <p>
         If you choose this option, your students will upload a single compiled PDF and let Adapt know which pages
@@ -10,6 +21,7 @@
     </b-tooltip>
     <b-tooltip target="individual_assessment_upload_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       <p>
         If you choose this option, your students will upload individual submissions at the question level.
@@ -19,6 +31,7 @@
     </b-tooltip>
     <b-tooltip target="both_upload_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       <p>
         If you choose this option, your students will be able to upload either a compiled PDF or individual
@@ -29,11 +42,13 @@
 
     <b-tooltip target="internal"
                delay="250"
+               triggers="hover focus"
     >
       Get questions from the Adapt database or from the Query library
     </b-tooltip>
     <b-tooltip target="notifications_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       Students can optionally request to receive notifications for upcoming due dates. You may want to turn this
       option
@@ -41,6 +56,7 @@
     </b-tooltip>
     <b-tooltip target="late_deduction_application_period_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       Enter a timeframe such as 5 minutes, 3 hours, or 1 day. As a concrete example, if the Late Deduction percent
       is 20%
@@ -50,22 +66,26 @@
     </b-tooltip>
     <b-tooltip target="external"
                delay="250"
+               triggers="hover focus"
     >
       Use questions outside of Adapt and manually input scores into the grade book
     </b-tooltip>
     <b-tooltip target="delayed"
                delay="250"
+               triggers="hover focus"
     >
       Scores and solutions are not automatically released. This type of assessment works well
       for open-ended questions.
     </b-tooltip>
     <b-tooltip target="performance"
                delay="250"
+               triggers="hover focus"
     >
       Students are given credit for providing correct answers.
     </b-tooltip>
     <b-tooltip target="completion"
                delay="250"
+               triggers="hover focus"
     >
       Students are given full credit for automatically graded submissions as long as they submit something.
       Open-ended submissions are manually graded. For questions with both automatically
@@ -75,12 +95,14 @@
 
     <b-tooltip target="real_time"
                delay="250"
+               triggers="hover focus"
     >
       Scores and solutions are released in real time, providing students with immediate feedback.
     </b-tooltip>
 
     <b-tooltip target="add_assign_to_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       When adding new "assign tos", we first assign at the user level, then section level, and finally at the course
       level. So, if you
@@ -90,17 +112,20 @@
 
     <b-tooltip target="assign_to_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       You can assign to Everybody, a particular section (search by name) or student (search by name or email).
     </b-tooltip>
     <b-tooltip target="default_clicker_time_to_submit_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       The default amount of time (30 seconds, 2 minutes) your students will have to answer clicker questions.
       This can be changed at the individual question level.
     </b-tooltip>
     <b-tooltip target="learning_tree"
                delay="250"
+               triggers="hover focus"
     >
       Students are provided with Learning Trees which consist of a root question node and remediation nodes.
       The remediation nodes provide the student with supplementary material to help them answer the initial
@@ -108,17 +133,20 @@
     </b-tooltip>
     <b-tooltip target="clicker"
                delay="250"
+               triggers="hover focus"
     >
       Instructors manually open and close these real-time graded assessments.
     </b-tooltip>
     <b-tooltip target="number_of_randomized_assessments_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       Adapt will randomly choose a subset of assessments from the total that you provide
     </b-tooltip>
 
     <b-tooltip target="final_submission_deadline_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       For assessments where you allow late submissions (either marked late or with penalty), this is the latest
       possible date for which you'll accept a submission. If your solutions are released, you will not be able to
@@ -127,12 +155,14 @@
 
     <b-tooltip target="min_time_needed_in_learning_tree_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       The minimum time a student must be in a Learning Tree before they can earn a percent of the
       original question points.
     </b-tooltip>
     <b-tooltip target="libretexts_url_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       If your assignment is integrated into a Libretexts, provide the URL for the start of the assignment. When your
       students open the assignment in your LMS, they will be re-directed to this URL.
@@ -140,6 +170,7 @@
 
     <b-tooltip target="percent_earned_for_exploring_learning_tree_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       The percent of the question points that a student earns for entering the Learning Tree for at least the
       minimum time as described above.
@@ -147,6 +178,7 @@
 
     <b-tooltip target="default_open_ended_submission_type_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       Adjust this option if your assignment consists of open-ended questions. This option can be changed on a per
       question basis once you start adding questions to the assignment.
@@ -154,6 +186,7 @@
 
     <b-tooltip target="submission_count_percent_decrease_tooltip"
                delay="250"
+               triggers="hover focus"
     >
       For each new attempt after their first free attempt, students will be awarded the total number of new
       attempts multiplied by the percent decrease of the total score in addition to the percent awarded for entering
@@ -191,7 +224,7 @@
               :class="{ 'is-invalid': form.errors.has('name') }"
               @keydown="form.errors.clear('name')"
             />
-            <has-error :form="form" field="name" />
+            <has-error :form="form" field="name"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -202,14 +235,12 @@
       >
         <template slot="label">
           Public Description
-          <b-icon id="public-description-tooltip"
-                  v-b-tooltip.hover
-                  class="text-muted"
-                  icon="question-circle"
-          />
-          <b-tooltip target="public-description-tooltip" triggers="hover">
-            An optional description for the assignment. This description will be viewable by your students.
-          </b-tooltip>
+          <a id="public-description-tooltip"
+             href="#"
+             class="text-muted">
+            <b-icon icon="question-circle"/>
+          </a>
+
         </template>
         <b-form-textarea
           id="public_description"
@@ -227,14 +258,12 @@
       >
         <template slot="label">
           Private Description
-          <b-icon id="private-description-tooltip"
-                  v-b-tooltip.hover
-                  class="text-muted"
-                  icon="question-circle"
-          />
-          <b-tooltip target="private-description-tooltip" triggers="hover">
-            An optional description for the assignment. This description will only be viewable by you.
-          </b-tooltip>
+          <a id="private-description-tooltip"
+             href="#"
+             class="text-muted">
+            <b-icon icon="question-circle"/>
+          </a>
+Start here!!!!
         </template>
         <b-form-textarea
           id="private_description"
@@ -259,7 +288,7 @@
                            :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                            @change="checkGroupId(form.assignment_group_id)"
             />
-            <has-error :form="form" field="assignment_group_id" />
+            <has-error :form="form" field="assignment_group_id"/>
           </b-col>
           <b-modal
             id="modal-create-assignment-group"
@@ -285,7 +314,7 @@
                   :class="{ 'is-invalid': assignmentGroupForm.errors.has('assignment_group') }"
                   @keydown="assignmentGroupForm.errors.clear('assignment_group')"
                 />
-                <has-error :form="assignmentGroupForm" field="assignment_group" />
+                <has-error :form="assignmentGroupForm" field="assignment_group"/>
               </b-form-group>
             </b-form-row>
           </b-modal>
@@ -307,14 +336,14 @@
         >
           <b-form-radio name="source" value="a">
             Internal <span id="internal" class="text-muted"><b-icon
-              icon="question-circle"
-            /></span>
+            icon="question-circle"
+          /></span>
           </b-form-radio>
 
           <b-form-radio name="source" value="x">
             External <span id="external" class="text-muted"><b-icon
-              icon="question-circle"
-            />
+            icon="question-circle"
+          />
             </span>
           </b-form-radio>
         </b-form-radio-group>
@@ -363,7 +392,7 @@
                 :disabled="isLocked() || isBetaAssignment"
                 @keydown="form.errors.clear('default_points_per_question')"
               />
-              <has-error :form="form" field="default_points_per_question" />
+              <has-error :form="form" field="default_points_per_question"/>
             </b-col>
           </b-form-row>
         </b-form-group>
@@ -385,28 +414,28 @@
       >
         <b-form-radio name="assessment_type" value="real time">
           Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+          icon="question-circle"
+        />
           </span>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="delayed">
           Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+          icon="question-circle"
+        /></span>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="learning tree">
           Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+          icon="question-circle"
+        />
           </span>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="clicker">
           Clicker Assessments <span id="clicker" class="text-muted"><b-icon
-            icon="question-circle"
-          />
+          icon="question-circle"
+        />
           </span>
         </b-form-radio>
       </b-form-radio-group>
@@ -422,9 +451,9 @@
         <template slot="label">
           Default Clicker Time To Submit <span id="default_clicker_time_to_submit_tooltip"
                                                class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+        ><b-icon
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-row>
           <b-col lg="3">
@@ -437,7 +466,7 @@
               :disabled="isBetaAssignment"
               @keydown="form.errors.clear('default_clicker_time_to_submit')"
             />
-            <has-error :form="form" field="default_clicker_time_to_submit" />
+            <has-error :form="form" field="default_clicker_time_to_submit"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -456,9 +485,9 @@
           />
           Minimum Number of Minutes Exploring Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
                                                                   class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+        ><b-icon
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -471,7 +500,7 @@
               :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
               @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
             />
-            <has-error :form="form" field="min_time_needed_in_learning_tree" />
+            <has-error :form="form" field="min_time_needed_in_learning_tree"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -488,9 +517,9 @@
           />
           Percent Earned For Exploring Learning Tree <span id="percent_earned_for_exploring_learning_tree_tooltip"
                                                            class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+        ><b-icon
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -503,7 +532,7 @@
               :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
               @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
             />
-            <has-error :form="form" field="percent_earned_for_exploring_learning_tree" />
+            <has-error :form="form" field="percent_earned_for_exploring_learning_tree"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -518,8 +547,8 @@
             icon="tree" variant="success"
           />
           Submission Count Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -532,7 +561,7 @@
               :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
               @keydown="form.errors.clear('submission_count_percent_decrease')"
             />
-            <has-error :form="form" field="submission_count_percent_decrease" />
+            <has-error :form="form" field="submission_count_percent_decrease"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -556,15 +585,15 @@
         <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
         <b-form-radio name="file_upload_mode" value="compiled_pdf">
           Compiled Upload (PDFs only) <span id="compiled_pdf_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
         </b-form-radio>
         <b-form-radio name="file_upload_mode" value="individual_assessment">
           Individual Assessment Upload <span id="individual_assessment_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
         </b-form-radio>
         <b-form-radio name="file_upload_mode" value="both">
           Compiled Upload & Individual Assessment Upload <span id="both_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle" /></span>
+            <b-icon class="text-muted" icon="question-circle"/></span>
         </b-form-radio>
       </b-form-radio-group>
       <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
@@ -582,7 +611,7 @@
       <template slot="label">
         Default Open-ended Submission Type
         <span id="default_open_ended_submission_type_tooltip">
-          <b-icon class="text-muted" icon="question-circle" /></span>
+          <b-icon class="text-muted" icon="question-circle"/></span>
       </template>
       <b-form-radio-group v-model="form.default_open_ended_submission_type"
                           stacked
@@ -662,7 +691,7 @@
               :class="{ 'is-invalid': form.errors.has('late_deduction_percent') }"
               @keydown="form.errors.clear('late_deduction_percent')"
             />
-            <has-error :form="form" field="late_deduction_percent" />
+            <has-error :form="form" field="late_deduction_percent"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -697,10 +726,10 @@
                   :class="{ 'is-invalid': form.errors.has('late_deduction_application_period') }"
                   @keydown="form.errors.clear('late_deduction_application_period')"
                 />
-                <has-error :form="form" field="late_deduction_application_period" />
+                <has-error :form="form" field="late_deduction_application_period"/>
               </b-col>
               <span id="late_deduction_application_period_tooltip">
-                <b-icon class="text-muted" icon="question-circle" /></span>
+                <b-icon class="text-muted" icon="question-circle"/></span>
             </b-row>
           </b-form-radio>
         </b-form-radio-group>
@@ -744,7 +773,7 @@
             :class="{ 'is-invalid': form.errors.has('external_source_points') }"
             @keydown="form.errors.clear('external_source_points')"
           />
-          <has-error :form="form" field="external_source_points" />
+          <has-error :form="form" field="external_source_points"/>
         </b-col>
       </b-form-row>
     </b-form-group>
@@ -799,8 +828,8 @@
     >
       <template slot="label">
         Number of randomized assessments <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+        icon="question-circle"
+      /></span>
       </template>
       <b-form-row>
         <b-col lg="2">
@@ -812,7 +841,7 @@
             :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
             @keydown="form.errors.clear('number_of_randomized_assessments')"
           />
-          <has-error :form="form" field="number_of_randomized_assessments" />
+          <has-error :form="form" field="number_of_randomized_assessments"/>
         </b-col>
       </b-form-row>
     </b-form-group>
@@ -824,8 +853,8 @@
     >
       <template slot="label">
         Notifications <span id="notifications_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+        icon="question-circle"
+      /></span>
       </template>
       <b-form-radio-group v-model="form.notifications" stacked>
         <b-form-radio name="notifications" value="1">
@@ -845,8 +874,8 @@
     >
       <template slot="label">
         Libretexts URL <span id="libretexts_url_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+        icon="question-circle"
+      /></span>
       </template>
       <b-form-textarea
         id="libretexts_url"
@@ -855,7 +884,7 @@
         rows="4"
         max-rows="4"
       />
-      <has-error :form="form" field="libretexts_url" />
+      <has-error :form="form" field="libretexts_url"/>
     </b-form-group>
     <div v-for="(assignTo,index) in form.assign_tos"
          :key="index"
@@ -867,7 +896,7 @@
         label-for="Assign to"
       >
         <template slot="label">
-          Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle" /></span>
+          Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -876,7 +905,7 @@
                            :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
                            @change="updateAssignTos(assignTo)"
             />
-            <has-error :form="form" :field="`groups_${index}`" />
+            <has-error :form="form" :field="`groups_${index}`"/>
           </b-col>
           <b-col>
             <ul
@@ -886,7 +915,7 @@
             >
               <li>
                 {{ group.text }}
-                <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)" />
+                <b-icon icon="trash" @click="removeAssignToGroup(assignTo, group)"/>
               </li>
             </ul>
           </b-col>
@@ -906,14 +935,14 @@
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
             />
-            <has-error :form="form" :field="`available_from_date_${index}`" />
+            <has-error :form="form" :field="`available_from_date_${index}`"/>
           </b-col>
           <b-col>
             <b-form-timepicker v-model="assignTo.available_from_time"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
             />
-            <has-error :form="form" :field="`available_from_time_${index}`" />
+            <has-error :form="form" :field="`available_from_time_${index}`"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -933,7 +962,7 @@
               :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
               @shown="form.errors.clear(`due_${index}`)"
             />
-            <has-error :form="form" :field="`due_${index}`" />
+            <has-error :form="form" :field="`due_${index}`"/>
           </b-col>
           <b-col>
             <b-form-timepicker v-model="assignTo.due_time"
@@ -941,7 +970,7 @@
                                :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
                                @shown="form.errors.clear(`due_time_${index}`)"
             />
-            <has-error :form="form" :field="`due_time_${index}`" />
+            <has-error :form="form" :field="`due_time_${index}`"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -955,9 +984,9 @@
         <template slot="label">
           Final Submission Deadline <span id="final_submission_deadline_tooltip"
                                           class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+        ><b-icon
+          icon="question-circle"
+        /></span>
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -968,7 +997,7 @@
               :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
               @shown="form.errors.clear(`final_submission_deadline_${index}`)"
             />
-            <has-error :form="form" :field="`final_submission_deadline_${index}`" />
+            <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
           </b-col>
           <b-col>
             <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
@@ -977,7 +1006,7 @@
                                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
                                @shown="form.errors.clear(`final_submission_deadline_time_${index}`)"
             />
-            <has-error :form="form" :field="`final_submission_deadline_time_${index}`" />
+            <has-error :form="form" :field="`final_submission_deadline_time_${index}`"/>
           </b-col>
         </b-form-row>
       </b-form-group>
@@ -994,7 +1023,7 @@
     <b-button variant="outline-primary" size="sm" @click="addAssignTo">
       Add Assign to
     </b-button>
-    <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle" /></span>
+    <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
   </div>
 </template>
 
@@ -1009,7 +1038,6 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
-
 
 export default {
   components: {
@@ -1108,7 +1136,7 @@ export default {
         if (this.form.file_upload_mode === 'compiled_pdf' &&
           !['0', 'file'].includes(this.form.default_open_ended_submission_type)) {
           this.form.file_upload_mode = originalFileUploadMode
-          this.$noty.info("You cannot choose a File Upload Mode of Compiled PDF's unless your Default Open-Ended Submission Type is File or None"
+          this.$noty.info('You cannot choose a File Upload Mode of Compiled PDF\'s unless your Default Open-Ended Submission Type is File or None'
             ,
             { timeout: 9000 })
         }
