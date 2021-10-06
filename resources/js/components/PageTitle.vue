@@ -1,8 +1,8 @@
 <template>
   <div>
-    <h2 class="page-title">
+    <h1 style="font-size:32px" class="page-title">
       {{ title }}
-    </h2> <hr>
+    </h1> <hr>
   </div>
 </template>
 

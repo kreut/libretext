@@ -14,7 +14,6 @@
       <b-form ref="form">
         <RequiredText />
         <b-form-group
-          id="name"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Name"
@@ -24,6 +23,7 @@
             Name<Asterisk />
           </template>
           <b-form-input
+            aria-required="true"
             id="name"
             v-model="sendEmailForm.name"
             class="col-6"

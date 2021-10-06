@@ -98,31 +98,42 @@
       />
       <b-container>
         <b-row>
-          <b-card-group v-for="commonsCourse in commonsCourses" :key="commonsCourse.id" class="col-6 pb-5">
+          <b-card-group v-for="commonsCourse in commonsCourses" :key="commonsCourse.id" class="col-12 pb-5">
             <b-card>
               <template #header>
-                <h5 class="mb-0 font-italic">
+                <h2 style="font-size:20px" class="mb-0 font-italic">
                   {{ commonsCourse.name }}
-                </h5>
+                </h2>
               </template>
               <b-card-text>
-                <span class="font-weight-bold font-italic">Description: </span>
-                {{ commonsCourse.description ? commonsCourse.description : 'None provided' }}
+                {{ commonsCourse.description ? commonsCourse.description : 'This course has no description.' }}
               </b-card-text>
-
-              <b-button variant="primary" size="sm" @click="openAssignmentsModal(commonsCourse.id)">
-                View Assignments
-              </b-button>
-              <b-button variant="success" size="sm"
-                        @click="initEnterCommonsCourseAsAnonymousUser(commonsCourse.id)"
-              >
-                Enter Course
-              </b-button>
-              <b-button v-if="user && user.role === 2" variant="outline-primary" size="sm"
-                        @click="idOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
-              >
-                Import Course
-              </b-button>
+              <div class="d-flex">
+                <b-button variant="primary"
+                          size="sm"
+                          :aria-label="`View assignments for ${commonsCourse.name}`"
+                          class="mr-2"
+                          @click="openAssignmentsModal(commonsCourse.id)"
+                >
+                  View Assignments
+                </b-button>
+                <b-button variant="success"
+                          size="sm"
+                          class="mr-2"
+                          :aria-label="`Enter the course ${commonsCourse.name}`"
+                          @click="initEnterCommonsCourseAsAnonymousUser(commonsCourse.id)"
+                >
+                  Enter Course
+                </b-button>
+                <b-button v-if="user && user.role === 2"
+                          variant="outline-primary"
+                          size="sm"
+                          :aria-label="`Import the course ${commonsCourse.name}`"
+                          @click="idOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
+                >
+                  Import Course
+                </b-button>
+              </div>
             </b-card>
           </b-card-group>
         </b-row>
