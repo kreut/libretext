@@ -15,15 +15,18 @@
       <template v-if="!inIFrame" #modal-title>
         Enroll In Course
       </template>
+      <p>Please provide the course access code given to you by your instructor.</p>
+      <RequiredText :plural="false"/>
       <b-form ref="form" @submit="submitEnrollInCourse">
-        <p>Please provide the course access code given to you by your instructor.</p>
         <b-form-group
           id="access_code"
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Access Code"
           label-for="access_code"
         >
+          <template slot="label">
+            Access Code<Asterisk />
+          </template>
           <b-form-input
             id="access_code"
             v-model="form.access_code"
