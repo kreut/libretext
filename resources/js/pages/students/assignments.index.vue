@@ -86,12 +86,15 @@
           </p>
           <p v-if="zScore !== false" class="font-italic font-weight-bold">
             Your current z-score for the course is {{ zScore }}.
-            <b-icon id="course-z-score-tooltip"
-                    v-b-tooltip.hover
-                    class="text-muted"
-                    icon="question-circle"
-            />
-            <b-tooltip target="course-z-score-tooltip" triggers="hover">
+            <a id="course-z-score-tooltip"
+               href="#"
+            >
+              <b-icon class="text-muted" icon="question-circle" />
+            </a>
+            <b-tooltip target="course-z-score-tooltip"
+                       triggers="hover focus"
+                       delay="250"
+            >
               The z-score for the course is computed using all assignments that are for credit, not including extra
               credit assignments.
               Your overall weighted average is then compared with those of your peers in order to compute your relative
@@ -132,7 +135,21 @@
                 Score
               </th>
               <th scope="col">
-                Z-Score <span v-b-tooltip="showZScoreTooltip"><b-icon class="text-muted" icon="question-circle" /></span>
+                Z-Score
+                <a id="z-score-explained"
+                   href="#"
+                >
+                  <b-icon class="text-muted" icon="question-circle" />
+                </a>
+                <b-tooltip target="z-score-explained"
+                           triggers="hover focus"
+                           delay="250"
+                >
+                  The z-score tells you how many standard deviations you are away from the mean.
+                  A z-score of 0 tells you that your score was the exact mean of the distribution.
+                  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
+                  z-scores outside of this range are considered atypical.
+                </b-tooltip>
               </th>
               <th scope="col">
                 Files
@@ -237,11 +254,6 @@ export default {
     assignmentGroupOptions: [],
     chosenAssignmentGroupText: null,
     chosenAssignmentGroup: null,
-    showZScoreTooltip: {
-      fallbackPlacement: ['right'],
-      placement: 'right',
-      title: 'The z-score tells you how many standard deviations you are away from the mean.  A z-score of 0 tells you that your score was the exact mean of the distribution.  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean; z-scores outside of this range are considered atypical.'
-    },
     loading: true,
     studentsCanViewWeightedAverage: false,
     letterGradesReleased: false,
