@@ -99,6 +99,7 @@
         >
           <b-form-row class="mt-2">
             <toggle-button
+              tabindex="0"
               :width="80"
               :value="Boolean(assignment.show_scores)"
               :sync="true"
@@ -118,6 +119,7 @@
         >
           <b-form-row class="mt-2">
             <toggle-button
+              tabindex="0"
               :width="80"
               :value="Boolean(assignment.solutions_released)"
               :sync="true"
@@ -137,6 +139,7 @@
         >
           <b-form-row class="mt-2">
             <toggle-button
+              tabindex="0"
               :width="80"
               :value="Boolean(assignment.students_can_view_assignment_statistics)"
               :sync="true"
@@ -156,6 +159,7 @@
         >
           <b-form-row class="mt-2">
             <toggle-button
+              tabindex="0"
               :width="80"
               :value="Boolean(assignment.show_points_per_question)"
               :sync="true"
@@ -173,18 +177,23 @@
         >
           <template slot="label">
             Graders can see student names
-            <b-icon id="viewable-by-graders-tooltip"
-                    v-b-tooltip.hover
-                    class="text-muted"
-                    icon="question-circle"
-            />
-            <b-tooltip target="viewable-by-graders-tooltip" triggers="hover">
+
+            <a id="viewable-by-graders-tooltip"
+               href="#"
+            >
+              <b-icon icon="question-circle" class="text-muted"/>
+            </a>
+            <b-tooltip target="viewable-by-graders-tooltip"
+                       delay="500"
+                       triggers="hover focus"
+            >
               You can optionally hide your students' names from your graders to avoid any sort of
               conscious or subconscious bias.
             </b-tooltip>
           </template>
           <b-form-row v-if="user.role === 2" class="mt-2">
             <toggle-button
+              tabindex="0"
               :width="60"
               :value="Boolean(assignment.graders_can_see_student_names)"
               :sync="true"
