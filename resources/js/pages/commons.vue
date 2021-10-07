@@ -98,7 +98,7 @@
       />
       <b-container>
         <b-row>
-          <b-card-group v-for="commonsCourse in commonsCourses" :key="commonsCourse.id" class="col-12 pb-5">
+          <b-card-group v-for="commonsCourse in commonsCourses" :key="commonsCourse.id" class="col-6 pb-5">
             <b-card>
               <template #header>
                 <h2 style="font-size:20px" class="mb-0 font-italic">
