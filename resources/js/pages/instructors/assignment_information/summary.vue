@@ -20,7 +20,7 @@
           <AssignTosToView ref="assignTosModal" :assign-tos-to-view="assignTosToView"/>
         </b-modal>
         <b-container>
-          <b-row align-h="end" class="pb-2">
+          <b-row align-h="end" v-if="user.role === 2" class="pb-2">
             <b-button size="sm" variant="primary" @click="getPropertiesView">
               <b-icon icon="gear"/>
               Edit Assignment

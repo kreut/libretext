@@ -180,14 +180,16 @@
                 <th scope="col">
                   Title
                 </th>
-                <th scope="col" style="width: 150px;">
+                <th v-if="user.role === 2" scope="col" style="width: 150px;">
                   Adapt ID
-                  <b-icon id="adapt-id-tooltip"
-                          v-b-tooltip.hover
-                          class="text-muted"
-                          icon="question-circle"
-                  />
-                  <b-tooltip target="adapt-id-tooltip" triggers="hover">
+                  <a id="adapt-id-tooltip"
+                     href="#"
+                  >
+                    <b-icon class="text-muted" icon="question-circle" />
+                  </a>
+                  <b-tooltip target="adapt-id-tooltip"
+                             delay="500"
+                             triggers="hover focus">
                     This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
                   </b-tooltip>
                 </th>
@@ -200,15 +202,19 @@
                 <th scope="col">
                   Solution
                 </th>
-                <th scope="col">
+                <th v-if="user.role === 2" scope="col">
                   Actions
                 </th>
               </tr>
             </thead>
-            <tbody is="draggable" v-model="items" tag="tbody" @end="saveNewOrder">
+            <tbody is="draggable"
+                   v-model="items"
+                   tag="tbody"
+                   :options="{disabled : user.role === 4}"
+                   @end="saveNewOrder">
               <tr v-for="item in items" :key="item.id">
                 <th scope="row">
-                  <b-icon icon="list" />
+                  <b-icon icon="list" v-if="user.role === 2"/>
                   {{ item.order }}
                 </th>
                 <td>
@@ -220,7 +226,7 @@
                   >&alpha; </span>
                   <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
                 </td>
-                <td>
+                <td v-if="user.role === 2">
                   {{ item.assignment_id_question_id }}
 
                   <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
@@ -243,7 +249,7 @@
                 </td>
                 <td>{{ item.points }}</td>
                 <td><span v-html="item.solution" /></td>
-                <td>
+                <td v-if="user.role === 2">
                   <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                              delay="500"
                              triggers="hover focus"

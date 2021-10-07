@@ -171,6 +171,7 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
+          v-if="user.role === 2"
           id="graders_can_see_student_names"
           label-cols-sm="5"
           label-cols-lg="4"
@@ -191,7 +192,7 @@
               conscious or subconscious bias.
             </b-tooltip>
           </template>
-          <b-form-row v-if="user.role === 2" class="mt-2">
+          <b-form-row  class="mt-2">
             <toggle-button
               tabindex="0"
               :width="60"

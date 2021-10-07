@@ -19,7 +19,7 @@
           <card title="Assignment Information" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
-                <router-link :to="{ name: tab.route }" class="nav-link" active-class="active">
+                <router-link v-if=" !['Grader Access', 'Properties'].includes(tab.name)" :to="{ name: tab.route }" class="nav-link" active-class="active">
                   {{ tab.name }}
                 </router-link>
               </li>
