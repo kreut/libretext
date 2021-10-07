@@ -252,7 +252,7 @@
             <tr v-for="course in courses"
                 :key="course.id"
             >
-              <td>
+              <th scope="row">
                 <div class="mb-0">
                   <b-icon v-if="user.role === 2" icon="list" />
                   <span v-show="parseInt(course.alpha) === 1"
@@ -278,7 +278,7 @@
                   </b-tooltip>
                   <a href="" @click.prevent="showAssignments(course.id)">{{ course.name }}</a>
                 </div>
-              </td>
+              </th>
 
               <td>
                 <span v-if="user.role === 2">
