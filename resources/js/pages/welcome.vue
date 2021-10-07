@@ -33,7 +33,21 @@ export default {
   }),
   computed: mapGetters({
     authenticated: 'auth/check'
-  })
+  }),
+  mounted () {
+    this.resizeHandler()
+    window.addEventListener('resize', this.resizeHandler)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resizeHandler)
+  },
+  methods: {
+    resizeHandler () {
+      this.zoomGreaterThan(1.5)
+        ? document.getElementsByClassName('basic-layout')[0].style.height = 'auto'
+        : document.getElementsByClassName('basic-layout')[0].style.height = '100vh'
+    }
+  }
 }
 </script>
 

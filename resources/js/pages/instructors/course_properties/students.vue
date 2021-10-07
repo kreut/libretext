@@ -137,7 +137,7 @@
             <div v-if="enrollments.length">
               <b-table striped
                        hover
-                       title="Students"
+                       aria-label="Students"
                        :fields="fields"
                        :items="enrollments"
               >

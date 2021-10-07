@@ -126,7 +126,7 @@
               </p>
               <b-table striped
                        hover
-                       title="Letter grades"
+                       aria-label="Letter grades"
                        :sticky-header="true"
                        :fields="letterGradeFields" :items="letterGradeItems"
               />

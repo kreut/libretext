@@ -91,6 +91,7 @@
         <b-table striped hover
                  :fields="fields"
                  :items="learningTrees"
+                 aria-label="Learning trees"
         >
           <template v-slot:cell(title)="data">
             <router-link :to="{name: 'instructors.learning_trees.editor', params: {learningTreeId: data.item.id}}">

@@ -98,7 +98,11 @@
       />
       <b-container>
         <b-row>
-          <b-card-group v-for="commonsCourse in commonsCourses" :key="commonsCourse.id" class="col-6 pb-5">
+          <b-card-group v-for="commonsCourse in commonsCourses"
+                        :key="commonsCourse.id"
+                        class="pb-5"
+                        :class="oneCoursePerRow ? 'col-12' : 'col-6'"
+          >
             <b-card>
               <template #header>
                 <h2 style="font-size:20px" class="mb-0 font-italic">
@@ -108,11 +112,12 @@
               <b-card-text>
                 {{ commonsCourse.description ? commonsCourse.description : 'This course has no description.' }}
               </b-card-text>
-              <div class="d-flex">
+              <div :class="!oneButtonPerRow ? 'd-flex' : ''">
                 <b-button variant="primary"
                           size="sm"
                           :aria-label="`View assignments for ${commonsCourse.name}`"
                           class="mr-2"
+                          :class="oneButtonPerRow ? 'mb-2' :''"
                           @click="openAssignmentsModal(commonsCourse.id)"
                 >
                   View Assignments
@@ -120,6 +125,7 @@
                 <b-button variant="success"
                           size="sm"
                           class="mr-2"
+                          :class="oneButtonPerRow ? 'mb-2' :''"
                           :aria-label="`Enter the course ${commonsCourse.name}`"
                           @click="initEnterCommonsCourseAsAnonymousUser(commonsCourse.id)"
                 >
@@ -129,6 +135,7 @@
                           variant="outline-primary"
                           size="sm"
                           :aria-label="`Import the course ${commonsCourse.name}`"
+                          :class="oneButtonPerRow ? 'mb-2' :''"
                           @click="idOfCourseToImport = commonsCourse.id;commonsCourse.alpha ? openImportCourseAsBetaModal() : handleImportCourse()"
                 >
                   Import Course
@@ -159,6 +166,8 @@ export default {
     Email
   },
   data: () => ({
+    oneButtonPerRow: false,
+    oneCoursePerRow: false,
     loggingIn: true,
     idOfCourseToImport: 0,
     courseToImportForm: new Form({
@@ -185,9 +194,18 @@ export default {
     this.logout = logout
   },
   mounted () {
+    this.resizeHandler()
+    window.addEventListener('resize', this.resizeHandler)
     this.getCommonsCourses()
   },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resizeHandler)
+  },
   methods: {
+    resizeHandler () {
+      this.oneCoursePerRow = this.zoomGreaterThan(1.2)
+      this.oneButtonPerRow = this.zoomGreaterThan(1)
+    },
     async initEnterCommonsCourseAsAnonymousUser (courseId) {
       if (this.user && this.user.role === 2) {
         this.isLoading = true

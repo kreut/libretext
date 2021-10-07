@@ -41,7 +41,7 @@
               </b-alert>
               <b-table striped
                        hover
-                       title="Assignment group weights"
+                       aria-label="Assignment group weights"
                        :fields="assignmentGroupWeightsFields"
                        :items="assignmentGroupWeights"
                        class="border border-1 rounded"

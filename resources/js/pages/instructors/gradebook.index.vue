@@ -99,7 +99,7 @@
               </b-form-row>
             </b-form-group>
             <b-row>
-              <b-table title="Gradebook"
+              <b-table aria-label="Gradebook"
                        striped
                        hover
                        responsive="true"
@@ -284,6 +284,7 @@
                 </b-button>
               </p>
               <b-table
+                aria-label="Override assignment scores"
                 striped
                 hover
                 :no-border-collapse="true"

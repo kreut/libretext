@@ -140,7 +140,7 @@
             undone.
           </p>
           <b-card-text>
-            <b-table title="Beta course approvlas"
+            <b-table aria-label="Beta course approvals"
                      striped
                      hover
                      :fields="fields"
@@ -171,7 +171,7 @@
           </b-card-text>
         </b-card>
         <div v-if="items.length">
-          <table class="table table-striped" title="Assignment questions">
+          <table class="table table-striped" aria-label="Assignment questions">
             <thead>
               <tr>
                 <th scope="col">

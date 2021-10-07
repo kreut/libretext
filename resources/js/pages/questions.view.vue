@@ -1094,7 +1094,7 @@
           class="mb-2"
         >
           <b-row>
-            <b-col cols="4">
+            <b-col :cols="bCardCols">
               <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
                 Root Assessment
               </b-button>
@@ -1357,7 +1357,7 @@
             </b-col>
             <b-col
               v-if="assessmentType !== 'clicker' && showAssignmentStatistics && loaded && user.role === 2 && !inIFrame && !isInstructorWithAnonymousView "
-              cols="4"
+              :cols="bCardCols"
             >
               <b-card header="default" header-html="<span class=&quot;font-weight-bold&quot;>Question Statistics</span>"
                       class="mb-2"
@@ -1389,7 +1389,7 @@
               v-if="(user.role === 3)
                 && (assessmentType !== 'clicker')
                 && (showSubmissionInformation || openEndedSubmissionType === 'file')"
-              cols="4"
+              :cols="bCardCols"
             >
               <b-row
                 v-if="assessmentType === 'learning tree'
@@ -1440,8 +1440,9 @@
                 && showSubmissionInformation"
               >
                 <b-card header="default"
-                        header-html="<span class=&quot;font-weight-bold&quot;>Auto-Graded Submission Information</span>"
+                        header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
                         class="sidebar-card"
+                        :class="{ 'mt-3':  zoomedOut}"
                 >
                   <b-card-text>
                     <span
@@ -1505,7 +1506,7 @@
                        && (user.role === 3)
                        && (showSubmissionInformation || openEndedSubmissionType === 'file')
                        && !isAnonymousUser"
-                     :class="{ 'mt-3': questions[currentPage-1].technology_iframe && showSubmissionInformation, 'mb-3': true }"
+                     :class="{ 'mt-3': (questions[currentPage-1].technology_iframe && showSubmissionInformation) || zoomedOut, 'mb-3': true }"
               >
                 <b-card header="Default" :header-html="getOpenEndedTitle()" class="sidebar-card">
                   <b-card-text>
@@ -1717,6 +1718,8 @@ export default {
     }),
     scoringType: '',
     completionScoringModeMessage: '',
+    bCardCols: 4,
+    zoomedOut: false,
     toggleColors: window.config.toggleColors,
     savedQuestions: [],
     savedQuestionIds: [],
@@ -2012,6 +2015,7 @@ export default {
     window.removeEventListener('keydown', this.arrowListener)
   },
   async mounted () {
+    window.addEventListener('resize', this.resizeHandler)
     this.isAnonymousUser = this.user.email === 'anonymous'
     this.isLoading = true
 
@@ -2058,14 +2062,9 @@ export default {
         this.showSubmissionInformation = false
         this.showAssignmentInformation = false
       }
-      this.questionCol = this.assessmentType === 'clicker' ||
-      !this.showSubmissionInformation
-        ? 12 : 8
-      // override this for files
-      if (this.questions[this.currentPage - 1].open_ended_submission_type === 'file' &&
-        ((this.user.role === 3 && !this.isAnonymousUser) || (this.isInstructor() && !this.isInstructorWithAnonymousView))) {
-        this.questionCol = 8
-      }
+      this.setQuestionCol()
+      this.resizeHandler()
+
       if (this.user.role === 2) {
         await this.getCutups(this.assignmentId)
       }
@@ -2075,6 +2074,7 @@ export default {
   },
   beforeDestroy () {
     window.removeEventListener('message', this.receiveMessage)
+    window.removeEventListener('resize', this.resizeHandler)
     if (this.clickerPollingSetInterval) {
       clearInterval(this.clickerPollingSetInterval)
       this.clickerPollingSetInterval = null
@@ -2151,6 +2151,26 @@ export default {
             : 'You will'
           this.completionScoringModeMessage += ` receive ${autoGradedPoints} points for an auto-graded submission and ${openEndedPoints} points for an open-ended submission.`
         }
+      }
+    },
+    resizeHandler () {
+      this.zoomedOut = this.zoomGreaterThan(1.2)
+      if (this.zoomedOut ) {
+        this.questionCol = 12
+        this.bCardCols = 12
+      } else {
+        this.setQuestionCol()
+        this.bCardCols = 4
+      }
+    },
+    setQuestionCol () {
+      this.questionCol = this.assessmentType === 'clicker' ||
+      !this.showSubmissionInformation
+        ? 12 : 8
+      // override this for files
+      if (this.questions[this.currentPage - 1] && this.questions[this.currentPage - 1].open_ended_submission_type === 'file' &&
+        ((this.user.role === 3 && !this.isAnonymousUser) || (this.isInstructor() && !this.isInstructorWithAnonymousView))) {
+        this.questionCol = 8
       }
     },
     async getSavedQuestions () {
@@ -2723,7 +2743,7 @@ export default {
     getOpenEndedTitle () {
       let openEndedSubmissionType = this.openEndedSubmissionType.includes('text') ? 'text' : this.openEndedSubmissionType
       let capitalizedTitle = this.capitalize(openEndedSubmissionType)
-      return `<span class="font-weight-bold">${capitalizedTitle} Submission Information</span>`
+      return `<h2 class="h7">${capitalizedTitle} Submission Information</h2>`
     },
     async submitText () {
       try {

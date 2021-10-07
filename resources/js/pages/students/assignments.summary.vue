@@ -90,8 +90,9 @@
             <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
           </div>
           <b-card v-show="assessmentType !== 'clicker'" header="default"
-                  header-html='<span class="h5">Important Information</span>'
+                  header-html="<h2 class=&quot;h5&quot;>Important Information</h2>"
           >
+
             <b-card-text>
               <p v-if="public_description" class="mb-2">
                 <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
@@ -119,7 +120,7 @@
           </b-card>
 
           <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default"
-                  header-html="<span class=&quot;h5&quot;>Upload Compiled PDF Submission</span>"
+                  header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
             <file-upload
               ref="upload"
@@ -166,13 +167,17 @@
                 :key="fullPdfUrlKey"
                 type="iframe"
                 aspect="16by9"
+                aria-label="Compiled PDF"
                 :src="getFullPdfUrlAtPage(fullPdfUrl, questionSubmissionPageForm.page)"
                 allowfullscreen
               />
             </div>
           </b-card>
-          <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default"
-                  header-html="<span class=&quot;h5&quot;>Questions</span>"
+          <b-card v-show="items.length && assessmentType !== 'clicker'"
+                  id="questions_card"
+                  class="mt-3 mb-3"
+                  header="default"
+                  header-html="<h2 class=&quot;h5&quot;>Questions</h2>"
           >
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
@@ -186,7 +191,8 @@
             </div>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
-              title="Summary of questions and submissions"
+              id="summary_of_questions_and_submissions"
+              aria-label="Summary of questions and submissions"
               striped
               hover
               :no-border-collapse="true"
@@ -394,8 +400,24 @@ export default {
     if (this.assessmentType === 'clicker' && !this.pastDue) {
       this.initClickerPolling()
     }
+    this.$nextTick(function () {
+      this.resizeHandler()
+    })
+
+    window.addEventListener('resize', this.resizeHandler)
+  },
+  beforeDestroy () {
+    window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    resizeHandler () {
+      let table = document.getElementById('summary_of_questions_and_submissions')
+      if (table && this.zoomGreaterThan(1.2)) {
+        document.getElementById('questions_card').style.width = (parseInt(table.offsetWidth) + 100).toString() + 'px'
+      } else {
+        document.getElementById('questions_card').style.width = ''
+      }
+    },
     confirmSetPageAsSubmission (questionNumber, questionId, page) {
       this.questionSubmissionPageForm.questionId = questionId
       this.questionSubmissionPageForm.page = page
@@ -731,4 +753,3 @@ export default {
   }
 }
 </script>
-

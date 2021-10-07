@@ -224,7 +224,7 @@
         </b-alert>
       </div>
       <div class="table-responsive">
-        <table class="table table-striped" title="Course List">
+        <table class="table table-striped" aria-label="Course List">
           <thead>
             <tr>
               <th scope="col">

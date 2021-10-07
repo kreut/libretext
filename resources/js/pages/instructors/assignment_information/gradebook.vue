@@ -12,8 +12,8 @@
       <div v-if="!isLoading">
         <PageTitle title="Assignment Gradebook"/>
         <b-table
-          title="Assignment Gradebook"
           v-show="items.length"
+          aria-label="Assignment Gradebook"
           striped
           hover
           responsive

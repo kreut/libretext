@@ -305,7 +305,7 @@
         </b-row>
       </b-container>
       <div v-show="hasAssignments" class="table-responsive">
-        <table class="table table-striped" title="Assignment List">
+        <table class="table table-striped" aria-label="Assignment List">
           <thead>
           <tr>
             <th scope="col">

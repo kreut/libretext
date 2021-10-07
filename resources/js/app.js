@@ -34,7 +34,10 @@ Vue.component('RequiredText', RequiredText)
 Vue.mixin({
   methods: {
     asset: asset,
-    htmlToText: str => str.replace(/<[^>]+>/g, '')
+    htmlToText: str => str.replace(/<[^>]+>/g, ''),
+    zoomGreaterThan: function (zoom) {
+      return (window.outerWidth - 8) / window.innerWidth > zoom
+    }
   }
 })
 
@@ -56,25 +59,6 @@ Vue.use(BootstrapVue)
 Vue.use(BootstrapVueIcons)
 
 // accessibility stuff
-function getCookie (cname) {
-  let name = cname + '='
-  let decodedCookie = decodeURIComponent(document.cookie)
-  let ca = decodedCookie.split(';')
-  for (let i = 0; i < ca.length; i++) {
-    let c = ca[i]
-    while (c.charAt(0) === ' ') {
-      c = c.substring(1)
-    }
-    if (c.indexOf(name) === 0) {
-      return c.substring(name.length, c.length)
-    }
-  }
-  return ''
-}
-console.log(document.cookie)
-Vue.prototype.$accessibility = getCookie('accessibility') !== ''
-console.log(Vue.prototype.$accessibility)
-
 Vue.use(VueNoty, {
   callbacks: {
     onShow: function () {
@@ -85,6 +69,14 @@ Vue.use(VueNoty, {
     }
   }
 })
+
+Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
+console.log('Zoom at ' + Vue.prototype.$browserZoomLevel)
+window.addEventListener('resize', () => {
+  Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
+  console.log('Zoom at ' + Vue.prototype.$browserZoomLevel)
+})
+// end accessibility stuff
 
 Vue.use(VueMoment)
 Vue.use(AudioRecorder)

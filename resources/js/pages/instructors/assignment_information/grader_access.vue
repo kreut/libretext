@@ -44,6 +44,7 @@
           </b-form-group>
           <b-table
             v-if="assignmentGraderAccess.length"
+            aria-label="Assignment Grader Access"
             striped
             hover
             :no-border-collapse="true"
