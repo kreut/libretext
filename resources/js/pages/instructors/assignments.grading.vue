@@ -193,6 +193,7 @@
                 <b-form-select
                   id="question-view"
                   v-model="questionView"
+                  title="Question View"
                   :options="questionOptions"
                   @change="processing=true;getGrading()"
                 />

@@ -91,6 +91,7 @@
                   <b-form-select
                     id="section-view"
                     v-model="sectionId"
+                    title="Section View"
                     :options="sections"
                     @change="getScores"
                   />
@@ -98,7 +99,8 @@
               </b-form-row>
             </b-form-group>
             <b-row>
-              <b-table striped
+              <b-table title="Gradebook"
+                       striped
                        hover
                        responsive="true"
                        :no-border-collapse="true"
