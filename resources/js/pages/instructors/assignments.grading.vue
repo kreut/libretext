@@ -14,6 +14,7 @@
         ref="modal"
         title="Edit Canned Responses"
         size="lg"
+        :no-close-on-esc="true"
       >
         <b-list-group-item
           v-for="cannedResponse in cannedResponses"
@@ -21,10 +22,11 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)" />
+          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
         </b-list-group-item>
         <b-input-group class="mt-4">
-          <b-form-input v-model="cannedResponseForm.canned_response"
+          <b-form-input id="canned_response"
+                        v-model="cannedResponseForm.canned_response"
                         type="text"
                         :class="{ 'is-invalid': cannedResponseForm.errors.has('canned_response') }"
                         @keydown="cannedResponseForm.errors.clear('canned_response')"
@@ -34,7 +36,7 @@
               Save Response
             </b-button>
           </b-input-group-append>
-          <has-error :form="cannedResponseForm" field="canned_response" />
+          <has-error :form="cannedResponseForm" field="canned_response"/>
         </b-input-group>
         <template #modal-footer="{ ok }">
           <b-button size="sm" variant="success" @click="ok()">
@@ -74,7 +76,7 @@
               :accept="getAcceptedFileTypes()"
             />
             <div v-if="uploading">
-              <b-spinner small type="grow" />
+              <b-spinner small type="grow"/>
               Uploading file...
             </div>
             <input type="hidden" class="form-control is-invalid">
@@ -104,7 +106,7 @@
         </div>
       </b-modal>
       <div v-if="!isLoading">
-        <PageTitle :title="title" />
+        <PageTitle :title="title"/>
         <div v-if="grading.length>0">
           <b-container>
             <b-row>
@@ -146,7 +148,6 @@
           </b-form-group>
           <b-form-group
             v-if="hasMultipleSections"
-            id="sections"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Section View"
@@ -155,8 +156,8 @@
             <b-form-row>
               <b-col lg="3">
                 <b-form-select
-                  id="section-view"
                   v-model="sectionId"
+                  title="Sections"
                   :options="sections"
                   @change="processing=true;getGrading()"
                 />
@@ -173,8 +174,8 @@
             <b-form-row>
               <b-col lg="5">
                 <b-form-select
-                  id="grade-view"
                   v-model="gradeView"
+                  title="Grade view"
                   :options="gradeViews"
                   @change="processing=true;getGrading()"
                 />
@@ -191,7 +192,6 @@
             <b-form-row>
               <b-col lg="1">
                 <b-form-select
-                  id="question-view"
                   v-model="questionView"
                   title="Question View"
                   :options="questionOptions"
@@ -200,7 +200,7 @@
               </b-col>
               <b-col lg="2">
                 <span v-if="processing">
-                  <b-spinner small type="grow" />
+                  <b-spinner small type="grow"/>
                   Processing...
                 </span>
               </b-col>
@@ -241,6 +241,7 @@
                   <div class="d-flex mt-2 mb-2">
                     <span class="mt-2 mr-2">Jump To:</span>
                     <b-form-select v-model="studentNumberToJumpTo"
+                                   title="Student to jump to"
                                    style="width:70px"
                                    :options="jumpToStudentsByNumber"
                                    @change="jumpToStudentByNumber()"
@@ -315,16 +316,17 @@
                         <br>
                         <br>
                         <b-form-group
-                          id="auto_graded_score"
                           label-cols-sm="5"
                           label-cols-lg="4"
+                          label-for="auto_graded_score"
                         >
                           <template slot="label">
                             <span class="font-weight-bold">Auto-graded score:</span>
                           </template>
                           <div v-show="isAutoGraded" class="pt-1">
                             <div class="d-flex">
-                              <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                              <b-form-input id="auto_graded_score"
+                                            v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
                                             v-model="gradingForm.question_submission_score"
                                             type="text"
                                             size="sm"
@@ -371,9 +373,9 @@
                           </div>
                         </b-form-group>
                         <b-form-group
-                          id="open_ended_score"
                           label-cols-sm="5"
                           label-cols-lg="4"
+                          label-for="open_ended_score"
                         >
                           <template slot="label">
                             <span class="font-weight-bold">
@@ -383,6 +385,7 @@
                           <div v-show="isOpenEnded" class="pt-1">
                             <div class="d-flex">
                               <b-form-input
+                                id="open_ended_score"
                                 v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                                 v-model="gradingForm.file_submission_score"
                                 type="text"
@@ -431,7 +434,7 @@
                         <strong>Total:</strong>
                         {{
                           (1 * grading[currentStudentPage - 1]['open_ended_submission']['question_submission_score'] || 0)
-                            + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
+                          + (1 * grading[currentStudentPage - 1]['open_ended_submission']['file_submission_score'] || 0)
                         }} out of {{ grading[currentStudentPage - 1]['open_ended_submission']['points'] * 1 }}
                         <br>
                         <hr>
@@ -447,9 +450,10 @@
                               </b-button>
                             </b-col>
                             <b-col>
-                              <b-button :disabled="viewSubmission"
+                              <b-button :class="{ 'disabled': viewSubmission}"
+                                        :aria-disabled="viewSubmission"
                                         size="sm"
-                                        @click="toggleView(currentStudentPage)"
+                                        @click="viewSubmission ? '' : toggleView()"
                               >
                                 View Submission
                               </b-button>
@@ -472,6 +476,7 @@
                           <b-row class="mb-2">
                             <b-col>
                               <b-form-select v-model="textFeedbackMode"
+                                             title="Text Feedback Mode"
                                              :options="textFeedbackModeOptions"
                                              size="sm"
                               />
@@ -508,10 +513,11 @@
                               :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                               @keydown="gradingForm.errors.clear('textFeedback')"
                             />
-                            <has-error :form="gradingForm" field="textFeedback" />
+                            <has-error :form="gradingForm" field="textFeedback"/>
 
                             <b-form-select v-if="textFeedbackMode === 'canned_response'"
                                            v-model="cannedResponse"
+                                           title="Canned response"
                                            :options="cannedResponseOptions"
                                            class="mb-5"
                             />
@@ -527,10 +533,11 @@
                               </b-button>
 
                               <b-button
-                                :disabled="!viewSubmission"
+                                :class="{ 'disabled': !viewSubmission}"
+                                :aria-disabled="!viewSubmission"
                                 size="sm"
                                 class="ml-2 mr-4"
-                                @click="toggleView(currentStudentPage)"
+                                @click="!viewSubmission ? '' : toggleView()"
                               >
                                 View Feedback File
                               </b-button>
@@ -560,17 +567,20 @@
             <b-container>
               <b-row align-h="center" class="pt-3">
                 <b-button variant="primary"
-                          :disabled="noSubmission"
+                          :class="{ 'disabled': noSubmission}"
+                          :aria-disabled="noSubmission"
                           size="sm"
                           class="ml-1 mr-1"
-                          @click="submitGradingForm(false)"
+                          @click="noSubmission ? '' :submitGradingForm(false)"
                 >
                   Submit
                 </b-button>
-                <b-button :disabled="currentStudentPage === numStudents || noSubmission"
-                          size="sm"
-                          variant="success"
-                          @click="submitGradingForm(true)"
+                <b-button
+                  :class="{ 'disabled': currentStudentPage === numStudents || noSubmission}"
+                  :aria-disabled="currentStudentPage === numStudents || noSubmission"
+                  size="sm"
+                  variant="success"
+                  @click="currentStudentPage === numStudents || noSubmission ? '' : submitGradingForm(true)"
                 >
                   Submit And Next
                 </b-button>
@@ -601,7 +611,8 @@
                   v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
                 >
                   <div v-if="isOpenEndedFileSubmission" class="row">
-                    <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                    <iframe title="Open-ended submission"
+                            :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
                             width="600"
                             height="600"
                             :src="getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['open_ended_submission']['page'])"
@@ -1011,6 +1022,7 @@ export default {
       }
     },
     async toggleView () {
+      if (this.viewSubmission) return
       if (this.grading.length > 0 && (this.grading[this.currentStudentPage - 1]['open_ended_submission']['file_feedback_url'] === null)) {
         this.$noty.info('You have not uploaded a feedback file.')
         return false
