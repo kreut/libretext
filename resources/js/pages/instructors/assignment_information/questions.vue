@@ -140,7 +140,9 @@
             undone.
           </p>
           <b-card-text>
-            <b-table striped hover
+            <b-table title="Beta course approvlas"
+                     striped
+                     hover
                      :fields="fields"
                      :items="betaCourseApprovals"
             >
@@ -169,7 +171,7 @@
           </b-card-text>
         </b-card>
         <div v-if="items.length">
-          <table class="table table-striped">
+          <table class="table table-striped" title="Assignment questions">
             <thead>
               <tr>
                 <th scope="col">
@@ -205,10 +207,10 @@
             </thead>
             <tbody is="draggable" v-model="items" tag="tbody" @end="saveNewOrder">
               <tr v-for="item in items" :key="item.id">
-                <td>
+                <th scope="row">
                   <b-icon icon="list" />
                   {{ item.order }}
-                </td>
+                </th>
                 <td>
                   <span v-show="isBetaAssignment"
                         class="text-muted"
@@ -220,9 +222,21 @@
                 </td>
                 <td>
                   {{ item.assignment_id_question_id }}
-                  <span class="text-info">
-                    <font-awesome-icon :icon="copyIcon" @click="doCopy(item.assignment_id_question_id)" />
-                  </span>
+
+                  <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Copy the Adapt ID
+                  </b-tooltip>
+                  <a :id="getTooltipTarget('copy',item.question_id)"
+                     href="#"
+                     class="pr-1"
+                     aria-label="Copy Adapt ID"
+                     @click="doCopy(item.assignment_id_question_id)"
+                  >
+                    <font-awesome-icon :icon="copyIcon"/>
+                  </a>
                 </td>
                 <td>
                   {{ item.submission }}
@@ -230,22 +244,34 @@
                 <td>{{ item.points }}</td>
                 <td><span v-html="item.solution" /></td>
                 <td>
-                  <span class="pr-1" @click="editQuestionSource(item.mind_touch_url)">
-                    <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
-                               delay="500"
-                    >
-                      Edit question source
-                    </b-tooltip>
-                    <b-icon :id="getTooltipTarget('edit',item.question_id)" icon="pencil" />
-                  </span>
-                  <span class="pr-1" @click="openRemoveQuestionModal(item.question_id)">
-                    <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                               delay="500"
-                    >
-                      Remove the question from the assignment
-                    </b-tooltip>
-                    <b-icon :id="getTooltipTarget('remove',item.question_id)" icon="trash" />
-                  </span>
+                  <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Edit question source
+                  </b-tooltip>
+
+                  <a :id="getTooltipTarget('edit',item.question_id)"
+                     href="#"
+                     class="pr-1"
+                     @click="editQuestionSource(item.mind_touch_url)"
+                  >
+                    <b-icon class="text-muted" icon="pencil" />
+                  </a>
+
+                  <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Remove the question from the assignment
+                  </b-tooltip>
+                  <a :id="getTooltipTarget('remove',item.question_id)"
+                     href="#"
+                     class="pr-1"
+                     @click.prevent="openRemoveQuestionModal(item.question_id)"
+                  >
+                    <b-icon class="text-muted" icon="trash" />
+                  </a>
                 </td>
               </tr>
             </tbody>
@@ -453,7 +479,6 @@ export default {
         this.isBetaAssignment = data.is_beta_assignment
         this.isAlphaCourse = data.is_alpha_course
         this.h5pQuestionsWithAnonymousUsers = data.h5p_questions_exist && data.course_has_anonymous_users
-
 
         this.items = data.rows
         let hasNonH5P
