@@ -40,6 +40,7 @@
             </b-card-text>
           </b-card>
           <b-table
+            title="Assignment Summary"
             striped
             hover
             :no-border-collapse="true"
