@@ -207,7 +207,6 @@
         </b-alert>
       </div>
       <b-form-group
-        id="name"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Name"
@@ -229,9 +228,9 @@
         </b-form-row>
       </b-form-group>
       <b-form-group
-        id="public_description"
         label-cols-sm="4"
         label-cols-lg="3"
+        label-for="public_description"
       >
         <template slot="label">
           Public Description
@@ -252,7 +251,7 @@
         />
       </b-form-group>
       <b-form-group
-        id="private_description"
+        label-for="private_description"
         label-cols-sm="4"
         label-cols-lg="3"
       >
@@ -263,7 +262,7 @@
              class="text-muted">
             <b-icon icon="question-circle"/>
           </a>
-Start here!!!!
+
         </template>
         <b-form-textarea
           id="private_description"
@@ -275,15 +274,15 @@ Start here!!!!
         />
       </b-form-group>
       <b-form-group
-        id="assignment_group"
+        label-for="assignment_group"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Assignment Group"
-        label-for="Assignment Group"
       >
         <b-form-row>
           <b-col lg="5">
             <b-form-select v-model="form.assignment_group_id"
+                           title="Assignment groups"
                            :options="assignmentGroups"
                            :class="{ 'is-invalid': form.errors.has('assignment_group_id') }"
                            @change="checkGroupId(form.assignment_group_id)"
@@ -300,14 +299,13 @@ Start here!!!!
           >
             <b-form-row>
               <b-form-group
-                id="create_assignment_group"
                 label-cols-sm="4"
                 label-cols-lg="5"
                 label="Assignment Group"
-                label-for="Assignment Group"
+                label-for="create_assignment_group"
               >
                 <b-form-input
-                  id="assignment_group"
+                  id="create_assignment_group"
                   v-model="assignmentGroupForm.assignment_group"
                   type="text"
                   placeholder=""
@@ -326,9 +324,10 @@ Start here!!!!
         label-cols-sm="4"
         label-cols-lg="3"
         label="Source"
-        label-for="Source"
+        label-for="source"
       >
         <b-form-radio-group
+          id="source"
           v-model="form.source"
           stacked
           :disabled="isLocked() || isBetaAssignment"
@@ -353,9 +352,9 @@ Start here!!!!
         label-cols-sm="4"
         label-cols-lg="3"
         label="Scoring Type"
-        label-for="Scoring Type"
+        label-for="scoring_type"
       >
-        <b-form-radio-group v-model="form.scoring_type" stacked
+        <b-form-radio-group id="scoring_type" v-model="form.scoring_type" stacked
                             :disabled="isLocked() || isBetaAssignment"
         >
           <span @click="form.students_can_view_assignment_statistics = 1">
@@ -375,7 +374,6 @@ Start here!!!!
       </b-form-group>
       <div v-show="form.source === 'a'">
         <b-form-group
-          id="default_points_per_question"
           label-cols-sm="4"
           label-cols-lg="3"
           label="Default Points/Question"
@@ -401,13 +399,13 @@ Start here!!!!
 
     <b-form-group
       v-show="form.source === 'a'"
-      id="assessment_type"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Assessment Type"
-      label-for="Assessment Type"
+      label-for="assessment_type"
     >
-      <b-form-radio-group v-model="form.assessment_type"
+      <b-form-radio-group id="assessment_type"
+                          v-model="form.assessment_type"
                           stacked
                           :disabled="isLocked() || isBetaAssignment"
                           @change="initAssessmentTypeSwitch($event)"
@@ -442,7 +440,6 @@ Start here!!!!
     </b-form-group>
     <div v-show="form.assessment_type === 'clicker'">
       <b-form-group
-        id="default_clicker_time_to_submit"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Default Time To Submit"
@@ -474,7 +471,6 @@ Start here!!!!
 
     <div v-show="form.assessment_type === 'learning tree'">
       <b-form-group
-        id="min_time_needed_in_learning_tree"
         label-cols-sm="8"
         label-cols-lg="7"
         label-for="min_time_needed_in_learning_tree"
@@ -505,7 +501,6 @@ Start here!!!!
         </b-form-row>
       </b-form-group>
       <b-form-group
-        id="percent_earned_for_exploring_learning_tree"
         label-cols-sm="7"
         label-cols-lg="6"
         label="Percent Earned For Exploring Learning Tree"
@@ -537,7 +532,6 @@ Start here!!!!
         </b-form-row>
       </b-form-group>
       <b-form-group
-        id="submission_count_percent_decrease"
         label-cols-sm="7"
         label-cols-lg="6"
         label-for="submission_count_percent_decrease"
@@ -568,13 +562,13 @@ Start here!!!!
     </div>
     <b-form-group
       v-show="form.assessment_type === 'delayed' && form.source === 'a'"
-      id="file_upload_mode"
       label-cols-sm="4"
       label-cols-lg="3"
       label="File Upload Mode"
-      label-for="File Upload Mode"
+      label-for="file_upload_mode"
     >
-      <b-form-radio-group v-model="form.file_upload_mode"
+      <b-form-radio-group       id="file_upload_mode"
+                                v-model="form.file_upload_mode"
                           stacked
                           :disabled="isLocked() || isBetaAssignment"
                           name="file_upload_mode"
@@ -602,18 +596,18 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
-      id="default_open_ended_submission_type"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Default Open-ended Submission Type"
-      label-for="Default Open-ended Submission Type"
+      label-for="default_open_ended_submission_type"
     >
       <template slot="label">
         Default Open-ended Submission Type
         <span id="default_open_ended_submission_type_tooltip">
           <b-icon class="text-muted" icon="question-circle"/></span>
       </template>
-      <b-form-radio-group v-model="form.default_open_ended_submission_type"
+      <b-form-radio-group id="default_open_ended_submission_type"
+                          v-model="form.default_open_ended_submission_type"
                           stacked
                           :disabled="isLocked() || isBetaAssignment"
                           name="default_open_ended_submission_type"
@@ -650,13 +644,13 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-show="form.source === 'a'"
-      id="late_policy"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Late Policy"
-      label-for="Late Policy"
+      label-for="late_policy"
     >
-      <b-form-radio-group v-model="form.late_policy" stacked
+      <b-form-radio-group       id="late_policy"
+                                v-model="form.late_policy" stacked
                           :disabled="isLocked()"
       >
         <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
@@ -675,7 +669,6 @@ Start here!!!!
     </b-form-group>
     <div v-show="form.late_policy === 'deduction'">
       <b-form-group
-        id="late_deduction_percent"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Late Deduction Percent"
@@ -697,7 +690,6 @@ Start here!!!!
       </b-form-group>
 
       <b-form-group
-        id="late_deduction_application_period"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Late Deduction Applied"
@@ -737,13 +729,13 @@ Start here!!!!
     </div>
     <b-form-group
       v-if="!lms"
-      id="include_in_weighted_average"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Include In Final Score"
-      label-for="Include In Final Score"
+      label-for="include_in_final_score"
     >
-      <b-form-radio-group v-model="form.include_in_weighted_average" stacked>
+      <b-form-radio-group id="nclude_in_final_score"
+      v-model="form.include_in_weighted_average" stacked>
         <b-form-radio name="include_in_weighted_average" value="1">
           Include the assignment in computing a final
           weighted score
@@ -756,11 +748,10 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-show="form.source === 'x'"
-      id="total_points"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Total Points"
-      label-for="Total Points"
+      label-for="external_source_points"
     >
       <b-form-row>
         <b-col lg="3">
@@ -780,7 +771,6 @@ Start here!!!!
 
     <b-form-group
       v-show="form.source === 'a' && !lms"
-      id="instructions"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Instructions (Optional)"
@@ -788,7 +778,7 @@ Start here!!!!
     >
       <b-form-row>
         <ckeditor
-          id="instructions_editor"
+          id="instructions"
           v-model="form.instructions"
           rows="4"
           :config="richEditorConfig"
@@ -800,13 +790,13 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-show="form.source === 'a'"
-      id="randomizations"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Randomizations"
-      label-for="Randomizations"
+      label-for="randomizations"
     >
-      <b-form-radio-group v-model="form.randomizations" stacked
+      <b-form-radio-group       id="randomizations"
+                                v-model="form.randomizations" stacked
                           :disabled="isLocked() || isBetaAssignment"
       >
         <b-form-radio value="0" @change="resetRandomizations">
@@ -820,7 +810,6 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-show="form.source === 'a' && parseInt(form.randomizations) === 1"
-      id="number_of_randomized_assessments"
       label-cols-sm="4"
       label-cols-lg="3"
       label="Number of randomized assessments"
@@ -846,7 +835,6 @@ Start here!!!!
       </b-form-row>
     </b-form-group>
     <b-form-group
-      id="notifications"
       label-cols-sm="4"
       label-cols-lg="3"
       label-for="notifications"
@@ -856,7 +844,7 @@ Start here!!!!
         icon="question-circle"
       /></span>
       </template>
-      <b-form-radio-group v-model="form.notifications" stacked>
+      <b-form-radio-group       id="notifications" v-model="form.notifications" stacked>
         <b-form-radio name="notifications" value="1">
           On
         </b-form-radio>
@@ -867,7 +855,6 @@ Start here!!!!
     </b-form-group>
     <b-form-group
       v-if="lms"
-      id="libretexts_url"
       label-cols-sm="4"
       label-cols-lg="3"
       label-for="libretexts_url"
@@ -890,17 +877,17 @@ Start here!!!!
          :key="index"
     >
       <b-form-group
-        id="assign_to"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Assign to"
+        label-for="assign_to"
       >
         <template slot="label">
           Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
         </template>
         <b-form-row>
           <b-col lg="5">
-            <b-form-select v-model="assignTo.selectedGroup"
+            <b-form-select         id="assign_to"
+                                   v-model="assignTo.selectedGroup"
                            :options="assignToGroups"
                            :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
                            @change="updateAssignTos(assignTo)"
@@ -922,15 +909,15 @@ Start here!!!!
         </b-form-row>
       </b-form-group>
       <b-form-group
-        :id="`available_from_${index}`"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Available on"
-        label-for="Available on"
+        :label-for="`available_from_${index}`"
       >
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
+              :id="`available_from_${index}`"
               v-model="assignTo.available_from_date"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
@@ -948,15 +935,15 @@ Start here!!!!
       </b-form-group>
 
       <b-form-group
-        id="due"
         label-cols-sm="4"
         label-cols-lg="3"
         label="Due Date"
-        label-for="Due Date"
+        label-for="due_date"
       >
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
+              id="due_date"
               v-model="assignTo.due_date"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
@@ -976,10 +963,9 @@ Start here!!!!
       </b-form-group>
       <b-form-group
         v-show="form.late_policy !== 'not accepted'"
-        id="last"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="Final Submission Deadline"
+        label-for="final_submission_deadline"
       >
         <template slot="label">
           Final Submission Deadline <span id="final_submission_deadline_tooltip"
@@ -991,6 +977,7 @@ Start here!!!!
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
+              id="final_submission_deadline"
               v-model="assignTo.final_submission_deadline_date"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"

@@ -257,10 +257,12 @@
             </b-alert>
           </div>
           <b-col lg="3">
-            <b-form-select v-if="assignmentGroupOptions.length>1"
-                           v-model="chosenAssignmentGroup"
-                           :options="assignmentGroupOptions"
-                           @change="updateAssignmentGroupFilter(courseId)"
+            <b-form-select
+              v-if="assignmentGroupOptions.length>1"
+              v-model="chosenAssignmentGroup"
+              title="Filter by assignment group"
+              :options="assignmentGroupOptions"
+              @change="updateAssignmentGroupFilter(courseId)"
             />
           </b-col>
           <b-col lg="9">
@@ -302,7 +304,7 @@
         </b-row>
       </b-container>
       <div v-show="hasAssignments" class="table-responsive">
-        <table class="table table-striped">
+        <table class="table table-striped" title="Assignment List">
           <thead>
             <tr>
               <th scope="col">
@@ -329,11 +331,12 @@
             </tr>
           </thead>
           <tbody is="draggable" v-model="assignments" tag="tbody" @end="saveNewOrder">
-            <tr v-for="assignment in assignments"
-                v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
-                :key="assignment.id"
+            <tr
+              v-for="assignment in assignments"
+              v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
+              :key="assignment.id"
             >
-              <td style="width:300px">
+              <th scope="row" style="width:300px">
                 <b-icon icon="list" />
                 <a v-show="assignment.is_beta_assignment"
                    :id="getTooltipTarget('betaAssignment',assignment.id)"
@@ -378,7 +381,7 @@
                   </b-tooltip>
 
                 </span>
-              </td>
+              </th>
               <td>
                 <toggle-button
                   tabindex="0"
@@ -424,6 +427,7 @@
                      :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                      href="#"
                      class="pr-1"
+                     aria-label="Grading"
                      @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
                   >
                     <b-icon
@@ -440,7 +444,9 @@
                     </b-tooltip>
                     <a :id="getTooltipTarget('editAssignment',assignment.id)"
                        href="#"
-                       class="pr-1" @click="assignmentId=assignment.id;editAssignment(assignment)"
+                       class="pr-1"
+                       aria-label="Edit assignment"
+                       @click="assignmentId=assignment.id;editAssignment(assignment)"
                     >
                       <b-icon
                         icon="gear"
@@ -456,6 +462,7 @@
                     <a :id="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
                        href="#"
                        class="pr-1"
+                       aria-label="Create assignment from template"
                        @click="initCreateAssignmentFromTemplate(assignment.id)"
                     >
                       <font-awesome-icon
@@ -471,6 +478,7 @@
                     </b-tooltip>
                     <a :id="getTooltipTarget('deleteAssignment',assignment.id)"
                        href="#"
+                       aria-label="Delete assignment"
                        @click="deleteAssignment(assignment)"
                     >
                       <b-icon icon="trash" class="text-muted" />

@@ -220,7 +220,7 @@
         </b-alert>
       </div>
       <div class="table-responsive">
-        <table class="table table-striped" title="List of your courses">
+        <table class="table table-striped" title="Course List">
           <thead>
             <tr>
               <th scope="col">
