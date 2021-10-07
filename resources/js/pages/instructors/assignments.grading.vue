@@ -836,7 +836,6 @@ export default {
       if (event.key === 'ArrowLeft' &&
         this.currentStudentPage > 1 &&
         !inTextArea) {
-        alert(document.activeElement.id)
         this.currentStudentPage--
         this.changePage()
       }
