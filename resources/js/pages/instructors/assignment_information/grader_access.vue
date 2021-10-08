@@ -100,7 +100,10 @@ export default {
     assignmentId: 0,
     assignmentGraderAccess: [],
     fields: [
-      'grader',
+      {
+        key: 'grader',
+        isRowHeader: true
+      },
       'access_level',
       'sections'
     ]
