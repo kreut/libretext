@@ -9,7 +9,7 @@
           <!-- Email -->
           <RequiredText :plural="false"/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Email
+            <label class="col-md-3 col-form-label text-md-right" for="email">Email
               <Asterisk/>
             </label>
             <div class="col-md-7">
@@ -27,7 +27,9 @@
           <!-- Submit Button -->
           <div class="form-group row">
             <div class="col-md-9 ml-md-auto">
-              <v-button :loading="form.busy">
+              <v-button
+                :loading="form.busy"
+              >
                 Send Password Reset Link
               </v-button>
             </div>
@@ -61,6 +63,7 @@ export default {
   }),
   methods: {
     async send () {
+      this.form.busy = true
       try {
         const { data } = await this.form.post('/api/password/email')
 

@@ -1,29 +1,45 @@
 <template>
-  <card title="Your Password">
+  <card title="Reset Password">
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Password -->
-      <RequiredText />
+      <RequiredText/>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">New Password<Asterisk /></label>
+        <label class="col-md-4 col-form-label text-md-right" for="password">New Password
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
-          <input v-model="form.password" :class="{ 'is-invalid': form.errors.has('password') }" class="form-control" type="password" name="password">
-          <has-error :form="form" field="password" />
+          <input id="password"
+                 v-model="form.password"
+                 :class="{ 'is-invalid': form.errors.has('password') }"
+                 class="form-control"
+                 type="password"
+                 name="password"
+          >
+          <has-error :form="form" field="password"/>
         </div>
       </div>
 
       <!-- Password Confirmation -->
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Confirm Password<Asterisk /></label>
+        <label class="col-md-4 col-form-label text-md-right" for="confirm_password">Confirm Password
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
-          <input v-model="form.password_confirmation" :class="{ 'is-invalid': form.errors.has('password_confirmation') }" class="form-control" type="password" name="password_confirmation">
-          <has-error :form="form" field="password_confirmation" />
+          <input id="confirm_password"
+                 v-model="form.password_confirmation"
+                 :class="{ 'is-invalid': form.errors.has('password_confirmation') }"
+                 class="form-control"
+                 type="password"
+                 name="password_confirmation"
+          >
+          <has-error :form="form" field="password_confirmation"/>
         </div>
       </div>
 
       <!-- Submit Button -->
       <hr>
       <div class="float-right">
-        <b-button variant="primary" @click="update">
+        <b-button variant="primary" @click="update" size="sm">
           {{ $t('update') }}
         </b-button>
       </div>
