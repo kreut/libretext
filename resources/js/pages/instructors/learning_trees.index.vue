@@ -26,12 +26,15 @@
         title="Import Learning Trees"
         :no-close-on-esc="true"
       >
+        <RequiredText/>
         <b-form-group
           label-cols-sm="5"
           label-cols-lg="4"
-          label="Learning Tree Id(s)"
           label-for="learning_tree_imports"
         >
+          <template slot="label">
+            Learning Tree Id(s)<Asterisk/>
+          </template>
           <b-form-row>
             <b-col lg="5">
               <b-form-input
