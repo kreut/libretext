@@ -179,6 +179,7 @@
                       <span class="text-info">
                         <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                    delay="500"
+                                   triggers="hover focus"
                         >
 
                           You can refresh the access code if you would like to render the current access code invalid.
