@@ -1,15 +1,18 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-learning-tree'"/>
     <b-modal
       id="modal-update-node"
       ref="modal"
       title="Node Contents"
       size="xl"
+      :no-close-on-esc="true"
       hide-footer
     >
       <iframe
         :key="`node-iframe-${nodeIframeId}`"
         v-resize="{ log: false }"
+        title="node"
         width="100%"
         :src="nodeSrc"
         frameborder="0"
@@ -17,14 +20,14 @@
       <hr>
       <b-form ref="form">
         <b-form-group
-          id="node_library"
           label-cols-sm="2"
           label-cols-lg="1"
           label="Library"
-          label-for="library"
+          label-for="node_library"
         >
           <div class="mb-2 mr-2" style="width: 300px">
-            <b-form-select v-model="nodeForm.library"
+            <b-form-select id="node_library"
+                           v-model="nodeForm.library"
                            :options="libraryOptions"
                            :class="{ 'is-invalid': nodeForm.errors.has('library') }"
                            @change="nodeForm.errors.clear('library')"
@@ -34,14 +37,13 @@
         </b-form-group>
         <b-form-group>
           <b-form-group
-            id="node_page_id"
             label-cols-sm="2"
             label-cols-lg="1"
             label="Page Id"
             label-for="page_id"
           >
             <b-form-input
-              id="page_id"
+              id="node_page_id"
               v-model="nodeForm.page_id"
               type="text"
               style="width: 100px"
@@ -66,8 +68,7 @@
       id="modal-learning-tree-details"
       ref="modal"
       title="Learning Tree Details"
-      ok-title="Submit"
-      @ok="submitLearningTreeInfo"
+      :no-close-on-esc="true"
       @hidden="resetLearningTreeDetailsModal"
     >
       <p v-if="learningTreeId" class="font-italic">
@@ -75,15 +76,16 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-
+<RequiredText/>
       <b-form ref="form">
         <b-form-group
-          id="learning_tree_title"
           label-cols-sm="5"
           label-cols-lg="4"
-          label="Title"
-          label-for="title"
+          label-for="learning_tree_title"
         >
+          <template slot="label">
+            Title<Asterisk/>
+          </template>
           <b-form-input
             id="learning_tree_title"
             v-model="learningTreeForm.title"
@@ -95,12 +97,13 @@
         </b-form-group>
 
         <b-form-group
-          id="description"
           label-cols-sm="5"
           label-cols-lg="4"
-          label="Description"
           label-for="description"
         >
+          <template slot="label">
+            Description<Asterisk/>
+          </template>
           <b-form-textarea
             id="description"
             v-model="learningTreeForm.description"
@@ -112,14 +115,16 @@
         </b-form-group>
         <b-form-group
           v-if="!learningTreeId"
-          id="assessment_library"
           label-cols-sm="5"
           label-cols-lg="4"
-          label="Library"
           label-for="library"
         >
+          <template slot="label">
+            Library<Asterisk/>
+          </template>
           <div class="mb-2 mr-2">
             <b-form-select v-model="learningTreeForm.library"
+                           title="library"
                            :options="libraryOptions"
                            :class="{ 'is-invalid': learningTreeForm.errors.has('library') }"
                            @change="learningTreeForm.errors.clear('library')"
@@ -127,27 +132,39 @@
             <has-error :form="learningTreeForm" field="library"/>
           </div>
         </b-form-group>
-        <b-form-group>
-          <b-form-group
-            v-if="!learningTreeId"
+        <b-form-group
+          v-if="!learningTreeId"
+          label-cols-sm="5"
+          label-cols-lg="4"
+          label-for="page_id"
+        >
+          <template slot="label">
+            Page Id<Asterisk/>
+          </template>
+          <b-form-input
             id="page_id"
-            label-cols-sm="5"
-            label-cols-lg="4"
-            label="Page Id"
-            label-for="page_id"
-          >
-            <b-form-input
-              id="page_id"
-              v-model="learningTreeForm.page_id"
-              type="text"
-              style="width: 90px"
-              :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
-              @keydown="learningTreeForm.errors.clear('page_id')"
-            />
-            <has-error :form="learningTreeForm" field="page_id"/>
-          </b-form-group>
+            v-model="learningTreeForm.page_id"
+            type="text"
+            style="width: 90px"
+            :class="{ 'is-invalid': learningTreeForm.errors.has('page_id') }"
+            @keydown="learningTreeForm.errors.clear('page_id')"
+          />
+          <has-error :form="learningTreeForm" field="page_id"/>
         </b-form-group>
       </b-form>
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm"
+                  @click="$bvModal.hide('modal-learning-tree-details');resetLearningTreeDetailsModal"
+        >
+          Cancel
+        </b-button>
+        <b-button size="sm"
+                  variant="primary"
+                  @click="submitLearningTreeInfo"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
 
     <b-modal
@@ -177,6 +194,7 @@
     <div style="margin-left:-100px;">
       <toggle-button
         v-if="(user !== null)"
+        tabindex="0"
         class="mt-2"
         :width="170"
         :value="!isLearningTreeView"
@@ -193,35 +211,46 @@
         <b-button variant="success" size="sm" @click="initCreateNew">
           Create New
         </b-button>
-        <b-button variant="primary" size="sm" :disabled="learningTreeId === 0" @click="editLearningTree">
+        <b-button :class="{ 'disabled': learningTreeId === 0}"
+                  :aria-disabled="learningTreeId === 0"
+                  variant="primary"
+                  size="sm"
+                  @click="learningTreeId === 0 ? '' : editLearningTree()"
+        >
           Update Info
         </b-button>
-        <b-button variant="danger" size="sm" :disabled="learningTreeId === 0" @click="deleteLearningTree">
-          Delete
+        <b-button :class="{ 'disabled': learningTreeId === 0}"
+                  :aria-disabled="learningTreeId === 0"
+                  variant="danger"
+                  size="sm"
+                  @click="learningTreeId === 0 ? '' : deleteLearningTree()"
+        >
+         Delete
         </b-button>
         <div id="search">
           <div class="mb-2 mr-2">
-            <b-form-select v-model="library" :options="libraryOptions" class="mt-3" />
+            <b-form-select v-model="library" title="library" :options="libraryOptions" class="mt-3"/>
           </div>
           <div class="d-flex flex-row">
             <b-form-input v-model="pageId" style="width: 90px" placeholder="Page Id"/>
-            <b-button id="add"
+            <b-button :class="{ 'disabled': learningTreeId === 0}"
                       class="ml-2 mr-2"
+                      :aria-disabled="learningTreeId === 0"
                       variant="secondary"
                       size="sm"
-                      :disabled="learningTreeId === 0"
-                      @click="addRemediation"
+                      @click="learningTreeId === 0 ? '' : deleteLearningTree()"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               Get Node
             </b-button>
             <b-button size="sm"
                       variant="outline-info"
+                      :class="{ 'disabled': !canUndo}"
+                      aria-label="Undo"
                       class="mr-2"
-                      :disabled="!canUndo"
-                      @click="undo()"
+                      @click="!canUndo ? '' : undo()"
             >
-              <font-awesome-icon :icon="undoIcon"/>
+              <font-awesome-icon :icon="undoIcon" />
             </b-button>
           </div>
         </div>
@@ -243,7 +272,7 @@ import { mapGetters } from 'vuex'
 import libraries from '~/helpers/Libraries'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
-import Loading from 'vue-loading-overlay'
+import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 
 export default {
@@ -253,9 +282,11 @@ export default {
   },
   components: {
     FontAwesomeIcon,
-    ToggleButton
+    ToggleButton,
+    AllFormErrors
   },
   data: () => ({
+    allFormErrors: [],
     isLearningTreeView: false,
     nodeSrc: '',
     nodeIframeId: '',
@@ -472,6 +503,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.nodeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-learning-tree')
         }
       }
     },
@@ -558,6 +592,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.learningTreeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-learning-tree')
         }
       }
     },
@@ -578,6 +615,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.learningTreeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-learning-tree')
         }
       }
     },
@@ -1216,6 +1256,7 @@ body, html {
   background-color: #F0F2F9;
   opacity: .5;
 }
+
 /*
 #canvas {
   position: absolute;
