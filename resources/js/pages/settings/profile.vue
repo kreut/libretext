@@ -4,35 +4,55 @@
       <!-- Name -->
       <RequiredText />
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">First Name<Asterisk /></label>
-        <div class="col-md-3">
-          <input v-model="form.first_name" :class="{ 'is-invalid': form.errors.has('first_name') }"
-                 class="form-control" type="text" name="first_name" placeholder="First"
+        <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name<Asterisk /></label>
+        <div class="col-md-7">
+          <input id="first_name"
+                 v-model="form.first_name"
+                 :class="{ 'is-invalid': form.errors.has('first_name') }"
+                 class="form-control"
+                 type="text"
+                 name="first_name"
+                 placeholder="First"
           >
           <has-error :form="form" field="first_name" />
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Last Name<Asterisk /></label>
-        <div class="col-md-4">
-          <input v-model="form.last_name" :class="{ 'is-invalid': form.errors.has('last_name') }"
-                 class="form-control" type="text" name="last_name" placeholder="Last"
+        <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name<Asterisk /></label>
+        <div class="col-md-7">
+          <input id="last_name"
+                 v-model="form.last_name"
+                 :class="{ 'is-invalid': form.errors.has('last_name') }"
+                 class="form-control"
+                 type="text"
+                 name="last_name"
+                 placeholder="Last"
           >
           <has-error :form="form" field="last_name" />
         </div>
       </div>
       <div v-if="user.role === 3" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Student ID<Asterisk /></label>
+        <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk /></label>
         <div class="col-md-7">
-          <input v-model="form.student_id" :class="{ 'is-invalid': form.errors.has('student_id') }" class="form-control" type="text" name="student_id">
+          <input id="student_id"
+                 v-model="form.student_id"
+                 :class="{ 'is-invalid': form.errors.has('student_id') }"
+                 class="form-control"
+                 type="text"
+                 name="student_id">
           <has-error :form="form" field="student_id" />
         </div>
       </div>
       <!-- Email -->
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Email<Asterisk/></label>
+        <label class="col-md-3 col-form-label text-md-right" for="email">Email<Asterisk/></label>
         <div class="col-md-7">
-          <input v-model="form.email" :class="{ 'is-invalid': form.errors.has('email') }" class="form-control" type="email" name="email">
+          <input id="email"
+                 v-model="form.email"
+                 :class="{ 'is-invalid': form.errors.has('email') }"
+                 class="form-control"
+                 type="email"
+                 name="email">
           <has-error :form="form" field="email" />
         </div>
       </div>
@@ -40,6 +60,7 @@
         <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk/></label>
         <div class="col-md-7" @change="removeTimeZoneError()">
           <b-form-select v-model="form.time_zone"
+                         title="time zone"
                          :options="timeZones"
                          :class="{ 'is-invalid': form.errors.has('time_zone') }"
           />
