@@ -37,13 +37,13 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label="Email"
-          label-for="email"
+          label-for="email_in_contact_us_form"
         >
           <template slot="label">
             Email<Asterisk />
           </template>
           <b-form-input
-            id="email"
+            id="email_in_contact_us_form"
             v-model="sendEmailForm.email"
             aria-required="true"
             class="col-6"
