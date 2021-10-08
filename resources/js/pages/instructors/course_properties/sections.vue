@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-sections'" />
     <b-modal
       id="modal-delete-section"
       ref="modal"
@@ -41,13 +41,15 @@
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
              :no-close-on-esc="true"
     >
+      <RequiredText />
       <b-form-group
-        id="section_name"
         label-cols-sm="5"
         label-cols-lg="4"
-        label="Section Name"
-        label-for="section name"
+        label-for="section_name"
       >
+        <template slot="label">
+          Section Name<Asterisk/>
+        </template>
         <b-form-input
           id="section_name"
           v-model="sectionForm.name"
@@ -59,21 +61,14 @@
         <has-error :form="sectionForm" field="name" />
       </b-form-group>
       <b-form-group
-        id="crn"
         label-cols-sm="5"
         label-cols-lg="4"
+        label-for="crn"
       >
         <template slot="label">
-          CRN
-          <b-icon id="crn-tooltip"
-                  v-b-tooltip.hover
-                  class="text-muted"
-                  icon="question-circle"
-          />
-          <b-tooltip target="crn-tooltip" triggers="hover">
-            The Course Reference Number is the number that identifies a specific section of a course being offered.
-          </b-tooltip>
+          CRN<Asterisk/>
         </template>
+
         <b-form-input
           id="crn"
           v-model="sectionForm.crn"
@@ -136,14 +131,13 @@
                 <b-table striped hover :fields="fields" :items="sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <b-icon id="crn-tooltip"
-                            v-b-tooltip.hover
-                            class="text-muted"
-                            icon="question-circle"
-                    />
-                    <b-tooltip target="crn-tooltip" triggers="hover">
-                      The Course Reference Number is the number that identifies a specific section of a course being
-                      offered.
+                    <a id="crn-tooltip"
+                       href="#"
+                    >
+                      <b-icon class="text-muted" icon="question-circle"/>
+                    </a>
+                    <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
+                      The Course Reference Number is the number that identifies a specific section of a course being offered.
                     </b-tooltip>
                   </template>
                   <template v-slot:cell(access_code)="data">
@@ -154,22 +148,34 @@
                   </template>
                   <template v-slot:cell(actions)="data">
                     <div class="mb-0">
-                      <span class="pr-1" @click="initEditSection(data.item)">
-                        <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
-                                   delay="500"
-                        >
-                          Edit Section
-                        </b-tooltip>
-                        <b-icon :id="getTooltipTarget('edit',data.item.id)" icon="pencil" />
-                      </span>
-                      <span class="pr-1" @click="confirmDeleteSection(data.item.id)">
-                        <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
-                                   delay="500"
-                        >
-                          Delete Section
-                        </b-tooltip>
-                        <b-icon :id="getTooltipTarget('deleteSection',data.item.id)" icon="trash" />
-                      </span>
+                      <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
+                                 delay="500"
+                      >
+                        Edit Section
+                      </b-tooltip>
+                      <a :id="getTooltipTarget('edit',data.item.id)"
+                         href="#"
+                         class="pr-1"
+                         aria-label="Refresh access code"
+                         @click="initEditSection(data.item)"
+                      >
+                        <b-icon icon="pencil" class="text-muted" />
+                      </a>
+
+                      <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
+                                 delay="500"
+                      >
+                        Delete Section
+                      </b-tooltip>
+                      <a :id="getTooltipTarget('deleteSection',data.item.id)"
+                         href="#"
+                         class="pr-1"
+                         aria-label="Delete section"
+                         @click="confirmDeleteSection(data.item.id)"
+                      >
+                        <b-icon icon="trash" class="text-muted" />
+                      </a>
+
                       <span class="text-info">
                         <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                    delay="500"
@@ -178,10 +184,14 @@
                           You can refresh the access code if you would like to render the current access code invalid.
 
                         </b-tooltip>
-                        <b-icon-arrow-repeat :id="getTooltipTarget('refreshAccessCode',data.item.id)"
-                                             variant="dark"
-                                             @click="refreshAccessCode(data.item.id)"
-                        />
+                        <a :id="getTooltipTarget('refreshAccessCode',data.item.id)"
+                           href="#"
+                           class="pr-1"
+                           aria-label="Refresh access code"
+                           @click="refreshAccessCode(data.item.id)"
+                        >
+                          <b-icon icon="arrow-repeat" class="text-muted" />
+                        </a>
                       </span>
                     </div>
                   </template>
@@ -234,7 +244,8 @@ export default {
     fields: [
       {
         key: 'name',
-        label: 'Section'
+        label: 'Section',
+        isRowHeader: true
       },
       'crn',
       'access_code',
