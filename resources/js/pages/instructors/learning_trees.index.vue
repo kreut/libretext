@@ -24,13 +24,13 @@
         id="modal-import-learning-tree"
         ref="import-learning-tree-modal"
         title="Import Learning Trees"
+        :no-close-on-esc="true"
       >
         <b-form-group
-          id="learning_tree_imports"
           label-cols-sm="5"
           label-cols-lg="4"
           label="Learning Tree Id(s)"
-          label-for="learning Tree Id(s)"
+          label-for="learning_tree_imports"
         >
           <b-form-row>
             <b-col lg="5">
@@ -105,19 +105,27 @@
               >
                 Create Learning Tree From Template
               </b-tooltip>
-              <span class="pr-1" @click="createLearningTreeFromTemplate(data.item.id)">
-                <b-icon :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
+
+              <a :id="getTooltipTarget('createLearningTreeFromTemplate',data.item.id)"
+                 href="#"
+                 class="pr-1"
+                 @click="createLearningTreeFromTemplate(data.item.id)"
+              >
+                <b-icon class="text-muted"
                         icon="clipboard-check"
                 />
-              </span>
+              </a>
               <b-tooltip :target="getTooltipTarget('deleteLearningTree',data.item.id)"
                          delay="500"
               >
                 Delete Learning Tree
               </b-tooltip>
-              <b-icon :id="getTooltipTarget('deleteLearningTree',data.item.id)" icon="trash"
-                      @click="deleteLearningTree(data.item.id)"
-              />
+              <a :id="getTooltipTarget('deleteLearningTree',data.item.id)"
+                 href="#"
+                 @click="deleteLearningTree(data.item.id)"
+              >
+                <b-icon class="text-muted" icon="trash"/>
+              </a>
             </div>
           </template>
         </b-table>
@@ -152,7 +160,8 @@ export default {
       'id',
       {
         key: 'title',
-        sortable: true
+        sortable: true,
+        isRowHeader: true
       },
       {
         key: 'description',
