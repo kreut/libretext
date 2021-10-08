@@ -123,6 +123,7 @@
       you to your school. If you still can't
       find it, then please contact us.
     </b-tooltip>
+    <RequiredText />
     <b-form ref="form">
       <b-form-group
         id="school"
@@ -131,7 +132,7 @@
         label-for="school"
       >
         <template slot="label">
-          School
+          School<Asterisk/>
           <a id="school_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
@@ -149,9 +150,11 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Name"
         label-for="name"
       >
+        <template slot="label">
+          Name<Asterisk/>
+        </template>
         <b-form-input
           id="name"
           v-model="form.name"
@@ -318,9 +321,10 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Start Date"
         label-for="start_date"
-      >
+      ><template slot="label">
+        Start Date<Asterisk />
+      </template>
         <b-form-datepicker
           id="start_date"
           v-model="form.start_date"
@@ -358,7 +362,7 @@
         label-for="public"
       >
         <template slot="label">
-          Public
+          Public<Asterisk/>
           <a id="public_tooltip"
              href="#"
           >
