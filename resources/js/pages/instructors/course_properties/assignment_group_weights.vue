@@ -42,6 +42,9 @@
               <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
                        class="border border-1 rounded"
               >
+                <template v-slot:cell(assignment_group)="data">
+                  <label :for="`assignment_group_id_${data.item.id}}`">{{ data.item.assignment_group }}</label>
+                </template>
                 <template v-slot:cell(assignment_group_weight)="data">
                   <b-col lg="5">
                     <b-form-input
@@ -57,10 +60,9 @@
               </b-table>
 
               <b-form-group v-if="extraCreditId>0"
-                            id="extra_credit"
                             label-cols-sm="5"
                             label-cols-lg="4"
-                            label-for="Extra Credit Weight"
+                            label-for="extra_credit_weight"
               >
                 <template slot="label">
                   <b-icon-star-fill varient="info" variant="warning"/>
@@ -68,7 +70,7 @@
                 </template>
                 <b-col lg="3">
                   <b-form-input
-                    id="extra_credit"
+                    id="extra_credit_weight"
                     v-model="assignmentGroupWeightsForm[extraCreditId]"
                     type="text"
                     :class="{ 'is-invalid': assignmentGroupWeightsFormWeightError }"
