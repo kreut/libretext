@@ -26,8 +26,8 @@
           <img :src="asset('assets/img/372103860_CHECK_MARK_400.gif')" alt="Check mark" width="275">
         </b-row>
         <b-row>
-      <span class="font-weight-bold font-italic">
-  {{ successMessage }}</span>
+          <span class="font-weight-bold font-italic">
+            {{ successMessage }}</span>
         </b-row>
       </b-container>
     </b-modal>
@@ -39,7 +39,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage"/>
+        <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage" />
       </b-alert>
     </b-modal>
     <b-modal id="modal-confirm-set-page"
@@ -61,7 +61,6 @@
       </template>
     </b-modal>
 
-
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -72,7 +71,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="name"/>
+        <PageTitle :title="name" />
         <b-container>
           <div v-if="assessmentType !== 'clicker' || pastDue">
             <b-row align-h="end">
@@ -88,15 +87,15 @@
             </b-alert>
           </div>
           <div v-show="isInstructorLoggedInAsStudent">
-            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
+            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
           </div>
           <b-card v-show="assessmentType !== 'clicker'" header="default" header-html="<h5>Important Information</h5>">
             <b-card-text>
               <p v-if="public_description" class="mb-2">
-                <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
+                <span class="font-weight-bold">Description: </span> <span v-html="public_description" />
               </p>
               <p v-if="instructions.length" class="mb-2">
-                <span v-html="instructions"/>
+                <span v-html="instructions" />
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
@@ -112,7 +111,7 @@
                   Open ended submissions:</span>
                 <span class="font-italic">
                   Upload a single compiled PDF of the questions and assign pages AND/OR submit individual submissions on each page.
-              </span>
+                </span>
               </p>
             </b-card-text>
           </b-card>
@@ -136,17 +135,17 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
-                      file.name
-                    }}</span> -
+                    file.name
+                  }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow"/>
+                    <b-spinner small type="grow" />
                     Uploading File...
                   </span>
                   <span v-if="processingFile">
-                    <b-spinner small type="grow"/>
+                    <b-spinner small type="grow" />
                     Processing file...
                   </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -169,7 +168,6 @@
                 allowfullscreen
               />
             </div>
-
           </b-card>
           <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default"
                   header-html="<h5>Questions</h5>"
@@ -182,6 +180,7 @@
             </h5>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
+              title="Summary of questions and submissions"
               striped
               hover
               :no-border-collapse="true"
@@ -190,13 +189,13 @@
             >
               <template #cell(question_number)="data">
                 <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{
-                    data.item.question_number
-                  }}&nbsp;</span></a>
+                  data.item.question_number
+                }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto Graded Submission <span v-b-tooltip="showAutoGradedSubmissionTooltip"><b-icon
-                class="text-muted" icon="question-circle"
-              /></span>
+                  class="text-muted" icon="question-circle"
+                /></span>
               </template>
               <template #cell(last_question_submission)="data">
                 <span
@@ -214,12 +213,12 @@
                   :class="{ 'text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
                 >
                   <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
-                      data.item.last_open_ended_submission
-                    }}</span>
+                    data.item.last_open_ended_submission
+                  }}</span>
                   <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
                     <a :href="data.item.submission_file_url" target="_blank">{{
-                        data.item.last_open_ended_submission
-                      }}</a>
+                      data.item.last_open_ended_submission
+                    }}</a>
                   </span>
                 </span>
                 <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission" class="text-success"
@@ -229,12 +228,12 @@
 
               <template v-slot:head(last_open_ended_submission)="data">
                 Last Open Ended Submission <span v-b-tooltip="showOpenEndedSubmissionTooltip"><b-icon
-                class="text-muted" icon="question-circle"
-              />
-              </span>
+                  class="text-muted" icon="question-circle"
+                />
+                </span>
               </template>
               <template #cell(solution_file_url)="data">
-                <span v-html="getSolutionFileLink(data.item)"/>
+                <span v-html="getSolutionFileLink(data.item)" />
               </template>
               <template #cell(page)="data">
                 <div v-if="data.item.isOpenEndedFileSubmission">
@@ -253,7 +252,7 @@
                                 :disabled="!fullPdfUrl"
                                 @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
                       >
-                        Set Page
+                        <label :for="`set_page_for_question_${data.item.question_number}`">Set Page</label>
                       </b-button>
                     </b-input-group-append>
 
@@ -270,7 +269,7 @@
           </b-card>
 
           <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default" header-html="<h5>Statistics</h5>">
-            <AssignmentStatistics/>
+            <AssignmentStatistics />
           </b-card>
         </b-container>
       </div>
@@ -606,7 +605,8 @@ export default {
           {
             key: 'question_number',
             label: 'Number',
-            shown: true
+            shown: true,
+            isRowHeader: true
           },
           {
             key: 'last_question_submission',

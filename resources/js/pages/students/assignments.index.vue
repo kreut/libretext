@@ -107,6 +107,7 @@
             <b-col lg="3">
               <b-form-select v-if="assignmentGroupOptions.length>1"
                              v-model="chosenAssignmentGroup"
+                             title="Filter by assignment group"
                              :options="assignmentGroupOptions"
                              @change="updateAssignmentGroupFilter()"
               />
@@ -164,14 +165,14 @@
                 v-show="chosenAssignmentGroup === null || assignment.assignment_group === chosenAssignmentGroupText"
                 :key="assignment.id"
             >
-              <td>
+              <th role="row">
                 <div v-show="assignment.is_available">
                   <a href="" @click.prevent="getAssignmentSummaryView(assignment)">{{ assignment.name }}</a>
                 </div>
                 <div v-show="!assignment.is_available">
                   {{ assignment.name }}
                 </div>
-              </td>
+              </th>
               <td>
                 {{ assignment.assignment_group }}
               </td>
