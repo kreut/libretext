@@ -195,9 +195,19 @@
                 }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
-                Last Auto Graded Submission <span v-b-tooltip="showAutoGradedSubmissionTooltip"><b-icon
-                  class="text-muted" icon="question-circle"
-                /></span>
+                Last Auto Graded Submission
+                <a id="auto_graded_submission_tooltip"
+                   href="#"
+                >
+                  <b-icon class="text-muted" icon="question-circle" />
+                </a>
+                <b-tooltip target="auto_graded_submission_tooltip"
+                           triggers="hover focus"
+                           delay="250"
+                >
+                  Auto graded questions are questions which can be graded automatically by Adapt.
+                  Some examples are multiple choice, true false, numeric based and matching.
+                </b-tooltip>
               </template>
               <template #cell(last_question_submission)="data">
                 <span
@@ -229,10 +239,18 @@
               </template>
 
               <template v-slot:head(last_open_ended_submission)="data">
-                Last Open Ended Submission <span v-b-tooltip="showOpenEndedSubmissionTooltip"><b-icon
-                  class="text-muted" icon="question-circle"
-                />
-                </span>
+                Last Open Ended Submission
+                  <a id="open_ended_submission_tooltip"
+                     href="#"
+                  >
+                  <b-icon class="text-muted" icon="question-circle" />
+                </a>
+                <b-tooltip target="open_ended_submission_tooltip"
+                           triggers="hover focus"
+                           delay="250"
+                >
+                Open ended questions are questions which will require a grader.  Some examples are file uploads, text based responses, and audio uploads.
+                </b-tooltip>
               </template>
               <template #cell(solution_file_url)="data">
                 <span v-html="getSolutionFileLink(data.item)" />
@@ -333,16 +351,6 @@ export default {
     }),
     thumbsUpIcon: faThumbsUp,
     checkIcon: faCheck,
-    showAutoGradedSubmissionTooltip: {
-      fallbackPlacement: ['right'],
-      placement: 'right',
-      title: 'Auto graded questions are questions which can be graded automatically by Adapt.  Some examples are multiple choice, true false, numeric based and matching.'
-    },
-    showOpenEndedSubmissionTooltip: {
-      fallbackPlacement: ['right'],
-      placement: 'right',
-      title: 'Open ended questions are questions which will require a grader.  Some examples are file uploads, text based responses, and audio uploads.'
-    },
     fields: [],
     items: [],
     pastDue: false,
