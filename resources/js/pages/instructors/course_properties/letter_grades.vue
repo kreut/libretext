@@ -14,6 +14,7 @@
           id="modal-letter-grades-editor"
           ref="modal"
           title="Letter Grades"
+          :no-close-on-esc="true"
         >
           <p>
             Use the text area below to customize your letter grades, in a comma separated list of
@@ -26,20 +27,21 @@
           <b-form-input
             id="letter_grades"
             v-model="letterGradesForm.letter_grades"
+            title="Comma separated list of letter grades"
             type="text"
             placeholder=""
             :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
             @keydown="letterGradesForm.errors.clear('letter_grades')"
           />
-          <has-error :form="letterGradesForm" field="letter_grades"/>
+          <has-error :form="letterGradesForm" field="letter_grades" />
           <div slot="modal-footer">
-            <b-btn @click="$bvModal.hide('modal-letter-grades-editor')">
+            <b-btn size="sm" @click="$bvModal.hide('modal-letter-grades-editor')">
               Cancel
             </b-btn>
-            <b-btn variant="info" @click="resetLetterGradesToDefault">
+            <b-btn variant="info" size="sm" @click="resetLetterGradesToDefault">
               Reset to Default
             </b-btn>
-            <b-btn variant="primary" @click="submitLetterGrades">
+            <b-btn variant="primary" size="sm" @click="submitLetterGrades">
               Submit
             </b-btn>
           </div>
@@ -68,6 +70,7 @@
               <p>
                 <span class="font-italic">Show z-scores: </span>
                 <toggle-button
+                  tabindex="0"
                   class="mt-2"
                   :width="55"
                   :value="showZScores"
@@ -81,6 +84,7 @@
                 <br>
                 <span class="font-italic">Release weighted averages: </span>
                 <toggle-button
+                  tabindex="0"
                   class="mt-2"
                   :width="55"
                   :value="studentsCanViewWeightedAverage"
@@ -94,6 +98,7 @@
                 <br>
                 <span class="font-italic">Release letter grades: </span>
                 <toggle-button
+                  tabindex="0"
                   class="mt-2"
                   :width="55"
                   :value="letterGradesReleased"
@@ -107,6 +112,7 @@
                 <br>
                 <span class="font-italic">When determining the letter grades, round the weighted scores to the nearest integer:</span>
                 <toggle-button
+                  tabindex="0"
                   class="mt-2"
                   :width="55"
                   :value="Boolean(roundScores)"
@@ -151,7 +157,10 @@ export default {
     showZScores: false,
     isLoading: true,
     letterGradeFields: [
-      'letter_grade',
+      {
+        key: 'letter_grade',
+        isRowHeader: true
+      },
       {
         key: 'min',
         label: 'Minimum'
