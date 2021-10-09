@@ -11,7 +11,7 @@
         <b-row>
           <img :src="asset('assets/img/391906020_THUMBS_UP_400px.gif')" alt="Thumbs up" width="275">
         </b-row>
-        <b-row><h5>All Question Submissions Successfully Completed.</h5></b-row>
+        <b-row><span class="h5">All Question Submissions Successfully Completed.</span></b-row>
       </b-container>
     </b-modal>
     <b-modal
@@ -89,7 +89,7 @@
           <div v-show="isInstructorLoggedInAsStudent">
             <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
           </div>
-          <b-card v-show="assessmentType !== 'clicker'" header="default" header-html="<h5>Important Information</h5>">
+          <b-card v-show="assessmentType !== 'clicker'" header="default" header-html='<span class="h5">Important Information</span>'>
             <b-card-text>
               <p v-if="public_description" class="mb-2">
                 <span class="font-weight-bold">Description: </span> <span v-html="public_description" />
@@ -117,7 +117,7 @@
           </b-card>
 
           <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default"
-                  header-html="<h5>Upload Compiled PDF Submission</h5>"
+                  header-html="<span class=&quot;h5&quot;>Upload Compiled PDF Submission</span>"
           >
             <file-upload
               ref="upload"
@@ -170,14 +170,16 @@
             </div>
           </b-card>
           <b-card v-show="items.length && assessmentType !== 'clicker'" class="mt-3 mb-3" header="default"
-                  header-html="<h5>Questions</h5>"
+                  header-html="<span class=&quot;h5&quot;>Questions</span>"
           >
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
-            <h5 class="font-italic text-center pb-2">
-              This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{ totalPoints }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
-            </h5>
+            <div class="pb-2 text-center">
+              <span class="h5">
+                This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{ totalPoints }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
+              </span>
+            </div>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
               title="Summary of questions and submissions"
@@ -268,7 +270,7 @@
             </b-table>
           </b-card>
 
-          <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default" header-html="<h5>Statistics</h5>">
+          <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default" header-html="<span class=&quot;h5&quot;>Statistics</span">
             <AssignmentStatistics />
           </b-card>
         </b-container>
@@ -707,3 +709,4 @@ export default {
   }
 }
 </script>
+

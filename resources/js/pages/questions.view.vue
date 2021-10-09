@@ -720,13 +720,13 @@
                   v-if="!['clicker','learning tree'].includes(assessmentType) && (user.role !== 2) ||(user.role ===2 && questionView !== 'basic')"
                   class="text-center"
                 >
-                  <span style="font-size: 1.5rem;">This assignment is worth {{ totalPoints.toString() }} points.</span>
+                  <span class="h4">This assignment is worth {{ totalPoints.toString() }} points.</span>
                 </div>
                 <div
                   v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker' && !isAnonymousUser && !isInstructorWithAnonymousView"
-                  class="text-center"
+                  class="text-center mb-2"
                 >
-                  <span style="font-size: 1.25rem;">
+                  <span class="h5">
                     This question is worth
                     {{ 1 * (questions[currentPage - 1].points) }}
                     point{{ 1 * (questions[currentPage - 1].points) !== 1 ? 's' : '' }}.
