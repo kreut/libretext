@@ -114,7 +114,8 @@
             </b-col>
           </b-row>
         </b-container>
-        <table class="table table-striped">
+        <table class="table table-striped"
+        aria-label="Assignments">
           <thead>
             <tr>
               <th scope="col">

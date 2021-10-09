@@ -127,6 +127,7 @@
               </b-form-group>
               <b-table
                 v-if="pendingBetaCourseApprovals.length"
+                title="Pending course approvals"
                 striped
                 hover
                 :no-border-collapse="true"
@@ -181,6 +182,7 @@
               <b-table
                 striped
                 hover
+                title="Beta courses"
                 :no-border-collapse="true"
                 :fields="fields"
                 :items="betaCourses"

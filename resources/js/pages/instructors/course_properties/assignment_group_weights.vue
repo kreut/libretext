@@ -39,7 +39,11 @@
                 <span v-show="weightHas0Entry">  At least one of your weights has a 0 entry.</span>
               </span>
               </b-alert>
-              <b-table striped hover :fields="assignmentGroupWeightsFields" :items="assignmentGroupWeights"
+              <b-table striped
+                       hover
+                       title="Assignment group weights"
+                       :fields="assignmentGroupWeightsFields"
+                       :items="assignmentGroupWeights"
                        class="border border-1 rounded"
               >
                 <template v-slot:cell(assignment_group)="data">

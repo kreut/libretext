@@ -126,7 +126,9 @@
         <b-card header="default" header-html="Students">
           <b-card-text>
             <div v-if="enrollments.length">
-              <b-table striped hover
+              <b-table striped
+                       hover
+                       title="Students"
                        :fields="fields"
                        :items="enrollments"
               >
@@ -134,16 +136,16 @@
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
                 </template>
                 <template v-slot:cell(email)="data">
-                  <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span>    <a
-                  href="#"
-                  class="pr-1"
-                  aria-label="Copy email"
-                  @click="doCopy(`email-${data.item.id}}`)"
-                >
-                  <font-awesome-icon
-                    :icon="copyIcon"
-                  />
-                </a>
+                  <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span> <a
+                    href="#"
+                    class="pr-1"
+                    aria-label="Copy email"
+                    @click="doCopy(`email-${data.item.id}}`)"
+                  >
+                    <font-awesome-icon
+                      :icon="copyIcon"
+                    />
+                  </a>
                 </template>
                 <template v-slot:cell(actions)="data">
                   <a v-show="sectionOptions.length>1"

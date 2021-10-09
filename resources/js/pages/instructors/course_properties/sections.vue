@@ -128,7 +128,7 @@
                   this course. If you need to change these dates, you can always do so
                   <a href="" @click.prevent="$router.push({name: 'course_properties.general_info'})">here</a>.
                 </p>
-                <b-table striped hover :fields="fields" :items="sections">
+                <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
                     <a id="crn-tooltip"

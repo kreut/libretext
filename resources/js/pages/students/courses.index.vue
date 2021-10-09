@@ -1,14 +1,19 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses" />
+    <PageTitle title="My Courses"/>
     <div class="row mb-4 float-right">
-      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses" />
+      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
       <b-button v-if="!isAnonymousUser" v-b-modal.modal-enroll-in-course variant="primary" size="sm">
         Enroll In Course
       </b-button>
     </div>
     <div v-if="hasEnrolledInCourses">
-      <b-table striped hover :fields="fields" :items="enrolledInCourses">
+      <b-table striped
+               hover
+               :fields="fields"
+               :items="enrolledInCourses"
+               aria-label="Courses"
+      >
         <template v-slot:cell(course_section_name)="data">
           <div class="mb-0">
             <a href="" @click.prevent="getAssignments(data.item.id)">{{ data.item.course_section_name }}</a>
@@ -74,10 +79,10 @@ export default {
         key: 'course_section_name',
         label: 'Course'
       },
-      {
-        key: 'public_description',
-        label: 'Course Description'
-      }
+        {
+          key: 'public_description',
+          label: 'Course Description'
+        }
       ]
       this.getAnonymousUserCourses()
     } else {
@@ -85,13 +90,13 @@ export default {
         key: 'course_section_name',
         label: 'Course - Section'
       },
-      {
-        key: 'public_description',
-        label: 'Course Description'
-      },
-      'instructor',
-      'start_date',
-      'end_date'
+        {
+          key: 'public_description',
+          label: 'Course Description'
+        },
+        'instructor',
+        'start_date',
+        'end_date'
       ]
       this.getEnrolledInCourses()
     }

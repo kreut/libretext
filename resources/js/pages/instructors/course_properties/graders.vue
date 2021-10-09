@@ -156,6 +156,7 @@
                   </b-form-row>
                 </b-form-group>
                 <b-table striped hover
+                         title="Graders"
                          :fields="fields"
                          :items="graders"
                 >
