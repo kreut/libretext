@@ -13,8 +13,8 @@
         </b-alert>
         <p>
           <span class="font-italic">Please confirm that you would like to unenroll <strong>{{
-              studentToUnenroll.name
-            }}</strong> from
+            studentToUnenroll.name
+          }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
         <b-form-group
@@ -33,7 +33,7 @@
             :class="{ 'is-invalid': unenrollStudentForm.errors.has('confirmation') }"
             @keydown="unenrollStudentForm.errors.clear('confirmation')"
           />
-          <has-error :form="unenrollStudentForm" field="confirmation"/>
+          <has-error :form="unenrollStudentForm" field="confirmation" />
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -54,43 +54,45 @@
           Yes, unenroll the student!
         </b-button>
       </template>
-
     </b-modal>
 
     <b-modal
       id="modal-move-student"
       ref="modal"
       title="Move Student To New Section"
+      :no-close-on-esc="true"
     >
-      <b-alert show variant="info"><span class="font-weight-bold">The student's  submissions from the originating section will be removed
-        if the associated assignment doesn't exist in the new section.</span>
+      <b-alert show variant="info">
+        <span class="font-weight-bold">The student's  submissions from the originating section will be removed
+          if the associated assignment doesn't exist in the new section.</span>
       </b-alert>
       <p>
         <span class="font-italic">{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
       </p>
       <b-form ref="form">
         <b-form-group
-          id="move_student"
           label-cols-sm="5"
           label-cols-lg="4"
           label="Move student"
-          label-for="move student"
+          label-for="move_student"
         >
           <div class="mb-2 mr-2">
-            <b-form-select v-model="moveStudentForm.section_id"
+            <b-form-select id="move_student"
+                           v-model="moveStudentForm.section_id"
+                           title="Move student"
                            :options="studentSectionOptions"
                            :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
                            @keydown="moveStudentForm.errors.clear('section_id')"
             />
-            <has-error :form="moveStudentForm" field="section_id"/>
+            <has-error :form="moveStudentForm" field="section_id" />
           </div>
         </b-form-group>
       </b-form>
       <template #modal-footer>
         <span v-if="processingMoveStudent">
-          <b-spinner small type="grow"/>
-                    Processing...
-                  </span>
+          <b-spinner small type="grow" />
+          Processing...
+        </span>
         <b-button
           size="sm"
           class="float-right"
@@ -132,14 +134,32 @@
                   <a href="#" @click="loginAsStudentInCourse(data.item.id)">{{ data.item.name }}</a>
                 </template>
                 <template v-slot:cell(email)="data">
-
-                  <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span> <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy(`email-${data.item.id}}`)"/>
-        </span>
+                  <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span>    <a
+                  href="#"
+                  class="pr-1"
+                  aria-label="Copy email"
+                  @click="doCopy(`email-${data.item.id}}`)"
+                >
+                  <font-awesome-icon
+                    :icon="copyIcon"
+                  />
+                </a>
                 </template>
                 <template v-slot:cell(actions)="data">
-                  <b-icon v-show="sectionOptions.length>1" icon="truck" @click="initMoveStudent(data.item)"/>
-                  <b-icon icon="trash" @click="initUnenrollStudent(data.item)"/>
+                  <a v-show="sectionOptions.length>1"
+                     href="#"
+                     aria-label="Initialize move student"
+                     @click="initMoveStudent(data.item)"
+                  >
+                    <b-icon icon="truck" class="text-muted" />
+                  </a>
+                  <a
+                    href="#"
+                    aria-label="Initialize unenroll student"
+                    @click="initUnenrollStudent(data.item)"
+                  >
+                    <b-icon icon="trash" class="text-muted" />
+                  </a>
                 </template>
               </b-table>
             </div>
@@ -278,14 +298,18 @@ export default {
         }
         this.enrollments = data.enrollments
         this.sectionOptions = data.sections
-        this.fields = ['name',
+        this.fields = [
+          {
+            key: 'name',
+            isRowHeader: true
+          },
           'email',
           'enrollment_date',
           {
             key: 'section',
             label: 'Section'
           },
-        'actions']
+          'actions']
       } catch (error) {
         this.$noty.error(error.message)
       }
