@@ -64,14 +64,13 @@
     >
       <b-form ref="form">
         <b-form-group
-          id="email"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Email"
-          label-for="email"
+          label-for="grader_email"
         >
           <b-form-input
-            id="email"
+            id="grader_email"
             v-model="graderForm.email"
             placeholder="Email Address"
             type="text"
@@ -134,20 +133,22 @@
                 >
                   <template slot="label">
                     Head Grader
-                    <b-icon id="head-grader-tooltip"
-                            v-b-tooltip.hover
-                            class="text-muted"
-                            icon="question-circle"
-                    />
-                    <b-tooltip target="head-grader-tooltip" triggers="hover">
+                    <a id="head-grader-tooltip"
+                       href="#"
+                    >
+                      <b-icon icon="question-circle" class="text-muted" />
+                    </a>
+                    <b-tooltip target="head-grader-tooltip"
+                               triggers="hover focus"
+                               delay="500">
                       Optionally choose a head grader. Head graders can be sent a summary of ungraded assignments by
                       visiting the Grading Notifications page.
                     </b-tooltip>
                   </template>
                   <b-form-row>
                     <b-col lg="6">
-                      <b-form-select id="head_grader"
-                                     v-model="headGrader"
+                      <b-form-select v-model="headGrader"
+                                     title="Select a head grader"
                                      :options="graderOptions"
                                      @change="submitHeadGrader()"
                       />
@@ -162,8 +163,20 @@
                     {{ formatSections(data.item.sections) }}
                   </template>
                   <template v-slot:cell(actions)="data">
-                    <b-icon icon="pencil" @click="initEditSections(data.item)"/>
-                    <b-icon icon="trash" @click="initRemoveGrader(data.item.user_id)"/>
+                    <a
+                      href="#"
+                      aria-label="Edit Section"
+                      @click="initEditSections(data.item)"
+                    >
+                      <b-icon icon="pencil" class="text-muted"/>
+                    </a>
+                    <a
+                      href="#"
+                      aria-label="Remove grader"
+                      @click="initRemoveGrader(data.item.user_id)"
+                    >
+                      <b-icon icon="trash" class="text-muted"/>
+                    </a>
                   </template>
                 </b-table>
               </div>
@@ -207,7 +220,10 @@ export default {
     sectionOptions: [],
     graderFormType: 'addGrader',
     fields: [
-      'name',
+      {
+        key: 'name',
+        isRowHeader: true
+      },
       'email',
       {
         key: 'sections',
