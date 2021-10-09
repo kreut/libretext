@@ -40,15 +40,16 @@
               </p>
 
               <b-form-group
-                id="frequency_of_reminders"
                 label-cols-sm="4"
                 label-cols-lg="3"
                 label="Frequency of reminders"
-                label-for="Frequency of reminders"
+                label-for="frequency_of_reminders"
               >
                 <b-form-row>
                   <div class="col-md-5">
                     <b-form-select v-model="graderNotificationsForm.num_reminders_per_week"
+                                   id="frequency_of_reminders"
+                                   title="Frequency of reminders"
                                    :options="numRemindersPerWeekOptions"
                                    :class="{ 'is-invalid': graderNotificationsForm.errors.has('num_reminders_per_week') }"
                                    @change="graderNotificationsForm.errors.clear();resetForwardEmails($event)"
