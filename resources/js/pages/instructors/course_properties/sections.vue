@@ -150,13 +150,14 @@
                     <div class="mb-0">
                       <b-tooltip :target="getTooltipTarget('edit',data.item.id)"
                                  delay="500"
+                                 triggers="hover focus"
                       >
                         Edit Section
                       </b-tooltip>
                       <a :id="getTooltipTarget('edit',data.item.id)"
                          href="#"
                          class="pr-1"
-                         aria-label="Refresh access code"
+                         aria-label="Edit Section"
                          @click="initEditSection(data.item)"
                       >
                         <b-icon icon="pencil" class="text-muted" />
@@ -164,6 +165,7 @@
 
                       <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
                                  delay="500"
+                                 triggers="hover focus"
                       >
                         Delete Section
                       </b-tooltip>
@@ -179,7 +181,7 @@
                       <span class="text-info">
                         <b-tooltip :target="getTooltipTarget('refreshAccessCode',data.item.id)"
                                    delay="500"
-                                   triggers="hover focus"
+                                   triggers="hover"
                         >
 
                           You can refresh the access code if you would like to render the current access code invalid.
