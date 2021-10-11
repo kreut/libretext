@@ -40,7 +40,7 @@
       <!-- Submit Button -->
       <hr>
       <div class="float-right">
-        <b-button variant="primary" @click="update" size="sm">
+        <b-button variant="primary" size="sm" @click="update">
           {{ $t('update') }}
         </b-button>
       </div>
@@ -60,6 +60,7 @@ export default {
   },
 
   data: () => ({
+    allFormErrors: [],
     form: new Form({
       password: '',
       password_confirmation: ''
@@ -75,7 +76,7 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
         } else {
-          this.allFormErrors = this.assignmentGroupForm.errors.flatten()
+          this.allFormErrors = this.form.errors.flatten()
           this.$bvModal.show('modal-form-errors-reset-password')
         }
       }

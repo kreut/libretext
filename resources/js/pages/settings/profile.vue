@@ -1,10 +1,13 @@
 <template>
   <card title="Your Info">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-profile'"/>
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Name -->
-      <RequiredText />
+      <RequiredText/>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name<Asterisk /></label>
+        <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
           <input id="first_name"
                  v-model="form.first_name"
@@ -14,11 +17,13 @@
                  name="first_name"
                  placeholder="First"
           >
-          <has-error :form="form" field="first_name" />
+          <has-error :form="form" field="first_name"/>
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name<Asterisk /></label>
+        <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
           <input id="last_name"
                  v-model="form.last_name"
@@ -28,43 +33,51 @@
                  name="last_name"
                  placeholder="Last"
           >
-          <has-error :form="form" field="last_name" />
+          <has-error :form="form" field="last_name"/>
         </div>
       </div>
       <div v-if="user.role === 3" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk /></label>
+        <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
           <input id="student_id"
                  v-model="form.student_id"
                  :class="{ 'is-invalid': form.errors.has('student_id') }"
                  class="form-control"
                  type="text"
-                 name="student_id">
-          <has-error :form="form" field="student_id" />
+                 name="student_id"
+          >
+          <has-error :form="form" field="student_id"/>
         </div>
       </div>
       <!-- Email -->
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="email">Email<Asterisk/></label>
+        <label class="col-md-3 col-form-label text-md-right" for="email">Email
+          <Asterisk/>
+        </label>
         <div class="col-md-7">
           <input id="email"
                  v-model="form.email"
                  :class="{ 'is-invalid': form.errors.has('email') }"
                  class="form-control"
                  type="email"
-                 name="email">
-          <has-error :form="form" field="email" />
+                 name="email"
+          >
+          <has-error :form="form" field="email"/>
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk/></label>
+        <label class="col-md-3 col-form-label text-md-right">Time zone
+          <Asterisk/>
+        </label>
         <div class="col-md-7" @change="removeTimeZoneError()">
           <b-form-select v-model="form.time_zone"
                          title="time zone"
                          :options="timeZones"
                          :class="{ 'is-invalid': form.errors.has('time_zone') }"
           />
-          <has-error :form="form" field="time_zone" />
+          <has-error :form="form" field="time_zone"/>
         </div>
       </div>
       <!-- Submit Button -->
@@ -83,15 +96,17 @@ import Form from 'vform'
 import { mapGetters } from 'vuex'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   scrollToTop: false,
-
+  components: { AllFormErrors },
   metaInfo () {
     return { title: this.$t('settings') }
   },
 
   data: () => ({
+    allFormErrors: [],
     form: new Form({
       first_name: '',
       last_name: '',
@@ -134,6 +149,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-profile')
         }
       }
     }
