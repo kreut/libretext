@@ -53,7 +53,7 @@
         </b-button>
         <b-button
           variant="primary"
-          size="sm"
+          size="sm"getTooltipTarget
           class="float-right"
           :disabled="disableYesImportCourse"
           @click="handleImportCourse"

@@ -1,5 +1,7 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student" />
     <b-modal
       id="modal-unenroll-student"
       ref="modal"
@@ -17,13 +19,16 @@
           }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
+        <RequiredText :plural="false"/>
         <b-form-group
-          id="confirmation"
           label-cols-sm="1"
           label-cols-lg="2"
           label="Confirmation"
           label-for="Confirmation"
         >
+          <template slot="label">
+            Confirmation<Asterisk />
+          </template>
           <b-form-input
             id="confirmation"
             v-model="unenrollStudentForm.confirmation"
@@ -69,6 +74,7 @@
       <p>
         <span class="font-italic">{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
       </p>
+      <RequiredText :plural="false"/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -76,10 +82,13 @@
           label="Move student"
           label-for="move_student"
         >
+          <template slot="label">
+            Move Student<Asterisk />
+          </template>
           <div class="mb-2 mr-2">
-            <b-form-select id="move_student"
-                           v-model="moveStudentForm.section_id"
-                           title="Move student"
+            <b-form-select
+              v-model="moveStudentForm.section_id"
+              title="Move student"
                            :options="studentSectionOptions"
                            :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
                            @keydown="moveStudentForm.errors.clear('section_id')"
@@ -148,14 +157,28 @@
                   </a>
                 </template>
                 <template v-slot:cell(actions)="data">
+                  <b-tooltip :target="getTooltipTarget('moveStudent',data.item.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                   Move student to a different section
+                  </b-tooltip>
                   <a v-show="sectionOptions.length>1"
+                     :id="getTooltipTarget('moveStudent',data.item.id)"
                      href="#"
                      aria-label="Initialize move student"
                      @click="initMoveStudent(data.item)"
                   >
                     <b-icon icon="truck" class="text-muted" />
                   </a>
+                  <b-tooltip :target="getTooltipTarget('unEnrollStudent',data.item.id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Unenroll student
+                  </b-tooltip>
                   <a
+                    :id="getTooltipTarget('unEnrollStudent',data.item.id)"
                     href="#"
                     aria-label="Initialize unenroll student"
                     @click="initUnenrollStudent(data.item)"
@@ -181,20 +204,24 @@
 import axios from 'axios'
 import Form from 'vform'
 import { mapGetters } from 'vuex'
+import { getTooltipTarget, initTooltips } from '~/helpers/Tooptips'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   middleware: 'auth',
   components: {
     Loading,
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    AllFormErrors
   },
   data: () => ({
+    allFormErrors: [],
     processingMoveStudent: false,
     copyIcon: faCopy,
     studentToUnenroll: {},
@@ -225,6 +252,8 @@ export default {
     this.loginAsStudentInCourse = loginAsStudentInCourse
   },
   mounted () {
+    this.getTooltipTarget = getTooltipTarget
+    initTooltips(this)
     this.courseId = this.$route.params.courseId
     this.getEnrolledStudents()
   },
@@ -251,6 +280,9 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
           return false
+        } else {
+          this.allFormErrors = this.unenrollStudentForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-unenroll-student')
         }
       }
       this.unenrollStudentForm.confirmation = ''
@@ -273,6 +305,9 @@ export default {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
           return false
+        } else {
+          this.allFormErrors = this.moveStudentForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-move-student')
         }
       }
     },
