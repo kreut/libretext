@@ -1,6 +1,5 @@
 <template>
   <div class="main-layout">
-    <vue-announcer />
     <b-modal
       id="modal-accessibility"
       ref="modal"
@@ -19,6 +18,11 @@
         </b-button>
       </template>
     </b-modal>
+    <div class="text-center">
+      <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
+        <span class="font-weight-bold">Production</span>
+      </b-alert>
+    </div>
     <div v-if="!inIFrame">
       <navbar/>
     </div>
@@ -35,8 +39,12 @@
           more information contact us at <a href="mailto:info@libretexts.org.">info@libretexts.org.</a>
         </p>
         <p class="pt-3 pl-3 pr-4">
-          To improve the accessibility of this site, we can add an <a class="accessible-link" href="" @click.prevent="addAccessibilityCookie">accessibility
-          cookie</a> to your browser.  This cookie can also be <a class="accessible-link" href="" @click.prevent="removeAccessibilityCookie">removed</a> at any time.
+          To improve the accessibility of this site, we can add an <a class="accessible-link" href=""
+                                                                      @click.prevent="addAccessibilityCookie"
+        >accessibility
+          cookie</a> to your browser. This cookie can also be <a class="accessible-link" href=""
+                                                                 @click.prevent="removeAccessibilityCookie"
+        >removed</a> at any time.
         </p>
 
         <div class="d-flex  justify-content-center flex-wrap">
@@ -67,6 +75,8 @@ export default {
     Navbar
   },
   data: () => ({
+    showEnvironment: window.config.showEnvironment,
+    environment: window.config.environment,
     inIFrame: true,
     accessibilityMessage: ''
   }),

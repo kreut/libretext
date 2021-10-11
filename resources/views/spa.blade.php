@@ -6,6 +6,8 @@
       'githubAuth' => config('services.github.client_id'),
       'libretextsAuth' => config('services.libretexts.client_id'),
       'isMe' => config('myconfig.is_me_cookie') === ($_COOKIE['IS_ME'] ?? 'no cookie present'),
+      'showEnvironment' => $_COOKIE['show_environment'] ?? false,
+      'environment' => config('app.env'),
       'isAdmin' => \App\Helpers\Helper::isAdmin(),
       'toggleColors' => isset($_COOKIE['accessibility'])
                     ? [  'checked' => '#007E00', 'unchecked' => '#6c757d' ]
