@@ -1,5 +1,6 @@
 <template>
   <card title="Reset Password">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-reset-password'"/>
     <form @submit.prevent="update" @keydown="form.onKeydown($event)">
       <!-- Password -->
       <RequiredText/>
@@ -49,10 +50,11 @@
 
 <script>
 import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   scrollToTop: false,
-
+  components: { AllFormErrors },
   metaInfo () {
     return { title: this.$t('settings') }
   },
@@ -72,6 +74,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.assignmentGroupForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-reset-password')
         }
       }
     }
