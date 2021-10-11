@@ -1,13 +1,16 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-create-assignment-group'"/>
     <b-tooltip target="private-description-tooltip"
                delay="250"
-               triggers="hover focus">
+               triggers="hover focus"
+    >
       An optional description for the assignment. This description will only be viewable by you.
     </b-tooltip>
     <b-tooltip target="public-description-tooltip"
                delay="250"
-               triggers="hover focus">
+               triggers="hover focus"
+    >
       An optional description for the assignment. This description will be viewable by your students.
     </b-tooltip>
     <b-tooltip target="compiled_pdf_tooltip"
@@ -206,18 +209,20 @@
             the late policy (if appropriate), whether you include this in the final score, student notifications, and the assign to information.</span>
         </b-alert>
       </div>
+      <RequiredText/>
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Name"
         label-for="name"
       >
+        <template slot="label">
+          Name<Asterisk/>
+        </template>
         <b-form-row>
-          <b-col lg="7">
+          <b-col lg="10">
             <b-form-input
               id="name"
               v-model="form.name"
-              lg="7"
               :disabled="isBetaAssignment"
               type="text"
               :class="{ 'is-invalid': form.errors.has('name') }"
@@ -236,10 +241,10 @@
           Public Description
           <a id="public-description-tooltip"
              href="#"
-             class="text-muted">
+             class="text-muted"
+          >
             <b-icon icon="question-circle"/>
           </a>
-
         </template>
         <b-form-textarea
           id="public_description"
@@ -259,10 +264,10 @@
           Private Description
           <a id="private-description-tooltip"
              href="#"
-             class="text-muted">
+             class="text-muted"
+          >
             <b-icon icon="question-circle"/>
           </a>
-
         </template>
         <b-form-textarea
           id="private_description"
@@ -277,8 +282,10 @@
         label-for="assignment_group"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Assignment Group"
       >
+        <template slot="label">
+          Assignment Group<Asterisk/>
+        </template>
         <b-form-row>
           <b-col lg="5">
             <b-form-select v-model="form.assignment_group_id"
@@ -293,17 +300,18 @@
             id="modal-create-assignment-group"
             ref="modal"
             title="Create Assignment Group"
-            ok-title="Submit"
-            @ok="handleCreateAssignmentGroup"
-            @hidden="resetAssignmentGroupForm"
+            :no-close-on-esc="true"
           >
+            <RequiredText/>
             <b-form-row>
               <b-form-group
-                label-cols-sm="4"
-                label-cols-lg="5"
-                label="Assignment Group"
+                label-cols-sm="5"
+                label-cols-lg="6"
                 label-for="create_assignment_group"
               >
+                <template slot="label">
+                  Assignment Group<Asterisk/>
+                </template>
                 <b-form-input
                   id="create_assignment_group"
                   v-model="assignmentGroupForm.assignment_group"
@@ -315,6 +323,23 @@
                 <has-error :form="assignmentGroupForm" field="assignment_group"/>
               </b-form-group>
             </b-form-row>
+            <template #modal-footer>
+              <b-button
+                size="sm"
+                class="float-right"
+                @click="resetAssignmentGroupForm;$bvModal.hide('modal-create-assignment-group')"
+              >
+                Cancel
+              </b-button>
+              <b-button
+                variant="primary"
+                size="sm"
+                class="float-right"
+                @click="handleCreateAssignmentGroup"
+              >
+                Submit
+              </b-button>
+            </template>
           </b-modal>
         </b-form-row>
       </b-form-group>
@@ -323,9 +348,11 @@
         id="source"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Source"
         label-for="source"
       >
+        <template slot="label">
+          Source<Asterisk/>
+        </template>
         <b-form-radio-group
           id="source"
           v-model="form.source"
@@ -351,9 +378,11 @@
         id="scoring_type"
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Scoring Type"
         label-for="scoring_type"
       >
+        <template slot="label">
+          Scoring Type<Asterisk/>
+        </template>
         <b-form-radio-group id="scoring_type" v-model="form.scoring_type" stacked
                             :disabled="isLocked() || isBetaAssignment"
         >
@@ -376,9 +405,11 @@
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
-          label="Default Points/Question"
           label-for="default_points_per_question"
         >
+          <template slot="label">
+            Default Points/Question<Asterisk/>
+          </template>
           <b-form-row>
             <b-col lg="3">
               <b-form-input
@@ -401,9 +432,11 @@
       v-show="form.source === 'a'"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Assessment Type"
       label-for="assessment_type"
     >
+      <template slot="label">
+        Assessment Type<Asterisk/>
+      </template>
       <b-form-radio-group id="assessment_type"
                           v-model="form.assessment_type"
                           stacked
@@ -442,11 +475,10 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Default Time To Submit"
         label-for="default_clicker_time_to_submit"
       >
         <template slot="label">
-          Default Clicker Time To Submit <span id="default_clicker_time_to_submit_tooltip"
+          Default Clicker Time To Submit<Asterisk/> <span id="default_clicker_time_to_submit_tooltip"
                                                class="text-muted"
         ><b-icon
           icon="question-circle"
@@ -479,11 +511,12 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Minimum Number of Minutes Exploring Learning Tree <span id="min_time_needed_in_learning_tree_tooltip"
-                                                                  class="text-muted"
-        ><b-icon
-          icon="question-circle"
-        /></span>
+          Minimum Number of Minutes Exploring Learning Tree<Asterisk/>
+          <span id="min_time_needed_in_learning_tree_tooltip"
+                class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -503,18 +536,18 @@
       <b-form-group
         label-cols-sm="7"
         label-cols-lg="6"
-        label="Percent Earned For Exploring Learning Tree"
         label-for="percent_earned_for_exploring_learning_tree"
       >
         <template slot="label">
           <b-icon
             icon="tree" variant="success"
           />
-          Percent Earned For Exploring Learning Tree <span id="percent_earned_for_exploring_learning_tree_tooltip"
-                                                           class="text-muted"
-        ><b-icon
-          icon="question-circle"
-        /></span>
+          Percent Earned For Exploring Learning Tree<Asterisk/>
+          <span id="percent_earned_for_exploring_learning_tree_tooltip"
+                class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -540,9 +573,10 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Submission Count Percent Decrease <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+          Submission Count Percent Decrease<Asterisk/>
+          <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -564,11 +598,13 @@
       v-show="form.assessment_type === 'delayed' && form.source === 'a'"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="File Upload Mode"
       label-for="file_upload_mode"
     >
-      <b-form-radio-group       id="file_upload_mode"
-                                v-model="form.file_upload_mode"
+      <template slot="label">
+        File Upload Mode<Asterisk/>
+      </template>
+      <b-form-radio-group id="file_upload_mode"
+                          v-model="form.file_upload_mode"
                           stacked
                           :disabled="isLocked() || isBetaAssignment"
                           name="file_upload_mode"
@@ -598,11 +634,10 @@
       v-show="form.assessment_type === 'delayed' && form.source === 'a' && parseInt(form.file_upload_mode) !==1"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Default Open-ended Submission Type"
       label-for="default_open_ended_submission_type"
     >
       <template slot="label">
-        Default Open-ended Submission Type
+        Default Open-ended Submission Type<Asterisk/>
         <span id="default_open_ended_submission_type_tooltip">
           <b-icon class="text-muted" icon="question-circle"/></span>
       </template>
@@ -646,11 +681,13 @@
       v-show="form.source === 'a'"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Late Policy"
       label-for="late_policy"
     >
-      <b-form-radio-group       id="late_policy"
-                                v-model="form.late_policy" stacked
+      <template slot="label">
+        Late Policy<Asterisk/>
+      </template>
+      <b-form-radio-group id="late_policy"
+                          v-model="form.late_policy" stacked
                           :disabled="isLocked()"
       >
         <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
@@ -692,9 +729,11 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Late Deduction Applied"
         label-for="late_deduction_application_period"
       >
+        <template slot="label">
+          Late Deduction Applied<Asterisk/>
+        </template>
         <b-form-radio-group v-model="form.late_deduction_applied_once"
                             stacked
                             :disabled="isLocked()"
@@ -731,11 +770,14 @@
       v-if="!lms"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Include In Final Score"
       label-for="include_in_final_score"
     >
-      <b-form-radio-group id="nclude_in_final_score"
-      v-model="form.include_in_weighted_average" stacked>
+      <template slot="label">
+        Include In Final Score<Asterisk/>
+      </template>
+      <b-form-radio-group id="include_in_final_score"
+                          v-model="form.include_in_weighted_average" stacked
+      >
         <b-form-radio name="include_in_weighted_average" value="1">
           Include the assignment in computing a final
           weighted score
@@ -750,9 +792,11 @@
       v-show="form.source === 'x'"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Total Points"
       label-for="external_source_points"
     >
+      <template slot="label">
+        Total Points<Asterisk/>
+      </template>
       <b-form-row>
         <b-col lg="3">
           <b-form-input
@@ -773,7 +817,7 @@
       v-show="form.source === 'a' && !lms"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Instructions (Optional)"
+      label="Instructions"
       label-for="instructions"
     >
       <b-form-row>
@@ -792,11 +836,13 @@
       v-show="form.source === 'a'"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Randomizations"
       label-for="randomizations"
     >
-      <b-form-radio-group       id="randomizations"
-                                v-model="form.randomizations" stacked
+      <template slot="label">
+        Randomizations<Asterisk/>
+      </template>
+      <b-form-radio-group id="randomizations"
+                          v-model="form.randomizations" stacked
                           :disabled="isLocked() || isBetaAssignment"
       >
         <b-form-radio value="0" @change="resetRandomizations">
@@ -812,13 +858,13 @@
       v-show="form.source === 'a' && parseInt(form.randomizations) === 1"
       label-cols-sm="4"
       label-cols-lg="3"
-      label="Number of randomized assessments"
       label-for="number_of_randomized_assessments"
     >
       <template slot="label">
-        Number of randomized assessments <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
-        icon="question-circle"
-      /></span>
+        Number of randomized assessments<Asterisk/>
+        <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
+          icon="question-circle"
+        /></span>
       </template>
       <b-form-row>
         <b-col lg="2">
@@ -840,11 +886,12 @@
       label-for="notifications"
     >
       <template slot="label">
-        Notifications <span id="notifications_tooltip" class="text-muted"><b-icon
-        icon="question-circle"
-      /></span>
+        Notifications<Asterisk/>
+        <span id="notifications_tooltip" class="text-muted"><b-icon
+          icon="question-circle"
+        /></span>
       </template>
-      <b-form-radio-group       id="notifications" v-model="form.notifications" stacked>
+      <b-form-radio-group id="notifications" v-model="form.notifications" stacked>
         <b-form-radio name="notifications" value="1">
           On
         </b-form-radio>
@@ -882,12 +929,13 @@
         label-for="assign_to"
       >
         <template slot="label">
-          Assign to <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+          Assign to<Asterisk/>
+          <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
         </template>
         <b-form-row>
           <b-col lg="5">
-            <b-form-select         id="assign_to"
-                                   v-model="assignTo.selectedGroup"
+            <b-form-select id="assign_to"
+                           v-model="assignTo.selectedGroup"
                            :options="assignToGroups"
                            :class="{ 'is-invalid': form.errors.has(`groups_${index}`) }"
                            @change="updateAssignTos(assignTo)"
@@ -911,9 +959,11 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Available on"
         :label-for="`available_from_${index}`"
       >
+        <template slot="label">
+          Available on<Asterisk/>
+        </template>
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
@@ -937,9 +987,11 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label="Due Date"
         label-for="due_date"
       >
+        <template slot="label">
+          Due Date<Asterisk/>
+        </template>
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
@@ -968,11 +1020,12 @@
         label-for="final_submission_deadline"
       >
         <template slot="label">
-          Final Submission Deadline <span id="final_submission_deadline_tooltip"
-                                          class="text-muted"
-        ><b-icon
-          icon="question-circle"
-        /></span>
+          Final Submission Deadline<Asterisk/>
+          <span id="final_submission_deadline_tooltip"
+                class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1025,10 +1078,12 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
   components: {
-    ckeditor: CKEditor.component
+    ckeditor: CKEditor.component,
+    AllFormErrors
   },
   middleware: 'auth',
   props: {
@@ -1047,9 +1102,10 @@ export default {
     courseId: { type: Number, default: 0 },
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },
-    courseStartDate: { type: String, default: '' },
+    courseStartDate: { type: String, default: '' }
   },
   data: () => ({
+    allFormErrors: [],
     richEditorConfig: {
       toolbar: [
         { name: 'clipboard', items: ['Cut', 'Copy', 'Paste', '-', 'Undo', 'Redo'] },
@@ -1229,6 +1285,7 @@ export default {
       }
     },
     async initAssessmentTypeSwitch (assessmentType) {
+      let originalAssessmentType = this.form.assessment_type
       if (!this.assignmentId) {
         this.switchAssessmentType(assessmentType)
         return false
@@ -1240,12 +1297,12 @@ export default {
 
           if (data.type === 'error') {
             this.$noty.error(data.message)
-            this.form.assessment_type = this.originalAssignment.assessment_type
+            this.form.assessment_type = originalAssessmentType
             return false
           }
           this.switchAssessmentType(assessmentType)
         } catch (error) {
-          this.form.assessment_type = this.originalAssignment.assessment_type
+          this.form.assessment_type = originalAssessmentType
           this.$noty.error(error.message)
         }
       })
@@ -1369,6 +1426,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.assignmentGroupForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-create-assignment-group')
         }
       }
     },
