@@ -174,18 +174,24 @@
     </b-modal>
     <b-modal id="modal-confirm-override-assignment-scores"
              title="Confirm override assignment scores"
-             ok-title="Let's do it!"
-             ok-variant="success"
-             cancel-title="Cancel"
-             cancel-variant="danger"
              :no-close-on-esc="true"
-             @ok="submitOverrideAssignmentScores()"
     >
       <p>
         I have saved a copy of the current scores to my local computer. I understand that Adapt cannot retrieve
         any of my past scores.
       </p>
       <p>Would you like Adapt to override your scores for <strong>{{ assignmentName }}</strong>?</p>
+
+      <template #modal-footer="{ cancel, ok }">
+        <b-button size="sm" variant="danger" @click="$bvModal.hide('modal-confirm-override-assignment-scores')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="success"
+                  @click="submitOverrideAssignmentScores()"
+        >
+          Let's do it!
+        </b-button>
+      </template>
     </b-modal>
     <b-modal id="modal-override-assignment-scores"
              ref="modal"
@@ -474,11 +480,16 @@ export default {
         if (data.type === 'success') {
           this.isLoading = true
           this.$bvModal.hide('modal-override-assignment-scores')
+          this.$bvModal.hide('modal-confirm-override-assignment-scores')
           await this.getScores()
           this.isLoading = false
+        } else {
+          this.$noty[data.type](data.message)
         }
       } catch (error) {
         this.$noty.error(error.message)
+        this.$bvModal.hide('modal-override-assignment-scores')
+        this.$bvModal.hide('modal-confirm-override-assignment-scores')
       }
     },
     openConfirmOverrideAssignmentScoresModal () {
@@ -510,8 +521,6 @@ export default {
           }
         } else {
           this.fromToScores = data.from_to_scores
-          this.assignmentOverrideScoresFileForm.errors.clear('overrideScoresFile')
-          this.$noty.success(data.message)
         }
       } catch (error) {
         if (error.message.includes('status code 413')) {

@@ -253,7 +253,6 @@ class ScoreController extends Controller
                     'current_score' => $current_scores_by_user_id[$user_id] ?? '-'];
             }
             $response['from_to_scores'] = $from_to_scores;
-            $response['message'] = 'Your scores have been uploaded.';
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());
