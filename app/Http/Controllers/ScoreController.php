@@ -228,7 +228,7 @@ class ScoreController extends Controller
             $override_score_errors = [];
             foreach ($override_scores as $override_score) {
                 $score = $this->fixCSV($override_score['Score'], true);
-                if ($score !== '' && !is_numeric($score) || $score < 0) {
+                if ($score !== '' && (!is_numeric($score) || $score < 0)) {
                     $override_score_errors[] = $override_score['Name'];
                 }
             }
