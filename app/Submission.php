@@ -67,7 +67,6 @@ class Submission extends Model
     }
 
 
-
     /**
      * @param StoreSubmission $request
      * @param Submission $submission
@@ -87,7 +86,7 @@ class Submission extends Model
                           LtiLaunch              $ltiLaunch,
                           LtiGradePassback       $ltiGradePassback,
                           DataShop               $dataShop,
-                          AssignmentSyncQuestion $assignmentSyncQuestion)
+                          AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
 
         $response['type'] = 'error';//using an alert instead of a noty because it wasn't working with post message
@@ -100,14 +99,19 @@ class Submission extends Model
         $assignment = $Assignment->find($data['assignment_id']);
 
 
-        if ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession())){
+        if ($assignment->course->anonymous_users && (Helper::isAnonymousUser() || Helper::hasAnonymousUserSession())) {
             $response['type'] = 'success';
             return $response;
         }
 
-        $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
             ->where('question_id', $data['question_id'])
-            ->select('points', 'open_ended_submission_type')
+            ->select('points',
+                'question_id',
+                'assignment_id',
+                'completion_scoring_mode',
+                'open_ended_submission_type')
             ->first();
 
         if (!$assignment_question) {
@@ -549,7 +553,23 @@ class Submission extends Model
 
     public function computeScoreForCompletion($assignment_question)
     {
-        $open_ended_submission_type_factor = in_array($assignment_question->open_ended_submission_type, ['file', 'audio', 'text']) ? .5 : 1;
-        return floatval($assignment_question->points) * $open_ended_submission_type_factor;
+        $completion_scoring_factor = 1;
+        if (in_array($assignment_question->open_ended_submission_type, ['file', 'audio', 'text'])) {
+            if ($assignment_question->completion_scoring_mode === '100% for either') {
+                $open_ended_submission_exists = DB::table('submission_files')->where('user_id', Auth::user()->id)
+                    ->where('assignment_id', $assignment_question->assignment_id)
+                    ->where('question_id', $assignment_question->question_id)
+                    ->first();
+                if ( $open_ended_submission_exists){
+                    $completion_scoring_factor = 0;//don't give more points
+                }
+            } else {
+                $percent = preg_replace('~\D~', '', $assignment_question->completion_scoring_mode);
+                $completion_scoring_factor = floatval($percent) / 100;
+
+            }
+
+        }
+        return floatval($assignment_question->points) * $completion_scoring_factor;
     }
 }

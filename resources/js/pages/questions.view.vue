@@ -1,5 +1,63 @@
 <template>
   <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'" />
+    <b-modal
+      id="modal-update-completion-scoring-mode"
+      ref="modalUpdateCompletionScoringMode"
+      title="Update Completion Scoring Mode"
+      :no-close-on-esc="true"
+      size="lg"
+    >
+      <RequiredText />
+      <b-form-group
+        label-cols-sm="5"
+        label-cols-lg="4"
+        label-for="completion_scoring_mode"
+      >
+        <template slot="label">
+          Completion Scoring Mode
+          <Asterisk />
+        </template>
+
+        <b-form-radio-group id="completion_scoring_mode"
+                            v-model="completionScoringModeForm.completion_scoring_mode"
+                            stacked
+                            :class="{ 'is-invalid': completionScoringModeForm.errors.has('completion_scoring_mode') }"
+                            @keydown="completionScoringModeForm.errors.clear('completion_scoring_mode')"
+        >
+          <b-form-radio value="100% for either">
+            100% of points for either auto-graded or open-ended submission
+          </b-form-radio>
+          <b-form-radio value="split">
+            <input v-model="completionScoringModeForm.completion_split_auto_graded_percentage"
+                   class="percent-input"
+                   @keyup="completionSplitOpenEndedPercentage = updateCompletionSplitOpenEndedSubmissionPercentage(completionScoringModeForm)"
+                   @click="completionScoringModeForm.completion_scoring_mode = 'split'"
+                   @keydown="completionScoringModeForm.completion_scoring_mode = 'split'"
+            >% of points awarded for an auto-graded
+            submission<br>
+            <span v-if="!isNaN(parseFloat(completionSplitOpenEndedPercentage))">
+              <input v-model="completionSplitOpenEndedPercentage"
+                     class="percent-input"
+                     disabled
+                     :aria-disabled="true"
+              >%
+              of the points awarded for an open-ended submission
+            </span>
+          </b-form-radio>
+        </b-form-radio-group>
+        <has-error :form="completionScoringModeForm" field="completion_scoring_mode" />
+      </b-form-group>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-update-completion-scoring-mode')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="updateCompletionScoringMode(questions[currentPage-1].id)">
+          Update
+        </b-button>
+      </template>
+    </b-modal>
+
     <b-modal
       id="modal-attribution"
       ref="modalAttribution"
@@ -15,7 +73,7 @@
         />
       </div>
     </b-modal>
-    <div v-if="modalEnrollInCourseIsShown" style="height: 375px"/>
+    <div v-if="modalEnrollInCourseIsShown" style="height: 375px" />
     <b-modal
       id="modal-not-updated"
       ref="modalNotUpdated"
@@ -39,7 +97,7 @@
       <b-container>
         <b-row>
           <span class="font-italic font-weight-bold" style="font-size: large">
-            <font-awesome-icon :icon="treeIcon" class="text-success"/>
+            <font-awesome-icon :icon="treeIcon" class="text-success" />
             {{ submissionDataMessage }}
           </span>
         </b-row>
@@ -69,7 +127,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
       </b-alert>
     </b-modal>
     <b-modal
@@ -86,7 +144,7 @@
           >
         </b-row>
         <b-row>
-          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
         </b-row>
       </b-container>
     </b-modal>
@@ -101,7 +159,7 @@
         </p>
       </div>
     </b-alert>
-    <EnrollInCourse :is-lms="isLMS"/>
+    <EnrollInCourse :is-lms="isLMS" />
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -110,7 +168,7 @@
            type="contact_grader"
            :subject="getSubject()"
     />
-    <CannotAddAssessmentToBetaAssignmentModal/>
+    <CannotAddAssessmentToBetaAssignmentModal />
     <b-modal
       id="modal-cannot-update-solution"
       ref="modalCannotUpdateSolutionIfBetaAssignment"
@@ -189,7 +247,7 @@
           </b-form-row>
           <div v-show="autoAttribution">
             <span v-show="!autoAttributionHTML.length" class="font-weight-bold font-italic">No licensing information is available.</span>
-            <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML"/>
+            <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML" />
           </div>
           <ckeditor v-show="!autoAttribution"
                     v-model="propertiesForm.attribution"
@@ -243,13 +301,13 @@
         </b-button>
       </template>
     </b-modal>
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -286,19 +344,19 @@
       <div class="mb-2">
         <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')" />
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Page ID:</span> <span id="pageId">{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')" />
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')" />
         </span>
       </div>
       <div class="mb-2">
@@ -306,13 +364,13 @@
           currentUrl
         }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')" />
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
                                                                     v-html="technologySrc"
-      />
+        />
       </div>
     </b-modal>
 
@@ -367,11 +425,10 @@
                       :class="{ 'is-invalid': solutionTextForm.errors.has('solution_text') }"
                       @keydown="solutionTextForm.errors.clear('solution_text')"
             />
-            <has-error :form="solutionTextForm" field="solution_text"/>
+            <has-error :form="solutionTextForm" field="solution_text" />
           </div>
           <div>
-            <span class="float-right"><b-button variant="primary" @click="submitSolutionText"
-            >Save Text</b-button></span>
+            <span class="float-right"><b-button variant="primary" @click="submitSolutionText">Save Text</b-button></span>
           </div>
         </div>
       </div>
@@ -433,7 +490,7 @@
                       :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
                       @keydown="cutupsForm.errors.clear('chosen_cutups')"
                     />
-                    <has-error :form="cutupsForm" field="chosen_cutups"/>
+                    <has-error :form="cutupsForm" field="chosen_cutups" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -443,7 +500,7 @@
                         Set As Solution
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -482,7 +539,7 @@
                       :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
                       @keydown="questionSubmissionPageForm.errors.clear('page')"
                     />
-                    <has-error :form="questionSubmissionPageForm" field="page"/>
+                    <has-error :form="questionSubmissionPageForm" field="page" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -492,7 +549,7 @@
                         Set As Question File Submission
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -532,17 +589,17 @@
                 <ul v-if="files.length && (preSignedURL !== '')">
                   <li v-for="file in files" :key="file.id">
                     <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
-                        file.name
-                      }}</span> -
+                      file.name
+                    }}</span> -
                     <span>{{ formatFileSize(file.size) }} </span>
                     <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
                     <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                     <span v-else-if="file.active" class="ml-2">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Uploading File...
                     </span>
                     <span v-if="processingFile">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Processing file...
                     </span>
                     <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -567,8 +624,8 @@
                 <b-row :align-h="user.role === 3 ? 'start' : 'end'">
                   <div style="vertical-align: bottom">
                     <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
-                        getSolutionUploadTypes()
-                      }}.</span>
+                      getSolutionUploadTypes()
+                    }}.</span>
                   </div>
                   <file-upload
                     ref="upload"
@@ -607,7 +664,7 @@
                background="#FFFFFF"
       />
       <div v-if="questions !==['init'] && !inIFrame">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
@@ -623,14 +680,14 @@
             <span class="font-weight-bold">
               You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
               <span v-if="showScores">  You received a score of {{
-                  questions[currentPage - 1].submission_score
-                }}.</span></span>
+                questions[currentPage - 1].submission_score
+              }}.</span></span>
           </b-alert>
         </div>
       </div>
       <div v-if="questions.length && !initializing && !isLoading">
         <div v-show="isInstructorLoggedInAsStudent">
-          <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
+          <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
         </div>
         <div v-if="inIFrame && (user.role === 2)">
           <b-button variant="primary" size="sm" class="mb-3" @click="viewInAdapt">
@@ -671,7 +728,7 @@
         </b-alert>
       </div>
       <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
-        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
+        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist" />
       </div>
       <div v-if="questions.length && !cannotViewAssessmentMessage && !launchThroughLMSMessage">
         <div :class="assignmentInformationMarginBottom">
@@ -733,6 +790,14 @@
                   </span>
                 </div>
                 <div
+                  v-if="!isInstructor() && showPointsPerQuestion && assessmentType !== 'clicker' && !isAnonymousUser && !isInstructorWithAnonymousView"
+                  class="text-center mb-2"
+                >
+                  <b-row align-h="center">
+                    <span class="font-weight-bold" v-html="completionScoringModeMessage" />
+                  </b-row>
+                </div>
+                <div
                   v-if="!isInstructor() && showPointsPerQuestion && assessmentType === 'learning tree' && parseInt(questions[currentPage-1].answered_correctly_at_least_once)!==1 && !isInstructorWithAnonymousView"
                   class="text-center"
                 >
@@ -761,7 +826,7 @@
                   class="text-center"
                 >
                   <b-form-row>
-                    <b-col/>
+                    <b-col />
                     <h5 class="mt-1">
                       This question is worth
                     </h5>
@@ -775,7 +840,7 @@
                         :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                         @keydown="questionPointsForm.errors.clear('points')"
                       />
-                      <has-error :form="questionPointsForm" field="points"/>
+                      <has-error :form="questionPointsForm" field="points" />
                     </b-col>
                     <h5 class="mt-1">
                       points.
@@ -793,16 +858,27 @@
                       </div>
                     </b-col>
                   </b-form-row>
+                  <b-row align-h="center">
+                    <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage" />
+                    <a href="#">
+                      <b-icon v-if="completionScoringModeMessage"
+                              icon="pencil"
+                              class="text-muted"
+                              @click="openUpdateCompletionScoringModeModal()"
+                      />
+                    </a>
+                  </b-row>
                 </div>
               </div>
             </b-col>
+
             <b-row class="text-center font-italic">
               <b-col>
                 <div v-if="assessmentType === 'learning tree'">
                   <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
                     <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                        questions[currentPage - 1].last_submitted
-                      }}</span>
+                      questions[currentPage - 1].last_submitted
+                    }}</span>
                   </div>
                   <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                     <span class="font-weight-bold">You had a late penalty of </span> {{
@@ -817,7 +893,7 @@
                              @end="cleanUpClickerCounter"
                   >
                     <template slot-scope="props">
-                      <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                      <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
                   </countdown>
                 </div>
@@ -830,7 +906,7 @@
                     size="sm"
                     @click="openModalShare()"
                   >
-                    <b-icon icon="share"/>
+                    <b-icon icon="share" />
                     Share
                   </b-button>
                   <b-button
@@ -942,8 +1018,8 @@
         <div v-if="assessmentType === 'learning tree'">
           <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
             <span class="font-weight-bold">You achieved a score of {{
-                questions[currentPage - 1].submission_score
-              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+              questions[currentPage - 1].submission_score
+            }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
         <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame"
@@ -1044,8 +1120,8 @@
                 <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                   <template slot-scope="props">
                     <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                        props.seconds
-                      }} seconds, then re-submit.
+                      props.seconds
+                    }} seconds, then re-submit.
                     </span>
                   </template>
                 </countdown>
@@ -1159,7 +1235,7 @@
                           @keydown="openEndedDefaultTextForm.errors.clear('open_ended_default_text')"
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                         />
-                        <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
+                        <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text" />
                       </b-card>
                       <b-container class="mt-2">
                         <b-row align-h="end">
@@ -1255,7 +1331,7 @@
                           :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
                           @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                         />
-                        <has-error :form="clickerTimeForm" field="time_to_submit"/>
+                        <has-error :form="clickerTimeForm" field="time_to_submit" />
                       </b-form-group>
                       <b-col>
                         <b-button variant="success" @click="startClickerAssessment">
@@ -1267,7 +1343,7 @@
                       <hr>
                       <countdown v-show="assessmentType === 'clicker'" :time="timeLeft" @end="cleanUpClickerCounter">
                         <template slot-scope="props">
-                          <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                          <span v-html="getTimeLeftMessage(props, assessmentType)" />
                         </template>
                       </countdown>
                       <h4>{{ responsePercent }}% of students have responded</h4>
@@ -1276,7 +1352,7 @@
                       </h5>
                     </div>
                   </div>
-                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart"/>
+                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
               </div>
             </b-col>
@@ -1331,21 +1407,21 @@
                         <a href=""
                            @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                         >{{
-                            previousNode.title
-                          }}</a>
+                          previousNode.title
+                        }}</a>
                       </b-row>
                       <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
                       </b-row>
                     </div>
                     <b-row align-h="center" class="p-2">
                       <span class="font-weight-bold font-italic text-muted">{{
-                          activeNode.title
-                        }}</span>
+                        activeNode.title
+                      }}</span>
                     </b-row>
                     <div v-if="futureNodes.length>0">
                       <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
                       </b-row>
                       <b-row class="p-2">
                         <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
@@ -1381,7 +1457,7 @@
                       <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
                                                                                         :current-page="currentPage"
                                                                                         :assignment-name="name"
-                    /><br>
+                      /><br>
                     </span>
                     <span v-if="assessmentType==='learning tree'">
                       <span class="font-weight-bold">Number of attempts: </span>
@@ -1393,14 +1469,14 @@
                     <span
                       :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                     >{{
-                        questions[currentPage - 1].student_response
-                      }}</span> <br>
+                      questions[currentPage - 1].student_response
+                    }}</span> <br>
                     <span class="font-weight-bold">Submitted At:</span>
                     <span
                       :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                     >{{
-                        questions[currentPage - 1].last_submitted
-                      }} </span>
+                      questions[currentPage - 1].last_submitted
+                    }} </span>
                     <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'"
                                        class="text-success"
                                        :icon="checkIcon"
@@ -1466,7 +1542,7 @@
                     <br>
                     <div v-if="solutionsReleased">
                       <span class="font-weight-bold">Solution: </span>
-                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
                     </div>
                     <br>
                     <span v-if="showScores">
@@ -1492,11 +1568,6 @@
                       <br>
 
                       <strong>Score:</strong> {{ questions[currentPage - 1].submission_file_score }}
-                      <span v-if="questions[currentPage - 1].grader_id">
-                        <b-button size="sm" variant="outline-primary"
-                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                        >Contact Grader</b-button>
-                      </span>
                       <br>
                       <strong>Z-Score:</strong> {{ questions[currentPage - 1].submission_file_z_score }}<br>
                     </span>
@@ -1504,6 +1575,11 @@
                       <hr>
                       <b-container>
                         <b-row v-show="!compiledPDF" class="mt-2 mr-2" align-h="end">
+                           <span v-if="questions[currentPage - 1].grader_id" class="pr-2">
+                        <b-button size="sm" variant="outline-primary"
+                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                        >Contact Grader</b-button>
+                      </span>
                           <b-button variant="primary"
 
                                     size="sm"
@@ -1517,8 +1593,8 @@
                         >
                           <span class="font-italic">
                             {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
-                            :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
-                          >summary page</router-link>.
+                              :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
+                            >summary page</router-link>.
                           </span>
                         </b-row>
                       </b-container>
@@ -1603,6 +1679,9 @@ import CannotAddAssessmentToBetaAssignmentModal from '~/components/CannotAddAsse
 
 import IframeInformation from '~/components/IframeInformation'
 
+import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
+import AllFormErrors from '~/components/AllFormErrors'
+
 Vue.prototype.$http = axios // needed for the audio player
 
 const VueUploadComponent = require('vue-upload-component')
@@ -1627,9 +1706,18 @@ export default {
     AssessmentTypeWarnings,
     IframeInformation,
     CannotAddAssessmentToBetaAssignmentModal,
-    RefreshQuestion
+    RefreshQuestion,
+    AllFormErrors
   },
   data: () => ({
+    allFormErrors: [],
+    completionSplitOpenEndedPercentage: '',
+    completionScoringModeForm: new Form({
+      completion_scoring_mode: null,
+      completion_split_auto_graded_percentage: null
+    }),
+    scoringType: '',
+    completionScoringModeMessage: '',
     toggleColors: window.config.toggleColors,
     savedQuestions: [],
     savedQuestionIds: [],
@@ -1918,6 +2006,7 @@ export default {
     this.downloadSolutionFile = downloadSolutionFile
     this.downloadSubmissionFile = downloadSubmissionFile
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
+    this.updateCompletionSplitOpenEndedSubmissionPercentage = updateCompletionSplitOpenEndedSubmissionPercentage
     window.addEventListener('keydown', this.arrowListener)
   },
   destroyed () {
@@ -1993,6 +2082,78 @@ export default {
     }
   },
   methods: {
+    updateTotalScore() {
+      let autoGradedScore = this.questions[this.currentPage - 1].submission_score
+      let openEndedScore = this.questions[this.currentPage - 1].submission_file_score
+      this.questions[this.currentPage - 1].total_score =
+        (autoGradedScore === 'N/A' ? 0 : parseFloat(autoGradedScore)) +
+        (openEndedScore === 'N/A' ? 0 : parseFloat(openEndedScore))
+    },
+    async updateCompletionScoringMode (questionId) {
+      try {
+        const { data } = await this.completionScoringModeForm.patch(`/api/assignments/${this.assignmentId}/questions/${questionId}/update-completion-scoring-mode`)
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.questions[this.currentPage - 1].completion_scoring_mode = data.completion_scoring_mode
+          if (data.update_completion_scoring_mode) {
+            for (let i = 0; i < this.questions.length; i++) {
+              this.questions[i].completion_scoring_mode = data.completion_scoring_mode
+            }
+          }
+          this.setCompletionScoringModeMessage()
+          this.$bvModal.hide('modal-update-completion-scoring-mode')
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.completionScoringModeForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-completion-scoring-mode')
+        }
+      }
+    },
+    openUpdateCompletionScoringModeModal () {
+      if (this.isBetaAssignment) {
+        this.$bvModal.show('modal-cannot-update-points-if-beta-assignment')
+        return false
+      }
+      if (this.hasAtLeastOneSubmission) {
+        this.$noty.error("Students have already made submission for this question so you can't change the scoring method.")
+        return false
+      }
+      if (this.scoringType === 'c') {
+        if (this.questions[this.currentPage - 1].completion_scoring_mode === '100% for either') {
+          this.completionScoringModeForm.completion_scoring_mode = '100% for either'
+          this.completionScoringModeForm.completion_split_auto_graded_percentage = '50'
+          this.completionSplitOpenEndedPercentage = '50'
+        } else {
+          this.completionScoringModeForm.completion_scoring_mode = 'split'
+          this.completionScoringModeForm.completion_split_auto_graded_percentage = this.questions[this.currentPage - 1].completion_scoring_mode.replace(/\D/g, '')
+          this.completionSplitOpenEndedPercentage = 100 - parseInt(this.completionScoringModeForm.completion_split_auto_graded_percentage)
+        }
+      }
+      this.$bvModal.show('modal-update-completion-scoring-mode')
+    },
+    setCompletionScoringModeMessage () {
+      this.completionScoringModeMessage = ''
+      let completionScoringMode = this.questions[this.currentPage - 1].completion_scoring_mode
+      if (this.scoringType === 'c' && this.questions[this.currentPage - 1].has_auto_graded_and_open_ended) {
+        let autoGradedPercent = parseFloat(completionScoringMode.replace(/\D/g, ''))
+        let openEndedPercent = (100 - autoGradedPercent) / 100
+        let autoGradedPoints = (autoGradedPercent / 100) * this.questions[this.currentPage - 1].points
+        let openEndedPoints = openEndedPercent * this.questions[this.currentPage - 1].points
+        if (completionScoringMode.includes('either')) {
+          this.completionScoringModeMessage = this.isInstructor()
+            ? 'Students receive full credit for either an auto-graded or open-ended submission.'
+            : 'You will receive full credit for either an auto-graded or open-ended submission.<br>Note that your score will only be saved for the first submitted response.'
+        } else {
+          this.completionScoringModeMessage = this.isInstructor()
+            ? 'Students'
+            : 'You will'
+          this.completionScoringModeMessage += ` receive ${autoGradedPoints} points for an auto-graded submission and ${openEndedPoints} points for an open-ended submission.`
+        }
+      }
+    },
     async getSavedQuestions () {
       try {
         const { data } = await axios.get(`/api/saved-questions/${this.assignmentId}`)
@@ -2484,6 +2645,8 @@ export default {
         this.questions[this.currentPage - 1].submission_file_url = data.submission_file_url
         this.questions[this.currentPage - 1].late_file_submission = data.late_file_submission
         this.questions[this.currentPage - 1].submission_file_exists = true
+        this.questions[this.currentPage - 1].submission_file_score = data.score
+        this.updateTotalScore()
       }
       this.$refs.uploadRecorder.removeRecord()
       this.$bvModal.hide('modal-upload-file')
@@ -2572,6 +2735,8 @@ export default {
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].date_submitted = data.date_submitted
           this.questions[this.currentPage - 1].submission = this.textSubmissionForm.text_submission
+          this.questions[this.currentPage - 1].submission_file_score = data.score
+          this.updateTotalScore()
           data.completed_all_assignment_questions
             ? this.$bvModal.show('modal-completed-assignment')
             : this.$bvModal.show('modal-submission-accepted')
@@ -2702,6 +2867,7 @@ export default {
         this.questions[this.currentPage - 1]['answered_correctly_at_least_once'] = data.answered_correctly_at_least_once
         this.questions[this.currentPage - 1]['late_question_submission'] = data.late_question_submission
         this.questions[this.currentPage - 1]['solution'] = data.solution
+        this.updateTotalScore()
         if (data.submission_count > 1) {
           // successfully made a submission so they don't need to know about the points for the learning tree anymore
           this.showLearningTreePointsMessage = false
@@ -2850,6 +3016,7 @@ export default {
               this.questions[i].points = this.questionPointsForm.points
             }
           }
+          this.setCompletionScoringModeMessage()
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
@@ -2899,6 +3066,9 @@ export default {
 
       try {
         await this.submitUploadFile(this.uploadFileType, this.uploadFileForm, this.$noty, this.$nextTick, this.$bvModal, this.questions[this.currentPage - 1], this.uploadFileUrl, false)
+       if (this.user.role === 3){
+          this.updateTotalScore()
+       }
       } catch (error) {
         this.$noty.error(error.message)
       }
@@ -2986,6 +3156,7 @@ export default {
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
       this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
 
+      this.setCompletionScoringModeMessage()
       this.isOpenEndedTextSubmission = (this.openEndedSubmissionType === 'text')
       if (this.isOpenEndedTextSubmission) {
         this.openEndedSubmissionType = `${this.questions[currentPage - 1].open_ended_text_editor} text`
@@ -3156,6 +3327,7 @@ export default {
         let assignment = data.assignment
         this.betaAssignmentsExist = assignment.beta_assignments_exist
         this.isBetaAssignment = assignment.is_beta_assignment
+        this.scoringType = assignment.scoring_type
 
         if (this.user.role === 3) {
           if (this.isLMS && !assignment.lti_launch_exists) {

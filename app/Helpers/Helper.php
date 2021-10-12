@@ -57,5 +57,14 @@ class Helper
         }
     }
 
+    public static function getCompletionScoringMode($scoring_type, $completion_scoring_mode, $completion_split_auto_graded_percentage): ?string
+    {
+        if ($scoring_type === 'c') {
+            return $completion_scoring_mode === '100% for either'
+                ? $completion_scoring_mode
+                : "$completion_split_auto_graded_percentage% for auto-graded";
+        } else return null;
+    }
+
 
 }

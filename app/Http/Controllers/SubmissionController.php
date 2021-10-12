@@ -35,12 +35,19 @@ class SubmissionController extends Controller
 
     }
 
-
+    /**
+     * @param StoreSubmission $request
+     * @param Assignment $Assignment
+     * @param Score $score
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
     public
     function store(StoreSubmission $request,
                    Assignment $Assignment,
                    Score $score,
-                   AssignmentSyncQuestion $assignmentSyncQuestion)
+                   AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $Submission = new Submission();
         return $Submission->store($request,

@@ -293,6 +293,7 @@ class QuestionController extends Controller
                             'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                             'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
                             'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
+                            'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                             'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
                     $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
                     array_push($library_page_ids_added_to_assignment, $library_text_page_id);

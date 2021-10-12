@@ -9,6 +9,7 @@ use App\DataShop;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
+use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Libretext;
@@ -226,7 +227,9 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment_question->points = $assignment->default_points_per_question;
                     $assignment_question->created_at = Carbon::now();
                     $assignment_question->updated_at = Carbon::now();
-
+                    $assignment_question->completion_scoring_mode = ($assignment->scoring_type === 'c')
+                        ? $assignment->default_completion_scoring_mode
+                        : null;
                     $assignment_question_exists = DB::table('assignment_question')
                         ->where('assignment_id', $assignment->id)
                         ->where('question_id', $question['question_id'])->first();
@@ -716,6 +719,72 @@ class AssignmentSyncQuestionController extends Controller
         return $response;
     }
 
+
+    /**
+     * @param UpdateCompletionScoringModeRequest $request
+     * @param Assignment $assignment
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @return array
+     * @throws Exception
+     */
+    public
+    function updateCompletionScoringMode(UpdateCompletionScoringModeRequest $request,
+                                         Assignment                         $assignment,
+                                         Question                           $question,
+                                         AssignmentSyncQuestion             $assignmentSyncQuestion): array
+    {
+
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('update', [$assignmentSyncQuestion, $assignment]);
+        $data = $request->validated();
+
+        if (!$authorized->allowed()) {
+
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        if ($assignment->scoring_type !== 'c') {
+            $response['message'] = "This option is only available for assignments that are graded for 'completion'.";
+        }
+
+        $completion_scoring_mode = Helper::getCompletionScoringMode('c', $data['completion_scoring_mode'], $request->completion_split_auto_graded_percentage);
+        $assignment_ids = [$assignment->id];
+        if ($assignment->course->alpha) {
+            $assignment_ids = $assignment->addBetaAssignmentIds();
+        }
+        try {
+            $is_randomized_assignment = $assignment->number_of_randomized_assessments;
+            if ($is_randomized_assignment) {
+                DB::table('assignment_question')
+                    ->whereIn('assignment_id', $assignment_ids)
+                    ->update(['points' => $data['points']]);
+                $assignment->default_completion_scoring_mode = $completion_scoring_mode;
+                $assignment->save();
+                $message = 'Since this is a randomized assignment, all questions now have the same completion scoring mode.';
+            } else {
+                DB::table('assignment_question')
+                    ->whereIn('assignment_id', $assignment_ids)
+                    ->where('question_id', $question->id)
+                    ->update(['completion_scoring_mode' => $completion_scoring_mode]);
+                $message = 'The completion scoring mode has been updated.';
+            }
+            $response['type'] = 'success';
+            $response['message'] = $message;
+            $response['completion_scoring_mode'] = $completion_scoring_mode;
+            $response['update_completion_scoring_mode'] = $is_randomized_assignment;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error updating the number of points.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
     /**
      * @param UpdateAssignmentQuestionPointsRequest $request
      * @param Assignment $assignment
@@ -818,6 +887,7 @@ class AssignmentSyncQuestionController extends Controller
                     'question_id' => $question->id,
                     'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
                     'points' => $points, //don't need to test since tested already when creating an assignment
+                    'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
                     'open_ended_submission_type' => $open_ended_submission_type,
                     'open_ended_text_editor' => $open_ended_text_editor]);
             $assignmentSyncQuestion->addLearningTreeIfBetaAssignment($assignment_question_id, $assignment->id, $question->id);
@@ -1010,7 +1080,7 @@ class AssignmentSyncQuestionController extends Controller
         }
 
         return ['last_submitted' => $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($response_info['last_submitted'],
-            Auth::user()->time_zone, 'M d, Y g:i:s a'),
+            Auth::user()->time_zone, 'M d, Y g:i a'),
             'student_response' => $response_info['student_response'],
             'submission_count' => $response_info['submission_count'],
             'submission_score' => $response_info['submission_score'],
@@ -1124,6 +1194,7 @@ class AssignmentSyncQuestionController extends Controller
             $open_ended_submission_types = [];
             $open_ended_text_editors = [];
             $open_ended_default_texts = [];
+            $completion_scoring_modes = [];
             $clicker_status = [];
             $clicker_time_left = [];
             $learning_tree_ids_by_question_id = [];
@@ -1135,6 +1206,7 @@ class AssignmentSyncQuestionController extends Controller
                 $open_ended_submission_types[$question->question_id] = $question->open_ended_submission_type;
                 $open_ended_text_editors[$question->question_id] = $question->open_ended_text_editor;
                 $open_ended_default_texts[$question->question_id] = $question->open_ended_default_text;
+                $completion_scoring_modes[$question->question_id] = $question->completion_scoring_mode;
                 $iframe_showns[$question->question_id] = ['attribution_information_shown_in_iframe' => (boolean)$question->attribution_information_shown_in_iframe,
                     'submission_information_shown_in_iframe' => (boolean)$question->submission_information_shown_in_iframe,
                     'assignment_information_shown_in_iframe' => (boolean)$question->assignment_information_shown_in_iframe];
@@ -1311,6 +1383,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['open_ended_submission_type'] = $open_ended_submission_types[$question->id];
                 $assignment->questions[$key]['open_ended_text_editor'] = $open_ended_text_editors[$question->id];
                 $assignment->questions[$key]['open_ended_default_text'] = $open_ended_default_texts[$question->id];
+                $assignment->questions[$key]['completion_scoring_mode'] = $completion_scoring_modes[$question->id];
                 $show_solution = (!Helper::isAnonymousUser() || !Helper::hasAnonymousUserSession())
                     &&
                     (($assignment->assessment_type !== 'real time' && $assignment->solutions_released)
@@ -1457,13 +1530,13 @@ class AssignmentSyncQuestionController extends Controller
                                 $custom_claims['webwork']['course_password'] = 'anonymous';
                                 break;
                         }
-                       /* if (Auth::user()->role === 2
-                            && $assignment->course->user_id !== Auth::user()->id
-                            && Helper::isCommonsCourse($assignment->course)) {
-                            $custom_claims['webwork']['showSubmitButton'] = 0;
-                            $custom_claims['webwork']['showPreviewButton'] = 0;
-                        }
-                       */
+                        /* if (Auth::user()->role === 2
+                             && $assignment->course->user_id !== Auth::user()->id
+                             && Helper::isCommonsCourse($assignment->course)) {
+                             $custom_claims['webwork']['showSubmitButton'] = 0;
+                             $custom_claims['webwork']['showPreviewButton'] = 0;
+                         }
+                        */
                         if ($webwork_url === 'https://wwrenderer.libretexts.org') {
 
                             $custom_claims['webwork']['showPartialCorrectAnswers'] = $assignment->solutions_released;
@@ -1535,8 +1608,8 @@ class AssignmentSyncQuestionController extends Controller
                     case('h5p'):
                         $problemJWT = '';
                         $technology_src = $this->getIframeSrcFromHtml($domd, $question['technology_iframe']);
-                        if (Auth::user()->role === 2){
-                            $technology_src = str_replace('/embed','', $technology_src);
+                        if (Auth::user()->role === 2) {
+                            $technology_src = str_replace('/embed', '', $technology_src);
                         }
                         break;
                     case('text'):
@@ -1562,6 +1635,7 @@ class AssignmentSyncQuestionController extends Controller
                 //Frankenstein type problems
 
                 $assignment->questions[$key]->non_technology_iframe_src = $this->getLocallySavedPageIframeSrc($question);
+                $assignment->questions[$key]->has_auto_graded_and_open_ended = $iframe_technology && $assignment->questions[$key]['open_ended_submission_type'] !== '0';
             }
 
             $response['type'] = 'success';

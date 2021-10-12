@@ -10,6 +10,8 @@ export const assignmentForm = new Form({
   submission_count_percent_decrease: null,
   assignment_group_id: null,
   default_open_ended_submission_type: 0,
+  default_completion_scoring_mode: '100% for either',
+  completion_split_auto_graded_percentage: '50',
   file_upload_mode: 'compiled_pdf',
   late_policy: 'not accepted',
   late_deduction_percent: null,
@@ -95,10 +97,12 @@ export function resetAssignmentForm (form, assignmentId) {
   form.default_open_ended_submission_type = 'file'
   form.default_points_per_question = '10'
   form.scoring_type = 'p'
+  form.default_completion_scoring_mode = '100% for either'
 
   assignmentId = 0
   form.errors.clear()
 }
+
 export function updateModalToggleIndex () {
   // ckeditor fix for input type text --- wasn't able to click
   // https://stackoverflow.com/questions/58482267/ckeditor-i-cant-fill-any-fields-no-focus-on-inputs
@@ -109,6 +113,9 @@ export function updateModalToggleIndex () {
 export async function initAddAssignment (form, courseId, assignmentGroups, noty, moment, courseStartDate, courseEndDate, bvModal) {
   form.has_submissions_or_file_submissions = 0
   form.solutionsReleased = 0
+  form.scoring_type = 'p'
+  form.default_completion_scoring_mode = '100% for either'
+  form.completion_split_auto_graded_percentage = '50'
   form.assignment_group_id = null
   form.assign_tos = [defaultAssignTos(moment, courseStartDate, courseEndDate)]
   form.late_policy = 'not accepted'
@@ -172,6 +179,15 @@ export async function editAssignment (assignment) {
   this.form.num_submissions_needed = assignment.num_submissions_needed
   this.form.default_points_per_question = assignment.default_points_per_question
   this.form.scoring_type = assignment.scoring_type
+  if (this.form.scoring_type === 'c') {
+    if (assignment.default_completion_scoring_mode === '100% for either') {
+      this.form.default_completion_scoring_mode = '100% for either'
+    } else {
+      this.form.default_completion_scoring_mode = 'split'
+      this.form.completion_split_auto_graded_percentage = assignment.default_completion_scoring_mode.replace(/\D/g, '')
+    }
+  }
+
   this.form.students_can_view_assignment_statistics = assignment.students_can_view_assignment_statistics
   this.form.external_source_points = assignment.source === 'x' ? assignment.external_source_points : ''
   this.form.libretexts_url = assignment.libretexts_url

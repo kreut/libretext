@@ -7,6 +7,7 @@ use App\CompiledPDFOverride;
 use App\Course;
 use App\Grader;
 use App\GraderNotification;
+use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
 use App\Http\Requests\UpdateSubmisionFilePage;
 use App\Question;
@@ -184,13 +185,19 @@ class SubmissionFileController extends Controller
                     'type' => 'q'],
                 $submission_file_data
             );
-            $this->updateScoreIfCompletedScoringType($assignment, $question->id);
+            $open_ended_score = $this->updateScoreIfCompletedScoringType($assignment, $question->id);
+            $auto_graded_submission = DB::table('submissions')->where('user_id', Auth::user()->id)
+                ->where('assignment_id', $assignment->id)
+                ->where('question_id', $question->id)
+                ->first();
+            $total_score = $open_ended_score + ($auto_graded_submission ? $auto_graded_submission->score : 0);
+
 
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['original_filename'] = $full_file->original_filename;
             $response['late_file_submission'] = $this->isLateSubmission($extension, $assignment, Carbon::now());
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment->id, $full_file->submission) . "#page=$page";
-
+            $response['total_score'] = Helper::removeZerosAfterDecimal($total_score);
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone);
             $re = $is_update ? 're-' : '';
             $response['message'] = "You have {$re}assigned Page $page as the start of the submitted solution to Question $request->question_number.";
@@ -392,7 +399,6 @@ class SubmissionFileController extends Controller
      * @param Extension $extension
      * @param SubmissionFile $submissionFile
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param Score $score
      * @return array
      * @throws Exception
      */
@@ -482,10 +488,11 @@ class SubmissionFileController extends Controller
                             'type' => 'q'],
                         $submission_file_data
                     );
-                    $this->updateScoreIfCompletedScoringType($assignment, $question_id);
+                    $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
 
                     $response['submission'] = basename($submission);
                     $response['original_filename'] = $original_filename;
+                    $response['score'] = $score === null ? null : $score;
                     $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
                     $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
                     $response['message'] = "Your file submission has been saved.";

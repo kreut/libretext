@@ -168,8 +168,18 @@ class QuestionsViewTest extends TestCase
             "_method" => "put"
         ];
     }
+/** @test */
+    public function non_instructor_cannot_update_the_completion_scoring_mode()
+    {
+        $this->actingAs($this->student_user)
+            ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-completion-scoring-mode",
+            ['completion_scoring_mode' => '100% for either'])
+            ->assertJson(['message' => 'You are not allowed to update that resource.']);
+
+    }
 
     /** @test */
+
     public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_auto_graded_response_if_assignment_past_due_and_no_extension_if_allowed()
     {
 
@@ -232,6 +242,172 @@ class QuestionsViewTest extends TestCase
 
 
     /** @test */
+
+    public function student_gets_full_credit_if_incorrect_for_complete_incomplete_assignment()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $question_points = 20;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $question_points, 'open_ended_submission_type' => 0]);
+
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $assignment_score = DB::table('scores')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->first()
+            ->score;
+        $this->assertEquals($assignment_score, $question_points);
+
+    }
+
+
+    /** @test */
+
+    public function student_gets_correct_credit_if_incorrect_for_complete_incomplete_assignment_with_open_ended_component()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $question_points = 20;
+        $percent = 50;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['points' => $question_points,
+                'open_ended_submission_type' => 'file',
+                'completion_scoring_mode' => "$percent% for auto-graded"]);
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $assignment_score = DB::table('scores')
+            ->where('assignment_id', $this->assignment->id)
+            ->where('user_id', $this->student_user->id)
+            ->first()
+            ->score;
+        $this->assertEquals($assignment_score, ($percent / 100) * $question_points);
+
+    }
+
+
+    /** @test */
+    public function submitted_file_gets_correct_credit_if_scoring_type_is_completed_and_score_is_either()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_file_data = $this->getSubmissionFileData();
+
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['completion_scoring_mode' => '100% for either']);
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points), floatval($score));//includes a technology piece
+
+    }
+
+    /** @test */
+    public function submitted_file_gets_correct_credit_if_scoring_type_is_completed_and_score_is_either_with_already_submitted_auto_graded()
+    {
+
+        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
+        $score_with_just_auto_graded = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_file_data = $this->getSubmissionFileData();
+
+
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['completion_scoring_mode' => '100% for either']);
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score_with_both = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($score_with_just_auto_graded), floatval($points));//includes a technology piece
+        $this->assertEquals(floatval($score_with_both), floatval($points));//includes a technology piece
+
+    }
+
+    /** @test */
+    public function submitted_file_gets_correct_credit_if_scoring_type_is_completed_and_score_is_split()
+    {
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $percent = 20;
+        $submission_file_data = $this->getSubmissionFileData();
+
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['completion_scoring_mode' => "$percent% for auto-graded"]);
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points) * (100 - $percent) / 100, floatval($score));//includes a technology piece
+
+    }
+
+    /** @test */
+
+    public function update_page_gets_full_credit_if_scoring_type_is_completed()
+    {
+        $percent = 50;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['completion_scoring_mode' => "$percent% for auto-graded"]);
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_file_data = [
+            'assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'type' => 'a',
+            'user_id' => $this->student_user->id,
+            'original_filename' => 'blah blah',
+            'submission' => 'sflkjfwlKEKLie.pdf',
+            'date_submitted' => Carbon::now()
+        ];
+        DB::table('submission_files')->insert($submission_file_data);
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points * (100 - $percent) / 100), floatval($score));//includes a technology piece
+
+    }
+
+    /** @test */
+    public function text_file_gets_full_credit_if_scoring_type_is_completed()
+    {
+        $percent = 50;
+        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
+            ->where('question_id', $this->question->id)
+            ->update(['completion_scoring_mode' => "$percent% for auto-graded"]);
+        $this->assignment->scoring_type = 'c';
+        $this->assignment->save();
+        $submission_text_data = [
+            "text_submission" => "Here is my text!",
+            "assignmentId" => $this->assignment->id,
+            "questionId" => $this->question->id
+        ];
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", $submission_text_data)
+            ->assertJson(['type' => 'success']);
+        $points = $this->getPoints($this->assignment->id, $this->question->id);
+        $score = $this->getScore($this->assignment->id, $this->student_user->id);
+
+        $this->assertEquals(floatval($points * (100 - $percent) / 100), floatval($score));//includes a technology piece
+
+    }
+
+
+    /** @test */
     public function submitted_file_gets_full_credit_if_scoring_type_is_completed_for_just_text_type_question()
     {
         $this->assignment->scoring_type = 'c';
@@ -256,64 +432,6 @@ class QuestionsViewTest extends TestCase
         $submission_file_data = $this->getSubmissionFileData();
         $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
             ->assertJson(['message' => 'Your file submission has been saved.']);
-
-    }
-
-    public function submitted_file_gets_full_credit_if_scoring_type_is_completed()
-    {
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        $submission_file_data = $this->getSubmissionFileData();
-        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
-            ->assertJson(['type' => 'success']);
-        $points = $this->getPoints($this->assignment->id, $this->question->id);
-        $score = $this->getScore($this->assignment->id, $this->student_user->id);
-
-        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
-
-    }
-
-    /** @test */
-
-    public function update_page_gets_full_credit_if_scoring_type_is_completed()
-    {
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        $submission_file_data = [
-            'assignment_id' => $this->assignment->id,
-            'question_id' => $this->question->id,
-            'type' => 'a',
-            'user_id' => $this->student_user->id,
-            'original_filename' => 'blah blah',
-            'submission' => 'sflkjfwlKEKLie.pdf',
-            'date_submitted' => Carbon::now()
-        ];
-        DB::table('submission_files')->insert($submission_file_data);
-        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
-            ->assertJson(['type' => 'success']);
-        $points = $this->getPoints($this->assignment->id, $this->question->id);
-        $score = $this->getScore($this->assignment->id, $this->student_user->id);
-
-        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
-
-    }
-
-    /** @test */
-    public function text_file_gets_full_credit_if_scoring_type_is_completed()
-    {
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        $submission_text_data = [
-            "text_submission" => "Here is my text!",
-            "assignmentId" => $this->assignment->id,
-            "questionId" => $this->question->id
-        ];
-        $this->actingAs($this->student_user)->postJson("/api/submission-texts", $submission_text_data)
-            ->assertJson(['type' => 'success']);
-        $points = $this->getPoints($this->assignment->id, $this->question->id);
-        $score = $this->getScore($this->assignment->id, $this->student_user->id);
-
-        $this->assertEquals(floatval($points / 2), floatval($score));//includes a technology piece
 
     }
 
@@ -690,50 +808,6 @@ class QuestionsViewTest extends TestCase
             ->first();
 
         $this->assertEquals($submission->score, $this->question_points * $this->assignment->late_deduction_percent / 100);
-
-    }
-
-    /** @test */
-
-    public function student_gets_half_credit_if_incorrect_for_complete_incomplete_assignment()
-    {
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        $question_points = 20;
-        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->update(['points' => $question_points, 'open_ended_submission_type' => 'file']);
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $assignment_score = DB::table('scores')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('user_id', $this->student_user->id)
-            ->first()
-            ->score;
-        $this->assertEquals($assignment_score, .5 * $question_points);
-
-    }
-
-
-    /** @test */
-
-    public function student_gets_full_credit_if_incorrect_for_complete_incomplete_assignment()
-    {
-        $this->assignment->scoring_type = 'c';
-        $this->assignment->save();
-        $question_points = 20;
-        DB::table('assignment_question')->where('assignment_id', $this->assignment->id)
-            ->where('question_id', $this->question->id)
-            ->update(['points' => $question_points, 'open_ended_submission_type' => 0]);
-
-        $this->h5pSubmission['submission_object'] = str_replace('"score":{"min":0,"raw":11,"max":11,"scaled":0}', '"score":{"min":0,"raw":3,"max":11,"scaled":0}', $this->submission_object);
-        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission);
-        $assignment_score = DB::table('scores')
-            ->where('assignment_id', $this->assignment->id)
-            ->where('user_id', $this->student_user->id)
-            ->first()
-            ->score;
-        $this->assertEquals($assignment_score, $question_points);
 
     }
 

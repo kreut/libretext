@@ -1,6 +1,14 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-create-assignment-group'"/>
+    <b-tooltip target="default-completion-scoring-mode-tooltip"
+               delay="250"
+               triggers="hover focus"
+    >
+      For assessments with both an auto-graded and open-ended component, students can receive full credit
+      for submitting either piece, or you can apportion a percentage of the points to each piece. This can
+      be customized for each question.
+    </b-tooltip>
     <b-tooltip target="private-description-tooltip"
                delay="250"
                triggers="hover focus"
@@ -375,7 +383,6 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        id="scoring_type"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="scoring_type"
@@ -400,6 +407,52 @@
             </span>
           </span>
         </b-form-radio-group>
+      </b-form-group>
+      <b-form-group
+        v-show="form.scoring_type === 'c'"
+        label-cols-sm="4"
+        label-cols-lg="3"
+        label-for="completion_scoring_mode"
+
+      >
+        <template slot="label">
+          Default Completion Scoring Mode<Asterisk/>
+          <a id="default-completion-scoring-mode-tooltip"
+             href="#"
+             class="text-muted"
+          >
+            <b-icon icon="question-circle"/>
+          </a>
+        </template>
+        <b-form-radio-group id="default_completion_scoring_mode"
+                            v-model="form.default_completion_scoring_mode"
+                            stacked
+                            :disabled="isLocked() || isBetaAssignment"
+                            :class="{ 'is-invalid': form.errors.has('default_completion_scoring_mode') }"
+                            @keydown="form.errors.clear('default_completion_scoring_mode')"
+        >
+          <b-form-radio value="100% for either">
+            100% of points for either auto-graded or open-ended submission
+          </b-form-radio>
+          <b-form-radio value="split">
+            <input v-model="form.completion_split_auto_graded_percentage"
+                   class="percent-input"
+                   @keyup="completionSplitOpenEndedPercentage = updateCompletionSplitOpenEndedSubmissionPercentage(form)"
+                   @click="form.default_completion_scoring_mode = 'split'"
+                   @keydown="form.default_completion_scoring_mode = 'split'"
+            >% of points awarded for an auto-graded
+            submission<br>
+            <span v-if="!isNaN(parseFloat(completionSplitOpenEndedPercentage))">
+              <input v-model="completionSplitOpenEndedPercentage"
+                     class="percent-input"
+                     disabled
+                     :aria-disabled="true"
+              >%
+              of the points awarded for an open-ended submission
+            </span>
+          </b-form-radio>
+        </b-form-radio-group>
+        <has-error :form="form" field="default_completion_scoring_mode"/>
       </b-form-group>
       <div v-show="form.source === 'a'">
         <b-form-group
@@ -478,11 +531,12 @@
         label-for="default_clicker_time_to_submit"
       >
         <template slot="label">
-          Default Clicker Time To Submit<Asterisk/> <span id="default_clicker_time_to_submit_tooltip"
-                                               class="text-muted"
-        ><b-icon
-          icon="question-circle"
-        /></span>
+          Default Clicker Time To Submit<Asterisk/>
+          <span id="default_clicker_time_to_submit_tooltip"
+                class="text-muted"
+          ><b-icon
+            icon="question-circle"
+          /></span>
         </template>
         <b-form-row>
           <b-col lg="3">
@@ -1078,6 +1132,7 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 import CKEditor from 'ckeditor4-vue'
 
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
+import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
@@ -1105,6 +1160,7 @@ export default {
     courseStartDate: { type: String, default: '' }
   },
   data: () => ({
+    completionSplitOpenEndedPercentage: '',
     allFormErrors: [],
     richEditorConfig: {
       toolbar: [
@@ -1162,6 +1218,8 @@ export default {
     this.isLocked = isLocked
     this.isLockedMessage = isLockedMessage
     this.defaultAssignTos = defaultAssignTos
+    this.updateCompletionSplitOpenEndedSubmissionPercentage = updateCompletionSplitOpenEndedSubmissionPercentage
+    this.completionSplitOpenEndedPercentage = 100 - parseInt(this.form.completion_split_auto_graded_percentage)
   },
   async mounted () {
     this.min = this.$moment(this.$moment(), 'YYYY-MM-DD').format('YYYY-MM-DD')
@@ -1287,7 +1345,7 @@ export default {
     async initAssessmentTypeSwitch (assessmentType) {
       let originalAssessmentType = this.form.assessment_type
       if (!this.assignmentId) {
-        this.switchAssessmentType(assessmentType)
+        this.switchAssessmentType(assessmentType,originalAssessmentType)
         return false
       }
       this.$nextTick(async function () {
@@ -1300,14 +1358,14 @@ export default {
             this.form.assessment_type = originalAssessmentType
             return false
           }
-          this.switchAssessmentType(assessmentType)
+          this.switchAssessmentType(assessmentType,originalAssessmentType)
         } catch (error) {
           this.form.assessment_type = originalAssessmentType
           this.$noty.error(error.message)
         }
       })
     },
-    switchAssessmentType (assessmentType) {
+    switchAssessmentType (assessmentType, originalAssessmentType) {
       switch (assessmentType) {
         case ('real time'):
           this.showRealTimeOptions()
@@ -1316,7 +1374,7 @@ export default {
           this.showDelayedOptions()
           break
         case ('learning tree'):
-          this.checkIfScoringTypeOfPoints()
+          this.checkIfScoringTypeOfPoints(originalAssessmentType)
           break
         case ('clicker'):
           this.form.number_of_randomized_assessments = null
@@ -1362,9 +1420,9 @@ export default {
         this.form.number_of_randomized_assessments = null
       }
     },
-    checkIfScoringTypeOfPoints (event) {
+    checkIfScoringTypeOfPoints (originalAssessmentType) {
       if (this.form.scoring_type === 'c') {
-        event.preventDefault()
+        this.form.assessment_type = originalAssessmentType
         this.$noty.info('Learning Tree assessments types must have a Scoring Type of "Points".')
         return false
       }
@@ -1465,3 +1523,4 @@ export default {
   }
 }
 </script>
+

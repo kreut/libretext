@@ -7,6 +7,7 @@ use App\Assignment;
 use App\Course;
 use App\Rules\HasNoRandomizedAssignmentQuestions;
 use App\Rules\IsNotClickerAssessment;
+use App\Rules\isValidDefaultCompletionScoringType;
 use App\Rules\IsValidPeriodOfTime;
 use App\Rules\IsADateLaterThan;
 use App\Rules\IsValidSubmissionCountPercentDecrease;
@@ -112,7 +113,9 @@ class StoreAssignment extends FormRequest
         }
 
         if ($this->scoring_type === 'c') {
-            $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy), new isValidAssesmentTypeForScoringType($this->assessment_type)];
+            $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy),
+                new isValidAssesmentTypeForScoringType($this->assessment_type)];
+            $rules['default_completion_scoring_mode']= new isValidDefaultCompletionScoringType( $this->completion_split_auto_graded_percentage);
 
         }
 

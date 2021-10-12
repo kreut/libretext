@@ -39,7 +39,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage" />
+        <span class="font-italic font-weight-bold" style="font-size: large" v-html="errorMessage"/>
       </b-alert>
     </b-modal>
     <b-modal id="modal-confirm-set-page"
@@ -71,7 +71,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="name" />
+        <PageTitle :title="name"/>
         <b-container>
           <div v-if="assessmentType !== 'clicker' || pastDue">
             <b-row align-h="end">
@@ -87,15 +87,17 @@
             </b-alert>
           </div>
           <div v-show="isInstructorLoggedInAsStudent">
-            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
+            <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
           </div>
-          <b-card v-show="assessmentType !== 'clicker'" header="default" header-html='<span class="h5">Important Information</span>'>
+          <b-card v-show="assessmentType !== 'clicker'" header="default"
+                  header-html='<span class="h5">Important Information</span>'
+          >
             <b-card-text>
               <p v-if="public_description" class="mb-2">
-                <span class="font-weight-bold">Description: </span> <span v-html="public_description" />
+                <span class="font-weight-bold">Description: </span> <span v-html="public_description"/>
               </p>
               <p v-if="instructions.length" class="mb-2">
-                <span v-html="instructions" />
+                <span v-html="instructions"/>
               </p>
               <p>
                 <span class="font-weight-bold">Due Date: </span>
@@ -135,17 +137,17 @@
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
                   <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
-                    file.name
-                  }}</span> -
+                      file.name
+                    }}</span> -
                   <span>{{ formatFileSize(file.size) }} </span>
                   <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
                   <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                   <span v-else-if="file.active" class="ml-2">
-                    <b-spinner small type="grow" />
+                    <b-spinner small type="grow"/>
                     Uploading File...
                   </span>
                   <span v-if="processingFile">
-                    <b-spinner small type="grow" />
+                    <b-spinner small type="grow"/>
                     Processing file...
                   </span>
                   <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -177,7 +179,9 @@
             </b-alert>
             <div class="pb-2 text-center">
               <span class="h5">
-                This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{ totalPoints }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
+                This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{
+                  totalPoints
+                }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
               </span>
             </div>
             <b-table
@@ -191,15 +195,15 @@
             >
               <template #cell(question_number)="data">
                 <a href="" @click.stop.prevent="viewQuestion(data.item.question_id)"><span style="font-size:large">&nbsp;{{
-                  data.item.question_number
-                }}&nbsp;</span></a>
+                    data.item.question_number
+                  }}&nbsp;</span></a>
               </template>
               <template v-slot:head(last_question_submission)="data">
                 Last Auto Graded Submission
                 <a id="auto_graded_submission_tooltip"
                    href="#"
                 >
-                  <b-icon class="text-muted" icon="question-circle" />
+                  <b-icon class="text-muted" icon="question-circle"/>
                 </a>
                 <b-tooltip target="auto_graded_submission_tooltip"
                            triggers="hover focus"
@@ -225,12 +229,12 @@
                   :class="{ 'text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
                 >
                   <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
-                    data.item.last_open_ended_submission
-                  }}</span>
+                      data.item.last_open_ended_submission
+                    }}</span>
                   <span v-if="data.item.showThumbsUpForOpenEndedSubmission">
                     <a :href="data.item.submission_file_url" target="_blank">{{
-                      data.item.last_open_ended_submission
-                    }}</a>
+                        data.item.last_open_ended_submission
+                      }}</a>
                   </span>
                 </span>
                 <font-awesome-icon v-show="data.item.showThumbsUpForOpenEndedSubmission" class="text-success"
@@ -240,45 +244,49 @@
 
               <template v-slot:head(last_open_ended_submission)="data">
                 Last Open Ended Submission
-                  <a id="open_ended_submission_tooltip"
-                     href="#"
-                  >
-                  <b-icon class="text-muted" icon="question-circle" />
+                <a id="open_ended_submission_tooltip"
+                   href="#"
+                >
+                  <b-icon class="text-muted" icon="question-circle"/>
                 </a>
                 <b-tooltip target="open_ended_submission_tooltip"
                            triggers="hover focus"
                            delay="250"
                 >
-                Open ended questions are questions which will require a grader.  Some examples are file uploads, text based responses, and audio uploads.
+                  Open ended questions are questions which will require a grader. Some examples are file uploads, text
+                  based responses, and audio uploads.
                 </b-tooltip>
               </template>
               <template #cell(solution_file_url)="data">
-                <span v-html="getSolutionFileLink(data.item)" />
+                <span v-html="getSolutionFileLink(data.item)"/>
               </template>
               <template #cell(page)="data">
                 <div v-if="data.item.isOpenEndedFileSubmission">
                   <b-input-group>
-                    <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
-                                  v-model="data.item.page"
-                                  type="text"
-                                  style="width: 50px"
-                                  placeholder=""
-                                  :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
-                                  @keydown="questionSubmissionPageForm.errors.clear('page')"
-                    />
-                    <b-input-group-append>
+                    <div class="d-flex">
+                      <b-form-input :id="`set_page_for_question_${data.item.question_number}`"
+                                    v-model="data.item.page"
+                                    type="text"
+                                    style="width: 60px"
+                                    placeholder=""
+                                    :class="{ 'is-invalid': data.item.question_id === questionSubmissionPageForm.questionId && questionSubmissionPageForm.errors.has('page') }"
+                                    @keydown="questionSubmissionPageForm.errors.clear('page')"
+                      />
+
                       <b-button variant="primary"
                                 size="sm"
+                                class="ml-1"
                                 :disabled="!fullPdfUrl"
                                 @click="confirmSetPageAsSubmission(data.item.question_number, data.item.question_id, data.item.page)"
                       >
-                        <label :for="`set_page_for_question_${data.item.question_number}`">Set Page</label>
+                        <label :for="`set_page_for_question_${data.item.question_number}`" style="margin-bottom:0">Set
+                          Page</label>
                       </b-button>
-                    </b-input-group-append>
+                      <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
+                                 :form="questionSubmissionPageForm" field="page"
+                      />
+                    </div>
 
-                    <has-error v-show="data.item.question_id === questionSubmissionPageForm.questionId"
-                               :form="questionSubmissionPageForm" field="page"
-                    />
                   </b-input-group>
                 </div>
                 <div v-else>
@@ -288,8 +296,10 @@
             </b-table>
           </b-card>
 
-          <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default" header-html="<span class=&quot;h5&quot;>Statistics</span">
-            <AssignmentStatistics />
+          <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default"
+                  header-html="<span class=&quot;h5&quot;>Statistics</span"
+          >
+            <AssignmentStatistics/>
           </b-card>
         </b-container>
       </div>
@@ -409,6 +419,9 @@ export default {
         openEndedSubmission.submission_file_exists = true
         openEndedSubmission.submission_file_url = data.submission_file_url
         openEndedSubmission.last_open_ended_submission = data.date_submitted
+        if (openEndedSubmission.hasOwnProperty('total_score')) {
+          openEndedSubmission.total_score = data.total_score
+        }
         openEndedSubmission.showThumbsUpForOpenEndedSubmission = true
         this.successMessage = data.message
         this.completedAllAssignmentQuestions = data.completed_all_assignment_questions
@@ -629,7 +642,8 @@ export default {
           {
             key: 'page',
             label: 'Initial Page',
-            shown: this.fullPdfUrl !== null
+            shown: this.fullPdfUrl !== null,
+            thStyle: { 'width': '165px' }
           },
           {
             key: 'points',

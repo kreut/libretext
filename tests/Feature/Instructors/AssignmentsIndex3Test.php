@@ -106,6 +106,29 @@ class AssignmentsIndex3Test extends TestCase
     }
 
     /** @test */
+    public function completed_must_have_a_valid_default_completion_scoring_mode(){
+        $this->assignment_info['scoring_type'] = 'c';
+        $this->assignment_info['default_completion_scoring_mode'] = "some letters";
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('default_completion_scoring_mode');
+
+        $this->assignment_info['default_completion_scoring_mode'] = -100;
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('default_completion_scoring_mode');
+
+        $this->assignment_info['default_completion_scoring_mode'] = 4000;
+
+        $this->actingAs($this->user)
+            ->patchJson("/api/assignments/{$this->assignment->id}", $this->assignment_info)
+            ->assertJsonValidationErrors('default_completion_scoring_mode');
+    }
+
+
+    /** @test */
     public function delayed_assignment_cannot_switch_to_clicker_if_there_are_no_technology_questions()
     {
         DB::table('assignment_question')

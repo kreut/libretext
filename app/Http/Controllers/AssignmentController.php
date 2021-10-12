@@ -170,7 +170,7 @@ class AssignmentController extends Controller
             foreach ($enrolled_users as $enrolled_user) {
                 $users_by_id[] = [$enrolled_user->id, "$enrolled_user->first_name $enrolled_user->last_name", ''];
             }
-            if (!$users_by_id){
+            if (!$users_by_id) {
                 $response['type'] = 'info';
                 $response['message'] = 'This course has no students yet.';
                 return $response;
@@ -760,6 +760,7 @@ class AssignmentController extends Controller
                     'default_points_per_question' => $this->getDefaultPointsPerQuestion($data),
                     'default_clicker_time_to_submit' => $this->getDefaultClickerTimeToSubmit($request->assessment_type, $data),
                     'scoring_type' => $data['scoring_type'],
+                    'default_completion_scoring_mode' => Helper::getCompletionScoringMode($data['scoring_type'], $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage),
                     'file_upload_mode' => $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null,
                     'default_open_ended_submission_type' => $this->getDefaultOpenEndedSubmissionType($request, $data),
                     'default_open_ended_text_editor' => $this->getDefaultOpenEndedTextEditor($request, $data),
@@ -1432,6 +1433,7 @@ class AssignmentController extends Controller
                     $data['number_of_randomized_assessments'] = $this->getNumberOfRandomizedAssessments($request->assessment_type, $data);
                     $data['file_upload_mode'] = $request->assessment_type === 'delayed' ? $data['file_upload_mode'] : null;
                     $data['default_points_per_question'] = $this->getDefaultPointsPerQuestion($data);
+                    $data['default_completion_scoring_mode'] =  Helper::getCompletionScoringMode($request->scoring_type, $request->default_completion_scoring_mode, $request->completion_split_auto_graded_percentage);
                 }
                 $data['late_deduction_application_period'] = $this->getLateDeductionApplicationPeriod($request, $data);
 

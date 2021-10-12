@@ -146,9 +146,10 @@ class SubmissionTextController extends Controller
                     'question_id' => $question_id],
                 $submission_text_data
             );
-            $this->updateScoreIfCompletedScoringType($assignment, $question_id);
+            $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
             $response['type'] = 'success';
             $response['message'] = 'Your text submission was saved.';
+            $response['score'] = $score === null ? null : $score;
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime($now,
                 $user->time_zone, 'M d, Y g:i:s a');

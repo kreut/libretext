@@ -49,7 +49,8 @@ export async function submitUploadFile (type, form, noty, nextTick, bvModal, upl
 
       uploadFile.date_submitted = data.date_submitted
       uploadFile.original_filename = data.original_filename
-      uploadFile.date_graded = uploadFile.text_feedback = uploadFile.submission_file_score = 'N/A'
+      uploadFile.date_graded = uploadFile.text_feedback = 'N/A'
+      uploadFile.submission_file_score = data.score ? data.score : 'N/A'
       uploadFile.file_feedback = null
       uploadFile.submission_file_exists = true
       uploadFile.submission = data.submission

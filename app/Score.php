@@ -28,12 +28,12 @@ class Score extends Model
      * @param Question $question
      * @param $model
      * @return array
-     * @throws Exception
+     * @throws Exception|\Throwable
      */
     public function handleUpdateScores(UpdateScoresRequest $request,
                                        Assignment          $assignment,
                                        Question            $question,
-                                                           $model)
+                                                           $model): array
     {
 
         $response['type'] = 'error';
