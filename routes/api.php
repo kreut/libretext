@@ -307,6 +307,17 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/enrollments', 'EnrollmentController@index');
     Route::get('/enrollments/{course}/details', 'EnrollmentController@details');
+
+    Route::get('/enrollments/{assignment}/from-assignment', 'EnrollmentController@enrollmentsFromAssignment');
+
+
+
+    Route::get('/submission-overrides/{assignment}', 'SubmissionOverrideController@index');
+    Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
+    Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
+
+
+
     Route::post('/enrollments', 'EnrollmentController@store');
     Route::delete('/enrollments/{section}/{user}', 'EnrollmentController@destroy');
     Route::patch('/enrollments/{course}/{user}', 'EnrollmentController@update');

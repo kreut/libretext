@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\Question;
+use App\QuestionLevelOverride;
 use App\Score;
 use App\Submission;
 use \Exception;
@@ -87,16 +88,24 @@ class SubmissionTextController extends Controller
         $user = Auth::user();
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment_id, $question_id]);
         if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
+            $questionLevelOverride = new QuestionLevelOverride();
+            $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+            if (!$has_question_level_override) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
         }
         try {
             //validator put here to be consistent with the file submissions
 
             if ($can_submit_text_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment->id, $question_id)) {
                 if ($can_submit_text_response['type'] === 'error') {
-                    $response['message'] = $can_submit_text_response['message'];
-                    return $response;
+                    $questionLevelOverride = new QuestionLevelOverride();
+                    $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+                    if (!$has_question_level_override) {
+                        $response['message'] = $can_submit_text_response['message'];
+                        return $response;
+                    }
                 }
             }
             if (!$request->text_submission) {

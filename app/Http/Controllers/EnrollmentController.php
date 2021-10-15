@@ -242,11 +242,11 @@ class EnrollmentController extends Controller
     private function _assignTosWereNotRemoved($user_id, $course_id)
     {
         /**select *
-        FROM assign_to_timings
-        JOIN assign_to_users
-        ON (assign_to_timings.id = assign_to_users.assign_to_timing_id)
-        WHERE assignment_id IN (SELECT id from assignments where course_id=220)
-        AND user_id = 153
+         * FROM assign_to_timings
+         * JOIN assign_to_users
+         * ON (assign_to_timings.id = assign_to_users.assign_to_timing_id)
+         * WHERE assignment_id IN (SELECT id from assignments where course_id=220)
+         * AND user_id = 153
          ***/
         $assignments = DB::table('assignments')->where('course_id', $course_id)->get('id');
         $assign_tos_exist = false;
@@ -259,6 +259,44 @@ class EnrollmentController extends Controller
                 ->first();
         }
         return $assign_tos_exist;
+
+    }
+
+    public function enrollmentsFromAssignment(Assignment $assignment, Enrollment $enrollment)
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('enrollmentsFromAssignment', [$enrollment, $assignment]);
+
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+
+            $enrollments_info = DB::table('enrollments')
+                ->join('sections', 'enrollments.section_id', '=', 'sections.id')
+                ->join('users', 'enrollments.user_id', '=', 'users.id')
+                ->where('sections.course_id', $assignment->course->id)
+                ->where('users.fake_student', 0)
+                ->select('users.id AS user_id',
+                    DB::raw('CONCAT(first_name, " " , last_name) AS name'))
+                ->orderBy('first_name')
+                ->get();
+            $enrollments[0] = ['text' => 'Select a student', 'value' => null];
+            $enrollments[] = ['text' => 'Everybody', 'value' => -1];
+            foreach ($enrollments_info as $info) {
+                $enrollments[] = ['text' => $info->name, 'value' => $info->user_id];
+            }
+            $response['enrollments'] = $enrollments;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting your enrollments.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
 
     }
 

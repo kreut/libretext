@@ -101,6 +101,7 @@ class BreadcrumbController extends Controller
                         case('instructors.assignments.summary'):
                         case('instructors.assignments.properties'):
                         case('instructors.assignments.control_panel'):
+                        case('instructors.assignments.submission_overrides'):
                         case('instructors.assignments.statistics'):
                         case('instructors.assignments.grader_access'):
                         case('instructors.assignments.questions'):

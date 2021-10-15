@@ -118,10 +118,14 @@ class Submission extends Model
 
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
 
-
+        $questionLevelOverride = new QuestionLevelOverride();
+        $has_question_level_override = $questionLevelOverride->hasAutoGradedOverride($assignment->id, $data['question_id']);
         if (!$authorized->allowed()) {
-            $response['message'] = $authorized->message();
-            return $response;
+
+            if (!$has_question_level_override ) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
         }
 
 

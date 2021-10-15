@@ -6,6 +6,7 @@ use App\Assignment;
 use App\AssignmentFile;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
+use App\QuestionLevelOverride;
 use App\Score;
 use App\User;
 use \Exception;
@@ -66,8 +67,12 @@ class SubmissionAudioController extends Controller
 
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
             if ($can_upload_response['type'] === 'error') {
-                $response['message'] = $can_upload_response['message'];
-                return $response;
+                $questionLevelOverride = new QuestionLevelOverride();
+                $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+               if (!$has_question_level_override) {
+                   $response['message'] = $can_upload_response['message'];
+                   return $response;
+               }
             }
         }
 

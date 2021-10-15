@@ -583,6 +583,8 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['submission'] = Helper::getSubmissionType($value);
 
                 $columns['auto_graded_only'] = !($value->technology === 'text' || $value->open_ended_submission_type);
+                $columns['is_open_ended'] = $value->open_ended_submission_type !== '0';
+                $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
                 $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
@@ -846,7 +848,7 @@ class AssignmentSyncQuestionController extends Controller
     function destroy(Assignment             $assignment,
                      Question               $question,
                      AssignmentSyncQuestion $assignmentSyncQuestion,
-                     BetaCourseApproval     $betaCourseApproval)
+                     BetaCourseApproval     $betaCourseApproval): array
     {
 
         $response['type'] = 'error';
@@ -924,6 +926,9 @@ class AssignmentSyncQuestionController extends Controller
                 ->delete();
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
+                ->delete();
+            DB::table('question_level_overrides')->where('question_id', $question->id)
+                ->where('assignment_id', $assignment->id)
                 ->delete();
             $currently_ordered_questions = DB::table('assignment_question')
                 ->where('assignment_id', $assignment->id)

@@ -20,7 +20,7 @@
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
                 <router-link
-                  v-if="user.role ===2 || user.role ===4 && !['Grader Access', 'Properties'].includes(tab.name)"
+                  v-if="user.role ===2 || user.role ===4 && !['Grader Access', 'Properties', 'Submission Overrides'].includes(tab.name)"
                   :to="{ name: tab.route }"
                   class="nav-link"
                   active-class="active"
@@ -96,6 +96,11 @@ export default {
           icon: '',
           name: 'Control Panel',
           route: 'instructors.assignments.control_panel'
+        },
+        {
+          icon: '',
+          name: 'Submission Overrides',
+          route: 'instructors.assignments.submission_overrides'
         },
         {
           icon: '',

@@ -3,6 +3,7 @@
 namespace App\Policies;
 
 
+use App\Assignment;
 use App\Course;
 use App\Section;
 use App\User;
@@ -36,6 +37,18 @@ class EnrollmentPolicy
             : Response::deny('You are not allowed to unenroll this student.');
 
     }
+
+
+
+    public function enrollmentsFromAssignment(User $user, Enrollment $enrollment, Assignment $assignment)
+    {
+        return ((int) $assignment->course->user_id === $user->id || $assignment->course->isGrader())
+            ? Response::allow()
+            : Response::deny('You are not allowed to get the enrollments for the course from this assignment.');
+
+    }
+
+
 
     public function details(User $user, Enrollment $enrollment, Course $course)
     {

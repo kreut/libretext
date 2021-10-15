@@ -1518,6 +1518,9 @@ class AssignmentController extends Controller
             DB::table('cutups')->where('assignment_id', $assignment->id)->delete();
             DB::table('lti_launches')->where('assignment_id', $assignment->id)->delete();
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
+            DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
+            DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
+
             $assignment->graders()->detach();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 

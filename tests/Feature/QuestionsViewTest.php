@@ -4,11 +4,13 @@ namespace Tests\Feature;
 
 use App\Assignment;
 use App\AssignToTiming;
+use App\CompiledPDFOverride;
 use App\Course;
 use App\Enrollment;
 use App\Extension;
 use App\Cutup;
 use App\LtiLaunch;
+use App\QuestionLevelOverride;
 use App\Section;
 use App\Solution;
 use App\User;
@@ -166,6 +168,68 @@ class QuestionsViewTest extends TestCase
             "_method" => "put"
         ];
     }
+
+    /** @test */
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_auto_graded_response_if_assignment_past_due_and_no_extension_if_allowed()
+    {
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
+        QuestionLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'auto_graded' => '1',
+            'open_ended' => '0'
+        ]);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson([ 'message' => 'Auto-graded submission saved.']);
+
+    }
+
+
+    /** @test */
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_text_response_if_assignment_past_due_and_no_extension_if_allowed()
+    {
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
+        QuestionLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'auto_graded' => '0',
+            'open_ended' => '1'
+        ]);
+
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
+                'questionId' => $this->question->id,
+                'assignmentId' => $this->assignment->id,
+                'text_submission' => 'Some other cool text after it was graded.']
+        )->assertJson(['message' => 'Your text submission was saved.']);
+
+    }
+    /** @test */
+
+    public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_question_level_file_response_if_assignment_past_due_and_no_extension_if_allowed()
+    {
+
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = "2001-03-05 09:00:00";//was due an hour ago.
+        $assignToTiming->save();
+        QuestionLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'question_id' => $this->question->id,
+            'user_id' => $this->student_user->id,
+            'auto_graded' => '0',
+            'open_ended' => '1'
+        ]);
+
+        $submission_file_data = $this->getSubmissionFileData();
+        $this->actingAs($this->student_user)->postJson("/api/submission-files", $submission_file_data)
+            ->assertJson(['message' => 'Your file submission has been saved.']);
+
+    }
+
 
     /** @test */
     public function submitted_file_gets_full_credit_if_scoring_type_is_completed_for_just_text_type_question()
@@ -1211,6 +1275,26 @@ class QuestionsViewTest extends TestCase
 
     }
 
+    /** @test */
+
+    public function student_can_set_page_if_the_assignment_is_past_due_with_set_page_override()
+    {
+        CompiledPDFOverride::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id,
+            'set_page_only' => '1'
+        ]);
+
+        $this->createSubmissionFile();
+        $assignToTiming = AssignToTiming::where('assignment_id', $this->assignment->id)->first();
+        $assignToTiming->due = Carbon::yesterday();
+        $assignToTiming->save();
+
+
+        $this->assignment->save();
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
+            ->assertJson(['type' => "success"]);
+
+    }
 
     /** @test */
 

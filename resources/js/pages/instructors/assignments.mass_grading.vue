@@ -304,7 +304,7 @@ import axios from 'axios'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import { mapGetters } from 'vuex'
-import { viewQuestion, doCopy } from '~/helpers/Questions'
+import { viewQuestion, doCopy, getQuestions } from '~/helpers/Questions'
 
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
@@ -375,6 +375,7 @@ export default {
     this.assignmentId = this.$route.params.assignmentId
     this.doCopy = doCopy
     this.viewQuestion = viewQuestion
+    this.getQuestions = getQuestions
     await this.getQuestions()
     if (!this.questions.length) {
       this.isLoading = false
@@ -512,28 +513,6 @@ export default {
       for (let i = 0; i < this.items.length; i++) {
         this.questionScoreForm.user_ids.push(this.items[i].user_id)
       }
-    },
-    async getQuestions () {
-      this.questions = []
-      try {
-        const { data } = await axios.get(`/api/assignments/${this.assignmentId}/questions/summary`)
-        if (!data.rows.length) {
-          return false
-        }
-        for (let i = 0; i < data.rows.length; i++) {
-          let question = data.rows[i]
-          this.questions.push(question)
-          this.questionsOptions.push({ value: question.order, text: question.order })
-        }
-        this.questionId = data.rows[0].question_id
-        if (data.type === 'error') {
-          this.$noty.error(data.message)
-          return false
-        }
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-      this.currentQuestionPage = 1
     },
     async getScoresByAssignmentAndQuestion () {
       try {

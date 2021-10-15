@@ -3,12 +3,14 @@
 namespace App\Http\Controllers;
 
 use App\AssignmentSyncQuestion;
+use App\CompiledPDFOverride;
 use App\Course;
 use App\Grader;
 use App\GraderNotification;
 use App\Http\Requests\UpdateScoresRequest;
 use App\Http\Requests\UpdateSubmisionFilePage;
 use App\Question;
+use App\QuestionLevelOverride;
 use App\Score;
 use App\User;
 use App\AssignmentFile;
@@ -139,13 +141,17 @@ class SubmissionFileController extends Controller
                                Question                $question,
                                SubmissionFile          $submissionFile,
                                Extension               $extension,
-                               AssignmentSyncQuestion  $assignmentSyncQuestion)
+                               AssignmentSyncQuestion  $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
             if ($can_upload_response['type'] === 'error') {
-                $response['message'] = $can_upload_response['message'];
-                return $response;
+                $compiledPDFOverride = new CompiledPDFOverride();
+                $has_set_page_override = $compiledPDFOverride->hasSetPageOverride($assignment->id);
+                if (!$has_set_page_override) {
+                    $response['message'] = $can_upload_response['message'];
+                    return $response;
+                }
             }
 
         }
@@ -337,12 +343,19 @@ class SubmissionFileController extends Controller
             $user = Auth::user();
             $user_id = $user->id;
             $response['type'] = 'error';
-            //validator put here because I wasn't using vform so had to manually handle errors
+            //validator put here because I wasn't usingf vform so had to manually handle errors
 
             if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id, $upload_level)) {
                 if ($can_upload_response['type'] === 'error') {
-                    $response['message'] = $can_upload_response['message'];
-                    return $response;
+                    $compiledPDFOverride = new CompiledPDFOverride();
+                    $questionLevelOverride = new QuestionLevelOverride();
+                    $has_upload_override = $upload_level === 'assignment'
+                        ? $compiledPDFOverride->hasCompiledPDFOverride($assignment_id)
+                        : $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+                    if (!$has_upload_override) {
+                        $response['message'] = $can_upload_response['message'];
+                        return $response;
+                    }
                 }
             }
 
