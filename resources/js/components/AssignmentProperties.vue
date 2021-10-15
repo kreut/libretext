@@ -987,7 +987,7 @@
       <b-form-group
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="due_date"
+        :label-for="`due_date_${index}`"
       >
         <template slot="label">
           Due Date<Asterisk/>
@@ -995,7 +995,7 @@
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
-              id="due_date"
+              :id="`due_date_${index}`"
               v-model="assignTo.due_date"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
