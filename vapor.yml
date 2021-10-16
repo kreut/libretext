@@ -3,6 +3,7 @@ name: adapt
 environments:
     production:
         memory: 1024
+        timeout: 20
         cli-memory: 512
         runtime: docker
         database: production
@@ -18,6 +19,7 @@ environments:
             - 'npm ci && npm run prod && rm -rf node_modules'
     staging:
         memory: 1024
+        timeout: 20
         cli-memory: 512
         runtime: docker
         firewall:

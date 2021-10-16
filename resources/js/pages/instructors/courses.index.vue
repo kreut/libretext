@@ -44,6 +44,10 @@
         </b-form-radio-group>
       </b-form-group>
       <template #modal-footer>
+        <span v-if="processingImportCourse">
+          <b-spinner small type="grow" />
+          Importing course...
+        </span>
         <b-button
           size="sm"
           class="float-right"
@@ -53,9 +57,9 @@
         </b-button>
         <b-button
           variant="primary"
-          size="sm"getTooltipTarget
+          size="sm"
           class="float-right"
-          :disabled="disableYesImportCourse"
+          :disabled="disableYesImportCourse || processingImportCourse"
           @click="handleImportCourse"
         >
           Yes, import course!
@@ -395,6 +399,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    processingImportCourse: false,
     toggleColors: window.config.toggleColors,
     currentOrderedCourses: [],
     allFormErrors: [],
@@ -595,12 +600,14 @@ export default {
       return 0
     },
     async handleImportCourse () {
+      this.processingImportCourse = true
       try {
         let IdOfCourseToImport = this.getIdOfCourseToImport(this.courseToImport)
         const { data } = await this.courseToImportForm.post(`/api/courses/import/${IdOfCourseToImport}`)
         this.$noty[data.type](data.message)
 
         if (data.type === 'error') {
+          this.processingImportCourse = false
           return false
         }
         this.$bvModal.hide('modal-import-course')
@@ -610,6 +617,7 @@ export default {
           this.$noty.error(error.message)
         }
       }
+      this.processingImportCourse = false
     },
     showCourseWarning (course) {
       this.course = course
