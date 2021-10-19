@@ -3,6 +3,7 @@
 namespace App\Console\Commands\Database;
 
 
+use Illuminate\Support\Facades\Storage;
 use phpseclib\Crypt\RSA;
 use phpseclib\Net\SSH2;
 use Illuminate\Console\Command;
@@ -44,8 +45,6 @@ class backupVaporDB extends Command
 
         $start_time = microtime(true);
         $backup_path = storage_path() . '/app/db_backups/';
-
-
         $key = new RSA();
         $key->loadKey(file_get_contents('/Users/franciscaparedes/.ssh/vapor-jump-production'));
 
@@ -56,7 +55,12 @@ class backupVaporDB extends Command
             exit('Login Failed');
         }
         echo $ssh->exec('mysqldump --single-transaction --quick -h production.cluster-civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor vapor | gzip > dump.sql.gz');
+        echo $ssh->exec('mysqldump --single-transaction --quick -h production.cluster-civ8gz4roxix.us-west-1.rds.amazonaws.com -u vapor vapor data_shops | gzip > analytics.sql.gz');
+        shell_exec('scp -i ~/.ssh/vapor-jump-production ec2-user@ec2-54-183-249-159.us-west-1.compute.amazonaws.com:analytics.sql.gz ' . $backup_path . 'analytics.sql.gz');
         shell_exec('scp -i ~/.ssh/vapor-jump-production ec2-user@ec2-54-183-249-159.us-west-1.compute.amazonaws.com:dump.sql.gz ' . $backup_path . '"$(date +%Y-%m-%d)".sql.gz');
+        Storage::disk('backup_s3')->put('data_shops/data_shops.sql.gz',$backup_path . 'analytics.sql.gz');
+        $analytics =file_get_contents($backup_path . 'analytics.sql.gz');
+        Storage::disk('backup_s3')->put('analytics.sql.gz',$analytics);
         $total_time = microtime(true) - $start_time;
 
         foreach (new \DirectoryIterator($backup_path) as $item) {
@@ -75,6 +79,7 @@ class backupVaporDB extends Command
             'parse_mode' => 'HTML',
             'text' => "DB backup: " . $filesize . ' ' . round($total_time, 1) . ' seconds'
         ]);
+
         return 0;
     }
 }

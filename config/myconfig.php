@@ -11,5 +11,6 @@ return [
     'db_host' => env('DB_HOST', 'No host provided'),
     'minpods' => env('MINPODS', 0),
     'loadtest' => env('LOADTEST', false),
-    'my_ip' => env('MY_IP', false)
+    'my_ip' => env('MY_IP', false),
+    'analytics_token' => env('ANALYTICS_TOKEN', false)
 ];

@@ -50,6 +50,7 @@ Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCour
 Route::patch('/accessibility/set-cookie', 'AccessibilityController@setCookie');
 Route::delete('/accessibility/delete-cookie', 'AccessibilityController@destroyCookie');
 
+Route::get('/analytics','AnalyticsController@index');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
 
