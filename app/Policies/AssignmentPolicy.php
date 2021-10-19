@@ -4,12 +4,16 @@ namespace App\Policies;
 
 use App\Assignment;
 use App\Course;
+use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Score;
 use App\User;
+use Carbon\Carbon;
+use Exception;
 use Illuminate\Auth\Access\HandlesAuthorization;
 use Illuminate\Auth\Access\Response;
 use \App\Traits\CommonPolicies;
+use Illuminate\Support\Facades\Storage;
 
 class AssignmentPolicy
 {
@@ -85,6 +89,16 @@ class AssignmentPolicy
             case(3):
                 $has_access = ($assignment->course->anonymous_users && Helper::isAnonymousUser())
                     || $assignment->course->enrollments->contains('user_id', $user->id);
+                if (!$has_access){
+                    try {
+                        $contents = "User: $user->id Assignment: $assignment->id, Course: {$assignment->course->id}";
+                        $date_time = Carbon::now('America/Los_Angeles');
+                        Storage::disk('s3')->put("logs/$date_time", $contents, ['StorageClass' => 'STANDARD_IA']);
+                    } catch (Exception $e){
+                        $h = new Handler(app());
+                        $h->report($e);
+                    }
+                }
                 break;
             case(4):
                 $has_access = $assignment->course->isGrader();
