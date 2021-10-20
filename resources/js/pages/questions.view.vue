@@ -860,11 +860,10 @@
                   </b-form-row>
                   <b-row align-h="center">
                     <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage" />
-                    <a href="#">
+                    <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
                       <b-icon v-if="completionScoringModeMessage"
                               icon="pencil"
                               class="text-muted"
-                              @click="openUpdateCompletionScoringModeModal()"
                       />
                     </a>
                   </b-row>
@@ -2118,7 +2117,7 @@ export default {
         return false
       }
       if (this.hasAtLeastOneSubmission) {
-        this.$noty.error("Students have already made submission for this question so you can't change the scoring method.")
+        this.$noty.info("Students have already made submission for this question so you can't change the scoring method.")
         return false
       }
       if (this.scoringType === 'c') {

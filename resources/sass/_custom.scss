@@ -15,6 +15,7 @@ button.accessible-btn {
 .h5 {
   font-size: 1.25rem;
 }
+
 .h4 {
   font-size: 1.5rem;
 }
@@ -34,6 +35,10 @@ button.accessible-btn {
   border-color: #80bdff;
   box-shadow: 0 0 0 0.2rem rgb(0 123 255 / 25%);
   outline: 0
+}
+
+.percent-input-disabled {
+  background-color: #E9ECEF;
 }
 
 

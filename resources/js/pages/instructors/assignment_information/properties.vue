@@ -23,6 +23,7 @@
             :assignment-id="parseInt(assignmentId)"
             :is-beta-assignment="assignment.is_beta_assignment"
             :lms="Boolean(lms)"
+            :has-submissions-or-file-submissions="assignment.has_submissions_or_file_submissions"
           />
           <hr>
           <span class="float-right">

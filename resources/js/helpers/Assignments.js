@@ -24,13 +24,8 @@ export function isLockedMessage () {
               you can still add/remove questions.`
 }
 
-export function isLocked (assignment) {
-  // on the assignments index page I have to pass in the specific assignment
-  // otherwise, I'm within an assignment.
-  if (!assignment) {
-    assignment = this
-  }
-  return Boolean(this.user.role === 2 && assignment.has_submissions_or_file_submissions)
+export function isLocked (hasSubmissionsOrFileSubmissions) {
+  return Boolean(this.user.role === 2 && hasSubmissionsOrFileSubmissions)
 }
 
 export function initAssignmentGroupOptions (assignments) {

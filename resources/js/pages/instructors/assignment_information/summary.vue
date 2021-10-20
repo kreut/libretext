@@ -158,6 +158,7 @@ export default {
 
         this.items.push(
           { property: 'Assessment Type', value: _.startCase(this.assignment.assessment_type) },
+          { property: 'Scoring Type', value: this.assignment.scoring_type === 'p' ? 'Performance' : 'Completion' },
           {
             property: 'Students Can View Assignment Statistics',
             value: this.students_can_view_assignment_statistics ? 'Yes' : 'No'

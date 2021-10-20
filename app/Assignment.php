@@ -49,6 +49,7 @@ class Assignment extends Model
             ->isNotEmpty();
 
     }
+
     /**
      * @return array
      */
@@ -247,7 +248,7 @@ class Assignment extends Model
                         $assignments_info[$key]['assign_tos'][$assign_to_key]['due_time'] = $this->convertUTCMysqlFormattedDateToLocalTime($due, Auth::user()->time_zone);
                     }
                     $assignments_info[$key]['overall_status'] = $this->getOverallStatus($num_assign_tos, $num_open, $num_closed, $num_upcoming);
-
+                    $assignments_info[$key]['has_submissions_or_file_submissions'] = $this->hasSubmissionsOrFileSubmissions($assignment->id);
                     $assignments_info[$key]['number_of_questions'] = $number_of_questions;
 
 
@@ -273,6 +274,31 @@ class Assignment extends Model
 
         }
         return $response;
+    }
+
+    /**
+     * @param int $assignment_id
+     * @return bool
+     */
+    function hasSubmissionsOrFileSubmissions(int $assignment_id): bool
+    {
+        //don't include fake students
+        if (DB::table('submissions')
+            ->join('users','submissions.user_id','users.id')
+            ->where('assignment_id', $assignment_id)
+            ->where('fake_student',0)
+            ->first()) {
+            return true;
+        }
+        if (DB::table('submission_files')
+            ->join('users','submission_files.user_id','users.id')
+            ->where('assignment_id', $assignment_id)
+            ->where('fake_student',0)
+            ->first()) {
+            return true;
+        }
+        return false;
+
     }
 
     function assignToGroups()

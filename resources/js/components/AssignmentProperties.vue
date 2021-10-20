@@ -205,7 +205,7 @@
     </b-tooltip>
 
     <b-form ref="form">
-      <div v-if="isLocked()">
+      <div v-if="isLocked(hasSubmissionsOrFileSubmissions)">
         <b-alert variant="info" show>
           <span class="font-weight-bold">{{ isLockedMessage() }}</span>
         </b-alert>
@@ -224,7 +224,8 @@
         label-for="name"
       >
         <template slot="label">
-          Name<Asterisk/>
+          Name
+          <Asterisk/>
         </template>
         <b-form-row>
           <b-col lg="10">
@@ -292,7 +293,8 @@
         label-cols-lg="3"
       >
         <template slot="label">
-          Assignment Group<Asterisk/>
+          Assignment Group
+          <Asterisk/>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -318,7 +320,8 @@
                 label-for="create_assignment_group"
               >
                 <template slot="label">
-                  Assignment Group<Asterisk/>
+                  Assignment Group
+                  <Asterisk/>
                 </template>
                 <b-form-input
                   id="create_assignment_group"
@@ -359,13 +362,14 @@
         label-for="source"
       >
         <template slot="label">
-          Source<Asterisk/>
+          Source
+          <Asterisk/>
         </template>
         <b-form-radio-group
           id="source"
           v-model="form.source"
           stacked
-          :disabled="isLocked() || isBetaAssignment"
+          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
           @change="initInternalExternalSwitch()"
         >
           <b-form-radio name="source" value="a">
@@ -388,10 +392,11 @@
         label-for="scoring_type"
       >
         <template slot="label">
-          Scoring Type<Asterisk/>
+          Scoring Type
+          <Asterisk/>
         </template>
         <b-form-radio-group id="scoring_type" v-model="form.scoring_type" stacked
-                            :disabled="isLocked() || isBetaAssignment"
+                            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
         >
           <span @click="form.students_can_view_assignment_statistics = 1">
             <b-form-radio value="p">Performance <span id="performance" class="text-muted"><b-icon
@@ -416,7 +421,8 @@
 
       >
         <template slot="label">
-          Default Completion Scoring Mode<Asterisk/>
+          Default Completion Scoring Mode
+          <Asterisk/>
           <a id="default-completion-scoring-mode-tooltip"
              href="#"
              class="text-muted"
@@ -427,7 +433,7 @@
         <b-form-radio-group id="default_completion_scoring_mode"
                             v-model="form.default_completion_scoring_mode"
                             stacked
-                            :disabled="isLocked() || isBetaAssignment"
+                            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                             :class="{ 'is-invalid': form.errors.has('default_completion_scoring_mode') }"
                             @keydown="form.errors.clear('default_completion_scoring_mode')"
         >
@@ -444,8 +450,8 @@
             submission<br>
             <span v-if="!isNaN(parseFloat(completionSplitOpenEndedPercentage))">
               <input v-model="completionSplitOpenEndedPercentage"
-                     class="percent-input"
-                     disabled
+                     class="percent-input percent-input-disabled"
+                     @click="false"
                      :aria-disabled="true"
               >%
               of the points awarded for an open-ended submission
@@ -461,7 +467,8 @@
           label-for="default_points_per_question"
         >
           <template slot="label">
-            Default Points/Question<Asterisk/>
+            Default Points/Question
+            <Asterisk/>
           </template>
           <b-form-row>
             <b-col lg="3">
@@ -471,7 +478,7 @@
                 type="text"
                 placeholder=""
                 :class="{ 'is-invalid': form.errors.has('default_points_per_question') }"
-                :disabled="isLocked() || isBetaAssignment"
+                :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                 @keydown="form.errors.clear('default_points_per_question')"
               />
               <has-error :form="form" field="default_points_per_question"/>
@@ -488,12 +495,13 @@
       label-for="assessment_type"
     >
       <template slot="label">
-        Assessment Type<Asterisk/>
+        Assessment Type
+        <Asterisk/>
       </template>
       <b-form-radio-group id="assessment_type"
                           v-model="form.assessment_type"
                           stacked
-                          :disabled="isLocked() || isBetaAssignment"
+                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                           @change="initAssessmentTypeSwitch($event)"
       >
         <b-form-radio name="assessment_type" value="real time">
@@ -531,7 +539,8 @@
         label-for="default_clicker_time_to_submit"
       >
         <template slot="label">
-          Default Clicker Time To Submit<Asterisk/>
+          Default Clicker Time To Submit
+          <Asterisk/>
           <span id="default_clicker_time_to_submit_tooltip"
                 class="text-muted"
           ><b-icon
@@ -565,7 +574,8 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Minimum Number of Minutes Exploring Learning Tree<Asterisk/>
+          Minimum Number of Minutes Exploring Learning Tree
+          <Asterisk/>
           <span id="min_time_needed_in_learning_tree_tooltip"
                 class="text-muted"
           ><b-icon
@@ -579,7 +589,7 @@
               v-model="form.min_time_needed_in_learning_tree"
               type="text"
               placeholder="In Minutes"
-              :disabled="isLocked() || isBetaAssignment"
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('min_time_needed_in_learning_tree') }"
               @keydown="form.errors.clear('min_time_needed_in_learning_tree')"
             />
@@ -596,7 +606,8 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Percent Earned For Exploring Learning Tree<Asterisk/>
+          Percent Earned For Exploring Learning Tree
+          <Asterisk/>
           <span id="percent_earned_for_exploring_learning_tree_tooltip"
                 class="text-muted"
           ><b-icon
@@ -610,7 +621,7 @@
               v-model="form.percent_earned_for_exploring_learning_tree"
               type="text"
               placeholder="Out of 100"
-              :disabled="isLocked() || isBetaAssignment"
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('percent_earned_for_exploring_learning_tree') }"
               @keydown="form.errors.clear('percent_earned_for_exploring_learning_tree')"
             />
@@ -627,7 +638,8 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Submission Count Percent Decrease<Asterisk/>
+          Submission Count Percent Decrease
+          <Asterisk/>
           <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
             icon="question-circle"
           /></span>
@@ -639,7 +651,7 @@
               v-model="form.submission_count_percent_decrease"
               type="text"
               placeholder="Out of 100"
-              :disabled="isLocked() || isBetaAssignment"
+              :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
               :class="{ 'is-invalid': form.errors.has('submission_count_percent_decrease') }"
               @keydown="form.errors.clear('submission_count_percent_decrease')"
             />
@@ -655,12 +667,13 @@
       label-for="file_upload_mode"
     >
       <template slot="label">
-        File Upload Mode<Asterisk/>
+        File Upload Mode
+        <Asterisk/>
       </template>
       <b-form-radio-group id="file_upload_mode"
                           v-model="form.file_upload_mode"
                           stacked
-                          :disabled="isLocked() || isBetaAssignment"
+                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                           name="file_upload_mode"
                           :class="{ 'is-invalid': form.errors.has('file_upload_mode') }"
                           @keydown="form.errors.clear('file_upload_mode')"
@@ -691,14 +704,15 @@
       label-for="default_open_ended_submission_type"
     >
       <template slot="label">
-        Default Open-ended Submission Type<Asterisk/>
+        Default Open-ended Submission Type
+        <Asterisk/>
         <span id="default_open_ended_submission_type_tooltip">
           <b-icon class="text-muted" icon="question-circle"/></span>
       </template>
       <b-form-radio-group id="default_open_ended_submission_type"
                           v-model="form.default_open_ended_submission_type"
                           stacked
-                          :disabled="isLocked() || isBetaAssignment"
+                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
                           name="default_open_ended_submission_type"
                           :class="{ 'is-invalid': form.errors.has('default_open_ended_submission_type') }"
                           @change="checkIfCompiledPdf()"
@@ -738,11 +752,12 @@
       label-for="late_policy"
     >
       <template slot="label">
-        Late Policy<Asterisk/>
+        Late Policy
+        <Asterisk/>
       </template>
       <b-form-radio-group id="late_policy"
                           v-model="form.late_policy" stacked
-                          :disabled="isLocked()"
+                          :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
       >
         <!-- <b-form-radio name="default_open_ended_submission_type" value="a">At the assignment level</b-form-radio>-->
         <b-form-radio value="not accepted">
@@ -786,11 +801,12 @@
         label-for="late_deduction_application_period"
       >
         <template slot="label">
-          Late Deduction Applied<Asterisk/>
+          Late Deduction Applied
+          <Asterisk/>
         </template>
         <b-form-radio-group v-model="form.late_deduction_applied_once"
                             stacked
-                            :disabled="isLocked()"
+                            :disabled="isLocked(hasSubmissionsOrFileSubmissions)"
         >
           <span @click="form.late_deduction_application_period = ''">
             <b-form-radio value="1">
@@ -827,7 +843,8 @@
       label-for="include_in_final_score"
     >
       <template slot="label">
-        Include In Final Score<Asterisk/>
+        Include In Final Score
+        <Asterisk/>
       </template>
       <b-form-radio-group id="include_in_final_score"
                           v-model="form.include_in_weighted_average" stacked
@@ -849,7 +866,8 @@
       label-for="external_source_points"
     >
       <template slot="label">
-        Total Points<Asterisk/>
+        Total Points
+        <Asterisk/>
       </template>
       <b-form-row>
         <b-col lg="3">
@@ -893,11 +911,12 @@
       label-for="randomizations"
     >
       <template slot="label">
-        Randomizations<Asterisk/>
+        Randomizations
+        <Asterisk/>
       </template>
       <b-form-radio-group id="randomizations"
                           v-model="form.randomizations" stacked
-                          :disabled="isLocked() || isBetaAssignment"
+                          :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
       >
         <b-form-radio value="0" @change="resetRandomizations">
           No
@@ -915,7 +934,8 @@
       label-for="number_of_randomized_assessments"
     >
       <template slot="label">
-        Number of randomized assessments<Asterisk/>
+        Number of randomized assessments
+        <Asterisk/>
         <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
           icon="question-circle"
         /></span>
@@ -926,7 +946,7 @@
             id="number_of_randomized_assessments"
             v-model="form.number_of_randomized_assessments"
             type="text"
-            :disabled="isLocked() || isBetaAssignment"
+            :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
             :class="{ 'is-invalid': form.errors.has('number_of_randomized_assessments') }"
             @keydown="form.errors.clear('number_of_randomized_assessments')"
           />
@@ -940,7 +960,8 @@
       label-for="notifications"
     >
       <template slot="label">
-        Notifications<Asterisk/>
+        Notifications
+        <Asterisk/>
         <span id="notifications_tooltip" class="text-muted"><b-icon
           icon="question-circle"
         /></span>
@@ -983,7 +1004,8 @@
         label-for="assign_to"
       >
         <template slot="label">
-          Assign to<Asterisk/>
+          Assign to
+          <Asterisk/>
           <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
         </template>
         <b-form-row>
@@ -1016,7 +1038,8 @@
         :label-for="`available_from_${index}`"
       >
         <template slot="label">
-          Available on<Asterisk/>
+          Available on
+          <Asterisk/>
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1044,7 +1067,8 @@
         :label-for="`due_date_${index}`"
       >
         <template slot="label">
-          Due Date<Asterisk/>
+          Due Date
+          <Asterisk/>
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1074,7 +1098,8 @@
         label-for="final_submission_deadline"
       >
         <template slot="label">
-          Final Submission Deadline<Asterisk/>
+          Final Submission Deadline
+          <Asterisk/>
           <span id="final_submission_deadline_tooltip"
                 class="text-muted"
           ><b-icon
@@ -1157,7 +1182,8 @@ export default {
     courseId: { type: Number, default: 0 },
     assignmentId: { type: Number, default: 0 },
     courseEndDate: { type: String, default: '' },
-    courseStartDate: { type: String, default: '' }
+    courseStartDate: { type: String, default: '' },
+    hasSubmissionsOrFileSubmissions: { type: Boolean, default: false }
   },
   data: () => ({
     completionSplitOpenEndedPercentage: '',
@@ -1456,7 +1482,7 @@ export default {
       this.form.submission_count_percent_decrease = null
     },
     getLockedQuestionsMessage (assignment) {
-      if ((Number(assignment.has_submissions_or_file_submissions))) {
+      if (assignment.has_submissions_or_file_submissions) {
         return 'Since students have already submitted responses to this assignment, you won\'t be able to add or remove questions.'
       }
       if ((Number(assignment.solutions_released))) {
