@@ -4,10 +4,7 @@
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
-      ok-title="Submit"
-      :ok-only="inIFrame"
       :no-close-on-esc="true"
-      @ok="submitEnrollInCourse"
     >
       <template v-if="inIFrame" #modal-header>
         Enroll In Course
@@ -17,15 +14,15 @@
       </template>
       <p>Please provide the course access code given to you by your instructor.</p>
       <RequiredText :plural="false"/>
-      <b-form ref="form" @submit="submitEnrollInCourse">
+      <b-form ref="form">
         <b-form-group
-          id="access_code"
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="access_code"
         >
           <template slot="label">
-            Access Code<Asterisk />
+            Access Code
+            <Asterisk/>
           </template>
           <b-form-input
             id="access_code"
@@ -47,6 +44,27 @@
           </div>
         </div>
       </b-form>
+      <template #modal-footer>
+        <span v-if="!inIFrame">
+        <b-button
+          size="sm"
+          class="float-right"
+          aria-label="Cancel enroll in course"
+          @click="$bvModal.hide('modal-enroll-in-course')"
+        >
+            Cancel
+        </b-button>
+          </span>
+        <b-button
+          variant="primary"
+          size="sm"
+          class="float-right"
+          aria-label="Submit enroll in course"
+          @click="submitEnrollInCourse()"
+        >
+          Submit
+        </b-button>
+      </template>
     </b-modal>
   </div>
 </template>
@@ -101,10 +119,7 @@ export default {
     this.form.time_zone = null
   },
   methods: {
-    submitEnrollInCourse (bvModalEvt) {
-      // Prevent modal from closing
-      bvModalEvt.preventDefault()
-      // Trigger submit handler
+    submitEnrollInCourse () {
       this.inIFrame ? this.enrollInCourseViaIFrame() : this.enrollInCourse()
     },
     resetAll () {
