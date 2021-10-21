@@ -78,7 +78,7 @@
       id="modal-not-updated"
       ref="modalNotUpdated"
       hide-footer
-      title="Not Updated"
+      title="No Updated"
     >
       <b-container>
         <b-row>

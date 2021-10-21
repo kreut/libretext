@@ -136,6 +136,12 @@ class Submission extends Model
         switch ($data['technology']) {
             case('h5p'):
                 $submission = json_decode($data['submission']);
+                $no_submission = str_replace('[,]','',$submission->result->response) === '';
+                if ($no_submission){
+                    $response['type'] = 'info';
+                   $response['message'] =  $response['not_updated_message'] = "It looks like you submitted a blank response.  Please make a selection before submitting.";
+                    return $response;
+                }
                 $proportion_correct = (floatval($submission->result->score->raw) / floatval($submission->result->score->max));
                 $data['score'] = $assignment->scoring_type === 'p'
                     ? floatval($assignment_question->points) * $proportion_correct
