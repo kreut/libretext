@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Assignment;
+use App\AssignmentLevelOverride;
 use App\AssignToTiming;
 use App\CompiledPDFOverride;
 use App\Course;
@@ -168,12 +169,13 @@ class QuestionsViewTest extends TestCase
             "_method" => "put"
         ];
     }
-/** @test */
+
+    /** @test */
     public function non_instructor_cannot_update_the_completion_scoring_mode()
     {
         $this->actingAs($this->student_user)
             ->patchJson("/api/assignments/{$this->assignment->id}/questions/{$this->question->id}/update-completion-scoring-mode",
-            ['completion_scoring_mode' => '100% for either'])
+                ['completion_scoring_mode' => '100% for either'])
             ->assertJson(['message' => 'You are not allowed to update that resource.']);
 
     }
@@ -193,7 +195,12 @@ class QuestionsViewTest extends TestCase
             'open_ended' => '0'
         ]);
         $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
-            ->assertJson([ 'message' => 'Auto-graded submission saved.']);
+            ->assertJson(['message' => 'Auto-graded submission saved.']);
+        DB::table('question_level_overrides')->delete();
+        AssignmentLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id]);
+        $this->actingAs($this->student_user)->postJson("/api/submissions", $this->h5pSubmission)
+            ->assertJson(['message' => 'Auto-graded submission saved.']);
 
     }
 
@@ -217,8 +224,17 @@ class QuestionsViewTest extends TestCase
                 'assignmentId' => $this->assignment->id,
                 'text_submission' => 'Some other cool text after it was graded.']
         )->assertJson(['message' => 'Your text submission was saved.']);
+        DB::table('question_level_overrides')->delete();
+        AssignmentLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id]);
+        $this->actingAs($this->student_user)->postJson("/api/submission-texts", [
+                'questionId' => $this->question->id,
+                'assignmentId' => $this->assignment->id,
+                'text_submission' => 'Some other cool text after it was graded.']
+        )->assertJson(['message' => 'Your text submission was saved.']);
 
     }
+
     /** @test */
 
     public function with_a_late_assignment_policy_of_not_accepted_a_student_can_submit_question_level_file_response_if_assignment_past_due_and_no_extension_if_allowed()
@@ -1365,6 +1381,11 @@ class QuestionsViewTest extends TestCase
 
 
         $this->assignment->save();
+        $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
+            ->assertJson(['type' => "success"]);
+        DB::table('compiled_pdf_overrides')->delete();
+        AssignmentLevelOverride::create(['assignment_id' => $this->assignment->id,
+            'user_id' => $this->student_user->id]);
         $this->actingAs($this->student_user)->patchJson("/api/submission-files/{$this->assignment->id}/{$this->question->id}/page", ['page' => 1])
             ->assertJson(['type' => "success"]);
 

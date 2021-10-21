@@ -12,8 +12,73 @@
       />
       <div v-if="!isLoading">
         <div v-if="enrollments.length">
+          <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Level</h2>"
+                  class="mb-4"
+          >
+            <b-card-text>
+              <p>
+                Optionally allow a subset of your class to re-submit any auto-graded or open-ended question
+                after an assignment has been closed. Students may also upload a Compiled PDF and Set Pages if the
+                Compiled
+                PDF option is set for the assignment. If this option is set, it will take precedence over any individual
+                override
+                set below.
+              </p>
+              <b-form>
+                <RequiredText/>
+                <b-form-group
+                  label-cols-sm="3"
+                  label-cols-lg="2"
+                >
+                  <template slot="label">
+                    Apply To<Asterisk/>
+                  </template>
+                  <b-form-row>
+                    <div class="d-flex mt-1">
+                      <b-form-select v-model="assignmentLevelApplyTo"
+                                     title="compiled pdf"
+                                     cols="5"
+                                     size="sm"
+                                     class="mr-2"
+                                     :options="enrollments"
+                      />
+                      <b-button variant="primary"
+                                size="sm"
+                                @click="updateOverrides(assignmentLevelOverrides,'assignment-level', assignmentLevelApplyTo)"
+                      >
+                        Update
+                      </b-button>
+                    </div>
+                  </b-form-row>
+                </b-form-group>
+              </b-form>
+              <div v-if="assignmentLevelOverrides.length">
+                <ul v-for="assignmentLevelOverride in assignmentLevelOverrides"
+                    :key="`assignment_level_override_${assignmentLevelOverride.value}`"
+                >
+                  <li>
+                    {{ assignmentLevelOverride.text }}
+                    <a href="" @click.prevent="removeOverride(assignmentLevelOverride,'assignment-level')">
+                      <b-icon-trash class="text-muted"/>
+                    </a>
+                  </li>
+                </ul>
+                <b-button variant="danger"
+                          size="sm"
+                          @click="removeOverride({value: -1},'assignment-level')"
+                >
+                  Remove All Assignment Level Overrides
+                </b-button>
+              </div>
+              <div v-else>
+                <b-alert :show="true" variant="info" class="font-weight-bold">
+                  No students have been selected.
+                </b-alert>
+              </div>
+            </b-card-text>
+          </b-card>
           <div v-if="fileUploadMode !== 'individual_assessment'">
-            <b-card header-html="<span class=&quot;font-weight-bold&quot;>Compiled PDF And Set Pages</span>"
+            <b-card header-html="<h2 class=&quot;h7&quot;>Compiled PDF And Set Pages</h2>"
                     class="mb-4"
             >
               <b-card-text>
@@ -28,8 +93,7 @@
                     label-cols-lg="2"
                   >
                     <template slot="label">
-                      Apply To
-                      <Asterisk/>
+                      Apply To<Asterisk/>
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
@@ -75,7 +139,7 @@
                 </div>
               </b-card-text>
             </b-card>
-            <b-card header-html="<span class=&quot;font-weight-bold&quot;>Set Pages Only</span>" class="mb-4">
+            <b-card header-html="<h2 class=&quot;h7&quot;>Set Pages Only</h2>" class="mb-4">
               <b-card-text>
                 <p>
                   Optionally allow a subset of your class to set pages in their compiled PDF even if
@@ -90,8 +154,7 @@
                     label-cols-lg="2"
                   >
                     <template slot="label">
-                      Apply To
-                      <Asterisk/>
+                      Apply To<Asterisk/>
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
@@ -137,7 +200,7 @@
               </b-card-text>
             </b-card>
           </div>
-          <b-card header-html="<span class=&quot;font-weight-bold&quot;>Question Level</span>" class="mb-4">
+          <b-card header-html="<h2 class=&quot;h7&quot;>Question Level</h2>" class="mb-4">
             <b-card-text>
               <p>
                 Optionally allow a subset of your class to resubmit questions regardless of whether the assignment is
@@ -150,8 +213,7 @@
                   label-cols-lg="2"
                 >
                   <template slot="label">
-                    Question
-                    <Asterisk/>
+                    Question<Asterisk/>
                   </template>
                   <b-form-row>
                     <div class="mt-1">
@@ -279,9 +341,11 @@ export default {
     currentQuestionPage: null,
     questions: [],
     questionsOptions: [],
+    assignmentLevelOverrides: [],
     compiledPDFOverrides: [],
     setPageOverrides: [],
     questionLevelOverrides: [],
+    assignmentLevelApplyTo: null,
     questionLevelApplyTo: null,
     compiledPDFApplyTo: null,
     setPageApplyTo: null,
@@ -341,6 +405,8 @@ export default {
         this.compiledPDFOverrides = data.compiled_pdf_overrides
         this.setPageOverrides = data.set_page_overrides
         this.questionLevelOverrides = data.question_level_overrides
+        this.assignmentLevelOverrides = data.assignment_level_overrides
+        this.assignmentLevelOverride = null
         this.compiledPDFOverride = null
         this.setPageOverride = null
         this.questionLevelOverride = null

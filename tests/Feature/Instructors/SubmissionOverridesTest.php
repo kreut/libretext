@@ -57,7 +57,7 @@ class SubmissionOverridesTest extends TestCase
     {
 
         $this->actingAs($this->user_2)
-            ->deleteJson("/api/submission-overrides/{$this->assignment->id}/{$this->student_user->id}/set-page")
+            ->deleteJson("/api/submission-overrides/{$this->assignment->id}/{$this->student_user->id}/set-page-only")
             ->assertJson(['message' => "You are not allowed to delete the overrides for this assignment."]);
 
     }
@@ -130,7 +130,7 @@ class SubmissionOverridesTest extends TestCase
     {
 
         $this->actingAs($this->user)
-            ->patchJson("/api/submission-overrides/{$this->assignment->id}", ['type' => 'set-page', 'student' => ['value' => -1]])
+            ->patchJson("/api/submission-overrides/{$this->assignment->id}", ['type' => 'set-page-only', 'student' => ['value' => -1]])
             ->assertJson(['message' => "Everybody can now set pages for each question."]);
 
     }

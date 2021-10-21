@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentLevelOverride;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\Question;
@@ -89,7 +90,8 @@ class SubmissionTextController extends Controller
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment_id, $question_id]);
         if (!$authorized->allowed()) {
             $questionLevelOverride = new QuestionLevelOverride();
-            $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+            $assignmentLevelOverride = new AssignmentLevelOverride();
+            $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id, $assignmentLevelOverride);
             if (!$has_question_level_override) {
                 $response['message'] = $authorized->message();
                 return $response;
@@ -101,7 +103,8 @@ class SubmissionTextController extends Controller
             if ($can_submit_text_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment->id, $question_id)) {
                 if ($can_submit_text_response['type'] === 'error') {
                     $questionLevelOverride = new QuestionLevelOverride();
-                    $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+                    $assignmentLevelOverride = new AssignmentLevelOverride();
+                    $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id, $assignmentLevelOverride);
                     if (!$has_question_level_override) {
                         $response['message'] = $can_submit_text_response['message'];
                         return $response;

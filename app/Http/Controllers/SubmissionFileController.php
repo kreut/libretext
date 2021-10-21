@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\AssignmentLevelOverride;
 use App\AssignmentSyncQuestion;
 use App\CompiledPDFOverride;
 use App\Course;
@@ -148,7 +149,8 @@ class SubmissionFileController extends Controller
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($request->user(), $assignment, $assignment->id, $question->id)) {
             if ($can_upload_response['type'] === 'error') {
                 $compiledPDFOverride = new CompiledPDFOverride();
-                $has_set_page_override = $compiledPDFOverride->hasSetPageOverride($assignment->id);
+                $assignmentLevelOverride = new AssignmentLevelOverride();
+                $has_set_page_override = $compiledPDFOverride->hasSetPageOverride($assignment->id, $assignmentLevelOverride);
                 if (!$has_set_page_override) {
                     $response['message'] = $can_upload_response['message'];
                     return $response;
@@ -356,9 +358,10 @@ class SubmissionFileController extends Controller
                 if ($can_upload_response['type'] === 'error') {
                     $compiledPDFOverride = new CompiledPDFOverride();
                     $questionLevelOverride = new QuestionLevelOverride();
+                    $assignmentLevelOverride = new AssignmentLevelOverride();
                     $has_upload_override = $upload_level === 'assignment'
-                        ? $compiledPDFOverride->hasCompiledPDFOverride($assignment_id)
-                        : $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+                        ? $compiledPDFOverride->hasCompiledPDFOverride($assignment_id, $assignmentLevelOverride)
+                        : $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id, $assignmentLevelOverride);
                     if (!$has_upload_override) {
                         $response['message'] = $can_upload_response['message'];
                         return $response;

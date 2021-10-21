@@ -1479,7 +1479,8 @@ class AssignmentController extends Controller
      *
      * @param Assignment $assignment
      * @param AssignToTiming $assignToTiming
-     * @return mixed
+     * @param BetaAssignment $betaAssignment
+     * @return array
      * @throws Exception
      */
     public
@@ -1522,7 +1523,7 @@ class AssignmentController extends Controller
             DB::table('randomized_assignment_questions')->where('assignment_id', $assignment->id)->delete();
             DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
             DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
-
+            DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
             $assignment->graders()->detach();
             $assignToTiming->deleteTimingsGroupsUsers($assignment);
 

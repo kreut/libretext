@@ -10,16 +10,32 @@ class CompiledPDFOverride extends Model
 {
     protected $guarded = [];
     protected $table = 'compiled_pdf_overrides';
-    public function hasCompiledPDFOverride(int $assignment_id) {
+
+    /**
+     * @param int $assignment_id
+     * @param AssignmentLevelOverride $assignmentLevelOverride
+     * @return bool
+     */
+    public function hasCompiledPDFOverride(int $assignment_id, AssignmentLevelOverride $assignmentLevelOverride): bool
+    {
         return DB::table('compiled_pdf_overrides')
             ->where('assignment_id', $assignment_id)
             ->where('user_id', Auth::user()->id)
-            ->first();
+            ->exists()
+            || $assignmentLevelOverride->hasAssignmentLevelOverride($assignment_id);
     }
-    public function hasSetPageOverride(int $assignment_id){
+
+    /**
+     * @param int $assignment_id
+     * @param AssignmentLevelOverride $assignmentLevelOverride
+     * @return bool
+     */
+    public function hasSetPageOverride(int $assignment_id, AssignmentLevelOverride $assignmentLevelOverride): bool
+    {
         return DB::table('compiled_pdf_overrides')
             ->where('assignment_id', $assignment_id)
             ->where('user_id', Auth::user()->id)
-            ->first();
+            ->exists()
+            || $assignmentLevelOverride->hasAssignmentLevelOverride($assignment_id);
     }
 }

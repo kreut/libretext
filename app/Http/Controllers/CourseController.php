@@ -1129,6 +1129,9 @@ class CourseController extends Controller
                 $assignment->seeds()->delete();
                 $assignment->graders()->detach();
                 $betaAssignment->where('id', $assignment->id)->delete();
+                DB::table('compiled_pdf_overrides')->where('assignment_id', $assignment->id)->delete();
+                DB::table('question_level_overrides')->where('assignment_id', $assignment->id)->delete();
+                DB::table('assignment_level_overrides')->where('assignment_id', $assignment->id)->delete();
                 $betaCourseApproval->where('beta_assignment_id', $assignment->id)->delete();
             }
             $course->extensions()->delete();

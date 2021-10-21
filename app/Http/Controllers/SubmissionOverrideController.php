@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Assignment;
+use App\AssignmentLevelOverride;
 use App\CompiledPDFOverride;
 use App\Exceptions\Handler;
 use App\Question;
@@ -35,11 +36,19 @@ class SubmissionOverrideController extends Controller
         }
 
         try {
+            $assignment_level_overrides = DB::table('assignment_level_overrides')
+                ->join('users', 'assignment_level_overrides.user_id', '=', 'users.id')
+                ->where('assignment_id', $assignment->id)
+                ->where('fake_student', 0)
+                ->select('user_id AS value',
+                    DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS text"))
+                ->get();
+
             $all_pdf_overrides = DB::table('compiled_pdf_overrides')
                 ->join('users', 'compiled_pdf_overrides.user_id', '=', 'users.id')
                 ->where('assignment_id', $assignment->id)
                 ->where('fake_student', 0)
-                ->select('user_id as value',
+                ->select('user_id AS value',
                     'set_page_only',
                     DB::raw("CONCAT(users.first_name, ' ',users.last_name) AS text"))
                 ->get();
@@ -94,6 +103,11 @@ class SubmissionOverrideController extends Controller
                     : $compiled_pdf_overrides[] = $pdf_override;
             }
 
+            if (count($assignment_level_overrides) === $assignment->course->enrolledUsers()->count()) {
+                $assignment_level_overrides = [['text' => 'Everybody', 'value' => -1]];
+            }
+
+
             if (count($compiled_pdf_overrides) === $assignment->course->enrolledUsers()->count()) {
                 $compiled_pdf_overrides = [['text' => 'Everybody', 'value' => -1]];
             }
@@ -115,6 +129,7 @@ class SubmissionOverrideController extends Controller
                     }
                 }
             }
+            $response['assignment_level_overrides'] = $assignment_level_overrides;
             $response['compiled_pdf_overrides'] = $compiled_pdf_overrides;
             $response['set_page_overrides'] = $set_page_overrides;
             $response['question_level_overrides'] = $question_level_overrides;
@@ -132,6 +147,7 @@ class SubmissionOverrideController extends Controller
     /**
      * @param Request $request
      * @param Assignment $assignment
+     * @param AssignmentLevelOverride $assignmentLevelOverride
      * @param CompiledPDFOverride $compiledPDFOverride
      * @param QuestionLevelOverride $questionLevelOverride
      * @param SubmissionOverride $submissionOverride
@@ -139,18 +155,19 @@ class SubmissionOverrideController extends Controller
      * @throws Exception
      */
     public
-    function update(Request               $request,
-                    Assignment            $assignment,
-                    CompiledPDFOverride   $compiledPDFOverride,
-                    QuestionLevelOverride $questionLevelOverride,
-                    SubmissionOverride    $submissionOverride): array
+    function update(Request                 $request,
+                    Assignment              $assignment,
+                    AssignmentLevelOverride $assignmentLevelOverride,
+                    CompiledPDFOverride     $compiledPDFOverride,
+                    QuestionLevelOverride   $questionLevelOverride,
+                    SubmissionOverride      $submissionOverride): array
     {
 
         $response['type'] = 'error';
         $type = $request->type;
         $authorized = ($type === 'question-level')
             ? Gate::inspect('updateQuestionLevel', [$submissionOverride, $assignment, $request->question_id])
-            : Gate::inspect('updateCompiledPDF', [$submissionOverride, $assignment]);
+            : Gate::inspect('updateAssignmentLevel', [$submissionOverride, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -180,31 +197,41 @@ class SubmissionOverrideController extends Controller
         try {
             DB::beginTransaction();
             foreach ($student_ids as $student_id) {
-                ($type === 'question-level')
-                    ? $questionLevelOverride->updateOrCreate(
-                    ['user_id' => $student_id,
-                        'assignment_id' => $assignment->id,
-                        'question_id' => $question_id],
-                    ['auto_graded' => $auto_graded,
-                        'open_ended' => $open_ended])
-                    :
-                    $compiledPDFOverride->updateOrCreate(
-                        ['user_id' => $student_id,
-                            'assignment_id' => $assignment->id],
-                        ['set_page_only' => $type === 'set-page-only']);
+                switch ($type) {
+                    case('assignment-level'):
+                        $assignmentLevelOverride->firstOrCreate(
+                            [
+                                'user_id' => $student_id,
+                                'assignment_id' => $assignment->id
+                            ]);
+                        $message = "$student_name can now submit anything in the assignment.";
+                        break;
+                    case('question-level'):
+                        $questionLevelOverride->updateOrCreate(
+                            ['user_id' => $student_id,
+                                'assignment_id' => $assignment->id,
+                                'question_id' => $question_id],
+                            ['auto_graded' => $auto_graded,
+                                'open_ended' => $open_ended]);
+                        if ($auto_graded && $open_ended) {
+                            $submission_message = "auto-graded and open-ended";
+                        } else {
+                            $submission_message = $auto_graded ? "auto-graded" : "open-ended";
+                        }
+                        $message = "$student_name can now submit $submission_message submissions for question $request->question_order.";
+                        break;
+                    case('compiled-pdf'):
+                    case('set-page-only'):
+                        $compiledPDFOverride->updateOrCreate(
+                            ['user_id' => $student_id,
+                                'assignment_id' => $assignment->id],
+                            ['set_page_only' => $type === 'set-page-only']);
+                        $extra_message = $type === 'compiled-pdf' ? ' upload a compiled-pdf and ' : ' ';
+                        $message = "$student_name can now{$extra_message}set pages for each question.";
+                }
+
             }
             DB::commit();
-            if ($type === 'question-level') {
-                if ($auto_graded && $open_ended) {
-                    $submission_message = "auto-graded and open-ended";
-                } else {
-                    $submission_message = $auto_graded ? "auto-graded" : "open-ended";
-                }
-                $message = "$student_name can now submit $submission_message submissions for question $request->question_order.";
-            } else {
-                $extra_message = $type === 'compiled-pdf' ? ' upload a compiled-pdf and ' : ' ';
-                $message = "$student_name can now{$extra_message}set pages for each question.";
-            }
 
             $response['message'] = $message;
             $response['type'] = 'success';
@@ -227,17 +254,17 @@ class SubmissionOverrideController extends Controller
      * @throws Exception
      */
     public
-    function destroy(Assignment         $assignment,
-                                        $studentUser,
-                     string             $type,
-                     Question           $question = null): array
+    function destroy(Assignment $assignment,
+                                $studentUser,
+                     string     $type,
+                     Question   $question = null): array
     {
 
         $response['type'] = 'error';
         $submissionOverride = new SubmissionOverride();
         $authorized = ($type === 'question-level')
             ? Gate::inspect('deleteQuestionLevel', [$submissionOverride, $assignment, $question->id])
-            : Gate::inspect('deleteCompiledPDF', [$submissionOverride, $assignment]);
+            : Gate::inspect('deleteAssignmentLevel', [$submissionOverride, $assignment]);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
@@ -253,23 +280,33 @@ class SubmissionOverrideController extends Controller
         $student_user_ids = $is_everybody
             ? $assignment->course->enrollments->pluck('user_id')
             : [$student_user->id];
-        if ($type == 'question-level') {
-            $question_level_query = DB::table('question_level_overrides')
-                ->where('assignment_id', $assignment->id)
-                ->whereIn('user_id', $student_user_ids);
-            if ($question) {
-                $question_level_query = $question_level_query->where('question_id', $question->id);
+        try {
+            switch($type){
+                case('question-level'):
+                    $question_level_query = DB::table('question_level_overrides')
+                        ->where('assignment_id', $assignment->id)
+                        ->whereIn('user_id', $student_user_ids);
+                    if ($question) {
+                        $question_level_query = $question_level_query->where('question_id', $question->id);
+                    }
+                    $question_level_query->delete();
+                    break;
+                case('compiled-pdf'):
+                case('set-page-only'):
+                DB::table('compiled_pdf_overrides')
+                    ->where('assignment_id', $assignment->id)
+                    ->whereIn('user_id', $student_user_ids)
+                    ->where('set_page_only', $type === 'set-page-only' ? 1 : 0)
+                    ->delete();
+                    break;
+                case('assignment-level'):
+                    DB::table('assignment_level_overrides')
+                        ->where('assignment_id', $assignment->id)
+                        ->whereIn('user_id', $student_user_ids)
+                        ->delete();
+                    break;
             }
 
-        }
-        try {
-            $type === 'question-level'
-                ? $question_level_query->delete()
-                : DB::table('compiled_pdf_overrides')
-                ->where('assignment_id', $assignment->id)
-                ->whereIn('user_id', $student_user_ids)
-                ->where('set_page_only', $type === 'set-page-only' ? 1 : 0)
-                ->delete();
             $message_name = $is_everybody ? 'The overrides have' : "$student_user->first_name $student_user->last_name has";
             $response['message'] = "$message_name been removed.";
             $response['type'] = 'info';

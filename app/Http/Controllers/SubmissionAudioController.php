@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Assignment;
 use App\AssignmentFile;
+use App\AssignmentLevelOverride;
 use App\AssignmentSyncQuestion;
 use App\Exceptions\Handler;
 use App\QuestionLevelOverride;
@@ -68,7 +69,8 @@ class SubmissionAudioController extends Controller
         if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id)) {
             if ($can_upload_response['type'] === 'error') {
                 $questionLevelOverride = new QuestionLevelOverride();
-                $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id);
+                $assignmentLevelOverride = new AssignmentLevelOverride();
+                $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id, $assignmentLevelOverride);
                if (!$has_question_level_override) {
                    $response['message'] = $can_upload_response['message'];
                    return $response;

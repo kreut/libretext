@@ -123,7 +123,8 @@ class Submission extends Model
         $authorized = Gate::inspect('store', [$submission, $assignment, $assignment->id, $data['question_id']]);
 
         $questionLevelOverride = new QuestionLevelOverride();
-        $has_question_level_override = $questionLevelOverride->hasAutoGradedOverride($assignment->id, $data['question_id']);
+        $assignmentLevelOverride = new AssignmentLevelOverride();
+        $has_question_level_override = $questionLevelOverride->hasAutoGradedOverride($assignment->id, $data['question_id'], $assignmentLevelOverride);
         if (!$authorized->allowed()) {
 
             if (!$has_question_level_override ) {
