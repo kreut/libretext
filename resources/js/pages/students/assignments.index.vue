@@ -274,7 +274,8 @@ export default {
     fields: [
       {
         key: 'name',
-        sortable: true
+        sortable: true,
+        isRowHeader: true
       },
       {
         key: 'assignment_group',
