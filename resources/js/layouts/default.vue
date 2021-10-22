@@ -90,7 +90,19 @@ export default {
       this.inIFrame = true
     }
   },
+  mounted () {
+    window.addEventListener('keydown', this.keydownHandler)
+  },
+  beforeDestroy () {
+    window.removeEventListener('keydown', this.keydownHandler)
+  },
   methods: {
+    keydownHandler (e) {
+      if (e.keyCode === 27) {
+        this.$root.$emit('bv::hide::tooltip')
+        console.log('Tooltip closed')
+      }
+    },
     async addAccessibilityCookie () {
       try {
         const { data } = await axios.patch(`/api/accessibility/set-cookie`)

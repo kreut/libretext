@@ -1,9 +1,9 @@
 <template>
   <div id="app">
-    <loading v-if="showLoading" ref="loading" />
+    <loading v-if="showLoading" ref="loading"/>
 
     <transition name="page" mode="out-in">
-      <component :is="layout" v-if="layout" />
+      <component :is="layout" v-if="layout"/>
     </transition>
   </div>
 </template>
@@ -51,7 +51,6 @@ export default {
     const regex = /^\/courses\/[0-9]+\/anonymous$/
     this.showLoading = !window.location.pathname.match(regex)
   },
-
   methods: {
     /**
      * Set the application layout.
