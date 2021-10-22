@@ -101,6 +101,18 @@
                 <span v-html="instructions"/>
               </p>
               <p>
+                <span class="font-weight-bold">Number Of Points: </span>
+                <span class="font-italic">This assignment is worth a total of {{
+                    totalPoints
+                  }} point{{ totalPoints !== 1 ? 's' : '' }}.</span>
+              </p>
+              <p>
+                <span class="font-weight-bold">Number Of Questions: </span>
+                <span class="font-italic">This assignment has {{
+                    items.length
+                  }} question{{ items.length !== 1 ? 's' : '' }}.</span>
+              </p>
+              <p>
                 <span class="font-weight-bold">Due Date: </span>
                 <span class="font-italic">This assignment is due {{ formattedDue }}.</span>
                 <span v-if="extension" class="font-italic">(You have an extension until {{ extension }}).</span>
@@ -182,13 +194,6 @@
             <b-alert variant="success" :show="completedAllAssignmentQuestions">
               <span class="font-italic font-weight-bold">You have completed all assessments on this assignment!</span>
             </b-alert>
-            <div class="pb-2 text-center">
-              <span class="h5">
-                This assignment has {{ items.length }} question{{ items.length !== 1 ? 's' : '' }} and is worth a total of {{
-                  totalPoints
-                }} point{{ parseInt(totalPoints) !== 1 ? 's' : '' }}.
-              </span>
-            </div>
             <b-table
               v-show="items.length && assessmentType !== 'clicker'"
               id="summary_of_questions_and_submissions"
@@ -209,7 +214,10 @@
                 <a id="auto_graded_submission_tooltip"
                    href="#"
                 >
-                  <b-icon class="text-muted" icon="question-circle"/>
+                  <b-icon class="text-muted"
+                          icon="question-circle"
+                          aria-label="Explanation of Auto-graded questions"
+                  />
                 </a>
                 <b-tooltip target="auto_graded_submission_tooltip"
                            triggers="hover focus"
@@ -253,7 +261,10 @@
                 <a id="open_ended_submission_tooltip"
                    href="#"
                 >
-                  <b-icon class="text-muted" icon="question-circle"/>
+                  <b-icon class="text-muted"
+                          icon="question-circle"
+                          aria-label="Explanation of open ended submissions"
+                  />
                 </a>
                 <b-tooltip target="open_ended_submission_tooltip"
                            triggers="hover focus"
@@ -649,7 +660,7 @@ export default {
         this.fields = [
           {
             key: 'question_number',
-            label: 'Number',
+            label: 'Question',
             shown: true,
             isRowHeader: true
           },
