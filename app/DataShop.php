@@ -17,7 +17,7 @@ class DataShop extends Model
      * @param $data
      * @param $assignment
      */
-    public function store($submission, $data, Assignment $assignment)
+    public function store($submission, $data, Assignment $assignment, $assignment_question)
     {
         $extra_info = DB::table('assignments')
             ->join('courses', 'assignments.course_id', '=', 'courses.id')
@@ -26,6 +26,9 @@ class DataShop extends Model
             ->select('users.email', 'users.first_name', 'users.last_name','assignment_groups.assignment_group')
             ->where('assignments.id',$assignment->id)
             ->first();
+        $level_points = DB::table('assignment_question')
+            ->where('assignment_id', $assignment->id)
+            ->sum('points');
         $question = Question::find($submission->question_id);
         $this->anon_student_id = Auth::user()->email ? Auth::user()->email : 'test';
         $this->session_id = session()->get('submission_id');
@@ -33,8 +36,11 @@ class DataShop extends Model
         $this->level = $assignment->id;
         $this->level_name = $assignment->name;
         $this->level_group = $extra_info->assignment_group;
+        $this->level_scoring_type = $assignment->scoring_type;
+        $this->level_points = $level_points;
         $this->number_of_attempts_allowed = $assignment->assessment_type === 'delayed' ? 'unlimited' : '1';
         $this->problem_name = $submission->question_id;
+        $this->problem_points = $assignment_question->points;
         $this->library = $question->library;
         $this->page_id = $question->page_id;
         $this->problem_view = $submission->submission_count;
