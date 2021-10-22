@@ -1,5 +1,6 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-file-upload'"/>
     <b-modal
       id="modal-completed-assignment"
       ref="modalThumbsUp"
@@ -134,18 +135,28 @@
           <b-card v-show="compiledPdf" class="mt-3 mb-3" header="default"
                   header-html="<h2 class=&quot;h5&quot;>Upload Compiled PDF Submission</h2>"
           >
-            <file-upload
-              ref="upload"
-              v-model="files"
-              put-action="/put.method"
-              @input-file="inputFile"
-              @input-filter="inputFilter"
+            Upload your compiled PDF and then set each submission.
+            <b-button variant="primary"
+                      size="sm"
+                      class="mr-3 pb-0"
+                      @click="submissionFileForm.errors.clear('submission')"
             >
-              Upload your compiled PDF and then set each submission.
-              <b-button variant="primary" size="sm" class="mr-3">
-                Select file
-              </b-button>
-            </file-upload>
+              <file-upload
+                ref="upload"
+                v-model="files"
+                accept="application/pdf"
+                put-action="/put.method"
+                @input-file="inputFile"
+                @input-filter="inputFilter"
+              >
+                Select PDF
+              </file-upload>
+            </b-button>
+            <input type="hidden" class="form-control is-invalid">
+            <div v-if="submissionFileForm.errors.has('submission')"
+                 class="help-block invalid-feedback">
+              {{ submissionFileForm.errors.errors.submission[0] }}
+            </div>
             <div class="upload mt-3">
               <ul v-if="files.length && (preSignedURL !== '')">
                 <li v-for="file in files" :key="file.id">
@@ -337,6 +348,7 @@ import Vue from 'vue'
 import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
+import AllFormErrors from '~/components/AllFormErrors'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -346,10 +358,12 @@ export default {
     AssignmentStatistics,
     Loading,
     FontAwesomeIcon,
-    LoggedInAsStudent
+    LoggedInAsStudent,
+    AllFormErrors
   },
   middleware: 'auth',
   data: () => ({
+    allFormErrors: [],
     extension: null,
     public_description: null,
     isInstructorLoggedInAsStudent: false,
@@ -404,6 +418,7 @@ export default {
     this.getFullPdfUrlAtPage = getFullPdfUrlAtPage
   },
   async mounted () {
+
     this.assignmentId = this.$route.params.assignmentId
     await this.getAssignmentSummary()
     await this.getSelectedQuestions(this.assignmentId)
@@ -413,14 +428,18 @@ export default {
     }
     this.$nextTick(function () {
       this.resizeHandler()
+      this.accessibilityFix()
     })
-
     window.addEventListener('resize', this.resizeHandler)
   },
   beforeDestroy () {
     window.removeEventListener('resize', this.resizeHandler)
   },
   methods: {
+    accessibilityFix () {
+      // hide this so that it's not tabbable.  Otherwise the file upload has both a button and an extra tab
+      document.getElementById('file').style.display = 'none'
+    },
     resizeHandler () {
       let table = document.getElementById('summary_of_questions_and_submissions')
       if (table && this.zoomGreaterThan(1.2)) {
@@ -499,7 +518,6 @@ export default {
       }
     },
     async handleOK () {
-      this.submissionFileForm.errors.clear('submission')
       this.submissionFileForm.uploadLevel = 'assignment'
       this.submissionFileForm.s3_key = this.s3Key
       this.submissionFileForm.original_filename = this.originalFilename
@@ -512,7 +530,6 @@ export default {
       this.processingFile = true
 
       try {
-        this.submissionFileForm.errors.clear('submission')
         // https://stackoverflow.com/questions/49328956/file-upload-with-vue-and-laravel
         let formData = new FormData()
         formData.append('submission', this.submissionFileForm)
@@ -528,6 +545,8 @@ export default {
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           this.submissionFileForm.errors.set('submission', data.message)
+          this.allFormErrors = this.submissionFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
         } else {
           this.fullPdfUrl = data.full_pdf_url
           this.fields.find(field => field.key === 'page').shown = true
@@ -554,6 +573,8 @@ export default {
             message += 'You might want to try an online PDF compressor such as https://smallpdf.com/compress-pdf to reduce the size.'
           }
           this.submissionFileForm.errors.set('submission', message)
+          this.allFormErrors = this.submissionFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
           return prevent()
         }
         let validUploadTypesMessage = `The file type must be .pdf`
@@ -562,6 +583,8 @@ export default {
 
         if (!validExtension) {
           this.submissionFileForm.errors.set('submission', validUploadTypesMessage)
+          this.allFormErrors = this.submissionFileForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-file-upload')
 
           return prevent()
         } else {
