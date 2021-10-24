@@ -70,10 +70,6 @@ Vue.use(VueNoty, {
   }
 })
 
-Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
-window.addEventListener('resize', () => {
-  Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
-})
 // end accessibility stuff
 
 Vue.use(VueMoment)
