@@ -159,9 +159,6 @@ export default {
       this.form.is_lms = this.isLms
       try {
         const { data } = await this.form.post('/api/enrollments')
-        if (data.validated) {
-          location.reload()
-        }
         // they never finished the registration page
         if (parseInt(this.user.role) === 0) {
           alert('You did not complete the previous registration page.')
@@ -170,6 +167,10 @@ export default {
         }
         if (data.type === 'error') {
           this.$noty.error(data.message)
+          return false
+        }
+        if (data.validated) {
+          location.reload()
         }
       } catch (error) {
         if (!error.message.includes('status code 422')) {
