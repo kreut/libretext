@@ -71,10 +71,8 @@ Vue.use(VueNoty, {
 })
 
 Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
-console.log('Zoom at ' + Vue.prototype.$browserZoomLevel)
 window.addEventListener('resize', () => {
   Vue.prototype.$browserZoomLevel = (window.outerWidth - 8) / window.innerWidth
-  console.log('Zoom at ' + Vue.prototype.$browserZoomLevel)
 })
 // end accessibility stuff
 
@@ -85,50 +83,9 @@ Vue.use(VueAnnouncer)
 Vue.config.productionTip = false
 
 /* eslint-disable no-new */
-if (window.location.pathname.search('questions/view') !== -1) {
-  let urlPieces = window.location.pathname.split('/')
-  // ["", "assignments", "1193", "questions", "view"]
-  let assignmentId = urlPieces[2]
-  let questionId = urlPieces[5] ? urlPieces[5] : null
-  let shownSections = urlPieces[6] ? urlPieces[6] : null
-  axios.get(
-    `/api/beta-assignments/get-from-alpha-assignment/${assignmentId}`)
-    .then(function (response) {
-      if (response.data.type !== 'success') {
-        let message = response.data.message ? response.data.message : response.data
-        alert(message)
-        console.log(response)
-        window.location = '/beta-assignments/redirect-error'
-      }
-      if (response.data.login_redirect) {
-        window.location = '/login'
-      } else if (response.data.beta_assignment_id) {
-        let url = `/assignments/${response.data.beta_assignment_id}/questions/view`
-        if (questionId) {
-          url += `/${questionId}`
-        }
-        if (shownSections) {
-          url += `/${shownSections}`
-        }
-        window.location = url
-      } else {
-        new Vue({
-          i18n,
-          store,
-          router,
-          ...App
-        })
-      }
-    }).catch(error => {
-    alert(error)
-    window.location = '/beta-assignments/redirect-error'
-    console.log(error)
-  })
-} else {
-  new Vue({
-    i18n,
-    store,
-    router,
-    ...App
-  })
-}
+new Vue({
+  i18n,
+  store,
+  router,
+  ...App
+})
