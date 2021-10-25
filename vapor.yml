@@ -5,7 +5,6 @@ environments:
         memory: 1024
         timeout: 20
         cli-memory: 512
-        cli-timeout: 800
         runtime: docker
         database: production
         cache: production
@@ -22,7 +21,6 @@ environments:
         memory: 1024
         timeout: 20
         cli-memory: 512
-        cli-timeout: 800
         runtime: docker
         firewall:
           rate-limit: 1000
