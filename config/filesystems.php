@@ -81,16 +81,7 @@ return [
             'region' => env('BACKUP_AWS_DEFAULT_REGION'),
             'bucket' => env('BACKUP_AWS_BUCKET'),
             'url' => env('BACKUP_AWS_URL'),
-        ],
-        'analytics_s3' => [
-            'driver' => 's3',
-            'key' => env('AWS_ANALYTICS_ACCESS_KEY_ID'),
-            'secret' => env('AWS_ANALYTICS_SECRET_ACCESS_KEY'),
-            'region' => env('AWS_ANALYTICS_DEFAULT_REGION'),
-            'bucket' => env('AWS_ANALYTICS_BUCKET'),
-            'url' => env('AWS_ANALYTICS_URL'),
-        ],
-
+        ]
     ],
 
     /*
