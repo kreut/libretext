@@ -89,7 +89,7 @@
             <a id="course-z-score-tooltip"
                href="#"
             >
-              <b-icon class="text-muted" icon="question-circle" />
+              <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
             </a>
             <b-tooltip target="course-z-score-tooltip"
                        triggers="hover focus"
@@ -141,7 +141,7 @@
                 <a id="z-score-explained"
                    href="#"
                 >
-                  <b-icon class="text-muted" icon="question-circle" />
+                  <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
                 </a>
                 <b-tooltip target="z-score-explained"
                            triggers="hover focus"

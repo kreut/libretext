@@ -1,8 +1,8 @@
 <template>
   <div v-if="showPage">
-    <PageTitle title="My Courses"/>
+    <PageTitle title="My Courses" />
     <div class="row mb-4 float-right">
-      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses"/>
+      <EnrollInCourse :get-enrolled-in-courses="getEnrolledInCourses" />
       <b-button v-if="!isAnonymousUser" v-b-modal.modal-enroll-in-course variant="primary" size="sm">
         Enroll In Course
       </b-button>
@@ -77,26 +77,28 @@ export default {
     if (this.isAnonymousUser) {
       this.fields = [{
         key: 'course_section_name',
-        label: 'Course'
+        label: 'Course',
+        isRowHeader: true
       },
-        {
-          key: 'public_description',
-          label: 'Course Description'
-        }
+      {
+        key: 'public_description',
+        label: 'Course Description'
+      }
       ]
       this.getAnonymousUserCourses()
     } else {
       this.fields = [{
         key: 'course_section_name',
-        label: 'Course - Section'
+        label: 'Course - Section',
+        isRowHeader: true
       },
-        {
-          key: 'public_description',
-          label: 'Course Description'
-        },
-        'instructor',
-        'start_date',
-        'end_date'
+      {
+        key: 'public_description',
+        label: 'Course Description'
+      },
+      'instructor',
+      'start_date',
+      'end_date'
       ]
       this.getEnrolledInCourses()
     }
