@@ -1049,7 +1049,7 @@ class ScoreController extends Controller
 
 
         $validator = Validator::make($request->all(), [
-            'score' => 'required|numeric|min:0|not_in:0'
+            'score' => 'required|numeric|min:0'
         ]);
 
         if ($validator->fails()) {
