@@ -50,26 +50,26 @@ class StoreAssignment extends FormRequest
         ];
 
 
-        if ($this->file_upload_mode === 'compiled_pdf'){
-            $rules['default_open_ended_submission_type'] = Rule::in(['file',  0]);
-        }
-        if ($this->libretexts_url){
-            $rules['libretexts_url'] = 'url';
+        if ($this->file_upload_mode === 'compiled_pdf') {
+            $rules['default_open_ended_submission_type'] = Rule::in(['file', 0]);
         }
 
-        if ($this->assessment_type === 'delayed'){
-            $rules['file_upload_mode'] = Rule::in(['compiled_pdf','individual_assessment','both']);
+        $rules['libretexts_url'] = 'nullable|url';
+
+
+        if ($this->assessment_type === 'delayed') {
+            $rules['file_upload_mode'] = Rule::in(['compiled_pdf', 'individual_assessment', 'both']);
         }
-          foreach ($this->assign_tos as $key => $assign_to) {
-              if ($this->late_policy !== 'not accepted') {
-                  $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
-              }
-              $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
-              $rules['available_from_date_' . $key] = 'required|date';
-              $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
-              $rules['due_time_' . $key] = 'required|date_format:H:i:00';
-              $rules['groups_' . $key] = 'required';
-          }
+        foreach ($this->assign_tos as $key => $assign_to) {
+            if ($this->late_policy !== 'not accepted') {
+                $rules['final_submission_deadline_' . $key] = new IsADateLaterThan($this->{'due_' . $key}, 'due', 'late policy deadline');
+            }
+            $rules['due_' . $key] = new IsADateLaterThan($this->{'available_from_' . $key}, 'available on', 'due');
+            $rules['available_from_date_' . $key] = 'required|date';
+            $rules['available_from_time_' . $key] = 'required|date_format:H:i:00';
+            $rules['due_time_' . $key] = 'required|date_format:H:i:00';
+            $rules['groups_' . $key] = 'required';
+        }
         switch ($this->source) {
             case('a'):
                 $rules['default_points_per_question'] = 'required|integer|min:0|max:100';
@@ -81,7 +81,7 @@ class StoreAssignment extends FormRequest
                     ];
                     if ($this->route()->getActionMethod() === 'update') {
                         $assignment_id = $this->route()->parameters()['assignment']->id;
-                        if ( Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
+                        if (Assignment::find($assignment_id)->number_of_randomized_assessments !== $this->number_of_randomized_assessments) {
                             $rules['number_of_randomized_assessments'][] = new HasNoRandomizedAssignmentQuestions($assignment_id);
                         }
                     }
@@ -115,7 +115,7 @@ class StoreAssignment extends FormRequest
         if ($this->scoring_type === 'c') {
             $rules['scoring_type'] = [new isValidLatePolicyForCompletedScoringType($this->late_policy),
                 new isValidAssesmentTypeForScoringType($this->assessment_type)];
-            $rules['default_completion_scoring_mode']= new isValidDefaultCompletionScoringType( $this->completion_split_auto_graded_percentage);
+            $rules['default_completion_scoring_mode'] = new isValidDefaultCompletionScoringType($this->completion_split_auto_graded_percentage);
 
         }
 

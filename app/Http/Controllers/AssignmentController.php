@@ -1418,6 +1418,7 @@ class AssignmentController extends Controller
                 ? $assignment->addBetaAssignments()
                 : [$assignment];
             DB::beginTransaction();
+
             foreach ($assignments as $assignment) {
                 if (!$assignment->isBetaAssignment()) {
                     //either the alpha assignment, so set these
