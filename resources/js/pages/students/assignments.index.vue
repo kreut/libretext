@@ -18,7 +18,7 @@
           :accept="getAcceptedFileTypes()"
         />
         <div v-if="uploading">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Uploading file...
         </div>
         <input type="hidden" class="form-control is-invalid">
@@ -57,11 +57,11 @@
       </b-card>
       <div v-if="assignmentFileInfo.file_feedback_url">
         <div class="d-flex justify-content-center mt-5">
-          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url" />
+          <iframe width="600" height="600" :src="this.assignmentFileInfo.file_feedback_url"/>
         </div>
       </div>
     </b-modal>
-    <PageTitle v-if="canViewAssignments" :title="title" />
+    <PageTitle v-if="canViewAssignments" :title="title"/>
     <div class="vld-parent">
       <!--Use loading instead of isLoading because there's both the assignment and scores loading-->
       <loading :active.sync="loading"
@@ -115,51 +115,52 @@
           </b-row>
         </b-container>
         <table class="table table-striped"
-        aria-label="Assignments">
+               aria-label="Assignments"
+        >
           <thead>
-            <tr>
-              <th scope="col">
-                Assignment Name
-              </th>
-              <th scope="col">
-                Group
-              </th>
-              <th scope="col">
-                Available From
-              </th>
-              <th scope="col">
-                Due
-              </th>
-              <th scope="col">
-                Submitted
-              </th>
-              <th scope="col">
-                Score
-              </th>
-              <th scope="col">
-                Z-Score
-                <a id="z-score-explained"
-                   href="#"
-                >
-                  <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
-                </a>
-                <b-tooltip target="z-score-explained"
-                           triggers="hover focus"
-                           delay="250"
-                >
-                  The z-score tells you how many standard deviations you are away from the mean.
-                  A z-score of 0 tells you that your score was the exact mean of the distribution.
-                  For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
-                  z-scores outside of this range are considered atypical.
-                </b-tooltip>
-              </th>
-              <th scope="col">
-                Files
-              </th>
-              <th scope="col">
-                Solution Key
-              </th>
-            </tr>
+          <tr>
+            <th scope="col">
+              Assignment Name
+            </th>
+            <th scope="col">
+              Group
+            </th>
+            <th scope="col">
+              Available From
+            </th>
+            <th scope="col">
+              Due
+            </th>
+            <th scope="col">
+              Submitted
+            </th>
+            <th scope="col">
+              Score
+            </th>
+            <th scope="col">
+              Z-Score
+              <a id="z-score-explained"
+                 href="#"
+              >
+                <b-icon class="text-muted" icon="question-circle" aria-label="Explanation of z-score"/>
+              </a>
+              <b-tooltip target="z-score-explained"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                The z-score tells you how many standard deviations you are away from the mean.
+                A z-score of 0 tells you that your score was the exact mean of the distribution.
+                For bell-shaped data, about 95% of observations will fall within 2 standard deviations of the mean;
+                z-scores outside of this range are considered atypical.
+              </b-tooltip>
+            </th>
+            <th scope="col">
+              Files
+            </th>
+            <th scope="col">
+              Solution Key
+            </th>
+          </tr>
           </thead>
           <b-tbody v-model="assignments">
             <tr v-for="assignment in assignments"
@@ -192,8 +193,8 @@
               <td>
                 <span v-if="assignment.score === 'Not yet released'">Not yet released</span>
                 <span v-if="assignment.score !== 'Not yet released'"> {{ assignment.score }}/{{
-                  assignment.total_points
-                }}</span>
+                    assignment.total_points
+                  }}</span>
               </td>
               <td>
                 {{ assignment.z_score }}
@@ -203,7 +204,7 @@
                   <b-icon v-b-modal.modal-uploadmodal-upload-assignment-file-file icon="cloud-upload" class="mr-2"
                           @click="openUploadAssignmentFileModal(assignment.id)"
                   />
-                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)" />
+                  <b-icon icon="pencil-square" @click="getAssignmentFileInfo(assignment.id)"/>
                 </div>
                 <div v-else>
                   N/A
@@ -420,6 +421,11 @@ export default {
     getAssignmentSummaryView (assignment) {
       if (assignment.source === 'x') {
         this.$noty.info('This assignment has no questions to view because it is an external assignment.  Please contact your instructor for more information.')
+        return false
+      }
+      if (assignment.is_in_lms_course) {
+        this.$noty.info('This assignment is served through your LMS such as Canvas, Blackboard, or Moodle.  Please log in to your LMS to enter the assignment.',
+          { timeout: 10000 })
         return false
       }
       this.$router.push(`/students/assignments/${assignment.id}/summary`)
