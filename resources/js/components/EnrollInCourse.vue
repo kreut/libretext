@@ -137,7 +137,9 @@ export default {
         if (data.validated) {
           this.$noty[data.type](data.message)
           if (data.type === 'success') {
-            this.resetAll()
+            this.isLms
+              ? location.reload()
+              : this.resetAll()
           }
         } else {
           if (data.type === 'error') {
