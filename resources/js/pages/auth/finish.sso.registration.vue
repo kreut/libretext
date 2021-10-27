@@ -1,19 +1,12 @@
 <template>
   <div class="row pb-5">
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-finish-sso-registration'"/>
     <div class="col-lg-8 m-auto">
       <card title="Complete Registration">
         <form>
-          <div v-if="form.registration_type === 'student'" class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Student ID</label>
-            <div class="col-md-7">
-              <input v-model="form.student_id" :class="{ 'is-invalid': form.errors.has('student_id') }"
-                     class="form-control" type="text" name="student_id"
-              >
-              <has-error :form="form" field="student_id"/>
-            </div>
-          </div>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Time zone</label>
+            <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk/>
+            </label>
             <div class="col-md-7" @change="removeTimeZoneError()">
               <b-form-select v-model="form.time_zone"
                              :options="timeZones"
@@ -23,9 +16,11 @@
             </div>
           </div>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Registration Type</label>
+            <label class="col-md-3 col-form-label text-md-right">Registration Type<Asterisk/>
+            </label>
             <div class="col-md-7">
               <b-form-select v-model="form.registration_type"
+                             title="registration_type"
                              :options="registrationTypes"
                              :class="{ 'is-invalid': form.errors.has('registration_type') }"
               />
@@ -34,12 +29,29 @@
           </div>
           <!-- Name -->
           <div v-if="![null,'student'].includes(form.registration_type)" class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Access Code</label>
+            <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code<Asterisk/>
+            </label>
             <div class="col-md-7">
-              <input v-model="form.access_code" :class="{ 'is-invalid': form.errors.has('access_code') }"
-                     class="form-control" type="text" name="access_code"
+              <input id="access_code"
+                     v-model="form.access_code"
+                     :class="{ 'is-invalid': form.errors.has('access_code') }"
+                     class="form-control"
+                     type="text"
+                     name="access_code"
               >
               <has-error :form="form" field="access_code"/>
+            </div>
+          </div>
+          <div v-if="form.registration_type === 'student'" class="form-group row">
+            <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk/>
+            </label>
+            <div class="col-md-7">
+              <input id="student_id"
+                     v-model="form.student_id"
+                     :class="{ 'is-invalid': form.errors.has('student_id') }"
+                     class="form-control" type="text" name="student_id"
+              >
+              <has-error :form="form" field="student_id"/>
             </div>
           </div>
           <b-row align-h="end" class="col-md-10">
@@ -58,9 +70,14 @@ import Form from 'vform'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import { redirectOnSSOCompletion } from '../../helpers/LoginRedirect'
+import AllFormErrors from '~/components/AllFormErrors'
 
 export default {
+  components: {
+    AllFormErrors
+  },
   data: () => ({
+    allFormErrors: [],
     inIFrame: false,
     isStudent: true,
     form: new Form({
@@ -111,6 +128,9 @@ export default {
       } catch (error) {
         if (!error.message.includes('status code 422')) {
           this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.form.errors.flatten()
+          this.$bvModal.show('modal-form-errors-finish-sso-registration')
         }
       }
     }
