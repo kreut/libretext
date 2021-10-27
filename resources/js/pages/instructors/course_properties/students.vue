@@ -1,7 +1,7 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student" />
-    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student" />
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-unenroll-student"/>
+    <AllFormErrors :all-form-errors="allFormErrors" modal-id="modal-form-errors-move-student"/>
     <b-modal
       id="modal-unenroll-student"
       ref="modal"
@@ -15,11 +15,11 @@
         </b-alert>
         <p>
           <span class="font-italic">Please confirm that you would like to unenroll <strong>{{
-            studentToUnenroll.name
-          }}</strong> from
+              studentToUnenroll.name
+            }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
-        <RequiredText :plural="false" />
+        <RequiredText :plural="false"/>
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
@@ -38,7 +38,7 @@
             :class="{ 'is-invalid': unenrollStudentForm.errors.has('confirmation') }"
             @keydown="unenrollStudentForm.errors.clear('confirmation')"
           />
-          <has-error :form="unenrollStudentForm" field="confirmation" />
+          <has-error :form="unenrollStudentForm" field="confirmation"/>
         </b-form-group>
       </b-form>
       <template #modal-footer>
@@ -74,7 +74,7 @@
       <p>
         <span class="font-italic">{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
       </p>
-      <RequiredText :plural="false" />
+      <RequiredText :plural="false"/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -93,13 +93,13 @@
               :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
               @keydown="moveStudentForm.errors.clear('section_id')"
             />
-            <has-error :form="moveStudentForm" field="section_id" />
+            <has-error :form="moveStudentForm" field="section_id"/>
           </div>
         </b-form-group>
       </b-form>
       <template #modal-footer>
         <span v-if="processingMoveStudent">
-          <b-spinner small type="grow" />
+          <b-spinner small type="grow"/>
           Processing...
         </span>
         <b-button
@@ -146,15 +146,15 @@
                 </template>
                 <template v-slot:cell(email)="data">
                   <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span> <a
-                    href="#"
-                    class="pr-1"
-                    :aria-label="`Copy email for ${data.item.name}`"
-                    @click="doCopy(`email-${data.item.id}}`)"
-                  >
-                    <font-awesome-icon
-                      :icon="copyIcon"
-                    />
-                  </a>
+                  href="#"
+                  class="pr-1"
+                  :aria-label="`Copy email for ${data.item.name}`"
+                  @click="doCopy(`email-${data.item.id}}`)"
+                >
+                  <font-awesome-icon
+                    :icon="copyIcon"
+                  />
+                </a>
                 </template>
                 <template v-slot:cell(actions)="data">
                   <b-tooltip :target="getTooltipTarget('moveStudent',data.item.id)"
@@ -170,7 +170,8 @@
                   >
                     <b-icon icon="truck"
                             class="text-muted"
-                            :aria-label="`Move ${data.item.name} to a different section`"/>
+                            :aria-label="`Move ${data.item.name} to a different section`"
+                    />
                   </a>
                   <b-tooltip :target="getTooltipTarget('unEnrollStudent',data.item.id)"
                              delay="500"
@@ -182,7 +183,7 @@
                      href=""
                      @click.prevent="initUnenrollStudent(data.item)"
                   >
-                    <b-icon icon="trash" class="text-muted" :aria-label="`Unenroll ${data.item.name}`" />
+                    <b-icon icon="trash" class="text-muted" :aria-label="`Unenroll ${data.item.name}`"/>
                   </a>
                 </template>
               </b-table>
@@ -338,6 +339,10 @@ export default {
           {
             key: 'name',
             isRowHeader: true
+          },
+          {
+            key: 'student_id',
+            label: 'Student ID'
           },
           'email',
           'enrollment_date',

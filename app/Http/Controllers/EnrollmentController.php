@@ -323,6 +323,7 @@ class EnrollmentController extends Controller
                     DB::raw('CONCAT(first_name, " " , last_name) AS name'),
                     'email',
                     'sections.name AS section',
+                    'student_id',
                     'sections.id AS section_id',
                     'enrollments.created_at AS enrollment_date')
                 ->orderBy('first_name')
@@ -393,7 +394,7 @@ class EnrollmentController extends Controller
      * @param Enrollment $enrollment
      * @param Section $Section
      * @param AssignToUser $assignToUser
-     * @return array|Application|ResponseFactory|Response
+     * @return array|Application|ResponseFactory|Response|string
      * @throws Exception
      */
     public
@@ -416,6 +417,7 @@ class EnrollmentController extends Controller
             if ($request->is_lms) {
                 $user = request()->user();
                 $user->time_zone = $data['time_zone'];
+                $user->student_id = $data['student_id'];
                 $user->save();
             }
             $section = $Section->where('access_code', '=', $data['access_code'])
@@ -430,6 +432,15 @@ class EnrollmentController extends Controller
                 $enrolled_user_ids = $section->course->enrollments->pluck('user_id')->toArray();
                 if (in_array($request->user()->id, $enrolled_user_ids)) {
                     $response['message'] = 'You are already enrolled in another section of this course.';
+                    return $response;
+                }
+                $student_id_exists = DB::table('users')
+                    ->whereIn('id', $enrolled_user_ids)
+                    ->where('student_id', $request->user()->student_id)
+                    ->where('last_name', $request->user()->last_name)
+                    ->first();
+                if ($student_id_exists) {
+                    $response['message'] = 'Someone with your student ID and the same last name is already enrolled in this course.';
                     return $response;
                 }
             }
@@ -459,8 +470,7 @@ class EnrollmentController extends Controller
                 DB::commit();
                 $response['message'] = "You are now enrolled in <strong>$course_section_name</strong>.";
             }
-        } catch
-        (Exception $e) {
+        } catch (Exception $e) {
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);

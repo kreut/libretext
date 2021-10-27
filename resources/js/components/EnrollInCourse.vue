@@ -12,17 +12,15 @@
       <template v-if="!inIFrame" #modal-title>
         Enroll In Course
       </template>
-      <p>Please provide the course access code given to you by your instructor.</p>
+      <p>Please provide the course access code given to you by your instructors.</p>
       <RequiredText :plural="false"/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="4"
           label-cols-lg="3"
           label-for="access_code"
+          label="Access Code*"
         >
-          <template slot="label">
-            Access Code*
-          </template>
           <b-form-input
             id="access_code"
             v-model="form.access_code"
@@ -32,15 +30,37 @@
           />
           <has-error :form="form" field="access_code"/>
         </b-form-group>
-        <div v-show="isLms" class="form-group row">
-          <label class="col-md-3 col-form-label text-md-right">Time zone</label>
-          <div class="col-md-7" @change="form.errors.clear('time_zone')">
-            <b-form-select v-model="form.time_zone"
-                           :options="timeZones"
-                           :class="{ 'is-invalid': form.errors.has('time_zone') }"
+        <div v-show="isLms">
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="student_id"
+            label="Student ID*"
+          >
+            <b-form-input
+              id="student_id"
+              v-model="form.student_id"
+              type="text"
+              :class="{ 'is-invalid': form.errors.has('student_id') }"
+              @keydown="form.errors.clear('student_id')"
             />
-            <has-error :form="form" field="time_zone"/>
-          </div>
+            <has-error :form="form" field="student_id"/>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="4"
+            label-cols-lg="3"
+            label-for="time_zone"
+            label="Time Zone*"
+          >
+              <b-form-select id="time_zone"
+                             v-model="form.time_zone"
+                             title="time zone"
+                             :options="timeZones"
+                             :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                             @change="form.errors.clear('time_zone')"
+              />
+              <has-error :form="form" field="time_zone"/>
+          </b-form-group>
         </div>
       </b-form>
       <template #modal-footer>
@@ -119,6 +139,7 @@ export default {
   },
   methods: {
     submitEnrollInCourse () {
+      this.form.is_lms = this.isLms
       this.inIFrame ? this.enrollInCourseViaIFrame() : this.enrollInCourse()
     },
     resetAll () {
@@ -157,7 +178,6 @@ export default {
       }
     },
     async enrollInCourseViaIFrame () {
-      this.form.is_lms = this.isLms
       try {
         const { data } = await this.form.post('/api/enrollments')
         // they never finished the registration page

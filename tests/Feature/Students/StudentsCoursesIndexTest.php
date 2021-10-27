@@ -34,6 +34,30 @@ class StudentsCoursesIndexTest extends TestCase
     }
 
     /** @test */
+    public function same_last_name_and_student_id_cannot_enroll_in_the_same_course()
+    {
+        $enrollment = new Enrollment();
+        $enrollment->user_id = $this->student_user->id;
+        $enrollment->course_id = $this->course->id;
+        $enrollment->section_id = $this->section->id;
+        $enrollment->save();
+
+        $this->student_user->student_id = '12345';
+        $this->student_user->save();
+        $this->student_user_2 = factory(User::class)->create([
+            'last_name' => $this->student_user->last_name,
+            'student_id' => $this->student_user->student_id,
+            'role' => 3]);
+
+        $this->actingAs($this->student_user_2)->postJson("/api/enrollments", [
+            'section_id' => $this->section_1->id,
+            'access_code' => $this->section_1->access_code
+        ])->assertJson(['message' => 'Someone with your student ID and the same last name is already enrolled in this course.']);
+
+    }
+
+
+    /** @test */
     public function can_get_enrollments_of_shown_courses_if_user_is_a_student()
     {
         factory(Enrollment::class)->create([
@@ -110,6 +134,8 @@ class StudentsCoursesIndexTest extends TestCase
         ])->assertJson(['message' => 'You are already enrolled in another section of this course.']);
 
     }
+
+
 
     /** @test */
     public function cannot_enroll_in_a_course_with_an_invalid_access_code()

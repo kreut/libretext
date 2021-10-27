@@ -27,6 +27,7 @@ class StoreEnrollment extends FormRequest
 
         $rules['access_code'] = 'required|exists:sections,access_code';
         if ($this->is_lms) {
+            $rules['student_id'] = 'required';
             $rules['time_zone'] = new IsValidTimeZone();
         }
         return $rules;
