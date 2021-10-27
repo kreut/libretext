@@ -52,7 +52,9 @@
         </div>
       </div>
       <!-- Email -->
-      <div class="form-group row">
+      <!-- For now I'm not letting them change their email because if they do a course through Canvas and change the email
+      it will screw up the grade pass back -->
+      <div v-show="false" class="form-group row">
         <label class="col-md-3 col-form-label text-md-right" for="email">Email
           <Asterisk/>
         </label>
