@@ -437,4 +437,121 @@ class Question extends Model
         return $innerHTML;
     }
 
+    /**
+     * @param $library_text_page_id
+     * @param Libretext $libretext
+     * @param Request $request
+     * @return array
+     * @throws Exception
+     */
+    function getQuestionToAddByPageId(Request   $request,
+                                      Libretext $libretext): array
+    {
+
+
+        $libraries = $libretext->libraries();
+        $library_text_page_id = $request->direct_import;
+        $library_texts = [];
+        $response['type'] = 'error';
+        foreach ($libraries as $library_text => $library) {
+            $library_texts[] = strtolower($library_text);
+        }
+
+        $default_import_library = $request->cookie('default_import_library');
+        $library_text_exists = strpos($library_text_page_id, '-') !== false;
+        if (!$library_text_exists && !$default_import_library) {
+            $response['message'] = "$library_text_page_id should be of the form {library}-{page id}.";
+            return $response;
+        }
+
+        if ($default_import_library && !$library_text_exists) {
+            $library = $default_import_library;
+            $page_id = trim($library_text_page_id);
+            $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library));
+        } else {
+            [$library_text, $page_id] = explode('-', $library_text_page_id);
+            $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library_text));
+            if (!in_array($library_text, $library_texts)) {
+                $response['message'] = "$library_text is not a valid library.";
+                return $response;
+            }
+
+            $library = $this->getLibraryFromLibraryText($libraries, $library_text);
+
+
+        }
+        if (!(is_numeric($page_id) && is_int(0 + $page_id) && 0 + $page_id > 0)) {
+            $response['message'] = "$page_id should be a positive integer.";
+            return $response;
+        }
+
+        $question_id = $this->getQuestionIdsByPageId($page_id, $library, false)[0];//returned as an array
+        $response['question_id'] = $question_id;
+        $response['direct_import_id'] = "$library_text-$page_id";
+        $response['type'] = 'success';
+
+        return $response;
+    }
+
+    public function getQuestionToAddByAdaptId(Request $request)
+    {
+        $adapt_id = $request->direct_import;
+        $response['type'] = 'error';
+        $assignment_question_arr = explode('-', $adapt_id);
+        if (count($assignment_question_arr) !== 2) {
+            $response['message'] = "$adapt_id should be of the form {assignment_id}-{question_id}.";
+            return $response;
+        }
+        $assignment_id = $assignment_question_arr[0];
+        $question_id = $assignment_question_arr[1];
+        $assignment_question = DB::table('assignment_question')
+            ->where('assignment_id', $assignment_id)
+            ->where('question_id', $question_id)
+            ->first();
+        if (!$assignment_question) {
+            $response['message'] = "The assignment question with Adapt ID $adapt_id does not exist.";
+            return $response;
+        }
+        $response['question_id'] = $question_id;
+        $response['assignment_question'] = $assignment_question;
+        $response['direct_import_id'] = $adapt_id;
+        $response['type'] = 'success';
+        return $response;
+    }
+
+
+    /**
+     * @param $libraries
+     * @param $library
+     * @return int|string
+     */
+    public function getLibraryTextFromLibrary($libraries, $library)
+    {
+        $response = $library;
+        foreach ($libraries as $library_text => $value) {
+            if ($value === trim($library)) {
+                $response = $library_text;
+            }
+        }
+        return $response;
+    }
+
+
+    /**
+     * @param $libraries
+     * @param $library_text
+     * @return false|mixed|string
+     */
+    public function getLibraryFromLibraryText($libraries, $library_text)
+    {
+        $response = false;
+        foreach ($libraries as $key => $library) {
+            //works for the name or abbreviations
+            if (strtolower($key) === $library_text || $library === $library_text) {
+                $response = $library;
+            }
+        }
+        return $response;
+    }
 }
+

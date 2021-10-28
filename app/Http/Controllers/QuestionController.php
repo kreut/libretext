@@ -108,7 +108,7 @@ class QuestionController extends Controller
 
 
             DB::beginTransaction();
-            if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question) ) {
+            if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
 
                 DB::table('submissions')->where('assignment_id', $assignment->id)
@@ -218,12 +218,12 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function directImportQuestions(Request                $request,
-                                          Question               $Question,
-                                          Assignment             $assignment,
-                                          AssignmentSyncQuestion $assignmentSyncQuestion,
-                                          Libretext              $libretext,
-                                          BetaCourseApproval     $betaCourseApproval): array
+    public function directImportQuestion(Request                $request,
+                                         Question               $Question,
+                                         Assignment             $assignment,
+                                         AssignmentSyncQuestion $assignmentSyncQuestion,
+                                         Libretext              $libretext,
+                                         BetaCourseApproval     $betaCourseApproval): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -236,117 +236,59 @@ class QuestionController extends Controller
 
         try {
             $direct_import = $request->direct_import;
-            if (!$direct_import) {
-                $response['message'] = "You didn't submit any library-page id's for direct import.";
+            $type = $request->type;
+            if (!in_array($type, ['page id', 'adapt id'])) {
+                $response['message'] = "$type is not a valid direct import type.";
                 return $response;
             }
-            //works for both multiple and single inputs.  In Vue, this was changed to single inputs to get around
-            //AWS lamba timeout issues
-            $library_text_page_ids = explode(',', $direct_import);
-
-            $library_page_ids_added_to_assignment = [];
-            $library_page_ids_not_added_to_assignment = [];
-            $questions_to_add = [];
-            $libraries = $libretext->libraries();
-            $library_texts = [];
-            foreach ($libraries as $library_text => $library) {
-                $library_texts[] = strtolower($library_text);
+            if (!$direct_import) {
+                $response['message'] = "You didn't submit anything for direct import.";
+                return $response;
             }
-
-            foreach ($library_text_page_ids as $library_text_page_id) {
-                $default_import_library = $request->cookie('default_import_library');
-                $library_text_exists = strpos($library_text_page_id, '-') !== false;
-                if (!$library_text_exists && !$default_import_library) {
-                    $response['message'] = "$library_text_page_id should be of the form {library}-{page id}.";
-                    return $response;
-                }
-
-                if ($default_import_library && !$library_text_exists) {
-                    $library = $default_import_library;
-                    $page_id = trim($library_text_page_id);
-                    $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library));
-                } else {
-                    [$library_text, $page_id] = explode('-', $library_text_page_id);
-                    $library_text = strtolower($this->getLibraryTextFromLibrary($libraries, $library_text));
-                    if (!in_array($library_text, $library_texts)) {
-                        $response['message'] = "$library_text is not a valid library.";
-                        return $response;
-                    }
-                    $library = $this->getLibraryFromLibraryText($libraries, $library_text);
-                }
-                if (!(is_numeric($page_id) && is_int(0 + $page_id) && 0 + $page_id > 0)) {
-                    $response['message'] = "$page_id should be a positive integer.";
-                    return $response;
-                }
-
-                $question_id = $Question->getQuestionIdsByPageId($page_id, $library, false)[0];//returned as an array
-                $questions_to_add[$question_id] = "$library_text-$page_id";
+            $question_to_add_info = ($type === 'page id')
+                ? $Question->getQuestionToAddByPageId($request, $libretext)
+                : $Question->getQuestionToAddByAdaptId($request);
+            if ($question_to_add_info['type'] === 'error') {
+                $response['message'] = $question_to_add_info['message'];
+                return $response;
             }
+            $question_id = $question_to_add_info['question_id'];
+            $direct_import_id = $question_to_add_info['direct_import_id'];
             DB::beginTransaction();
             $assignment_questions = $assignment->questions->pluck('id')->toArray();
-            foreach ($questions_to_add as $question_id => $library_text_page_id) {
-                if (!in_array($question_id, $assignment_questions)) {
-                    DB::table('assignment_question')
-                        ->insert([
-                            'assignment_id' => $assignment->id,
-                            'question_id' => $question_id,
-                            'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
-                            'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
-                            'open_ended_submission_type' => $assignment->default_open_ended_submission_type,
-                            'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
-                            'open_ended_text_editor' => $assignment->default_open_ended_text_editor]);
-                    $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
-                    array_push($library_page_ids_added_to_assignment, $library_text_page_id);
-                } else {
-                    array_push($library_page_ids_not_added_to_assignment, $library_text_page_id);
+            if (!in_array($question_id, $assignment_questions)) {
+                $open_ended_submission_type = $assignment->default_open_ended_submission_type;
+                $open_ended_text_editor = $assignment->default_open_ended_text_editor;
+                if ($type === 'adapt id') {
+                    $assignment_question = $question_to_add_info['assignment_question'];
+                    $open_ended_submission_type = $assignment_question->open_ended_submission_type;
+                    $open_ended_text_editor = $assignment_question->open_ended_text_editor;
                 }
-                array_push($assignment_questions, $question_id);
+                DB::table('assignment_question')
+                    ->insert([
+                        'assignment_id' => $assignment->id,
+                        'question_id' => $question_id,
+                        'order' => $assignmentSyncQuestion->getNewQuestionOrder($assignment),
+                        'points' => $assignment->default_points_per_question, //don't need to test since tested already when creating an assignment
+                        'open_ended_submission_type' => $open_ended_submission_type,
+                        'completion_scoring_mode' => $assignment->scoring_type === 'c' ? $assignment->default_completion_scoring_mode : null,
+                        'open_ended_text_editor' => $open_ended_text_editor]);
+                $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question_id, 'add');
+                $response['direct_import_id_added_to_assignment'] = $direct_import_id;
+            } else {
+                $response['direct_import_id_not_added_to_assignment'] = $direct_import_id;
             }
             DB::commit();
-            $response['page_ids_added_to_assignment'] = implode(', ', $library_page_ids_added_to_assignment);
-            $response['page_ids_not_added_to_assignment'] = implode(', ', $library_page_ids_not_added_to_assignment);
             $response['type'] = 'success';
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error importing these questions.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error importing the question.  Please try again or contact us for assistance.";
         }
         return $response;
 
 
-    }
-
-    /**
-     * @param $libraries
-     * @param $library_text
-     * @return false
-     */
-    public function getLibraryFromLibraryText($libraries, $library_text)
-    {
-        $response = false;
-        foreach ($libraries as $key => $library) {
-            //works for the name or abbreviations
-            if (strtolower($key) === $library_text || $library === $library_text) {
-                $response = $library;
-            }
-        }
-        return $response;
-    }
-
-    /**
-     * @param $libraries
-     * @param $library
-     * @return int|string
-     */
-    public function getLibraryTextFromLibrary($libraries, $library)
-    {
-        $response = $library;
-        foreach ($libraries as $library_text => $value) {
-            if ($value === trim($library)) {
-                $response = $library_text;
-            }
-        }
-        return $response;
     }
 
 

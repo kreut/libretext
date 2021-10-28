@@ -105,8 +105,9 @@
                        :set-question-to-remove="setQuestionToRemove"
               />
             </b-tab>
-            <b-tab title="Assignment Remixer" @click="showQuestions = false;">
-              <Remixer ref="remixer2"
+            <b-tab title="Assignment Remixer" @click="remixerKey++;showQuestions = false;">
+              <Remixer :key="remixerKey"
+                       ref="remixer2"
                        type-of-remixer="assignment-remixer"
                        :assignment-id="parseInt(assignmentId)"
                        :get-question-warning-info="getQuestionWarningInfo"
@@ -171,8 +172,8 @@
                 </b-card>
               </b-col>
             </b-tab>
-            <b-tab title="Direct Import By Page Id" class="pb-8" @click="showQuestions = false">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page Id" style="height:425px">
+            <b-tab title="Direct Import By Page ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page ID" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
@@ -224,7 +225,7 @@
                           <span v-if="directImportingQuestions" class="mr-3 font-italic">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
-                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions()">
+                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('page id')">
                             <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
@@ -233,19 +234,72 @@
                     </b-row>
                   </b-container>
                   <div class="pt-4">
-                    <div v-if="errorPageIdsMessage.length>0">
+                    <div v-if="errorDirectImportIdsMessage.length>0">
                       <b-alert :show="true" variant="danger">
-                        <span class="font-weight-bold">{{ errorPageIdsMessage }}</span>
+                        <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
                       </b-alert>
                     </div>
-                    <div v-if="pageIdsAddedToAssignmentMessage.length>0">
+                    <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
                       <b-alert :show="true" variant="success">
-                        <span class="font-weight-bold">{{ pageIdsAddedToAssignmentMessage }}</span>
+                        <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
                       </b-alert>
                     </div>
-                    <div v-if="pageIdsNotAddedToAssignmentMessage.length>0">
+                    <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
                       <b-alert :show="true" variant="info">
-                        <span class="font-weight-bold">{{ pageIdsNotAddedToAssignmentMessage }}</span>
+                        <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
+                      </b-alert>
+                    </div>
+                  </div>
+                </b-card-text>
+              </b-card>
+            </b-tab>
+            <b-tab title="Direct Import By Adapt ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Adapt ID" style="height:425px">
+                <b-card-text>
+                  <b-container>
+                    <b-row>
+                      <b-col @click="resetSearchByTag">
+                        <p>
+                          Perform a direct import of questions directly into your assignment using the Adapt ID. Please
+                          enter
+                          the Adapt IDs in a comma separated list.
+                        </p>
+
+                      </b-col>
+                      <b-col>
+                        <b-form-textarea
+                          id="textarea"
+                          v-model="directImport"
+                          placeholder="Example. 1027-34, 1029-38, 1051-44"
+                          rows="4"
+                          max-rows="5"
+                        />
+                        <div class="float-right mt-2">
+                          <span v-if="directImportingQuestions" class="mr-3 font-italic">
+                            Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
+                          </span>
+                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('adapt id')">
+                            <b-spinner v-if="directImportingQuestions" small type="grow"/>
+                            Import Questions
+                          </b-button>
+                        </div>
+                      </b-col>
+                    </b-row>
+                  </b-container>
+                  <div class="pt-4">
+                    <div v-if="errorDirectImportIdsMessage.length>0">
+                      <b-alert :show="true" variant="danger">
+                        <span class="font-weight-bold">{{ errorDirectImportIdsMessage }}</span>
+                      </b-alert>
+                    </div>
+                    <div v-if="directImportIdsAddedToAssignmentMessage.length>0">
+                      <b-alert :show="true" variant="success">
+                        <span class="font-weight-bold">{{ directImportIdsAddedToAssignmentMessage }}</span>
+                      </b-alert>
+                    </div>
+                    <div v-if="directImportIdsNotAddedToAssignmentMessage.length>0">
+                      <b-alert :show="true" variant="info">
+                        <span class="font-weight-bold">{{ directImportIdsNotAddedToAssignmentMessage }}</span>
                       </b-alert>
                     </div>
                   </div>
@@ -347,6 +401,7 @@ export default {
   },
   middleware: 'auth',
   data: () => ({
+    remixerKey: 0,
     modalRemoveQuestionKey: 0,
     typeOfRemixer: '',
     h5pQuestionsWithAnonymousUsers: false,
@@ -354,7 +409,7 @@ export default {
     betaAssignmentsExist: false,
     questionToRemove: {},
     isRemixerTab: true,
-    errorPageIdsMessage: '',
+    errorDirectImportIdsMessage: '',
     directImportCount: '',
     directImportIndex: '',
     openEndedQuestionsInRealTime: '',
@@ -367,8 +422,8 @@ export default {
     loadingQuestion: false,
     defaultImportLibrary: null,
     libraryOptions: libraries,
-    pageIdsNotAddedToAssignmentMessage: '',
-    pageIdsAddedToAssignmentMessage: '',
+    directImportIdsNotAddedToAssignmentMessage: '',
+    directImportIdsAddedToAssignmentMessage: '',
     directImportingQuestions: false,
     directImport: '',
     questionFilesAllowed: false,
@@ -421,6 +476,11 @@ export default {
     this.getQuestionWarningInfo()
   },
   methods: {
+    resetDirectImportMessages () {
+      this.directImportIdsAddedToAssignmentMessage = ''
+      this.errorDirectImportIdsMessage = ''
+      this.directImportIdsNotAddedToAssignmentMessage = ''
+    },
     setQuestionToRemove (questionToRemove, typeOfRemixer) {
       this.questionToRemove = questionToRemove
       this.typeOfRemixer = typeOfRemixer
@@ -482,62 +542,71 @@ export default {
     },
     resetDirectImport () {
       this.questions = []
-      this.pageIdsAddedToAssignmentMessage = ''
-      this.pageIdsNotAddedToAssignmentMessage = ''
+      this.directImportIdsAddedToAssignmentMessage = ''
+      this.directImportIdsNotAddedToAssignmentMessage = ''
       this.directImport = ''
     },
     resetSearchByTag () {
       this.showQuestions = false
       this.chosenTags = []
     },
-    async directImportQuestions () {
+    async directImportQuestions (type) {
       if (this.directImportingQuestions) {
         let timeToProcess = Math.ceil(((this.directImport.match(/,/g) || []).length) / 3)
         let message = `Please be patient.  Validating all of your page id's  will take about ${timeToProcess} seconds.`
         this.$noty.info(message)
         return false
       }
+
       this.pageIdsAddedToAssignmentMessage = ''
       this.pageIdsNotAddedToAssignmentMessage = ''
+      this.errorDirectImportIdsMessage = ''
+      this.directImportIdsAddedToAssignmentMessage = ''
+      this.directImportIdsNotAddedToAssignmentMessage = ''
       this.directImportingQuestions = true
       let directImport = this.directImport.split(',')
       this.directImportCount = directImport.length
-      let pageIdsAddedToAssignment = []
-      let pageIdsNotAddedToAssignment = []
-      let errorPageIds = []
+      let directImportIdsAddedToAssignment = []
+      let directImportIdsNotAddedToAssignment = []
+      let errorDirectImportIds = []
       for (this.directImportIndex = 0; this.directImportIndex < directImport.length; this.directImportIndex++) {
         try {
-          const { data } = await axios.post(`/api/questions/${this.assignmentId}/direct-import-questions`, { 'direct_import': directImport[this.directImportIndex] })
+          const { data } = await axios.post(`/api/questions/${this.assignmentId}/direct-import-question`,
+            {
+              'direct_import': directImport[this.directImportIndex],
+              'type': type
+            }
+          )
           if (data.type === 'error') {
-            errorPageIds.push(directImport[this.directImportIndex])
+            errorDirectImportIds.push(directImport[this.directImportIndex])
             this.$noty.error(data.message)
           }
-          if (data.page_ids_added_to_assignment) {
-            pageIdsAddedToAssignment.push(data.page_ids_added_to_assignment)
+          if (data.direct_import_id_added_to_assignment) {
+            directImportIdsAddedToAssignment.push(data.direct_import_id_added_to_assignment)
           }
-          if (data.page_ids_not_added_to_assignment) {
-            pageIdsNotAddedToAssignment.push(data.page_ids_not_added_to_assignment)
+          if (data.direct_import_id_not_added_to_assignment) {
+            directImportIdsNotAddedToAssignment.push(data.direct_import_id_not_added_to_assignment)
           }
         } catch (error) {
           this.$noty.error(error.message)
         }
       }
-      console.log(pageIdsNotAddedToAssignment)
+      console.log(directImportIdsNotAddedToAssignment)
       this.directImportingQuestions = false
-      pageIdsAddedToAssignment = pageIdsAddedToAssignment.join(', ')
-      pageIdsNotAddedToAssignment = pageIdsNotAddedToAssignment.join(', ')
+      directImportIdsAddedToAssignment = directImportIdsAddedToAssignment.join(', ')
+      directImportIdsNotAddedToAssignment = directImportIdsNotAddedToAssignment.join(', ')
       let verb
-      verb = pageIdsAddedToAssignment.includes(',') ? 'were' : 'was'
-      if (pageIdsAddedToAssignment !== '') {
-        this.pageIdsAddedToAssignmentMessage = `${pageIdsAddedToAssignment} ${verb} added to this assignment.`
+      verb = directImportIdsAddedToAssignment.includes(',') ? 'were' : 'was'
+      if (directImportIdsAddedToAssignment !== '') {
+        this.directImportIdsAddedToAssignmentMessage = `${directImportIdsAddedToAssignment} ${verb} added to this assignment.`
       }
-      if (errorPageIds.length) {
-        this.errorPageIdsMessage = `Errors found with: ${errorPageIds}`
+      if (errorDirectImportIds.length) {
+        this.errorDirectImportIdsMessage = `Errors found with: ${errorDirectImportIds}`
       }
-      verb = pageIdsNotAddedToAssignment.includes(',') ? 'were' : 'was'
-      let pronoun = pageIdsNotAddedToAssignment.includes(',') ? 'they' : 'it'
-      if (pageIdsNotAddedToAssignment !== '') {
-        this.pageIdsNotAddedToAssignmentMessage = `${pageIdsNotAddedToAssignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
+      verb = directImportIdsNotAddedToAssignment.includes(',') ? 'were' : 'was'
+      let pronoun = directImportIdsNotAddedToAssignment.includes(',') ? 'they' : 'it'
+      if (directImportIdsNotAddedToAssignment !== '') {
+        this.directImportIdsNotAddedToAssignmentMessage = `${directImportIdsNotAddedToAssignment} ${verb} not added to this assignment since ${pronoun} ${verb} already a part of the assignment.`
       }
       this.directImport = ''
     },

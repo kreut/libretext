@@ -235,9 +235,9 @@ class QuestionsGetTest extends TestCase
         $this->actingAs($this->user)
             ->disableCookieEncryption()
             ->withCookie('default_import_library', 'chem')
-            ->post("/api/questions/{$this->assignment->id}/direct-import-questions",
-                ['direct_import' => "265531"]
-            )->assertJson(['page_ids_added_to_assignment' => 'chemistry-265531']);
+            ->post("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "265531", 'type' => 'page id']
+            )->assertJson(['direct_import_id_added_to_assignment' => 'chemistry-265531']);
 
     }
 
@@ -245,9 +245,9 @@ class QuestionsGetTest extends TestCase
     public function direct_import_can_use_abbreviations()
     {
         $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-                ['direct_import' => "chem-265531"]
-            )->assertJson(['page_ids_added_to_assignment' => 'chemistry-265531']);
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "chem-265531", 'type' => 'page id']
+            )->assertJson(['direct_import_id_added_to_assignment' => 'chemistry-265531']);
 
     }
 
@@ -255,9 +255,39 @@ class QuestionsGetTest extends TestCase
     public function direct_import_must_be_a_valid_library()
     {
         $this->actingAs($this->user)
-            ->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-                ['direct_import' => "chems-265531"]
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "chems-265531", 'type' => 'page id']
             )->assertJson(['message' => 'chems is not a valid library.']);
+
+    }
+
+    /** @test */
+    public function direct_import_must_be_a_valid_adapt_id()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "1-26", 'type' => 'adapt id']
+            )->assertJson(['message' => 'The assignment question with Adapt ID 1-26 does not exist.']);
+
+    }
+
+    /** @test */
+    public function direct_import_of_adapt_id_must_be_of_the_correct_form()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "7", 'type' => 'adapt id']
+            )->assertJson(['message' => '7 should be of the form {assignment_id}-{question_id}.']);
+
+    }
+
+    /** @test */
+    public function direct_import_must_be_a_valid_type()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+                ['direct_import' => "1-26", 'type' => 'Not valid type']
+            )->assertJson(['message' => 'Not valid type is not a valid direct import type.']);
 
     }
 
@@ -265,8 +295,8 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function non_owner_cannot_do_a_direct_import()
     {
-        $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => "1860,1862"])
+        $this->actingAs($this->user_2)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => "1860,1862", 'type' => 'page id'])
             ->assertJson(['message' => 'You are not allowed to update this assignment.']);
 
     }
@@ -274,19 +304,21 @@ class QuestionsGetTest extends TestCase
     /** @test */
     public function page_ids_must_be_valid()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => "query-zzz"])
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => "query-zzz", 'type'=> 'page id'])
             ->assertJson(['message' => 'zzz should be a positive integer.']);
 
     }
 
 
+
+
     /** @test */
     public function owner_can_direct_import()
     {
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => "query-1860,query-1862"])
-            ->assertJson(['page_ids_added_to_assignment' => 'query-1860, query-1862']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => "query-1860", 'type'=> 'page id'])
+            ->assertJson(['direct_import_id_added_to_assignment' => 'query-1860']);
 
     }
 
@@ -294,12 +326,12 @@ class QuestionsGetTest extends TestCase
     public function direct_import_will_not_repeat_questions()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => 'query-1860,query-1862']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => 'query-1860', 'type'=> 'page id']);
 
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => 'query-1860,query-1862'])
-            ->assertJson(['page_ids_not_added_to_assignment' => 'query-1860, query-1862']);
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => 'query-1860', 'type'=> 'page id'])
+            ->assertJson(['direct_import_id_not_added_to_assignment' => 'query-1860']);
 
     }
 
@@ -307,8 +339,8 @@ class QuestionsGetTest extends TestCase
     public function direct_import_should_be_of_the_correct_form()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-questions",
-            ['direct_import' => 'bad form,query-1862'])
+        $this->actingAs($this->user)->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
+            ['direct_import' => 'bad form', 'type'=> 'page id'])
             ->assertJson(['message' => 'bad form should be of the form {library}-{page id}.']);
 
     }

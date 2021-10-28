@@ -342,15 +342,10 @@
         />
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Library:</span> <span id="libraryText">{{ libraryText }}</span>
+        <span class="font-weight-bold">Library-Page ID:</span> <span id="libraryPageId">
+        {{ libraryText }}-{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryText')"/>
-        </span>
-      </div>
-      <div class="mb-2">
-        <span class="font-weight-bold">Page ID:</span> <span id="pageId">{{ pageId }}</span>
-        <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('pageId')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryPageId')"/>
         </span>
       </div>
       <div class="mb-2">
@@ -2703,7 +2698,7 @@ export default {
       this.$bvModal.show('modal-share')
       this.currentUrl = this.getCurrentUrl()
       this.embedCode = this.getEmbedCode()
-      this.libraryText = this.getLibraryText(this.questions[this.currentPage - 1].library)
+      this.libraryText = this.questions[this.currentPage - 1].library
       this.adaptId = `${this.assignmentId}-${this.questions[this.currentPage - 1].id}`
       this.pageId = this.questions[this.currentPage - 1].page_id
       this.assignmentInformationShownInIFrame = this.questions[this.currentPage - 1].assignment_information_shown_in_iframe
@@ -2734,15 +2729,6 @@ export default {
             this.technologySrc = `Please Contact Us.  We have not yet implemented the sharing code for ${this.questions[this.currentPage - 1].technology}`
         }
       }
-    },
-    getLibraryText (library) {
-      let text = library
-      for (let i = 0; i < this.libraryOptions.length; i++) {
-        if (library === this.libraryOptions[i].value) {
-          text = this.libraryOptions[i].text
-        }
-      }
-      return text
     },
     getEmbedCode () {
       return `<iframe id="adapt-${this.assignmentId}-${this.questions[this.currentPage - 1].id}" allowtransparency="true" frameborder="0" scrolling="no" src="${this.currentUrl}" style="width: 1px;min-width: 100%;min-height: 100px;" />`
