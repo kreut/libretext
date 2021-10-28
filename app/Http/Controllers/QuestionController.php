@@ -421,6 +421,17 @@ class QuestionController extends Controller
                 '',
                 $question['technology_iframe']);
         }
+        $question['text_question'] = $question_info['text_question'];
+        $question['a11y_question'] = $question_info['a11y_question'];
+        $question['libretexts_link'] = $question_info['libretexts_link'];
+
+        $question['notes'] = $question['solution_html'] = $question['hint'] = null;
+        if (Auth::user()->role === 2) {
+            $question['notes'] = $question_info['notes'];
+            $question['solution_html'] = $question_info['solution_html'];
+            $question['hint'] = $question_info['hint'];
+        }
+
         return $question;
     }
 

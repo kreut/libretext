@@ -14,7 +14,7 @@ use \Exception;
 class Question extends Model
 {
 
-    protected $fillable = ['page_id', 'technology_iframe', 'non_technology', 'technology', 'library', 'author', 'license', 'license_version'];
+    protected $guarded = [];
 
     public function __construct(array $attributes = [])
     {
@@ -342,13 +342,33 @@ class Question extends Model
         libxml_clear_errors();
         $selector = new \DOMXPath($dom);
 
-        foreach ($selector->query('//div[contains(attribute::class, "hidden-adapt")]') as $e) {
-            $e->parentNode->removeChild($e);
+
+        $text_question = $this->getInnerHTMLByClass($selector, 'ADAPT-TextQuestion');
+
+        $a11y_question = $this->getInnerHTMLByClass($selector, 'ADAPT-A11yQuestion');
+        $solution_html =  $this->getInnerHTMLByClass($selector, 'ADAPT-Solution');
+        $hint = $this->getInnerHTMLByClass($selector, 'ADAPT-Hint');
+        $libretexts_link = $this->getInnerHTMLByClass($selector, 'ADAPT-Link');
+        $notes = $this->getInnerHTMLByClass($selector, 'ADAPT-Notes');
+
+        $classes_to_remove = ['ADAPT-hidden',
+            'ADAPT-TextQuestion',
+            'ADAPT-A11yQuestion',
+            'ADAPT-Solution',
+            'ADAPT-Hint',
+            'ADAPT-Link',
+            'ADAPT-Notes'];
+        foreach ($classes_to_remove as $class_to_remove) {
+            foreach ($selector->query('//div[contains(attribute::class, "' . $class_to_remove . '")]') as $e) {
+                $e->parentNode->removeChild($e);
+            }
+
         }
 
         // $body = $doc->saveHTML($doc->documentElement);
         $rootnode = $dom->getELementsByTagName('body')->item(0);
-        $body = $this->DOMinnerHTML($rootnode);
+        $body = trim($this->DOMinnerHTML($rootnode));
+
         try {
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
@@ -402,7 +422,13 @@ class Question extends Model
                     'author' => $author_and_license_info['author'],
                     'license' => $author_and_license_info['license'],
                     'license_version' => $author_and_license_info['license_version'],
-                    'technology_iframe' => $technology_iframe
+                    'technology_iframe' => $technology_iframe,
+                    'text_question' => $text_question,
+                    'a11y_question' => $a11y_question,
+                    'solution_html' => $solution_html,
+                    'hint' => $hint,
+                    'libretexts_link' => $libretexts_link,
+                    'notes' => $notes
                 ]);
 
             $Libretext = new Libretext(['library' => $library]);
@@ -425,6 +451,21 @@ class Question extends Model
 
     }
 
+    function getInnerHTMLByClass($selector, $class)
+    {
+        $innerHTML = null;
+        $nodes = $selector->query("//*[contains(concat(' ', normalize-space(@class), ' '), ' $class ')]")->item(0);
+
+        if (!$nodes) {
+            return null;
+        }
+        $tmp_dom = new DOMDocument();
+        foreach ($nodes->childNodes as $node) {
+            $tmp_dom->appendChild($tmp_dom->importNode($node, true));
+        }
+        $innerHTML .= trim($tmp_dom->saveHTML());
+        return $innerHTML;
+    }
     function DOMinnerHTML(\DOMNode $element)
     {
         $innerHTML = "";

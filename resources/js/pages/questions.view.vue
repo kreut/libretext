@@ -343,7 +343,7 @@
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Libretexts ID:</span> <span id="libretextsID">
-        {{ libraryText }}-{{ pageId }}</span>
+          {{ libraryText }}-{{ pageId }}</span>
         <span class="text-info">
           <font-awesome-icon :icon="copyIcon" @click="doCopy('libretextsID')"/>
         </span>
@@ -1196,6 +1196,41 @@
                     </span>
                   </b-button>
                 </div>
+                <div
+                  v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
+                  class="mt-1"
+                >
+                  <div v-if="questions[currentPage - 1].text_question"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].text_question"/>
+                  </div>
+                  <div v-if="questions[currentPage-1].a11y_question"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].a11y_question"/>
+                  </div>
+                  <div v-if="questions[currentPage-1].solution_html"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].solution_html"/>
+                  </div>
+                  <div v-if="questions[currentPage-1].hint"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].hint"/>
+                  </div>
+                  <div v-if="questions[currentPage-1].libretexts_link"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].libretexts_link"/>
+                  </div>
+                  <div v-if="questions[currentPage-1].notes"
+                       class="mt-3"
+                  >
+                    <span v-html="questions[currentPage - 1].notes"/>
+                  </div>
+                </div>
                 <div v-if="assessmentType === 'clicker'">
                   <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                     <span class="font-weight-bold">{{ submissionDataMessage }}</span>
@@ -1438,7 +1473,7 @@
                 <b-card header="default"
                         header-html="<h2 class=&quot;h7&quot;>Auto-Graded Submission Information</h2>"
                         class="sidebar-card"
-                        :class="{ 'mt-3':  zoomedOut}"
+                        :class="{ 'mt-3': zoomedOut}"
                 >
                   <b-card-text>
                     <span
@@ -1571,11 +1606,11 @@
                       <hr>
                       <b-container>
                         <b-row v-show="!compiledPDF" class="mt-2 mr-2" align-h="end">
-                           <span v-if="questions[currentPage - 1].grader_id" class="pr-2">
-                        <b-button size="sm" variant="outline-primary"
-                                  @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
-                        >Contact Grader</b-button>
-                      </span>
+                          <span v-if="questions[currentPage - 1].grader_id" class="pr-2">
+                            <b-button size="sm" variant="outline-primary"
+                                      @click="openContactGraderModal( questions[currentPage - 1].grader_id)"
+                            >Contact Grader</b-button>
+                          </span>
                           <b-button variant="primary"
 
                                     size="sm"
@@ -2299,6 +2334,13 @@ export default {
         this.questions[this.currentPage - 1].non_technology_iframe_src = data.question.non_technology_iframe_src
         this.questions[this.currentPage - 1].technology_iframe = data.question.technology_iframe
         this.questions[this.currentPage - 1].title = data.question.title
+        this.questions[this.currentPage - 1].text_question = data.question.text_question
+        this.questions[this.currentPage - 1].a11y_question = data.question.a11y_question
+        this.questions[this.currentPage - 1].solution_html = data.question.solution_html
+        this.questions[this.currentPage - 1].hint = data.question.hint
+        this.questions[this.currentPage - 1].libretexts_link = data.question.libretexts_link
+        this.questions[this.currentPage - 1].notes = data.question.notes
+
         this.$bvModal.hide('modal-question-has-submissions-in-this-assignment')
         await this.changePage(this.currentPage)
         this.cacheIndex++
@@ -3197,6 +3239,7 @@ export default {
 
       this.$nextTick(() => {
         this.questionPointsForm.points = this.questions[currentPage - 1].points
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
       })
 
       if (this.showAssignmentStatistics) {
@@ -3588,3 +3631,4 @@ div.ar-icon svg {
   width: 368px;
 }
 </style>
+

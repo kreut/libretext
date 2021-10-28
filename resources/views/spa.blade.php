@@ -26,7 +26,7 @@
   <meta name="asset-url" content="{{ config('app.asset_url') }}">
   <link rel="shortcut icon" type="image/png" href="{{ asset('assets/img/favicon.png') }}"/>
   <title>{{ config('app.name') }}</title>
-<?php if (isset($_COOKIE['accessibility'])) { ?>
+  <?php if (isset($_COOKIE['accessibility'])) { ?>
   <link rel="stylesheet" href="{{ mix('dist/css/accessible_app.css') }}">
   <?php } else { ?>
   <link rel="stylesheet" href="{{ mix('dist/css/app.css') }}">
@@ -46,6 +46,65 @@
 </script>
 {{-- Load the application scripts --}}
 <script src="{{ mix('dist/js/app.js') }}"></script>
+<script type="text/x-mathjax-config">/*<![CDATA[*/
+  MathJax.Ajax.config.path["mhchem"] =
+            "https://cdnjs.cloudflare.com/ajax/libs/mathjax-mhchem/3.3.2";
+        MathJax.Hub.Config({ messageStyle: "none",
+        tex2jax: {preview: "none"},
+        jax: ["input/TeX","input/MathML","output/SVG"],
+  extensions: ["tex2jax.js","mml2jax.js","MathMenu.js","MathZoom.js"],
+  TeX: {
+        extensions: ["autobold.js","mhchem.js","color.js","cancel.js", "AMSmath.js","AMSsymbols.js","noErrors.js","noUndefined.js"]
+  },
+    "HTML-CSS": { linebreaks: { automatic: true , width: "90%"}, scale: 85, mtextFontInherit: false},
+menuSettings: { zscale: "150%", zoom: "Double-Click" },
+         SVG: { linebreaks: { automatic: true } }});
+/*]]>*/
+    </script>
+<script type="text/javascript" async="true"
+        src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
+<script type="text/javascript">
+  front = document.getElementById('titleHolder').innerText;
+  front = front.match(/^.*?:/);
+  if (front) {
+    front = front[0];
+    front = front.split(":")[0];
+    if (front.includes(".")) {
+      front = front.split(".");
+      front = front.map((int) => int.includes("0") ? parseInt(int, 10) : int).join(".");
+    }
+    front += ".";
+  } else {
+    front = "";
+  }
+  console.log(front);
+  front = front.replace(/_/g, " ");
+  MathJaxConfig = {
+    TeX: {
+      equationNumbers: {
+        autoNumber: "all",
+        formatNumber: function (n) {
+          return front + n;
+        }
+      },
+      macros: {
+        PageIndex: ["{" + front + " #1}", 1],
+        test: ["{" + front + " #1}", 1]
+      },
+      Macros: {
+        PageIndex: ["{" + front + " #1}", 1],
+        test: ["{" + front + " #1}", 1]
+      },
+      SVG: {
+        linebreaks: {automatic: true}
+      }
+    }
+  };
 
+  MathJax.Hub.Config(MathJaxConfig);
+  MathJax.Hub.Register.StartupHook("End", () => {
+    if (activateBeeLine) activateBeeLine()
+  });
+</script>
 </body>
 </html>

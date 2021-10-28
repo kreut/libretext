@@ -1493,6 +1493,12 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['solution_type'] = $solutions_by_question_id[$question->id]['solution_type'] ?? false;
                 $assignment->questions[$key]['solution_file_url'] = $solutions_by_question_id[$question->id]['solution_file_url'] ?? false;
                 $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
+
+
+                $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 ? $assignment->questions[$key]->solution_html : null;
+                $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
+                $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
+
                 //set up the problemJWT
                 $custom_claims = ['adapt' => [
                     'assignment_id' => $assignment->id,
