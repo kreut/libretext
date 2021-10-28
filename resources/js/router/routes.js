@@ -36,6 +36,7 @@ let control_panel_paths = [
     ] }
 ]
 let general_paths  = [
+  { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },
   { path: '/init-lms-assignment/:assignmentId', name: 'init_lms_assignment', component: page('init_lms_assignment.vue') },
   { path: '/question-in-iframe', name: 'question_in_iframe', component: page('iframe_test.vue') },

@@ -23,7 +23,7 @@ use Carbon\Carbon;
 class LTIController extends Controller
 {
 
-    public function jsonConfig()
+    public function jsonConfig($id)
     {
         $app_url = config('app.url');
         $title = config('app.name');
@@ -44,13 +44,13 @@ class LTIController extends Controller
                             0 => [
                                 'placement' => 'assignment_selection',
                                 'message_type' => 'LtiDeepLinkingRequest',
-                                'target_link_uri' => $app_url . '/api/lti/configure',
+                                'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
                             ],
                         ],
                         'assignment_selection' => [
                             'placement' => 'assignment_selection',
                             'message_type' => 'LtiDeepLinkingRequest',
-                            'target_link_uri' => $app_url . '/api/lti/configure',
+                            'target_link_uri' => $app_url . '/api/lti/configure/' . $id,
                         ],
                     ],
                 ],
@@ -72,7 +72,7 @@ class LTIController extends Controller
             'description' => 'Adapt',
             'custom_fields' => [
             ],
-            'target_link_uri' => $app_url . '/api/lti/redirect-uri',
+            'target_link_uri' => $app_url . '/api/lti/redirect-uri/' . $id,
             'oidc_initiation_url' => $app_url . '/api/lti/oidc-initiation-url',
         ];
 
@@ -145,10 +145,16 @@ class LTIController extends Controller
 
     public function initiateLoginRequest(Request $request)
     {
+        $campus_id = basename($request['target_link_uri']);
+        $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
+        if ($campus_id === 'configure' || $campus_id === 'redirect-uri') {
+            $campus_id = '';
+            $launch_url = request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri";
+        }
 
         // file_put_contents(base_path() . '//lti_log.text', "Initiate login request:" . print_r($request->all(), true) . "\r\n", FILE_APPEND);
         LTI\LTI_OIDC_Login::new(new LTIDatabase())
-            ->do_oidc_login_redirect(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri", $request->all())
+            ->do_oidc_login_redirect($launch_url, $campus_id, $request->all())
             ->do_redirect();
 
     }
@@ -158,22 +164,27 @@ class LTIController extends Controller
      * @param User $user
      * @param LtiLaunch $ltiLaunch
      * @param LtiGradePassback $ltiGradePassback
+     * @param string $campus_id
      * @return Application|RedirectResponse|Redirector
      * @throws Exception
      */
     public function authenticationResponse(Assignment       $assignment,
                                            User             $user,
                                            LtiLaunch        $ltiLaunch,
-                                           LtiGradePassback $ltiGradePassback)
+                                           LtiGradePassback $ltiGradePassback,
+                                           string           $campus_id = '')
     {
 
         try {
             $launch = LTI\LTI_Message_Launch::new(new LTIDatabase())
                 ->validate();
+            $url = $campus_id === ''
+                ? request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri"
+                : request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri/$campus_id";
             if ($launch->is_deep_link_launch()) {
                 //this configures the Deep Link
                 $resource = LTI\LTI_Deep_Link_Resource::new()
-                    ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
+                    ->set_url($url)
                     ->set_title('Adapt');
                 $launch->get_deep_link()
                     ->output_response_form([$resource]);

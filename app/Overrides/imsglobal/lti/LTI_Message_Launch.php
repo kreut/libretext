@@ -277,7 +277,9 @@ class LTI_Message_Launch {
 
     private function validate_registration() {
         // Find registration.
-        $this->registration = $this->db->find_registration_by_issuer($this->jwt['body']['iss']);
+
+        $campus_id = basename($this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
+        $this->registration = $this->db->find_registration_by_campus_id($campus_id);
 
         if (empty($this->registration)) {
             throw new LTI_Exception("Registration not found.", 1);
@@ -311,7 +313,9 @@ class LTI_Message_Launch {
 
     private function validate_deployment() {
         // Find deployment.
-        $deployment = $this->db->find_deployment($this->jwt['body']['iss'], $this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id']);
+        $campus_id = basename($this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/target_link_uri']);
+        $deployment = $this->db->find_deployment_by_campus_id( $campus_id,
+            $this->jwt['body']['https://purl.imsglobal.org/spec/lti/claim/deployment_id']);
 
         if (empty($deployment)) {
             // deployment not recognized.

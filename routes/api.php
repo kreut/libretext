@@ -30,10 +30,10 @@ Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssign
 
 Route::post('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
 Route::get('/lti/oidc-initiation-url', 'LTIController@initiateLoginRequest');
-Route::get('/lti/redirect-uri', 'LTIController@authenticationResponse');
-Route::post('/lti/redirect-uri', 'LTIController@authenticationResponse');
+Route::get('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
+Route::post('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
 
-Route::get('/lti/json-config', 'LTIController@jsonConfig');
+Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
