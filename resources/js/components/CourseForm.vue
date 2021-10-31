@@ -123,7 +123,7 @@
       you to your school. If you still can't
       find it, then please contact us.
     </b-tooltip>
-    <RequiredText />
+    <RequiredText/>
     <b-form ref="form">
       <b-form-group
         id="school"
@@ -132,7 +132,8 @@
         label-for="school"
       >
         <template slot="label">
-          School<Asterisk/>
+          School
+          <Asterisk/>
           <a id="school_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
@@ -144,6 +145,7 @@
           placeholder="Not Specified"
           :class="{ 'is-invalid': form.errors.has('school') }"
           @keydown="form.errors.clear('school')"
+          @hit="checkIfLTI($event)"
         />
         <has-error :form="form" field="school"/>
       </b-form-group>
@@ -153,7 +155,8 @@
         label-for="name"
       >
         <template slot="label">
-          Name<Asterisk/>
+          Name
+          <Asterisk/>
         </template>
         <b-form-input
           id="name"
@@ -225,7 +228,8 @@
           label-for="section"
         >
           <template slot="label">
-            Section<Asterisk/>
+            Section
+            <Asterisk/>
             <a id="section-name-tooltip"
                href="#"
             >
@@ -257,7 +261,8 @@
           label-for="crn"
         >
           <template slot="label">
-            CRN<Asterisk/>
+            CRN
+            <Asterisk/>
             <a id="crn-tooltip"
                href="#"
             >
@@ -291,7 +296,8 @@
         label-for="term"
       >
         <template slot="label">
-          Term<Asterisk/>
+          Term
+          <Asterisk/>
           <a id="term-tooltip"
              href="#"
           >
@@ -322,9 +328,11 @@
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="start_date"
-      ><template slot="label">
-        Start Date<Asterisk />
-      </template>
+      >
+        <template slot="label">
+          Start Date
+          <Asterisk/>
+        </template>
         <b-form-datepicker
           id="start_date"
           v-model="form.start_date"
@@ -342,7 +350,8 @@
         label-for="end_date"
       >
         <template slot="label">
-          End Date<Asterisk/>
+          End Date
+          <Asterisk/>
         </template>
         <b-form-datepicker
           id="end_date"
@@ -362,7 +371,8 @@
         label-for="public"
       >
         <template slot="label">
-          Public<Asterisk/>
+          Public
+          <Asterisk/>
           <a id="public_tooltip"
              href="#"
           >
@@ -372,7 +382,8 @@
         <b-form-radio-group id="public"
                             v-model="form.public"
                             stacked
-                            :aria-required="true">
+                            :aria-required="true"
+        >
           <b-form-radio name="public" value="1">
             Yes
           </b-form-radio>
@@ -388,7 +399,8 @@
         label-for="anonymous_users"
       >
         <template slot="label">
-          Anonymous Users<Asterisk/>
+          Anonymous Users
+          <Asterisk/>
           <a id="anonymous_users_tooltip" href="#">
             <b-icon
               class="text-muted"
@@ -396,7 +408,9 @@
             />
           </a>
         </template>
-        <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked @change="showAnonymousUsersWarning">
+        <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked
+                            @change="showAnonymousUsersWarning"
+        >
           <b-form-radio name="anonymous_users" value="1">
             Yes
           </b-form-radio>
@@ -422,7 +436,8 @@
         label-for="alpha"
       >
         <template slot="label">
-          Alpha<Asterisk/>
+          Alpha
+          <Asterisk/>
           <a id="alpha_course_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
@@ -444,7 +459,8 @@
         label-for="untether_beta_course"
       >
         <template slot="label">
-          Untether Beta Course<Asterisk/>
+          Untether Beta Course
+          <Asterisk/>
           <span id="untether_beta_course_tooltip">
             <b-icon class="text-muted" icon="question-circle"/></span>
         </template>
@@ -459,23 +475,23 @@
         </b-form-radio-group>
       </b-form-group>
       <b-form-group
-        v-show="['adapt@libretexts.org','hagnew@libretexts.org','blindsh@ksu.edu'].includes(user.email)"
-
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="lms"
       >
         <template slot="label">
-          LMS<Asterisk/>
+          LMS
+          <Asterisk/>
           <a id="lms_course_tooltip" href="#">
             <b-icon class="text-muted" icon="question-circle"/>
           </a>
         </template>
-        <b-form-radio-group v-model="form.lms" stacked>
+        <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
+          configured to be used with Adapt.  If you would like to integrate Adapt with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
+        <b-form-radio-group v-if="ltiIsEnabled" v-model="form.lms" stacked>
           <b-form-radio name="lms" value="1">
             Yes
           </b-form-radio>
-
           <b-form-radio name="lms" value="0">
             No
           </b-form-radio>
@@ -501,6 +517,8 @@ export default {
     course: { type: Object, default: null }
   },
   data: () => ({
+    ltiIsEnabled: false,
+    ltiSchools: [],
     schools: [],
     min: new Date(now.getFullYear(), now.getMonth(), now.getDate())
   }),
@@ -512,9 +530,26 @@ export default {
       this.$refs.schoolTypeAhead.inputValue = this.form.school
     }
     this.getSchools()
+    this.getLTISchools()
     console.log(this.course)
   },
   methods: {
+    checkIfLTI (school) {
+      this.ltiIsEnabled = this.ltiSchools.includes(school)
+    },
+    async getLTISchools () {
+      try {
+        const { data } = await axios.get('/api/lti-school')
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.ltiSchools = data.lti_schools
+        this.ltiIsEnabled = this.ltiSchools.includes(this.form.school)
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
     getAnonymousUserEntryUrl () {
       if (!this.course) {
         return

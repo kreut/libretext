@@ -51,6 +51,11 @@ export default {
           icon: '',
           name: 'Refresh Question Requests',
           route: 'refresh.question.requests'
+        },
+        {
+          icon: '',
+          name: 'LTI integrations',
+          route: 'lti.integrations'
         }
       ]
     }

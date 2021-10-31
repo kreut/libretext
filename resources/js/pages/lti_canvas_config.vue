@@ -1,18 +1,25 @@
 <template>
   <div>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-lti-details'"/>
     <PageTitle title="Canvas Configuration"/>
     <p>
-      Please use the following information when configuring Adapt to be integrated with Canvas. Once configured as an
-      LTI key,
-      please contact us with the Developer key ID (the number associated with the key) so that we can activate the
-      connection in
-      our database.
+      Using the following configuration, you can integrate your Canvas installation with Adapt via LTI 1.3, also
+      known as LTI Advantage. Optionally, you can following along with <a
+      href="https://www.youtube.com/watch?v=b5_jtHK-XsY" target="_blank"
+    >this video</a>, which implements the steps below.
     </p>
 
     <p>
-      First, go to your Developer keys page and add an LTI key. When the configuration page opens up choose "Configure
-      with the Manual Entry"
-      if it's not already there.
+      In your Canvas installation, first go to the Developer Keys page and add an LTI key. When the configuration page
+      opens up choose "Manual
+      Entry" as the method to enter the configuration details.
+    </p>
+    <p>
+      <span class="font-weight-bold">Redirect URIs:</span>
+      <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
+      <span class="text-info">
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('redirect-uri')"/>
+        </span>
     </p>
     <p>
       <span class="font-weight-bold">Title:</span> <span id="title">Adapt</span> <span class="text-info">
@@ -23,13 +30,6 @@
       <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
       <span class="text-info">
           <font-awesome-icon :icon="copyIcon" @click="doCopy('description')"/>
-        </span>
-    </p>
-    <p>
-      <span class="font-weight-bold">Redirect URIs:</span>
-      <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
-      <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('redirect-uri')"/>
         </span>
     </p>
     <p><span class="font-weight-bold">Target Link URI:</span>
@@ -89,6 +89,24 @@
           <font-awesome-icon :icon="copyIcon" @click="doCopy('placement-target-link-uri')"/>
         </span></p>
     <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>
+
+
+    <RequiredText/>
+    <div style="width:700px" class="mb-5">
+      <b-card header="default" header-html="LTI Integration Request">
+        <p>
+          Please fill out the form so that we can add your registration details to our database. Once completed, you
+          will receive a follow-up email from us asking you to create a test instructor and test student so that we can
+          verify that the connection details are correct.
+        </p>
+        <LTIRegistration :form="ltiRegistrationForm" :show-campus-id="false"/>
+        <div class="float-right">
+          <b-button variant="primary" size="sm" @click="submitDetails">
+            Submit Details
+          </b-button>
+        </div>
+      </b-card>
+    </div>
   </div>
 </template>
 
@@ -96,18 +114,51 @@
 import { faCopy } from '@fortawesome/free-regular-svg-icons'
 import { doCopy } from '~/helpers/Copy'
 import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import Form from 'vform'
+import AllFormErrors from '~/components/AllFormErrors'
+import LTIRegistration from '~/components/LTIRegistration'
 
 export default {
   components: {
-    FontAwesomeIcon
+    FontAwesomeIcon,
+    AllFormErrors,
+    LTIRegistration
   },
   data: () => ({
+    allFormErrors: [],
     campusId: '',
-    copyIcon: faCopy
+    copyIcon: faCopy,
+    ltiRegistrationForm: new Form({
+      admin_name: '',
+      admin_email: '',
+      url: '',
+      developer_key_id: '',
+      campus_id: ''
+    })
   }),
   mounted () {
     this.doCopy = doCopy
     this.campusId = this.$route.params.campusId
+    this.ltiRegistrationForm.campus_id = this.campusId
+  },
+  methods: {
+    async submitDetails () {
+      try {
+        this.ltiRegistrationForm.errors.clear()
+        const { data } = await this.ltiRegistrationForm.post('/api/lti-registration/email-details')
+        this.$noty[data.type](data.message)
+        if (data.type === 'success') {
+          this.ltiRegistrationForm = new Form({ campus_id: this.campusId })
+        }
+      } catch (error) {
+        if (!error.message.includes('status code 422')) {
+          this.$noty.error(error.message)
+        } else {
+          this.allFormErrors = this.ltiRegistrationForm.errors.flatten()
+          this.$bvModal.show('modal-form-errors-lti-details')
+        }
+      }
+    }
   }
 }
 </script>

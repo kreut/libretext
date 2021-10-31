@@ -967,8 +967,6 @@ class CourseController extends Controller
 
 
             $new_course = $course->create($data);
-            $courses = $this->getCourses(auth()->user());
-
 
             $section->course_id = $new_course->id;
             $section->save();

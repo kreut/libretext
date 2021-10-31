@@ -32,7 +32,8 @@ let control_panel_paths = [
     children: [
       { path: '', redirect: { name: 'login.as' } },
       { path: 'login-as', name: 'login.as', component: page('control_panel/login.as.vue') },
-      { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('control_panel/refresh.question.requests.vue') }
+      { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('control_panel/refresh.question.requests.vue') },
+      { path: 'lti-integrations', name: 'lti.integrations', component: page('control_panel/lti.integrations.vue') }
     ] }
 ]
 let general_paths  = [

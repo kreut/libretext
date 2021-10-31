@@ -21,9 +21,6 @@ Route:*/
 //Must support both get and post according to the docs
 
 
-
-
-
 Route::get('/kubernetes', 'KubernetesController@metrics');
 Route::get('/lti/user', 'LTIController@getUser');
 Route::post('lti/link-assignment-to-lms/{assignment}', 'LTIController@linkAssignmentToLMS');
@@ -34,6 +31,8 @@ Route::get('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationRespon
 Route::post('/lti/redirect-uri/{campus_id?}', 'LTIController@authenticationResponse');
 
 Route::get('/lti/json-config/{campus_id}', 'LTIController@jsonConfig');
+
+Route::post('/lti-registration/email-details', 'LtiRegistrationController@EmailDetails');
 
 Route::post('mind-touch-events/update', 'MindTouchEventController@update');
 Route::post('jwt/process-answer-jwt', 'JWTController@processAnswerJWT');
@@ -52,8 +51,15 @@ Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCour
 Route::patch('/accessibility/set-cookie', 'AccessibilityController@setCookie');
 Route::delete('/accessibility/delete-cookie', 'AccessibilityController@destroyCookie');
 
-Route::get('/analytics','AnalyticsController@index');
+Route::get('/analytics', 'AnalyticsController@index');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
+
+    Route::get('/lti-registration', 'LtiRegistrationController@index');
+    Route::post('/lti-registration/save', 'LtiRegistrationController@store');
+    Route::patch('/lti-registration/active/{ltiRegistration}', 'LtiRegistrationController@active');
+
+    Route::get('/lti-school', 'LtiSchoolController@index');
+
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
@@ -105,8 +111,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/assignments', 'CourseController@getCoursesAndAssignments');
     Route::get('/courses/assignments/non-beta', 'CourseController@getCoursesAndNonBetaAssignments');
 
-
-
     Route::get('/courses/public/{instructor?}', 'CourseController@getPublicCourses');
     Route::get('/courses/importable', 'CourseController@getImportable');
     Route::patch('/courses/order', 'CourseController@order');
@@ -114,7 +118,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/courses/beta-approval-notifications/{course}', 'CourseController@getBetaApprovalNotifications');
     Route::patch('/courses/beta-approval-notifications/{course}', 'CourseController@updateBetaApprovalNotifications');
 
-    Route::get('/courses/anonymous-user','CourseController@getAnonymousUserCourses');
+    Route::get('/courses/anonymous-user', 'CourseController@getAnonymousUserCourses');
 
     Route::get('/courses/{course}', 'CourseController@show');
 
@@ -177,7 +181,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::post('/s3/pre-signed-url', 'S3Controller@preSignedURL');
 
-    Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student','AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
+    Route::get('/auto-graded-and-file-submissions/{assignment}/{question}/get-auto-graded-and-file-submissions-by-assignment-and-question-and-student', 'AutoGradedAndFileSubmissionController@getAutoGradedAndFileSubmissionsByAsssignmentAndQuestionAndStudent');
     Route::get('/scores/{assignment}/{question}/get-scores-by-assignment-and-question', 'ScoreController@getScoresByAssignmentAndQuestion');
     Route::put('/scores/{assignment}/upload-override-scores', 'ScoreController@uploadOverrideScores');
     Route::post('/scores/over-total-points/{assignment}/{question}', 'ScoreController@overTotalPoints');
@@ -207,7 +211,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/{assignment}/direct-import-question', 'QuestionController@directImportQuestion');
 
 
-
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
     Route::get('/beta-courses/get-tethered-to-alpha-course/{course}', 'BetaCourseController@getTetheredToAlphaCourse');
     Route::delete('/beta-courses/untether/{course}', 'BetaCourseController@untetherBetaCourseFromAlphaCourse');
@@ -232,7 +235,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 
     Route::patch('/learning-tree-histories/{learningTree}', 'LearningTreeHistoryController@updateLearningTreeFromHistory');
-
 
 
     Route::post('/learning-trees/learning-tree-exists', 'LearningTreeController@learningTreeExists');
@@ -316,11 +318,9 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/enrollments/{assignment}/from-assignment', 'EnrollmentController@enrollmentsFromAssignment');
 
 
-
     Route::get('/submission-overrides/{assignment}', 'SubmissionOverrideController@index');
     Route::patch('/submission-overrides/{assignment}', 'SubmissionOverrideController@update');
     Route::delete('/submission-overrides/{assignment}/{studentUser}/{type}/{question?}', 'SubmissionOverrideController@destroy');
-
 
 
     Route::post('/enrollments', 'EnrollmentController@store');
@@ -360,7 +360,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/grading/{assignment}/{question}/{sectionId}/{gradeView}', 'GradingController@index');
 
 
-
     Route::put('/submission-files', 'SubmissionFileController@storeSubmissionFile');
     Route::post('/submission-files/get-temporary-url-from-request', 'SubmissionFileController@getTemporaryUrlFromRequest');
     Route::post('/submission-files/download', 'SubmissionFileController@downloadSubmissionFile');
@@ -384,8 +383,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
 Route::group(['middleware' => ['guest:api', 'throttle:30,1']], function () {
 
-    Route::get('/courses/anonymous-user/can-log-in','CourseController@canLogInAsAnonymousUser');
-    Route::get('/courses/open/index','CourseController@open');
+    Route::get('/courses/anonymous-user/can-log-in', 'CourseController@canLogInAsAnonymousUser');
+    Route::get('/courses/open/index', 'CourseController@open');
     Route::get('/courses/{course}/can-log-into-course-as-anonymous-user', 'CourseController@canLogIntoCourseAsAnonymousUser');
 
     Route::post('login', 'Auth\LoginController@login');
