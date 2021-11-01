@@ -12,7 +12,7 @@
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
-        <RequiredText />
+        <RequiredText/>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -20,7 +20,7 @@
           label-for="name"
         >
           <template slot="label">
-            Name<Asterisk />
+            Name*
           </template>
           <b-form-input
             id="name"
@@ -40,7 +40,7 @@
           label-for="email_in_contact_us_form"
         >
           <template slot="label">
-            Email<Asterisk />
+            Email*
           </template>
           <b-form-input
             id="email_in_contact_us_form"
@@ -60,18 +60,27 @@
           label-for="subject"
         >
           <template slot="label">
-            Subject<Asterisk />
+            Subject*
           </template>
-          <b-form-input
-            id="subject"
-            v-model="sendEmailForm.subject"
-            aria-required="true"
-            class="col-8"
-            type="text"
-            :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
-            @keydown="sendEmailForm.errors.clear('subject')"
-          />
-          <has-error :form="sendEmailForm" field="subject"/>
+          <div v-if="showSubjectOptions">
+            <b-form-select v-model="sendEmailForm.subject"
+                           title="subject options"
+                           :options="subjectOptions"
+                           class="col-4"
+            />
+          </div>
+          <div v-if="!showSubjectOptions">
+            <b-form-input
+              id="subject"
+              v-model="sendEmailForm.subject"
+              aria-required="true"
+              class="col-8"
+              type="text"
+              :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
+              @keydown="sendEmailForm.errors.clear('subject')"
+            />
+            <has-error :form="sendEmailForm" field="subject"/>
+          </div>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -80,7 +89,7 @@
           label-for="message"
         >
           <template slot="label">
-            Message<Asterisk />
+            Message*
           </template>
           <b-form-textarea
             id="message"
@@ -146,6 +155,13 @@ export default {
     }
   },
   data: () => ({
+    subjectOptions: [
+      { value: 'General Inquiry', text: 'General Inquiry' },
+      { value: 'Instructor Access Code', text: 'Instructor Access Code' },
+      { value: 'Technical Issue', text: 'Technical Issue' },
+      { value: 'Other', text: 'Other' }
+    ],
+    showSubjectOptions: false,
     modalFormErrorsId: '',
     allFormErrors: [],
     showSendEmailModal: false,
@@ -157,8 +173,11 @@ export default {
     }),
     sendingEmail: false
   }),
-  created() {
+  created () {
     this.modalFormErrorsId = 'modal-form-errors-' + this.id
+    if (this.type === 'contact_us') {
+      this.showSubjectOptions = true
+    }
   },
   methods: {
     resetSendEmailModal () {

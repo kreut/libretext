@@ -24,9 +24,10 @@
           >
             <hr>
             <!-- Name -->
-            <RequiredText />
+            <RequiredText/>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name*
+              </label>
               <div class="col-md-7">
                 <input id="first_name" v-model="form.first_name"
                        :class="{ 'is-invalid': form.errors.has('first_name') }"
@@ -37,9 +38,10 @@
                 >
                 <has-error :form="form" field="first_name"/>
               </div>
-              </div>
+            </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name*
+              </label>
               <div class="col-md-7">
                 <input id="last_name"
                        v-model="form.last_name"
@@ -51,7 +53,8 @@
               </div>
             </div>
             <div v-if="isStudent" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID*
+              </label>
               <div class="col-md-7">
                 <input id="student_id" v-model="form.student_id"
                        :class="{ 'is-invalid': form.errors.has('student_id') }"
@@ -63,7 +66,8 @@
             </div>
             <!-- Email -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="email">Email<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="email">Email*
+              </label>
               <div class="col-md-7">
                 <input id="email" v-model="form.email"
                        :class="{ 'is-invalid': form.errors.has('email') }"
@@ -77,7 +81,8 @@
 
             <!-- Password -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="password">Password<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="password">Password*
+              </label>
               <div class="col-md-7">
                 <input id="password" v-model="form.password"
                        :class="{ 'is-invalid': form.errors.has('password') }"
@@ -91,7 +96,8 @@
 
             <!-- Password Confirmation -->
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="password_confirmation">Confirm Password<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="password_confirmation">Confirm Password*
+              </label>
               <div class="col-md-7">
                 <input id="password_confirmation"
                        v-model="form.password_confirmation"
@@ -105,7 +111,8 @@
 
             <!-- Access Code -->
             <div v-if="isInstructor || isGrader" class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
+              </label>
               <div class="col-md-7">
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
@@ -116,7 +123,8 @@
               </div>
             </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone<Asterisk /></label>
+              <label class="col-md-3 col-form-label text-md-right">Time zone*
+              </label>
               <div class="col-md-7" @change="removeTimeZoneError()">
                 <b-form-select id="time_zone" v-model="form.time_zone"
                                :options="timeZones"
@@ -191,14 +199,30 @@ export default {
     this.setRegistrationType(this.$route.path)
     let timeZones = getTimeZones()
     populateTimeZoneSelect(timeZones, this)
+    if (this.$route.params.accessCode) {
+      this.form.access_code = this.$route.params.accessCode
+    }
   },
 
   methods: {
     removeTimeZoneError () {
       this.form.errors.clear('time_zone')
     },
+    getRegistrationType (path) {
+      if (path.includes('student')) {
+        return 'student'
+      }
+      if (path.includes('instructor')) {
+        return 'instructor'
+      }
+      if (path.includes('grader')) {
+        return 'grader'
+      }
+      alert('Not a valid registration type.')
+      return false
+    },
     setRegistrationType (path) {
-      this.form.registration_type = path.replace('/register/', '')
+      this.form.registration_type = this.getRegistrationType(path)
       switch (this.form.registration_type) {
         case 'instructor':
           this.registrationTitle = 'Instructor Registration'

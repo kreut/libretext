@@ -6,6 +6,7 @@
            :from-user="user"
            title="Contact Us"
            type="contact_us"
+           subject="General Inquiry"
     />
     <div v-if="showNavBar">
       <b-navbar-brand href="/">

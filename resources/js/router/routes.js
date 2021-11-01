@@ -33,8 +33,8 @@ let control_panel_paths = [
       { path: '', redirect: { name: 'login.as' } },
       { path: 'login-as', name: 'login.as', component: page('control_panel/login.as.vue') },
       { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('control_panel/refresh.question.requests.vue') },
-      { path: 'lti-integrations', name: 'lti.integrations', component: page('control_panel/lti.integrations.vue') }
-    ] }
+      { path: 'lti-integrations', name: 'lti.integrations', component: page('control_panel/lti.integrations.vue') },
+      { path: 'instructor-access-codes', name: 'instructorAccessCodes', component: page('control_panel/instructor.access.codes.vue') }] }
 ]
 let general_paths  = [
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
@@ -46,7 +46,7 @@ let general_paths  = [
   { path: '/', name: 'welcome', component: page('welcome.vue') },
   { path: '/login', name: 'login', component: page('auth/login.vue') },
   { path: '/finish-sso-registration', name: 'finish.sso.registration', component: page('auth/finish.sso.registration.vue') },
-  { path: '/register/instructor', name: 'register', component: page('auth/register.vue'), alias: ['/register/student','/register/grader'] },
+  { path: '/register/instructor/:accessCode?', name: 'register', component: page('auth/register.vue'), alias: ['/register/student','/register/grader'] },
   { path: '/password/reset', name: 'password.request', component: page('auth/password/email.vue') },
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },

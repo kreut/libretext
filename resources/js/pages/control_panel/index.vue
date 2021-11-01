@@ -54,8 +54,13 @@ export default {
         },
         {
           icon: '',
-          name: 'LTI integrations',
+          name: 'LTI Integrations',
           route: 'lti.integrations'
+        },
+        {
+          icon: '',
+          name: 'Instructor Access Codes',
+          route: 'instructorAccessCodes'
         }
       ]
     }

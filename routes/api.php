@@ -58,6 +58,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/lti-registration/save', 'LtiRegistrationController@store');
     Route::patch('/lti-registration/active/{ltiRegistration}', 'LtiRegistrationController@active');
 
+
+    Route::post('/instructor-access-code', 'InstructorAccessCodeController@store');
+    Route::post('/instructor-access-code/email', 'InstructorAccessCodeController@email');
+
     Route::get('/lti-school', 'LtiSchoolController@index');
 
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');

@@ -52,7 +52,6 @@ class Kernel extends ConsoleKernel
 
             $schedule->command('notification:sendAssignmentDueReminderEmails')->everyMinute();
 
-            //$schedule->command('dataShop:toS3')->twiceDaily(); memory issues so I'm holding off on this
 
             $schedule->command('notify:BetaCourseApprovals')->daily();
             /* grader notifications */
@@ -61,6 +60,7 @@ class Kernel extends ConsoleKernel
             $schedule->command('notify:gradersReminders')->daily();
             /* end grader notifications */
             $schedule->command('check:AssignTos')->twiceDaily();
+            $schedule->command('remove:oldInstructorAccessCodes')->daily();
 
         }
 

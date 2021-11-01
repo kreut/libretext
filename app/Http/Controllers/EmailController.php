@@ -35,9 +35,6 @@ class EmailController extends Controller
             case('contact_grader'):
                 $response = $this->contactGrader($request, $email);
                 break;
-            case('instructor_account_request'):
-                $response = $this->instructorAccountRequest($request, $email);
-                break;
 
         }
         return $response;
@@ -97,8 +94,11 @@ class EmailController extends Controller
         $data = $request->validated();
 
         try {
+            $to_email = in_array($data['subject'], ['General Inquiry', 'Instructor Access Code'])
+                ? 'delmar@libretexts.org'
+                : 'adapt@libretexts.org';
 
-            Mail::to('adapt@libretexts.org')
+            Mail::to($to_email)
                 ->send(new \App\Mail\Email($data['subject'], $data['text'], $data['email'], $data['name']));
 
             $response['type'] = 'success';
@@ -109,35 +109,5 @@ class EmailController extends Controller
             $response['message'] = "There was an error sending the email.  Please try again.";
         }
         return $response;
-
     }
-
-    /**
-     * @param Send $request
-     * @return array
-     * @throws Exception
-     */
-    public function instructorAccountRequest(Send $request): array
-    {
-
-        $data = $request->validated();
-
-        try {
-            $text = "{$data['name']} with email address {$data['email']} would like an instructor account.\r\n";
-            $text .= $data['text'] ?? '';
-            Mail::to('delmar@libretexts.org')
-                ->send(new \App\Mail\Email($data['subject'], $text, $data['email'], $data['name']));
-
-            $response['type'] = 'success';
-            $response['message'] = 'Thank you for your message!  Please expect a response within 1 business day.';
-        } catch (Exception $e) {
-            $h = new Handler(app());
-            $h->report($e);
-            $response['message'] = "There was an error sending the email.  Please try again.";
-        }
-        return $response;
-
-    }
-
-
 }
