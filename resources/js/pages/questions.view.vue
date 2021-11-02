@@ -342,10 +342,10 @@
         />
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Library-Page ID:</span> <span id="libraryPageId">
+        <span class="font-weight-bold">Libretexts ID:</span> <span id="libretextsID">
         {{ libraryText }}-{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libraryPageId')"/>
+          <font-awesome-icon :icon="copyIcon" @click="doCopy('libretextsID')"/>
         </span>
       </div>
       <div class="mb-2">

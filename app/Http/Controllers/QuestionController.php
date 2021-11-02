@@ -237,7 +237,7 @@ class QuestionController extends Controller
         try {
             $direct_import = $request->direct_import;
             $type = $request->type;
-            if (!in_array($type, ['page id', 'adapt id'])) {
+            if (!in_array($type, ['libretexts id', 'adapt id'])) {
                 $response['message'] = "$type is not a valid direct import type.";
                 return $response;
             }
@@ -245,7 +245,7 @@ class QuestionController extends Controller
                 $response['message'] = "You didn't submit anything for direct import.";
                 return $response;
             }
-            $question_to_add_info = ($type === 'page id')
+            $question_to_add_info = ($type === 'libretexts id')
                 ? $Question->getQuestionToAddByPageId($request, $libretext)
                 : $Question->getQuestionToAddByAdaptId($request);
             if ($question_to_add_info['type'] === 'error') {

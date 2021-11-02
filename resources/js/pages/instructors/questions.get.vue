@@ -172,14 +172,14 @@
                 </b-card>
               </b-col>
             </b-tab>
-            <b-tab title="Direct Import By Page ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Page ID" style="height:425px">
+            <b-tab title="Direct Import By Libretexts ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+              <b-card header-html="<span class='font-weight-bold'>Direct Import By Libretexts ID" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
                       <b-col @click="resetSearchByTag">
                         <p>
-                          Perform a direct import of questions directly into your assignment from any library. Please
+                          Perform a direct import of questions directly into your assignment using the Libretexts ID. Please
                           enter
                           your questions using a comma
                           separated list of the form {library}-{page id}.
@@ -225,7 +225,7 @@
                           <span v-if="directImportingQuestions" class="mr-3 font-italic">
                             Processing {{ parseInt(directImportIndex) + 1 }} of {{ directImportCount }}
                           </span>
-                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('page id')">
+                          <b-button variant="success" size="sm" class="mr-2" @click="directImportQuestions('libretexts id')">
                             <b-spinner v-if="directImportingQuestions" small type="grow"/>
                             Import Questions
                           </b-button>
@@ -553,7 +553,7 @@ export default {
     async directImportQuestions (type) {
       if (this.directImportingQuestions) {
         let timeToProcess = Math.ceil(((this.directImport.match(/,/g) || []).length) / 3)
-        let message = `Please be patient.  Validating all of your page id's  will take about ${timeToProcess} seconds.`
+        let message = `Please be patient.  Validating all of your Libretexts Ids  will take about ${timeToProcess} seconds.`
         this.$noty.info(message)
         return false
       }
