@@ -238,7 +238,7 @@
                       :aria-disabled="learningTreeId === 0"
                       variant="secondary"
                       size="sm"
-                      @click="learningTreeId === 0 ? '' : deleteLearningTree()"
+                      @click="addRemediation"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
               Get Node
