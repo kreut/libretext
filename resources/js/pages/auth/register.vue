@@ -1,5 +1,13 @@
 <template>
   <div class="row">
+    <Email id="request-instructor-access-code-modal"
+           ref="request_instructor_access_code_email"
+           extra-email-modal-text="Please use this form to request an instructor access code."
+           :from-user="user"
+           title="Instructor Access Code"
+           type="contact_us"
+           subject="Request Instructor Access Code"
+    />
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-register-form'"/>
     <div class="col-lg-8 m-auto">
       <card v-if="mustVerifyEmail" :title="registrationTitle">
@@ -117,9 +125,14 @@
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
                        :aria-required="true"
+                       :aria-describedby="access-code-help-block"
                        class="form-control" type="text" name="access_code"
                 >
                 <has-error :form="form" field="access_code"/>
+                <b-form-text id="access-code-help-block">
+                  <span v-if="isGrader">Please contact your instructor for an access code.</span>
+                  <span v-if="isInstructor">Please <a href="" @click.prevent="openSendEmailModal()">contact us</a> for an access code.</span>
+                </b-form-text>
               </div>
             </div>
             <div class="form-group row">
@@ -156,13 +169,14 @@ import { redirectOnLogin } from '~/helpers/LoginRedirect'
 import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
-
+import Email from '~/components/Email'
 export default {
   middleware: 'guest',
 
   components: {
     LoginWithLibretexts,
-    AllFormErrors
+    AllFormErrors,
+    Email
   },
 
   metaInfo () {
@@ -205,6 +219,9 @@ export default {
   },
 
   methods: {
+    openSendEmailModal () {
+      this.$refs.request_instructor_access_code_email.openSendEmailModal()
+    },
     removeTimeZoneError () {
       this.form.errors.clear('time_zone')
     },

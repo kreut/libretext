@@ -54,6 +54,7 @@
           <has-error :form="sendEmailForm" field="email"/>
         </b-form-group>
         <b-form-group
+          v-show="showRequestInstructorAccessCode"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Subject"
@@ -66,7 +67,8 @@
             <b-form-select v-model="sendEmailForm.subject"
                            title="subject options"
                            :options="subjectOptions"
-                           class="col-4"
+                           style="width:280px"
+                           @change="checkIfRequestInstructorAccessCode($event)"
             />
           </div>
           <div v-if="!showSubjectOptions">
@@ -81,6 +83,26 @@
             />
             <has-error :form="sendEmailForm" field="subject"/>
           </div>
+        </b-form-group>
+        <b-form-group
+          v-if="showSchool"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="school"
+        >
+          <template slot="label">
+            School*
+          </template>
+          <b-form-input
+            id="school"
+            v-model="sendEmailForm.school"
+            aria-required="true"
+            class="col-6"
+            type="text"
+            :class="{ 'is-invalid': sendEmailForm.errors.has('school') }"
+            @keydown="sendEmailForm.errors.clear('school')"
+          />
+          <has-error :form="sendEmailForm" field="school"/>
         </b-form-group>
         <b-form-group
           label-cols-sm="3"
@@ -155,9 +177,11 @@ export default {
     }
   },
   data: () => ({
+    showRequestInstructorAccessCode: true,
+    showSchool: false,
     subjectOptions: [
       { value: 'General Inquiry', text: 'General Inquiry' },
-      { value: 'Instructor Access Code', text: 'Instructor Access Code' },
+      { value: 'Request Instructor Access Code', text: 'Request Instructor Access Code' },
       { value: 'Technical Issue', text: 'Technical Issue' },
       { value: 'Other', text: 'Other' }
     ],
@@ -169,7 +193,8 @@ export default {
       name: '',
       email: '',
       subject: '',
-      text: ''
+      text: '',
+      school: ''
     }),
     sendingEmail: false
   }),
@@ -180,10 +205,15 @@ export default {
     }
   },
   methods: {
+    checkIfRequestInstructorAccessCode (option) {
+      this.showSchool = option === 'Request Instructor Access Code'
+    },
     resetSendEmailModal () {
       this.sendEmailForm.name = !_.isEmpty(this.fromUser) && this.fromUser.email !== 'anonymous' ? this.fromUser.first_name + ' ' + this.fromUser.last_name : ''
       this.sendEmailForm.email = !_.isEmpty({}) && this.fromUser.email !== 'anonymous' ? this.fromUser.email : ''
       this.sendEmailForm.text = ''
+      this.sendEmailForm.school = ''
+      this.showSchool = false
       this.sendEmailForm.errors.clear()
     },
     openSendEmailModal (toUserId = 0) {
@@ -191,6 +221,10 @@ export default {
       this.resetSendEmailModal()
       this.sendEmailForm.to_user_id = toUserId
       this.sendEmailForm.subject = this.subject
+      if (this.subject === 'Request Instructor Access Code') {
+        this.showSchool = true
+        this.showRequestInstructorAccessCode = false
+      }
       this.sendEmailForm.type = this.type
       this.$bvModal.show(this.id)
     },

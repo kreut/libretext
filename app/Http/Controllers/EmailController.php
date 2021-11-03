@@ -94,10 +94,12 @@ class EmailController extends Controller
         $data = $request->validated();
 
         try {
-            $to_email = in_array($data['subject'], ['General Inquiry', 'Instructor Access Code'])
+            $to_email = in_array($data['subject'], ['General Inquiry', 'Request Instructor Access Code'])
                 ? 'delmar@libretexts.org'
                 : 'adapt@libretexts.org';
-
+            if ($data['subject'] === 'Request Instructor Access Code') {
+                $data['text'] = "{$data['name']} from {$data['school']} with email {$data['email']} would like an instructor access code. --- {$data['text']}";
+            }
             Mail::to($to_email)
                 ->send(new \App\Mail\Email($data['subject'], $data['text'], $data['email'], $data['name']));
 

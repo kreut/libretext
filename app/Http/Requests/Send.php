@@ -24,12 +24,16 @@ class Send extends FormRequest
     public function rules()
     {
 
-       return  [
+        $rules = [
             'name' => 'required',
             'email' => 'email',
             'subject' => 'required',
-            'text' => $this->type === 'instructor_account_request' ? '' :'required|string|min:10'
+            'text' => 'required|string|min:10'
         ];
+        if ($this->subject === 'Request Instructor Access Code') {
+            $rules['school'] = 'required';
+        }
+        return $rules;
 
     }
 }
