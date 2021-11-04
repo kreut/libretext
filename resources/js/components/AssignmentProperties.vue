@@ -1143,11 +1143,6 @@ export default {
     isLoading: false,
     solutionsReleased: 0,
     assignments: [],
-    showPointsPerQuestionTooltip: {
-      fallbackPlacement: ['right'],
-      placement: 'right',
-      title: 'In case you only grade a random subset of questions, you can hide the number of points per question so that your students won\'t know which questions you\'ll be grading.'
-    },
     completedOrCorrectOptions: [
       { item: 'correct', name: 'correct' },
       { item: 'completed', name: 'completed' }
