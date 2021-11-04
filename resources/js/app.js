@@ -24,12 +24,13 @@ import iFrameResize from 'iframe-resizer/js/iframeResizer'
 import VueMoment from 'vue-moment'
 
 import { asset } from '@codinglabs/laravel-asset'
-import axios from 'axios'
 import Asterisk from '~/components/Asterisk'
 import RequiredText from '~/components/RequiredText'
+import QuestionCircleTooltip from '~/components/QuestionCircleTooltip'
 
 Vue.component('Asterisk', Asterisk)
 Vue.component('RequiredText', RequiredText)
+Vue.component('QuestionCircleTooltip', QuestionCircleTooltip)
 
 Vue.mixin({
   methods: {

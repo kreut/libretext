@@ -1082,13 +1082,11 @@ import CKEditor from 'ckeditor4-vue'
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
 import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
-import QuestionCircleTooltip from '~/components/QuestionCircleTooltip'
 
 export default {
   components: {
     ckeditor: CKEditor.component,
-    AllFormErrors,
-    QuestionCircleTooltip
+    AllFormErrors
   },
   middleware: 'auth',
   props: {
