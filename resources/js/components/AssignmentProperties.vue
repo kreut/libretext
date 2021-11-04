@@ -224,8 +224,7 @@
         label-for="name"
       >
         <template slot="label">
-          Name
-          <Asterisk/>
+          Name*
         </template>
         <b-form-row>
           <b-col lg="10">
@@ -248,12 +247,7 @@
       >
         <template slot="label">
           Public Description
-          <a id="public-description-tooltip"
-             href="#"
-             class="text-muted"
-          >
-            <b-icon icon="question-circle"/>
-          </a>
+          <QuestionCircleTooltip :id="'public-description-tooltip'"/>
         </template>
         <b-form-textarea
           id="public_description"
@@ -271,12 +265,8 @@
       >
         <template slot="label">
           Private Description
-          <a id="private-description-tooltip"
-             href="#"
-             class="text-muted"
-          >
-            <b-icon icon="question-circle"/>
-          </a>
+          <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+
         </template>
         <b-form-textarea
           id="private_description"
@@ -293,8 +283,7 @@
         label-cols-lg="3"
       >
         <template slot="label">
-          Assignment Group
-          <Asterisk/>
+          Assignment Group*
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -320,8 +309,7 @@
                 label-for="create_assignment_group"
               >
                 <template slot="label">
-                  Assignment Group
-                  <Asterisk/>
+                  Assignment Group*
                 </template>
                 <b-form-input
                   id="create_assignment_group"
@@ -362,8 +350,7 @@
         label-for="source"
       >
         <template slot="label">
-          Source
-          <Asterisk/>
+          Source*
         </template>
         <b-form-radio-group
           id="source"
@@ -373,16 +360,13 @@
           @change="initInternalExternalSwitch()"
         >
           <b-form-radio name="source" value="a">
-            Internal <span id="internal" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+            Internal
+            <QuestionCircleTooltip :id="'internal'"/>
           </b-form-radio>
 
           <b-form-radio name="source" value="x">
-            External <span id="external" class="text-muted"><b-icon
-            icon="question-circle"
-          />
-            </span>
+            External
+            <QuestionCircleTooltip :id="'external'"/>
           </b-form-radio>
         </b-form-radio-group>
       </b-form-group>
@@ -392,22 +376,17 @@
         label-for="scoring_type"
       >
         <template slot="label">
-          Scoring Type
-          <Asterisk/>
+          Scoring Type*
         </template>
         <b-form-radio-group id="scoring_type" v-model="form.scoring_type" stacked
                             :disabled="isLocked(hasSubmissionsOrFileSubmissions) || isBetaAssignment"
         >
           <span @click="form.students_can_view_assignment_statistics = 1">
-            <b-form-radio value="p">Performance <span id="performance" class="text-muted"><b-icon
-              icon="question-circle"
-            /></span></b-form-radio>
+            <b-form-radio value="p">Performance <QuestionCircleTooltip :id="'performance'"/></b-form-radio>
           </span>
           <span @click="canSwitchToCompleteIncomplete">
             <span @click="resetOpenEndedResponsesAndPointsPerQuestion">
-              <b-form-radio value="c">Completion <span id="completion" class="text-muted"><b-icon
-                icon="question-circle"
-              /></span>
+              <b-form-radio value="c">Completion <QuestionCircleTooltip :id="'completion'"/>
               </b-form-radio>
             </span>
           </span>
@@ -421,14 +400,8 @@
 
       >
         <template slot="label">
-          Default Completion Scoring Mode
-          <Asterisk/>
-          <a id="default-completion-scoring-mode-tooltip"
-             href="#"
-             class="text-muted"
-          >
-            <b-icon icon="question-circle"/>
-          </a>
+          Default Completion Scoring Mode*
+          <QuestionCircleTooltip :id="'default-completion-scoring-mode-tooltip'"/>
         </template>
         <b-form-radio-group id="default_completion_scoring_mode"
                             v-model="form.default_completion_scoring_mode"
@@ -467,8 +440,7 @@
           label-for="default_points_per_question"
         >
           <template slot="label">
-            Default Points/Question
-            <Asterisk/>
+            Default Points/Question*
           </template>
           <b-form-row>
             <b-col lg="3">
@@ -495,8 +467,7 @@
       label-for="assessment_type"
     >
       <template slot="label">
-        Assessment Type
-        <Asterisk/>
+        Assessment Type*
       </template>
       <b-form-radio-group id="assessment_type"
                           v-model="form.assessment_type"
@@ -505,30 +476,23 @@
                           @change="initAssessmentTypeSwitch($event)"
       >
         <b-form-radio name="assessment_type" value="real time">
-          Real Time Graded Assessments <span id="real_time" class="text-muted"><b-icon
-          icon="question-circle"
-        />
-          </span>
+          Real Time Graded Assessments
+          <QuestionCircleTooltip :id="'real_time'"/>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="delayed">
-          Delayed Graded Assessments <span id="delayed" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+          Delayed Graded Assessments
+          <QuestionCircleTooltip :id="'delayed'"/>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="learning tree">
-          Learning Tree Assessments <span id="learning_tree" class="text-muted"><b-icon
-          icon="question-circle"
-        />
-          </span>
+          Learning Tree Assessments
+          <QuestionCircleTooltip :id="'learning_tree'"/>
         </b-form-radio>
 
         <b-form-radio name="assessment_type" value="clicker">
-          Clicker Assessments <span id="clicker" class="text-muted"><b-icon
-          icon="question-circle"
-        />
-          </span>
+          Clicker Assessments
+          <QuestionCircleTooltip :id="'clicker'"/>
         </b-form-radio>
       </b-form-radio-group>
     </b-form-group>
@@ -539,13 +503,8 @@
         label-for="default_clicker_time_to_submit"
       >
         <template slot="label">
-          Default Clicker Time To Submit
-          <Asterisk/>
-          <span id="default_clicker_time_to_submit_tooltip"
-                class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+          Default Clicker Time To Submit*
+          <QuestionCircleTooltip :id="'default_clicker_time_to_submit_tooltip'"/>
         </template>
         <b-form-row>
           <b-col lg="3">
@@ -574,13 +533,9 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Minimum Number of Minutes Exploring Learning Tree
-          <Asterisk/>
-          <span id="min_time_needed_in_learning_tree_tooltip"
-                class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+          Minimum Number of Minutes Exploring Learning Tree*
+          <QuestionCircleTooltip :id="'min_time_needed_in_learning_tree_tooltip'"/>
+
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -606,13 +561,8 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Percent Earned For Exploring Learning Tree
-          <Asterisk/>
-          <span id="percent_earned_for_exploring_learning_tree_tooltip"
-                class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+          Percent Earned For Exploring Learning Tree*
+          <QuestionCircleTooltip :id="'percent_earned_for_exploring_learning_tree_tooltip'"/>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -638,11 +588,8 @@
           <b-icon
             icon="tree" variant="success"
           />
-          Submission Count Percent Decrease
-          <Asterisk/>
-          <span id="submission_count_percent_decrease_tooltip" class="text-muted"><b-icon
-            icon="question-circle"
-          /></span>
+          Submission Count Percent Decrease*
+          <QuestionCircleTooltip :id="'submission_count_percent_decrease_tooltip'"/>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -667,8 +614,7 @@
       label-for="file_upload_mode"
     >
       <template slot="label">
-        File Upload Mode
-        <Asterisk/>
+        File Upload Mode*
       </template>
       <b-form-radio-group id="file_upload_mode"
                           v-model="form.file_upload_mode"
@@ -681,16 +627,16 @@
       >
         <!-- <b-form-radio name="default_open_ended_submission" value="a">At the assignment level</b-form-radio>-->
         <b-form-radio name="file_upload_mode" value="compiled_pdf">
-          Compiled Upload (PDFs only) <span id="compiled_pdf_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+          Compiled Upload (PDFs only)
+          <QuestionCircleTooltip :id="'compiled_pdf_tooltip'"/>
         </b-form-radio>
         <b-form-radio name="file_upload_mode" value="individual_assessment">
-          Individual Assessment Upload <span id="individual_assessment_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+          Individual Assessment Upload
+          <QuestionCircleTooltip :id="'individual_assessment_upload_tooltip'"/>
         </b-form-radio>
         <b-form-radio name="file_upload_mode" value="both">
-          Compiled Upload & Individual Assessment Upload <span id="both_upload_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+          Compiled Upload & Individual Assessment Upload
+          <QuestionCircleTooltip :id="'both_upload_tooltip'"/>
         </b-form-radio>
       </b-form-radio-group>
       <div v-if="form.errors.has('file_upload_mode')" class="help-block invalid-feedback">
@@ -704,10 +650,8 @@
       label-for="default_open_ended_submission_type"
     >
       <template slot="label">
-        Default Open-ended Submission Type
-        <Asterisk/>
-        <span id="default_open_ended_submission_type_tooltip">
-          <b-icon class="text-muted" icon="question-circle"/></span>
+        Default Open-ended Submission Type*
+        <QuestionCircleTooltip :id="'default_open_ended_submission_type_tooltip'"/>
       </template>
       <b-form-radio-group id="default_open_ended_submission_type"
                           v-model="form.default_open_ended_submission_type"
@@ -752,8 +696,7 @@
       label-for="late_policy"
     >
       <template slot="label">
-        Late Policy
-        <Asterisk/>
+        Late Policy*
       </template>
       <b-form-radio-group id="late_policy"
                           v-model="form.late_policy" stacked
@@ -801,8 +744,7 @@
         label-for="late_deduction_application_period"
       >
         <template slot="label">
-          Late Deduction Applied
-          <Asterisk/>
+          Late Deduction Applied*
         </template>
         <b-form-radio-group v-model="form.late_deduction_applied_once"
                             stacked
@@ -829,8 +771,7 @@
                 />
                 <has-error :form="form" field="late_deduction_application_period"/>
               </b-col>
-              <span id="late_deduction_application_period_tooltip">
-                <b-icon class="text-muted" icon="question-circle"/></span>
+              <QuestionCircleTooltip :id="'late_deduction_application_period_tooltip'"/>
             </b-row>
           </b-form-radio>
         </b-form-radio-group>
@@ -843,8 +784,7 @@
       label-for="include_in_final_score"
     >
       <template slot="label">
-        Include In Final Score
-        <Asterisk/>
+        Include In Final Score*
       </template>
       <b-form-radio-group id="include_in_final_score"
                           v-model="form.include_in_weighted_average" stacked
@@ -866,8 +806,7 @@
       label-for="external_source_points"
     >
       <template slot="label">
-        Total Points
-        <Asterisk/>
+        Total Points*
       </template>
       <b-form-row>
         <b-col lg="3">
@@ -911,8 +850,7 @@
       label-for="randomizations"
     >
       <template slot="label">
-        Randomizations
-        <Asterisk/>
+        Randomizations*
       </template>
       <b-form-radio-group id="randomizations"
                           v-model="form.randomizations" stacked
@@ -934,11 +872,8 @@
       label-for="number_of_randomized_assessments"
     >
       <template slot="label">
-        Number of randomized assessments
-        <Asterisk/>
-        <span id="number_of_randomized_assessments_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+        Number of randomized assessments*
+        <QuestionCircleTooltip :id="'number_of_randomized_assessments_tooltip'"/>
       </template>
       <b-form-row>
         <b-col lg="2">
@@ -960,11 +895,8 @@
       label-for="notifications"
     >
       <template slot="label">
-        Notifications
-        <Asterisk/>
-        <span id="notifications_tooltip" class="text-muted"><b-icon
-          icon="question-circle"
-        /></span>
+        Notifications*
+        <QuestionCircleTooltip :id="'notifications_tooltip'"/>
       </template>
       <b-form-radio-group id="notifications" v-model="form.notifications" stacked>
         <b-form-radio name="notifications" value="1">
@@ -982,9 +914,8 @@
       label-for="libretexts_url"
     >
       <template slot="label">
-        Libretexts URL <span id="libretexts_url_tooltip" class="text-muted"><b-icon
-        icon="question-circle"
-      /></span>
+        Libretexts URL
+        <QuestionCircleTooltip :id="'libretexts_url_tooltip'"/>
       </template>
       <b-form-textarea
         id="libretexts_url"
@@ -1004,9 +935,8 @@
         label-for="assign_to"
       >
         <template slot="label">
-          Assign to
-          <Asterisk/>
-          <span id="assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+          Assign to*
+          <QuestionCircleTooltip :id="'assign_to_tooltip'"/>
         </template>
         <b-form-row>
           <b-col lg="5">
@@ -1038,8 +968,7 @@
         :label-for="`available_from_${index}`"
       >
         <template slot="label">
-          Available on
-          <Asterisk/>
+          Available on*
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1067,8 +996,7 @@
         :label-for="`due_date_${index}`"
       >
         <template slot="label">
-          Due Date
-          <Asterisk/>
+          Due Date*
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1098,13 +1026,8 @@
         label-for="final_submission_deadline"
       >
         <template slot="label">
-          Final Submission Deadline
-          <Asterisk/>
-          <span id="final_submission_deadline_tooltip"
-                class="text-muted"
-          ><b-icon
-            icon="question-circle"
-          /></span>
+          Final Submission Deadline*
+          <QuestionCircleTooltip :id="'final_submission_deadline_tooltip'"/>
         </template>
         <b-form-row>
           <b-col lg="7">
@@ -1142,7 +1065,7 @@
     <b-button variant="outline-primary" size="sm" @click="addAssignTo">
       Add Assign to
     </b-button>
-    <span id="add_assign_to_tooltip" class="text-muted"><b-icon icon="question-circle"/></span>
+    <QuestionCircleTooltip :id="'add_assign_to_tooltip'"/>
   </div>
 </template>
 
@@ -1159,11 +1082,13 @@ import CKEditor from 'ckeditor4-vue'
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
 import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
+import QuestionCircleTooltip from '~/components/QuestionCircleTooltip'
 
 export default {
   components: {
     ckeditor: CKEditor.component,
-    AllFormErrors
+    AllFormErrors,
+    QuestionCircleTooltip
   },
   middleware: 'auth',
   props: {
@@ -1371,7 +1296,7 @@ export default {
     async initAssessmentTypeSwitch (assessmentType) {
       let originalAssessmentType = this.form.assessment_type
       if (!this.assignmentId) {
-        this.switchAssessmentType(assessmentType,originalAssessmentType)
+        this.switchAssessmentType(assessmentType, originalAssessmentType)
         return false
       }
       this.$nextTick(async function () {
@@ -1384,7 +1309,7 @@ export default {
             this.form.assessment_type = originalAssessmentType
             return false
           }
-          this.switchAssessmentType(assessmentType,originalAssessmentType)
+          this.switchAssessmentType(assessmentType, originalAssessmentType)
         } catch (error) {
           this.form.assessment_type = originalAssessmentType
           this.$noty.error(error.message)
