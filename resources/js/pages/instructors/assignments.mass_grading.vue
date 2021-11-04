@@ -16,17 +16,17 @@
         <span class="font-weight-bold">Question:</span> <span class="font-italic">{{ selectedQuestionText }}</span><br>
         <span class="font-weight-bold">Apply To:</span> <span class="font-italic">
           {{
-            parseInt(questionScoreForm.apply_to) === 1
-              ? 'Submission scores in the filtered group'
-              : 'Submission scores that are not in the filtered group'
-          }}
+          parseInt(questionScoreForm.apply_to) === 1
+            ? 'Submission scores in the filtered group'
+            : 'Submission scores that are not in the filtered group'
+        }}
         </span><br>
       </p>
       <p>
         Please confirm that you would like to change the student scores which match the above criteria to
         a new score of <span
-          class="font-weight-bold"
-        >
+        class="font-weight-bold"
+      >
           {{ questionScoreForm.new_score }}</span>.
       </p>
 
@@ -52,8 +52,8 @@
       <p>
         <b-alert variant="danger" :show="true">
           <span class="font-weight-bold font-italic">By updating the score to {{
-            questionScoreForm.new_score
-          }}, {{ numOverMax }} students will
+              questionScoreForm.new_score
+            }}, {{ numOverMax }} students will
             be given a score over {{ questions[currentQuestionPage - 1].points }} points, which is the total number
             of points allotted to this question. Please reduce the score provided.
           </span>
@@ -79,7 +79,7 @@
           allowfullscreen
         />
       </div>
-      <div v-show="submissionText" v-html=" submissionText" />
+      <div v-show="submissionText" v-html=" submissionText"/>
     </b-modal>
     <div class="vld-parent">
       <loading :active.sync="isLoading"
@@ -91,7 +91,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle :title="`Mass Grading For ${assignmentName}`" />
+        <PageTitle :title="`Mass Grading For ${assignmentName}`"/>
         <div v-if="questions.length">
           <b-container>
             <p>
@@ -101,8 +101,8 @@
               particular question.
               For grading submissions at the individual level, you can also use the <a href=""
                                                                                        @click.prevent="gotoIndividualGrading"
-              >
-                individual grading view</a>.
+            >
+              individual grading view</a>.
             </p>
             <hr>
             <b-row>
@@ -114,9 +114,14 @@
             <b-row>
               <span class="font-weight-bold mr-2">Adapt ID: </span>
               {{ questions[currentQuestionPage - 1].assignment_id_question_id }} <span class="text-info ml-1">
-                <font-awesome-icon :icon="copyIcon"
-                                   @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
-                />
+                <a
+                  href="#"
+                  class="pr-1"
+                  aria-label="Copy Adapt ID"
+                  @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
+                >
+                  <font-awesome-icon :icon="copyIcon"/>
+                  </a>
               </span>
             </b-row>
             <b-row>
@@ -139,16 +144,18 @@
               />
             </b-row>
           </b-container>
+          <RequiredText/>
           <b-form-group
             id="student"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Student"
+            label="Student*"
             label-for="Student"
           >
             <b-form-row>
               <b-col lg="6">
                 <b-form-select v-model="studentId"
+                               title="student id"
                                :options="studentsOptions"
                                @change="updateStudentsFilter($event)"
                 />
@@ -159,12 +166,13 @@
             id="submission"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Submission"
+            label="Submission*"
             label-for="Submission"
           >
             <b-form-row>
               <b-col lg="4">
                 <b-form-select v-model="submission"
+                               title="submission"
                                :options="submissionsOptions"
                                :disabled="openEndedView"
                                @change="updateSubmissionsFilter($event)"
@@ -176,12 +184,13 @@
             id="score"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Score"
+            label="Score*"
             label-for="Score"
           >
             <b-form-row>
               <b-col lg="3">
                 <b-form-select v-model="score"
+                               title="score"
                                :options="scoresOptions"
                                @change="updateScoresFilter($event)"
                 />
@@ -192,12 +201,13 @@
             id="question"
             label-cols-sm="3"
             label-cols-lg="2"
-            label="Question"
+            label="Question*"
             label-for="Question"
           >
             <b-form-row>
               <b-col lg="3">
                 <b-form-select v-model="currentQuestionPage"
+                               title="current question page"
                                :options="questionsOptions"
                                @change="updateQuestionsFilter()"
                 />
@@ -217,7 +227,7 @@
               id="apply_to"
               label-cols-sm="3"
               label-cols-lg="2"
-              label="Apply To"
+              label="Apply To*"
               label-for="Apply To"
             >
               <b-form-row>
@@ -239,8 +249,8 @@
               id="new_score"
               label-cols-sm="3"
               label-cols-lg="2"
-              label="New Score"
-              label-for="New Score"
+              label="New Score*"
+              label-for="new_score"
             >
               <b-form-row>
                 <b-col lg="2">
@@ -252,7 +262,7 @@
                     :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"
                     @keydown="questionScoreForm.errors.clear('new_score')"
                   />
-                  <has-error :form="questionScoreForm" field="new_score" />
+                  <has-error :form="questionScoreForm" field="new_score"/>
                 </b-col>
                 <b-col>
                   <div class="pt-1">
@@ -260,7 +270,7 @@
                       Update
                     </b-button>
                     <span v-if="processing">
-                      <b-spinner small type="grow" />
+                      <b-spinner small type="grow"/>
                       Processing...
                     </span>
                   </div>
@@ -531,27 +541,27 @@ export default {
           shown: true,
           isRowHeader: true
         },
-        {
-          key: 'email',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'submission',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'submission_count',
-          label: 'Count',
-          sortable: true,
-          shown: true
-        },
-        {
-          key: 'score',
-          sortable: true,
-          shown: true
-        }]
+          {
+            key: 'email',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'submission_count',
+            label: 'Count',
+            sortable: true,
+            shown: true
+          },
+          {
+            key: 'score',
+            sortable: true,
+            shown: true
+          }]
         this.autoGradedView = false
         this.openEndedView = false
         let hasAutoGraded = data.auto_graded_submission_info_by_user.length > 0
