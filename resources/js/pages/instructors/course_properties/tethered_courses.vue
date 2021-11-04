@@ -81,7 +81,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Tethered Courses" class="mb-5">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Tethered Courses</h2>" class="mb-5">
           <b-card-text>
             <p>
               Tethered courses are courses that remain in sync. An instructor in the Alpha course will create
@@ -94,7 +94,7 @@
           </b-card-text>
         </b-card>
 
-        <b-card header="default" header-html="Pending Approvals" class="mb-5">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Pending Approvals</h2>" class="mb-5">
           <b-card-text>
             <div v-if="tetheredToAlphaCourseWithInstructorName.length">
               <b-form-group
@@ -153,7 +153,7 @@
             </div>
           </b-card-text>
         </b-card>
-        <b-card header="default" header-html="Tethered Alpha Course" class="mb-5">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Tethered Alpha Course</h2>" class="mb-5">
           <b-card-text>
             <div v-if="tetheredToAlphaCourseWithInstructorName.length">
               <p>This Beta course is currently tethered to:</p>
@@ -171,7 +171,7 @@
             </div>
           </b-card-text>
         </b-card>
-        <b-card header="default" header-html="Tethered Beta Courses" class="mb-5">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Tethered Beta Courses</h2>" class="mb-5">
           <b-card-text>
             <div v-if="betaCourses.length">
               <p>

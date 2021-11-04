@@ -127,7 +127,7 @@
         </div>
         <b-card v-show="user.role === 2 && betaCourseApprovals.length"
                 header="default"
-                header-html="Beta Course Approvals"
+                header-html="<h2 class=&quot;h7&quot;>Beta Course Approvals</h2>"
         >
           <p>
             The Alpha course instructor has either added or removed assessments on the tethered assignment.

@@ -116,7 +116,7 @@
             </b-tab>
             <b-tab title="Search Query By Tag">
               <b-col @click="resetDirectImport()">
-                <b-card header-html="<span class='font-weight-bold'>Search Query By Tag</span>" class="h-100">
+                <b-card header-html="<h2 class=&quot;h7&quot;>Search Query By Tag</h2>" class="h-100">
                   <b-card-text>
                     <b-container>
                       <b-row>

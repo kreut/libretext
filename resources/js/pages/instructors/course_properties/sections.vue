@@ -113,7 +113,7 @@
           </b-alert>
         </div>
         <div v-else>
-          <b-card header="default" header-html="Sections">
+          <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Sections</h2>">
             <b-card-text>
               <div v-if="user.email !== 'commons@libretexts.org'">
                 <p>

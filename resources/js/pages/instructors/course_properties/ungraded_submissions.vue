@@ -11,7 +11,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Ungraded Submissions">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Ungraded Submissions</h2>">
           <b-card-text>
             <p>The following are assignment/questions which have submissions that still need grading:</p>
             <div v-show="ungradedSubmissions.length">

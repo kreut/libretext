@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Grader Notifications">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Assignment Grader Notifications</h2>">
           <b-card-text>
             <b-container>
               <p>With Grader Notifications, you can optionally let your graders know when assignments are closed and

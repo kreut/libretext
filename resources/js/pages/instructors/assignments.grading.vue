@@ -974,10 +974,10 @@ export default {
       let grader = this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         ? 'by ' + this.grading[this.currentStudentPage - 1]['open_ended_submission'].grader_name
         : ''
-      return `<h5>Grader Feedback ${grader}</h5>`
+      return `<h2 class=&quot;h7&quot;>Grader Feedback ${grader}</h2>`
     },
     getStudentScoresTitle () {
-      return `<h5>Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h5>`
+      return `<h2 class=&quot;h7&quot;>Scores for ${this.grading[this.currentStudentPage - 1]['open_ended_submission']['name']}</h2>`
     },
     viewQuestion (questionId) {
       window.open(`/assignments/${this.assignmentId}/questions/view/${questionId}/view`)

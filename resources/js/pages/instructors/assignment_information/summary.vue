@@ -26,7 +26,7 @@
               Edit Assignment
             </b-button>
           </b-row>
-          <b-card :header="assignment.name" class="h-100">
+          <b-card :header-html="`<h2 class=&quot;h7&quot;>${assignment.name}</h2>`" class="h-100">
             <b-card-text>
               <p v-if="!lms">
                 <span class="font-weight-bold">Instructions: </span>

@@ -10,8 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Assignment Group Weights">
-
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Assignment Group Weights</h2>">
           <b-card-text>
             <div v-if="lms">
               <b-alert variant="info" :show="true">

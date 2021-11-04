@@ -46,7 +46,7 @@
             </b-btn>
           </div>
         </b-modal>
-        <b-card header="default" header-html="Letter Grades">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Letter Grades</h2>">
           <b-card-text>
             <div v-if="lms">
               <b-alert variant="info" :show="true">

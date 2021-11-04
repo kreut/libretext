@@ -132,7 +132,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="Students">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Students</h2>">
           <b-card-text>
             <div v-if="enrollments.length">
               <b-table striped

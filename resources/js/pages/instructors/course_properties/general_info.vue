@@ -10,7 +10,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading && user.role === 2">
-        <b-card header="default" header-html="General Information">
+        <b-card header="default" header-html="<h2 class=&quot;h7&quot;>General Information</h2>">
           <b-card-text>
             <CourseForm :form="editCourseForm" :course="course"/>
             <b-button class="float-right" size="sm" variant="primary" @click="updateCourse">
