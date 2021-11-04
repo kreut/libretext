@@ -179,11 +179,7 @@
           <template slot="label">
             Graders can see student names
 
-            <a id="viewable-by-graders-tooltip"
-               href="#"
-            >
-              <b-icon icon="question-circle" class="text-muted"/>
-            </a>
+            <QuestionCircleTooltip :id="'viewable-by-graders-tooltip'" />
             <b-tooltip target="viewable-by-graders-tooltip"
                        delay="500"
                        triggers="hover focus"

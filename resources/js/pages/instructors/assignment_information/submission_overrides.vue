@@ -31,7 +31,7 @@
                   label-cols-lg="2"
                 >
                   <template slot="label">
-                    Apply To<Asterisk/>
+                    Apply To*
                   </template>
                   <b-form-row>
                     <div class="d-flex mt-1">
@@ -93,7 +93,7 @@
                     label-cols-lg="2"
                   >
                     <template slot="label">
-                      Apply To<Asterisk/>
+                      Apply To*
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
@@ -154,7 +154,7 @@
                     label-cols-lg="2"
                   >
                     <template slot="label">
-                      Apply To<Asterisk/>
+                      Apply To*
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
@@ -213,7 +213,7 @@
                   label-cols-lg="2"
                 >
                   <template slot="label">
-                    Question<Asterisk/>
+                    Question*
                   </template>
                   <b-form-row>
                     <div class="mt-1">
@@ -260,8 +260,7 @@
                   label="Apply to"
                 >
                   <template slot="label">
-                    Apply To
-                    <Asterisk/>
+                    Apply To*
                   </template>
                   <b-form-row>
                     <div class="d-flex mt-1">

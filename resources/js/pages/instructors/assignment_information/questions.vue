@@ -182,11 +182,7 @@
                 </th>
                 <th v-if="user.role === 2" scope="col" style="width: 150px;">
                   Adapt ID
-                  <a id="adapt-id-tooltip"
-                     href="#"
-                  >
-                    <b-icon class="text-muted" icon="question-circle" />
-                  </a>
+                  <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
                   <b-tooltip target="adapt-id-tooltip"
                              delay="500"
                              triggers="hover focus">
