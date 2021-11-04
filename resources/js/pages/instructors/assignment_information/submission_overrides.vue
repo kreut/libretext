@@ -233,8 +233,7 @@
                   label="Apply to"
                 >
                   <template slot="label">
-                    Type
-                    <Asterisk v-if="showQuestionSubmissionTypes"/>
+                    Type<span v-if="showQuestionSubmissionTypes">*</span>
                   </template>
                   <div class="mt-2">
                     <b-form-checkbox-group

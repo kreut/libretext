@@ -33,7 +33,7 @@
           label-for="learning_tree_imports"
         >
           <template slot="label">
-            Learning Tree Id(s)<Asterisk/>
+            Learning Tree Id(s)*
           </template>
           <b-form-row>
             <b-col lg="5">

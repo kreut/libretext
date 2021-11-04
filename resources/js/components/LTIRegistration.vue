@@ -24,7 +24,7 @@
       label-for="canvas_url"
     >
       <template slot="label">
-        Canvas URL<Asterisk/>
+        Canvas URL*
       </template>
       <b-form-input
         id="canvas_url"
@@ -43,7 +43,7 @@
       label-for="schools"
     >
       <template slot="label">
-        School(s)<Asterisk/>
+        School(s)*
       </template>
       <b-form-input
         id="schools"
@@ -61,7 +61,7 @@
       label-for="developer_key_id"
     >
       <template slot="label">
-        Developer Key ID<Asterisk/>
+        Developer Key ID*
       </template>
       <b-form-input
         id="canvas_url"
@@ -79,7 +79,7 @@
       label-for="admin_name"
     >
       <template slot="label">
-        Admin Name<Asterisk/>
+        Admin Name*
       </template>
       <b-form-input
         id="admin_name"
@@ -97,7 +97,7 @@
       label-for="admin_email"
     >
       <template slot="label">
-        Admin Email<Asterisk/>
+        Admin Email*
       </template>
       <b-form-input
         id="section_name"

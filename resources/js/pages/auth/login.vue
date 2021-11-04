@@ -18,7 +18,7 @@
           <hr>
           <RequiredText/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right" for="email">{{ $t('email') }}<Asterisk/></label>
+            <label class="col-md-3 col-form-label text-md-right" for="email">{{ $t('email') }}*</label>
             <div class="col-md-7">
               <input id="email"
                      v-model="form.email"
@@ -32,7 +32,7 @@
 
           <!-- Password -->
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right" for="password">{{ $t('password') }}<Asterisk/></label>
+            <label class="col-md-3 col-form-label text-md-right" for="password">{{ $t('password') }}*</label>
             <div class="col-md-7">
               <input id="password"
                      v-model="form.password"

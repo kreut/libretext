@@ -27,7 +27,7 @@
           label-for="Confirmation"
         >
           <template slot="label">
-            Confirmation<Asterisk />
+            Confirmation*
           </template>
           <b-form-input
             id="confirmation"
@@ -83,7 +83,7 @@
           label-for="move_student"
         >
           <template slot="label">
-            Move Student<Asterisk />
+            Move Student*
           </template>
           <div class="mb-2 mr-2">
             <b-form-select

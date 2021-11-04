@@ -84,7 +84,7 @@
           label-for="learning_tree_title"
         >
           <template slot="label">
-            Title<Asterisk/>
+            Title*
           </template>
           <b-form-input
             id="learning_tree_title"
@@ -102,7 +102,7 @@
           label-for="description"
         >
           <template slot="label">
-            Description<Asterisk/>
+            Description*
           </template>
           <b-form-textarea
             id="description"
@@ -120,7 +120,7 @@
           label-for="library"
         >
           <template slot="label">
-            Library<Asterisk/>
+            Library*
           </template>
           <div class="mb-2 mr-2">
             <b-form-select v-model="learningTreeForm.library"
@@ -139,7 +139,7 @@
           label-for="page_id"
         >
           <template slot="label">
-            Page Id<Asterisk/>
+            Page Id*
           </template>
           <b-form-input
             id="page_id"

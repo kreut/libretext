@@ -9,8 +9,7 @@
           <!-- Email -->
           <RequiredText :plural="false"/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right" for="email">Email
-              <Asterisk/>
+            <label class="col-md-3 col-form-label text-md-right" for="email">Email*
             </label>
             <div class="col-md-7">
               <input id="email"

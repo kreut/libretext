@@ -5,8 +5,7 @@
       <!-- Name -->
       <RequiredText/>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name
-          <Asterisk/>
+        <label class="col-md-3 col-form-label text-md-right" for="first_name">First Name*
         </label>
         <div class="col-md-7">
           <input id="first_name"
@@ -21,8 +20,7 @@
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name
-          <Asterisk/>
+        <label class="col-md-3 col-form-label text-md-right" for="last_name">Last Name*
         </label>
         <div class="col-md-7">
           <input id="last_name"
@@ -37,8 +35,7 @@
         </div>
       </div>
       <div v-if="user.role === 3" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID
-          <Asterisk/>
+        <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID*
         </label>
         <div class="col-md-7">
           <input id="student_id"
@@ -55,8 +52,7 @@
       <!-- For now I'm not letting them change their email because if they do a course through Canvas and change the email
       it will screw up the grade pass back -->
       <div v-show="false" class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right" for="email">Email
-          <Asterisk/>
+        <label class="col-md-3 col-form-label text-md-right" for="email">Email*
         </label>
         <div class="col-md-7">
           <input id="email"
@@ -70,8 +66,7 @@
         </div>
       </div>
       <div class="form-group row">
-        <label class="col-md-3 col-form-label text-md-right">Time zone
-          <Asterisk/>
+        <label class="col-md-3 col-form-label text-md-right">Time zone*
         </label>
         <div class="col-md-7" @change="removeTimeZoneError()">
           <b-form-select v-model="form.time_zone"

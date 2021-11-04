@@ -21,8 +21,7 @@
           label-for="access_code"
         >
           <template slot="label">
-            Access Code
-            <Asterisk/>
+            Access Code*
           </template>
           <b-form-input
             id="access_code"

@@ -5,8 +5,7 @@
       <!-- Password -->
       <RequiredText/>
       <div class="form-group row">
-        <label class="col-md-4 col-form-label text-md-right" for="password">New Password
-          <Asterisk/>
+        <label class="col-md-4 col-form-label text-md-right" for="password">New Password*
         </label>
         <div class="col-md-7">
           <input id="password"
@@ -22,8 +21,7 @@
 
       <!-- Password Confirmation -->
       <div class="form-group row">
-        <label class="col-md-4 col-form-label text-md-right" for="confirm_password">Confirm Password
-          <Asterisk/>
+        <label class="col-md-4 col-form-label text-md-right" for="confirm_password">Confirm Password*
         </label>
         <div class="col-md-7">
           <input id="confirm_password"

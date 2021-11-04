@@ -15,8 +15,7 @@
         label-for="completion_scoring_mode"
       >
         <template slot="label">
-          Completion Scoring Mode
-          <Asterisk/>
+          Completion Scoring Mode*
         </template>
 
         <b-form-radio-group id="completion_scoring_mode"
