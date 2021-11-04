@@ -132,11 +132,9 @@
         label-for="school"
       >
         <template slot="label">
-          School
-          <Asterisk/>
-          <a id="school_tooltip" href="#">
-            <b-icon class="text-muted" icon="question-circle"/>
-          </a>
+          School*
+
+          <QuestionCircleTooltip :id="'school_tooltip'"/>
         </template>
         <vue-bootstrap-typeahead
           ref="schoolTypeAhead"
@@ -155,8 +153,7 @@
         label-for="name"
       >
         <template slot="label">
-          Name
-          <Asterisk/>
+          Name*
         </template>
         <b-form-input
           id="name"
@@ -175,12 +172,7 @@
       >
         <template slot="label">
           Public Description
-          <a id="public-description-tooltip" href="#">
-            <b-icon
-              class="text-muted"
-              icon="question-circle"
-            />
-          </a>
+            <QuestionCircleTooltip :id="'public-description-tooltip'"/>
         </template>
         <b-form-textarea
           id="public_description"
@@ -197,15 +189,7 @@
       >
         <template slot="label">
           Private Description
-          <a id="private-description-tooltip"
-             href="#"
-             class="text-muted"
-          >
-            <b-icon
-              class="text-muted"
-              icon="question-circle"
-            />
-          </a>
+       <QuestionCircleTooltip :id="'private-description-tooltip'"/>
           <b-tooltip target="private-description-tooltip"
                      triggers="hover focus"
                      delay="250"
@@ -228,16 +212,8 @@
           label-for="section"
         >
           <template slot="label">
-            Section
-            <Asterisk/>
-            <a id="section-name-tooltip"
-               href="#"
-            >
-              <b-icon
-                class="text-muted"
-                icon="question-circle"
-              />
-            </a>
+            Section*
+          <QuestionCircleTooltip :id="'section-name-tooltip'"/>
             <b-tooltip target="section-name-tooltip"
                        triggers="hover focus"
                        delay="250"
@@ -261,16 +237,8 @@
           label-for="crn"
         >
           <template slot="label">
-            CRN
-            <Asterisk/>
-            <a id="crn-tooltip"
-               href="#"
-            >
-              <b-icon
-                class="text-muted"
-                icon="question-circle"
-              />
-            </a>
+            CRN*
+            <QuestionCircleTooltip :id="'crn-tooltip'"/>
             <b-tooltip target="crn-tooltip"
                        triggers="hover focus"
                        delay="250"
@@ -296,16 +264,8 @@
         label-for="term"
       >
         <template slot="label">
-          Term
-          <Asterisk/>
-          <a id="term-tooltip"
-             href="#"
-          >
-            <b-icon
-              class="text-muted"
-              icon="question-circle"
-            />
-          </a>
+          Term*
+        <QuestionCircleTooltip :id="'term-tooltip'"/>
           <b-tooltip target="term-tooltip"
                      triggers="hover focus"
                      delay="250"
@@ -330,8 +290,7 @@
         label-for="start_date"
       >
         <template slot="label">
-          Start Date
-          <Asterisk/>
+          Start Date*
         </template>
         <b-form-datepicker
           id="start_date"
@@ -350,8 +309,7 @@
         label-for="end_date"
       >
         <template slot="label">
-          End Date
-          <Asterisk/>
+          End Date*
         </template>
         <b-form-datepicker
           id="end_date"
@@ -371,13 +329,8 @@
         label-for="public"
       >
         <template slot="label">
-          Public
-          <Asterisk/>
-          <a id="public_tooltip"
-             href="#"
-          >
-            <b-icon class="text-muted" icon="question-circle"/>
-          </a>
+          Public*
+          <QuestionCircleTooltip :id="'public_tooltip'"/>
         </template>
         <b-form-radio-group id="public"
                             v-model="form.public"
@@ -399,14 +352,8 @@
         label-for="anonymous_users"
       >
         <template slot="label">
-          Anonymous Users
-          <Asterisk/>
-          <a id="anonymous_users_tooltip" href="#">
-            <b-icon
-              class="text-muted"
-              icon="question-circle"
-            />
-          </a>
+          Anonymous Users*
+           <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
         </template>
         <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked
                             @change="showAnonymousUsersWarning"
@@ -436,11 +383,8 @@
         label-for="alpha"
       >
         <template slot="label">
-          Alpha
-          <Asterisk/>
-          <a id="alpha_course_tooltip" href="#">
-            <b-icon class="text-muted" icon="question-circle"/>
-          </a>
+          Alpha*
+          <QuestionCircleTooltip :id="'alpha_course_tooltip'"/>
         </template>
         <b-form-radio-group id="alpha" v-model="form.alpha" stacked @change="validateCanChange">
           <b-form-radio name="alpha" value="1">
@@ -459,10 +403,8 @@
         label-for="untether_beta_course"
       >
         <template slot="label">
-          Untether Beta Course
-          <Asterisk/>
-          <span id="untether_beta_course_tooltip">
-            <b-icon class="text-muted" icon="question-circle"/></span>
+          Untether Beta Course*
+          <QuestionCircleTooltip :id="'untether_beta_course_tooltip'"/>
         </template>
         <b-form-radio-group v-model="form.untether_beta_course" stacked :aria-required="true">
           <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
@@ -480,11 +422,8 @@
         label-for="lms"
       >
         <template slot="label">
-          LMS
-          <Asterisk/>
-          <a id="lms_course_tooltip" href="#">
-            <b-icon class="text-muted" icon="question-circle"/>
-          </a>
+          LMS*
+          <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
         </template>
         <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
           configured to be used with Adapt.  If you would like to integrate Adapt with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
