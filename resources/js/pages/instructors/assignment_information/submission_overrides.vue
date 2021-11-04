@@ -358,7 +358,7 @@ export default {
     await this.getQuestions()
     this.currentQuestionPage = 1
     await this.getEnrolledStudentsFromAssignment()
-    if (this.enrollments.length) {
+    if (this.enrollments.length && this.questions.length) {
       await this.getOverrides()
       this.updateQuestionSubmissionTypes()
     }
@@ -380,7 +380,6 @@ export default {
     },
     updateQuestionSubmissionTypes () {
       let question = this.questions.find(question => question.order === this.currentQuestionPage)
-
       this.showQuestionSubmissionTypes = question.is_auto_graded && question.is_open_ended
       this.justAutoGraded = question.is_auto_graded && !question.is_open_ended
       if (this.justAutoGraded) {
