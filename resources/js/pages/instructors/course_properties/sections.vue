@@ -48,7 +48,7 @@
         label-for="section_name"
       >
         <template slot="label">
-          Section Name<Asterisk/>
+          Section Name*
         </template>
         <b-form-input
           id="section_name"
@@ -66,7 +66,7 @@
         label-for="crn"
       >
         <template slot="label">
-          CRN<Asterisk/>
+          CRN*
         </template>
 
         <b-form-input
@@ -131,11 +131,7 @@
                 <b-table striped hover :fields="fields" :items="sections" title="Sections">
                   <template v-slot:head(crn)>
                     CRN
-                    <a id="crn-tooltip"
-                       href="#"
-                    >
-                      <b-icon class="text-muted" icon="question-circle"/>
-                    </a>
+                    <QuestionCircleTooltip :id="'crn-tooltip'" />
                     <b-tooltip target="crn-tooltip" triggers="hover focus" delay="500">
                       The Course Reference Number is the number that identifies a specific section of a course being offered.
                     </b-tooltip>
