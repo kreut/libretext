@@ -104,8 +104,8 @@
                 label-for="notify_of_approvals"
               >
                 <template slot="label">
-                  Notify when there are pending approvals <span id="pending_approvals_tooltip">
-                    <b-icon class="text-muted" icon="question-circle" /></span>
+                  Notify when there are pending approvals
+                  <QuestionCircleTooltip :id="'pending_approvals_tooltip'"/>
                   <b-tooltip target="pending_approvals_tooltip"
                              delay="250"
                   >

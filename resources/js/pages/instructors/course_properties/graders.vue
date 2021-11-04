@@ -62,11 +62,12 @@
       title="Invite Grader"
       :no-close-on-esc="true"
     >
+      <RequiredText />
       <b-form ref="form">
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
-          label="Email"
+          label="Email*"
           label-for="grader_email"
         >
           <b-form-input
@@ -133,11 +134,7 @@
                 >
                   <template slot="label">
                     Head Grader
-                    <a id="head-grader-tooltip"
-                       href="#"
-                    >
-                      <b-icon icon="question-circle" class="text-muted" />
-                    </a>
+                    <QuestionCircleTooltip :id="'head-grader-tooltip'" />
                     <b-tooltip target="head-grader-tooltip"
                                triggers="hover focus"
                                delay="500">
