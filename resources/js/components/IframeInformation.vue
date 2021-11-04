@@ -12,12 +12,10 @@
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('assignment',!assignmentInformationShownInIFrame)"
     />
-    <b-icon id="assignmentInformation-tooltip"
-            v-b-tooltip.hover
-            class="text-muted"
-            icon="question-circle"
-    />
-    <b-tooltip target="assignmentInformation-tooltip" triggers="hover">
+    <QuestionCircleTooltip :id="'assignment-information-tooltip'"/>
+    <b-tooltip target="assignment-information-tooltip" delay="250"
+               triggers="hover focus"
+    >
       This information includes the name of the assignment, the question number in the assignment, and the time left
       in the assignment.
     </b-tooltip>
@@ -34,12 +32,10 @@
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('submission',!submissionInformationShownInIFrame)"
     />
-    <b-icon id="submissionInformation-tooltip"
-            v-b-tooltip.hover
-            class="text-muted"
-            icon="question-circle"
-    />
-    <b-tooltip target="submissionInformation-tooltip" triggers="hover">
+    <QuestionCircleTooltip :id="'submission-information-tooltip'"/>
+    <b-tooltip target="submission-information-tooltip" delay="250"
+               triggers="hover focus"
+    >
       The submission information includes when the question was submitted, the score on the question, and the last
       submitted. Please note that for open-ended questions with file uploads, this information will always be shown
       so the
@@ -58,12 +54,10 @@
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="updateShownInIFrame('attribution',!attributionInformationShownInIFrame)"
     />
-    <b-icon id="attribution-tooltip"
-            v-b-tooltip.hover
-            class="text-muted"
-            icon="question-circle"
-    />
-    <b-tooltip target="attribution-tooltip" triggers="hover">
+    <QuestionCircleTooltip :id="'attribution-tooltip'"/>
+    <b-tooltip target="attribution-tooltip" delay="250"
+               triggers="hover focus"
+    >
       The attribution includes who authored the question and the license associated with the question.
     </b-tooltip>
   </div>

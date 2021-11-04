@@ -209,12 +209,10 @@
         >
           <template slot="label">
             Private Description
-            <b-icon id="private-description-tooltip"
-                    v-b-tooltip.hover
-                    class="text-muted"
-                    icon="question-circle"
-            />
-            <b-tooltip target="private-description-tooltip" triggers="hover">
+            <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+            <b-tooltip target="private-description-tooltip" delay="250"
+                       triggers="hover focus"
+            >
               An optional description for the assessment. This description will only be viewable by you.
             </b-tooltip>
           </template>
@@ -345,13 +343,27 @@
         <span class="font-weight-bold">Libretexts ID:</span> <span id="libretextsID">
           {{ libraryText }}-{{ pageId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('libretextsID')"/>
+             <a
+               href=""
+               class="pr-1"
+               aria-label="Copy Libretexts ID"
+               @click.prevent="doCopy('libretextsID')"
+             >
+          <font-awesome-icon :icon="copyIcon"/>
+             </a>
         </span>
       </div>
       <div class="mb-2">
         <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('adaptID')"/>
+             <a
+               href=""
+               class="pr-1"
+               aria-label="Copy Adapt Id"
+               @click.prevent="doCopy('adaptID')"
+             >
+          <font-awesome-icon :icon="copyIcon"/>
+             </a>
         </span>
       </div>
       <div class="mb-2">
@@ -359,7 +371,14 @@
           currentUrl
         }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('currentURL')"/>
+             <a
+               href=""
+               class="pr-1"
+               aria-label="Copy Adapt URL"
+               @click.prevent="doCopy('currentURL')"
+             >
+          <font-awesome-icon :icon="copyIcon"/>
+             </a>
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
