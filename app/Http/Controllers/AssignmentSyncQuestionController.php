@@ -1495,7 +1495,10 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
 
 
-                $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 ? $assignment->questions[$key]->solution_html : null;
+                $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->solution_html : null;
+                if ($assignment->questions[$key]['solution_html']) {
+                    $assignment->questions[$key]['solution_type'] = 'html';
+                }
                 $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
 

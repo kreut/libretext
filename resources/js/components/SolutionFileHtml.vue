@@ -1,6 +1,16 @@
 <template>
   <span>
     <b-modal
+      id="modal-show-html-solution"
+      ref="htmlModal"
+      aria-label="Solution"
+      ok-title="OK"
+      ok-only
+      size="lg"
+    >
+      <div v-html="questions[currentPage-1].solution_html" />
+    </b-modal>
+    <b-modal
       id="modal-show-audio-solution"
       ref="modal"
       title="Audio Solution"
@@ -22,17 +32,25 @@
     <span v-if="questions[currentPage-1].solution_type === 'audio'">
       <a
         href="" @click="openShowAudioSolutionModal"
-      >{{ standardizeFilename(questions[currentPage-1].solution) }}</a>
+      >{{ standardizeFilename(questions[currentPage - 1].solution) }}</a>
     </span>
     <span v-if="questions[currentPage-1].solution_type === 'q'">
       <a
         :href="questions[currentPage-1].solution_file_url"
         target="_blank"
       >
-        {{ standardizeFilename(questions[currentPage-1].solution) }}
+        {{ standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
     </span>
-    <span v-if="!questions[currentPage-1].solution">N/A</span>
+
+    <a v-if="questions[currentPage-1].solution_type === 'html'"
+       href=""
+       @click.prevent="openShowHTMLSolutionModal"
+    >
+      View Solution
+    </a>
+
+    <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">N/A</span>
   </span>
 </template>
 
@@ -53,6 +71,13 @@ export default {
     }
   },
   methods: {
+    openShowHTMLSolutionModal () {
+      this.$bvModal.show('modal-show-html-solution')
+      this.$nextTick(() => {
+        MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        document.getElementById('modal-show-html-solution___BV_modal_header_').style.display = 'none'
+      })
+    },
     standardizeFilename (filename) {
       if (!filename) {
         return ''
@@ -69,7 +94,3 @@ export default {
   }
 }
 </script>
-
-<style scoped>
-
-</style>
