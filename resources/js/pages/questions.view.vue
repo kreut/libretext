@@ -1214,41 +1214,6 @@
                     </span>
                   </b-button>
                 </div>
-                <div
-                  v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
-                  class="mt-1"
-                >
-                  <div v-if="questions[currentPage - 1].text_question"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].text_question"/>
-                  </div>
-                  <div v-if="questions[currentPage-1].a11y_question"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].a11y_question"/>
-                  </div>
-                  <div v-if="questions[currentPage-1].solution_html"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].solution_html"/>
-                  </div>
-                  <div v-if="questions[currentPage-1].hint"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].hint"/>
-                  </div>
-                  <div v-if="questions[currentPage-1].libretexts_link"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].libretexts_link"/>
-                  </div>
-                  <div v-if="questions[currentPage-1].notes"
-                       class="mt-3"
-                  >
-                    <span v-html="questions[currentPage - 1].notes"/>
-                  </div>
-                </div>
                 <div v-if="assessmentType === 'clicker'">
                   <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
                     <span class="font-weight-bold">{{ submissionDataMessage }}</span>
@@ -1655,6 +1620,43 @@
                 </b-card>
               </b-row>
             </b-col>
+          </b-row>
+          <b-row>
+            <div
+              v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && questionView !== 'basic' && !inIFrame"
+              class="mt-1 libretexts-font"
+            >
+              <div v-if="questions[currentPage - 1].text_question"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].text_question" />
+              </div>
+              <div v-if="questions[currentPage-1].a11y_question"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].a11y_question"/>
+              </div>
+              <div v-if="questions[currentPage-1].solution_html"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].solution_html"/>
+              </div>
+              <div v-if="questions[currentPage-1].hint"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].hint"/>
+              </div>
+              <div v-if="questions[currentPage-1].libretexts_link"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].libretexts_link"/>
+              </div>
+              <div v-if="questions[currentPage-1].notes"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].notes"/>
+              </div>
+            </div>
           </b-row>
         </b-container>
       </div>
@@ -2568,6 +2570,12 @@ export default {
         this.questionView = (this.questionView === 'basic') ? 'expanded' : 'basic'
       } catch (error) {
         this.$noty.error(error.message)
+      }
+
+      if (this.questionView === 'expanded') {
+        this.$nextTick(() => {
+          MathJax.Hub.Queue(['Typeset', MathJax.Hub])
+        })
       }
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {

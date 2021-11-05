@@ -46,9 +46,22 @@ button.accessible-btn {
 }
 
 h2.editable {
-  font-size: 1.5rem!important;
+  font: 24px Tahoma, Ariel, serif;
   font-weight: 700;
   color: #0372a6;
+}
+
+.libretexts-font {
+  font: 17.6px Tahoma,Arial,serif;
+  color: black;
+}
+
+.libretexts-border {
+  border: 1px solid;
+  padding: 0 10px 10px;
+  margin: 10px 0;
+;
+
 }
 
 
