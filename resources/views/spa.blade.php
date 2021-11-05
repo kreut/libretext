@@ -61,11 +61,15 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
          SVG: { linebreaks: { automatic: true } }});
 /*]]>*/
     </script>
-<script type="text/javascript" async="true"
+<script type="text/javascript"
         src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.3/MathJax.js?config=TeX-AMS_HTML"></script>
 <script type="text/javascript">
-  front = document.getElementById('titleHolder').innerText;
-  front = front.match(/^.*?:/);
+  titleHolder = document.getElementById('titleHolder')
+  let front
+  if (titleHolder) {
+    front = titleHolder.innerText;
+    front = front.match(/^.*?:/);
+  }
   if (front) {
     front = front[0];
     front = front.split(":")[0];
@@ -77,7 +81,6 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   } else {
     front = "";
   }
-  console.log(front);
   front = front.replace(/_/g, " ");
   MathJaxConfig = {
     TeX: {
@@ -102,9 +105,7 @@ menuSettings: { zscale: "150%", zoom: "Double-Click" },
   };
 
   MathJax.Hub.Config(MathJaxConfig);
-  MathJax.Hub.Register.StartupHook("End", () => {
-    if (activateBeeLine) activateBeeLine()
-  });
+
 </script>
 </body>
 </html>
