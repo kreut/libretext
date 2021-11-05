@@ -53,6 +53,25 @@ class QuestionsSummaryTest extends TestCase
 
     }
 
+
+    /** @test */
+
+    public function non_instructor_cannot_refresh_question_properties()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
+            ->assertJson(['message' => 'You are not allowed to refresh the question properties from the database.']);
+
+    }
+
+    /** @test */
+
+    public function instructor_can_refresh_question_properties()
+    {
+        $this->actingAs($this->user_2)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
+            ->assertJson(['message' => 'You are not allowed to refresh the question properties from the database.']);
+
+    }
+
     /** @test */
 
     public function non_owner_cannot_reorder_an_assignment()

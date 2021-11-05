@@ -264,6 +264,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
     Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');
+    Route::patch('/questions/{question}/refresh-properties', 'QuestionController@refreshProperties');
     Route::post('/questions/set-question-updated-at-session', 'QuestionController@setQuestionUpdatedAtSession');
 
 

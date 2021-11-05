@@ -55,6 +55,14 @@ class QuestionPolicy
 
     }
 
+    public function refreshProperties(User $user)
+    {
+        return ($user->role !== 2)
+            ? Response::allow()
+            : Response::deny('You are not allowed to refresh the question properties from the database.');
+
+    }
+
     public function viewByPageId(User $user, Question $question, int $page_id)
     {
         switch ($user->role) {

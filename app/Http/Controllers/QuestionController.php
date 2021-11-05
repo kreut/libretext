@@ -12,7 +12,6 @@ use App\LtiGradePassback;
 use App\LtiLaunch;
 use App\Question;
 use App\RefreshQuestionRequest;
-use Carbon\Carbon;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
 use Illuminate\Http\Request;
@@ -132,6 +131,35 @@ class QuestionController extends Controller
                 ? "All submissions have been removed and your students will need to re-submit."
                 : '';
             $response['message'] = "The question has been refreshed.  $updated_scores_message ";
+
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+    /**
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function refreshProperties(Question $question): array
+    {
+
+        try {
+
+               $response['type'] = 'error';
+                $authorized = Gate::inspect('refreshProperties', [$question]);
+                if (!$authorized->allowed()) {
+                    $response['message'] = $authorized->message();
+                    return $response;
+                }
+
+            $response['type'] = 'error';
+            $question->refreshProperties();
 
             $response['type'] = 'success';
         } catch (Exception $e) {

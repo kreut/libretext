@@ -270,6 +270,21 @@ class Question extends Model
         $this->storeH5P();
     }
 
+    function refreshProperties()
+    {
+        $Libretext = new Libretext(['library' => $this->library]);
+        $body_technology_and_tags_info = $this->getBodyTechnologyAndTagsByPageId($Libretext, $this->page_id);
+        $dom_elements_from_body = $this->getDomElementsFromBody($body_technology_and_tags_info['body']);
+        $this->text_question = $dom_elements_from_body['text_question'];
+        $this->a11y_question = $dom_elements_from_body['a11y_question'];
+        $this->solution_html = $dom_elements_from_body['solution_html'];
+        $this->hint = $dom_elements_from_body['hint'];
+        $this->libretexts_link = $dom_elements_from_body['libretexts_link'];
+        $this->notes = $dom_elements_from_body['notes'];
+        $this->save();
+    }
+
+
     /**
      * @param int $page_id
      * @param string $library
@@ -296,78 +311,22 @@ class Question extends Model
         ///
         /// getPageInfoByPageId(int $page_id)
         $Libretext = new Libretext(['library' => $library]);
-        $technology_and_tags['technology'] = false;
-        $technology_and_tags['tags'] = [];
 
-        try {
-            // id=102629;  //Frankenstein test
-            //Public type questions
-            $page_info = $Libretext->getPageInfoByPageId($page_id);
-            $technology_and_tags = $Libretext->getTechnologyAndTags($page_info);
-            $contents = $Libretext->getContentsByPageId($page_id);
-            $body = $contents['body'][0];
-            if (!$body) {
-                throw new exception ("This page has no HTML.");
-            }
-        } catch (Exception $e) {
-
-            if (strpos($e->getMessage(), '403 Forbidden') === false) {
-                //some other error besides forbidden
-                echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting the public page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
-                    'timeout' => 12000]);
-                exit;
-            }
-
-            //private page so try again!
-            try {
-                $contents = $Libretext->getBodyFromPrivatePage($page_id);
-                $body = $contents->body;
-                $body = $body[0];
-                if (!$body) {
-                    throw new exception ("This page has no HTML.");
-                }
-            } catch (Exception $e) {
-                $h = new Handler(app());
-                $h->report($e);
-                echo json_encode(['type' => 'error',
-                    'message' => 'We tried getting that private page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
-                    'timeout' => 12000]);
-                exit;
-            }
-        }
-        $dom = new DOMDocument();
-        libxml_use_internal_errors(true);
-        $dom->loadHTML($body);
-        libxml_clear_errors();
-        $selector = new \DOMXPath($dom);
+        $body_technology_and_tags_info = $this->getBodyTechnologyAndTagsByPageId($Libretext, $page_id);
+        $body = $body_technology_and_tags_info['body'];
+        $technology_and_tags = $body_technology_and_tags_info['technology_and_tags'];
 
 
-        $text_question = $this->getInnerHTMLByClass($selector, 'ADAPT-TextQuestion');
+        $dom_elements_from_body = $this->getDomElementsFromBody($body);
+        $dom = $dom_elements_from_body['dom'];
+        $body = $dom_elements_from_body['body'];
+        $text_question = $dom_elements_from_body['text_question'];
+        $a11y_question = $dom_elements_from_body['a11y_question'];
+        $solution_html = $dom_elements_from_body['solution_html'];
+        $hint = $dom_elements_from_body['hint'];
+        $libretexts_link = $dom_elements_from_body['libretexts_link'];
+        $notes = $dom_elements_from_body['notes'];
 
-        $a11y_question = $this->getInnerHTMLByClass($selector, 'ADAPT-A11yQuestion');
-        $solution_html =  $this->getInnerHTMLByClass($selector, 'ADAPT-Solution');
-        $hint = $this->getInnerHTMLByClass($selector, 'ADAPT-Hint');
-        $libretexts_link = $this->getInnerHTMLByClass($selector, 'ADAPT-Link');
-        $notes = $this->getInnerHTMLByClass($selector, 'ADAPT-Notes');
-
-        $classes_to_remove = ['ADAPT-hidden',
-            'ADAPT-TextQuestion',
-            'ADAPT-A11yQuestion',
-            'ADAPT-Solution',
-            'ADAPT-Hint',
-            'ADAPT-Link',
-            'ADAPT-Notes'];
-        foreach ($classes_to_remove as $class_to_remove) {
-            foreach ($selector->query('//div[contains(attribute::class, "' . $class_to_remove . '")]') as $e) {
-                $e->parentNode->removeChild($e);
-            }
-
-        }
-
-        // $body = $doc->saveHTML($doc->documentElement);
-        $rootnode = $dom->getELementsByTagName('body')->item(0);
-        $body = trim($this->DOMinnerHTML($rootnode));
 
         try {
             $efs_dir = '/mnt/local/';
@@ -451,6 +410,97 @@ class Question extends Model
 
     }
 
+    function getBodyTechnologyAndTagsByPageId(Libretext $Libretext, int $page_id)
+    {
+        $technology_and_tags['technology'] = false;
+        $technology_and_tags['tags'] = [];
+        try {
+            // id=102629;  //Frankenstein test
+            //Public type questions
+            $page_info = $Libretext->getPageInfoByPageId($page_id);
+            $technology_and_tags = $Libretext->getTechnologyAndTags($page_info);
+            $contents = $Libretext->getContentsByPageId($page_id);
+            $body = $contents['body'][0];
+            if (!$body) {
+                throw new exception ("This page has no HTML.");
+            }
+        } catch (Exception $e) {
+
+            if (strpos($e->getMessage(), '403 Forbidden') === false) {
+                //some other error besides forbidden
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting the public page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+
+            //private page so try again!
+            try {
+                $contents = $Libretext->getBodyFromPrivatePage($page_id);
+                $body = $contents->body;
+                $body = $body[0];
+                if (!$body) {
+                    throw new exception ("This page has no HTML.");
+                }
+            } catch (Exception $e) {
+                $h = new Handler(app());
+                $h->report($e);
+                echo json_encode(['type' => 'error',
+                    'message' => 'We tried getting that private page with page id ' . $page_id . ' but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
+                    'timeout' => 12000]);
+                exit;
+            }
+        }
+        return compact('body', 'technology_and_tags');
+    }
+
+
+    function getDomElementsFromBody($body)
+    {
+        $dom = new DOMDocument();
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($body);
+        libxml_clear_errors();
+        $selector = new \DOMXPath($dom);
+
+
+        $text_question = $this->getInnerHTMLByClass($selector, 'ADAPT-TextQuestion');
+
+        $a11y_question = $this->getInnerHTMLByClass($selector, 'ADAPT-A11yQuestion');
+        $solution_html = $this->getInnerHTMLByClass($selector, 'ADAPT-Solution');
+        $hint = $this->getInnerHTMLByClass($selector, 'ADAPT-Hint');
+        $libretexts_link = $this->getInnerHTMLByClass($selector, 'ADAPT-Link');
+        $notes = $this->getInnerHTMLByClass($selector, 'ADAPT-Notes');
+
+        $classes_to_remove = ['ADAPT-hidden',
+            'ADAPT-TextQuestion',
+            'ADAPT-A11yQuestion',
+            'ADAPT-Solution',
+            'ADAPT-Hint',
+            'ADAPT-Link',
+            'ADAPT-Notes'];
+        foreach ($classes_to_remove as $class_to_remove) {
+            foreach ($selector->query('//div[contains(attribute::class, "' . $class_to_remove . '")]') as $e) {
+                $e->parentNode->removeChild($e);
+            }
+
+        }
+
+        // $body = $doc->saveHTML($doc->documentElement);
+        $rootnode = $dom->getELementsByTagName('body')->item(0);
+        $body = trim($this->DOMinnerHTML($rootnode));
+
+        return compact('dom',
+            'body',
+            'text_question',
+            'a11y_question',
+            'solution_html',
+            'hint',
+            'libretexts_link',
+            'notes');
+
+    }
+
     function getInnerHTMLByClass($selector, $class)
     {
         $innerHTML = null;
@@ -466,6 +516,7 @@ class Question extends Model
         $innerHTML .= trim($tmp_dom->saveHTML());
         return $innerHTML;
     }
+
     function DOMinnerHTML(\DOMNode $element)
     {
         $innerHTML = "";
