@@ -90,7 +90,7 @@
           />
           <b-row align-h="end">
             <b-button variant="primary" size="sm" @click="getStudentView(assignmentId)">
-              View as Student
+              View Questions
             </b-button>
           </b-row>
         </b-container>

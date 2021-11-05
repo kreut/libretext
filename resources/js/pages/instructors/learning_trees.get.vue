@@ -35,7 +35,7 @@
           Get Learning Tree
         </b-button>
         <b-button variant="dark" size="sm" @click="getStudentView(assignmentId)">
-          View as Student
+          View Questions
         </b-button>
       </div>
     </div>
