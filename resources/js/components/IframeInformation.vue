@@ -3,7 +3,7 @@
     Assignment Information:
     <toggle-button
       class="mt-1"
-      :width="80"
+      :width="84"
       :value="assignmentInformationShownInIFrame"
       :sync="true"
       :font-size="14"
@@ -23,7 +23,7 @@
     Submission Information:
     <toggle-button
       class="mt-1"
-      :width="80"
+      :width="84"
       :value="submissionInformationShownInIFrame"
       :sync="true"
       :font-size="14"
@@ -44,7 +44,7 @@
     <br>
     Attribution:
     <toggle-button
-      :width="80"
+      :width="84"
       class="mt-1"
       :value="attributionInformationShownInIFrame"
       :sync="true"
