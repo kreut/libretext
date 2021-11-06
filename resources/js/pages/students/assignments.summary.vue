@@ -286,7 +286,9 @@
                 </b-tooltip>
               </template>
               <template #cell(solution_file_url)="data">
-                <span v-html="getSolutionFileLink(data.item)"/>
+                <SolutionFileHtml :questions="items"
+                                  :current-page="data.item.question_number"
+                                  assignment-name="Question"/>
               </template>
               <template #cell(page)="data">
                 <div v-if="data.item.isOpenEndedFileSubmission">
@@ -349,6 +351,7 @@ import Form from 'vform'
 import { getFullPdfUrlAtPage } from '~/helpers/DownloadFiles'
 import LoggedInAsStudent from '~/components/LoggedInAsStudent'
 import AllFormErrors from '~/components/AllFormErrors'
+import SolutionFileHtml from '~/components/SolutionFileHtml'
 
 const VueUploadComponent = require('vue-upload-component')
 Vue.component('file-upload', VueUploadComponent)
@@ -359,7 +362,8 @@ export default {
     Loading,
     FontAwesomeIcon,
     LoggedInAsStudent,
-    AllFormErrors
+    AllFormErrors,
+    SolutionFileHtml
   },
   middleware: 'auth',
   data: () => ({
@@ -619,11 +623,6 @@ export default {
         newFile.blob = URL.createObjectURL(newFile.file)
       }
     },
-    getSolutionFileLink (question) {
-      return question.solution_file_url
-        ? `<a href="${question.solution_file_url}" target="_blank">Solution ${question.question_number}</a>`
-        : 'N/A'
-    },
     viewQuestion (questionId) {
       this.$router.push({ path: `/assignments/${this.assignmentId}/questions/view/${questionId}` })
       return false
@@ -712,7 +711,7 @@ export default {
           },
           {
             key: 'solution_file_url',
-            label: 'Solution File',
+            label: 'Solution',
             shown: true
           }
         ]
@@ -767,7 +766,10 @@ export default {
             page: question.submission_file_page ? question.submission_file_page : null,
             submission_file_exists: question.submission_file_exists,
             submission_file_url: question.submission_file_url ? question.submission_file_url : null,
+            solution_type: question.solution_type,
+            solution_html: question.solution_html,
             solution_file_url: question.solution_file_url ? question.solution_file_url : null,
+            solution: question.solution ? question.solution : null,
             points: question.points ? question.points : 'N/A',
             total_score: question.hasOwnProperty('total_score') ? question.total_score : 'N/A',
             solution_file: question.solution_file_url
