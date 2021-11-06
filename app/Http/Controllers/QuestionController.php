@@ -151,16 +151,16 @@ class QuestionController extends Controller
 
         try {
 
-               $response['type'] = 'error';
-                $authorized = Gate::inspect('refreshProperties', [$question]);
-                if (!$authorized->allowed()) {
-                    $response['message'] = $authorized->message();
-                    return $response;
-                }
+            $response['type'] = 'error';
+            $authorized = Gate::inspect('refreshProperties', [$question]);
+            if (!$authorized->allowed()) {
+                $response['message'] = $authorized->message();
+                return $response;
+            }
 
             $response['type'] = 'error';
             $question->refreshProperties();
-
+            $response['solution_html'] = $question->solution_html ?: null;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

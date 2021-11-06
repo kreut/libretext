@@ -262,9 +262,10 @@
                 {{ item.submission }}
               </td>
               <td>{{ item.points }}</td>
-              <td><SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
-                                    :format-filename="false"
-              />
+              <td>
+                <SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
+                                  :format-filename="false"
+                />
               <td v-if="user.role === 2">
                 <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                            delay="500"
@@ -335,6 +336,7 @@ import {
   updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
 import SolutionFileHtml from '~/components/SolutionFileHtml'
+
 export default {
   middleware: 'auth',
   components: {
@@ -405,12 +407,15 @@ export default {
           this.items[i].refresh_status = data.type === 'success'
             ? '<span class="text-success">Success</span>'
             : '<span class="text-danger">Error</span>'
+          if (data.type === 'success' && data.solution_html) {
+            this.items[i].solution_html = data.solution_html
+            this.items[i].solution_type = 'html'
+          }
         } catch (error) {
           this.items[i].refresh_status = '<span class="text-danger">Error</span>'
         }
         this.$forceUpdate()
       }
-
     },
     viewQuestionInModal (question, action) {
       this.alphaAssignmentQuestion = question
