@@ -57,7 +57,7 @@ class QuestionPolicy
 
     public function refreshProperties(User $user)
     {
-        return ($user->role !== 2)
+        return ($user->role === 2)
             ? Response::allow()
             : Response::deny('You are not allowed to refresh the question properties from the database.');
 

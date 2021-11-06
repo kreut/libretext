@@ -30,6 +30,7 @@ class QuestionsSummaryTest extends TestCase
         parent::setUp();
         $this->user = factory(User::class)->create();
         $this->user_2 = factory(User::class)->create();
+        $this->student_user = factory(User::class)->create(['role' =>3]);
         $course = factory(Course::class)->create(['user_id' => $this->user->id]);
         $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id, 'solutions_released' => 0]);
         $this->question = factory(Question::class)->create(['page_id' => 1]);
@@ -58,7 +59,7 @@ class QuestionsSummaryTest extends TestCase
 
     public function non_instructor_cannot_refresh_question_properties()
     {
-        $this->actingAs($this->user_2)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
+        $this->actingAs($this->student_user)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
             ->assertJson(['message' => 'You are not allowed to refresh the question properties from the database.']);
 
     }
@@ -67,8 +68,8 @@ class QuestionsSummaryTest extends TestCase
 
     public function instructor_can_refresh_question_properties()
     {
-        $this->actingAs($this->user_2)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
-            ->assertJson(['message' => 'You are not allowed to refresh the question properties from the database.']);
+        $this->actingAs($this->user)->patchJson("/api/questions/{$this->question->id}/refresh-properties")
+            ->assertJson(['type' => 'success']);
 
     }
 
