@@ -1,11 +1,12 @@
 .page-title {
   font-size: 2em;
   font-weight: 400;
-  color: #2882d3;
+  color: #2F76B7;
 }
 
-a.accessible-link {
-  color: #001AFF !important;
+
+a {
+  color: #0058E6 !important;
 }
 
 button.accessible-btn {
@@ -19,6 +20,7 @@ button.accessible-btn {
 .h4 {
   font-size: 1.5rem;
 }
+
 .h7 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -52,7 +54,7 @@ h2.editable {
 }
 
 .libretexts-font {
-  font: 17.6px Tahoma,Arial,serif;
+  font: 17.6px Tahoma, Arial, serif;
   color: black;
 }
 
@@ -60,8 +62,59 @@ h2.editable {
   border: 1px solid;
   padding: 0 10px 10px;
   margin: 10px 0;
-;
+}
 
+.noty_theme__mint.noty_type__success {
+  background-color: #C6EFCE !important;
+  border-bottom: 1px solid #A0B55C;
+}
+
+.noty_theme__mint.noty_type__success .noty_body {
+  color: #006100
+}
+
+.noty_theme__mint.noty_type__error {
+  background-color: #FFC7CE !important;
+  border-bottom: 1px solid #A0B55C;
+}
+
+.noty_theme__mint.noty_type__error .noty_body {
+  color: #9C0006
+}
+
+.noty_theme__mint.noty_type__info {
+  background-color: #BDD7EE !important;
+  border-bottom: 1px solid #A0B55C;
+}
+.noty_theme__mint.noty_type__info .noty_body {
+  color: #1F4E78
+}
+
+.breadcrumb-item.active {
+  color: #6C6878 !important;
+
+}
+a.nav-link.router-link-exact-active.active {
+  background-color: #EAECEF !important;
+}
+
+.commons.btn-primary {
+  background-color: black !important;
+}
+
+.btn-primary {
+  background-color: #0058E6 !important;
 }
 
 
+.btn-outline-primary {
+  color: #0058E6 !important;
+}
+
+.btn-info {
+  background-color: #2F76B7 !important;
+}
+
+.btn-success {
+  background-color: #008600 !important;
+}
