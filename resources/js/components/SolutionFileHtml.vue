@@ -1,7 +1,7 @@
 <template>
   <span>
     <b-modal
-      id="modal-show-html-solution"
+      :id="`modal-show-html-solution-${currentPage}`"
       ref="htmlModal"
       aria-label="Solution"
       ok-title="OK"
@@ -11,7 +11,7 @@
       <div v-html="questions[currentPage-1].solution_html" />
     </b-modal>
     <b-modal
-      id="modal-show-audio-solution"
+      :id="`modal-show-audio-solution-${currentPage}`"
       ref="modal"
       title="Audio Solution"
       ok-title="OK"
@@ -68,28 +68,38 @@ export default {
     assignmentName: {
       type: String,
       default: 'Assignment'
+    },
+    formatFilename: {
+      type: Boolean,
+      default: true
     }
   },
   methods: {
     openShowHTMLSolutionModal () {
-      this.$bvModal.show('modal-show-html-solution')
+      this.$bvModal.show(`modal-show-html-solution-${this.currentPage}`)
       this.$nextTick(() => {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
-        document.getElementById('modal-show-html-solution___BV_modal_header_').style.display = 'none'
+        if (document.getElementsByClassName('modal-header').length) {
+          document.getElementsByClassName('modal-header')[0].style.display = 'none'
+        }
       })
     },
     standardizeFilename (filename) {
-      if (!filename) {
-        return ''
-      }
-      let ext = filename.slice((Math.max(0, filename.lastIndexOf('.')) || Infinity) + 1)
+      if (this.formatFilename) {
+        if (!filename) {
+          return ''
+        }
+        let ext = filename.slice((Math.max(0, filename.lastIndexOf('.')) || Infinity) + 1)
 
-      let name = this.assignmentName.replace(/[/\\?%*:|"<>]/g, '-')
-      return `${name}-${this.currentPage}.${ext}`
+        let name = this.assignmentName.replace(/[/\\?%*:|"<>]/g, '-')
+        return `${name}-${this.currentPage}.${ext}`
+      } else {
+        return filename
+      }
     },
     openShowAudioSolutionModal (event) {
       event.preventDefault()
-      this.$bvModal.show('modal-show-audio-solution')
+      this.$bvModal.show(`modal-show-audio-solution-${this.currentPage}`)
     }
   }
 }

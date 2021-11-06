@@ -550,6 +550,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.technology_iframe',
                     'questions.technology',
                     'questions.title', DB::raw('questions.id AS question_id'),
+                    'questions.solution_html',
                     'learning_tree_id',
                     'learning_trees.description AS learning_tree_description')
                 ->get();
@@ -560,16 +561,19 @@ class AssignmentSyncQuestionController extends Controller
                 $question_ids[] = $value->question_id;
             }
 
-            $assignment_solutions = $solutions->whereIn('question_id', $question_ids)
-                ->where('user_id', Auth::user()->id)
+            $solutions = DB::table('solutions')
+                ->whereIn('question_id', $question_ids)
+                ->where('user_id', $assignment->course->user_id)
                 ->get();
 
+            if ($solutions) {
+                foreach ($solutions as $key => $value) {
+                    $assignment_solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
+                    $assignment_solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
+                    $assignment_solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
+                    $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
 
-            $assignment_solutions_by_question_id = [];
-            $rows = [];
-            foreach ($assignment_solutions as $key => $value) {
-                $assignment_solutions_by_question_id[$value->question_id] = ['original_filename' => $value->original_filename,
-                    'file' => $value->file];
+                }
             }
             $h5p_questions_exists = false;
             foreach ($assignment_questions as $value) {
@@ -590,7 +594,22 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['is_auto_graded'] = $value->technology !== 'text';
                 $columns['learning_tree'] = $value->learning_tree_id !== null;
                 $columns['points'] = Helper::removeZerosAfterDecimal($value->points);
-                $columns['solution'] = $this->_getSolutionLink($assignment, $assignment_solutions_by_question_id, $value->question_id);
+
+                $columns['solution'] = $assignment_solutions_by_question_id[$value->question_id]['original_filename'] ?? false;
+
+                $columns['solution_type'] = $assignment_solutions_by_question_id[$value->question_id]['solution_type'] ?? false;
+                $columns['solution_file_url'] = $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
+                $columns['solution_text'] = $assignment_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
+                if ($columns['solution_file_url']) {
+                    $columns['type'] = 'q';
+                }
+                $columns['solution_html'] = $value->solution_html;
+                if ($columns['solution_html']) {
+                    $columns['solution_type'] = 'html';
+                }
+
+
+
                 $columns['order'] = $value->order;
                 $columns['question_id'] = $value->question_id;
                 $columns['technology'] = $value->technology;

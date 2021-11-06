@@ -148,7 +148,7 @@
                      :items="betaCourseApprovals"
             >
               <template v-slot:cell(title)="data">
-                <a href="#" @click="viewQuestionInModal(data.item,data.item.action)">
+                <a href="" @click.prevent="viewQuestionInModal(data.item,data.item.action)">
                   {{ data.item.title !== null ? data.item.title : 'None provided' }}
                 </a>
               </template>
@@ -250,10 +250,10 @@
                   Copy the Adapt ID
                 </b-tooltip>
                 <a :id="getTooltipTarget('copy',item.question_id)"
-                   href="#"
+                   href=""
                    class="pr-1"
                    aria-label="Copy Adapt ID"
-                   @click="doCopy(item.assignment_id_question_id)"
+                   @click.prevent="doCopy(item.assignment_id_question_id)"
                 >
                   <font-awesome-icon :icon="copyIcon"/>
                 </a>
@@ -262,7 +262,9 @@
                 {{ item.submission }}
               </td>
               <td>{{ item.points }}</td>
-              <td><span v-html="item.solution"/></td>
+              <td><SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
+                                    :format-filename="false"
+              />
               <td v-if="user.role === 2">
                 <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
                            delay="500"
@@ -272,9 +274,9 @@
                 </b-tooltip>
 
                 <a :id="getTooltipTarget('edit',item.question_id)"
-                   href="#"
+                   href=""
                    class="pr-1"
-                   @click="editQuestionSource(item.mind_touch_url)"
+                   @click.prevent="editQuestionSource(item.mind_touch_url)"
                 >
                   <b-icon class="text-muted" icon="pencil"/>
                 </a>
@@ -286,7 +288,7 @@
                   Remove the question from the assignment
                 </b-tooltip>
                 <a :id="getTooltipTarget('remove',item.question_id)"
-                   href="#"
+                   href=""
                    class="pr-1"
                    @click.prevent="openRemoveQuestionModal(item.question_id)"
                 >
@@ -332,7 +334,7 @@ import {
   updateLearningTreeInNonLearningTreeMessage,
   updateNonLearningTreeInLearningTreeMessage
 } from '~/helpers/AssessmentTypeWarnings'
-
+import SolutionFileHtml from '~/components/SolutionFileHtml'
 export default {
   middleware: 'auth',
   components: {
@@ -341,7 +343,8 @@ export default {
     Loading,
     draggable,
     RemoveQuestion,
-    CannotDeleteAssessmentFromBetaAssignmentModal
+    CannotDeleteAssessmentFromBetaAssignmentModal,
+    SolutionFileHtml
   },
   data: () => ({
     showRefreshStatus: false,
