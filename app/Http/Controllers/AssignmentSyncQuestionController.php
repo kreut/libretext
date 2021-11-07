@@ -576,6 +576,7 @@ class AssignmentSyncQuestionController extends Controller
                 }
             }
             $h5p_questions_exists = false;
+            $rows = [];
             foreach ($assignment_questions as $value) {
                 $columns = [];
                 $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
