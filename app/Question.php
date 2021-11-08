@@ -277,6 +277,7 @@ class Question extends Model
         $dom_elements_from_body = $this->getDomElementsFromBody($body_technology_and_tags_info['body']);
         $this->text_question = $dom_elements_from_body['text_question'];
         $this->a11y_question = $dom_elements_from_body['a11y_question'];
+        $this->a11y_question = $dom_elements_from_body['answer_html'];
         $this->solution_html = $dom_elements_from_body['solution_html'];
         $this->hint = $dom_elements_from_body['hint'];
         $this->libretexts_link = $dom_elements_from_body['libretexts_link'];
@@ -322,6 +323,7 @@ class Question extends Model
         $body = $dom_elements_from_body['body'];
         $text_question = $dom_elements_from_body['text_question'];
         $a11y_question = $dom_elements_from_body['a11y_question'];
+        $answer_html = $dom_elements_from_body['answer_html'];
         $solution_html = $dom_elements_from_body['solution_html'];
         $hint = $dom_elements_from_body['hint'];
         $libretexts_link = $dom_elements_from_body['libretexts_link'];
@@ -384,6 +386,7 @@ class Question extends Model
                     'technology_iframe' => $technology_iframe,
                     'text_question' => $text_question,
                     'a11y_question' => $a11y_question,
+                    'answer_html' => $answer_html,
                     'solution_html' => $solution_html,
                     'hint' => $hint,
                     'libretexts_link' => $libretexts_link,
@@ -467,6 +470,7 @@ class Question extends Model
         $text_question = $this->getInnerHTMLByClass($selector, 'ADAPT-TextQuestion');
 
         $a11y_question = $this->getInnerHTMLByClass($selector, 'ADAPT-A11yQuestion');
+        $answer_html = $this->getInnerHTMLByClass($selector, 'ADAPT-Answer');
         $solution_html = $this->getInnerHTMLByClass($selector, 'ADAPT-Solution');
         $hint = $this->getInnerHTMLByClass($selector, 'ADAPT-Hint');
         $libretexts_link = $this->getInnerHTMLByClass($selector, 'ADAPT-Link');
@@ -475,6 +479,7 @@ class Question extends Model
         $classes_to_remove = ['ADAPT-hidden',
             'ADAPT-TextQuestion',
             'ADAPT-A11yQuestion',
+            'ADAPT-Answer',
             'ADAPT-Solution',
             'ADAPT-Hint',
             'ADAPT-Link',
@@ -494,6 +499,7 @@ class Question extends Model
             'body',
             'text_question',
             'a11y_question',
+            'answer_html',
             'solution_html',
             'hint',
             'libretexts_link',

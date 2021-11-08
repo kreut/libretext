@@ -1636,6 +1636,11 @@
               >
                 <div class="mt-3" v-html="questions[currentPage - 1].a11y_question"/>
               </div>
+              <div v-if="questions[currentPage-1].answer_html"
+                   class="mt-3 libretexts-border"
+              >
+                <div class="mt-3" v-html="questions[currentPage - 1].answer_html"/>
+              </div>
               <div v-if="questions[currentPage-1].solution_html"
                    class="mt-3 libretexts-border"
               >

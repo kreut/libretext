@@ -550,6 +550,7 @@ class AssignmentSyncQuestionController extends Controller
                     'questions.technology_iframe',
                     'questions.technology',
                     'questions.title', DB::raw('questions.id AS question_id'),
+                    'questions.answer_html',
                     'questions.solution_html',
                     'learning_tree_id',
                     'learning_trees.description AS learning_tree_description')
@@ -604,10 +605,12 @@ class AssignmentSyncQuestionController extends Controller
                 if ($columns['solution_file_url']) {
                     $columns['type'] = 'q';
                 }
+
                 $columns['solution_html'] = $value->solution_html;
-                if ($columns['solution_html']) {
-                    $columns['solution_type'] = 'html';
+                if (!$columns['solution_html']) {
+                    $columns['solution_html'] = $value->answer_html;
                 }
+                $columns['solution_type'] = 'html';
 
 
 
@@ -1515,6 +1518,7 @@ class AssignmentSyncQuestionController extends Controller
                 $assignment->questions[$key]['solution_text'] = $solutions_by_question_id[$question->id]['solution_text'] ?? false;
 
 
+                $assignment->questions[$key]['answer_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->answer_html : null;
                 $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->solution_html : null;
                 if ($assignment->questions[$key]['solution_html']) {
                     $assignment->questions[$key]['solution_type'] = 'html';

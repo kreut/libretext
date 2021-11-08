@@ -453,9 +453,10 @@ class QuestionController extends Controller
         $question['a11y_question'] = $question_info['a11y_question'];
         $question['libretexts_link'] = $question_info['libretexts_link'];
 
-        $question['notes'] = $question['solution_html'] = $question['hint'] = null;
+        $question['notes'] = $question['answer_html'] = $question['solution_html'] = $question['hint'] = null;
         if (Auth::user()->role === 2) {
             $question['notes'] = $question_info['notes'];
+            $question['answer_html'] = $question_info['answer_html'];
             $question['solution_html'] = $question_info['solution_html'];
             $question['hint'] = $question_info['hint'];
         }
