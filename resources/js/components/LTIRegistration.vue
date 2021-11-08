@@ -1,6 +1,24 @@
 <template>
   <div>
     <b-form-group
+      label-cols-sm="4"
+      label-cols-lg="3"
+      label-for="developer_key_id"
+    >
+      <template slot="label">
+        Developer Key ID*
+      </template>
+      <b-form-input
+        id="canvas_url"
+        v-model="form.developer_key_id"
+        type="text"
+        placeholder="Example. 10203900029"
+        :class="{ 'is-invalid': form.errors.has('developer_key_id') }"
+        @keydown="form.errors.clear('developer_key_id')"
+      />
+      <has-error :form="form" field="developer_key_id"/>
+    </b-form-group>
+    <b-form-group
       v-show="showCampusId"
       label-cols-sm="4"
       label-cols-lg="3"
@@ -54,24 +72,6 @@
         @keydown="form.errors.clear('schools')"
       />
       <has-error :form="form" field="schools"/>
-    </b-form-group>
-    <b-form-group
-      label-cols-sm="4"
-      label-cols-lg="3"
-      label-for="developer_key_id"
-    >
-      <template slot="label">
-        Developer Key ID*
-      </template>
-      <b-form-input
-        id="canvas_url"
-        v-model="form.developer_key_id"
-        type="text"
-        placeholder="Example. 10203900029"
-        :class="{ 'is-invalid': form.errors.has('developer_key_id') }"
-        @keydown="form.errors.clear('developer_key_id')"
-      />
-      <has-error :form="form" field="developer_key_id"/>
     </b-form-group>
     <b-form-group
       label-cols-sm="4"
