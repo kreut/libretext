@@ -8,7 +8,7 @@
       ok-only
       size="lg"
     >
-      <div v-html="questions[currentPage-1].solution_html" />
+      <div v-html="questions[currentPage-1].solution_html"/>
     </b-modal>
     <b-modal
       :id="`modal-show-audio-solution-${currentPage}`"
@@ -26,7 +26,7 @@
         </b-card>
       </b-row>
       <div v-if="questions[currentPage-1].solution_text" class="pt-3">
-        <span v-html="questions[currentPage-1].solution_text" />
+        <span v-html="questions[currentPage-1].solution_text"/>
       </div>
     </b-modal>
     <span v-if="questions[currentPage-1].solution_type === 'audio'">
@@ -81,6 +81,10 @@ export default {
         MathJax.Hub.Queue(['Typeset', MathJax.Hub])
         if (document.getElementsByClassName('modal-header').length) {
           document.getElementsByClassName('modal-header')[0].style.display = 'none'
+          let images = document.getElementsByTagName('img')
+          for (let i = 0; i < images.length; i++) {
+            images[i].style.maxWidth = '100%'
+          }
         }
       })
     },
