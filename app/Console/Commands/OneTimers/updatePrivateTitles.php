@@ -47,7 +47,7 @@ class updatePrivateTitles extends Command
         foreach ($questions_with_private_titles as $key => $private_question){
             try {
                 $Libretext = new Libretext(['library' =>  $private_question->library]);
-                $contents = $Libretext->getBodyFromPrivatePage($private_question->page_id);
+                $contents = $Libretext->getPrivatePage('contents', $private_question->page_id);
                 $attribute = '@title';
                 $private_question->title = $contents->$attribute;
 

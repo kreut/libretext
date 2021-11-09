@@ -15,7 +15,8 @@ class DataShop extends Model
     /**
      * @param $submission
      * @param $data
-     * @param $assignment
+     * @param Assignment $assignment
+     * @param $assignment_question
      */
     public function store($submission, $data, Assignment $assignment, $assignment_question)
     {

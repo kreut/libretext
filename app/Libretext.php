@@ -28,7 +28,7 @@ class Libretext extends Model
 
     public function __construct(array $attributes = [])
     {
-        //parent::__construct($attributes);
+
 
         $this->client = new Client();
         $this->tokens = $this->getTokens();
@@ -103,7 +103,7 @@ class Libretext extends Model
             $title = $contents['@title'] ?? 'No title.';
         } catch (Exception $e) {
             try {
-                $contents = $this->getBodyFromPrivatePage($page_id);
+                $contents = $this->getPrivatePage('contents', $page_id);
                 $attribute = '@title';
                 $title = $contents->$attribute;
             } catch (Exception $e) {
@@ -251,12 +251,21 @@ class Libretext extends Model
         return json_decode($response->getBody(), true);
     }
 
-    function getBodyFromPrivatePage(int $page_id)
+    /**
+     * @param string $end_point
+     * @param int $page_id
+     * @return mixed
+     * @throws Exception
+     */
+    function getPrivatePage(string $end_point, int $page_id)
     {
+        if (!in_array($end_point, ['contents', 'tags', 'info'])) {
+            throw new Exception("$string is not a valid end point.");
+        }
         $curl = curl_init();
         $curl_opts = [
             CURLOPT_FAILONERROR => true,
-            CURLOPT_URL => "https://api.libretexts.org/endpoint/contents",
+            CURLOPT_URL => "https://api.libretexts.org/endpoint/$end_point",
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_ENCODING => "",
             CURLOPT_MAXREDIRS => 10,

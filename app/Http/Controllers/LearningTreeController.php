@@ -587,7 +587,7 @@ EOT;
                 return $response;
             } else {
                 try {
-                    $contents = $Libretext->getBodyFromPrivatePage($pageId);
+                    $contents = $Libretext->getPrivatePage('contents', $pageId);
                     $title = '@title';
                     $response['title'] = $contents->{$title} ?? 'Title';
                     $response['title'] = str_replace('"', '&quot;', $response['title']);

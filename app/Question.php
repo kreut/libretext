@@ -439,7 +439,7 @@ class Question extends Model
 
             //private page so try again!
             try {
-                $contents = $Libretext->getBodyFromPrivatePage($page_id);
+                $contents = $Libretext->getPrivatePage('contents', $page_id);
                 $body = $contents->body;
                 $body = $body[0];
                 if (!$body) {

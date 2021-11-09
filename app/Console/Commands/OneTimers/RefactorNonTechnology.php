@@ -75,7 +75,7 @@ echo "page id $page_id";
 
                 //private page so try again!
                 try {
-                    $body = $Libretext->getBodyFromPrivatePage($page_id);
+                    $body = $Libretext->getPrivatePage('contents', $page_id);
                 } catch (Exception $e) {
                     echo json_encode(['type' => 'error',
                         'message' => 'We tried getting that page but got the error: <br><br>' . $e->getMessage() . '<br><br>Please email support with questions!',
