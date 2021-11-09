@@ -44,6 +44,7 @@ class DataShop extends Model
         $this->problem_points = $assignment_question->points;
         $this->library = $question->library;
         $this->page_id = $question->page_id;
+        $this->url = $question->url;
         $this->problem_view = $submission->submission_count;
         $this->outcome = $data['all_correct'] ? 'CORRECT' : 'INCORRECT';
         $this->due = $assignment->assignToTimingByUser('due');

@@ -42,12 +42,13 @@ class addLibretextUrls extends Command
      */
     public function handle()
     {
-        ini_set('memory_limit', '750M');
 
         $data_shop_question_ids = DB::table('data_shops')
+            ->orderBy('id', 'desc')
+            ->where('url', null)
+            ->limit(10000)
             ->get('problem_name')
             ->pluck('problem_name')
-            ->where('url', null)
             ->toArray();
         $question_ids = array_unique($data_shop_question_ids);
         sort($question_ids);
@@ -67,7 +68,7 @@ class addLibretextUrls extends Command
                 DB::table('data_shops')->where('problem_name', $question->id)->update(['url' => $url]);
                 DB::table('questions')->where('id', $question->id)->update(['url' => $url]);
             } catch (Exception $e) {
-                echo $num_questions - $key . " {$e->getMessage()}  \r\n";
+                echo $num_questions - $key . "  {$question->id} {$e->getMessage()}  \r\n";
             }
         }
         echo microtime(true) - $start;
