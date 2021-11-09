@@ -47,6 +47,7 @@ class addLibretextUrls extends Command
         $data_shop_question_ids = DB::table('data_shops')
             ->get('problem_name')
             ->pluck('problem_name')
+            ->where('url', null)
             ->toArray();
         $question_ids = array_unique($data_shop_question_ids);
         sort($question_ids);
