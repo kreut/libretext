@@ -66,7 +66,6 @@ class addLibretextUrls extends Command
                 echo $num_questions - $key . " $url  \r\n";
                 DB::table('data_shops')->where('problem_name', $question->id)->update(['url' => $url]);
                 DB::table('questions')->where('id', $question->id)->update(['url' => $url]);
-                exit;
             } catch (Exception $e) {
                 echo $num_questions - $key . " {$e->getMessage()}  \r\n";
             }
