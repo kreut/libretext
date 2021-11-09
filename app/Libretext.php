@@ -93,10 +93,27 @@ class Libretext extends Model
 
     /**
      * @param int $page_id
-     * @param int $question_id
+     * @return null
+     */
+    public function getUrl(int $page_id)
+    {
+
+        try {
+            $info = $this->getPrivatePage('info', $page_id);
+            $uri = 'uri.ui';
+            $url = $info->{$uri};
+        } catch (Exception $e) {
+            $url = null;
+        }
+      return $url;
+    }
+
+
+    /**
+     * @param int $page_id
      * @return mixed|string
      */
-    public function updateTitle(int $page_id, int $question_id)
+    public function getTitle(int $page_id)
     {
         try {
             $contents = $this->getContentsByPageId($page_id);
@@ -113,7 +130,6 @@ class Libretext extends Model
         if (!$title) {
             $title = 'No title';
         }
-        Question::where('id', $question_id)->update(['title' => $title]);
         return $title;
     }
 

@@ -394,7 +394,12 @@ class Question extends Model
                 ]);
 
             $Libretext = new Libretext(['library' => $library]);
-            $Libretext->updateTitle($page_id, $question->id);
+            $title = $Libretext->getTitle($page_id, $question->id);
+            $url = $Libretext->getUrl($page_id);
+            $question->title = $title;
+            $question->url = $url;
+            $question->save();
+
 
 
             if ($technology_and_tags['tags']) {

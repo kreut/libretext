@@ -3,9 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\BetaAssignment;
-use App\BetaCourse;
 use App\BetaCourseApproval;
-use App\DataShop;
 use App\Exceptions\Handler;
 use App\Helpers\Helper;
 use App\Http\Requests\StartClickerAssessment;
@@ -13,8 +11,6 @@ use App\Http\Requests\UpdateCompletionScoringModeRequest;
 use App\Http\Requests\UpdateOpenEndedSubmissionType;
 use App\JWE;
 use App\Libretext;
-use App\LtiLaunch;
-use App\LtiGradePassback;
 use App\RandomizedAssignmentQuestion;
 use App\SavedQuestion;
 use App\Solution;
@@ -40,7 +36,6 @@ use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
-use Illuminate\Support\Facades\Log;
 
 use App\Traits\S3;
 use App\Traits\SubmissionFiles;
@@ -48,7 +43,7 @@ use App\Traits\GeneralSubmissionPolicy;
 use App\Traits\LatePolicy;
 use App\Traits\JWT;
 use Carbon\Carbon;
-use Spipu\Html2Pdf\Tag\Html\Sub;
+
 
 class AssignmentSyncQuestionController extends Controller
 {
@@ -572,7 +567,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment_solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
                     $assignment_solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
                     $assignment_solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                    $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+                    $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
 
                 }
             }
@@ -583,7 +578,9 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['title'] = $value->learning_tree_id ? $value->learning_tree_description : $value->title;
                 if (!$value->title) {
                     $Libretext = new Libretext(['library' => $value->library]);
-                    $columns['title'] = $Libretext->updateTitle($value->page_id, $value->question_id);
+                    $title = $Libretext->getTitle($value->page_id);
+                    Question::where('id', $value->question_id)->update(['title' => $title]);
+                    $columns['title'] = $title;
                 }
                 if ($value->open_ended_submission_type === 'text') {
                     $value->open_ended_submission_type = $value->open_ended_text_editor . ' text';
@@ -611,7 +608,6 @@ class AssignmentSyncQuestionController extends Controller
                     $columns['solution_html'] = $value->answer_html;
                 }
                 $columns['solution_type'] = 'html';
-
 
 
                 $columns['order'] = $value->order;
@@ -1352,7 +1348,7 @@ class AssignmentSyncQuestionController extends Controller
                         $solutions_by_question_id[$value->question_id]['original_filename'] = $value->original_filename;
                         $solutions_by_question_id[$value->question_id]['solution_text'] = $value->text;
                         $solutions_by_question_id[$value->question_id]['solution_type'] = $value->type;
-                        $solutions_by_question_id[$value->question_id]['solution_file_url'] = \Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
+                        $solutions_by_question_id[$value->question_id]['solution_file_url'] = Storage::disk('s3')->temporaryUrl("solutions/{$assignment->course->user_id}/{$value->file}", now()->addMinutes(360));
 
                     }
                 }
