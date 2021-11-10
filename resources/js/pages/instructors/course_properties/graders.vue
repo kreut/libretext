@@ -62,7 +62,7 @@
       title="Invite Grader"
       :no-close-on-esc="true"
     >
-      <RequiredText />
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="3"
@@ -134,10 +134,11 @@
                 >
                   <template slot="label">
                     Head Grader
-                    <QuestionCircleTooltip :id="'head-grader-tooltip'" />
+                    <QuestionCircleTooltip :id="'head-grader-tooltip'"/>
                     <b-tooltip target="head-grader-tooltip"
                                triggers="hover focus"
-                               delay="500">
+                               delay="500"
+                    >
                       Optionally choose a head grader. Head graders can be sent a summary of ungraded assignments by
                       visiting the Grading Notifications page.
                     </b-tooltip>
@@ -166,22 +167,28 @@
                       aria-label="Edit Section"
                       @click="initEditSections(data.item)"
                     >
-                      <b-icon icon="pencil" class="text-muted"/>
+                      <b-icon icon="pencil"
+                              class="text-muted"
+                              :aria-label="`Edit sections for ${data.item.name}`"
+                      />
                     </a>
                     <a
                       href="#"
                       aria-label="Remove grader"
                       @click="initRemoveGrader(data.item.user_id)"
                     >
-                      <b-icon icon="trash" class="text-muted"/>
+                      <b-icon icon="trash"
+                              class="text-muted"
+                              :aria-label="`Remove ${data.item.name} as a grader`"/>
                     </a>
                   </template>
                 </b-table>
               </div>
-              <div v-show="!course.graders.length">
-                <b-alert show variant="info">
-                  <span class="font-weight-bold">You currently have no graders associated with this course.</span>
-                </b-alert>
+              <div v-show=" !course.graders.length
+                      ">
+                      <b-alert show variant="info">
+                        <span class="font-weight-bold">You currently have no graders associated with this course.</span>
+                      </b-alert>
               </div>
             </div>
             <div v-else>

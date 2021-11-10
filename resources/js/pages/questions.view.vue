@@ -878,6 +878,7 @@
                       <b-icon v-if="completionScoringModeMessage"
                               icon="pencil"
                               class="text-muted"
+                              aria-label="Edit completion scoring mode"
                       />
                     </a>
                   </b-row>

@@ -279,7 +279,10 @@
                    class="pr-1"
                    @click.prevent="editQuestionSource(item.mind_touch_url)"
                 >
-                  <b-icon class="text-muted" icon="pencil"/>
+                  <b-icon class="text-muted"
+                          icon="pencil"
+                          :aria-label="Edit questoin source"
+                  />
                 </a>
 
                 <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
