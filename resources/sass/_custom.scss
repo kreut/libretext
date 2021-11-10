@@ -5,9 +5,11 @@
 }
 
 
-a {
+a:not(.vbst-item,.alert-link,.text-muted,.dropdown-item){ //exclude the links from the typeahead, alerts, icons
   color: #0058E6 !important;
 }
+
+
 
 button.accessible-btn {
   background-color: #0369E7 !important;
