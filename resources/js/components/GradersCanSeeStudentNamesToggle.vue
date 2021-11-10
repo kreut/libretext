@@ -8,7 +8,7 @@
       :font-size="14"
       :color="toggleColors"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
-      :aria-label="Boolean(assignment.graders_can_see_student_names)? 'student names shown to graders' : 'student names hidden from graders'"
+      :aria-label="Boolean(assignment.graders_can_see_student_names) ? `Graders can student names for ${assignment.name}` : `Graders cannot see student names for ${assignment.name}`"
       @change="submitGradersCanSeeStudentNames(assignment)"
     />
   </div>

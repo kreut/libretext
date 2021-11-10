@@ -32,6 +32,7 @@
       :sync="true"
       :font-size="14"
       :color="toggleColors"
+      :aria-label="Boolean(assignment.shown) ? `Assignment statistics for ${assignment.name} are shown` : `Assignment statistics for ${assignment.name} not shown`"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="initShowAssignmentStatistics(assignment)"
     />

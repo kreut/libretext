@@ -7,6 +7,7 @@
       :sync="true"
       :font-size="14"
       :color="toggleColors"
+      :aria-label="Boolean(assignment.show_points_per_question) ? `Points per question for ${assignment.name} are shown` : `Points per question for ${assignment.name} are not shown`"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="submitShowPointsPerQuestion(assignment)"
     />

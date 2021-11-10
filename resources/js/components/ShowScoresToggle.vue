@@ -33,6 +33,7 @@
       :sync="true"
       :font-size="14"
       :color="toggleColors"
+      :aria-label="Boolean(assignment.show_scores) ? `Scores for ${assignment.name} are shown` : `Scores for ${assignment.name} are not shown`"
       :labels="{checked: 'Shown', unchecked: 'Hidden'}"
       @change="initShowScores(assignment)"
     />

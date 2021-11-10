@@ -461,6 +461,7 @@
                 :font-size="14"
                 :margin="4"
                 :color="toggleColors"
+                :aria-label="Boolean(assignment.shown) ? `${assignment.name} shown` : `${assignment.name} not shown`"
                 :labels="{checked: 'Yes', unchecked: 'No'}"
                 @change="submitShowAssignment(assignment)"
               />

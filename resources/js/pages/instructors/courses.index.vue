@@ -297,6 +297,7 @@
                     :width="57"
                     :value="Boolean(course.shown)"
                     :aria-checked="Boolean(course.shown)"
+                    :aria-label="Boolean(course.shown) ? `${course.name} shown` : `${course.name} not shown`"
                     :sync="true"
                     :font-size="14"
                     :margin="4"

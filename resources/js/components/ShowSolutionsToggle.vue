@@ -33,6 +33,7 @@
           :sync="true"
           :font-size="14"
           :color="toggleColors"
+          :aria-label="Boolean(assignment.solutions_released) ? `Solutions are released for ${assignment.name}` : `Solutions are not released for ${assignment.name}`"
           :labels="{checked: 'Shown', unchecked: 'Hidden'}"
           @change="initSolutionsReleased(assignment)"
         />
