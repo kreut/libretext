@@ -15,8 +15,8 @@
       <div v-if="!isLoading">
         <b-form-group
           id="scores"
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="4"
+          label-cols-lg="3"
           label="Scores"
           label-for="scores"
         >
@@ -26,8 +26,8 @@
         </b-form-group>
         <b-form-group
           id="solutions"
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="4"
+          label-cols-lg="3"
           label="Solutions"
           label-for="solutions"
         >
@@ -37,8 +37,8 @@
         </b-form-group>
         <b-form-group
           id="statistics"
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="4"
+          label-cols-lg="3"
           label="Statistics"
           label-for="statistics"
         >
@@ -48,8 +48,8 @@
         </b-form-group>
         <b-form-group
           id="points_per_question"
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="4"
+          label-cols-lg="3"
           label="Points Per Question"
           label-for="points_per_question"
         >
@@ -60,8 +60,8 @@
         <b-form-group
           v-if="user.role === 2"
           id="graders_can_see_student_names"
-          label-cols-sm="3"
-          label-cols-lg="2"
+          label-cols-sm="4"
+          label-cols-lg="3"
           ab
         >
           <template slot="label">
