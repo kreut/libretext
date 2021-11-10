@@ -48,9 +48,6 @@ Route::get('/courses/commons', 'CourseController@getCommonsCourses');
 Route::get('/courses/open', 'CourseController@getOpenCourses');
 Route::get('/assignments/commons/{course}', 'AssignmentController@getCommonsCourseAssignments');
 
-Route::patch('/accessibility/set-cookie', 'AccessibilityController@setCookie');
-Route::delete('/accessibility/delete-cookie', 'AccessibilityController@destroyCookie');
-
 Route::get('/analytics', 'AnalyticsController@index');
 Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 

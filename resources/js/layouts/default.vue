@@ -1,23 +1,5 @@
 <template>
   <div class="main-layout">
-    <b-modal
-      id="modal-accessibility"
-      ref="modal"
-      size="sm"
-      title="Accessibility Cookie"
-      @hidden="$router.go()"
-    >
-      {{ accessibilityMessage }}
-      <template #modal-footer="{ ok }">
-        <b-button size="sm"
-                  variant="primary"
-                  class="accessible-btn"
-                  @click="$router.go()"
-        >
-          Got it!
-        </b-button>
-      </template>
-    </b-modal>
     <div class="text-center">
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
@@ -38,15 +20,6 @@
           Unless otherwise noted, LibreTexts content is licensed by CC BY-NC-SA 3.0. Have questions or comments? For
           more information contact us at <a href="mailto:info@libretexts.org.">info@libretexts.org.</a>
         </p>
-        <p class="pt-3 pl-3 pr-4">
-          To improve the accessibility of this site, we can add an <a class="accessible-link" href=""
-                                                                      @click.prevent="addAccessibilityCookie"
-        >accessibility
-          cookie</a> to your browser. This cookie can also be <a class="accessible-link" href=""
-                                                                 @click.prevent="removeAccessibilityCookie"
-        >removed</a> at any time.
-        </p>
-
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
              href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
@@ -77,8 +50,7 @@ export default {
   data: () => ({
     showEnvironment: window.config.showEnvironment,
     environment: window.config.environment,
-    inIFrame: true,
-    accessibilityMessage: ''
+    inIFrame: true
   }),
   computed: mapGetters({
     user: 'auth/user'
@@ -101,24 +73,6 @@ export default {
       if (e.keyCode === 27) {
         this.$root.$emit('bv::hide::tooltip')
         console.log('Tooltip closed')
-      }
-    },
-    async addAccessibilityCookie () {
-      try {
-        const { data } = await axios.patch(`/api/accessibility/set-cookie`)
-        this.accessibilityMessage = data.message
-        this.$bvModal.show('modal-accessibility')
-      } catch (error) {
-        this.$noty.error(error.message)
-      }
-    },
-    async removeAccessibilityCookie () {
-      try {
-        const { data } = await axios.delete(`/api/accessibility/delete-cookie`)
-        this.accessibilityMessage = data.message
-        this.$bvModal.show('modal-accessibility')
-      } catch (error) {
-        this.$noty.error(error.message)
       }
     }
   }
