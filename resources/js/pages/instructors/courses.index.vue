@@ -85,6 +85,7 @@
       ref="modal"
       title="Course Details"
       size="lg"
+      :no-close-on-esc="true"
       @hidden="resetModalForms"
     >
       <CourseForm :form="newCourseForm"/>
