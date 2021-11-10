@@ -2,7 +2,7 @@
   <div>
     <b-modal
       id="modal-student-extension-and-override"
-      ref="modal"
+      :key="`${assignmentId}-${studentUserId}`"
       :title="`Update Extension And Override for ${studentName}`"
       size="lg"
     >
@@ -20,11 +20,12 @@
           label-cols-sm="4"
           label-cols-lg="3"
           label="Extension"
-          label-for="Extension"
+          label-for="extension_date"
         >
           <b-form-row>
             <b-col lg="7">
               <b-form-datepicker
+                :id="`extension_date-${assignmentId}-${studentUserId}`"
                 v-model="form.extension_date"
                 :min="min"
                 :class="{ 'is-invalid': form.errors.has('extension_date') }"
@@ -33,7 +34,8 @@
               <has-error :form="form" field="extension_date"/>
             </b-col>
             <b-col>
-              <b-form-timepicker v-model="form.extension_time"
+              <b-form-timepicker :id="`extension_time-${assignmentId}-${studentUserId}`"
+                                 v-model="form.extension_time"
                                  locale="en"
                                  :class="{ 'is-invalid': form.errors.has('extension_time') }"
                                  @shown="form.errors.clear('extension_time')"

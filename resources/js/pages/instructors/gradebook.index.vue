@@ -319,7 +319,6 @@
                                :form="form"
     />
   </div>
-  </div>
 </template>
 <script>
 import axios from 'axios'
@@ -330,6 +329,7 @@ import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
 import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
 import { ToggleButton } from 'vue-js-toggle-button'
+import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -661,6 +661,10 @@ export default {
         await this.getScoreAndExtensionByAssignmentAndStudent()
         this.isLoading = false
         this.$bvModal.show('modal-student-extension-and-override')
+        this.$nextTick(() => {
+          hideDatePickerButton(`extension_date-${this.assignmentId}-${this.studentUserId}`)
+          hideDatePickerButton(`extension_time-${this.assignmentId}-${this.studentUserId}`)
+        })
       } catch (error) {
         this.$noty.error(error.message)
       }

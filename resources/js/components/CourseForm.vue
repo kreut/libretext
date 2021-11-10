@@ -172,7 +172,7 @@
       >
         <template slot="label">
           Public Description
-            <QuestionCircleTooltip :id="'public-description-tooltip'"/>
+          <QuestionCircleTooltip :id="'public-description-tooltip'"/>
         </template>
         <b-form-textarea
           id="public_description"
@@ -189,7 +189,7 @@
       >
         <template slot="label">
           Private Description
-       <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+          <QuestionCircleTooltip :id="'private-description-tooltip'"/>
           <b-tooltip target="private-description-tooltip"
                      triggers="hover focus"
                      delay="250"
@@ -213,7 +213,7 @@
         >
           <template slot="label">
             Section*
-          <QuestionCircleTooltip :id="'section-name-tooltip'"/>
+            <QuestionCircleTooltip :id="'section-name-tooltip'"/>
             <b-tooltip target="section-name-tooltip"
                        triggers="hover focus"
                        delay="250"
@@ -265,7 +265,7 @@
       >
         <template slot="label">
           Term*
-        <QuestionCircleTooltip :id="'term-tooltip'"/>
+          <QuestionCircleTooltip :id="'term-tooltip'"/>
           <b-tooltip target="term-tooltip"
                      triggers="hover focus"
                      delay="250"
@@ -353,7 +353,7 @@
       >
         <template slot="label">
           Anonymous Users*
-           <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
+          <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
         </template>
         <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked
                             @change="showAnonymousUsersWarning"
@@ -444,6 +444,7 @@
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
+import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
 
 const now = new Date()
 export default {
@@ -465,6 +466,16 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
+    hideDatePickerButton('start_date')
+    hideDatePickerButton('end_date')
+    let startDate = document.getElementById('start_date')
+    startDate.style.opacity = '0'
+    startDate.style.width = '0'
+    startDate.style.padding = '5px'
+    let endDate = document.getElementById('end_date')
+    endDate.style.opacity = '0'
+    endDate.style.width = '0'
+    endDate.style.padding = '5px'
     if (this.form.school) {
       this.$refs.schoolTypeAhead.inputValue = this.form.school
     }

@@ -981,7 +981,8 @@
             <has-error :form="form" :field="`available_from_date_${index}`"/>
           </b-col>
           <b-col>
-            <b-form-timepicker v-model="assignTo.available_from_time"
+            <b-form-timepicker :id="`available_from_time_${index}`"
+                               v-model="assignTo.available_from_time"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
             />
@@ -1010,7 +1011,8 @@
             <has-error :form="form" :field="`due_${index}`"/>
           </b-col>
           <b-col>
-            <b-form-timepicker v-model="assignTo.due_time"
+            <b-form-timepicker :id="`due_time_${index}`"
+                               v-model="assignTo.due_time"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
                                @shown="form.errors.clear(`due_time_${index}`)"
@@ -1032,7 +1034,7 @@
         <b-form-row>
           <b-col lg="7">
             <b-form-datepicker
-              id="final_submission_deadline"
+              :id="`final_submission_deadline_${index}`"
               v-model="assignTo.final_submission_deadline_date"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
@@ -1042,7 +1044,8 @@
             <has-error :form="form" :field="`final_submission_deadline_${index}`"/>
           </b-col>
           <b-col>
-            <b-form-timepicker v-model="assignTo.final_submission_deadline_time"
+            <b-form-timepicker :id="`final_submission_deadline_time_${index}`"
+                               v-model="assignTo.final_submission_deadline_time"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
                                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
@@ -1082,6 +1085,7 @@ import CKEditor from 'ckeditor4-vue'
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
 import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
+import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
 
 export default {
   components: {
@@ -1170,11 +1174,22 @@ export default {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     await this.getAssignToGroups()
+    this.hideDatePickerButtonsForAssignTos()
   },
   form: function (newVal, oldVal) {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
   },
   methods: {
+    hideDatePickerButtonsForAssignTos () {
+      for (let i = 0; i < this.form.assign_tos.length; i++) {
+        hideDatePickerButton(`available_from_${i}`)
+        hideDatePickerButton(`available_from_time_${i}`)
+        hideDatePickerButton(`due_date_${i}`)
+        hideDatePickerButton(`due_time_${i}`)
+        hideDatePickerButton(`final_submission_deadline_${i}`)
+        hideDatePickerButton(`final_submission_deadline_time_${i}`)
+      }
+    },
     checkDefaultOpenEndedSubmissionType () {
       let originalFileUploadMode = this.form.file_upload_mode
       this.$nextTick(function () {
@@ -1236,6 +1251,9 @@ export default {
     addAssignTo () {
       let newAssignTo = this.defaultAssignTos(this.$moment, this.courseStartDate, this.courseEndDate)
       this.form.assign_tos.push(newAssignTo)
+      this.$nextTick(() => {
+        this.hideDatePickerButtonsForAssignTos()
+      })
     },
     updateAssignTos (assignTo) {
       if (assignTo.selectedGroup.hasOwnProperty('user_id')) {
