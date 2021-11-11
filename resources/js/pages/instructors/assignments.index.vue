@@ -497,14 +497,15 @@
                   </b-tooltip>
                   <a v-show="assignment.source === 'a' & assignment.submission_files !== '0'"
                      :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
-                     href="#"
+                     href=""
                      class="pr-1"
                      aria-label="Grading"
-                     @click="getSubmissionFileView(assignment.id, assignment.submission_files)"
+                     @click.prevent="getSubmissionFileView(assignment.id, assignment.submission_files)"
                   >
                     <b-icon
                       class="text-muted"
                       icon="check2"
+                      :aria-label="`Grading for ${assignment.name}`"
                     />
                   </a>
                   <span v-show="user && user.role === 2">
