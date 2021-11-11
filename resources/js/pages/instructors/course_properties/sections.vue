@@ -152,12 +152,11 @@
                         Edit Section
                       </b-tooltip>
                       <a :id="getTooltipTarget('edit',data.item.id)"
-                         href="#"
+                         href=""
                          class="pr-1"
-                         :aria-label="`Edit ${data.item.name}`"
-                         @click="initEditSection(data.item)"
+                         @click.prevent="initEditSection(data.item)"
                       >
-                        <b-icon icon="pencil" class="text-muted"/>
+                        <b-icon icon="pencil" class="text-muted" :aria-label="`Edit ${data.item.name}`"/>
                       </a>
 
                       <b-tooltip :target="getTooltipTarget('deleteSection',data.item.id)"
@@ -188,15 +187,14 @@
 
                         </b-tooltip>
                         <a :id="getTooltipTarget('refreshAccessCode',data.item.id)"
-                           href="#"
+                           href=""
                            class="pr-1"
-                           @click="refreshAccessCode(data.item.id)"
+                           @click.prevent="refreshAccessCode(data.item.id)"
                         >
                           <b-icon icon="arrow-repeat"
                                   class="text-muted"
                                   :aria-label="`Refresh access code for ${data.item.name}`"
                           />
-                          <b-icon icon="arrow-repeat" class="text-muted" />
                         </a>
                       </span>
                     </div>
