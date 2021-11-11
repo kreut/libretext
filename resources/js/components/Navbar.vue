@@ -20,6 +20,7 @@
         <div v-if="$route.name !== 'instructors.learning_trees.editor'">
           <toggle-button
             v-if="showToggleStudentView && (user !== null)"
+            tabindex="0"
             class="mt-2"
             :width="140"
             :value="isInstructorView"
@@ -28,6 +29,7 @@
             :margin="4"
             :color="toggleColors"
             :labels="{checked: 'Instructor View', unchecked: 'Student View'}"
+            :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
             @change="toggleStudentView()"
           />
           <span v-if="isMe && (user !== null)">
