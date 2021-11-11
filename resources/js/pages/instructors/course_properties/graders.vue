@@ -163,9 +163,9 @@
                   </template>
                   <template v-slot:cell(actions)="data">
                     <a
-                      href="#"
+                      href=""
                       aria-label="Edit Section"
-                      @click="initEditSections(data.item)"
+                      @click.prevent="initEditSections(data.item)"
                     >
                       <b-icon icon="pencil"
                               class="text-muted"
