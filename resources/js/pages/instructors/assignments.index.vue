@@ -517,12 +517,12 @@
                     <a :id="getTooltipTarget('editAssignment',assignment.id)"
                        href=""
                        class="pr-1"
-                       aria-label="Edit assignment"
                        @click.prevent="assignmentId=assignment.id;editAssignment(assignment)"
                     >
                       <b-icon
                         icon="gear"
                         class="text-muted"
+                        :aria-label="`Edit ${assignment.name}`"
                       />
                     </a>
                     <b-tooltip :target="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"

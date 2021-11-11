@@ -343,10 +343,13 @@
                         Course Properties
                       </b-tooltip>
                       <a :id="getTooltipTarget('properties',course.id)"
-                         href="#"
+                         href=""
                          @click.prevent="getProperties(course)"
                       >
-                        <b-icon class="text-muted" icon="gear"/>
+                        <b-icon class="text-muted"
+                                icon="gear"
+                                :aria-label="`Course properties for ${course.name}`"
+                        />
                       </a>
                     </span>
                     <b-tooltip :target="getTooltipTarget('deleteCourse',course.id)"
