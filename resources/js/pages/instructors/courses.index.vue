@@ -327,13 +327,16 @@
                       Gradebook
                     </b-tooltip>
                     <a :id="getTooltipTarget('gradebook',course.id)"
-                       href="#"
+                       href=""
                        @click.prevent="showGradebook(course.id)"
                     >
-                      <b-icon class="text-muted" icon="file-spreadsheet"/>
+                      <b-icon class="text-muted"
+                              icon="file-spreadsheet"
+                              :aria-label="`Gradebook for ${course.name}`"
+                      />
                     </a>
                   </span>
-                <span v-if="user && user.role === 2">
+                  <span v-if="user && user.role === 2">
 
                     <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
