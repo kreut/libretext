@@ -165,11 +165,12 @@
                   </b-tooltip>
                   <a v-show="sectionOptions.length>1"
                      :id="getTooltipTarget('moveStudent',data.item.id)"
-                     href="#"
-                     aria-label="Initialize move student"
-                     @click="initMoveStudent(data.item)"
+                     href=""
+                     @click.prevent="initMoveStudent(data.item)"
                   >
-                    <b-icon icon="truck" class="text-muted" />
+                    <b-icon icon="truck"
+                            class="text-muted"
+                            :aria-label="`Move ${data.item.name} to a different section`"/>
                   </a>
                   <b-tooltip :target="getTooltipTarget('unEnrollStudent',data.item.id)"
                              delay="500"
@@ -181,7 +182,7 @@
                      href=""
                      @click.prevent="initUnenrollStudent(data.item)"
                   >
-                    <b-icon icon="trash" class="text-muted" :aria-label="`Initialize unenroll ${data.item.name}`" />
+                    <b-icon icon="trash" class="text-muted" :aria-label="`Unenroll ${data.item.name}`" />
                   </a>
                 </template>
               </b-table>
