@@ -1121,19 +1121,6 @@
               <b-button class="mr-2" variant="primary" size="sm" @click="showRootAssessment">
                 Root Assessment
               </b-button>
-              <toggle-button
-                :width="160"
-                class="mt-2"
-                :value="showPathwayNavigator"
-                :sync="true"
-                size="lg"
-                :font-size="14"
-                :margin="4"
-                :color="{checked: '#467fd0', unchecked: '#28a745'}"
-                :labels="{checked: 'Pathway Navigator', unchecked: 'Learning Tree'}"
-                :aria-label="showPathwayNavigator ? 'Show pathway navigator' : 'Show learning tree'"
-                @change="togglePathwayNavigatorLearningTree"
-              />
             </b-col>
             <b-col>
               <b-alert :variant="submissionDataType" :show="showSubmissionMessage">
