@@ -19,7 +19,7 @@
           }}</strong> from
             <strong>{{ studentToUnenroll.section }}</strong>.</span>
         </p>
-        <RequiredText :plural="false"/>
+        <RequiredText :plural="false" />
         <b-form-group
           label-cols-sm="1"
           label-cols-lg="2"
@@ -74,7 +74,7 @@
       <p>
         <span class="font-italic">{{ studentToMove.name }} is currently enrolled in {{ studentToMove.section }}.</span>
       </p>
-      <RequiredText :plural="false"/>
+      <RequiredText :plural="false" />
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -89,9 +89,9 @@
             <b-form-select
               v-model="moveStudentForm.section_id"
               title="Move student"
-                           :options="studentSectionOptions"
-                           :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
-                           @keydown="moveStudentForm.errors.clear('section_id')"
+              :options="studentSectionOptions"
+              :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
+              @keydown="moveStudentForm.errors.clear('section_id')"
             />
             <has-error :form="moveStudentForm" field="section_id" />
           </div>
@@ -161,7 +161,7 @@
                              delay="500"
                              triggers="hover focus"
                   >
-                   Move student to a different section
+                    Move student to a different section
                   </b-tooltip>
                   <a v-show="sectionOptions.length>1"
                      :id="getTooltipTarget('moveStudent',data.item.id)"
@@ -177,13 +177,11 @@
                   >
                     Unenroll student
                   </b-tooltip>
-                  <a
-                    :id="getTooltipTarget('unEnrollStudent',data.item.id)"
-                    href="#"
-                    aria-label="Initialize unenroll student"
-                    @click="initUnenrollStudent(data.item)"
+                  <a :id="getTooltipTarget('unEnrollStudent',data.item.id)"
+                     href=""
+                     @click.prevent="initUnenrollStudent(data.item)"
                   >
-                    <b-icon icon="trash" class="text-muted" />
+                    <b-icon icon="trash" class="text-muted" :aria-label="`Initialize unenroll ${data.item.name}`" />
                   </a>
                 </template>
               </b-table>

@@ -59,7 +59,7 @@
                   <li>
                     {{ assignmentLevelOverride.text }}
                     <a href="" @click.prevent="removeOverride(assignmentLevelOverride,'assignment-level')">
-                      <b-icon-trash class="text-muted"/>
+                      <b-icon-trash class="text-muted" :aria-label="`Remove assignment level override: ${assignmentLevelOverride.text}`"/>
                     </a>
                   </li>
                 </ul>
@@ -121,7 +121,7 @@
                     <li>
                       {{ compiledPDFOverride.text }}
                       <a href="" @click.prevent="removeOverride(compiledPDFOverride,'compiled-pdf')">
-                        <b-icon-trash class="text-muted"/>
+                        <b-icon-trash class="text-muted" :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`"/>
                       </a>
                     </li>
                   </ul>
@@ -181,7 +181,7 @@
                     <li>
                       {{ setPageOverride.text }}
                       <a href="" @click.prevent="removeOverride(setPageOverride,'set-page-only')">
-                        <b-icon-trash class="text-muted"/>
+                        <b-icon-trash class="text-muted" :aria-label="`Remove set page override: ${setPageOverride.text}`"/>
                       </a>
                     </li>
                   </ul>
@@ -290,7 +290,7 @@
                     <a href=""
                        @click.prevent="removeOverride(questionLevelOverride,'question-level',questionLevelOverride.question_id)"
                     >
-                      <b-icon-trash class="text-muted"/>
+                      <b-icon-trash class="text-muted" :aria-label="`Remove question level override: ${questionLevelOverride.text }`"/>
                     </a>
                   </li>
                 </ul>

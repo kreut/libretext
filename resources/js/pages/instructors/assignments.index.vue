@@ -549,11 +549,10 @@
                       Delete Assignment
                     </b-tooltip>
                     <a :id="getTooltipTarget('deleteAssignment',assignment.id)"
-                       href="#"
-                       aria-label="Delete assignment"
-                       @click="deleteAssignment(assignment)"
+                       href=""
+                       @click.prevent="deleteAssignment(assignment)"
                     >
-                      <b-icon icon="trash" class="text-muted" />
+                      <b-icon icon="trash" class="text-muted" :aria-label="`Delete ${assignment.name}`"/>
                     </a>
                   </span>
                 </div>

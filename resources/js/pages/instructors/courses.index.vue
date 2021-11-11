@@ -356,10 +356,13 @@
                       Delete Course
                     </b-tooltip>
                     <a :id="getTooltipTarget('deleteCourse',course.id)"
-                       href="#"
+                       href=""
                        @click.prevent="deleteCourse(course.id)"
                     >
-                      <b-icon class="text-muted" icon="trash"/>
+                      <b-icon class="text-muted"
+                              icon="trash"
+                              :aria-label="`Delete ${course.name}`"
+                      />
                     </a>
 
                   </span>

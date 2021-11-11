@@ -167,9 +167,10 @@
                         Delete Section
                       </b-tooltip>
                       <a :id="getTooltipTarget('deleteSection',data.item.id)"
-                         href="#"
+                         href=""
                          class="pr-1"
                          @click="confirmDeleteSection(data.item.id)"
+                         @click.prevent="confirmDeleteSection(data.item.id)"
                       >
                         <b-icon icon="trash"
                                 class="text-muted"
@@ -195,6 +196,7 @@
                                   class="text-muted"
                                   :aria-label="`Refresh access code for ${data.item.name}`"
                           />
+                          <b-icon icon="arrow-repeat" class="text-muted" />
                         </a>
                       </span>
                     </div>

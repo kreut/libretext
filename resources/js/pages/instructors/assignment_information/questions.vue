@@ -1,6 +1,6 @@
 <template>
   <div>
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <b-modal
       v-if="alphaAssignmentQuestion"
       id="modal-view-question"
@@ -54,7 +54,7 @@
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -100,7 +100,7 @@
                background="#FFFFFF"
       />
       <div v-if="!isLoading">
-        <PageTitle title="Questions"/>
+        <PageTitle title="Questions" />
         <AssessmentTypeWarnings :assessment-type="assessmentType"
                                 :open-ended-questions-in-real-time="openEndedQuestionsInRealTime"
                                 :learning-tree-questions-in-non-learning-tree="learningTreeQuestionsInNonLearningTree"
@@ -110,8 +110,7 @@
         />
         <div v-if="items.length">
           <p>
-            The assessments that make up this assignment are <span class="font-italic font-weight-bold"
-          >{{ assessmentType }}</span> assessments.
+            The assessments that make up this assignment are <span class="font-italic font-weight-bold">{{ assessmentType }}</span> assessments.
             <span v-if="assessmentType === 'delayed'">
               Students will be able to get feedback for their responses after the assignment is closed.
             </span>
@@ -175,7 +174,7 @@
           <b-button variant="primary" size="sm" @click="refreshQuestionProperties">
             Refresh Question Properties
           </b-button>
-          <QuestionCircleTooltip :id="'refresh-question-properties'"/>
+          <QuestionCircleTooltip :id="'refresh-question-properties'" />
           <b-tooltip target="refresh-question-properties"
                      delay="500"
                      triggers="hover focus"
@@ -186,39 +185,39 @@
           </b-tooltip>
           <table class="table table-striped mt-2" aria-label="Assignment questions">
             <thead>
-            <tr>
-              <th scope="col">
-                Order
-              </th>
-              <th scope="col">
-                Title
-              </th>
-              <th v-if="user.role === 2" scope="col" style="width: 150px;">
-                Adapt ID
-                <QuestionCircleTooltip :id="'adapt-id-tooltip'"/>
-                <b-tooltip target="adapt-id-tooltip"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
-                </b-tooltip>
-              </th>
-              <th scope="col">
-                Submission
-              </th>
-              <th scope="col">
-                Points
-              </th>
-              <th scope="col">
-                Solution
-              </th>
-              <th v-if="user.role === 2" scope="col">
-                Actions
-              </th>
-              <th v-if="showRefreshStatus" scope="col">
-                Refresh Status
-              </th>
-            </tr>
+              <tr>
+                <th scope="col">
+                  Order
+                </th>
+                <th scope="col">
+                  Title
+                </th>
+                <th v-if="user.role === 2" scope="col" style="width: 150px;">
+                  Adapt ID
+                  <QuestionCircleTooltip :id="'adapt-id-tooltip'" />
+                  <b-tooltip target="adapt-id-tooltip"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    This ID is of the form {Assignment ID}-{Question ID} and is unique at the assignment level.
+                  </b-tooltip>
+                </th>
+                <th scope="col">
+                  Submission
+                </th>
+                <th scope="col">
+                  Points
+                </th>
+                <th scope="col">
+                  Solution
+                </th>
+                <th v-if="user.role === 2" scope="col">
+                  Actions
+                </th>
+                <th v-if="showRefreshStatus" scope="col">
+                  Refresh Status
+                </th>
+              </tr>
             </thead>
             <tbody is="draggable"
                    v-model="items"
@@ -226,82 +225,85 @@
                    :options="{disabled : user.role === 4}"
                    @end="saveNewOrder"
             >
-            <tr v-for="item in items" :key="item.id">
-              <th scope="row">
-                <b-icon icon="list" v-if="user.role === 2"/>
-                {{ item.order }}
-              </th>
-              <td>
+              <tr v-for="item in items" :key="item.id">
+                <th scope="row">
+                  <b-icon v-if="user.role === 2" icon="list" />
+                  {{ item.order }}
+                </th>
+                <td>
                   <span v-show="isBetaAssignment"
                         class="text-muted"
                   >&beta; </span>
-                <span v-show="isAlphaCourse"
-                      class="text-muted"
-                >&alpha; </span>
-                <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
-              </td>
-              <td v-if="user.role === 2">
-                {{ item.assignment_id_question_id }}
+                  <span v-show="isAlphaCourse"
+                        class="text-muted"
+                  >&alpha; </span>
+                  <a href="" @click.stop.prevent="viewQuestion(item.question_id)">{{ item.title }}</a>
+                </td>
+                <td v-if="user.role === 2">
+                  {{ item.assignment_id_question_id }}
 
-                <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  Copy the Adapt ID
-                </b-tooltip>
-                <a :id="getTooltipTarget('copy',item.question_id)"
-                   href=""
-                   class="pr-1"
-                   aria-label="Copy Adapt ID"
-                   @click.prevent="doCopy(item.assignment_id_question_id)"
-                >
-                  <font-awesome-icon :icon="copyIcon"/>
-                </a>
-              </td>
-              <td>
-                {{ item.submission }}
-              </td>
-              <td>{{ item.points }}</td>
-              <td>
-                <SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
-                                  :format-filename="false"
-                />
-              <td v-if="user.role === 2">
-                <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  Edit question source
-                </b-tooltip>
-
-                <a :id="getTooltipTarget('edit',item.question_id)"
-                   href=""
-                   class="pr-1"
-                   @click.prevent="editQuestionSource(item.mind_touch_url)"
-                >
-                  <b-icon class="text-muted"
-                          icon="pencil"
-                          :aria-label="Edit questoin source"
+                  <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Copy the Adapt ID
+                  </b-tooltip>
+                  <a :id="getTooltipTarget('copy',item.question_id)"
+                     href=""
+                     class="pr-1"
+                     aria-label="Copy Adapt ID"
+                     @click.prevent="doCopy(item.assignment_id_question_id)"
+                  >
+                    <font-awesome-icon :icon="copyIcon" />
+                  </a>
+                </td>
+                <td>
+                  {{ item.submission }}
+                </td>
+                <td>{{ item.points }}</td>
+                <td>
+                  <SolutionFileHtml :key="item.question_id" :questions="items" :current-page="item.order"
+                                    :format-filename="false"
                   />
-                </a>
+                </td><td v-if="user.role === 2">
+                  <b-tooltip :target="getTooltipTarget('edit',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Edit question source
+                  </b-tooltip>
 
-                <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
-                           delay="500"
-                           triggers="hover focus"
-                >
-                  Remove the question from the assignment
-                </b-tooltip>
-                <a :id="getTooltipTarget('remove',item.question_id)"
-                   href=""
-                   class="pr-1"
-                   @click.prevent="openRemoveQuestionModal(item.question_id)"
-                >
-                  <b-icon class="text-muted" icon="trash"/>
-                </a>
-              <td v-if="showRefreshStatus">
-                <span v-html="item.refresh_status"/>
-              </td>
-            </tr>
+                  <a :id="getTooltipTarget('edit',item.question_id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="editQuestionSource(item.mind_touch_url)"
+                  >
+                    <b-icon class="text-muted"
+                            icon="pencil"
+                            aria-label="Edit question source"
+                    />
+                  </a>
+
+                  <b-tooltip :target="getTooltipTarget('remove',item.question_id)"
+                             delay="500"
+                             triggers="hover focus"
+                  >
+                    Remove the question from the assignment
+                  </b-tooltip>
+                  <a :id="getTooltipTarget('remove',item.question_id)"
+                     href=""
+                     class="pr-1"
+                     @click.prevent="openRemoveQuestionModal(item.question_id)"
+                  >
+                    <b-icon class="text-muted"
+                            icon="trash"
+                            :aria-label="`Remove question ${item.title} from the assignment`"
+                    />
+                  </a>
+                </td><td v-if="showRefreshStatus">
+                  <span v-html="item.refresh_status" />
+                </td>
+              </tr>
             </tbody>
           </table>
         </div>
@@ -309,7 +311,7 @@
       <div v-if="!items.length && !isLoading" class="mt-5">
         <b-alert variant="warning" :show="true">
           <span class="font-weight-bold">This assignment doesn't have any questions.</span>
-          <strong/>
+          <strong />
         </b-alert>
       </div>
     </div>

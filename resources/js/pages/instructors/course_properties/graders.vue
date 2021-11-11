@@ -1,6 +1,6 @@
 <template>
   <div>
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-invite-graders'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-invite-graders'" />
     <b-modal
       id="modal-confirm-remove"
       ref="modal"
@@ -43,7 +43,7 @@
           name="sections"
           @keydown="sectionsForm.errors.clear('selected_sections')"
         />
-        <has-error :form="sectionsForm" field="selected_sections"/>
+        <has-error :form="sectionsForm" field="selected_sections" />
       </b-form>
       <template #modal-footer>
         <b-button
@@ -62,7 +62,7 @@
       title="Invite Grader"
       :no-close-on-esc="true"
     >
-      <RequiredText/>
+      <RequiredText />
       <b-form ref="form">
         <b-form-group
           label-cols-sm="3"
@@ -78,7 +78,7 @@
             :class="{ 'is-invalid': graderForm.errors.has('email') }"
             @keydown="graderForm.errors.clear('email')"
           />
-          <has-error :form="graderForm" field="email"/>
+          <has-error :form="graderForm" field="email" />
         </b-form-group>
         Choose individual sections or <a href="#" @click="selectAllSections">select all</a>:
         <b-form-checkbox-group
@@ -88,11 +88,11 @@
           name="sections"
           @keydown="graderForm.errors.clear('selected_sections')"
         />
-        <has-error :form="graderForm" field="selected_sections"/>
+        <has-error :form="graderForm" field="selected_sections" />
       </b-form>
       <template #modal-footer>
         <span v-if="sendingEmail">
-          <b-spinner small type="grow"/>
+          <b-spinner small type="grow" />
           Sending Email..
         </span>
         <b-button
@@ -134,7 +134,7 @@
                 >
                   <template slot="label">
                     Head Grader
-                    <QuestionCircleTooltip :id="'head-grader-tooltip'"/>
+                    <QuestionCircleTooltip :id="'head-grader-tooltip'" />
                     <b-tooltip target="head-grader-tooltip"
                                triggers="hover focus"
                                delay="500"
@@ -173,22 +173,22 @@
                       />
                     </a>
                     <a
-                      href="#"
+                      href=""
                       aria-label="Remove grader"
-                      @click="initRemoveGrader(data.item.user_id)"
+                      @click.prevent="initRemoveGrader(data.item.user_id)"
                     >
                       <b-icon icon="trash"
                               class="text-muted"
-                              :aria-label="`Remove ${data.item.name} as a grader`"/>
+                              :aria-label="`Remove ${data.item.name} as a grader`"
+                      />
                     </a>
                   </template>
                 </b-table>
               </div>
-              <div v-show=" !course.graders.length
-                      ">
-                      <b-alert show variant="info">
-                        <span class="font-weight-bold">You currently have no graders associated with this course.</span>
-                      </b-alert>
+              <div v-show=" !course.graders.length">
+                <b-alert show variant="info">
+                  <span class="font-weight-bold">You currently have no graders associated with this course.</span>
+                </b-alert>
               </div>
             </div>
             <div v-else>

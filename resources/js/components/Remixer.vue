@@ -170,7 +170,7 @@
       <div v-if="typeOfRemixer === 'saved-questions'">
         <p>
           Questions that have been saved after the visiting the Commons can be added here simply by dragging them from
-        your Saved Questions list to your Chosen Questions list.
+          your Saved Questions list to your Chosen Questions list.
         </p>
       </div>
       <b-row>
@@ -209,10 +209,32 @@
                   <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
                     {{ question.title ? question.title : 'No title' }}
                   </a>
+<<<<<<< Updated upstream
+                  <a href=""
+                     @click.prevent="removeQuestionFromSavedQuestions(question)"
+                  >
+                    <b-icon v-if="typeOfRemixer === 'saved-questions'"
+                            icon="trash"
+                            class="text-muted"
+                            :aria-label="`Remove ${question.title}`"
+                    />
+                  </a>
+||||||| merged common ancestors
                   <b-icon v-if="typeOfRemixer === 'saved-questions'"
                           icon="trash"
                           @click="removeQuestionFromSavedQuestions(question)"
                   />
+=======
+                  <a href=""
+                     @click="removeQuestionFromSavedQuestions(question)"
+                  >
+                    <b-icon v-if="typeOfRemixer === 'saved-questions'"
+                            icon="trash"
+                            class="text-muted"
+                            :aria-label="`Remove ${question.title} from saved questions`"
+                    />
+                  </a>
+>>>>>>> Stashed changes
                 </td>
                 <td class="dragArea">
                   {{ question.submission }}
@@ -250,9 +272,14 @@
                   <a href="" @click.stop.prevent="viewQuestion(question.question_id,'remove')">
                     {{ question.title ? question.title : 'No title' }}
                   </a>
-                  <b-icon icon="trash"
-                          @click="isRemixerTab = true; openRemoveQuestionModal(question)"
-                  />
+                  <a href=""
+                     @click="isRemixerTab = true; openRemoveQuestionModal(question)"
+                  >
+                    <b-icon icon="trash"
+                            class="text-muted"
+                            :aria-label="`Remove ${question.title} from the assignment`"
+                    />
+                  </a>
                 </td>
                 <td class="dragArea">
                   {{ question.submission }}

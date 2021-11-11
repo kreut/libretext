@@ -22,10 +22,16 @@
           class="flex-column align-items-start"
         >
           {{ cannedResponse.canned_response }}
-          <b-icon icon="trash" @click="removeCannedResponse(cannedResponse.id)"/>
+          <a href="" @click.prevent="removeCannedResponse(cannedResponse.id)">
+            <b-icon icon="trash"
+                    :aria-label="`Remove canned response ${cannedResponse.canned_response}`"
+                    class="text-muted"
+            />
+          </a>
         </b-list-group-item>
         <b-input-group class="mt-4">
           <b-form-input id="canned_response"
+                        aria-label="canned response"
                         v-model="cannedResponseForm.canned_response"
                         type="text"
                         :class="{ 'is-invalid': cannedResponseForm.errors.has('canned_response') }"
@@ -43,6 +49,8 @@
             OK
           </b-button>
         </template>
+        </b-icon></a>
+        </b-list-group-item>
       </b-modal>
 
       <b-modal
@@ -325,8 +333,8 @@
                           </template>
                           <div v-show="isAutoGraded" class="pt-1">
                             <div class="d-flex">
-                              <b-form-input id="auto_graded_score"
-                                            v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                              <b-form-input v-show="grading[currentStudentPage - 1]['auto_graded_submission']"
+                                            id="auto_graded_score"
                                             v-model="gradingForm.question_submission_score"
                                             type="text"
                                             size="sm"
@@ -385,8 +393,8 @@
                           <div v-show="isOpenEnded" class="pt-1">
                             <div class="d-flex">
                               <b-form-input
-                                id="open_ended_score"
                                 v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                                id="open_ended_score"
                                 v-model="gradingForm.file_submission_score"
                                 type="text"
                                 size="sm"
@@ -611,8 +619,8 @@
                   v-if="(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'])"
                 >
                   <div v-if="isOpenEndedFileSubmission" class="row">
-                    <iframe title="Open-ended submission"
-                            :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                    <iframe :key="grading[currentStudentPage - 1]['open_ended_submission']['submission']"
+                            title="Open-ended submission"
                             width="600"
                             height="600"
                             :src="getFullPdfUrlAtPage(grading[currentStudentPage - 1]['open_ended_submission']['submission_url'],grading[currentStudentPage - 1]['open_ended_submission']['page'])"
