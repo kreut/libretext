@@ -1,4 +1,5 @@
-n<template>
+n
+<template>
   <div>
     <div v-if="!isLoading">
       <b-container>
@@ -30,9 +31,8 @@ n<template>
             </b-card>
           </b-col>
           <b-col>
-            <scores v-if="!isLoading && chartdata"
-                    :chartdata="chartdata"
-                    :height="300"
+            <HistogramAndTableView :chartdata="chartdata"
+                                   :height="400"
             />
           </b-col>
         </b-row>
@@ -44,12 +44,13 @@ n<template>
 <script>
 
 import { mapGetters } from 'vuex'
-import Scores from '~/components/Scores'
+
 import { getScoresSummary } from '~/helpers/Scores'
 import axios from 'axios'
+import HistogramAndTableView from './HistogramAndTableView'
 
 export default {
-  components: { Scores },
+  components: { HistogramAndTableView },
   middleware: 'auth',
   data: () => ({
     assessmentUrlType: '',

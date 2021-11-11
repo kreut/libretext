@@ -45,7 +45,6 @@ export async function getScoresSummary (id, url) {
         counts.push(0)
       }
     }
-    console.log(counts)
 
     labels = labels.sort((a, b) => a - b)
     console.log(labels)
@@ -58,10 +57,15 @@ export async function getScoresSummary (id, url) {
         }
       }
     }
+    let labelsWithCounts = []
+    for (let i = 0; i < labels.length; i++) {
+      labelsWithCounts[i] = { number_of_students: counts[i], score: labels[i] }
+    }
     console.log('counts')
     console.log(counts)
 
     return {
+      labelsWithCounts: labelsWithCounts,
       labels: labels,
       datasets: [
         {
