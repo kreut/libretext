@@ -148,7 +148,7 @@
                   <span :id="`email-${data.item.id}}`">{{ data.item.email }} </span> <a
                     href="#"
                     class="pr-1"
-                    aria-label="Copy email"
+                    :aria-label="`Copy email for ${data.item.name}`"
                     @click="doCopy(`email-${data.item.id}}`)"
                   >
                     <font-awesome-icon

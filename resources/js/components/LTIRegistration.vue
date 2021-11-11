@@ -9,7 +9,7 @@
         Developer Key ID*
       </template>
       <b-form-input
-        id="canvas_url"
+        id="developer_key_id"
         v-model="form.developer_key_id"
         type="text"
         placeholder="Example. 10203900029"
@@ -100,7 +100,7 @@
         Admin Email*
       </template>
       <b-form-input
-        id="section_name"
+        id="admin_email"
         v-model="form.admin_email"
         type="text"
         placeholder=""

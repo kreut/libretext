@@ -523,7 +523,7 @@
                       <b-icon
                         icon="gear"
                         class="text-muted"
-                        :aria-label="`Edit ${assignment.name}`"
+                        :aria-label="`Assignment properties for ${assignment.name}`"
                       />
                     </a>
                     <b-tooltip :target="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
@@ -535,7 +535,7 @@
                     <a :id="getTooltipTarget('createAssignmentFromTemplate',assignment.id)"
                        href="#"
                        class="pr-1"
-                       aria-label="Create assignment from template"
+                       :aria-label="`Create assignment from ${assignment.name} template`"
                        @click="initCreateAssignmentFromTemplate(assignment.id)"
                     >
                       <font-awesome-icon

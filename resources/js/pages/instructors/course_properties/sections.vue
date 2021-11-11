@@ -138,7 +138,19 @@
                     </b-tooltip>
                   </template>
                   <template v-slot:cell(access_code)="data">
-                    {{ data.item.access_code ? data.item.access_code : 'None Available' }}
+                    <span :id="`access_code-${data.item.id}`">
+                      {{ data.item.access_code ? data.item.access_code : 'None Available' }}
+                    </span>
+                    <span v-if="data.item.access_code">
+                       <a
+                         href=""
+                         class="pr-1"
+                         :aria-label="`Copy access code for ${data.item.name}`"
+                         @click.prevent="doCopy(`access_code-${data.item.id}`)"
+                       >
+                  <font-awesome-icon :icon="copyIcon"/>
+                  </a>
+                    </span>
                   </template>
                   <template v-slot:cell(crn)="data">
                     {{ data.item.crn ? data.item.crn : 'None Provided' }}
@@ -224,14 +236,19 @@ import { mapGetters } from 'vuex'
 import Loading from 'vue-loading-overlay'
 import 'vue-loading-overlay/dist/vue-loading.css'
 import AllFormErrors from '~/components/AllFormErrors'
+import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
+import { faCopy } from '@fortawesome/free-regular-svg-icons'
+import { doCopy } from '~/helpers/Copy'
 
 export default {
   middleware: 'auth',
   components: {
     Loading,
-    AllFormErrors
+    AllFormErrors,
+    FontAwesomeIcon
   },
   data: () => ({
+    copyIcon: faCopy,
     allFormErrors: [],
     courseId: '',
     courseStartDate: '',
@@ -260,6 +277,7 @@ export default {
     user: 'auth/user'
   }),
   async mounted () {
+    this.doCopy = doCopy
     this.courseId = this.$route.params.courseId
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)

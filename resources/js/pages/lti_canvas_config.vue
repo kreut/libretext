@@ -19,39 +19,69 @@
         <span class="font-weight-bold">Redirect URIs:</span>
         <span id="redirect-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('redirect-uri')"/>
+          <a href=""
+             aria-label="Copy redirect uri"
+             @click.prevent="doCopy('redirect-uri')"
+          >
+          <font-awesome-icon :icon="copyIcon" />
+          </a>
         </span>
       </p>
       <p>
         <span class="font-weight-bold">Title:</span> <span id="title">Adapt</span> <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('title')"/>
+        <a href=""
+           aria-label="Copy title"
+           @click.prevent="doCopy('title')"
+        >
+          <font-awesome-icon :icon="copyIcon" />
+          </a>
         </span>
       </p>
       <p>
         <span class="font-weight-bold">Description</span> <span id="description">Online homework platform</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('description')"/>
+          <a href=""
+             aria-label="Copy description"
+             @click.prevent="doCopy('description')"
+          >
+          <font-awesome-icon :icon="copyIcon" />
+          </a>
         </span>
       </p>
       <p>
         <span class="font-weight-bold">Target Link URI:</span>
         <span id="target-link-uri">https://adapt.libretexts.org/api/lti/redirect-uri/{{ campusId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('target-link-uri')"/>
+          <a href=""
+             aria-label="Copy target link uri"
+             @click.prevent="doCopy('target-link-uri')"
+          >
+          <font-awesome-icon :icon="copyIcon" />
+            </a>
         </span>
       </p>
       <p>
         <span class="font-weight-bold">OpenID Connect Initiation Url:</span>
         <span id="open-id-connect-url">https://adapt.libretexts.org/api/lti/oidc-initiation-url</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('open-id-connect-url')"/>
+          <a href=""
+             aria-label="Copy OpenID connect url"
+             @click.prevent="doCopy('open-id-connect-url')"
+          >
+          <font-awesome-icon :icon="copyIcon" />
+            </a>
         </span>
       </p>
       <p>
         <span class="font-weight-bold">Public JWK:</span>
         <vue-json-pretty id="public-jwk" :data="publicJWK"/>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('public-jwk')"/>
+          <a href=""
+             aria-label="Copy public JWK"
+             @click.prevent="doCopy('public-jwk')"
+          >
+          <font-awesome-icon :icon="copyIcon"/>
+            </a>
         </span>
       </p>
 
@@ -75,7 +105,12 @@
         <span class="font-weight-bold">Target Link URI:</span>
         <span id="placement-target-link-uri">https://adapt.libretexts.org/api/lti/configure/{{ campusId }}</span>
         <span class="text-info">
-          <font-awesome-icon :icon="copyIcon" @click="doCopy('placement-target-link-uri')"/>
+          <a href=""
+             aria-label="Copy placement target link uri"
+             @click.prevent="doCopy('placement-target-link-uri')"
+          >
+          <font-awesome-icon :icon="copyIcon" />
+          </a>
         </span>
       </p>
       <p><span class="font-weight-bold">Select Message Type:</span> LtiDeepLinkingRequest</p>

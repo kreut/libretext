@@ -115,10 +115,10 @@
               <span class="font-weight-bold mr-2">Adapt ID: </span>
               {{ questions[currentQuestionPage - 1].assignment_id_question_id }} <span class="text-info ml-1">
                 <a
-                  href="#"
+                  href=""
                   class="pr-1"
-                  aria-label="Copy Adapt ID"
-                  @click="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
+                  :aria-label="`Copy Adapt ID for ${questions[currentQuestionPage - 1].title}`"
+                  @click.prevent="doCopy(questions[currentQuestionPage-1].assignment_id_question_id)"
                 >
                   <font-awesome-icon :icon="copyIcon"/>
                   </a>

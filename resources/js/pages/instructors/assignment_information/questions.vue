@@ -251,7 +251,7 @@
                   <a :id="getTooltipTarget('copy',item.question_id)"
                      href=""
                      class="pr-1"
-                     aria-label="Copy Adapt ID"
+                     :aria-label="`Copy Adapt ID for ${item.title}`"
                      @click.prevent="doCopy(item.assignment_id_question_id)"
                   >
                     <font-awesome-icon :icon="copyIcon" />
