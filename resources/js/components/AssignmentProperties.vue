@@ -840,6 +840,7 @@
           max-rows="4"
           :read-only="isBetaAssignment"
           @namespaceloaded="onCKEditorNamespaceLoaded"
+          @ready="handleFixCKEditor()"
         />
       </b-form-row>
     </b-form-group>
@@ -1090,7 +1091,8 @@ import CKEditor from 'ckeditor4-vue'
 import { defaultAssignTos } from '~/helpers/AssignmentProperties'
 import { updateCompletionSplitOpenEndedSubmissionPercentage } from '~/helpers/CompletionScoringMode'
 import AllFormErrors from '~/components/AllFormErrors'
-import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
+import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
+import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 
 export default {
   components: {
@@ -1179,28 +1181,20 @@ export default {
     this.getTooltipTarget = getTooltipTarget
     initTooltips(this)
     await this.getAssignToGroups()
-    this.hideDatePickerButtonsForAssignTos()
-    this.$nextTick(() => {
-      let ckeVoiceLabels = document.getElementsByClassName('cke_voice_label')
-      for (let i = 0; i < ckeVoiceLabels.length; i++) {
-        if (ckeVoiceLabels[i].innerHTML === 'Press ALT 0 for help') {
-          ckeVoiceLabels[i].innerHTML = ckeVoiceLabels[i].innerHTML + ' (Use the OPTION key instead ALT on a Mac)'
-        }
-      }
-    })
-  },
-  form: function (newVal, oldVal) {
-    console.log('New value: ' + newVal + ', Old value: ' + oldVal)
+    this.fixDatePickerAccessibilitysForAssignTos()
   },
   methods: {
-    hideDatePickerButtonsForAssignTos () {
+    handleFixCKEditor () {
+      fixCKEditor(this)
+    },
+    fixDatePickerAccessibilitysForAssignTos () {
       for (let i = 0; i < this.form.assign_tos.length; i++) {
-        hideDatePickerButton(`available_from_${i}`)
-        hideDatePickerButton(`available_from_time_${i}`)
-        hideDatePickerButton(`due_date_${i}`)
-        hideDatePickerButton(`due_time_${i}`)
-        hideDatePickerButton(`final_submission_deadline_${i}`)
-        hideDatePickerButton(`final_submission_deadline_time_${i}`)
+        fixDatePicker(`available_from_${i}`,`selected_available_from_${i}`)
+        fixDatePicker(`available_from_time_${i}`,`selected_available_from_time_${i}`)
+        fixDatePicker(`due_date_${i}`, `selected_due_date_${i}`)
+        fixDatePicker(`due_time_${i}`, `selected_due_time_${i}`)
+        fixDatePicker(`final_submission_deadline_${i}`,`selected_final_submission_deadline_${i}`)
+        fixDatePicker(`final_submission_deadline_time_${i}`,`selected_final_submission_deadline_time_${i}`)
       }
     },
     checkDefaultOpenEndedSubmissionType () {
@@ -1265,7 +1259,7 @@ export default {
       let newAssignTo = this.defaultAssignTos(this.$moment, this.courseStartDate, this.courseEndDate)
       this.form.assign_tos.push(newAssignTo)
       this.$nextTick(() => {
-        this.hideDatePickerButtonsForAssignTos()
+        this.fixDatePickerAccessibilitysForAssignTos()
       })
     },
     updateAssignTos (assignTo) {

@@ -329,7 +329,7 @@ import { loginAsStudentInCourse } from '~/helpers/LoginAsStudentInCourse'
 import { mapGetters } from 'vuex'
 import ExtensionAndOverrideScore from '~/components/ExtensionAndOverrideScore'
 import { ToggleButton } from 'vue-js-toggle-button'
-import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
+import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 
 // get all students enrolled in the course: course_enrollment
 // get all assignments for the course
@@ -662,8 +662,8 @@ export default {
         this.isLoading = false
         this.$bvModal.show('modal-student-extension-and-override')
         this.$nextTick(() => {
-          hideDatePickerButton(`extension_date-${this.assignmentId}-${this.studentUserId}`)
-          hideDatePickerButton(`extension_time-${this.assignmentId}-${this.studentUserId}`)
+          fixDatePicker(`extension_date-${this.assignmentId}-${this.studentUserId}`, 'extension date')
+          fixDatePicker(`extension_time-${this.assignmentId}-${this.studentUserId}`, 'extension time')
         })
       } catch (error) {
         this.$noty.error(error.message)

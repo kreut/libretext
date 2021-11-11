@@ -444,7 +444,7 @@
 import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
-import { hideDatePickerButton } from '~/helpers/HideDatePickerButton'
+import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
 
 const now = new Date()
 export default {
@@ -466,8 +466,8 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    hideDatePickerButton('start_date')
-    hideDatePickerButton('end_date')
+    fixDatePicker('start_date','start date')
+    fixDatePicker('end_date','end date')
     let startDate = document.getElementById('start_date')
     startDate.style.opacity = '0'
     startDate.style.width = '0'

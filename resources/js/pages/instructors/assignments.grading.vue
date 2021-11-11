@@ -504,11 +504,13 @@
                                       :key="`${currentQuestionPage}-${currentStudentPage}`"
                                       v-model="richTextFeedback"
                                       :config="richEditorConfig"
+                                      tabindex="0"
                                       style="margin-bottom: 23px"
                                       rows="5"
                                       max-rows="5"
                                       :class="{ 'is-invalid': gradingForm.errors.has('textFeedback') }"
                                       @namespaceloaded="onCKEditorNamespaceLoaded"
+                                      @ready="handleFixCKEditor()"
                             />
                             <b-form-textarea
                               v-if="textFeedbackMode === 'plain_text'"
@@ -695,6 +697,7 @@ import Vue from 'vue'
 import { ToggleButton } from 'vue-js-toggle-button'
 import CKEditor from 'ckeditor4-vue'
 import { mapGetters } from 'vuex'
+import { fixCKEditor } from '~/helpers/accessibility/fixCKEditor'
 
 Vue.prototype.$http = axios // needed for the audio player
 export default {
@@ -811,6 +814,9 @@ export default {
     this.getFerpaMode()
   },
   methods: {
+    handleFixCKEditor () {
+      fixCKEditor(this)
+    },
     jumpToStudentByNumber () {
       if (this.studentNumberToJumpTo !== '--') {
         this.currentStudentPage = this.studentNumberToJumpTo
@@ -862,6 +868,7 @@ export default {
     },
     onCKEditorNamespaceLoaded (CKEDITOR) {
       CKEDITOR.addCss('.cke_editable { font-size: 15px; }')
+      fixCKEditor(this)
     },
     async removeCannedResponse (cannedResponseId) {
       try {
