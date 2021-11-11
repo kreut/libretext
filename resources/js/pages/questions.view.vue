@@ -1272,6 +1272,7 @@
                         :key="questions[currentPage-1].id"
                         v-model="textSubmissionForm.text_submission"
                         tabindex="0"
+                        aria-label="Text submission box"
                         :config="questions[currentPage-1].open_ended_text_editor === 'rich' ? richEditorConfig: plainEditorConfig"
                         @ready="handleFixCKEditor()"
                         @namespaceloaded="onCKEditorNamespaceLoaded"
