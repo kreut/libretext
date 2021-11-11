@@ -414,6 +414,7 @@
           <b-form-radio value="split">
             <input v-model="form.completion_split_auto_graded_percentage"
                    class="percent-input"
+                   aria-label="completion split auto-graded percentage"
                    @keyup="completionSplitOpenEndedPercentage = updateCompletionSplitOpenEndedSubmissionPercentage(form)"
                    @click="form.default_completion_scoring_mode = 'split'"
                    @keydown="form.default_completion_scoring_mode = 'split'"
@@ -422,6 +423,7 @@
             <span v-if="!isNaN(parseFloat(completionSplitOpenEndedPercentage))">
               <input v-model="completionSplitOpenEndedPercentage"
                      class="percent-input percent-input-disabled"
+                     aria-label="completion split open-ended percentage"
                      :aria-disabled="true"
                      @click="false"
               >%
@@ -832,6 +834,7 @@
         <ckeditor
           id="instructions"
           v-model="form.instructions"
+          tabindex="0"
           rows="4"
           :config="richEditorConfig"
           max-rows="4"
@@ -912,7 +915,7 @@
     >
       <template slot="label">
         Libretexts URL
-        <QuestionCircleTooltip :id="'libretexts_url_tooltip'" />
+        <QuestionCircleTooltip id="'libretexts_url_tooltip'" />
       </template>
       <b-form-textarea
         id="libretexts_url"
@@ -1177,6 +1180,14 @@ export default {
     initTooltips(this)
     await this.getAssignToGroups()
     this.hideDatePickerButtonsForAssignTos()
+    this.$nextTick(() => {
+      let ckeVoiceLabels = document.getElementsByClassName('cke_voice_label')
+      for (let i = 0; i < ckeVoiceLabels.length; i++) {
+        if (ckeVoiceLabels[i].innerHTML === 'Press ALT 0 for help') {
+          ckeVoiceLabels[i].innerHTML = ckeVoiceLabels[i].innerHTML + ' (Use the OPTION key instead ALT on a Mac)'
+        }
+      }
+    })
   },
   form: function (newVal, oldVal) {
     console.log('New value: ' + newVal + ', Old value: ' + oldVal)
