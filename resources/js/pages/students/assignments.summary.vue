@@ -327,7 +327,7 @@
           </b-card>
 
           <b-card v-if="canViewAssignmentStatistics" class="mb-5" header="default"
-                  header-html="<span class=&quot;h5&quot;>Statistics</span"
+                  header-html="<h2 class=&quot;h5&quot;>Statistics</h2>"
           >
             <AssignmentStatistics/>
           </b-card>

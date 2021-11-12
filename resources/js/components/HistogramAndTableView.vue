@@ -1,5 +1,5 @@
 <template>
-  <div>
+  <div v-if="chartdata.labelsWithCounts && chartdata.labelsWithCounts.length">
     <toggle-button
       :width="105"
       class="mt-2"
@@ -17,7 +17,7 @@
       <scores
               class="border-1 border-info"
               :chartdata="chartdata"
-              :height="300" :width="300"
+              :height="height"
       />
     </div>
     <div v-else>

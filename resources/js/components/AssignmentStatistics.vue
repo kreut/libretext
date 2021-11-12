@@ -33,6 +33,7 @@ n
           <b-col>
             <HistogramAndTableView :chartdata="chartdata"
                                    :height="400"
+                                   :width="300"
             />
           </b-col>
         </b-row>

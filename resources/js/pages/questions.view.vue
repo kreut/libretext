@@ -1751,7 +1751,6 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal,
     FontAwesomeIcon,
     EnrollInCourse,
-    Scores,
     Email,
     Loading,
     ToggleButton,
