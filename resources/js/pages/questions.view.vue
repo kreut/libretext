@@ -645,7 +645,23 @@
                         getSolutionUploadTypes()
                       }}.</span>
                   </div>
+
                   <file-upload
+                    v-if="isOpenEndedAudioSubmission"
+                    ref="upload"
+                    :key="fileUploadKey"
+                    v-model="files"
+                    accept=".mp3"
+                    put-action="/put.method"
+                    @input-file="inputFile"
+                    @input-filter="inputFilter"
+                  >
+                    <b-button variant="primary" size="sm" class="mr-3">
+                      Select file
+                    </b-button>
+                  </file-upload>
+                  <file-upload
+                    v-if="!isOpenEndedAudioSubmission"
                     ref="upload"
                     :key="fileUploadKey"
                     v-model="files"
@@ -1291,7 +1307,25 @@
                     </b-container>
                   </div>
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
+                    <p>
+                      <span class="font-weight-bold">Instructions:</span> Use the audio recorder below to upload your
+                      audio submission directly to Adapt. Or optionally, record your submission separately
+                      as an .mp3 file and then upload it.
+                    </p>
+                    <toggle-button
+                      :width="160"
+                      class="mt-2"
+                      :value="showAudioUploadComponent"
+                      :sync="true"
+                      :font-size="14"
+                      :margin="4"
+                      :color="toggleColors"
+                      :labels="{checked: 'Use The Recorder', unchecked: 'Record Separately'}"
+                      :arai-label="showAudioUploadComponent ? 'Use The Recorder' : 'Record Separately'"
+                      @change="showAudioUploadComponent =!showAudioUploadComponent"
+                    />
                     <audio-recorder
+                      v-show="showAudioUploadComponent"
                       ref="uploadRecorder"
                       :key="questions[currentPage-1].id"
                       class="m-auto"
@@ -1300,6 +1334,13 @@
                       :successful-upload="submittedAudioUpload"
                       :failed-upload="failedAudioUpload"
                     />
+                    <b-button v-show="!showAudioUploadComponent"
+                              variant="primary"
+                              size="sm"
+                              @click="openUploadFileModal(questions[currentPage-1].id)"
+                    >
+                      Upload New .mp3 File
+                    </b-button>
                   </div>
                 </div>
               </div>
@@ -1709,7 +1750,6 @@ import { downloadSolutionFile, downloadSubmissionFile, getFullPdfUrlAtPage } fro
 import { doCopy } from '~/helpers/Copy'
 
 import Email from '~/components/Email'
-import Scores from '~/components/Scores'
 import EnrollInCourse from '~/components/EnrollInCourse'
 import RefreshQuestion from '~/components/RefreshQuestion'
 import { getScoresSummary } from '~/helpers/Scores'
@@ -1768,6 +1808,7 @@ export default {
     AllFormErrors
   },
   data: () => ({
+    showAudioUploadComponent: false,
     reload: 0,
     showHistogramView: true,
     allFormErrors: [],
@@ -2530,10 +2571,12 @@ export default {
         }
         let validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
 
-        let validExtension = this.uploadLevel === 'question'
-          ? /\.(pdf|text|png|jpeg|jpg)$/i.test(newFile.name)
-          : /\.(pdf)$/i.test(newFile.name)
-
+        let validExtension
+        if (this.uploadLevel === 'question') {
+          validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|text|png|jpeg|jpg)$/i.test(newFile.name)
+        } else {
+          /\.(pdf)$/i.test(newFile.name)
+        }
         if (!validExtension) {
           this.uploadFileForm.errors.set(this.uploadFileType, validUploadTypesMessage)
 
@@ -2958,7 +3001,11 @@ export default {
       return this.user.role === 3 ? 'Upload File Submission' : `Upload ${solutionType} Solution`
     },
     getSolutionUploadTypes () {
-      return this.uploadLevel === 'question' ? getAcceptedFileTypes() : getAcceptedFileTypes('.pdf')
+      if (this.uploadLevel === 'question') {
+        return this.isOpenEndedAudioSubmission ? getAcceptedFileTypes('.mp3') : getAcceptedFileTypes()
+      } else {
+        return getAcceptedFileTypes('.pdf')
+      }
     },
     async updateLastSubmittedAndLastResponse (assignmentId, questionId) {
       try {
@@ -3259,6 +3306,7 @@ export default {
       this.openEndedSubmissionType = this.questions[currentPage - 1].open_ended_submission_type
 
       this.isOpenEndedAudioSubmission = (this.openEndedSubmissionType === 'audio')
+      this.showAudioUploadComponent = this.isOpenEndedAudioSubmission
       this.isOpenEndedFileSubmission = (this.openEndedSubmissionType === 'file')
 
       this.setCompletionScoringModeMessage()

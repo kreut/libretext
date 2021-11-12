@@ -180,6 +180,7 @@ class SubmissionFileController extends Controller
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
+            DB::beginTransaction();
             $submissionFile->updateOrCreate(
                 ['user_id' => Auth::user()->id,
                     'assignment_id' => $assignment->id,
@@ -188,12 +189,12 @@ class SubmissionFileController extends Controller
                 $submission_file_data
             );
             $open_ended_score = $this->updateScoreIfCompletedScoringType($assignment, $question->id);
+            DB::commit();
             $auto_graded_submission = DB::table('submissions')->where('user_id', Auth::user()->id)
                 ->where('assignment_id', $assignment->id)
                 ->where('question_id', $question->id)
                 ->first();
             $total_score = $open_ended_score + ($auto_graded_submission ? $auto_graded_submission->score : 0);
-
 
             $response['completed_all_assignment_questions'] = $assignmentSyncQuestion->completedAllAssignmentQuestions($assignment);
             $response['original_filename'] = $full_file->original_filename;
@@ -208,6 +209,7 @@ class SubmissionFileController extends Controller
 
 
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to set the page for this question.  Please try again or contact us for assistance.";
@@ -491,6 +493,12 @@ class SubmissionFileController extends Controller
                             'type' => 'q'],
                         $submission_file_data
                     );
+                    //they may have used the audio file uploader instead of the file uploader so let's remove the regular one
+                    $submissionFile->where('user_id', Auth::user()->id)
+                        ->where('assignment_id', $assignment_id)
+                        ->where('question_id', $question_id)
+                        ->where('type', 'audio')
+                        ->delete();
                     $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
 
                     $response['submission'] = basename($submission);

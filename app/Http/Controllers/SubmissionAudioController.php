@@ -71,10 +71,10 @@ class SubmissionAudioController extends Controller
                 $questionLevelOverride = new QuestionLevelOverride();
                 $assignmentLevelOverride = new AssignmentLevelOverride();
                 $has_question_level_override = $questionLevelOverride->hasOpenEndedOverride($assignment_id, $question_id, $assignmentLevelOverride);
-               if (!$has_question_level_override) {
-                   $response['message'] = $can_upload_response['message'];
-                   return $response;
-               }
+                if (!$has_question_level_override) {
+                    $response['message'] = $can_upload_response['message'];
+                    return $response;
+                }
             }
         }
 
@@ -117,8 +117,14 @@ class SubmissionAudioController extends Controller
                     'question_id' => $question_id],
                 $submission_file_data
             );
-           $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
-
+            //they may have used the regular file uploader instead of the audio uploader so let's remove the regular one
+            $submissionFile->where('user_id', $user_id)
+                ->where('assignment_id', $assignment_id)
+                ->where('question_id', $question_id)
+                ->where('type', 'q')
+                ->delete();
+            $score = $this->updateScoreIfCompletedScoringType($assignment, $question_id);
+            DB::commit();
             $response['date_submitted'] = $this->convertUTCMysqlFormattedDateToHumanReadableLocalDateAndTime(date('Y-m-d H:i:s'), Auth::user()->time_zone, 'M d, Y g:i:s a');
             $response['submission_file_url'] = $this->getTemporaryUrl($assignment_id, basename($submission));
             $response['score'] = $score === null ? null : $score;
@@ -131,7 +137,7 @@ class SubmissionAudioController extends Controller
                 $response['message'] .= "  You may resubmit " . ($max_number_of_uploads_allowed - (1 + $upload_count)) . " more times.";
             }
             $response['type'] = 'success';
-            DB::commit();
+
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
