@@ -314,8 +314,8 @@
         </template>
         <b-form-datepicker
           id="end_date"
-          tabindex="0"
           v-model="form.end_date"
+          tabindex="0"
           :min="min"
           class="mb-2"
           :class="{ 'is-invalid': form.errors.has('end_date') }"

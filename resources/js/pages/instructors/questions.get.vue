@@ -173,7 +173,7 @@
               </b-col>
             </b-tab>
             <b-tab title="Direct Import By Libretexts ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Libretexts ID" style="height:425px">
+              <b-card header-html="<h2 class='h7'>Direct Import By Libretexts ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
@@ -215,8 +215,8 @@
                       </b-col>
                       <b-col>
                         <b-form-textarea
-                          id="textarea"
                           v-model="directImport"
+                          aria-label="Libretext IDs to direct import"
                           placeholder="Example. query-1023, chemistry-2213, chem-2213"
                           rows="4"
                           max-rows="5"
@@ -254,7 +254,7 @@
               </b-card>
             </b-tab>
             <b-tab title="Direct Import By Adapt ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
-              <b-card header-html="<span class='font-weight-bold'>Direct Import By Adapt ID" style="height:425px">
+              <b-card header-html="<h2 class='h7'>Direct Import By Adapt ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
@@ -268,8 +268,8 @@
                       </b-col>
                       <b-col>
                         <b-form-textarea
-                          id="textarea"
                           v-model="directImport"
+                          aria-label="Adapt IDs to direct import"
                           placeholder="Example. 1027-34, 1029-38, 1051-44"
                           rows="4"
                           max-rows="5"

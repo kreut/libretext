@@ -240,7 +240,7 @@
               </template>
               <template #cell(last_question_submission)="data">
                 <span
-                  :class="{ 'text-danger': data.item.questionSubmissionRequired && !data.item.showThumbsUpForQuestionSubmission }"
+                  :class="{ 'table-text-danger': data.item.questionSubmissionRequired && !data.item.showThumbsUpForQuestionSubmission }"
                 >
                   {{ data.item.last_question_submission }}
                 </span>
@@ -251,7 +251,7 @@
 
               <template #cell(last_open_ended_submission)="data">
                 <span
-                  :class="{ 'text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
+                  :class="{ 'table-text-danger': data.item.openEndedSubmissionRequired && !data.item.showThumbsUpForOpenEndedSubmission }"
                 >
                   <span v-if="!data.item.showThumbsUpForOpenEndedSubmission">{{
                       data.item.last_open_ended_submission

@@ -499,7 +499,6 @@
                      :id="getTooltipTarget('viewSubmissionFiles',assignment.id)"
                      href=""
                      class="pr-1"
-                     aria-label="Grading"
                      @click.prevent="getSubmissionFileView(assignment.id, assignment.submission_files)"
                   >
                     <b-icon

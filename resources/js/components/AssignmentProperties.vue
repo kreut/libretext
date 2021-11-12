@@ -981,6 +981,7 @@
             <b-form-datepicker
               :id="`available_from_${index}`"
               v-model="assignTo.available_from_date"
+              tabindex="0"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`available_from_date_${index}`) }"
             />
@@ -989,6 +990,7 @@
           <b-col>
             <b-form-timepicker :id="`available_from_time_${index}`"
                                v-model="assignTo.available_from_time"
+                               tabindex="0"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`available_from_time_${index}`) }"
             />
@@ -1010,6 +1012,7 @@
             <b-form-datepicker
               :id="`due_date_${index}`"
               v-model="assignTo.due_date"
+              tabindex="0"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`due_${index}`) }"
               @shown="form.errors.clear(`due_${index}`)"
@@ -1019,6 +1022,7 @@
           <b-col>
             <b-form-timepicker :id="`due_time_${index}`"
                                v-model="assignTo.due_time"
+                               tabindex="0"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`due_time_${index}`) }"
                                @shown="form.errors.clear(`due_time_${index}`)"
@@ -1031,7 +1035,7 @@
         v-show="form.late_policy !== 'not accepted'"
         label-cols-sm="4"
         label-cols-lg="3"
-        label-for="final_submission_deadline"
+        :label-for="`final_submission_deadline_${index}`"
       >
         <template slot="label">
           Final Submission Deadline*
@@ -1042,6 +1046,7 @@
             <b-form-datepicker
               :id="`final_submission_deadline_${index}`"
               v-model="assignTo.final_submission_deadline_date"
+              tabindex="0"
               :min="min"
               :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_${index}`) }"
               :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
@@ -1052,6 +1057,7 @@
           <b-col>
             <b-form-timepicker :id="`final_submission_deadline_time_${index}`"
                                v-model="assignTo.final_submission_deadline_time"
+                               tabindex="0"
                                locale="en"
                                :class="{ 'is-invalid': form.errors.has(`final_submission_deadline_time_${index}`) }"
                                :disabled="Boolean(solutionsReleased) && assessmentType !== 'real time'"
@@ -1189,12 +1195,12 @@ export default {
     },
     fixDatePickerAccessibilitysForAssignTos () {
       for (let i = 0; i < this.form.assign_tos.length; i++) {
-        fixDatePicker(`available_from_${i}`,`selected_available_from_${i}`)
-        fixDatePicker(`available_from_time_${i}`,`selected_available_from_time_${i}`)
+        fixDatePicker(`available_from_${i}`, `selected_available_from_${i}`)
+        fixDatePicker(`available_from_time_${i}`, `selected_available_from_time_${i}`)
         fixDatePicker(`due_date_${i}`, `selected_due_date_${i}`)
         fixDatePicker(`due_time_${i}`, `selected_due_time_${i}`)
-        fixDatePicker(`final_submission_deadline_${i}`,`selected_final_submission_deadline_${i}`)
-        fixDatePicker(`final_submission_deadline_time_${i}`,`selected_final_submission_deadline_time_${i}`)
+        fixDatePicker(`final_submission_deadline_${i}`, `selected_final_submission_deadline_${i}`)
+        fixDatePicker(`final_submission_deadline_time_${i}`, `selected_final_submission_deadline_time_${i}`)
       }
     },
     checkDefaultOpenEndedSubmissionType () {
