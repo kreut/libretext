@@ -293,6 +293,7 @@
           Start Date*
         </template>
         <b-form-datepicker
+          tabindex="0"
           id="start_date"
           v-model="form.start_date"
           :min="min"
@@ -313,6 +314,7 @@
         </template>
         <b-form-datepicker
           id="end_date"
+          tabindex="0"
           v-model="form.end_date"
           :min="min"
           class="mb-2"
@@ -334,14 +336,15 @@
         </template>
         <b-form-radio-group id="public"
                             v-model="form.public"
+                            aria-label="Public*"
                             stacked
                             :aria-required="true"
+                            name="public"
         >
-          <b-form-radio name="public" value="1">
+          <b-form-radio value="1">
             Yes
           </b-form-radio>
-
-          <b-form-radio name="public" value="0">
+          <b-form-radio  value="0">
             No
           </b-form-radio>
         </b-form-radio-group>
