@@ -53,11 +53,11 @@
       title="Question Used In Assignment"
     >
       <p>
-        You are trying to refresh a question in one of your assignments that already has student submissions. If this is a material
-        change, we can refresh the question and remove current student submissions.
+        You are trying to refresh a question in one of your assignments that already has student submissions.
+        If the change is purely cosmetic, we can refresh while leaving student submissions intact.
       </p>
       <p>
-        However, if the change is purely cosmetic, we can refresh while leaving student submissions intact.
+        However, if this is a material change, we can refresh the question and remove current student submissions.
       </p>
       <b-form-group
         id="refresh_option"
@@ -70,15 +70,16 @@
                             class="mt-2"
                             stacked
         >
-          <b-form-radio :value="true">
-            Refresh and remove student submissions
-          </b-form-radio>
           <b-form-radio :value="false">
             Refresh but do not remove student submissions
           </b-form-radio>
+          <b-form-radio :value="true">
+            Refresh and remove student submissions
+          </b-form-radio>
+
         </b-form-radio-group>
       </b-form-group>
-      <b-alert :show="refreshAndRemoveStudentSubmissions">
+      <b-alert :show="refreshAndRemoveStudentSubmissions" variant="danger">
         <span class="font-weight-bold font-italic">Removing student submissions cannot be undone</span>
       </b-alert>
       <template #modal-footer>
@@ -143,7 +144,7 @@ export default {
     }
   },
   data: () => ({
-    refreshAndRemoveStudentSubmissions: true,
+    refreshAndRemoveStudentSubmissions: false,
     natureOfUpdateForEditForm: new Form({
       nature_of_update: ''
     }),
