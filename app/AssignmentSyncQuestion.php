@@ -216,8 +216,6 @@ class AssignmentSyncQuestion extends Model
     /**
      * @param Assignment $assignment
      * @param Question $question
-     * @param LtiLaunch $ltiLaunch
-     * @param LtiGradePassback $ltiGradePassback
      */
     public
     function updateAssignmentScoreBasedOnRemovedQuestion(Assignment       $assignment,

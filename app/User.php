@@ -122,4 +122,20 @@ class User extends Authenticatable implements JWTSubject //, MustVerifyEmail
         return $assignments;
     }
 
+    /**
+     * @return bool
+     */
+    public function isAdminWithCookie(): bool
+    {
+        $admins = ['adapt@libretexts.org','dlarsen@ucdavis.edu'];
+        if (app()->environment('local', 'testing')){
+            $admins[] = 'me@me.com';
+        }
+
+        $isValidEmail =  in_array(session()->get('original_email'),$admins);//get the original email since they may be in student view
+        $isValidCookie  =isset(request()->cookie()['IS_ME']) && (request()->cookie()['IS_ME'] === config('myconfig.is_me_cookie'));
+
+        return $isValidEmail && $isValidCookie;
+    }
+
 }

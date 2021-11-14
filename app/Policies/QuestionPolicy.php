@@ -16,9 +16,21 @@ class QuestionPolicy
 {
     use HandlesAuthorization;
 
-
-    public function refreshQuestion(User $user, Question $question, AssignmentSyncQuestion $assignmentSyncQuestion, $assignment)
+    /**
+     * @param User $user
+     * @param Question $question
+     * @param AssignmentSyncQuestion $assignmentSyncQuestion
+     * @param $assignment
+     * @return bool|Response
+     */
+    public function refreshQuestion(User $user,
+                                    Question $question,
+                                    AssignmentSyncQuestion $assignmentSyncQuestion,
+                                    $assignment)
     {
+        if ($user->isAdminWithCookie()){
+            return true;
+        }
         $has_access = true;
         $message = '';
         if ($user->role !== 2) {
@@ -34,9 +46,11 @@ class QuestionPolicy
             $has_access = false;
             $message = "You cannot refresh this question since this is a Beta assignment. Please contact the Alpha instructor to request the refresh.";
         }
+
         return ($has_access)
             ? Response::allow()
             : Response::deny($message);
+
     }
 
     public function updateProperties(User $user)

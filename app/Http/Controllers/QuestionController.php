@@ -81,8 +81,6 @@ class QuestionController extends Controller
      * @param Question $question
      * @param Assignment $assignment
      * @param AssignmentSyncQuestion $assignmentSyncQuestion
-     * @param LtiLaunch $ltiLaunch
-     * @param LtiGradePassback $ltiGradePassback
      * @param RefreshQuestionRequest $refreshQuestionRequest
      * @return array
      * @throws Exception
@@ -91,9 +89,7 @@ class QuestionController extends Controller
                             Question               $question,
                             Assignment             $assignment,
                             AssignmentSyncQuestion $assignmentSyncQuestion,
-                            LtiLaunch              $ltiLaunch,
-                            LtiGradePassback       $ltiGradePassback,
-                            RefreshQuestionRequest $refreshQuestionRequest)
+                            RefreshQuestionRequest $refreshQuestionRequest): array
     {
 
         try {
@@ -107,6 +103,7 @@ class QuestionController extends Controller
 
 
             DB::beginTransaction();
+
             if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
 
@@ -136,7 +133,7 @@ class QuestionController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "We were not able to update the question's properties.  Please try again or contact us for assistance.";
+            $response['message'] = "We were not able to update the question.  Please try again or contact us for assistance.";
         }
         return $response;
     }
