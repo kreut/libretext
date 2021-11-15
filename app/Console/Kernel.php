@@ -38,6 +38,7 @@ class Kernel extends ConsoleKernel
                 ->dailyAt('13:00');
 
         }
+        $schedule->command('update:NonH5PLicenses')->everyFifteenMinutes();
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
