@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Console\Commands;
+namespace App\Console\Commands\OneTimers;
 
 use App\Libretext;
 use App\Question;
@@ -8,14 +8,14 @@ use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Storage;
 
-class updateLicenses extends Command
+class updateH5PLicenses extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'update:Licenses';
+    protected $signature = 'update:H5PLicenses';
 
     /**
      * The console command description.
@@ -77,14 +77,8 @@ class updateLicenses extends Command
 
 
         try {
-            //webwork
-            $output= "Updating webwork\r\n";
-             $question->where('technology', 'webwork')->update(['license'=>null]);
-            $question->where('technology', 'webwork')
-                ->where('library','query')
-                ->update(['license'=>'ccbyncsa', 'license_version' => '4.0']);
-            echo $output;
-            $output .= "Updating h5p\r\n";
+
+            $output = "Updating h5p\r\n";
             //h5p
             $questions = $question->where('technology', 'h5p')
                 ->where('author',null)

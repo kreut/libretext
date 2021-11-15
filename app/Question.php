@@ -60,7 +60,24 @@ class Question extends Model
                 $license_version = $license ? $info['license_version'] : null;
             }
         } else {
-            //TODO
+            $license = null;
+            $license_version = null;
+            $author = null;
+            $tags = $libretext->getPrivatePage('tags', $this->page_id)->tag ?? null;
+            if (is_array($tags)) {
+                foreach ($tags as $tag) {
+                    if (strpos($tag->title, 'author') !== false) {
+                        $author = str_replace(['authorname:','author:', 'author-'], '', $tag->title);
+                    }
+                    if (strpos($tag->title, 'license:') !== false) {
+                        $license = str_replace('license:', '', $tag->title);
+                    }
+                    if (strpos($tag->title, 'licenseversion:') !== false) {
+                        $license_version = str_replace('licenseversion:', '', $tag->title);
+                        $license_version = number_format($license_version/10,1);
+                    }
+                }
+            }
         }
         return compact('author', 'license', 'license_version');
     }
@@ -399,7 +416,6 @@ class Question extends Model
             $question->title = $title;
             $question->url = $url;
             $question->save();
-
 
 
             if ($technology_and_tags['tags']) {
