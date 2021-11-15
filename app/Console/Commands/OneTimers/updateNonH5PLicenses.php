@@ -50,7 +50,7 @@ class updateNonH5PLicenses extends Command
             ->join('assignment_question', 'questions.id', '=', 'assignment_question.question_id')
             ->where('technology', '<>', 'h5p')
             ->where('private_license_fixed', 0)
-            ->limit(700)
+            ->limit(1000)
             ->get();
 
         $questions_by_id = [];
