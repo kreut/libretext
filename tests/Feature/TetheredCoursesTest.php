@@ -73,6 +73,7 @@ class TetheredCoursesTest extends TestCase
         $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
         $this->beta_assignment = factory(Assignment::class)->create(['course_id' => $this->beta_course->id]);
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
+        factory(Question::class)->create(['library'=> $this->learning_tree->root_node_library, 'page_id' => $this->learning_tree->root_node_page_id]);
 
         BetaCourse::create(['id' => $this->beta_course->id, 'alpha_course_id' => $this->course->id]);
         BetaAssignment::create(['id' => $this->beta_assignment->id, 'alpha_assignment_id' => $this->assignment->id]);

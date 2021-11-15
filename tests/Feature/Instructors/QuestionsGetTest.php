@@ -9,6 +9,8 @@ use App\SubmissionFile;
 use App\Submission;
 use App\User;
 use App\Tag;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Illuminate\Support\Facades\DB;
@@ -21,27 +23,27 @@ class QuestionsGetTest extends TestCase
     /**Still must test the stuff with the correct/completed and number**/
     private $assignment_remixer;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $assignment;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user_2;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $course;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $question;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $student_user;
 
@@ -65,7 +67,7 @@ class QuestionsGetTest extends TestCase
         $this->question = factory(Question::class)->create();
 
         $this->assignment_remixer = factory(Assignment::class)->create(['course_id' => $this->course->id]);
-
+        factory(Question::class)->create(['library'=>'chem', 'page_id' => 265531]);
         DB::table('assignment_question')->insert([
             'assignment_id' => $this->assignment_remixer->id,
             'question_id' => $this->question->id,

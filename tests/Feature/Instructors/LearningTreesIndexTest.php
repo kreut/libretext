@@ -5,6 +5,9 @@ namespace Tests\Feature\Instructors;
 use App\Assignment;
 use App\Course;
 use App\LearningTreeHistory;
+use App\Question;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Tests\TestCase;
 use App\User;
 use App\LearningTree;
@@ -16,19 +19,15 @@ class LearningTreesIndexTest extends TestCase
     private $learning_tree;
     private $user;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $student_user;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $assignment;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
-     */
-    private $course;
-    /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user_2;
 
@@ -37,13 +36,15 @@ class LearningTreesIndexTest extends TestCase
 
         parent::setUp();
         $this->user = factory(User::class)->create();
-        $this->course = factory(Course::class)->create(['user_id' => $this->user->id]);
-        $this->assignment = factory(Assignment::class)->create(['course_id' => $this->course->id]);
+        $course = factory(Course::class)->create(['user_id' => $this->user->id]);
+        $this->assignment = factory(Assignment::class)->create(['course_id' => $course->id]);
         $this->user_2 = factory(User::class)->create();
         $this->student_user = factory(User::class)->create();
         $this->student_user->role = 3;
         $this->learning_tree = factory(LearningTree::class)->create(['user_id' => $this->user->id]);
-        //create a student and enroll in the class
+
+        factory(Question::class)->create(['page_id' => $this->learning_tree->root_node_page_id,
+        'library' => $this->learning_tree->root_node_library]);
 
     }
 
