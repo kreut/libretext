@@ -171,6 +171,27 @@ class QuestionsViewTest extends TestCase
     }
 
     /** @test */
+    public function non_instructor_cannot_email_about_solution_error()
+    {
+        $this->actingAs($this->student_user)
+            ->postJson("/api/libretexts/solution-error",
+                ['question_id' => $this->question->id,
+                    'text' => 'Here is my text explaining the issue'])
+            ->assertJson(['message' => 'You are not allowed to send a solution email error.']);
+    }
+
+    /** @test */
+    public function instructor_can_email_about_solution_error()
+    {
+        $this->actingAs($this->user)
+            ->postJson("/api/libretexts/solution-error",
+                ['question_id' => $this->question->id,
+                    'text' => 'Here is my text explaining the issue'])
+            ->assertJson(['type' => 'success']);
+    }
+
+
+    /** @test */
     public function non_instructor_cannot_update_the_completion_scoring_mode()
     {
         $this->actingAs($this->student_user)

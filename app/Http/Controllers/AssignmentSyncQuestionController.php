@@ -599,15 +599,19 @@ class AssignmentSyncQuestionController extends Controller
                 $columns['solution_type'] = $assignment_solutions_by_question_id[$value->question_id]['solution_type'] ?? false;
                 $columns['solution_file_url'] = $assignment_solutions_by_question_id[$value->question_id]['solution_file_url'] ?? false;
                 $columns['solution_text'] = $assignment_solutions_by_question_id[$value->question_id]['solution_text'] ?? false;
-                if ($columns['solution_file_url']) {
-                    $columns['type'] = 'q';
-                }
+                $columns['solution_type'] = null;
+
 
                 $columns['solution_html'] = $value->solution_html;
                 if (!$columns['solution_html']) {
                     $columns['solution_html'] = $value->answer_html;
                 }
-                $columns['solution_type'] = 'html';
+                if ($columns['solution_html']) {
+                    $columns['solution_type'] = 'html';
+                }
+                if ($columns['solution_file_url']) {
+                    $columns['solution_type'] = 'q';
+                }
 
 
                 $columns['order'] = $value->order;
@@ -1416,6 +1420,7 @@ class AssignmentSyncQuestionController extends Controller
                     $assignment->questions[$key]['correct_response'] = $correct_response;
                 }
 
+
                 if ($assignment->show_scores) {
                     $assignment->questions[$key]['submission_score'] = $submission_score;
                     $assignment->questions[$key]['submission_z_score'] = isset($mean_and_std_dev_by_question_submissions[$question->id])
@@ -1516,9 +1521,10 @@ class AssignmentSyncQuestionController extends Controller
 
                 $assignment->questions[$key]['answer_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->answer_html : null;
                 $assignment->questions[$key]['solution_html'] = Auth::user()->role === 2 || $show_solution ? $assignment->questions[$key]->solution_html : null;
-                if ($assignment->questions[$key]['solution_html']) {
+                if ($assignment->questions[$key]['solution_html'] && !$assignment->questions[$key]['solution_type']) {
                     $assignment->questions[$key]['solution_type'] = 'html';
                 }
+
                 $assignment->questions[$key]['hint'] = Auth::user()->role === 2 ? $assignment->questions[$key]->hint : null;
                 $assignment->questions[$key]['notes'] = Auth::user()->role === 2 ? $assignment->questions[$key]->notes : null;
 

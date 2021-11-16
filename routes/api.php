@@ -78,6 +78,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/user/instructors-with-public-courses', 'UserController@getInstructorsWithPublicCourses');
 
     Route::get('/get-locally-saved-page-contents/{library}/{pageId}', 'LibretextController@getLocallySavedPageContents');
+    Route::post('/libretexts/solution-error', 'LibretextController@emailSolutionError');
+
 
     Route::patch('settings/profile', 'Settings\ProfileController@update');
     Route::patch('settings/password', 'Settings\PasswordController@update');

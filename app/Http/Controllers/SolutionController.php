@@ -33,6 +33,7 @@ class SolutionController extends Controller
      * @param Assignment $assignment
      * @param Question $question
      * @param Solution $solution
+     * @param Cutup $cutup
      * @return array
      * @throws Exception
      */
@@ -40,7 +41,7 @@ class SolutionController extends Controller
                             Assignment $assignment,
                             Question $question,
                             Solution $solution,
-                            Cutup $cutup)
+                            Cutup $cutup): array
     {
 
         $response['type'] = 'error';

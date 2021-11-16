@@ -1,6 +1,68 @@
 <template>
   <div :style="!inIFrame ? 'min-height:400px; margin-bottom:100px' : 'margin-bottom:10px;'">
-    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'"/>
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-completion-scoring-mode'" />
+    <AllFormErrors :all-form-errors="allFormErrors" :modal-id="'modal-form-errors-libretexts-solution-error-form'" />
+
+    <b-modal
+      id="modal-reason-for-uploading-local-solution"
+      title="Reason For Uploading Local Solution"
+      size="lg"
+      :no-close-on-esc="true"
+    >
+      <RequiredText />
+      <b-container>
+        <b-form-group
+          id="reason_for_uploading_local_solution"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Reason For Upload*"
+          label-for="reason_for_uploading_local_solution"
+        >
+          <b-form-row>
+            <b-form-radio-group
+              v-model="reasonForUploadingLocalSolution"
+              stacked
+            >
+              <b-form-radio name="reason_for_uploading_local_solution" value="prefer_own_solution">
+                I prefer to use my own solution
+              </b-form-radio>
+
+              <b-form-radio name="reason_for_uploading_local_solution" value="libretexts_solution_error">
+                There's an error in the Libretexts solution
+              </b-form-radio>
+            </b-form-radio-group>
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-show="reasonForUploadingLocalSolution === 'libretexts_solution_error'"
+          label-cols-sm="4"
+          label-cols-lg="3"
+          label="Description Of Error*"
+          label-for="description_of_libretexts_solution_error"
+        >
+          <ckeditor
+            id="description_of_libretexts_solution_error"
+            v-model="libretextsSolutionErrorForm.text"
+            tabindex="0"
+            :config="richEditorSolutionErrorConfig"
+            :class="{ 'is-invalid': libretextsSolutionErrorForm.errors.has('text') }"
+            @keydown="libretextsSolutionErrorForm.errors.clear('text')"
+            @namespaceloaded="onCKEditorNamespaceLoaded"
+            @ready="handleFixCKEditor()"
+          />
+          <has-error :form="libretextsSolutionErrorForm" field="text" />
+        </b-form-group>
+      </b-container>
+      <template #modal-footer="{ ok, cancel }">
+        <b-button size="sm" @click="$bvModal.hide('modal-reason-for-uploading-local-solution')">
+          Cancel
+        </b-button>
+        <b-button size="sm" variant="primary" @click="submitReasonForUploadingLocalSolution()">
+          Submit
+        </b-button>
+      </template>
+    </b-modal>
+
     <b-modal
       id="modal-update-completion-scoring-mode"
       ref="modalUpdateCompletionScoringMode"
@@ -8,7 +70,7 @@
       :no-close-on-esc="true"
       size="lg"
     >
-      <RequiredText/>
+      <RequiredText />
       <b-form-group
         label-cols-sm="5"
         label-cols-lg="4"
@@ -45,7 +107,7 @@
             </span>
           </b-form-radio>
         </b-form-radio-group>
-        <has-error :form="completionScoringModeForm" field="completion_scoring_mode"/>
+        <has-error :form="completionScoringModeForm" field="completion_scoring_mode" />
       </b-form-group>
       <template #modal-footer="{ ok, cancel }">
         <b-button size="sm" @click="$bvModal.hide('modal-update-completion-scoring-mode')">
@@ -72,7 +134,7 @@
         />
       </div>
     </b-modal>
-    <div v-if="modalEnrollInCourseIsShown" style="height: 375px"/>
+    <div v-if="modalEnrollInCourseIsShown" style="height: 375px" />
     <b-modal
       id="modal-not-updated"
       ref="modalNotUpdated"
@@ -96,7 +158,7 @@
       <b-container>
         <b-row>
           <span class="font-italic font-weight-bold" style="font-size: large">
-            <font-awesome-icon :icon="treeIcon" class="text-success"/>
+            <font-awesome-icon :icon="treeIcon" class="text-success" />
             {{ submissionDataMessage }}
           </span>
         </b-row>
@@ -126,7 +188,7 @@
       title="Submission Not Accepted"
     >
       <b-alert variant="danger" :show="true">
-        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+        <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
       </b-alert>
     </b-modal>
     <b-modal
@@ -143,7 +205,7 @@
           >
         </b-row>
         <b-row>
-          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage"/>
+          <span class="font-italic font-weight-bold" style="font-size: large" v-html="submissionDataMessage" />
         </b-row>
       </b-container>
     </b-modal>
@@ -158,7 +220,7 @@
         </p>
       </div>
     </b-alert>
-    <EnrollInCourse :is-lms="isLMS"/>
+    <EnrollInCourse :is-lms="isLMS" />
     <Email id="contact-grader-modal"
            ref="email"
            extra-email-modal-text="Before you contact your grader, please be sure to look at the solutions first, if they are available."
@@ -167,7 +229,7 @@
            type="contact_grader"
            :subject="getSubject()"
     />
-    <CannotAddAssessmentToBetaAssignmentModal/>
+    <CannotAddAssessmentToBetaAssignmentModal />
     <b-modal
       id="modal-cannot-update-solution"
       ref="modalCannotUpdateSolutionIfBetaAssignment"
@@ -208,7 +270,7 @@
         >
           <template slot="label">
             Private Description
-            <QuestionCircleTooltip :id="'private-description-tooltip'"/>
+            <QuestionCircleTooltip :id="'private-description-tooltip'" />
             <b-tooltip target="private-description-tooltip" delay="250"
                        triggers="hover focus"
             >
@@ -244,7 +306,7 @@
           </b-form-row>
           <div v-show="autoAttribution">
             <span v-show="!autoAttributionHTML.length" class="font-weight-bold font-italic">No licensing information is available.</span>
-            <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML"/>
+            <span v-show="autoAttributionHTML.length" class="ml-2" v-html="autoAttributionHTML" />
           </div>
           <ckeditor v-show="!autoAttribution"
                     v-model="propertiesForm.attribution"
@@ -291,6 +353,9 @@
         Please confirm that you would like to remove this solution. Note that you will still be able to upload
         a different solution at any time.
       </p>
+      <p v-if="questions.length && questions[currentPage-1].solution_html">
+        Note that students will still have access to the Libretexts solution.
+      </p>
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" @click="$bvModal.hide('modal-remove-solution')">
           Cancel
@@ -300,13 +365,13 @@
         </b-button>
       </template>
     </b-modal>
-    <CannotDeleteAssessmentFromBetaAssignmentModal/>
+    <CannotDeleteAssessmentFromBetaAssignmentModal />
     <b-modal
       id="modal-remove-question"
       ref="modal"
       title="Confirm Remove Question"
     >
-      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist"/>
+      <RemoveQuestion :beta-assignments-exist="betaAssignmentsExist" />
       <template #modal-footer>
         <b-button
           size="sm"
@@ -350,7 +415,7 @@
             aria-label="Copy Libretexts ID"
             @click.prevent="doCopy('libretextsID')"
           >
-            <font-awesome-icon :icon="copyIcon"/>
+            <font-awesome-icon :icon="copyIcon" />
           </a>
         </span>
       </div>
@@ -363,7 +428,7 @@
             aria-label="Copy Adapt Id"
             @click.prevent="doCopy('adaptID')"
           >
-            <font-awesome-icon :icon="copyIcon"/>
+            <font-awesome-icon :icon="copyIcon" />
           </a>
         </span>
       </div>
@@ -378,14 +443,14 @@
             aria-label="Copy Adapt URL"
             @click.prevent="doCopy('currentURL')"
           >
-            <font-awesome-icon :icon="copyIcon"/>
+            <font-awesome-icon :icon="copyIcon" />
           </a>
         </span>
       </div>
       <div v-if="technologySrc" class="mb-2">
         <span class="font-weight-bold">Technology URL: </span><span id="technologySrc" class="font-italic"
                                                                     v-html="technologySrc"
-      />
+        />
       </div>
     </b-modal>
 
@@ -442,11 +507,10 @@
                       @keydown="solutionTextForm.errors.clear('solution_text')"
                       @ready="handleFixCKEditor()"
             />
-            <has-error :form="solutionTextForm" field="solution_text"/>
+            <has-error :form="solutionTextForm" field="solution_text" />
           </div>
           <div>
-            <span class="float-right"><b-button variant="primary" @click="submitSolutionText"
-            >Save Text</b-button></span>
+            <span class="float-right"><b-button variant="primary" @click="submitSolutionText">Save Text</b-button></span>
           </div>
         </div>
       </div>
@@ -508,7 +572,7 @@
                       :class="{ 'is-invalid': cutupsForm.errors.has('chosen_cutups') }"
                       @keydown="cutupsForm.errors.clear('chosen_cutups')"
                     />
-                    <has-error :form="cutupsForm" field="chosen_cutups"/>
+                    <has-error :form="cutupsForm" field="chosen_cutups" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -518,7 +582,7 @@
                         Set As Solution
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -557,7 +621,7 @@
                       :class="{ 'is-invalid': questionSubmissionPageForm.errors.has('page') }"
                       @keydown="questionSubmissionPageForm.errors.clear('page')"
                     />
-                    <has-error :form="questionSubmissionPageForm" field="page"/>
+                    <has-error :form="questionSubmissionPageForm" field="page" />
                   </b-col>
                   <b-col lg="8" class="ml-3">
                     <b-row>
@@ -567,7 +631,7 @@
                         Set As Question File Submission
                       </b-button>
                       <span v-show="settingAsSolution" class="ml-2">
-                        <b-spinner small type="grow"/>
+                        <b-spinner small type="grow" />
                         Processing your file...
                       </span>
                     </b-row>
@@ -607,17 +671,17 @@
                 <ul v-if="files.length && (preSignedURL !== '')">
                   <li v-for="file in files" :key="file.id">
                     <span :class="file.success ? 'text-success font-italic font-weight-bold' : ''">{{
-                        file.name
-                      }}</span> -
+                      file.name
+                    }}</span> -
                     <span>{{ formatFileSize(file.size) }} </span>
                     <span v-if="file.size > 10000000" class="font-italic">Note: large files may take up to a minute to process.</span>
                     <span v-if="file.error" class="text-danger">Error: {{ file.error }}</span>
                     <span v-else-if="file.active" class="ml-2">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Uploading File...
                     </span>
                     <span v-if="processingFile">
-                      <b-spinner small type="grow"/>
+                      <b-spinner small type="grow" />
                       Processing file...
                     </span>
                     <b-button v-if="!processingFile && (preSignedURL !== '') && (!$refs.upload || !$refs.upload.active)"
@@ -642,8 +706,8 @@
                 <b-row :align-h="user.role === 3 ? 'start' : 'end'">
                   <div style="vertical-align: bottom">
                     <span class="font-weight-bold font-italic mr-4">Accepted file types are: {{
-                        getSolutionUploadTypes()
-                      }}.</span>
+                      getSolutionUploadTypes()
+                    }}.</span>
                   </div>
 
                   <file-upload
@@ -698,7 +762,7 @@
                background="#FFFFFF"
       />
       <div v-if="questions !==['init'] && !inIFrame">
-        <PageTitle :title="title"/>
+        <PageTitle :title="title" />
       </div>
       <div v-if="questions.length && !initializing && inIFrame && !showSubmissionInformation">
         <div
@@ -714,14 +778,14 @@
             <span class="font-weight-bold">
               You have successfully submitted a response on  {{ questions[currentPage - 1].last_submitted }}.
               <span v-if="showScores">  You received a score of {{
-                  questions[currentPage - 1].submission_score
-                }}.</span></span>
+                questions[currentPage - 1].submission_score
+              }}.</span></span>
           </b-alert>
         </div>
       </div>
       <div v-if="questions.length && !initializing && !isLoading">
         <div v-show="isInstructorLoggedInAsStudent">
-          <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name"/>
+          <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
         </div>
         <div v-if="inIFrame && (user.role === 2)">
           <b-button variant="primary" size="sm" class="mb-3" @click="viewInAdapt">
@@ -762,7 +826,7 @@
         </b-alert>
       </div>
       <div v-if="user.role === 2 && !inIFrame && !isLoading && !isInstructorWithAnonymousView">
-        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist"/>
+        <AssessmentTypeWarnings :beta-assignments-exist="betaAssignmentsExist" />
       </div>
       <div v-if="questions.length && !cannotViewAssessmentMessage && !launchThroughLMSMessage">
         <div :class="assignmentInformationMarginBottom">
@@ -828,7 +892,7 @@
                   class="text-center mb-2"
                 >
                   <b-row align-h="center">
-                    <span class="font-weight-bold" v-html="completionScoringModeMessage"/>
+                    <span class="font-weight-bold" v-html="completionScoringModeMessage" />
                   </b-row>
                 </div>
                 <div
@@ -860,7 +924,7 @@
                   class="text-center"
                 >
                   <b-form-row>
-                    <b-col/>
+                    <b-col />
                     <h5 class="mt-1">
                       This question is worth
                     </h5>
@@ -874,7 +938,7 @@
                         :class="{ 'is-invalid': questionPointsForm.errors.has('points') }"
                         @keydown="questionPointsForm.errors.clear('points')"
                       />
-                      <has-error :form="questionPointsForm" field="points"/>
+                      <has-error :form="questionPointsForm" field="points" />
                     </b-col>
                     <h5 class="mt-1">
                       points.
@@ -893,7 +957,7 @@
                     </b-col>
                   </b-form-row>
                   <b-row align-h="center">
-                    <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage"/>
+                    <span class="pr-1 font-weight-bold" v-html="completionScoringModeMessage" />
                     <a href="" @click.prevent="openUpdateCompletionScoringModeModal()">
                       <b-icon v-if="completionScoringModeMessage"
                               icon="pencil"
@@ -911,8 +975,8 @@
                 <div v-if="assessmentType === 'learning tree'">
                   <div v-if="parseInt(questions[currentPage - 1].submission_count) > 0">
                     <span class="font-italic">Attempt {{ questions[currentPage - 1].submission_count }} was submitted {{
-                        questions[currentPage - 1].last_submitted
-                      }}</span>
+                      questions[currentPage - 1].last_submitted
+                    }}</span>
                   </div>
                   <span v-if="parseFloat(questions[currentPage - 1].late_penalty_percent) > 0 && showScores">
                     <span class="font-weight-bold">You had a late penalty of </span> {{
@@ -927,7 +991,7 @@
                              @end="cleanUpClickerCounter"
                   >
                     <template slot-scope="props">
-                      <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                      <span v-html="getTimeLeftMessage(props, assessmentType)" />
                     </template>
                   </countdown>
                 </div>
@@ -940,7 +1004,7 @@
                     size="sm"
                     @click="openModalShare()"
                   >
-                    <b-icon icon="share"/>
+                    <b-icon icon="share" />
                     Share
                   </b-button>
                   <b-button
@@ -1056,8 +1120,8 @@
         <div v-if="assessmentType === 'learning tree'">
           <b-alert variant="success" :show="parseInt(questions[currentPage - 1].submission_count) > 0">
             <span class="font-weight-bold">You achieved a score of {{
-                questions[currentPage - 1].submission_score
-              }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
+              questions[currentPage - 1].submission_score
+            }} point<span v-if="parseInt(questions[currentPage - 1].submission_score) !== 1">s</span>.</span>
           </b-alert>
         </div>
         <div v-if="isInstructor() && !isInstructorWithAnonymousView && !presentationMode && !inIFrame"
@@ -1091,17 +1155,33 @@
             />
           </div>
           <div v-if="questionView !== 'basic'" class="p-2">
-            <b-button
-              v-if="!questions[currentPage-1].solution"
-              class="mt-1 mb-2 ml-1"
-              variant="dark"
-              size="sm"
-              @click="isBetaAssignment
-                ? $bvModal.show('modal-cannot-update-solution')
-                : openUploadSolutionModal(questions[currentPage-1])"
-            >
-              Upload Solution
-            </b-button>
+            <span v-if="!questions[currentPage-1].solution">
+              <b-button
+                class="mt-1 mb-2 ml-1"
+                variant="dark"
+                size="sm"
+                @click="isBetaAssignment
+                  ? $bvModal.show('modal-cannot-update-solution')
+                  : initOpenUploadSolutionModal()"
+              >
+                Upload Local Solution
+              </b-button>
+              <a id="local_solution_tooltip"
+                 href="#"
+              >
+                <b-icon class="text-muted"
+                        icon="question-circle"
+                        aria-label="Explanation of local solutions"
+                />
+              </a>
+              <b-tooltip target="local_solution_tooltip"
+                         triggers="hover focus"
+                         delay="250"
+              >
+                Optionally, you can provide your own solution.  If this question has a Libretext solution
+                associated with it, your local solution will be shown to your students.
+              </b-tooltip>
+            </span>
             <b-button
               v-if="questions[currentPage-1].solution"
               class="mt-1 mb-2 ml-1"
@@ -1111,9 +1191,9 @@
                 ? $bvModal.show('modal-cannot-update-solution')
                 : $bvModal.show('modal-remove-solution')"
             >
-              Remove Solution
+              Remove Local Solution
             </b-button>
-            <span v-if="questions[currentPage-1].solution">
+            <span v-if="questions[currentPage-1].solution || questions[currentPage-1].solution_html">
               <span v-if="!showUploadedAudioSolutionMessage">
                 <SolutionFileHtml :key="savedText" :questions="questions" :current-page="currentPage"
                                   :assignment-name="name"
@@ -1124,7 +1204,7 @@
                 >
                   {{ uploadedAudioSolutionDataMessage }}</span>
               </span>
-              <span v-if="!questions[currentPage-1].solution">No solutions have been uploaded.</span>
+              <span v-if="!questions[currentPage-1].solution && !questions[currentPage-1].solution_html">No solutions are available.</span>
             </span>
           </div>
         </div>
@@ -1146,8 +1226,8 @@
                 <countdown :time="timeLeftToGetLearningTreePoints" @end="updateExploredLearningTree">
                   <template slot-scope="props">
                     <span class="font-weight-bold">  Explore the Learning Tree for {{ props.minutes }} minutes, {{
-                        props.seconds
-                      }} seconds, then re-submit.
+                      props.seconds
+                    }} seconds, then re-submit.
                     </span>
                   </template>
                 </countdown>
@@ -1263,7 +1343,7 @@
                           @namespaceloaded="onCKEditorNamespaceLoaded"
                           @ready="handleFixCKEditor()"
                         />
-                        <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text"/>
+                        <has-error :form="openEndedDefaultTextForm" field="open_ended_default_text" />
                       </b-card>
                       <b-container class="mt-2">
                         <b-row align-h="end">
@@ -1386,7 +1466,7 @@
                           :class="{ 'is-invalid': clickerTimeForm.errors.has('time_to_submit') }"
                           @keydown="clickerTimeForm.errors.clear('time_to_submit')"
                         />
-                        <has-error :form="clickerTimeForm" field="time_to_submit"/>
+                        <has-error :form="clickerTimeForm" field="time_to_submit" />
                       </b-form-group>
                       <b-col>
                         <b-button variant="success" @click="startClickerAssessment">
@@ -1398,7 +1478,7 @@
                       <hr>
                       <countdown v-show="assessmentType === 'clicker'" :time="timeLeft" @end="cleanUpClickerCounter">
                         <template slot-scope="props">
-                          <span v-html="getTimeLeftMessage(props, assessmentType)"/>
+                          <span v-html="getTimeLeftMessage(props, assessmentType)" />
                         </template>
                       </countdown>
                       <h4>{{ responsePercent }}% of students have responded</h4>
@@ -1407,7 +1487,7 @@
                       </h5>
                     </div>
                   </div>
-                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart"/>
+                  <pie-chart :key="currentPage" :chartdata="piechartdata" @pieChartLoaded="updateIsLoadingPieChart" />
                 </div>
               </div>
             </b-col>
@@ -1461,21 +1541,21 @@
                         <a href=""
                            @click.prevent="explore(previousNode.library, previousNode.pageId, previousNode.id)"
                         >{{
-                            previousNode.title
-                          }}</a>
+                          previousNode.title
+                        }}</a>
                       </b-row>
                       <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
                       </b-row>
                     </div>
                     <b-row align-h="center" class="p-2">
                       <span class="font-weight-bold font-italic text-muted">{{
-                          activeNode.title
-                        }}</span>
+                        activeNode.title
+                      }}</span>
                     </b-row>
                     <div v-if="futureNodes.length>0">
                       <b-row align-h="center">
-                        <b-icon icon="arrow-down-square-fill" variant="success"/>
+                        <b-icon icon="arrow-down-square-fill" variant="success" />
                       </b-row>
                       <b-row class="p-2">
                         <b-col v-for="remediationObject in futureNodes" :key="remediationObject.id"
@@ -1512,7 +1592,7 @@
                       <span class="font-weight-bold">Solution: </span><SolutionFileHtml :questions="questions"
                                                                                         :current-page="currentPage"
                                                                                         :assignment-name="name"
-                    /><br>
+                      /><br>
                     </span>
                     <span v-if="assessmentType==='learning tree'">
                       <span class="font-weight-bold">Number of attempts: </span>
@@ -1524,14 +1604,14 @@
                     <span
                       :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                     >{{
-                        questions[currentPage - 1].student_response
-                      }}</span> <br>
+                      questions[currentPage - 1].student_response
+                    }}</span> <br>
                     <span class="font-weight-bold">Submitted At:</span>
                     <span
                       :class="{ 'text-danger': questions[currentPage - 1].last_submitted === 'N/A' }"
                     >{{
-                        questions[currentPage - 1].last_submitted
-                      }} </span>
+                      questions[currentPage - 1].last_submitted
+                    }} </span>
                     <font-awesome-icon v-show="questions[currentPage - 1].last_submitted !== 'N/A'"
                                        class="text-success"
                                        :icon="checkIcon"
@@ -1597,7 +1677,7 @@
                     <br>
                     <div v-if="solutionsReleased">
                       <span class="font-weight-bold">Solution: </span>
-                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name"/>
+                      <SolutionFileHtml :questions="questions" :current-page="currentPage" :assignment-name="name" />
                     </div>
                     <br>
                     <span v-if="showScores">
@@ -1648,8 +1728,8 @@
                         >
                           <span class="font-italic">
                             {{ bothFileUploadMode ? 'Optionally' : 'Please' }}, upload your compiled PDF on the assignment's <router-link
-                            :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
-                          >summary page</router-link>.
+                              :to="{ name: 'students.assignments.summary', params: { assignmentId: assignmentId }}"
+                            >summary page</router-link>.
                           </span>
                         </b-row>
                       </b-container>
@@ -1670,37 +1750,37 @@
               <div v-if="questions[currentPage - 1].text_question"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].text_question"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].text_question" />
               </div>
               <div v-if="questions[currentPage-1].a11y_question"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].a11y_question"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].a11y_question" />
               </div>
               <div v-if="questions[currentPage-1].answer_html"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].answer_html"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].answer_html" />
               </div>
               <div v-if="questions[currentPage-1].solution_html"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].solution_html"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].solution_html" />
               </div>
               <div v-if="questions[currentPage-1].hint"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].hint"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].hint" />
               </div>
               <div v-if="questions[currentPage-1].libretexts_link"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].libretexts_link"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].libretexts_link" />
               </div>
               <div v-if="questions[currentPage-1].notes"
                    class="mt-3 libretexts-border"
               >
-                <div class="mt-3" v-html="questions[currentPage - 1].notes"/>
+                <div class="mt-3" v-html="questions[currentPage - 1].notes" />
               </div>
             </div>
           </b-row>
@@ -1808,6 +1888,11 @@ export default {
     AllFormErrors
   },
   data: () => ({
+    reasonForUploadingLocalSolution: 'prefer_own_solution',
+    libretextsSolutionErrorForm: new Form({
+      text: '',
+      question_id: 0
+    }),
     showAudioUploadComponent: false,
     reload: 0,
     showHistogramView: true,
@@ -1928,6 +2013,20 @@ export default {
       ],
       removeButtons: '',
       height: 100
+    },
+    richEditorSolutionErrorConfig: {
+      toolbar: [
+        { name: 'clipboard', items: ['Cut', 'Copy', '-', 'Undo', 'Redo'] },
+        {
+          name: 'basicstyles',
+          items: ['Bold', 'Italic', 'Underline', 'Subscript', 'Superscript', '-', 'CopyFormatting', 'RemoveFormat']
+        },
+        { name: 'links', items: ['Link', 'Unlink'] },
+        { name: 'insert', items: ['Table', 'HorizontalRule', 'Smiley', 'SpecialChar'] },
+        { name: 'colors', items: ['TextColor', 'BGColor'] }
+      ],
+      removeButtons: '',
+      height: 200
     },
     isOpenEnded: false,
     isOpenEndedFileSubmission: false,
@@ -2183,6 +2282,34 @@ export default {
     }
   },
   methods: {
+    async submitReasonForUploadingLocalSolution () {
+      if (this.reasonForUploadingLocalSolution === 'libretexts_solution_error') {
+        try {
+          this.libretextsSolutionErrorForm.question_id = this.questions[this.currentPage - 1].id
+          const { data } = await this.libretextsSolutionErrorForm.post(`/api/libretexts/solution-error`)
+          if (data.type === 'success') {
+            this.$noty.success(data.message)
+          }
+        } catch (error) {
+          if (error.message.includes('status code 422')) {
+            this.allFormErrors = this.libretextsSolutionErrorForm.errors.flatten()
+            this.$bvModal.show('modal-form-errors-libretexts-solution-error-form')
+          }
+          return false
+        }
+      }
+      this.$bvModal.hide('modal-reason-for-uploading-local-solution')
+      await this.openUploadFileModal(this.questions[this.currentPage - 1].id)
+    },
+    async initOpenUploadSolutionModal () {
+      this.reasonForUploadingLocalSolution = 'prefer_own_solution'
+      this.libretextsSolutionErrorForm.errors.clear()
+      this.libretextsSolutionErrorForm.text = ''
+      this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`
+      this.questions[this.currentPage - 1].solution_html
+        ? this.$bvModal.show('modal-reason-for-uploading-local-solution')
+        : await this.openUploadFileModal(this.questions[this.currentPage - 1].id)
+    },
     handleFixCKEditor () {
       fixCKEditor(this)
     },
@@ -2490,6 +2617,9 @@ export default {
         const { data } = await axios.delete(`/api/solution-files/${this.assignmentId}/${this.questions[this.currentPage - 1].id}`)
         if (data.type === 'success') {
           this.questions[this.currentPage - 1].solution = null
+          if (this.questions[this.currentPage - 1].solution_html) {
+            this.questions[this.currentPage - 1].solution_type = 'html'
+          }
           this.$bvModal.hide('modal-remove-solution')
         }
         this.$noty[data.type](data.message)
@@ -2570,13 +2700,13 @@ export default {
           return prevent()
         }
         let validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
-
         let validExtension
         if (this.uploadLevel === 'question') {
           validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|text|png|jpeg|jpg)$/i.test(newFile.name)
         } else {
-          /\.(pdf)$/i.test(newFile.name)
+          validExtension = /\.(pdf)$/i.test(newFile.name)
         }
+
         if (!validExtension) {
           this.uploadFileForm.errors.set(this.uploadFileType, validUploadTypesMessage)
 
@@ -2761,10 +2891,6 @@ export default {
       this.isBetaAssignment
         ? this.$bvModal.show('modal-should-not-edit-question-source-if-beta-assignment')
         : window.open(this.questions[currentPage - 1].mindtouch_url)
-    },
-    openUploadSolutionModal (question) {
-      this.audioSolutionUploadUrl = `/api/solution-files/audio/${this.assignmentId}/${question.id}`
-      this.openUploadFileModal(question.id)
     },
     submittedAudioSolutionUpload (response) {
       let data = response.data

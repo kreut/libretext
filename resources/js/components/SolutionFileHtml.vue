@@ -42,8 +42,8 @@
         {{ standardizeFilename(questions[currentPage - 1].solution) }}
       </a>
     </span>
-
-    <a v-if="questions[currentPage-1].solution_type === 'html'"
+    <a v-if="!['audio','q'].includes(questions[currentPage-1].solution_type)
+     && questions[currentPage-1].solution_type === 'html'"
        href=""
        @click.prevent="openShowHTMLSolutionModal"
     >
