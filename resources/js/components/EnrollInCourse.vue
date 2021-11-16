@@ -12,8 +12,7 @@
       <template v-if="!inIFrame" #modal-title>
         Enroll In Course
       </template>
-      <p>Please provide the course access code given to you by your instructors.</p>
-      <RequiredText :plural="false"/>
+      <p>Please complete the form below. <RequiredText/></p>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="4"

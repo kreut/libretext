@@ -4,8 +4,9 @@
     <div class="col-lg-8 m-auto">
       <card title="Complete Registration">
         <form>
+          <RequiredText/>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Time zone<Asterisk/>
+            <label class="col-md-3 col-form-label text-md-right">Time zone*
             </label>
             <div class="col-md-7" @change="removeTimeZoneError()">
               <b-form-select v-model="form.time_zone"
@@ -16,7 +17,7 @@
             </div>
           </div>
           <div class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right">Registration Type<Asterisk/>
+            <label class="col-md-3 col-form-label text-md-right">Registration Type*
             </label>
             <div class="col-md-7">
               <b-form-select v-model="form.registration_type"
@@ -29,7 +30,7 @@
           </div>
           <!-- Name -->
           <div v-if="![null,'student'].includes(form.registration_type)" class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code<Asterisk/>
+            <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
             </label>
             <div class="col-md-7">
               <input id="access_code"
@@ -43,7 +44,7 @@
             </div>
           </div>
           <div v-if="form.registration_type === 'student'" class="form-group row">
-            <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID<Asterisk/>
+            <label class="col-md-3 col-form-label text-md-right" for="student_id">Student ID*
             </label>
             <div class="col-md-7">
               <input id="student_id"
