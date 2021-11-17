@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Exceptions\Handler;
 use App\LtiGradePassback;
+use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\DB;
@@ -47,7 +48,8 @@ class retryFailedGradePassbacks extends Command
         try {
             $failed_lti_grade_passbacks_and_launch_infos = DB::table('lti_grade_passbacks')
                 ->join('lti_launches', 'lti_grade_passbacks.launch_id', '=', 'lti_launches.launch_id')
-                ->where('status', 'error')
+                ->where('status', '<>', 'success')
+                ->where('lti_grade_passbacks.created_at', '<=', Carbon::now()->subMinutes(2)->toDateTimeString())
                 ->get();
             if (count($failed_lti_grade_passbacks_and_launch_infos)) {
                 $verb = count($failed_lti_grade_passbacks_and_launch_infos) === 1 ? "was" : "were";
@@ -57,7 +59,8 @@ class retryFailedGradePassbacks extends Command
                 }
 
                 $num_not_successful = DB::table('lti_grade_passbacks')
-                    ->where('status', 'error')
+                    ->whereIn('status', ['error', 'pending'])
+                    ->orWhere('status')
                     ->count();
 
                 $message .= $num_not_successful
