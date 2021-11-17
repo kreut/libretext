@@ -2702,7 +2702,7 @@ export default {
         let validUploadTypesMessage = `The valid upload types are: ${this.getSolutionUploadTypes()}`
         let validExtension
         if (this.uploadLevel === 'question') {
-          validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|text|png|jpeg|jpg)$/i.test(newFile.name)
+          validExtension = this.isOpenEndedAudioSubmission ? /\.(mp3)$/i.test(newFile.name) : /\.(pdf|txt|png|jpeg|jpg)$/i.test(newFile.name)
         } else {
           validExtension = /\.(pdf)$/i.test(newFile.name)
         }

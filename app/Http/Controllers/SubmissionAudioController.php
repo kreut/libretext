@@ -99,7 +99,12 @@ class SubmissionAudioController extends Controller
             $submission = $request->file('audio')->store("assignments/$assignment->id", 'local');
             $submissionContents = Storage::disk('local')->get($submission);
             Storage::disk('s3')->put($submission, $submissionContents, ['StorageClass' => 'STANDARD_IA']);
-
+            $mime_type = Storage::disk('s3')->mimeType( $submission);
+            Log::info($mime_type);
+            if ($mime_type !== 'audio/mpeg'){
+                $response['message']= "Your file has a mime type of $mime_type which is not an accepted mime type.";
+                return $response;
+            }
 
             $submission_file_data = ['type' => 'audio',
                 'submission' => basename($submission),

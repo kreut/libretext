@@ -28,6 +28,7 @@ use App\Traits\SubmissionFiles;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Facades\DB;
 
@@ -344,7 +345,7 @@ class SubmissionFileController extends Controller
      * @return array
      * @throws Exception
      */
-    public function canSubmitFileSubmission(Request $request)
+    public function canSubmitFileSubmission(Request $request): array
     {
         try {
             $assignment_id = $request->assignmentId;
@@ -354,7 +355,7 @@ class SubmissionFileController extends Controller
             $user = Auth::user();
             $user_id = $user->id;
             $response['type'] = 'error';
-            //validator put here because I wasn't usingf vform so had to manually handle errors
+
 
             if ($can_upload_response = $this->canSubmitBasedOnGeneralSubmissionPolicy($user, $assignment, $assignment_id, $question_id, $upload_level)) {
                 if ($can_upload_response['type'] === 'error') {
@@ -422,6 +423,7 @@ class SubmissionFileController extends Controller
             return $response;
         }
 
+
         $assignment_id = $request->assignmentId;
         $question_id = $request->questionId;
         $upload_level = $request->uploadLevel;
@@ -438,12 +440,12 @@ class SubmissionFileController extends Controller
         try {
 
             $file_size = Storage::disk('s3')->size($request->s3_key);
+
             if ($file_size > $this->max_file_size) {
                 $response['message'] = 'Your file is ' . $this->bytesToHuman($file_size) . ' and has exceeded the ' . $this->bytesToHuman($this->max_file_size) . '  limit.';
                 return $response;
             }
             $assignment = Assignment::find($assignment_id);
-            //validator put here because I wasn't using vform so had to manually handle errors
 
             $latest_submission = DB::table('submission_files')
                 ->where('type', 'q') //not needed but for completeness
@@ -458,9 +460,17 @@ class SubmissionFileController extends Controller
 
             $submission = $request->s3_key;
             $original_filename = $request->original_filename;
-            $s3_file_contents = Storage::disk('s3')->get($request->s3_key);
+            $s3_file_contents = Storage::disk('s3')->get($submission);
             Storage::disk('local')->put($submission, $s3_file_contents);
 
+            $mime_type = Storage::disk('s3')->mimeType($submission);
+            $valid_mime_type = $assignment->file_upload_mode === 'compiled_pdf'
+                ? $mime_type === 'application/pdf'
+                : in_array($mime_type, ['application/pdf', 'text/plain', 'image/png', 'image/jpeg', 'audio/mpeg']);
+            if (!$valid_mime_type) {
+                $response['message'] = "Your file has a mime type of $mime_type which is not an accepted mime type.";
+                return $response;
+            }
 
             $submission_file_data = ['type' => $upload_level[0],
                 'submission' => basename($submission),
