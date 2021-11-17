@@ -11,8 +11,8 @@
   <p>Hi,</p>
   <p>
     {{$instructor}} with email {{$email}} found a problem with the solution associated with Libretexts
-    ID {{$libretexts_id}}.</p>
-  <p><strong>"{{$text}}"</strong></p>
+    ID {{$libretexts_id}}:</p>
+  <div>{!! $text !!}</div>
   <p>You can view the full question and solution <a href="{{$url}}">here</a>.
   </p>
   <p>-Adapt Support</p>
