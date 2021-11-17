@@ -1,66 +1,18 @@
 <?php
 
+
 namespace App\Http\Controllers;
 
 use App\Exceptions\Handler;
-use App\Http\Requests\EmailSolutionErrorRequest;
-use App\Libretext;
 use \Exception;
 use App\Question;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
-use Snowfire\Beautymail\Beautymail;
 
 class LibretextController extends Controller
 {
-    /**
-     * @param EmailSolutionErrorRequest $request
-     * @param Libretext $libretext
-     * @return array
-     * @throws Exception
-     */
-    public function emailSolutionError(EmailSolutionErrorRequest $request, Libretext $libretext): array
-    {
-        $response['type'] = 'error';
-        try {
-            $authorized = Gate::inspect('emailSolutionError', $libretext);
-            if (!$authorized->allowed()) {
-                $response['message'] = $authorized->message();
-                return $response;
-            }
-            $data = $request->validated();
-            $beauty_mail = app()->make(Beautymail::class);
-            $question = DB::table('questions')->where('id', $request->question_id)->first();
-            $url = "https://$question->library.libretexts.org/@go/page/$question->page_id";
-            $error_info = ['text' => $data['text'],
-                'instructor' => $request->user()->first_name . ' ' . $request->user()->last_name,
-                'email' => $request->user()->email,
-                'url' => $url,
-                'libretexts_id' => "$question->library-$question->page_id"];
-
-            $beauty_mail->send('emails.solution_error', $error_info, function ($message)
-            use ($request) {
-                $message
-                    ->from('adapt@noreply.libretexts.org', 'Adapt')
-                    ->to('delmar@libretexts.org')
-                    ->replyTo($request->user()->email)
-                    ->subject('Error in Solution');
-            });
-            $response['type'] = 'success';
-            $response['message'] = 'Thank you for letting us know.  Someone will be in touch.';
-
-        } catch (Exception $e) {
-
-            $h = new Handler(app());
-            $h->report($e);
-            //don't need to tell them there was an error
-        }
-        return $response;
-
-
-    }
-
     /**
      * @param string $library
      * @param int $pageId
@@ -94,7 +46,24 @@ class LibretextController extends Controller
                 if (!is_dir($storage_path . $library)) {
                     mkdir($storage_path . $library);
                 }
-                /**   if (!file_exists($file)) {
+
+                if ($is_efs && !file_exists("{$efs_dir}libretext.config.php")) {
+                    file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
+                }
+
+//if not cached or for some other reason it's not in the local file system...
+                $question_to_view = Question::where('library',$library)->where('page_id',$pageId)->first();
+                if (!$question_to_view->cached || !file_exists($file)) {
+                    $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
+                    if ($is_efs) {
+                        $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
+                            'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
+                    }
+                    file_put_contents($file, $contents);
+                    Question::where('library',$library)->where('page_id',$pageId)->update(['cached'=>1]);
+                }
+                /**
+                 * Original code to just grab from s3 everytime
                  * $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
                  * if ($is_efs) {
                  * if (!file_exists("{$efs_dir}libretext.config.php")) {
@@ -104,17 +73,7 @@ class LibretextController extends Controller
                  * 'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
                  * }
                  * file_put_contents($file, $contents);
-                 * }**/
-
-                $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
-                if ($is_efs) {
-                    if (!file_exists("{$efs_dir}libretext.config.php")) {
-                        file_put_contents("{$efs_dir}libretext.config.php", Storage::disk('s3')->get("libretext.config.php"));
-                    }
-                    $contents = str_replace("require_once(__DIR__ . '/../libretext.config.php');",
-                        'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
-                }
-                file_put_contents($file, $contents);
+                 ***/
 
 
                 require_once($file);

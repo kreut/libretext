@@ -348,15 +348,6 @@ class Question extends Model
 
 
         try {
-            $efs_dir = '/mnt/local/';
-            $is_efs = is_dir($efs_dir);
-            $storage_path = $is_efs
-                ? $efs_dir
-                : Storage::disk('local')->getAdapter()->getPathPrefix();
-
-            $file = "{$storage_path}{$library}/{$page_id}.php";
-
-
             if ($technology = $Libretext->getTechnologyFromBody($body)) {
                 $technology_iframe = $Libretext->getTechnologyIframeFromBody($body, $technology);
 
@@ -382,11 +373,6 @@ class Question extends Model
             }
 
 
-            if ($cache_busting && file_exists($file)) {
-                //remove the local file
-                unlink($file);
-            }
-
 
             $author_and_license_info = $this->getAuthorAndLicense($dom,
                 $Libretext,
@@ -411,8 +397,9 @@ class Question extends Model
                 ]);
 
             $Libretext = new Libretext(['library' => $library]);
-            $title = $Libretext->getTitle($page_id, $question->id);
+            $title = $Libretext->getTitle($page_id);
             $url = $Libretext->getUrl($page_id);
+            $question->cached = !$cache_busting;
             $question->title = $title;
             $question->url = $url;
             $question->save();
