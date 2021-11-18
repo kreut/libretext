@@ -209,24 +209,8 @@
                   <a href="" @click.stop.prevent="viewQuestion(question.question_id,'add')">
                     {{ question.title ? question.title : 'No title' }}
                   </a>
-<<<<<<< Updated upstream
                   <a href=""
                      @click.prevent="removeQuestionFromSavedQuestions(question)"
-                  >
-                    <b-icon v-if="typeOfRemixer === 'saved-questions'"
-                            icon="trash"
-                            class="text-muted"
-                            :aria-label="`Remove ${question.title}`"
-                    />
-                  </a>
-||||||| merged common ancestors
-                  <b-icon v-if="typeOfRemixer === 'saved-questions'"
-                          icon="trash"
-                          @click="removeQuestionFromSavedQuestions(question)"
-                  />
-=======
-                  <a href=""
-                     @click="removeQuestionFromSavedQuestions(question)"
                   >
                     <b-icon v-if="typeOfRemixer === 'saved-questions'"
                             icon="trash"
@@ -234,7 +218,6 @@
                             :aria-label="`Remove ${question.title} from saved questions`"
                     />
                   </a>
->>>>>>> Stashed changes
                 </td>
                 <td class="dragArea">
                   {{ question.submission }}
