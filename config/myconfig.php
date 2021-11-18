@@ -12,5 +12,6 @@ return [
     'minpods' => env('MINPODS', 0),
     'loadtest' => env('LOADTEST', false),
     'my_ip' => env('MY_IP', false),
-    'analytics_token' => env('ANALYTICS_TOKEN', false)
+    'analytics_token' => env('ANALYTICS_TOKEN', false),
+    'libretexts_private_page_token' =>env('LIBRETEXTS_PRIVATE_PAGE_TOKEN', false)
 ];

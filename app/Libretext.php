@@ -105,7 +105,7 @@ class Libretext extends Model
         } catch (Exception $e) {
             $url = null;
         }
-      return $url;
+        return $url;
     }
 
 
@@ -278,6 +278,7 @@ class Libretext extends Model
         if (!in_array($end_point, ['contents', 'tags', 'info'])) {
             throw new Exception("$string is not a valid end point.");
         }
+
         $curl = curl_init();
         $curl_opts = [
             CURLOPT_FAILONERROR => true,
@@ -292,13 +293,13 @@ class Libretext extends Model
             CURLOPT_POSTFIELDS => '{"path":' . $page_id . ', "subdomain":"' . $this->library . '","mode": "view", "dreamformat":"json"}',
             CURLOPT_HTTPHEADER => [
                 "Origin: https://adapt.libretexts.org",
-                "Content-Type: text/plain"
-            ],
+                "Content-Type: text/plain",
+                "Authorization: Bearer " . config('myconfig.libretexts_private_page_token')
+            ]
         ];
         curl_setopt_array($curl, $curl_opts);
 
         $response = curl_exec($curl);
-
         if (curl_errno($curl)) {
             throw new Exception (curl_error($curl));
         }
