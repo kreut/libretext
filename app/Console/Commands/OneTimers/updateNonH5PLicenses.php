@@ -67,7 +67,8 @@ class updateNonH5PLicenses extends Command
                     $libretext = new Libretext(['library' => $question->library]);
                     $info = $question->getAuthorAndLicense($domd,
                         $libretext,
-                        $question->technology_iframe);
+                        $question->technology_iframe,
+                        $question->page_id);
                     $question->author = $info['author'];
                     $question->license = $info['license'];
                     $question->license_version = $info['license_version'];

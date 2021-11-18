@@ -27,12 +27,14 @@ class Question extends Model
      * @param DOMDocument $domd
      * @param Libretext $libretext
      * @param string $technology_iframe
+     * @param int $page_id
      * @return array
      * @throws Exception
      */
     public function getAuthorAndLicense(DOMDocument $domd,
                                         Libretext   $libretext,
-                                        string      $technology_iframe): array
+                                        string      $technology_iframe,
+                                        int         $page_id): array
     {
         $technology = $libretext->getTechnologyFromBody($technology_iframe);
         $author = null;
@@ -63,18 +65,18 @@ class Question extends Model
             $license = null;
             $license_version = null;
             $author = null;
-            $tags = $libretext->getPrivatePage('tags', $this->page_id)->tag ?? null;
+            $tags = $libretext->getPrivatePage('tags', $page_id)->tag ?? null;
             if (is_array($tags)) {
                 foreach ($tags as $tag) {
                     if (strpos($tag->title, 'author') !== false) {
-                        $author = str_replace(['authorname:','author:', 'author-'], '', $tag->title);
+                        $author = str_replace(['authorname:', 'author:', 'author-'], '', $tag->title);
                     }
                     if (strpos($tag->title, 'license:') !== false) {
                         $license = str_replace('license:', '', $tag->title);
                     }
                     if (strpos($tag->title, 'licenseversion:') !== false) {
                         $license_version = str_replace('licenseversion:', '', $tag->title);
-                        $license_version = number_format($license_version/10,1);
+                        $license_version = number_format($license_version / 10, 1);
                     }
                 }
             }
@@ -376,7 +378,8 @@ class Question extends Model
 
             $author_and_license_info = $this->getAuthorAndLicense($dom,
                 $Libretext,
-                $technology_iframe);
+                $technology_iframe,
+                $page_id);
 
             $question = Question::updateOrCreate(
                 ['page_id' => $page_id, 'library' => $library],

@@ -42,27 +42,25 @@ class updateH5PLicenses extends Command
     public function handle(Question $question)
     {
         /**I've set up an API endpoint at /api/h5p/[id] that will output the following fields for any h5p id passed as a parameter:
-        id: the h5p id
-        title_1: the title of the h5p
-        title: the h5p type (e.g. interactive video, presentation etc.)
-        uid: the name of the author who created the node (always populated with data - for the imported h5p elements, this may still say "LibreStudio Admin")
-        authors: an array of author objects with name and 'role' added as metadata to an h5p element (typically blank unless a license is added to the h5p element)
-        license: the license attributed to the h5p
-        license_extras: additional license info if added to h5p metadata
-        license_version: sometimes added to h5p metadata
-        body: the description of the h5p element, if added by author
-        created: when the h5p element was created
-        changed: when the h5p element was last updated
-        field_subject: the subject that is h5p is added into
-        field_tags: any tags added to the h5p element
-        view_node: the url to the h5p page
-        view_user: the url to the author's profile
-        Examples:
-        H5P with license and author: https://studio.libretexts.org/api/h5p/2180
-        H5P without license and with drupal author/user: https://studio.libretexts.org/api/h5p/698
-
+         * id: the h5p id
+         * title_1: the title of the h5p
+         * title: the h5p type (e.g. interactive video, presentation etc.)
+         * uid: the name of the author who created the node (always populated with data - for the imported h5p elements, this may still say "LibreStudio Admin")
+         * authors: an array of author objects with name and 'role' added as metadata to an h5p element (typically blank unless a license is added to the h5p element)
+         * license: the license attributed to the h5p
+         * license_extras: additional license info if added to h5p metadata
+         * license_version: sometimes added to h5p metadata
+         * body: the description of the h5p element, if added by author
+         * created: when the h5p element was created
+         * changed: when the h5p element was last updated
+         * field_subject: the subject that is h5p is added into
+         * field_tags: any tags added to the h5p element
+         * view_node: the url to the h5p page
+         * view_user: the url to the author's profile
+         * Examples:
+         * H5P with license and author: https://studio.libretexts.org/api/h5p/2180
+         * H5P without license and with drupal author/user: https://studio.libretexts.org/api/h5p/698
          * **/
-
 
 
         /**
@@ -72,33 +70,30 @@ class updateH5PLicenses extends Command
          * **/
 
 
-
-
-
-
         try {
 
             $output = "Updating h5p\r\n";
             //h5p
             $questions = $question->where('technology', 'h5p')
-                ->where('author',null)
+                ->where('author', null)
                 ->get();
             $domd = new \DOMDocument();
             $libretext = new Libretext();
-            foreach ($questions as $key=>$h5p_question) {
-                $count = count( $questions) - $key ."\r\n";
+            foreach ($questions as $key => $h5p_question) {
+                $count = count($questions) - $key . "\r\n";
                 $output .= $count;
                 echo $count;
                 $info = $question->getAuthorAndLicense($domd,
                     $libretext,
-                    $h5p_question->technology_iframe);
+                    $h5p_question->technology_iframe,
+                    $h5p_question->page_id);
                 $h5p_question->author = $info['author'];
                 $h5p_question->license = $info['license'];
                 $h5p_question->license_version = $info['license_version'];
                 $h5p_question->save();
             }
             Storage::disk('s3')->put("updateLicenses.txt", $output, ['StorageClass' => 'STANDARD_IA']);
-        } catch (Exception $e){
+        } catch (Exception $e) {
             echo $e->getmessage();
         }
         return 0;
