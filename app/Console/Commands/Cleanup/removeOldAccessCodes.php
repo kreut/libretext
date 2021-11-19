@@ -7,15 +7,16 @@ use App\InstructorAccessCode;
 use Carbon\Carbon;
 use Exception;
 use Illuminate\Console\Command;
+use Illuminate\Support\Facades\DB;
 
-class removeOldInstructorAccessCodes extends Command
+class removeOldAccessCodes extends Command
 {
     /**
      * The name and signature of the console command.
      *
      * @var string
      */
-    protected $signature = 'remove:oldInstructorAccessCodes';
+    protected $signature = 'remove:oldAccessCodes';
 
     /**
      * The console command description.
@@ -37,18 +38,21 @@ class removeOldInstructorAccessCodes extends Command
     /**
      * Execute the console command.
      *
-     * @param InstructorAccessCode $instructorAccessCode
      * @return int
      * @throws Exception
      */
-    public function handle(InstructorAccessCode $instructorAccessCode): int
+    public function handle(): int
     {
         try {
-            $instructorAccessCode->where('created_at', '<=', Carbon::now()->subDays(2)->toDateTimeString())->delete();
+            foreach (['instructor_access_codes', 'question_editor_access_codes'] as $table)
+                DB::table($table)
+                    ->where('created_at', '<=', Carbon::now()->subDays(2)->toDateTimeString())
+                    ->delete();
             return 0;
-        } catch (Exception $e){
+        } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
+            echo $e->getMessage();
             return 1;
         }
     }

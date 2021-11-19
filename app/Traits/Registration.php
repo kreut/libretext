@@ -40,6 +40,8 @@ trait Registration
                GraderAccessCode::where('access_code', $data['access_code'])->delete();
                $role = 4;
                break;
+           case('question editor'):
+               $role = 5;
 
        }
 

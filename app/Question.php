@@ -24,6 +24,110 @@ class Question extends Model
     }
 
     /**
+     * @param string $technology
+     * @param string $technology_id
+     * @return string
+     */
+    public function getTechnologyIframeFromTechnology(string $technology, string $technology_id)
+    {
+        switch ($technology) {
+            case('h5p'):
+                $technology_iframe = '<iframe src="https://studio.libretexts.org/h5p/' . $technology_id . '/embed" frameborder="0" allowfullscreen="allowfullscreen"></iframe>';
+                break;
+            case('webwork'):
+                $technology_iframe = '<iframe allowtransparency="true" frameborder="0" src="https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&amp;sourceFilePath=' . $technology_id . '&amp;problemSeed=1234567&amp;courseID=anonymous&amp;userID=anonymous&amp;course_password=anonymous&amp;showSummary=1&amp;displayMode=MathJax&amp;problemIdentifierPrefix=102&amp;language=en&amp;outputformat=libretexts&amp;showScoreSummary=0&amp;showAnswerTable=0" width="100%"></iframe>';
+                break;
+            case('imathas'):
+                $technology_iframe = '<iframe src="https://imathas.libretexts.org/imathas/embedq2.php?id=' . $technology_id . '" class="imathas_problem"></iframe>';
+                break;
+            default:
+                $technology_iframe = '';
+        }
+        return $technology_iframe;
+    }
+
+    /**
+     * @param string $technology
+     * @param string $technology_id
+     * @return string
+     */
+    public function getTechnologyURLFromTechnology(string $technology, string $technology_id): string
+    {
+
+        switch ($technology) {
+            case('h5p'):
+                $url = "https://studio.libretexts.org/h5p/$technology_id";
+                break;
+            case('webwork'):
+                $url = "https://webwork.libretexts.org/webwork2/html2xml?answersSubmitted=0&amp;sourceFilePath=$technology_id&amp;problemSeed=1234567&amp;courseID=anonymous&amp;userID=anonymous&amp;course_password=anonymous&amp;showSummary=1&amp;displayMode=MathJax&amp;problemIdentifierPrefix=102&amp;language=en&amp;outputformat=libretexts&amp;showScoreSummary=0&amp;showAnswerTable=0";
+                break;
+            case('imathas'):
+                $url = "https://imathas.libretexts.org/imathas/embedq2.php?id=$technology_id";
+                break;
+            default:
+                $url = '';
+        }
+        return $url;
+
+
+    }
+
+    function addTags($tags)
+    {
+        $this->cleanUpTags();
+        if ($tags) {
+            foreach ($tags as $tag) {
+                $tag_in_db = Tag::where('tag', $tag)->first();
+                $tag_id = $tag_in_db
+                    ? $tag_in_db->id
+                    : Tag::create(['tag' => $tag])->id;
+                DB::table('question_tag')->insert(['question_id' => $this->id, 'tag_id' => $tag_id]);
+            }
+        }
+    }
+
+
+    function cleanUpTags()
+    {
+        $question_tags = DB::table('question_tag')->where('question_id', $this->id)->get();
+        foreach ($question_tags as $question_tag) {
+            $number_of_times_tag_appears = DB::table('question_tag')
+                ->where('tag_id', $question_tag->tag_id)
+                ->where('question_id', '<>', $this->id)
+                ->count();
+
+            //clean up the tags
+            DB::table('question_tag')->where('question_id', $this->id)->delete();
+            if (!$number_of_times_tag_appears) {
+                Tag::where('id', $question_tag->tag_id)->delete();
+            }
+        }
+    }
+
+    /**
+     * @param $non_technology_text
+     * @param string $library
+     * @param string $page_id
+     * @param Libretext $libretext
+     */
+    function storeNonTechnologyText($non_technology_text,
+                                    string $library,
+                                    string $page_id,
+                                    Libretext $libretext)
+    {
+        if ($non_technology_text) {
+            $glMol = strpos($non_technology_text, '/Molecules/GLmol/js/GLWrapper.js') !== false;
+            $non_technology_text = $libretext->addExtras($non_technology_text,
+                ['glMol' => $glMol,
+                    'MathJax' => strpos($non_technology_text, 'math-tex') !== false
+                        || strpos($non_technology_text, "\(") !== false
+                        || strpos($non_technology_text, "(\\") !== false
+                ]);
+            Storage::disk('s3')->put("$library/$page_id.php", $non_technology_text);
+        }
+    }
+
+    /**
      * @param DOMDocument $domd
      * @param Libretext $libretext
      * @param string $technology_iframe
@@ -37,34 +141,23 @@ class Question extends Model
                                         int         $page_id): array
     {
         $technology = $libretext->getTechnologyFromBody($technology_iframe);
-        $author = null;
-        $license = null;
-        $license_version = null;
 
         if ($technology === 'h5p') {
             $domd->loadHTML($technology_iframe);
             $iFrame = $domd->getElementsByTagName('iframe')->item(0);
             $src = $iFrame->getAttribute('src');
             $h5p_id = str_replace(['https://studio.libretexts.org/h5p/', '/embed'], ['', ''], $src);
-            $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, $endpoint);
-            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-
-            $output = curl_exec($ch);
-            curl_close($ch);
-            if ($info = json_decode($output, 1)) {
-                $info = $info[0];
-                $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
-                $author = !$author ? $info['uid'] : ($author[0]->name ?? '');
-                $license = $this->_mapLicenseTextToValue($info['license']);
-                $license_version = $license ? $info['license_version'] : null;
-            }
+            $h5p_info = $this->getH5PInfo($h5p_id);
+            $author = $h5p_info['author'];
+            $license = $h5p_info['license'];
+            $license_version = $h5p_info['license_version'];
+            $title = $h5p_info['title'];
+            $tags = $h5p_info['tags'];
         } else {
             $license = null;
             $license_version = null;
             $author = null;
+            $title = null;
             $tags = $libretext->getPrivatePage('tags', $page_id)->tag ?? null;
             if (is_array($tags)) {
                 foreach ($tags as $tag) {
@@ -81,7 +174,49 @@ class Question extends Model
                 }
             }
         }
-        return compact('author', 'license', 'license_version');
+        return compact('author', 'license', 'license_version', 'title', 'tags');
+    }
+
+    /**
+     * @param int $h5p_id
+     * @return array
+     * @throws Exception
+     */
+    public function getH5PInfo(int $h5p_id): array
+    {
+        $author = null;
+        $license = null;
+        $license_version = null;
+        $title = null;
+        $tags = null;
+        $url = null;
+        $endpoint = "https://studio.libretexts.org/api/h5p/$h5p_id";
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $endpoint);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, FALSE);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+
+        $output = curl_exec($ch);
+        curl_close($ch);
+        $success = false;
+        if ($info = json_decode($output, 1)) {
+            $info = $info[0];
+            $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
+            $author = !$author ? $info['uid'] : ($author[0]->name ?? null);
+            $license = $this->_mapLicenseTextToValue($info['license']);
+            $license_version = $license ? $info['license_version'] : null;
+            $title = $info['title_1'] ?? null;
+            if ($title) {
+                $title = str_replace(['&quot;', '&amp;quot;', '&amp;amp;'], ['"', '"', 'and'], $title);
+            }
+            $url = $this->getTechnologyURLFromTechnology('h5p', $h5p_id);
+            $tags = $info['field_tags'] ?? null;
+            if ($tags) {
+                $tags = explode(',', $tags);
+            }
+            $success = $info !== [];
+        }
+        return compact('author', 'license', 'license_version', 'title', 'url', 'tags', 'success');
     }
 
     /**
@@ -375,7 +510,6 @@ class Question extends Model
             }
 
 
-
             $author_and_license_info = $this->getAuthorAndLicense($dom,
                 $Libretext,
                 $technology_iframe,
@@ -547,9 +681,8 @@ class Question extends Model
     }
 
     /**
-     * @param $library_text_page_id
-     * @param Libretext $libretext
      * @param Request $request
+     * @param Libretext $libretext
      * @return array
      * @throws Exception
      */
@@ -602,6 +735,10 @@ class Question extends Model
         return $response;
     }
 
+    /**
+     * @param Request $request
+     * @return array
+     */
     public function getQuestionToAddByAdaptId(Request $request)
     {
         $adapt_id = $request->direct_import;
@@ -661,6 +798,20 @@ class Question extends Model
             }
         }
         return $response;
+    }
+
+    public function cleanUpExtraHtml(DOMDocument $dom, $html)
+    {
+        libxml_use_internal_errors(true);
+        $dom->loadHTML($html);
+        libxml_clear_errors();
+        $selector = new \DOMXPath($dom);
+        foreach ($selector->query('//h2[contains(attribute::class, "editable")]') as $e) {
+            $e->parentNode->removeChild($e);
+        }
+        $dom->saveHTML($dom->documentElement);
+        return $this->getInnerHTMLByClass($selector, 'mt-section');
+
     }
 }
 

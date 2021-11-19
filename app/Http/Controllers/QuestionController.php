@@ -7,10 +7,10 @@ use App\Assignment;
 use App\AssignmentSyncQuestion;
 use App\BetaCourseApproval;
 use App\Helpers\Helper;
+use App\Http\Requests\StoreQuestionRequest;
 use App\Libretext;
-use App\LtiGradePassback;
-use App\LtiLaunch;
 use App\Question;
+use App\Traits\DateFormatter;
 use App\RefreshQuestionRequest;
 use Illuminate\Contracts\Foundation\Application;
 use Illuminate\Contracts\Routing\ResponseFactory;
@@ -25,20 +25,533 @@ use Illuminate\Http\Response;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Auth;
-use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Storage;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 
 class QuestionController extends Controller
 {
     use IframeFormatter;
     use LibretextFiles;
+    use DateFormatter;
+
+    /**
+     * @return array
+     */
+    public function getValidLicenses(): array
+    {
+        $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'cbyncsa', 'gnu', 'arr', 'gnufdl'];
+        return $response;
+    }
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public function validateBulkImportQuestions(Request $request, Question $question): array
+    {
+        $import_template = $request->import_template;
+        $response['type'] = 'error';
+
+        $authorized = Gate::inspect('validateBulkImportQuestions', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            if (!app()->environment('testing')) {
+                if (!$request->file('bulk_import_questions_file')) {
+                    $response['message'] = ['No file was selected.'];
+                    return $response;
+                }
+                $bulk_import_questions_file = $request->file('bulk_import_questions_file')->store("override-scores/" . Auth()->user()->id, 'local');
+                $csv_file = Storage::disk('local')->path($bulk_import_questions_file);
+
+                if (!in_array($request->file('bulk_import_questions_file')->getMimetype(), ['application/csv', 'text/plain'])) {
+                    $response['message'] = ["This is not a .csv file."];
+                    return $response;
+                }
+                $bulk_import_questions = Helper::csvToArray($csv_file);
+            } else {
+                $bulk_import_questions = $request->csv_file_array;
+
+            }
+
+            if (!$bulk_import_questions) {
+                $response['message'] = ['The .csv file has no data.'];
+                return $response;
+            }
+            switch ($import_template) {
+                case('webwork'):
+                    $keys = ['Public*',
+                        'Title*',
+                        'File Path*',
+                        'Author',
+                        'License',
+                        'License Version',
+                        'Tags'];
+                    break;
+                case('advanced'):
+                default:
+                    $keys = ["Public*",
+                        "Title*",
+                        "Question Type*",
+                        "Technology",
+                        "Technology ID/File Path",
+                        "Author",
+                        "License",
+                        "License Version",
+                        "Tags",
+                        "Open-Ended Text",
+                        "Text Question",
+                        "A11Y Question",
+                        "Answer",
+                        "Solution",
+                        "Hint"
+                    ];
+
+            }
+            $uploaded_keys = array_keys($bulk_import_questions[0]);
+            foreach ($keys as $key => $correct_key) {
+                if ($correct_key !== $uploaded_keys[$key]) {
+                    $response['message'] = ["The CSV should have a first row with the following headings: " . implode(', ', $keys) . "."];
+                    return $response;
+                }
+            }
+            //structure looks good
+            $messages = [];
+            foreach ($bulk_import_questions as $key => $question) {
+                $bulk_import_questions[$key]['row'] = $key + 2;
+                $bulk_import_questions[$key]['import_status'] = 'Pending';
+                if ($question['Tags']) {
+                    $tags = explode(',', $question['Tags']);
+                    $bulk_import_questions[$key]['Tags'] = [];
+                    foreach ($tags as $tag) {
+                        $bulk_import_questions[$key]['Tags'][] = trim($tag);
+                    }
+                }
+                $row_num = $key + 2;
+
+                if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
+                    $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
+                }
+                if (!$question['Title*']) {
+                    $messages[] = "Row $row_num is missing a Title.";
+                }
+                if ($import_template === 'advanced' && !$question['Question Type*']) {
+                    $messages[] = "Row $row_num is missing a Question Type.";
+                }
+                if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['open_ended', 'auto_graded', 'frankenstein'])) {
+                    $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are open_ended, auto_graded, or frankenstein.";
+                }
+                if ($import_template === 'advanced' && $question['Question Type*'] === 'open_ended' && !$question['Open-Ended Text']) {
+                    $messages[] = "Row $row_num is an open_ended question and is missing text.";
+                }
+
+                if ($import_template === 'webwork' && !$question['File Path*']) {
+                    $messages[] = "Row $row_num does not have a File Path";
+                }
+
+                $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
+                if ($import_template === 'advanced' && $question['Question Type*'] !== 'open_ended') {
+                    switch ($question['Technology']) {
+                        case('webwork'):
+                            if (!$technology_id) {
+                                $messages[] = "Row $row_num uses webwork and is missing the File Path.";
+                            }
+                            break;
+                        case('h5p'):
+                        case('imathas'):
+                            if (!filter_var($technology_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+                                $messages[] = "Row $row_num uses {$question['Technology']} and requires a positive integer as the Technology ID.";
+                            }
+                            break;
+                        case(''):
+                            //no technologu
+                            break;
+                        default:
+                            $messages[] = "Row $row_num is using an invalid technology: {$question['Technology']}.";
+                    }
+                }
+                if ($question['License'] !== '' && !in_array($question['License'], $this->getValidLicenses()['licenses'])) {
+                    $messages[] = "Row $row_num is using an invalid license: {$question['License']}.";
+                }
+            }
+            if ($messages) {
+                $response['message'] = $messages;
+                return $response;
+            }
+
+            $response['questions_to_import'] = $bulk_import_questions;
+            $response['type'] = 'success';
+            /*  "Title*" => ""
+            "Question Type*" => ""
+            "Technology" => ""
+            "Technology ID/File Path" => ""
+            "Author" => "sfdsfs"
+            "License" => "a,b,c"
+            "License Version" => "this is the license"
+            "Tags" => ""some tags""
+            "Open-Ended Text" => ""
+            "Text Question" => ""
+            "A11Y Question" => ""
+            "Answer" => ""
+            "Solution" => ""
+            "Hint" => ""*/
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = ["We were not able to upload the questions file.  Please try again or contact us for assistance."];
+        }
+        return $response;
+
+    }
+
+    /**
+     * @param string $import_template
+     * @return array|StreamedResponse
+     * @throws Exception
+     */
+    public
+    function getBulkUploadTemplate(string $import_template)
+    {
+        try {
+            switch ($import_template) {
+                case('webwork'):
+                    $list = ['Public*',
+                        'Title*',
+                        'File Path*',
+                        'Author',
+                        'License',
+                        'License Version',
+                        'Tags'];
+                    break;
+                case('advanced'):
+                default:
+                    $list = ['Public*',
+                        'Title*',
+                        'Question Type*',
+                        'Technology',
+                        'Technology ID/File Path',
+                        'Author',
+                        'License',
+                        'License Version',
+                        'Tags',
+                        'Open-Ended Text',
+                        'Text Question',
+                        'A11Y Question',
+                        'Answer',
+                        'Solution',
+                        'Hint'];
+            }
+            $efs_dir = '/mnt/local/';
+            $is_efs = is_dir($efs_dir);
+            $storage_path = $is_efs
+                ? $efs_dir
+                : Storage::disk('local')->getAdapter()->getPathPrefix();
+            $file = "$storage_path$import_template-bulk-question-import-template.csv";
+            $fp = fopen($file, 'w');
+            fputcsv($fp, $list);
+
+            fclose($fp);
+
+
+            Storage::disk('s3')->put("$import_template-bulk-question-import-template.csv", file_get_contents($file));
+            return Storage::disk('s3')->download("$import_template-bulk-question-import-template.csv");
+
+        } catch (Exception $e) {
+
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to download the file.  Please try again or contact us for assistance.";
+        }
+        return $response;
+    }
+
+
+    /**
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public
+    function destroy(Question $question): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('destroy', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $exists_in_assignment = DB::table('assignment_question')->where('question_id', $question->id)->exists();
+            if ($exists_in_assignment) {
+                $response['message'] = "This question already exists in an assignment and cannot be deleted.";
+                return $response;
+            }
+            DB::beginTransaction();
+            $question->cleanUpTags();
+            $question->delete();
+            DB::commit();
+            $response['message'] = "The question has been deleted.";
+            $response['type'] = 'info';
+        } catch (Exception $e) {
+            DB::rollBack();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve your questions.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
+
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public
+    function index(Request $request, Question $question): array
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('index', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+        try {
+            $questions = $question->where('question_editor_user_id', $request->user()->id)
+                ->orderBy('updated_at', 'desc')
+                ->get();
+
+            $tags = DB::table('question_tag')
+                ->join('tags', 'question_tag.tag_id', '=', 'tags.id')
+                ->whereIn('question_id', $questions->pluck('id'))
+                ->select('question_id', 'tag')
+                ->get();
+            $tags_by_question_id = [];
+            foreach ($tags as $tag) {
+                $tags_by_question_id[$tag->question_id][] = $tag->tag;
+            }
+            $extra_htmls = ['text_question',
+                'a11y_question',
+                'answer_html',
+                'solution_html',
+                'hint',
+                'notes'];
+            $dom = new \DomDocument();
+            foreach ($questions as $key => $question) {
+                foreach ($extra_htmls as $extra_html) {
+                    if ($question[$extra_html]) {
+                        $html = $question->cleanUpExtraHtml($dom, $question[$extra_html]);
+                        $questions[$key][$extra_html] = $html;
+                    }
+                }
+                $questions[$key]['tags'] = $tags_by_question_id[$question->id] ?? ['none'];
+                $questions[$key]['updated_at'] = $this->convertUTCMysqlFormattedDateToLocalDateAndTime($question->updated_at, $request->user()->time_zone);
+            }
+            $response['my_questions'] = $questions;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to retrieve your questions.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+
+    }
+
+
+    /**
+     * @throws Exception
+     */
+    public function update(StoreQuestionRequest $request,
+                           Question             $question,
+                           Libretext            $libretext): array
+    {
+        return $this->store($request, $question, $libretext);
+
+    }
+
+    /**
+     * @param StoreQuestionRequest $request
+     * @param Question $question
+     * @param Libretext $libretext
+     * @return array
+     * @throws Exception
+     */
+    public
+    function store(StoreQuestionRequest $request,
+                   Question             $question,
+                   Libretext            $libretext): array
+    {
+        $response['type'] = 'error';
+
+        $is_update = isset($request->id);
+        $authorized = $is_update ? Gate::inspect('update', $question) : Gate::inspect('store', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $data = $request->validated();
+            $extra_htmls = ['text_question' => 'Text Question',
+                'a11y_question' => 'A11Y Question',
+                'answer_html' => 'Answer',
+                'solution_html' => 'Solution',
+                'hint' => 'Hint',
+                'notes' => 'Notes'];
+            foreach ($extra_htmls as $extra_html => $extra_html_title) {
+                if (isset($data[$extra_html]) && $data[$extra_html]) {
+                    $data[$extra_html] = '<div class="mt-section"><h2 class="editable">' . $extra_html_title . '</h2>' . $data[$extra_html] . "</div>";
+                }
+            }
+
+
+            $data['library'] = 'adapt';
+            $tags = [];
+            if ($data['tags']) {
+                foreach ($data['tags'] as $tag) {
+                    $tags[] = trim($tag);
+                }
+            }
+            unset($data['tags']);
+            if ($request->question_type === 'open_ended') {
+                $data['technology_id'] = null;
+                $data['technology'] = 'text';
+            }
+
+
+            $data['page_id'] = $is_update
+                ? Question::find($request->id)->page_id
+                : 1 + $question->where('library', 'adapt')->orderBy('id', 'desc')->value('page_id');
+
+            $data['url'] = null;
+
+            $data['technology_iframe'] = $data['technology_id']
+                ? $question->getTechnologyIframeFromTechnology($data['technology'], $data['technology_id'])
+                : '';
+
+            $non_technology_text = isset($data['non_technology_text']) ? trim($data['non_technology_text']) : '';
+            $data['non_technology'] = $non_technology_text !== '';
+            $data['question_editor_user_id'] = $request->user()->id;
+            $data['cached'] = false;
+            unset($data['non_technology_text']);
+            DB::beginTransaction();
+            if ($is_update) {
+                $question = Question::find($request->id);
+                $question->update($data);
+            } else {
+                $question = Question::create($data);
+            }
+            $question->addTags($tags);
+            $question->storeNonTechnologyText($non_technology_text, 'adapt', $data['page_id'], $libretext);
+
+
+            DB::commit();
+            $action = $is_update ? 'updated' : 'created';
+            $response['message'] = "The question has been $action.";
+            $response['url'] = $data['technology_id'] ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
+            $response['type'] = 'success';
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save this question.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
+    /**
+     * @param StoreQuestionRequest $request
+     * @param string $h5p_id
+     * @param Question $question
+     * @return array
+     * @throws Exception
+     */
+    public
+    function storeH5P(Request  $request,
+                      string   $h5p_id,
+                      Question $question): array
+
+    {
+        $response['type'] = 'error';
+        $authorized = Gate::inspect('storeH5P', $question);
+        if (!$authorized->allowed()) {
+            $response['message'] = $authorized->message();
+            return $response;
+        }
+
+        try {
+            $data['library'] = 'adapt';
+            if (!filter_var($h5p_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
+                $response['message'] = "$h5p_id should be a positive integer.";
+            }
+            if (DB::table('questions')
+                ->where('technology_iframe', 'like', "%https://studio.libretexts.org/h5p/$h5p_id%")
+                ->exists()) {
+                $response['message'] = "A question already exists with ID $h5p_id.";
+                return $response;
+            }
+            $h5p = $question->getH5PInfo($h5p_id);
+            if (!$h5p['success']) {
+                $response['h5p'] = $h5p;
+                $response['message'] = "$h5p_id is not a valid id.";
+                return $response;
+            }
+            $tags = $h5p['tags'];
+
+            $data['license'] = $h5p['license'];
+            $data['author'] = $h5p['author'];
+            $data['title'] = $h5p['title'];
+            $data['technology'] = 'h5p';
+            $data['license_version'] = $h5p['license_version'];
+            $data['question_editor_user_id'] = $request->user()->id;
+            $data['url'] = null;
+            $data['technology_id'] = $h5p_id;
+            $data['technology_iframe'] = $question->getTechnologyIframeFromTechnology('h5p', $h5p_id);
+            $data['non_technology'] = 0;
+            $data['cached'] = true;
+            $data['public'] = 0;
+            $data['page_id'] = 1 + $question->where('library', 'adapt')->orderBy('page_id', 'desc')->value('page_id');
+
+            DB::beginTransaction();
+
+            $question = Question::create($data);
+            $question->addTags($tags);
+
+            DB::commit();
+
+            $response['h5p'] = $h5p;
+            $response['type'] = 'success';
+
+        } catch (Exception $e) {
+            DB::rollback();
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "We were not able to save this question.  Please try again or contact us for assistance.";
+        }
+
+        return $response;
+    }
+
 
     /**
      * @param Request $request
      * @return Application|ResponseFactory|Response
      */
-    public function setQuestionUpdatedAtSession(Request $request)
+    public
+    function setQuestionUpdatedAtSession(Request $request)
     {
         $cookie = cookie()->forever('loaded_question_updated_at', $request->loaded_question_updated_at);
         $response['loaded_question_updated_at'] = $request->loaded_question_updated_at;
@@ -52,9 +565,10 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function initRefreshQuestion(Assignment             $assignment,
-                                        Question               $question,
-                                        AssignmentSyncQuestion $assignmentSyncQuestion): array
+    public
+    function initRefreshQuestion(Assignment             $assignment,
+                                 Question               $question,
+                                 AssignmentSyncQuestion $assignmentSyncQuestion): array
     {
         $response['type'] = 'error';
 
@@ -85,11 +599,12 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function refresh(Request                $request,
-                            Question               $question,
-                            Assignment             $assignment,
-                            AssignmentSyncQuestion $assignmentSyncQuestion,
-                            RefreshQuestionRequest $refreshQuestionRequest): array
+    public
+    function refresh(Request                $request,
+                     Question               $question,
+                     Assignment             $assignment,
+                     AssignmentSyncQuestion $assignmentSyncQuestion,
+                     RefreshQuestionRequest $refreshQuestionRequest): array
     {
 
         try {
@@ -131,6 +646,7 @@ class QuestionController extends Controller
 
             $response['type'] = 'success';
         } catch (Exception $e) {
+            DB::rollback();
             $h = new Handler(app());
             $h->report($e);
             $response['message'] = "We were not able to update the question.  Please try again or contact us for assistance.";
@@ -143,7 +659,8 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function refreshProperties(Question $question): array
+    public
+    function refreshProperties(Question $question): array
     {
 
         try {
@@ -171,7 +688,8 @@ class QuestionController extends Controller
      * @param Request $request
      * @return array|string|null
      */
-    public function getDefaultImportLibrary(Request $request)
+    public
+    function getDefaultImportLibrary(Request $request)
     {
         $response['default_import_library'] = $request->cookie('default_import_library') ?? null;
         return $response;
@@ -183,7 +701,8 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateProperties(Request $request, Question $question): array
+    public
+    function updateProperties(Request $request, Question $question): array
     {
 
         try {
@@ -209,7 +728,8 @@ class QuestionController extends Controller
 
     }
 
-    public function storeDefaultImportLibrary(Request $request, Libretext $libretext)
+    public
+    function storeDefaultImportLibrary(Request $request, Libretext $libretext)
     {
         $response['type'] = 'error';
         $libraries = $libretext->libraries();
@@ -243,12 +763,13 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function directImportQuestion(Request                $request,
-                                         Question               $Question,
-                                         Assignment             $assignment,
-                                         AssignmentSyncQuestion $assignmentSyncQuestion,
-                                         Libretext              $libretext,
-                                         BetaCourseApproval     $betaCourseApproval): array
+    public
+    function directImportQuestion(Request                $request,
+                                  Question               $Question,
+                                  Assignment             $assignment,
+                                  AssignmentSyncQuestion $assignmentSyncQuestion,
+                                  Libretext              $libretext,
+                                  BetaCourseApproval     $betaCourseApproval): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('update', $assignment);
@@ -317,7 +838,8 @@ class QuestionController extends Controller
     }
 
 
-    public function getQuestionsByTags(Request $request, Question $Question)
+    public
+    function getQuestionsByTags(Request $request, Question $Question)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
@@ -366,8 +888,9 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function compareCachedAndNonCachedQuestions(Question               $question,
-                                                       RefreshQuestionRequest $refreshQuestionRequest)
+    public
+    function compareCachedAndNonCachedQuestions(Question               $question,
+                                                RefreshQuestionRequest $refreshQuestionRequest): array
     {
         $response['type'] = 'error';
         /* $authorized = Gate::inspect('refreshQuestion', $question);
@@ -395,7 +918,51 @@ class QuestionController extends Controller
 
     }
 
-    public function show(Question $Question)
+    /**
+     * @param Request $request
+     * @param Question $question
+     * @param Libretext $libretext
+     * @return array
+     * @throws Exception
+     */
+    public
+    function preview(Request   $request,
+                     Question  $question,
+                     Libretext $libretext)
+    {
+        $response['type'] = 'error';
+        try {
+            $question['non_technology_iframe_src'] = null;
+            $page_id = $request->user()->id;
+            if ($request->non_technology_text) {
+                $question->storeNonTechnologyText($request->non_technology_text, 'preview', $page_id, $libretext);
+                $question['library'] = 'preview';
+                $question['page_id'] = $page_id;
+                $question['non_technology'] = true;
+                $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
+            }
+            $question['technology_iframe'] = null;
+            if ($request->question_type !== 'open_ended') {
+                $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
+                $iframe_id = substr(sha1(mt_rand()), 17, 12);
+                $question['technology_iframe'] = $this->formatIframeSrc($technology_iframe, $iframe_id);
+            }
+            $question['id'] = 'some-id-that-is-not-really-an-id';//just a placeholder for previews
+            $response['type'] = 'success';
+            $response['question'] = $question;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the question preview.  Please try again or contact us for assistance.";
+        }
+        return $response;
+
+
+    }
+
+    public
+    function show(Question $Question)
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('viewAny', $Question);
@@ -432,7 +999,8 @@ class QuestionController extends Controller
      * @param object $question_info
      * @return array
      */
-    private function _formatQuestionFromDatabase(object $question_info): array
+    private
+    function _formatQuestionFromDatabase(object $question_info): array
     {
         $question['title'] = $question_info['title'];
         $question['id'] = $question_info['id'];
@@ -462,7 +1030,8 @@ class QuestionController extends Controller
     }
 
 
-    public function getQuestionIdsByWordTags(Request $request)
+    public
+    function getQuestionIdsByWordTags(Request $request)
     {
         $chosen_tags = DB::table('tags')
             ->whereIn('tag', $request->get('tags'))
@@ -504,7 +1073,8 @@ class QuestionController extends Controller
         return $intersected_question_ids;
     }
 
-    public function validatePageId(Request $request)
+    public
+    function validatePageId(Request $request)
     {
         $page_id = false;
         foreach ($request->get('tags') as $tag) {

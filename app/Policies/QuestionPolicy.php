@@ -53,7 +53,56 @@ class QuestionPolicy
 
     }
 
-    public function updateProperties(User $user)
+    /**
+     * @param User $user
+     * @return Response
+     */
+    public function storeH5P(User $user): Response
+    {
+        return (in_array($user->role,[2,5]))
+            ? Response::allow()
+            : Response::deny("You are not allowed to bulk upload H5P questions.");
+    }
+
+    public function index(User $user): Response
+    {
+        return (in_array($user->role,[2,5]))
+            ? Response::allow()
+            : Response::deny("You are not allowed to view My Questions.");
+    }
+
+    public function destroy(User $user, Question $question): Response
+    {
+
+        return (int) $question->question_editor_user_id === (int) $user->id
+            ? Response::allow()
+            : Response::deny("You are not allowed to delete that question.");
+    }
+
+    public function store(User $user): Response
+    {
+
+        return (in_array($user->role,[2,5]))
+            ? Response::allow()
+            : Response::deny("You are not allowed to save questions.");
+    }
+
+    public function update(User $user, Question $question): Response
+    {
+        return (int) $user->id === (int) $question->question_editor_user_id
+            ? Response::allow()
+            : Response::deny("This is not your question to edit.");
+    }
+
+    public function validateBulkImportQuestions(User $user): Response
+    {
+        return (in_array($user->role,[2,5]))
+            ? Response::allow()
+            : Response::deny("You are not allowed to bulk import questions.");
+    }
+
+
+    public function updateProperties(User $user): Response
     {
         return ($user->role === 2)
             ? Response::allow()

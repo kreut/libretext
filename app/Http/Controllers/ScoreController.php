@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\AssignmentGroup;
 use App\Enrollment;
 use App\Extension;
+use App\Helpers\Helper;
 use App\Http\Requests\UpdateScoresRequest;
 use App\Jobs\ProcessPassBackByUserIdAndAssignment;
 use App\LtiGradePassback;
@@ -152,23 +153,6 @@ class ScoreController extends Controller
 
     }
 
-    function csvToArray($filename = '', $delimiter = ',')
-    {
-        if (!file_exists($filename) || !is_readable($filename))
-            return false;
-        $header = null;
-        $data = array();
-        if (($handle = fopen($filename, 'r')) !== false) {
-            while (($row = fgetcsv($handle, 1000, $delimiter)) !== false) {
-                if (!$header)
-                    $header = $row;
-                else
-                    $data[] = array_combine($header, $row);
-            }
-            fclose($handle);
-        }
-        return $data;
-    }
 
     public function overrideScores(Request $request, Assignment $assignment, Score $score)
     {
@@ -224,7 +208,7 @@ class ScoreController extends Controller
             foreach ($current_scores as $current_score) {
                 $current_scores_by_user_id[$current_score->user_id] = $current_score->score;
             }
-            $override_scores = $this->csvToArray($csv_file);
+            $override_scores = Helper::csvToArray($csv_file);
             $override_score_errors = [];
             foreach ($override_scores as $override_score) {
                 $score = $this->fixCSV($override_score['Score'], true);

@@ -68,12 +68,26 @@ class BreadcrumbController extends Controller
                         case('instructors.learning_trees.index'):
                             $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => ""];
                             break;
+                        case('question.editor'):
+                            $breadcrumbs[0] = ['text' => 'Question Editor', 'href' => ""];
+                            break;
                         case('students.assignments.anonymous.user.index'):
                             $breadcrumbs[0] = ['text' => '', 'href' => ""];
                             break;
                         case('login.as'):
+                            $breadcrumbs[0] = ['text' => 'Login As', 'href' => ""];
+                            break;
                         case('refresh.question.requests'):
-                            $breadcrumbs[0] = ['text' => 'My Courses', 'href' => "/$users/courses"];
+                            $breadcrumbs[0] = ['text' => 'Refresh Question Requests', 'href' => ""];
+                            break;
+                        case('lti.integrations'):
+                            $breadcrumbs[0] = ['text' => 'LTI Integrations', 'href' => ""];
+                            break;
+                        case('instructorAccessCodes'):
+                            $breadcrumbs[0] = ['text' => 'Instructor Access Codes', 'href' => ""];
+                            break;
+                        case('questionEditors'):
+                            $breadcrumbs[0] = ['text' => 'Question Editors', 'href' => ""];
                             break;
                         case('instructors.learning_trees.editor'):
                             $breadcrumbs[0] = ['text' => 'My Learning Trees', 'href' => "/instructors/learning-trees"];

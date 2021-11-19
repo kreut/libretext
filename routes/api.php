@@ -56,12 +56,15 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('/lti-registration/active/{ltiRegistration}', 'LtiRegistrationController@active');
 
 
-    Route::post('/instructor-access-code', 'InstructorAccessCodeController@store');
-    Route::post('/instructor-access-code/email', 'InstructorAccessCodeController@email');
+    Route::post('/access-code', 'AccessCodeController@store');
+    Route::post('/access-code/email', 'AccessCodeController@email');
 
     Route::get('/lti-school', 'LtiSchoolController@index');
 
     Route::post('/users/set-anonymous-user-session', 'UserController@setAnonymousUserSession');
+
+    Route::get('/question-editor', 'QuestionEditorController@index');
+    Route::delete('/question-editor/{questionEditorUser}', 'QuestionEditorController@destroy');
 
     Route::patch('/cookie/set-question-view/{questionView}', 'CookieController@setQuestionView');
     Route::patch('/cookie/set-assignment-group-filter/{course}/{chosenAssignmentGroup}', 'CookieController@setAssignmentGroupFilter');
@@ -208,10 +211,6 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::get('/tags', 'TagController@index');
 
-    Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
-    Route::post('/questions/default-import-library', 'QuestionController@storeDefaultImportLibrary');
-    Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
-    Route::post('/questions/{assignment}/direct-import-question', 'QuestionController@directImportQuestion');
 
 
     Route::get('/beta-courses/get-from-alpha-course/{alpha_course}', 'BetaCourseController@getBetaCoursesFromAlphaCourse');
@@ -223,9 +222,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::get('/beta-course-approvals/assignment/{assignment}', 'BetaCourseApprovalController@getByAssignment');
     Route::get('/beta-course-approvals/course/{course}', 'BetaCourseApprovalController@getByCourse');
 
-    Route::get('/questions/{question}', 'QuestionController@show');
-    Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
-    Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
+
 
     Route::get('/libreverse/library/{library}/page/{pageId}/student-learning-objectives', 'LibreverseController@getStudentLearningObjectiveByLibraryAndPageId');
     Route::get('/libreverse/library/{library}/page/{pageId}/title', 'LibreverseController@getTitleByLibraryAndPageId');
@@ -262,10 +259,32 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
 
     Route::patch('/assignments/{assignment}/questions/{question}/iframe-properties', 'AssignmentSyncQuestionController@updateIFrameProperties');
     Route::post('/assignments/{assignment}/questions/{question}/init-refresh-question', 'QuestionController@initRefreshQuestion');
-    Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');
-    Route::patch('/questions/{question}/refresh-properties', 'QuestionController@refreshProperties');
-    Route::post('/questions/set-question-updated-at-session', 'QuestionController@setQuestionUpdatedAtSession');
 
+
+    Route::get('/questions', 'QuestionController@index');
+    Route::get('/questions/default-import-library', 'QuestionController@getDefaultImportLibrary');
+    Route::get('/questions/properties/{question}', 'QuestionController@getProperties');
+    Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
+    Route::get('/questions/valid-licenses', 'QuestionController@getValidLicenses');
+    Route::post('/questions/bulk-upload-template/{import_template}', 'QuestionController@getBulkUploadTemplate');
+    Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
+
+    Route::get('/questions/{question}', 'QuestionController@show');
+    Route::post('/questions', 'QuestionController@store');
+    Route::post('/questions/preview', 'QuestionController@preview');
+    Route::post('/questions/h5p/{h5p}', 'QuestionController@storeH5P');
+
+    Route::patch('/questions/{question}', 'QuestionController@update');
+
+    Route::delete('/questions/{question}', 'QuestionController@destroy');
+
+    Route::post('/questions/{question}/refresh/{assignment?}', 'QuestionController@refresh');
+    Route::post('/questions/set-question-updated-at-session', 'QuestionController@setQuestionUpdatedAtSession');
+    Route::post('/questions/getQuestionsByTags', 'QuestionController@getQuestionsByTags');
+    Route::post('/questions/default-import-library', 'QuestionController@storeDefaultImportLibrary');
+    Route::post('/questions/{assignment}/direct-import-question', 'QuestionController@directImportQuestion');
+    Route::patch('/questions/{question}/refresh-properties', 'QuestionController@refreshProperties');
+    Route::patch('/questions/properties/{question}', 'QuestionController@updateProperties');
 
     Route::get('/assignments/{assignment}/{question}/last-submitted-info', 'AssignmentSyncQuestionController@updateLastSubmittedAndLastResponse');
     Route::get('/assignments/{assignment}/questions/ids', 'AssignmentSyncQuestionController@getQuestionIdsByAssignment');
@@ -301,7 +320,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/refresh-question-requests/deny/{question}', 'RefreshQuestionRequestController@denyRefreshQuestionRequest');
 
     Route::post('/refresh-question-requests/make-refresh-question-request/{question}', 'RefreshQuestionRequestController@makeRefreshQuestionRequest');
-    Route::get('/questions/compare-cached-and-non-cached/{question}', 'QuestionController@compareCachedAndNonCachedQuestions');
+
 
     Route::delete('/assignments/{assignment}/questions/{question}', 'AssignmentSyncQuestionController@destroy');
 

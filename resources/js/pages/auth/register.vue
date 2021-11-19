@@ -122,7 +122,7 @@
             </div>
 
             <!-- Access Code -->
-            <div v-if="isInstructor || isGrader" class="form-group row">
+            <div v-if="isInstructor || isGrader || isQuestionEditor" class="form-group row">
               <label class="col-md-3 col-form-label text-md-right" for="access_code">Access Code*
               </label>
               <div class="col-md-7">
@@ -135,7 +135,9 @@
                 <has-error :form="form" field="access_code"/>
                 <b-form-text id="access-code-help-block">
                   <span v-if="isGrader">Please contact your instructor for an access code.</span>
-                  <span v-if="isInstructor">Please <a href="" @click.prevent="openSendEmailModal()">contact us</a> for an access code.</span>
+                  <span v-if="isInstructor && !form.access_code">Please <a href=""
+                                                                           @click.prevent="openSendEmailModal()"
+                  >contact us</a> for an access code.</span>
                 </b-form-text>
               </div>
             </div>
@@ -145,6 +147,7 @@
               <div class="col-md-7" @change="removeTimeZoneError()">
                 <b-form-select id="time_zone"
                                v-model="form.time_zone"
+                               title="time zone"
                                :options="timeZones"
                                :class="{ 'is-invalid': form.errors.has('time_zone') }"
                                :aria-required="true"
@@ -175,6 +178,7 @@ import { getTimeZones } from '@vvo/tzdb'
 import { populateTimeZoneSelect } from '~/helpers/TimeZones'
 import AllFormErrors from '~/components/AllFormErrors'
 import Email from '~/components/Email'
+
 export default {
   middleware: 'guest',
 
@@ -207,6 +211,7 @@ export default {
     isGrader: false,
     isInstructor: false,
     isStudent: false,
+    isQuestionEditor: false,
     registrationTitle: ''
   }),
   watch: {
@@ -240,6 +245,9 @@ export default {
       if (path.includes('grader')) {
         return 'grader'
       }
+      if (path.includes('question-editor')) {
+        return 'question editor'
+      }
       alert('Not a valid registration type.')
       return false
     },
@@ -249,18 +257,22 @@ export default {
         case 'instructor':
           this.registrationTitle = 'Instructor Registration'
           this.isInstructor = true
-          this.isStudent = this.isGrader = false
+          this.isQuestionEditor = this.isStudent = this.isGrader = false
           break
         case 'student':
           this.registrationTitle = 'Student Registration'
           this.isStudent = true
-          this.isInstructor = this.isGrader = false
+          this.isQuestionEditor = this.isInstructor = this.isGrader = false
           break
         case 'grader':
           this.registrationTitle = 'Grader Registration'
           this.isGrader = true
-          this.isStudent = this.isInstructor = false
+          this.isQuestionEditor = this.isStudent = this.isInstructor = false
           break
+        case 'question editor':
+          this.registrationTitle = 'Question Editor Registration'
+          this.isQuestionEditor = true
+          this.isGrader = this.isStudent = this.isInstructor = false
       }
     },
     async register () {

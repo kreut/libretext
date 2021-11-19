@@ -39,11 +39,11 @@
           </span>
           <span v-if="user && user.role ===2">
           <b-dropdown id="dropdown-right" right text="Dashboard" variant="primary" class="m-2" size="sm">
-            <b-dropdown-item v-for="location in dashboards" :key="location.routeName"
-                             :active="$route.name === location.routeName"
-                             href="#" @click="$router.push({ name: location.routeName })"
+            <b-dropdown-item v-for="location in dashboards" :key="location.text"
+                             :active="$route.path === location.routePath"
+                             href="#" @click="$router.push({ path: location.routePath })"
             >
-              {{ location.text }}
+                {{ location.text }}
             </b-dropdown-item>
           </b-dropdown>
          </span>
@@ -86,8 +86,10 @@
             </b-navbar-nav>
 
             <b-navbar-nav class="ml-2 mr-2 mb-1">
-              <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor" @click="openSendEmailModal">
-                 Contact Us
+              <b-nav-item v-show="!isAnonymousUser" class="nav-link" :style="isLearningTreesEditor"
+                          @click="openSendEmailModal"
+              >
+                Contact Us
               </b-nav-item>
             </b-navbar-nav>
             <b-nav-item-dropdown v-show="!user" text="Register" class="pr-2" right>
@@ -104,6 +106,11 @@
               <b-dropdown-item href="#">
                 <router-link :to="{ path: '/register/grader' }" class="dropdown-item pl-3">
                   Grader
+                </router-link>
+              </b-dropdown-item>
+              <b-dropdown-item href="#">
+                <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
+                  Question Editor
                 </router-link>
               </b-dropdown-item>
             </b-nav-item-dropdown>
@@ -130,9 +137,11 @@ export default {
 
   data: () => ({
     toggleColors: window.config.toggleColors,
-    dashboards: [{ routeName: 'instructors.courses.index', text: 'My Courses' },
-      { routeName: 'commons', text: 'The Commons' },
-      { routeName: 'instructors.learning_trees.index', text: 'Learning Trees' }],
+    dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
+      { routePath: '/commons', text: 'The Commons' },
+      { routePath: '/question-editor/create-new-question', text: 'Question Editor' },
+      { routePath: '/question-editor/my-questions', text: 'My Questions' },
+      { routePath: '/instructors/learning-trees', text: 'Learning Trees' }],
     isAnonymousUser: false,
     showNavBar: true,
     isLearningTreeView: true,
@@ -188,6 +197,9 @@ export default {
   },
   created () {
     this.logout = logout
+    if (!this.isMe) {
+      this.dashboards = this.dashboards.filter(dashboard => dashboard.routeName !== 'question.editor')
+    }
   },
   methods: {
     async getSession () {
@@ -261,7 +273,6 @@ export default {
           [
             'commons',
             'welcome',
-            'login.as',
             'refresh.question.requests',
             'manual.grade.passbacks'
           ].includes(router.name)

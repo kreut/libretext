@@ -5,7 +5,7 @@ namespace App\Rules;
 use App\User;
 use Illuminate\Contracts\Validation\Rule;
 
-class IsValidInstructorAccessCodeEmail implements Rule
+class IsValidAccessCodeEmail implements Rule
 {
     /**
      * @var string

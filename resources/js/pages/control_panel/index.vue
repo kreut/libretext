@@ -13,13 +13,13 @@
             </ul>
           </card>
         </div>
-          <div class="col-md-9">
-            <transition name="fade" mode="out-in">
-              <router-view/>
-            </transition>
-          </div>
+        <div class="col-md-9">
+          <transition name="fade" mode="out-in">
+            <router-view/>
+          </transition>
         </div>
       </div>
+    </div>
 
   </div>
 </template>
@@ -41,28 +41,42 @@ export default {
     }),
     isMe: () => window.config.isMe,
     tabs () {
-      return [
+      let tabs = [
         {
           icon: '',
           name: 'Login As',
           route: 'login.as'
-        },
-        {
-          icon: '',
-          name: 'Refresh Question Requests',
-          route: 'refresh.question.requests'
-        },
-        {
-          icon: '',
-          name: 'LTI Integrations',
-          route: 'lti.integrations'
-        },
-        {
-          icon: '',
-          name: 'Instructor Access Codes',
-          route: 'instructorAccessCodes'
-        }
-      ]
+        }]
+      if ([1, 5].includes(this.user.id) || true) {
+        tabs = ([
+          {
+            icon: '',
+            name: 'Login As',
+            route: 'login.as'
+          },
+          {
+            icon: '',
+            name: 'Refresh Question Requests',
+            route: 'refresh.question.requests'
+          },
+          {
+            icon: '',
+            name: 'LTI Integrations',
+            route: 'lti.integrations'
+          },
+          {
+            icon: '',
+            name: 'Instructor Access Codes',
+            route: 'instructorAccessCodes'
+          },
+          {
+            icon: '',
+            name: 'Question Editors',
+            route: 'questionEditors'
+          }
+        ])
+      }
+      return tabs
     }
   },
   mounted () {

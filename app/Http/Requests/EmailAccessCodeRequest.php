@@ -3,10 +3,10 @@
 namespace App\Http\Requests;
 
 use App\Rules\IsValidInstructorAccessCode;
-use App\Rules\IsValidInstructorAccessCodeEmail;
+use App\Rules\IsValidAccessCodeEmail;
 use Illuminate\Foundation\Http\FormRequest;
 
-class EmailInstructorAccessCodeRequest extends FormRequest
+class EmailAccessCodeRequest extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -26,7 +26,7 @@ class EmailInstructorAccessCodeRequest extends FormRequest
     public function rules()
     {
         return [
-           'email' => new IsValidInstructorAccessCodeEmail()
+           'email' => new IsValidAccessCodeEmail()
         ];
     }
 }

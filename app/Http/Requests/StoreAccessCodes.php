@@ -4,7 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 
-class StoreInstructorAccessCodes extends FormRequest
+class StoreAccessCodes extends FormRequest
 {
     /**
      * Determine if the user is authorized to make this request.
@@ -24,7 +24,7 @@ class StoreInstructorAccessCodes extends FormRequest
     public function rules()
     {
         return [
-            'number_of_instructor_access_codes'  => 'required|integer|between:1,10'
+            'number_of_access_codes'  => 'required|integer|between:1,10'
         ];
     }
 }

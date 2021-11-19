@@ -34,9 +34,11 @@ let control_panel_paths = [
       { path: 'login-as', name: 'login.as', component: page('control_panel/login.as.vue') },
       { path: 'refresh-question-requests', name: 'refresh.question.requests', component: page('control_panel/refresh.question.requests.vue') },
       { path: 'lti-integrations', name: 'lti.integrations', component: page('control_panel/lti.integrations.vue') },
-      { path: 'instructor-access-codes', name: 'instructorAccessCodes', component: page('control_panel/instructor.access.codes.vue') }] }
+      { path: 'instructor-access-codes', name: 'instructorAccessCodes', component: page('control_panel/instructor.access.codes.vue') },
+      { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') }] }
 ]
 let general_paths  = [
+  { path: '/question-editor/:tab', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },
   { path: '/init-lms-assignment/:assignmentId', name: 'init_lms_assignment', component: page('init_lms_assignment.vue') },
@@ -47,6 +49,7 @@ let general_paths  = [
   { path: '/login', name: 'login', component: page('auth/login.vue') },
   { path: '/finish-sso-registration', name: 'finish.sso.registration', component: page('auth/finish.sso.registration.vue') },
   { path: '/register/instructor/:accessCode?', name: 'register', component: page('auth/register.vue'), alias: ['/register/student','/register/grader'] },
+  { path: '/register/question-editor/:accessCode?', name: 'question-editor-register', component: page('auth/register.vue')},
   { path: '/password/reset', name: 'password.request', component: page('auth/password/email.vue') },
   { path: '/password/reset/:token', name: 'password.reset', component: page('auth/password/reset.vue') },
   { path: '/email/verify/:id', name: 'verification.verify', component: page('auth/verification/verify.vue') },

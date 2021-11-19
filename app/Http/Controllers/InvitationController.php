@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Helpers\Helper;
 use App\Invitation;
 use App\Course;
 use App\GraderAccessCode;
@@ -10,7 +11,7 @@ use App\Section;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Gate;
 use App\Http\Requests\EmailInvitation;
-use App\Traits\AccessCodes;
+
 
 use App\Exceptions\Handler;
 use \Exception;
@@ -19,7 +20,6 @@ use Illuminate\Support\Facades\Log;
 class InvitationController extends Controller
 {
 
-    use AccessCodes;
 
     /**
      * @param EmailInvitation $request
@@ -50,7 +50,7 @@ class InvitationController extends Controller
             //create an access code and save it to the database
             $section_ids = $data['selected_sections'];
             $course_section_names = [];
-            $access_code = $this->createGraderAccessCode();
+            $access_code = Helper::createAccessCode();
             foreach ($section_ids as $section_id) {
                 $course_section_names [] = $course->name . ' - ' . $section->find($section_id)->name;
                 $grader_access_code = new GraderAccessCode();

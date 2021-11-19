@@ -62,6 +62,7 @@ class LibretextController extends Controller
 
 
     }
+
     /**
      * @param string $library
      * @param int $pageId
@@ -101,7 +102,12 @@ class LibretextController extends Controller
                 }
 
 //if not cached or for some other reason it's not in the local file system...
-                $question_to_view = Question::where('library',$library)->where('page_id',$pageId)->first();
+                if ($library === 'preview') {
+                    $question_to_view = new \stdClass();
+                    $question_to_view->cached = false;
+                } else {
+                    $question_to_view = Question::where('library', $library)->where('page_id', $pageId)->first();
+                }
                 if (!$question_to_view->cached || !file_exists($file)) {
                     $contents = Storage::disk('s3')->get("{$library}/{$pageId}.php");
                     if ($is_efs) {
@@ -109,7 +115,7 @@ class LibretextController extends Controller
                             'require_once("' . $efs_dir . 'libretext.config.php");', $contents);
                     }
                     file_put_contents($file, $contents);
-                    Question::where('library',$library)->where('page_id',$pageId)->update(['cached'=>1]);
+                    Question::where('library', $library)->where('page_id', $pageId)->update(['cached' => 1]);
                 }
                 /**
                  * Original code to just grab from s3 everytime

@@ -8,20 +8,19 @@ use App\AssignToUser;
 use App\Course;
 use App\Enrollment;
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Http\Requests\StoreSection;
 use App\Section;
 use App\Submission;
 use App\SubmissionFile;
 use Exception;
 use Illuminate\Http\Request;
-use App\Traits\AccessCodes;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 
 class SectionController extends Controller
 {
-    use AccessCodes;
 
     public function canCreateStudentAccessCodes(Request $request)
     {
@@ -126,7 +125,7 @@ class SectionController extends Controller
             $sections = $course->sections;
             foreach ($sections as $section) {
                 if (!$section->access_code) {
-                    $section->access_code = $this->createSectionAccessCode();
+                    $section->access_code = Helper::createAccessCode();
                     $section->save();
                 }
             }
@@ -155,7 +154,7 @@ class SectionController extends Controller
             return $response;
         }
         try {
-            $section->access_code = $this->createSectionAccessCode();
+            $section->access_code = Helper::createAccessCode();
             $section->save();
             $response['access_code'] = $section->access_code;
             $response['message'] = 'The access code has been refreshed.';
@@ -191,7 +190,7 @@ class SectionController extends Controller
             $section->name = $data['name'];
             $section->course_id = $course->id;
             $section->crn = $data['crn'];
-            $section->access_code = $this->createSectionAccessCode();
+            $section->access_code = Helper::createAccessCode();
             $section->save();
             $course->enrollFakeStudent($course->id, $section->id, $enrollment);
             $assignments = $course->assignments;

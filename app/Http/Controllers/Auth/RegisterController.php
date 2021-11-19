@@ -3,9 +3,8 @@
 namespace App\Http\Controllers\Auth;
 
 use App\Http\Controllers\Controller;
+use App\Rules\IsValidQuestionEditorAccessCode;
 use App\User;
-use App\InstructorAccessCode;
-use App\GraderAccessCode;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Foundation\Auth\RegistersUsers;
 use Illuminate\Http\Request;
@@ -67,7 +66,6 @@ class RegisterController extends Controller
             'email' => 'required|email|max:255|unique:users',
             'password' => 'required|min:6|confirmed',
         ];
-
         switch ($data['registration_type']) {
             case('instructor'):
                 $validator['access_code'] = new IsValidInstructorAccessCode();
@@ -78,8 +76,12 @@ class RegisterController extends Controller
             case('student'):
                 $validator['student_id'] = 'required';
                 break;
+            case('question editor'):
+                $validator['access_code'] = new IsValidQuestionEditorAccessCode();
+
         }
         $validator['time_zone'] = new IsValidTimeZone();
+
         return Validator::make($data, $validator);
     }
 
