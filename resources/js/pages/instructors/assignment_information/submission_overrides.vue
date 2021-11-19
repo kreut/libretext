@@ -12,7 +12,7 @@
       />
       <div v-if="!isLoading">
         <div v-if="enrollments.length">
-          <b-card header-html="<h2 class=&quot;h7&quot;>Assignment Level</h2>"
+          <b-card header-html="<h2 class=&quot;h7&quot;>Allow Submitting, Uploading PDF, and Assigning (all questions in assignment)</h2>"
                   class="mb-4"
           >
             <b-card-text>
@@ -78,7 +78,7 @@
             </b-card-text>
           </b-card>
           <div v-if="fileUploadMode !== 'individual_assessment'">
-            <b-card header-html="<h2 class=&quot;h7&quot;>Compiled PDF And Set Pages</h2>"
+            <b-card header-html="<h2 class=&quot;h7&quot;>Allow Uploading PDF and Assigning (all questions in assignment)</h2>"
                     class="mb-4"
             >
               <b-card-text>
@@ -139,7 +139,7 @@
                 </div>
               </b-card-text>
             </b-card>
-            <b-card header-html="<h2 class=&quot;h7&quot;>Set Pages Only</h2>" class="mb-4">
+            <b-card header-html="<h2 class=&quot;h7&quot;>Allow Assigning to Existing Uploaded PDF (all questions in assignment)</h2>" class="mb-4">
               <b-card-text>
                 <p>
                   Optionally allow a subset of your class to set pages in their compiled PDF even if
@@ -200,7 +200,7 @@
               </b-card-text>
             </b-card>
           </div>
-          <b-card header-html="<h2 class=&quot;h7&quot;>Question Level</h2>" class="mb-4">
+          <b-card header-html="<h2 class=&quot;h7&quot;>Allow Full Submitting (single question in assignment)</h2>" class="mb-4">
             <b-card-text>
               <p>
                 Optionally allow a subset of your class to resubmit questions regardless of whether the assignment is
