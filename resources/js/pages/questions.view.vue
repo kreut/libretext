@@ -2537,6 +2537,7 @@ export default {
         this.questions[this.currentPage - 1].text_question = data.question.text_question
         this.questions[this.currentPage - 1].a11y_question = data.question.a11y_question
         this.questions[this.currentPage - 1].solution_html = data.question.solution_html
+        this.questions[this.currentPage - 1].answer_html = data.question.answer_html
         this.questions[this.currentPage - 1].hint = data.question.hint
         this.questions[this.currentPage - 1].libretexts_link = data.question.libretexts_link
         this.questions[this.currentPage - 1].notes = data.question.notes
