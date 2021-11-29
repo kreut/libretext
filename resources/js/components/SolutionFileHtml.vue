@@ -85,6 +85,18 @@ export default {
           for (let i = 0; i < images.length; i++) {
             images[i].style.maxWidth = '100%'
           }
+
+          if (document.getElementsByClassName('mt-section').length) {
+            let solutionHTMLWidth = window.getComputedStyle(document.getElementsByClassName('mt-section')[0]).width
+            let elem,
+              style
+            elem = document.querySelector('.modal-lg')
+            style = getComputedStyle(elem)
+            if (parseInt(solutionHTMLWidth) > parseInt(style.maxWidth)) {
+              document.getElementsByClassName('modal-lg')[0].style.maxWidth = Math.min(parseInt(solutionHTMLWidth), window.outerWidth) - 20 + 'px'
+              document.getElementsByClassName('modal-body')[0].style.overflowX = 'auto'
+            }
+          }
         }
       })
     },
@@ -108,3 +120,9 @@ export default {
   }
 }
 </script>
+<style>
+.MathJax_Display, .MJXc-display, .MathJax_SVG_Display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+</style>
