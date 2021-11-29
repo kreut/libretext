@@ -186,28 +186,40 @@ class AssignmentSyncQuestionController extends Controller
             return $response;
         }
 
-
         try {
-
             $chosen_questions = $request->chosen_questions;
-            $assignment_questions = $assignment->questions->pluck('question_id')->toArray();
+            $assignment_questions = $assignment->questions->pluck('id')->toArray();
 
             DB::beginTransaction();
             foreach ($chosen_questions as $key => $question) {
                 if (!in_array($question['question_id'], $assignment_questions)) {
-                    $assignment_question = DB::table('assignment_question')
-                        ->where('assignment_id', $question['assignment_id'])
-                        ->where('question_id', $question['question_id'])
-                        ->first();
-                    if (!$assignment_question) {
-                        $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
-                        DB::rollBack();
-                        return $response;
+                    $learning_tree_id = null;
+                    if ($request->type_of_remixer !== 'saved-questions') {
+                        $assignment_question = DB::table('assignment_question')
+                            ->where('assignment_id', $question['assignment_id'])
+                            ->where('question_id', $question['question_id'])
+                            ->first();
+                        if (!$assignment_question) {
+                            $response['message'] = "Question {$question['question_id']} does not belong to that assignment.";
+                            DB::rollBack();
+                            return $response;
+                        }
+                        $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
+                            ->where('assignment_question_id', $assignment_question->id)
+                            ->first();
+                        if ($assignment_question_learning_tree) {
+                            $learning_tree_id = $assignment_question_learning_tree->learning_tree_id;
+                        }
+                    } else {
+                        $assignment_question = DB::table('saved_questions')
+                            ->where('question_id', $question['question_id'])
+                            ->where('user_id', $request->user()->id)
+                            ->select('question_id', 'open_ended_submission_type', 'open_ended_text_editor','learning_tree_id')
+                            ->first();
+                        $assignment_question_learning_tree = $assignment_question->learning_tree_id !== null;
+                        $learning_tree_id = $assignment_question->learning_tree_id;
+                        unset($assignment_question->learning_tree_id);
                     }
-                    $assignment_question_learning_tree = DB::table('assignment_question_learning_tree')
-                        ->where('assignment_question_id', $assignment_question->id)
-                        ->first();
-
 
                     if ($assignment->file_upload_mode === 'compiled_pdf'
                         && !in_array($assignment_question->open_ended_submission_type, ['0', 'file'])) {
@@ -247,8 +259,8 @@ class AssignmentSyncQuestionController extends Controller
                             ->first()) {
                             DB::table('assignment_question_learning_tree')
                                 ->insert(['assignment_question_id' => $assignment_question->id,
-                                    'learning_tree_id' => $assignment_question_learning_tree->learning_tree_id]);
-                            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add', $assignment_question_learning_tree->learning_tree_id);
+                                    'learning_tree_id' => $learning_tree_id]);
+                            $betaCourseApproval->updateBetaCourseApprovalsForQuestion($assignment, $question['question_id'], 'add', $learning_tree_id);
                         }
                     }
                 }
@@ -267,16 +279,11 @@ class AssignmentSyncQuestionController extends Controller
             }
 
             if ($request->type_of_remixer === 'saved-questions') {
-                foreach ($chosen_questions as $key => $question) {
-                    $assignment_question = DB::table('assignment_question')
-                        ->where('assignment_id', $question['assignment_id'])
-                        ->where('question_id', $question['question_id'])
-                        ->first();
-                    $savedQuestion->where('assignment_question_id', $assignment_question->id)
+                foreach ($chosen_questions as $question) {
+                    $savedQuestion->where('question_id', $question['question_id'])
                         ->where('user_id', request()->user()->id)
                         ->delete();
                 }
-
             }
 
             DB::commit();

@@ -346,7 +346,7 @@ export default {
   methods: {
     async removeQuestionFromSavedQuestions (questionToRemove) {
       try {
-        const { data } = await axios.delete(`/api/saved-questions/assignments/${questionToRemove.assignment_id}/questions/${questionToRemove.question_id}`)
+        const { data } = await axios.delete(`/api/saved-questions/${questionToRemove.question_id}`)
         if (data.type === 'error') {
           this.$noty.error(data.message)
           return false

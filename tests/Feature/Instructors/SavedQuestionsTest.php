@@ -67,7 +67,7 @@ class SavedQuestionsTest extends TestCase
     {
 
         $this->actingAs($this->student_user)
-            ->deleteJson("/api/saved-questions/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->deleteJson("/api/saved-questions/{$this->question->id}")
             ->assertJson(['message' => 'You are not allowed to remove saved questions.']);
     }
 
@@ -83,11 +83,13 @@ class SavedQuestionsTest extends TestCase
         ]);
         $savedQuestion = new SavedQuestion();
         $savedQuestion->assignment_question_id = $assignment_question_id;
+        $savedQuestion->question_id = $this->question->id;
+        $savedQuestion->open_ended_submission_type = 0;
         $savedQuestion->user_id = $this->user->id;
         $savedQuestion->save();
         $this->assertCount(1, SavedQuestion::all());
         $this->actingAs($this->user)
-            ->deleteJson("/api/saved-questions/assignments/{$this->assignment->id}/questions/{$this->question->id}")
+            ->deleteJson("/api/saved-questions/{$this->question->id}")
             ->assertJson(['message' => 'The question has been removed from your saved list.']);
         $this->assertCount(0, SavedQuestion::all());
     }

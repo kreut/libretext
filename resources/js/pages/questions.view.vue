@@ -2456,7 +2456,7 @@ export default {
     async removeSavedQuestion () {
       let questionId = this.questions[this.currentPage - 1].id
       try {
-        const { data } = await axios.delete(`/api/saved-questions/assignments/${this.assignmentId}/questions/${questionId}`)
+        const { data } = await axios.delete(`/api/saved-questions/${questionId}`)
         this.$noty[data.type](data.message)
         if (data.type === 'error') {
           return false

@@ -85,7 +85,7 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::patch('settings/password', 'Settings\PasswordController@update');
 
     Route::post('/saved-questions/{assignment}', 'SavedQuestionController@store');
-    Route::delete('/saved-questions/assignments/{assignment}/questions/{question}', 'SavedQuestionController@destroy');
+    Route::delete('/saved-questions/{question}', 'SavedQuestionController@destroy');
     Route::get('/saved-questions/{assignment}', 'SavedQuestionController@getSavedQuestionIdsByAssignment');
     Route::get('/saved-questions', 'SavedQuestionController@index');
 

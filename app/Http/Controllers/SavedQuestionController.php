@@ -25,31 +25,32 @@ class SavedQuestionController extends Controller
         }
 
 
-            try {
+        try {
 
-                //Get all assignment questions Question Upload, Solution, Number of Points
-                $assignment_questions = DB::table('saved_questions')
-                ->join('assignment_question','saved_questions.assignment_question_id','=','assignment_question.id')
-                    ->join('questions', 'assignment_question.question_id', '=', 'questions.id')
-                    ->where('saved_questions.user_id', request()->user()->id)
-                    ->select('assignment_question.*',
-                        'questions.title',
-                        'questions.id AS question_id',
-                        'questions.technology_iframe',
-                        'questions.technology')
-                    ->get();
-                $response['type'] = 'success';
-                foreach ($assignment_questions as $key => $assignment_question) {
-                    $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
-                }
-                $response['assignment_questions'] = $assignment_questions;
-
-            } catch (Exception $e) {
-                $h = new Handler(app());
-                $h->report($e);
-                $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
+            //Get all assignment questions Question Upload, Solution, Number of Points
+            $assignment_questions = DB::table('saved_questions')
+                ->join('questions', 'saved_questions.question_id', '=', 'questions.id')
+                ->where('saved_questions.user_id', request()->user()->id)
+                ->select('saved_questions.open_ended_submission_type',
+                    'saved_questions.open_ended_text_editor',
+                    'saved_questions.learning_tree_id',
+                    'questions.title',
+                    'questions.id AS question_id',
+                    'questions.technology_iframe',
+                    'questions.technology')
+                ->get();
+            $response['type'] = 'success';
+            foreach ($assignment_questions as $key => $assignment_question) {
+                $assignment_questions[$key]->submission = Helper::getSubmissionType($assignment_question);
             }
-            return $response;
+            $response['assignment_questions'] = $assignment_questions;
+
+        } catch (Exception $e) {
+            $h = new Handler(app());
+            $h->report($e);
+            $response['message'] = "There was an error getting the questions for this assignment.  Please try again or contact us for assistance.";
+        }
+        return $response;
     }
 
     /**
@@ -66,12 +67,13 @@ class SavedQuestionController extends Controller
             $response['message'] = $authorized->message();
             return $response;
         }
-
+        $question_ids = $assignment->questions->pluck('id')->toArray();
         try {
             $saved_question_ids = [];
             $saved_questions = DB::table('saved_questions')
-                ->join('assignment_question', 'saved_questions.assignment_question_id', '=', 'assignment_question.id')
+                ->join('assignment_question', 'saved_questions.question_id', '=', 'assignment_question.question_id')
                 ->where('saved_questions.user_id', request()->user()->id)
+                ->whereIn('saved_questions.question_id', $question_ids)
                 ->get();
             if ($saved_questions) {
                 foreach ($saved_questions as $saved_question) {
@@ -114,9 +116,14 @@ class SavedQuestionController extends Controller
             $question_ids = $request->question_ids;
             DB::beginTransaction();
             foreach ($question_ids as $question_id) {
-                $assignment_question = DB::table('assignment_question')->where('assignment_id', $assignment->id)
+                $assignment_question = DB::table('assignment_question')
+                    ->where('assignment_id', $assignment->id)
                     ->where('question_id', $question_id)
                     ->first();
+                $learning_tree_exists = DB::table('assignment_question_learning_tree')
+                    ->where('assignment_question_id', $assignment_question->id)
+                    ->first();
+                $learning_tree_id = $learning_tree_exists ? $learning_tree_exists->id : null;
                 if (!$assignment_question) {
                     $response['message'] = "Assessment with Adapt ID $question_id no longer exists.  Please refresh your page for an updated view of the assessments.";
                     return $response;
@@ -125,10 +132,14 @@ class SavedQuestionController extends Controller
                 $savedQuestion = new SavedQuestion();
 
                 if (!$savedQuestion->where('user_id', request()->user()->id)
-                    ->where('assignment_question_id', $assignment_question->id)
+                    ->where('question_id', $assignment_question->id)
                     ->first()) {
                     $savedQuestion->user_id = request()->user()->id;
                     $savedQuestion->assignment_question_id = $assignment_question->id;
+                    $savedQuestion->question_id = $assignment_question->question_id;
+                    $savedQuestion->open_ended_submission_type = $assignment_question->open_ended_submission_type;
+                    $savedQuestion->open_ended_text_editor = $assignment_question->open_ended_text_editor;
+                    $savedQuestion->learning_tree_id = $learning_tree_id;
                     $savedQuestion->save();
                 }
             }
@@ -145,35 +156,26 @@ class SavedQuestionController extends Controller
     }
 
     /**
-     * @param Assignment $assignment
      * @param Question $question
      * @param SavedQuestion $savedQuestion
      * @return array
      * @throws Exception
      */
     public
-    function destroy(Assignment $assignment, Question $question, SavedQuestion $savedQuestion): array
+    function destroy(Question $question, SavedQuestion $savedQuestion): array
     {
 
         $response['type'] = 'error';
-        $authorized = Gate::inspect('destroy', [$savedQuestion, $assignment]);
+        $authorized = Gate::inspect('destroy', $savedQuestion);
         if (!$authorized->allowed()) {
             $response['message'] = $authorized->message();
             return $response;
         }
 
         try {
-
-            $assignment_question = DB::table('assignment_question')
-                ->where('assignment_id', $assignment->id)
+            $savedQuestion->where('user_id', request()->user()->id)
                 ->where('question_id', $question->id)
-                ->first();
-            if ($assignment_question) {
-                $savedQuestion->where('user_id', request()->user()->id)
-                    ->where('assignment_question_id', $assignment_question->id)
-                    ->delete();
-            }
-
+                ->delete();
             $response['type'] = 'info';
             $response['message'] = 'The question has been removed from your saved list.';
         } catch (Exception $e) {
@@ -181,6 +183,7 @@ class SavedQuestionController extends Controller
             $h->report($e);
             $response['message'] = "There was an error removing the saved question.  Please try again or contact us for assistance.";
         }
+
         return $response;
     }
 
