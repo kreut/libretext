@@ -1,5 +1,6 @@
 <template>
   <div class="main-layout">
+    <a id="skip-link" href="#main-content">Skip to content</a>
     <div class="text-center">
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
@@ -10,7 +11,7 @@
     </div>
     <div v-else style="padding-top:30px"/>
     <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
-      <child/>
+      <child id="main-content" />
     </div>
     <div v-if="(user === null) && !inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
       <footer class="footer" style="border:1px solid #30b3f6">
@@ -40,7 +41,7 @@
 <script>
 import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
-import axios from 'axios'
+
 
 export default {
   name: 'MainLayout',

@@ -3,7 +3,6 @@
     <Email id="request-instructor-access-code-modal"
            ref="request_instructor_access_code_email"
            extra-email-modal-text="Please use this form to request an instructor access code."
-           :from-user="user"
            title="Instructor Access Code"
            type="contact_us"
            subject="Request Instructor Access Code"
@@ -15,7 +14,10 @@
           {{ $t('verify_email_address') }}
         </div>
       </card>
-      <card v-else :title="registrationTitle">
+      <b-card v-else header-tag="header">
+        <template #header>
+          <h1 class="h5 mb-0">{{ registrationTitle }}</h1>
+        </template>
         <form @submit.prevent="register" @keydown="form.onKeydown($event)">
           <!-- GitHub Register Button -->
           <div v-if="isStudent">
@@ -26,10 +28,12 @@
               <span class="font-text-bold">OR</span>
             </div>
           </div>
-          <b-card sub-title="Register with Adapt"
-                  sub-title-text-variant="primary"
-                  header-text-variant="white"
-          >
+          <b-card>
+            <template #header>
+              <h5 class="mb-0 text-primary" style="font-size:16px">
+                Register With Adapt
+              </h5>
+            </template>
             <hr>
             <!-- Name -->
             <RequiredText/>
@@ -125,7 +129,7 @@
                 <input id="access_code" v-model="form.access_code"
                        :class="{ 'is-invalid': form.errors.has('access_code') }"
                        :aria-required="true"
-                       :aria-describedby="access-code-help-block"
+                       aria-describedby="access-code-help-block"
                        class="form-control" type="text" name="access_code"
                 >
                 <has-error :form="form" field="access_code"/>
@@ -159,7 +163,7 @@
             </div>
           </b-card>
         </form>
-      </card>
+      </b-card>
     </div>
   </div>
 </template>

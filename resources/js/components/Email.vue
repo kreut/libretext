@@ -4,12 +4,14 @@
     <b-modal
       :id="id"
       ref="modal"
-      :title="title"
       type="type"
       extra-params="extraParams"
       size="lg"
       :no-close-on-esc="true"
     >
+      <template #modal-title>
+        <h2 class="h5 modal-title">{{ title }}</h2>
+      </template>
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
         <RequiredText/>
