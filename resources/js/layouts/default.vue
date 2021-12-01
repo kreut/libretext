@@ -1,6 +1,12 @@
 <template>
   <div class="main-layout">
     <a id="skip-link" href="#main-content">Skip to content</a>
+    <Email id="contact-us-general-inquiry-modal"
+           ref="email"
+           title="Contact Us"
+           type="contact_us"
+           subject="General Inquiry"
+    />
     <div class="text-center">
       <b-alert :show="showEnvironment && environment === 'production'" variant="danger">
         <span class="font-weight-bold">Production</span>
@@ -11,27 +17,30 @@
     </div>
     <div v-else style="padding-top:30px"/>
     <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
-      <child id="main-content" />
+      <child id="main-content"/>
     </div>
     <div v-if="(user === null) && !inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts Adapt platform is supported by the Department of Education Open Textbook Pilot Project and the
-          <a href="https://opr.ca.gov/learninglab/">California Education Learning Lab</a>.
+          <a href="https://opr.ca.gov/learninglab/" title="California Learning Lab">California Education Learning
+            Lab</a>.
           Unless otherwise noted, LibreTexts content is licensed by CC BY-NC-SA 3.0. Have questions or comments? For
-          more information contact us at <a href="mailto:info@libretexts.org.">info@libretexts.org.</a>
+          more information please <a href="" @click.prevent="contactUs">contact us</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
              href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
              rel="external nofollow" target="_blank"
-             title="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
-          > <img alt="DOE Logo.png" :src="asset('assets/img/DOE.png')"></a>
+             title="Press release for the US Department of Education awarding a grant to UC Davis to develop free open textbooks"
+          > <img alt="Logo for the US Department of Education" :src="asset('assets/img/DOE.png')"></a>
           <a class="ml-5 pt-3 pb-3"
              href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
              rel="external nofollow" target="_blank"
-             title="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
-          > <img alt="DOE Logo.png" style="height:85px;" :src="asset('assets/img/CELL_LogoColor.png')"></a>
+             title="Press release for the LibreText Project receiving a $1 million Innovation Grant from the California Learning Lab"
+          > <img alt="Logo for the California Learning Lab" style="height:85px;"
+                 :src="asset('assets/img/CELL_LogoColor.png')"
+          ></a>
         </div>
       </footer>
     </div>
@@ -41,12 +50,13 @@
 <script>
 import Navbar from '~/components/Navbar'
 import { mapGetters } from 'vuex'
-
+import Email from '~/components/Email'
 
 export default {
   name: 'MainLayout',
   components: {
-    Navbar
+    Navbar,
+    Email
   },
   data: () => ({
     showEnvironment: window.config.showEnvironment,
@@ -75,6 +85,9 @@ export default {
         this.$root.$emit('bv::hide::tooltip')
         console.log('Tooltip closed')
       }
+    },
+    contactUs () {
+      this.$bvModal.show('contact-us-general-inquiry-modal')
     }
   }
 }
@@ -84,3 +97,4 @@ export default {
   min-height: 700px
 }
 </style>
+
