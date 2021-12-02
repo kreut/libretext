@@ -78,6 +78,7 @@
                   :font-size="14"
                   :margin="4"
                   :color="toggleColors"
+                  :aria-label="showZScores ? 'Z-scores shown' : 'Z-scores not shown'"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitShowZScores()"
                 />
@@ -92,6 +93,7 @@
                   :font-size="14"
                   :margin="4"
                   :color="toggleColors"
+                  :aria-label="studentsCanViewWeightedAverage ? 'Students can view weighted averages' : 'Students cannot view weighted averages'"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitShowWeightedAverage()"
                 />
@@ -106,6 +108,7 @@
                   :font-size="14"
                   :margin="4"
                   :color="toggleColors"
+                  :aria-label="letterGradesReleased ? 'Letter grades released' : 'Letter grades not released'"
                   :labels="{checked: 'Yes', unchecked: 'No'}"
                   @change="submitReleaseLetterGrades()"
                 />
