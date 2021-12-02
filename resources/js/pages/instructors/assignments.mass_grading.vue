@@ -150,12 +150,12 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label="Student*"
-            label-for="Student"
+            label-for="student_id"
           >
             <b-form-row>
               <b-col lg="6">
-                <b-form-select v-model="studentId"
-                               title="student id"
+                <b-form-select id="student_id"
+                               v-model="studentId"
                                :options="studentsOptions"
                                @change="updateStudentsFilter($event)"
                 />
@@ -167,12 +167,12 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label="Submission*"
-            label-for="Submission"
+            label-for="submission"
           >
             <b-form-row>
               <b-col lg="4">
-                <b-form-select v-model="submission"
-                               title="submission"
+                <b-form-select id="submission"
+                               v-model="submission"
                                :options="submissionsOptions"
                                :disabled="openEndedView"
                                @change="updateSubmissionsFilter($event)"
@@ -185,12 +185,12 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label="Score*"
-            label-for="Score"
+            label-for="score"
           >
             <b-form-row>
               <b-col lg="3">
                 <b-form-select v-model="score"
-                               title="score"
+                               id="score"
                                :options="scoresOptions"
                                @change="updateScoresFilter($event)"
                 />
@@ -202,12 +202,12 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label="Question*"
-            label-for="Question"
+            label-for="current_question_page"
           >
             <b-form-row>
               <b-col lg="3">
-                <b-form-select v-model="currentQuestionPage"
-                               title="current question page"
+                <b-form-select id="current_question_page"
+                               v-model="currentQuestionPage"
                                :options="questionsOptions"
                                @change="updateQuestionsFilter()"
                 />

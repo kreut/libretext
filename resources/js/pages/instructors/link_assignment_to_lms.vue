@@ -28,11 +28,12 @@
         label-cols-sm="3"
         label-cols-lg="2"
         label="Course"
-        label-for="Course"
+        label-for="course"
       >
         <b-form-row>
           <b-col lg="10">
-            <b-form-select v-model="courseId"
+            <b-form-select id="course"
+                           v-model="courseId"
                            :options="courses"
                            @change="initCourseAssignments()"
             />
@@ -44,11 +45,12 @@
         label-cols-sm="3"
         label-cols-lg="2"
         label="Assignment"
-        label-for="Assignment"
+        label-for="assignment"
       >
         <b-form-row>
           <b-col lg="10">
-            <b-form-select v-if="assignmentId !== 0"
+            <b-form-select id="assignment"
+                           v-if="assignmentId !== 0"
                            v-model="assignmentId"
                            :options="courseAssignments"
             />

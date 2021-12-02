@@ -159,13 +159,13 @@
             label-cols-sm="3"
             label-cols-lg="2"
             label="Section View"
-            label-for="Section View"
+            label-for="section_view"
           >
             <b-form-row>
               <b-col lg="3">
                 <b-form-select
+                  id="section_view"
                   v-model="sectionId"
-                  title="Sections"
                   :options="sections"
                   @change="processing=true;getGrading()"
                 />
@@ -173,15 +173,15 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="submission_group"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Submission Group"
-            label-for="Submission Group"
+            label-for="submission_group"
           >
             <b-form-row>
               <b-col lg="5">
                 <b-form-select
+                  id="submission_group"
                   v-model="gradeView"
                   title="Grade view"
                   :options="gradeViews"
@@ -191,17 +191,16 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="question"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Question"
-            label-for="Question"
+            label-for="question_view"
           >
             <b-form-row>
               <b-col lg="1">
                 <b-form-select
+                  id="question_view"
                   v-model="questionView"
-                  title="Question View"
                   :options="questionOptions"
                   @change="processing=true;getGrading()"
                 />
@@ -483,7 +482,8 @@
                         <div v-show="grading[currentStudentPage - 1]['open_ended_submission']['submission']">
                           <b-row class="mb-2">
                             <b-col>
-                              <b-form-select v-model="textFeedbackMode"
+                              <b-form-select id="text_feedback_mode"
+                                             v-model="textFeedbackMode"
                                              title="Text Feedback Mode"
                                              :options="textFeedbackModeOptions"
                                              size="sm"

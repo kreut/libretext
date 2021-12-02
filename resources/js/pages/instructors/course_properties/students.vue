@@ -87,8 +87,8 @@
           </template>
           <div class="mb-2 mr-2">
             <b-form-select
+              id="move_student"
               v-model="moveStudentForm.section_id"
-              title="Move student"
               :options="studentSectionOptions"
               :class="{ 'is-invalid': moveStudentForm.errors.has('section_id') }"
               @keydown="moveStudentForm.errors.clear('section_id')"

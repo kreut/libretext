@@ -124,7 +124,8 @@
                 @hit="getPublicCourseAssignments(publicCourse)"
               />
 
-              <b-form-select v-if="!textBasedCourseSearchType"
+              <b-form-select id="Course"
+                             v-if="!textBasedCourseSearchType"
                              v-model="publicCourseId"
                              :options="publicCoursesOptions"
                              :disabled="publicCoursesOptions.length === 1"
@@ -154,11 +155,12 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label="Assignment"
-          label-for="Assignment"
+          label-for="assignment"
         >
           <b-form-row>
             <b-col lg="8">
-              <b-form-select v-model="publicCourseAssignment"
+              <b-form-select id="assignment"
+                             v-model="publicCourseAssignment"
                              :options="publicCourseAssignmentsOptions"
                              :disabled="publicCourseAssignmentsOptions.length === 1"
                              @change="getPublicCourseAssignmentQuestions($event)"

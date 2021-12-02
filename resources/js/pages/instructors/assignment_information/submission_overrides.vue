@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Submission Overrides"/>
+    <PageTitle title="Submission Overrides" />
     <div class="vld-parent">
       <loading :active.sync="isLoading"
                :can-cancel="true"
@@ -25,18 +25,19 @@
                 set below.
               </p>
               <b-form>
-                <RequiredText/>
+                <RequiredText />
                 <b-form-group
                   label-cols-sm="3"
                   label-cols-lg="2"
+                  label-for="assignment_level_apply_to"
                 >
                   <template slot="label">
                     Apply To*
                   </template>
                   <b-form-row>
                     <div class="d-flex mt-1">
-                      <b-form-select v-model="assignmentLevelApplyTo"
-                                     title="compiled pdf"
+                      <b-form-select id="assignment_level_apply_to"
+                                     v-model="assignmentLevelApplyTo"
                                      cols="5"
                                      size="sm"
                                      class="mr-2"
@@ -59,7 +60,7 @@
                   <li>
                     {{ assignmentLevelOverride.text }}
                     <a href="" @click.prevent="removeOverride(assignmentLevelOverride,'assignment-level')">
-                      <b-icon-trash class="text-muted" :aria-label="`Remove assignment level override: ${assignmentLevelOverride.text}`"/>
+                      <b-icon-trash class="text-muted" :aria-label="`Remove assignment level override: ${assignmentLevelOverride.text}`" />
                     </a>
                   </li>
                 </ul>
@@ -87,18 +88,19 @@
                   an assignment has been closed. This can be useful if individual students with the uploading process.
                 </p>
                 <b-form>
-                  <RequiredText/>
+                  <RequiredText />
                   <b-form-group
                     label-cols-sm="3"
                     label-cols-lg="2"
+                    label-for="compiled_pdf_apply_to"
                   >
                     <template slot="label">
                       Apply To*
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
-                        <b-form-select v-model="compiledPDFApplyTo"
-                                       title="compiled pdf"
+                        <b-form-select id="compiled_pdf_apply_to"
+                                       v-model="compiledPDFApplyTo"
                                        cols="5"
                                        size="sm"
                                        class="mr-2"
@@ -121,7 +123,7 @@
                     <li>
                       {{ compiledPDFOverride.text }}
                       <a href="" @click.prevent="removeOverride(compiledPDFOverride,'compiled-pdf')">
-                        <b-icon-trash class="text-muted" :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`"/>
+                        <b-icon-trash class="text-muted" :aria-label="`Remove compiled PDF override: ${compiledPDFOverride.text}`" />
                       </a>
                     </li>
                   </ul>
@@ -148,18 +150,19 @@
                   uploading their compiled PDF.
                 </p>
                 <b-form>
-                  <RequiredText/>
+                  <RequiredText />
                   <b-form-group
                     label-cols-sm="3"
                     label-cols-lg="2"
+                    label-for="set_page_apply_to"
                   >
                     <template slot="label">
                       Apply To*
                     </template>
                     <b-form-row>
                       <div class="d-flex mt-1">
-                        <b-form-select v-model="setPageApplyTo"
-                                       title="compiled pdf"
+                        <b-form-select id="set_page_apply_to"
+                                       v-model="setPageApplyTo"
                                        size="sm"
                                        class="mr-2"
                                        :options="enrollments"
@@ -181,7 +184,7 @@
                     <li>
                       {{ setPageOverride.text }}
                       <a href="" @click.prevent="removeOverride(setPageOverride,'set-page-only')">
-                        <b-icon-trash class="text-muted" :aria-label="`Remove set page override: ${setPageOverride.text}`"/>
+                        <b-icon-trash class="text-muted" :aria-label="`Remove set page override: ${setPageOverride.text}`" />
                       </a>
                     </li>
                   </ul>
@@ -207,10 +210,11 @@
                 closed.
               </p>
               <b-form>
-                <RequiredText/>
+                <RequiredText />
                 <b-form-group
                   label-cols-sm="3"
                   label-cols-lg="2"
+                  label-for="questions"
                 >
                   <template slot="label">
                     Question*
@@ -218,7 +222,7 @@
                   <b-form-row>
                     <div class="mt-1">
                       <b-form-select v-model="currentQuestionPage"
-                                     title="questions"
+                                     id="questions"
                                      :options="questionsOptions"
                                      cols="2"
                                      size="sm"
@@ -256,15 +260,15 @@
                 <b-form-group
                   label-cols-sm="3"
                   label-cols-lg="2"
-                  label="Apply to"
+                  label-for="question_level_apply_to"
                 >
                   <template slot="label">
                     Apply To*
                   </template>
                   <b-form-row>
                     <div class="d-flex mt-1">
-                      <b-form-select v-model="questionLevelApplyTo"
-                                     title="question level apply to"
+                      <b-form-select id="question_level_apply_to"
+                                     v-model="questionLevelApplyTo"
                                      :options="enrollments"
                                      size="sm"
                                      cols="5"
@@ -290,7 +294,7 @@
                     <a href=""
                        @click.prevent="removeOverride(questionLevelOverride,'question-level',questionLevelOverride.question_id)"
                     >
-                      <b-icon-trash class="text-muted" :aria-label="`Remove question level override: ${questionLevelOverride.text }`"/>
+                      <b-icon-trash class="text-muted" :aria-label="`Remove question level override: ${questionLevelOverride.text }`" />
                     </a>
                   </li>
                 </ul>
@@ -315,7 +319,7 @@
       <b-alert :show="true" variant="info">
         <span class="font-weight-bold">
           You will be able to provide submission overrides to students once
-        students are enrolled in this course.</span>
+          students are enrolled in this course.</span>
       </b-alert>
     </div>
   </div>

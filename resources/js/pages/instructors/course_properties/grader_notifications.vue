@@ -47,8 +47,8 @@
               >
                 <b-form-row>
                   <div class="col-md-5">
-                    <b-form-select v-model="graderNotificationsForm.num_reminders_per_week"
-                                   id="frequency_of_reminders"
+                    <b-form-select id="frequency_of_reminders"
+                                   v-model="graderNotificationsForm.num_reminders_per_week"
                                    title="Frequency of reminders"
                                    :options="numRemindersPerWeekOptions"
                                    :class="{ 'is-invalid': graderNotificationsForm.errors.has('num_reminders_per_week') }"

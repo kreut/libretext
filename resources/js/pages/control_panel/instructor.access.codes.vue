@@ -19,8 +19,10 @@
                 label-cols-sm="4"
                 label-cols-lg="3"
                 label="Number of access codes"
+                label-for="number_of_access_codes"
               >
-                <b-form-select v-model="numberOfInstructorAccessCodesForm.number_of_instructor_access_codes"
+                <b-form-select id="number_of_access_codes"
+                               v-model="numberOfInstructorAccessCodesForm.number_of_instructor_access_codes"
                                title="Number Of Instructor Access Codes"
                                :options="numberOfInstructorAccessCodesOptions"
                                :class="{ 'is-invalid': numberOfInstructorAccessCodesForm.errors.has('number_of_instructor_access_codes') }"

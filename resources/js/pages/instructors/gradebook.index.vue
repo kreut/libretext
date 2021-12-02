@@ -84,12 +84,12 @@
               label-cols-sm="3"
               label-cols-lg="2"
               label="Section View"
-              label-for="Section View"
+              label-for="section_view"
             >
               <b-form-row>
                 <b-col lg="3">
                   <b-form-select
-                    id="section-view"
+                    id="section_view"
                     v-model="sectionId"
                     title="Section View"
                     :options="sections"

@@ -36,15 +36,15 @@
       <b-card-text>
         <p>Choose an assignment from one of your courses and then you can import assesessments below.</p>
         <b-form-group
-          id="course"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Course"
-          label-for="Course"
+          label-for="course"
         >
           <b-form-row>
             <b-col lg="8">
-              <b-form-select v-model="courseId"
+              <b-form-select id="course"
+                             v-model="courseId"
                              :options="courses"
                              @change="initCourseAssignments()"
               />
@@ -52,15 +52,15 @@
           </b-form-row>
         </b-form-group>
         <b-form-group
-          id="assignment"
           label-cols-sm="3"
           label-cols-lg="2"
           label="Assignment"
-          label-for="Assignment"
+          label-for="assignment"
         >
           <b-form-row>
             <b-col lg="8">
-              <b-form-select v-if="assignmentId !== 0"
+              <b-form-select id="assignment"
+                             v-if="assignmentId !== 0"
                              v-model="assignmentId"
                              :options="courseAssignments"
               />

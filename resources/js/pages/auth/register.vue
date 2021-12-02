@@ -140,11 +140,10 @@
               </div>
             </div>
             <div class="form-group row">
-              <label class="col-md-3 col-form-label text-md-right">Time zone*
+              <label class="col-md-3 col-form-label text-md-right" for="time_zone">Time zone*
               </label>
               <div class="col-md-7" @change="removeTimeZoneError()">
                 <b-form-select id="time_zone"
-                               title="time zone"
                                v-model="form.time_zone"
                                :options="timeZones"
                                :class="{ 'is-invalid': form.errors.has('time_zone') }"
