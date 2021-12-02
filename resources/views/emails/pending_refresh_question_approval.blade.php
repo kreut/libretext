@@ -13,7 +13,7 @@
     An instructor would like to refresh a question which already has student submissions.
     Assuming you are logged in, you can accept or deny the submission <a href="{{$refresh_question_approval_link}}">here</a>.
   </p>
-  <p>-Adapt Support</p>
+  <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')
 
 

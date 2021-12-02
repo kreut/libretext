@@ -269,7 +269,7 @@ class QuestionsGetTest extends TestCase
         $this->actingAs($this->user)
             ->postJson("/api/questions/{$this->assignment->id}/direct-import-question",
                 ['direct_import' => "1-26", 'type' => 'adapt id']
-            )->assertJson(['message' => 'The assignment question with Adapt ID 1-26 does not exist.']);
+            )->assertJson(['message' => 'The assignment question with ADAPT ID 1-26 does not exist.']);
 
     }
 

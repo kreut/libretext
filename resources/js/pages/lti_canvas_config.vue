@@ -4,7 +4,7 @@
     <PageTitle title="Canvas Configuration"/>
     <b-container>
       <p>
-        Using the following configuration, you can integrate your Canvas installation with Adapt via LTI 1.3, also
+        Using the following configuration, you can integrate your Canvas installation with ADAPT via LTI 1.3, also
         known as LTI Advantage. Optionally, you can following along with <a
         href="https://youtu.be/o9tNGoorUgQ" target="_blank"
       >this video</a>, which implements the steps below.
@@ -28,7 +28,7 @@
         </span>
       </p>
       <p>
-        <span class="font-weight-bold">Title:</span> <span id="title">Adapt</span> <span class="text-info">
+        <span class="font-weight-bold">Title:</span> <span id="title">ADAPT</span> <span class="text-info">
         <a href=""
            aria-label="Copy title"
            @click.prevent="doCopy('title')"

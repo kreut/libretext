@@ -85,7 +85,7 @@ class InstructorAccessCodeController extends Controller
             $beauty_mail->send('emails.instructor_access_code', ['access_code' => $instructorAccessCode->access_code,'access_code_link' => $access_code_link], function ($message)
             use ($to_email) {
                 $message
-                    ->from('adapt@noreply.libretexts.org', 'Adapt')
+                    ->from('adapt@noreply.libretexts.org', 'ADAPT')
                     ->to($to_email)
                     ->subject("Instructor Access Code")
                     ->replyTo('delmar@libretexts.org');

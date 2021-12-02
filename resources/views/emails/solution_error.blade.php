@@ -15,7 +15,7 @@
   <div>{!! $text !!}</div>
   <p>You can view the full question and solution <a href="{{$url}}">here</a>.
   </p>
-  <p>-Adapt Support</p>
+  <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')
 
 

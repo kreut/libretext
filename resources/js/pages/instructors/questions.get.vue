@@ -253,23 +253,23 @@
                 </b-card-text>
               </b-card>
             </b-tab>
-            <b-tab title="Direct Import By Adapt ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
-              <b-card header-html="<h2 class='h7'>Direct Import By Adapt ID</h2>" style="height:425px">
+            <b-tab title="Direct Import By ADAPT ID" class="pb-8" @click="resetDirectImportMessages();showQuestions = false">
+              <b-card header-html="<h2 class='h7'>Direct Import By ADAPT ID</h2>" style="height:425px">
                 <b-card-text>
                   <b-container>
                     <b-row>
                       <b-col @click="resetSearchByTag">
                         <p>
-                          Perform a direct import of questions directly into your assignment using the Adapt ID. Please
+                          Perform a direct import of questions directly into your assignment using the ADAPT ID. Please
                           enter
-                          the Adapt IDs in a comma separated list.
+                          the ADAPT IDs in a comma separated list.
                         </p>
 
                       </b-col>
                       <b-col>
                         <b-form-textarea
                           v-model="directImport"
-                          aria-label="Adapt IDs to direct import"
+                          aria-label="ADAPT IDs to direct import"
                           placeholder="Example. 1027-34, 1029-38, 1051-44"
                           rows="4"
                           max-rows="5"

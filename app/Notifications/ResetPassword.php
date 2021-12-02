@@ -16,7 +16,7 @@ class ResetPassword extends Notification
     public function toMail($notifiable)
     {
         return (new MailMessage)
-            ->from('adapt@noreply.libretexts.org','Adapt')
+            ->from('adapt@noreply.libretexts.org','ADAPT')
             ->subject('Reset Password')
             ->line('You are receiving this email because we received a password reset request for your account.')
             ->action('Reset Password', url(config('app.url').'/password/reset/'.$this->token).'?email='.urlencode($notifiable->email))

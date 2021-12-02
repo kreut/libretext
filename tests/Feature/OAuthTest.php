@@ -36,7 +36,7 @@ class OAuthTest extends TestCase
 
         $this->mockSocialite('github', ['email' => 'test@example.com']);
         $this->get('/api/oauth/github/callback')
-           ->assertText("<p>Oops!  It looks like you've already used this email account to register with the local Adapt authentication.")
+           ->assertText("<p>Oops!  It looks like you've already used this email account to register with the local ADAPT authentication.")
             ->assertTextMissing('token')
             ->assertStatus(400);
     }

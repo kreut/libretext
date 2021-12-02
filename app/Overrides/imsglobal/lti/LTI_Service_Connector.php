@@ -46,7 +46,7 @@ class LTI_Service_Connector
         $jwt_claim = [
             "iss" => $client_id,
             "sub" => $client_id,
-            "aud" => $aud, //Adapt: changed from $this->registration->get_auth_server()   */
+            "aud" => $aud, //ADAPT: changed from $this->registration->get_auth_server()   */
             "iat" => time() - 5,
             "exp" => time() + 60,
             "jti" => 'lti-service-token' . hash('sha256', random_bytes(64))

@@ -17,7 +17,7 @@
     {!! $formatted_ungraded_submissions_by_course !!}
   </ul>
   <p>
-    -Adapt Support
+    -ADAPT Support
   </p>
   @include('beautymail::templates.sunny.contentEnd')
 

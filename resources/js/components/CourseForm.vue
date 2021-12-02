@@ -117,7 +117,7 @@
                delay="250"
                triggers="hover focus"
     >
-      Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So, to find UC-Davis,
+      ADAPT keeps a comprehensive list of colleges and universities, using the school's full name. So, to find UC-Davis,
       you
       can start typing University of California-Los Angeles. In general, any word within your school's name will lead
       you to your school. If you still can't
@@ -429,7 +429,7 @@
           <QuestionCircleTooltip :id="'lms_course_tooltip'"/>
         </template>
         <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
-          configured to be used with Adapt.  If you would like to integrate Adapt with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
+          configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
         <b-form-radio-group v-if="ltiIsEnabled" v-model="form.lms" stacked>
           <b-form-radio name="lms" value="1">
             Yes

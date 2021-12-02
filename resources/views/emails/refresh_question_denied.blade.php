@@ -13,7 +13,7 @@
     Unfortunately your request to refresh the question with id {{$question_id}} has been denied since the changes
     were not purely cosmetic in nature.  We recommend that you remove the question from your assignment and create another one.
   </p>
-  <p>-Adapt Support</p>
+  <p>-ADAPT Support</p>
   @include('beautymail::templates.sunny.contentEnd')
 
 

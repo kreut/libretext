@@ -25,7 +25,7 @@
           access it.
         </p>
         <p>
-          If, on the other hand, you are presenting your assignments within the Adapt platform, the only consequence of
+          If, on the other hand, you are presenting your assignments within the ADAPT platform, the only consequence of
           adding an
           untethered assignment is that these will not be auto-updated via an Alpha course.
         </p>
@@ -253,7 +253,7 @@
             <b-alert variant="info" :show="true">
               <span class="font-weight-bold">
                 This is a course which is being served through your LMS.  You will create your assignments
-                in Adapt including determining due dates, but will use your LMS's gradebook.
+                in ADAPT including determining due dates, but will use your LMS's gradebook.
               </span>
             </b-alert>
           </div>
@@ -731,7 +731,7 @@ export default {
         : 'main view'
     },
     showExternalAssignmentNoty () {
-      this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to Adapt.')
+      this.$noty.info('This assignment has no questions to view because it is an external assignment.  To add questions, please edit the assignment and change the Source to ADAPT.')
       return false
     },
     addUntetheredAssignment () {

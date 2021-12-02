@@ -28,7 +28,7 @@ class inviteTa extends Mailable
      */
     public function build()
     {
-        return $this->from('adapt@noreply.libretexts.org','Adapt')
+        return $this->from('adapt@noreply.libretexts.org','ADAPT')
                     ->view('emails.ta_invitation', ['access_code' => $this->access_code]);
     }
 }

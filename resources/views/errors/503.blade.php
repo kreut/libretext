@@ -13,6 +13,6 @@
   <h1>We&rsquo;ll be back soon!</h1>
   <div>
     <p>Sorry for the inconvenience but we're performing some maintenance at the moment. We'll be back online shortly.</p>
-    <p>&mdash; Adapt Support</p>
+    <p>&mdash; ADAPT Support</p>
   </div>
 </article>

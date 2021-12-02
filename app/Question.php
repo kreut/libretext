@@ -618,7 +618,7 @@ class Question extends Model
             ->where('question_id', $question_id)
             ->first();
         if (!$assignment_question) {
-            $response['message'] = "The assignment question with Adapt ID $adapt_id does not exist.";
+            $response['message'] = "The assignment question with ADAPT ID $adapt_id does not exist.";
             return $response;
         }
         $response['question_id'] = $question_id;

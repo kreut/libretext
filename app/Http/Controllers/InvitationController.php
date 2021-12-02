@@ -70,7 +70,7 @@ class InvitationController extends Controller
             $beauty_mail->send('emails.grader_invitation', $instructor_info, function ($message)
             use ($to_email) {
                 $message
-                    ->from('adapt@noreply.libretexts.org','Adapt')
+                    ->from('adapt@noreply.libretexts.org','ADAPT')
                     ->to($to_email)
                     ->replyTo(Auth::user()->email)
                     ->subject('Invitation to Grade');

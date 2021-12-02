@@ -21,7 +21,7 @@
             </div>
             <div v-else>
               <p>
-                Tell Adapt how you would like to weight your assignment groups which are currently associated with your
+                Tell ADAPT how you would like to weight your assignment groups which are currently associated with your
                 assignments.
               </p>
               <p v-if="hasExtraCredit">

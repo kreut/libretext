@@ -58,7 +58,7 @@ class delmarFix4_19 extends Command
         $score->where('assignment_id', 320)->update(['score' => 160]);
 
         $submission = new Submission();
-        //On Adapt ID: 392-98875 can I make all true submissions to "zero score"
+        //On ADAPT ID: 392-98875 can I make all true submissions to "zero score"
         $submissions = $submission->where('assignment_id', 392)->where('question_id', 98875)->get();
         foreach ($submissions as $submission) {
             $submission_arr = json_decode($submission->submission, true);

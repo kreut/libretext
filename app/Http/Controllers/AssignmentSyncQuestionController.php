@@ -1663,7 +1663,7 @@ class AssignmentSyncQuestionController extends Controller
                         $iframe_technology = false;
                         break;
                     default:
-                        $response['message'] = "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by Adapt.";
+                        $response['message'] = "Question id {$question->id} uses the technology '{$question->technology}' which is currently not supported by ADAPT.";
                         echo json_encode($response);
                         exit;
 

@@ -420,12 +420,12 @@
         </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Adapt ID: </span><span id="adaptID">{{ adaptId }}</span>
+        <span class="font-weight-bold">ADAPT ID: </span><span id="adaptID">{{ adaptId }}</span>
         <span class="text-info">
           <a
             href=""
             class="pr-1"
-            aria-label="Copy Adapt Id"
+            aria-label="Copy ADAPT Id"
             @click.prevent="doCopy('adaptID')"
           >
             <font-awesome-icon :icon="copyIcon" />
@@ -433,14 +433,14 @@
         </span>
       </div>
       <div class="mb-2">
-        <span class="font-weight-bold">Adapt URL:</span> <span id="currentURL" class="font-italic">{{
+        <span class="font-weight-bold">ADAPT URL:</span> <span id="currentURL" class="font-italic">{{
           currentUrl
         }}</span>
         <span class="text-info">
           <a
             href=""
             class="pr-1"
-            aria-label="Copy Adapt URL"
+            aria-label="Copy ADAPT URL"
             @click.prevent="doCopy('currentURL')"
           >
             <font-awesome-icon :icon="copyIcon" />
@@ -517,7 +517,7 @@
 
       <div v-if="solutionTypeIsPdfImage">
         <p>
-          <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let Adapt cut up the PDF for you. Or, upload one
+          <span v-if="user.role === 2">Upload an entire PDF with one solution per page and let ADAPT cut up the PDF for you. Or, upload one
             solution at a time. If you upload a full PDF, students will be able to both download a full solution key
             and download solutions on a per question basis.</span>
         </p>
@@ -530,7 +530,7 @@
                           @click="showCurrentFullPDF = true"
             >
               Upload
-              <span v-if="user.role === 2">solutions from a single PDF that Adapt can cutup for you.</span>
+              <span v-if="user.role === 2">solutions from a single PDF that ADAPT can cutup for you.</span>
               <span v-if="user.role !== 2">a PDF and let us know which page your submission is on.</span>
             </b-form-radio>
             <b-form-radio v-model="uploadLevel" name="uploadLevel" value="question">
@@ -788,8 +788,8 @@
           <LoggedInAsStudent :student-name="user.first_name + ' ' + user.last_name" />
         </div>
         <div v-if="inIFrame && (user.role === 2)">
-          <b-button variant="primary" size="sm" class="mb-3" @click="viewInAdapt">
-            View in Adapt
+          <b-button variant="primary" size="sm" class="mb-3" @click="viewInADAPT">
+            View in ADAPT
           </b-button>
           <b-alert variant="info" :show="true">
             <strong>You are current logged in as an instructor. No responses will be saved.</strong>
@@ -812,7 +812,7 @@
         <b-alert variant="info" show>
           <span class="font-weight-bold">
             This assessment is part of an assignment which should be initially launched through your LMS
-            so that Adapt can pass back your score.  Please log into your LMS and launch the assignment
+            so that ADAPT can pass back your score.  Please log into your LMS and launch the assignment
             "{{ name }}".
           </span>
         </b-alert>
@@ -1389,7 +1389,7 @@
                   <div v-if="isOpenEndedAudioSubmission && user.role === 3 && !isAnonymousUser" class="mt-3 mb-3">
                     <p>
                       <span class="font-weight-bold">Instructions:</span> Use the audio recorder below to upload your
-                      audio submission directly to Adapt. Or optionally, record your submission separately
+                      audio submission directly to ADAPT. Or optionally, record your submission separately
                       as an .mp3 file and then upload it.
                     </p>
                     <toggle-button
@@ -2481,7 +2481,7 @@ export default {
     getThumbsUpWidth () {
       return this.inIFrame ? 150 : 275
     },
-    viewInAdapt () {
+    viewInADAPT () {
       let link = window.location.href
       window.open(link)
     },

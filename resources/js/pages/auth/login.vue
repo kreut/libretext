@@ -11,7 +11,7 @@
         <div class="text-center mb-2">
           <span class="font-text-bold">OR</span>
         </div>
-        <b-card sub-title="Login with Adapt"
+        <b-card sub-title="Login with ADAPT"
                 sub-title-text-variant="dark"
                 header-text-variant="white"
         >

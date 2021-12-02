@@ -220,7 +220,7 @@ class AssignmentController extends Controller
             $source = $request->source;
 
             if ($source === 'x' && ($question || $learning_tree)) {
-                $response['message'] = "You can't switch to an external assignment until you remove all Adapt questions from the assignment.";
+                $response['message'] = "You can't switch to an external assignment until you remove all ADAPT questions from the assignment.";
                 return $response;
             }
 

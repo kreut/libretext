@@ -81,7 +81,7 @@ class notifyBetaCourseApprovals extends Command
                 $beauty_mail->send('emails.pending_beta_course_approvals', $email_info, function ($message)
                 use ($to_email) {
                     $message
-                        ->from('adapt@noreply.libretexts.org', 'Adapt')
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
                         ->to($to_email)
                         ->subject("Pending Beta Course Approvals");
                 });

@@ -31,7 +31,7 @@
           <b-card>
             <template #header>
               <h5 class="mb-0 text-primary" style="font-size:16px">
-                Register With Adapt
+                Register With ADAPT
               </h5>
             </template>
             <hr>

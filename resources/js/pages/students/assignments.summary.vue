@@ -234,7 +234,7 @@
                            triggers="hover focus"
                            delay="250"
                 >
-                  Auto graded questions are questions which can be graded automatically by Adapt.
+                  Auto graded questions are questions which can be graded automatically by ADAPT.
                   Some examples are multiple choice, true false, numeric based and matching.
                 </b-tooltip>
               </template>

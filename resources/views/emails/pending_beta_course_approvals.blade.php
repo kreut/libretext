@@ -11,12 +11,12 @@
 
   <p>Hi {{ $first_name }},</p>
   <p>The following assignments have assessments created/removed by a tethered Alpha course and need your approval.
-  If you are logged into Adapt, then you can click on the links to go directly to the Tethered Assignments section.</p>
+  If you are logged into ADAPT, then you can click on the links to go directly to the Tethered Assignments section.</p>
   <ul>
     {!! $pending_approvals !!}
   </ul>
   <p>
-    -Adapt Support
+    -ADAPT Support
   </p>
   @include('beautymail::templates.sunny.contentEnd')
 

@@ -19,8 +19,8 @@ class LTI_Lineitem {
         $this->label = $lineitem["label"];
         $this->resource_id = $lineitem["resourceId"];
         $this->tag = $lineitem["tag"];
-        $this->start_date_time = $lineitem["startDateTime"] ?? '';//added Adapt
-        $this->end_date_time = $lineitem["endDateTime"] ?? '';//added Adapt
+        $this->start_date_time = $lineitem["startDateTime"] ?? '';//added ADAPT
+        $this->end_date_time = $lineitem["endDateTime"] ?? '';//added ADAPT
 
     }
 

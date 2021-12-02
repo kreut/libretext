@@ -11,7 +11,7 @@
         {{ natureOfUpdate }}
       </b-card-text>
     </b-card>
-    <b-card header-html="<strong>As Viewed In Adapt</strong>" class="mb-4">
+    <b-card header-html="<strong>As Viewed In ADAPT</strong>" class="mb-4">
       <h4 class="text-primary">
         {{ cachedQuestion.title }}
       </h4>

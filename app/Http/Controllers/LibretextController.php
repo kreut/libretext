@@ -44,7 +44,7 @@ class LibretextController extends Controller
             $beauty_mail->send('emails.solution_error', $error_info, function ($message)
             use ($request) {
                 $message
-                    ->from('adapt@noreply.libretexts.org', 'Adapt')
+                    ->from('adapt@noreply.libretexts.org', 'ADAPT')
                     ->to('delmar@libretexts.org')
                     ->replyTo($request->user()->email)
                     ->subject('Error in Solution');

@@ -47,7 +47,7 @@ class delmarFix4_19_10_20am extends Command
         $score->where('assignment_id', 390)->update(['score' => 20]);
 
         $submission = new Submission();
-        //On Adapt ID: 392-98875 can I make all true submissions to "zero score"
+        //On ADAPT ID: 392-98875 can I make all true submissions to "zero score"
         $num_b_submissions = 0;
         $submissions = $submission->where('assignment_id', 392)->where('question_id', 98880)->get();
 

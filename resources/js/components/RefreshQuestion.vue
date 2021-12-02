@@ -10,7 +10,7 @@
       <p>
         This question already has submissions in other assignments so the only type of accepted updates are ones which don't
         cause additional confusion for the students. After reviewing the nature of your update, our Admin will email you to
-        let you know whether this question can be updated in Adapt.
+        let you know whether this question can be updated in ADAPT.
       </p>
       <b-form-group
         id="nature_of_update"

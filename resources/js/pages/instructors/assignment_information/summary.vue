@@ -61,7 +61,7 @@
                     }}...</a>
                 </span>
                   <span v-if="!assignment.libretexts_url">
-                    N/A. This LMS assignment is served through Adapt.
+                    N/A. This LMS assignment is served through ADAPT.
                     </span>
               </span>
             </template>

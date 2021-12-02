@@ -13,7 +13,7 @@
         :value="true"
         :unchecked-value="false"
       >
-        I understand that the question will be refreshed in all Adapt assignments where this question exists. Student
+        I understand that the question will be refreshed in all ADAPT assignments where this question exists. Student
         submissions will not be removed.
       </b-form-checkbox>
       <template #modal-footer="{ cancel, ok }">
@@ -229,7 +229,7 @@
               Title
             </th>
             <th v-if="user.role === 2" scope="col" style="width: 150px;">
-              Adapt ID
+              ADAPT ID
               <QuestionCircleTooltip :id="'adapt-id-tooltip'"/>
               <b-tooltip target="adapt-id-tooltip"
                          delay="500"
@@ -282,12 +282,12 @@
                          delay="500"
                          triggers="hover focus"
               >
-                Copy the Adapt ID
+                Copy the ADAPT ID
               </b-tooltip>
               <a :id="getTooltipTarget('copy',item.question_id)"
                  href=""
                  class="pr-1"
-                 :aria-label="`Copy Adapt ID for ${item.title}`"
+                 :aria-label="`Copy ADAPT ID for ${item.title}`"
                  @click.prevent="doCopy(item.assignment_id_question_id)"
               >
                 <font-awesome-icon :icon="copyIcon"/>

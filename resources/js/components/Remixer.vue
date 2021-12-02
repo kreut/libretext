@@ -61,7 +61,7 @@
           <b-tooltip target="school_tooltip"
                      delay="250"
           >
-            Adapt keeps a comprehensive list of colleges and universities, using the school's full name. So,
+            ADAPT keeps a comprehensive list of colleges and universities, using the school's full name. So,
             to find UC-Davis, you
             can start typing University of California-Los Angeles. In general, any word within your school's
             name will lead you to your school. If you still can't

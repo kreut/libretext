@@ -125,7 +125,7 @@ class SavedQuestionController extends Controller
                     ->first();
                 $learning_tree_id = $learning_tree_exists ? $learning_tree_exists->id : null;
                 if (!$assignment_question) {
-                    $response['message'] = "Assessment with Adapt ID $question_id no longer exists.  Please refresh your page for an updated view of the assessments.";
+                    $response['message'] = "Assessment with ADAPT ID $question_id no longer exists.  Please refresh your page for an updated view of the assessments.";
                     return $response;
                 }
 

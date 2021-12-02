@@ -47,7 +47,7 @@ class RefreshQuestionRequestController extends Controller
                 $beauty_mail->send('emails.refresh_question_denied', $refresh_question_denied_info, function ($message)
                 use ($to_user) {
                     $message
-                        ->from('adapt@noreply.libretexts.org', 'Adapt')
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
                         ->to($to_user->email)
                         ->subject("Refresh Question Denied");
                 });
@@ -115,7 +115,7 @@ class RefreshQuestionRequestController extends Controller
                 $beauty_mail->send('emails.pending_refresh_question_approval', $refresh_question_approval_info, function ($message)
                 use ($to_user) {
                     $message
-                        ->from('adapt@noreply.libretexts.org', 'Adapt')
+                        ->from('adapt@noreply.libretexts.org', 'ADAPT')
                         ->to($to_user->email)
                         ->subject("Pending Refresh Question Approval");
                 });

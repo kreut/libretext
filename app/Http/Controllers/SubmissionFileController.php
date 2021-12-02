@@ -419,7 +419,7 @@ class SubmissionFileController extends Controller
         $response['type'] = 'error';
 
         if (!$request->s3_key) {
-            $response['message'] = "It looks like you might be using an outdated file uploader.  Please refresh the page in your Browser to get Adapt's most up-to-date version then try again.";
+            $response['message'] = "It looks like you might be using an outdated file uploader.  Please refresh the page in your Browser to get ADAPT's most up-to-date version then try again.";
             return $response;
         }
 

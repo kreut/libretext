@@ -22,7 +22,7 @@
         the book.
       </p>
       <p>
-        However, if you are serving your assignments through the Adapt platform, your students will be unaffected by
+        However, if you are serving your assignments through the ADAPT platform, your students will be unaffected by
         this change.
       </p>
       <b-form-group

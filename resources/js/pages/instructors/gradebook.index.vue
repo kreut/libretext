@@ -179,10 +179,10 @@
              :no-close-on-esc="true"
     >
       <p>
-        I have saved a copy of the current scores to my local computer. I understand that Adapt cannot retrieve
+        I have saved a copy of the current scores to my local computer. I understand that ADAPT cannot retrieve
         any of my past scores.
       </p>
-      <p>Would you like Adapt to override your scores for <strong>{{ assignmentName }}</strong>?</p>
+      <p>Would you like ADAPT to override your scores for <strong>{{ assignmentName }}</strong>?</p>
 
       <template #modal-footer="{ cancel, ok }">
         <b-button size="sm" variant="danger" @click="$bvModal.hide('modal-confirm-override-assignment-scores')">

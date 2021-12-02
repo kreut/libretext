@@ -69,7 +69,7 @@ class LTIController extends Controller
                 'kty' => 'RSA',
                 'use' => 'sig',
             ],
-            'description' => 'Adapt',
+            'description' => 'ADAPT',
             'custom_fields' => [
             ],
             'target_link_uri' => $app_url . '/api/lti/redirect-uri/' . $id,
@@ -97,7 +97,7 @@ class LTIController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = 'We could not link up your LMS user account with Adapt.  Please try again or contact us for assistance.';
+            $response['message'] = 'We could not link up your LMS user account with ADAPT.  Please try again or contact us for assistance.';
 
         }
         return $response;
@@ -185,7 +185,7 @@ class LTIController extends Controller
                 //this configures the Deep Link
                 $resource = LTI\LTI_Deep_Link_Resource::new()
                     ->set_url($url)
-                    ->set_title('Adapt');
+                    ->set_title('ADAPT');
                 $launch->get_deep_link()
                     ->output_response_form([$resource]);
                 exit;
@@ -284,7 +284,7 @@ class LTIController extends Controller
         //file_put_contents(base_path() . '//lti_log.text', "Launch id: $launch_id", FILE_APPEND);
         $resource = LTI\LTI_Deep_Link_Resource::new()
             ->set_url(request()->getSchemeAndHttpHost() . "/api/lti/redirect-uri")
-            ->set_title('Adapt');
+            ->set_title('ADAPT');
         // file_put_contents(base_path() . '//lti_log.text', print_r((array)$launch->get_deep_link(), true), FILE_APPEND);
         $launch->get_deep_link()
             ->output_response_form([$resource]);

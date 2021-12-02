@@ -216,7 +216,7 @@
           <p>
             <span class="font-weight-bold">
               You currently have at least one Beta course.  Double check that the course
-              dates are accurate as Adapt uses this information to tether the Alpha assignments to your Beta assignments.
+              dates are accurate as ADAPT uses this information to tether the Alpha assignments to your Beta assignments.
             </span>
           </p>
           <b-button size="sm" variant="info" @click="doNotShowBetaCourseDatesWarnings()">

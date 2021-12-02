@@ -3,7 +3,7 @@
     <b-card header="default" header-html="<h2 class=&quot;h7&quot;>Embed information</h2>">
       <b-card-text>
         <p>
-          If you embed Adapt in another webpage, such as a Libretext, you can control how much information is shown
+          If you embed ADAPT in another webpage, such as a Libretext, you can control how much information is shown
           to the student. This can be updated at the question level within an assignment, or you can perform a mass
           update here.
         </p>

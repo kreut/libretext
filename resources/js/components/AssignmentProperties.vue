@@ -26,7 +26,7 @@
                triggers="hover focus"
     >
       <p>
-        If you choose this option, your students will upload a single compiled PDF and let Adapt know which pages
+        If you choose this option, your students will upload a single compiled PDF and let ADAPT know which pages
         are associated with which questions.
       </p>
     </b-tooltip>
@@ -55,7 +55,7 @@
                delay="250"
                triggers="hover focus"
     >
-      Get questions from the Adapt database or from the Query library
+      Get questions from the ADAPT database or from the Query library
     </b-tooltip>
     <b-tooltip target="notifications_tooltip"
                delay="250"
@@ -79,7 +79,7 @@
                delay="250"
                triggers="hover focus"
     >
-      Use questions outside of Adapt and manually input scores into the grade book
+      Use questions outside of ADAPT and manually input scores into the grade book
     </b-tooltip>
     <b-tooltip target="delayed"
                delay="250"
@@ -152,7 +152,7 @@
                delay="250"
                triggers="hover focus"
     >
-      Adapt will randomly choose a subset of assessments from the total that you provide
+      ADAPT will randomly choose a subset of assessments from the total that you provide
     </b-tooltip>
 
     <b-tooltip target="final_submission_deadline_tooltip"

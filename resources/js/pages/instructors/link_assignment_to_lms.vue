@@ -6,7 +6,7 @@
     <b-alert :show="showNoAssignments" variant="info">
       <span class="font-weight-bold">
         You can link assignments from courses where you have indicated that they
-        are LMS courses under Course Properties in your Adapt Account.
+        are LMS courses under Course Properties in your ADAPT Account.
         Currently, you have no assignments that you can link to your LMS.</span>
     </b-alert>
     <b-modal
@@ -17,11 +17,11 @@
     >
       <p>
         Below you can find the list of courses which you have enabled as LMS courses in the Course Properties panel
-        within Adapt.
+        within ADAPT.
       </p>
       <p>
         Once your assignment is linked, your students will be able to complete the assignment within your LMS with
-        scores automatically passed back from Adapt to your LMS.
+        scores automatically passed back from ADAPT to your LMS.
       </p>
       <b-form-group
         id="course"

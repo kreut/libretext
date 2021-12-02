@@ -21,7 +21,7 @@ public function fixCampusIdIfBlank($campus_id){
         $campus_id = $this->fixCampusIdIfBlank($campus_id);
         $lti_registration = LtiRegistration::where('campus_id', $campus_id)->first();
         if (!$lti_registration) {
-            echo "The campus id $campus_id does not yet exist in Adapt.  Please contact your LMS Admin and have them contact us with this message.";
+            echo "The campus id $campus_id does not yet exist in ADAPT.  Please contact your LMS Admin and have them contact us with this message.";
             exit;
         }
         return $this->_setLtiRegistration($lti_registration);
@@ -47,7 +47,7 @@ public function fixCampusIdIfBlank($campus_id){
 
         $lti_registration = LtiRegistration::where('iss', $iss)->first();
         if (!$lti_registration) {
-            echo "The issuer $iss does not yet exist in Adapt.  Please contact your LMS Admin and have them contact us with this message.";
+            echo "The issuer $iss does not yet exist in ADAPT.  Please contact your LMS Admin and have them contact us with this message.";
             exit;
         }
         return LTI\LTI_Registration::new()

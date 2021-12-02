@@ -370,7 +370,7 @@ class ScoreController extends Controller
             $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] = $proportion_scores_by_user_and_assignment_group[$user_id][$group_id] ?? 0;
 
             if (!isset($total_points_by_assignment_id[$assignment_id])) {
-                $total_points_by_assignment_id[$assignment_id] = 0; //if they have an Adapt assignment without questions
+                $total_points_by_assignment_id[$assignment_id] = 0; //if they have an ADAPT assignment without questions
             }
             $score_as_proportion = (($total_points_by_assignment_id[$assignment_id]) <= 0)//total_points_by_assignment can be 0.00
                 ? 0

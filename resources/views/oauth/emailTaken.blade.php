@@ -1,2 +1,2 @@
-<p>Oops!  It looks like you've already used this email account to register with the local Adapt authentication.  Please log in directly to Adapt with that email account or use a different email to register through the single sign on.</p>
+<p>Oops!  It looks like you've already used this email account to register with the local ADAPT authentication.  Please log in directly to ADAPT with that email account or use a different email to register through the single sign on.</p>
 <p><strong>Important:</strong> Please first visit <a href="https://sso.libretexts.org/cas/logout">https://sso.libretexts.org/cas/logout</a> in your browser to reset the authentication process.
