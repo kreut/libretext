@@ -203,6 +203,10 @@ export default {
     if (this.type === 'contact_us') {
       this.showSubjectOptions = true
     }
+    if (this.subject === 'Request Instructor Access Code') {
+      this.sendEmailForm.subject = 'Request Instructor Access Code'
+      this.showSchool = true
+    }
   },
   methods: {
     checkIfRequestInstructorAccessCode (option) {

@@ -4,8 +4,8 @@
            ref="email"
            extra-email-modal-text="To obtain an instructor account, please provide your name, your email address, and an optional message."
            title="Contact Us For Instructor Account"
-           type="instructor_account_request"
-           subject="Instructor Account Request"
+           type="contact_us"
+           subject="Request Instructor Access Code"
     />
     <b-modal
       id="modal-enter-course"
