@@ -6,12 +6,10 @@
       ref="modal"
       type="type"
       extra-params="extraParams"
+      :title="title"
       size="lg"
       :no-close-on-esc="true"
     >
-      <template #modal-title>
-        <h2 class="h5 modal-title">{{ title }}</h2>
-      </template>
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">
         <RequiredText/>

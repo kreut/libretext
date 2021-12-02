@@ -75,6 +75,13 @@ export default {
   },
   mounted () {
     window.addEventListener('keydown', this.keydownHandler)
+    this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
+      console.log('Modal is about to be shown', bvEvent, modalId)
+      const originalTitle = document.getElementById(`${modalId}___BV_modal_title_`)
+      originalTitle.insertAdjacentHTML('afterend', `<h2 id="${modalId}___BV_modal_title_2" class="h5 modal-title">${originalTitle.innerHTML}</h2>`)
+      originalTitle.remove()
+      document.getElementById(`${modalId}___BV_modal_title_2`).setAttribute('id', `${modalId}___BV_modal_title`)
+    })
   },
   beforeDestroy () {
     window.removeEventListener('keydown', this.keydownHandler)
