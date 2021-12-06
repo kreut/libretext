@@ -135,7 +135,6 @@ class SavedQuestionController extends Controller
                     ->where('question_id', $assignment_question->id)
                     ->first()) {
                     $savedQuestion->user_id = request()->user()->id;
-                    $savedQuestion->assignment_question_id = $assignment_question->id;
                     $savedQuestion->question_id = $assignment_question->question_id;
                     $savedQuestion->open_ended_submission_type = $assignment_question->open_ended_submission_type;
                     $savedQuestion->open_ended_text_editor = $assignment_question->open_ended_text_editor;

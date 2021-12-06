@@ -82,7 +82,6 @@ class SavedQuestionsTest extends TestCase
             'open_ended_submission_type' => 'none'
         ]);
         $savedQuestion = new SavedQuestion();
-        $savedQuestion->assignment_question_id = $assignment_question_id;
         $savedQuestion->question_id = $this->question->id;
         $savedQuestion->open_ended_submission_type = 0;
         $savedQuestion->user_id = $this->user->id;
