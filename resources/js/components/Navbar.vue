@@ -9,10 +9,10 @@
            subject="General Inquiry"
     />
     <div v-if="showNavBar">
-      <b-navbar-brand href="/">
+      <b-navbar-brand @click="redirectLogo()">
         <img :src="asset('assets/img/libretexts_section_complete_adapt_header.png')"
              class="d-inline-block align-top pl-3"
-             alt="ADAPT logo"
+             alt="ADAPT logo with redirect to main page"
              @load="logoLoaded = true"
         >
       </b-navbar-brand>
@@ -207,6 +207,23 @@ export default {
     }
   },
   methods: {
+    redirectLogo () {
+      if (this.user === null) {
+        if (this.$route.name !== 'welcome') {
+          this.$router.push({ name: 'welcome' })
+        }
+      } else if (this.user.role === 2) {
+        if (this.$route.name !== 'instructors.courses.index') {
+          this.$router.push({ name: 'instructors.courses.index' })
+        }
+      } else if (this.user.role === 3) {
+        if (this.$route.name !== 'students.courses.index') {
+          this.$router.push({ name: 'students.courses.index' })
+        }
+      } else {
+        window.location('/')
+      }
+    },
     async getSession () {
       console.log(this.user)
       if (this.user !== null) {
