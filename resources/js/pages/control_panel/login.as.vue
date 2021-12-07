@@ -11,6 +11,7 @@
                  color="#007BFF"
                  background="#FFFFFF"
         />
+        <b-container>
         <b-form ref="form">
           <p>Use the form below to login as another user:</p>
           <div class="col-7 pb-2">
@@ -30,6 +31,7 @@
             </span>
           </div>
         </b-form>
+        </b-container>
       </div>
     </div>
   </div>

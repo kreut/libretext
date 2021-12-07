@@ -19,14 +19,13 @@
     <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
       <child id="main-content"/>
     </div>
-    <div v-if="(user === null) && !inIFrame" class="d-flex flex-column" style="background: #e5f5fe">
+    <div v-if="!inIFrame" class="d-flex flex-column" style="background: #e5f5fe;margin-top:200px;">
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
           <a href="https://opr.ca.gov/learninglab/" title="California Learning Lab">California Education Learning
             Lab</a>.
-          Unless otherwise noted, LibreTexts content is licensed by CC BY-NC-SA 3.0. Have questions or comments? For
-          more information please <a href="" @click.prevent="contactUs">contact us</a>.
+          Have questions or comments? For more information please <a href="" @click.prevent="contactUs">contact us</a>.
         </p>
         <div class="d-flex  justify-content-center flex-wrap">
           <a class="ml-5 pt-3 pb-3"
