@@ -1,19 +1,15 @@
 <template>
   <div>
-    <div class="basic-layout d-flex  justify-content-center bg"
-         :style="{backgroundImage:'url(' + asset('assets/img/splash.jpg') + ')'}"
-    >
-      <div class="text-center">
-        <div class="title font-italic text-white">
-          {{ title }}
-        </div>
-        <h5 class="text-white pb-5">
-          The Libretexts Adaptive Learning Assessment System
-        </h5>
-        <b-button size="lg" variant="primary" class="commons" @click="$router.push({name:'commons'})">
-          The Commons
-        </b-button>
+    <div class="text-center">
+      <div class="title font-italic text-primary" style="margin-top:100px">
+        {{ title }}
       </div>
+      <h5 class="text-primary pb-5">
+        The Libretexts Adaptive Learning Assessment System
+      </h5>
+      <b-button size="lg" variant="info" @click="$router.push({name:'commons'})">
+        The Commons
+      </b-button>
     </div>
   </div>
 </template>
