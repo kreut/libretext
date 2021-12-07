@@ -19,7 +19,7 @@
     <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
       <child id="main-content"/>
     </div>
-    <div v-if="!inIFrame" class="d-flex flex-column" style="background: #e5f5fe;margin-top:200px;">
+    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column" style="background: #e5f5fe;margin-top:200px;">
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
@@ -60,11 +60,17 @@ export default {
   data: () => ({
     showEnvironment: window.config.showEnvironment,
     environment: window.config.environment,
-    inIFrame: true
+    inIFrame: true,
+    isLearningTreesEditor: false
   }),
   computed: mapGetters({
     user: 'auth/user'
   }),
+  watch: {
+    '$route' (to, from) {
+      this.isLearningTreesEditor = to.name === 'instructors.learning_trees.editor'
+    }
+  },
   created () {
     try {
       this.inIFrame = window.self !== window.top
