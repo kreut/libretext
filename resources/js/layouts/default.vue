@@ -16,10 +16,12 @@
       <navbar/>
     </div>
     <div v-else style="padding-top:30px"/>
-    <div :class="{'container':true, 'mt-4':true,'expandHeight': ((user === null) && !inIFrame)}">
-      <child id="main-content"/>
+    <div id="main-content" :class="{'container':true, 'mt-4':true}">
+      <child/>
     </div>
-    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column" style="background: #e5f5fe;margin-top:200px;">
+    <div v-if="!inIFrame && !isLearningTreesEditor" class="d-flex flex-column"
+         style="background: #e5f5fe;margin-top:200px;"
+    >
       <footer class="footer" style="border:1px solid #30b3f6">
         <p class="pt-3 pl-3 pr-4">
           The LibreTexts ADAPT platform is supported by the Department of Education Open Textbook Pilot Project and the
@@ -79,6 +81,9 @@ export default {
     }
   },
   mounted () {
+    if (!this.inIFrame && !this.isLearningTreesEditor) {
+      document.getElementById('main-content').style.minHeight = (window.screen.height - 630) + 'px'
+    }
     window.addEventListener('keydown', this.keydownHandler)
     this.$root.$on('bv::modal::shown', (bvEvent, modalId) => {
       console.log('Modal is about to be shown', bvEvent, modalId)
@@ -104,9 +109,5 @@ export default {
   }
 }
 </script>
-<style scoped>
-.expandHeight {
-  min-height: 700px
-}
-</style>
+
 
