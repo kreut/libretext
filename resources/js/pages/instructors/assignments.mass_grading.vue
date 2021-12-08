@@ -156,6 +156,7 @@
               <b-col lg="6">
                 <b-form-select id="student_id"
                                v-model="studentId"
+                               required
                                :options="studentsOptions"
                                @change="updateStudentsFilter($event)"
                 />
@@ -163,7 +164,6 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="submission"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Submission*"
@@ -173,6 +173,7 @@
               <b-col lg="4">
                 <b-form-select id="submission"
                                v-model="submission"
+                               required
                                :options="submissionsOptions"
                                :disabled="openEndedView"
                                @change="updateSubmissionsFilter($event)"
@@ -181,7 +182,6 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            id="score"
             label-cols-sm="3"
             label-cols-lg="2"
             label="Score*"
@@ -189,8 +189,9 @@
           >
             <b-form-row>
               <b-col lg="3">
-                <b-form-select v-model="score"
-                               id="score"
+                <b-form-select id="score"
+                               v-model="score"
+                               required
                                :options="scoresOptions"
                                @change="updateScoresFilter($event)"
                 />
@@ -207,6 +208,7 @@
             <b-form-row>
               <b-col lg="3">
                 <b-form-select id="current_question_page"
+                               required
                                v-model="currentQuestionPage"
                                :options="questionsOptions"
                                @change="updateQuestionsFilter()"
@@ -232,6 +234,7 @@
             >
               <b-form-row>
                 <b-form-radio-group
+                  required
                   v-model="questionScoreForm.apply_to"
                   stacked
                 >
@@ -246,7 +249,6 @@
               </b-form-row>
             </b-form-group>
             <b-form-group
-              id="new_score"
               label-cols-sm="3"
               label-cols-lg="2"
               label="New Score*"
@@ -257,6 +259,7 @@
                   <b-form-input
                     id="new_score"
                     v-model="questionScoreForm.new_score"
+                    required
                     lg="7"
                     type="text"
                     :class="{ 'is-invalid': questionScoreForm.errors.has('new_score') }"

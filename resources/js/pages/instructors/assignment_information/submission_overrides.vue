@@ -39,6 +39,7 @@
                       <b-form-select id="assignment_level_apply_to"
                                      v-model="assignmentLevelApplyTo"
                                      cols="5"
+                                     required
                                      size="sm"
                                      class="mr-2"
                                      :options="enrollments"
@@ -101,6 +102,7 @@
                       <div class="d-flex mt-1">
                         <b-form-select id="compiled_pdf_apply_to"
                                        v-model="compiledPDFApplyTo"
+                                       required
                                        cols="5"
                                        size="sm"
                                        class="mr-2"
@@ -163,6 +165,7 @@
                       <div class="d-flex mt-1">
                         <b-form-select id="set_page_apply_to"
                                        v-model="setPageApplyTo"
+                                       required
                                        size="sm"
                                        class="mr-2"
                                        :options="enrollments"
@@ -221,8 +224,9 @@
                   </template>
                   <b-form-row>
                     <div class="mt-1">
-                      <b-form-select v-model="currentQuestionPage"
-                                     id="questions"
+                      <b-form-select id="questions"
+                                     v-model="currentQuestionPage"
+                                     required
                                      :options="questionsOptions"
                                      cols="2"
                                      size="sm"
@@ -242,6 +246,7 @@
                   <div class="mt-2">
                     <b-form-checkbox-group
                       v-if="showQuestionSubmissionTypes"
+                      required
                       id="submission_options"
                       v-model="selectedSubmissionTypes"
                       name="submission options"

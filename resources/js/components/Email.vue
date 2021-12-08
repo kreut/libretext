@@ -17,15 +17,15 @@
           label-cols-sm="3"
           label-cols-lg="2"
           label="Name"
-          label-for="name"
+          label-for="email_from_name"
         >
           <template slot="label">
             Name*
           </template>
           <b-form-input
-            id="name"
+            id="email_from_name"
             v-model="sendEmailForm.name"
-            aria-required="true"
+            required
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('name') }"
@@ -45,7 +45,7 @@
           <b-form-input
             id="email_in_contact_us_form"
             v-model="sendEmailForm.email"
-            aria-required="true"
+            required
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('email') }"
@@ -65,6 +65,7 @@
           </template>
           <div v-if="showSubjectOptions">
             <b-form-select id="subject"
+                           required
                            v-model="sendEmailForm.subject"
                            :options="subjectOptions"
                            style="width:280px"
@@ -75,7 +76,7 @@
             <b-form-input
               id="subject"
               v-model="sendEmailForm.subject"
-              aria-required="true"
+              required
               class="col-8"
               type="text"
               :class="{ 'is-invalid': sendEmailForm.errors.has('subject') }"
@@ -96,7 +97,7 @@
           <b-form-input
             id="school"
             v-model="sendEmailForm.school"
-            aria-required="true"
+            required
             class="col-6"
             type="text"
             :class="{ 'is-invalid': sendEmailForm.errors.has('school') }"
@@ -116,7 +117,7 @@
           <b-form-textarea
             id="message"
             v-model="sendEmailForm.text"
-            aria-required="true"
+            required
             placeholder="Enter something..."
             rows="6"
             max-rows="6"

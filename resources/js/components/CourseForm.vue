@@ -126,7 +126,6 @@
     <RequiredText/>
     <b-form ref="form">
       <b-form-group
-        id="school"
         label-cols-sm="4"
         label-cols-lg="3"
         label-for="school"
@@ -137,11 +136,13 @@
           <QuestionCircleTooltip :id="'school_tooltip'"/>
         </template>
         <vue-bootstrap-typeahead
+          id="school"
           ref="schoolTypeAhead"
           v-model="form.school"
           :data="schools"
-          placeholder="Not Specified"
+          placeholder="Choose a school"
           :class="{ 'is-invalid': form.errors.has('school') }"
+          class="required"
           @keydown="form.errors.clear('school')"
           @hit="checkIfLTI($event)"
         />
@@ -158,6 +159,7 @@
         <b-form-input
           id="name"
           v-model="form.name"
+          required
           type="text"
           :class="{ 'is-invalid': form.errors.has('name') }"
           :aria-required="true"
@@ -224,6 +226,7 @@
           <b-form-input
             id="section"
             v-model="form.section"
+            required
             type="text"
             :class="{ 'is-invalid': form.errors.has('section') }"
             :aria-required="true"
@@ -249,6 +252,7 @@
           <b-form-input
             id="crn"
             v-model="form.crn"
+            required
             type="text"
             placeholder=""
             :aria-required="true"
@@ -276,6 +280,7 @@
         </template>
         <b-form-input
           id="term"
+          required
           v-model="form.term"
           type="text"
           :class="{ 'is-invalid': form.errors.has('term') }"
@@ -293,9 +298,10 @@
           Start Date*
         </template>
         <b-form-datepicker
-          tabindex="0"
-          id="start_date"
           v-model="form.start_date"
+          id="start_date"
+          required
+          tabindex="0"
           :min="min"
           :class="{ 'is-invalid': form.errors.has('start_date') }"
           :aria-required="true"
@@ -315,6 +321,7 @@
         <b-form-datepicker
           id="end_date"
           v-model="form.end_date"
+          required
           tabindex="0"
           :min="min"
           class="mb-2"
@@ -337,6 +344,7 @@
         <b-form-radio-group id="public"
                             v-model="form.public"
                             aria-label="Public*"
+                            required
                             stacked
                             :aria-required="true"
                             name="public"
@@ -344,7 +352,7 @@
           <b-form-radio value="1">
             Yes
           </b-form-radio>
-          <b-form-radio  value="0">
+          <b-form-radio value="0">
             No
           </b-form-radio>
         </b-form-radio-group>
@@ -358,7 +366,10 @@
           Anonymous Users*
           <QuestionCircleTooltip :id="'anonymous_users_tooltip'"/>
         </template>
-        <b-form-radio-group id="anonymous_users" v-model="form.anonymous_users" stacked
+        <b-form-radio-group id="anonymous_users"
+                            v-model="form.anonymous_users"
+                            stacked
+                            required
                             @change="showAnonymousUsersWarning"
         >
           <b-form-radio name="anonymous_users" value="1">
@@ -389,7 +400,12 @@
           Alpha*
           <QuestionCircleTooltip :id="'alpha_course_tooltip'"/>
         </template>
-        <b-form-radio-group id="alpha" v-model="form.alpha" stacked @change="validateCanChange">
+        <b-form-radio-group id="alpha"
+                            v-model="form.alpha"
+                            required
+                            stacked
+                            @change="validateCanChange"
+        >
           <b-form-radio name="alpha" value="1">
             Yes
           </b-form-radio>
@@ -409,7 +425,11 @@
           Untether Beta Course*
           <QuestionCircleTooltip :id="'untether_beta_course_tooltip'"/>
         </template>
-        <b-form-radio-group v-model="form.untether_beta_course" stacked :aria-required="true">
+        <b-form-radio-group
+          v-model="form.untether_beta_course"
+          stacked
+          required
+        >
           <span @click="showUntetherBetaCourseWarning"><b-form-radio name="untether_beta_course" value="1">
             Yes
           </b-form-radio></span>
@@ -430,7 +450,11 @@
         </template>
         <span v-show="!ltiIsEnabled">The LMS at <span class="font-weight-bold">{{ form.school }}</span> has not been
           configured to be used with ADAPT.  If you would like to integrate ADAPT with your LMS, please have your LMS Admin reach out to us via the contact form.</span>
-        <b-form-radio-group v-if="ltiIsEnabled" v-model="form.lms" stacked>
+        <b-form-radio-group v-if="ltiIsEnabled"
+                            v-model="form.lms"
+                            required
+                            stacked
+        >
           <b-form-radio name="lms" value="1">
             Yes
           </b-form-radio>
@@ -448,6 +472,7 @@ import VueBootstrapTypeahead from 'vue-bootstrap-typeahead'
 import axios from 'axios'
 import { mapGetters } from 'vuex'
 import { fixDatePicker } from '~/helpers/accessibility/FixDatePicker'
+import { fixRequired } from '~/helpers/accessibility/FixRequired'
 
 const now = new Date()
 export default {
@@ -469,8 +494,9 @@ export default {
     user: 'auth/user'
   }),
   mounted () {
-    fixDatePicker('start_date','start date')
-    fixDatePicker('end_date','end date')
+    fixRequired(this)
+    fixDatePicker('start_date', 'start date')
+    fixDatePicker('end_date', 'end date')
     let startDate = document.getElementById('start_date')
     startDate.style.opacity = '0'
     startDate.style.width = '0'

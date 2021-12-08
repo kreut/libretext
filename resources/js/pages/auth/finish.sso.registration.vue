@@ -9,8 +9,10 @@
             <label class="col-md-3 col-form-label text-md-right">Time zone*
             </label>
             <div class="col-md-7" @change="removeTimeZoneError()">
-              <b-form-select v-model="form.time_zone"
+              <b-form-select id="time_zone"
+                             v-model="form.time_zone"
                              :options="timeZones"
+                             required
                              :class="{ 'is-invalid': form.errors.has('time_zone') }"
               />
               <has-error :form="form" field="time_zone"/>
@@ -21,7 +23,7 @@
             </label>
             <div class="col-md-7">
               <b-form-select v-model="form.registration_type"
-                             title="registration_type"
+                             required
                              :options="registrationTypes"
                              :class="{ 'is-invalid': form.errors.has('registration_type') }"
               />
@@ -35,6 +37,7 @@
             <div class="col-md-7">
               <input id="access_code"
                      v-model="form.access_code"
+                     required
                      :class="{ 'is-invalid': form.errors.has('access_code') }"
                      class="form-control"
                      type="text"
@@ -49,6 +52,7 @@
             <div class="col-md-7">
               <input id="student_id"
                      v-model="form.student_id"
+                     required
                      :class="{ 'is-invalid': form.errors.has('student_id') }"
                      class="form-control" type="text" name="student_id"
               >

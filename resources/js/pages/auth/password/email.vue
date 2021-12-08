@@ -14,6 +14,7 @@
             <div class="col-md-7">
               <input id="email"
                      v-model="form.email"
+                     required
                      :class="{ 'is-invalid': form.errors.has('email') }"
                      class="form-control"
                      type="email"

@@ -33,12 +33,10 @@
           <a class="ml-5 pt-3 pb-3"
              href="https://www.ed.gov/news/press-releases/us-department-education-awards-49-million-grant-university-california-davis-develop-free-open-textbooks-program"
              rel="external nofollow" target="_blank"
-             title="Press release for the US Department of Education awarding a grant to UC Davis to develop free open textbooks"
           > <img alt="Logo for the US Department of Education" :src="asset('assets/img/DOE.png')"></a>
           <a class="ml-5 pt-3 pb-3"
              href="https://blog.libretexts.org/2020/03/21/libretext-project-announces-1-million-california/"
              rel="external nofollow" target="_blank"
-             title="Press release for the LibreText Project receiving a $1 million Innovation Grant from the California Learning Lab"
           > <img alt="Logo for the California Learning Lab" style="height:85px;"
                  :src="asset('assets/img/CELL_LogoColor.png')"
           ></a>
