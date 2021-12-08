@@ -14,7 +14,7 @@
           id="modal-letter-grades-editor"
           ref="modal"
           title="Letter Grades"
-          :no-close-on-esc="true"
+
         >
           <p>
             Use the text area below to customize your letter grades, in a comma separated list of

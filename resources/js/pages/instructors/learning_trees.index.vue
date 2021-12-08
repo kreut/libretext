@@ -24,7 +24,7 @@
         id="modal-import-learning-tree"
         ref="import-learning-tree-modal"
         title="Import Learning Trees"
-        :no-close-on-esc="true"
+
       >
         <RequiredText/>
         <b-form-group

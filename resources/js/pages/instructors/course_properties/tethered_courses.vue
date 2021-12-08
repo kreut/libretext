@@ -5,7 +5,7 @@
       ref="modal"
       :title="`Confirm Untether ${betaCourse} From ${tetheredToAlphaCourse}`"
       size="lg"
-      :no-close-on-esc="true"
+
     >
       <p>
         By untethering <span class="font-italic font-weight-bold">{{ betaCourse }}</span> from

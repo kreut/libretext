@@ -6,7 +6,7 @@
       id="modal-unenroll-student"
       ref="modal"
       title="Unenroll Student"
-      :no-close-on-esc="true"
+
       size="lg"
     >
       <b-form ref="form">
@@ -66,7 +66,7 @@
       id="modal-move-student"
       ref="modal"
       title="Move Student To New Section"
-      :no-close-on-esc="true"
+
     >
       <b-alert show variant="info">
         <span class="font-weight-bold">The student's  submissions from the originating section will be removed

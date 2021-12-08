@@ -4,7 +4,7 @@
     <b-modal
       id="modal-enroll-in-course"
       ref="modal"
-      :no-close-on-esc="true"
+
     >
       <template v-if="inIFrame" #modal-header>
         Enroll In Course
@@ -12,7 +12,9 @@
       <template v-if="!inIFrame" #modal-title>
         Enroll In Course
       </template>
-      <p>Please complete the form below. <RequiredText/></p>
+      <p>Please complete the form below.
+        <RequiredText/>
+      </p>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="4"
@@ -51,14 +53,14 @@
             label-for="time_zone"
             label="Time Zone*"
           >
-              <b-form-select id="time_zone"
-                             v-model="form.time_zone"
-                             title="time zone"
-                             :options="timeZones"
-                             :class="{ 'is-invalid': form.errors.has('time_zone') }"
-                             @change="form.errors.clear('time_zone')"
-              />
-              <has-error :form="form" field="time_zone"/>
+            <b-form-select id="time_zone"
+                           v-model="form.time_zone"
+                           title="time zone"
+                           :options="timeZones"
+                           :class="{ 'is-invalid': form.errors.has('time_zone') }"
+                           @change="form.errors.clear('time_zone')"
+            />
+            <has-error :form="form" field="time_zone"/>
           </b-form-group>
         </div>
       </b-form>

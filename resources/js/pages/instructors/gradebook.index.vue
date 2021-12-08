@@ -176,7 +176,7 @@
     </b-modal>
     <b-modal id="modal-confirm-override-assignment-scores"
              title="Confirm override assignment scores"
-             :no-close-on-esc="true"
+
     >
       <p>
         I have saved a copy of the current scores to my local computer. I understand that ADAPT cannot retrieve

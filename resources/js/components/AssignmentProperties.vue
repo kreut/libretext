@@ -296,7 +296,7 @@
             id="modal-create-assignment-group"
             ref="modal"
             title="Create Assignment Group"
-            :no-close-on-esc="true"
+
           >
             <RequiredText/>
             <b-form-row>

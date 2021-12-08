@@ -14,7 +14,7 @@
         ref="modal"
         title="Edit Canned Responses"
         size="lg"
-        :no-close-on-esc="true"
+
       >
         <b-list-group-item
           v-for="cannedResponse in cannedResponses"

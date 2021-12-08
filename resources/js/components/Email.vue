@@ -8,7 +8,7 @@
       extra-params="extraParams"
       :title="title"
       size="lg"
-      :no-close-on-esc="true"
+
     >
       <p>{{ extraEmailModalText }}</p>
       <b-form ref="form">

@@ -6,7 +6,7 @@
       ref="modal"
       title="Confirm Delete Section"
       ok-title="Yes, delete section!"
-      :no-close-on-esc="true"
+
     >
       <p>By deleting the section, you will also delete:</p>
       <ol>
@@ -39,7 +39,7 @@
     <b-modal id="modal-section"
              ref="modal"
              :title="sectionId ? 'Edit Section Name' : 'Add Section'"
-             :no-close-on-esc="true"
+
     >
       <RequiredText/>
       <b-form-group

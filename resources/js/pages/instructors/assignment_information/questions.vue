@@ -4,7 +4,7 @@
     <b-modal
       id="modal-confirm-refresh-questions-and-properties"
       title="Confirm refresh questions and properties"
-      :no-close-on-esc="true"
+
     >
       <b-form-checkbox
         id="checkbox-1"
@@ -33,7 +33,7 @@
       ref="modalViewQuestion"
       title="View Question"
       size="lg"
-      :no-close-on-esc="true"
+
     >
       <div>
         <iframe v-show="alphaAssignmentQuestion.non_technology"

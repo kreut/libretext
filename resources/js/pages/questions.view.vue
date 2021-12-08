@@ -7,7 +7,7 @@
       id="modal-reason-for-uploading-local-solution"
       title="Reason For Uploading Local Solution"
       size="lg"
-      :no-close-on-esc="true"
+
     >
       <RequiredText />
       <b-container>
@@ -67,7 +67,7 @@
       id="modal-update-completion-scoring-mode"
       ref="modalUpdateCompletionScoringMode"
       title="Update Completion Scoring Mode"
-      :no-close-on-esc="true"
+
       size="lg"
     >
       <RequiredText />

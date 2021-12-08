@@ -6,7 +6,7 @@
       ref="modal"
       title="Update Node"
       size="xl"
-      :no-close-on-esc="true"
+
       hide-footer
     >
       <div v-if="!showUpdateNodeContents">
@@ -94,7 +94,7 @@
       id="modal-learning-tree-details"
       ref="modal"
       title="Learning Tree Details"
-      :no-close-on-esc="true"
+
       @hidden="resetLearningTreeDetailsModal"
     >
       <p v-if="learningTreeId" class="font-italic">

@@ -56,7 +56,7 @@
         title="Assignment Properties"
         ok-title="Submit"
         size="lg"
-        :no-close-on-esc="true"
+
         @hidden="resetAssignmentForm(form,assignmentId)"
         @shown="updateModalToggleIndex"
       >

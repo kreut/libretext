@@ -5,7 +5,7 @@
       id="modal-import-course"
       ref="modal"
       title="Import Course"
-      :no-close-on-esc="true"
+
     >
       <div id="course_to_import">
         <vue-bootstrap-typeahead
@@ -85,7 +85,7 @@
       ref="modal"
       title="Course Details"
       size="lg"
-      :no-close-on-esc="true"
+
       @hidden="resetModalForms"
     >
       <CourseForm :form="newCourseForm"/>
