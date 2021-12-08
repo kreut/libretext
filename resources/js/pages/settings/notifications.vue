@@ -61,6 +61,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Settings - Notifications' }
+  },
   data: () => ({
     hoursUntilDue: 0,
     isLoading: true

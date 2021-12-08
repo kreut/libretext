@@ -209,6 +209,9 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   components: { Loading },
+  metaInfo () {
+    return { title: 'Course Tethered Courses' }
+  },
   data: () => ({
     pendingBetaCourseApprovalFields: ['name', 'total_pending'],
     pendingBetaCourseApprovals: [],

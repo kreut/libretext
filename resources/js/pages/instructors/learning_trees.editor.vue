@@ -306,7 +306,7 @@ import { h5pResizer } from '~/helpers/H5PResizer'
 export default {
 
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'Learning Trees Editor' }
   },
   components: {
     FontAwesomeIcon,

@@ -95,6 +95,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Assignment Grader Access' }
+  },
   data: () => ({
     allGraderAccessLevel: null,
     isLoading: true,

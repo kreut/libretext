@@ -66,6 +66,9 @@ export default {
     AssignmentProperties,
     AllFormErrors
   },
+  metaInfo () {
+    return { title: 'Assignment Properties' }
+  },
   data: () => ({
     lms: false,
     courseStartDate: '',

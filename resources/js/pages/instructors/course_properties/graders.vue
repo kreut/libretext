@@ -218,6 +218,9 @@ export default {
     Loading,
     AllFormErrors
   },
+  metaInfo () {
+    return { title: 'Course Graders' }
+  },
   data: () => ({
     allFormErrors: [],
     headGrader: null,

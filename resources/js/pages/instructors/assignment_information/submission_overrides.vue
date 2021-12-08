@@ -246,9 +246,9 @@
                   <div class="mt-2">
                     <b-form-checkbox-group
                       v-if="showQuestionSubmissionTypes"
-                      required
                       id="submission_options"
                       v-model="selectedSubmissionTypes"
+                      required
                       name="submission options"
                     >
                       <b-form-checkbox value="auto-graded">
@@ -338,6 +338,9 @@ import { getQuestions } from '~/helpers/Questions'
 
 export default {
   components: { Loading },
+  metaInfo () {
+    return { title: 'Assignment Submission Overrides' }
+  },
   data: () => ({
     fileUploadMode: '',
     justAutoGraded: false,

@@ -110,6 +110,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Course Assignment Group Weights' }
+  },
   data: () => ({
     lms: false,
     weightHas0Entry: false,

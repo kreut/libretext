@@ -80,6 +80,9 @@ import axios from 'axios'
 import { getLTIUser } from '~/helpers/lti'
 
 export default {
+  metaInfo () {
+    return { title: 'Link Assignment To LMS' }
+  },
   data: () => ({
     errorMessage: '',
     courseId: 0,

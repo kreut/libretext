@@ -86,6 +86,9 @@ export default {
     Loading,
     AssignTosToView
   },
+  metaInfo () {
+    return { title: 'Assignment Summary' }
+  },
   data: () => ({
     lms: false,
     course: {},

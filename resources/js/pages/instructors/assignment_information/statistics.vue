@@ -24,6 +24,9 @@ import { mapGetters } from 'vuex'
 
 export default {
   components: { AssignmentStatistics, Loading },
+  metaInfo () {
+    return { title: 'Assignment Statistics' }
+  },
   middleware: 'auth',
   data: () => ({
     isLoading: true

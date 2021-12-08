@@ -42,6 +42,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Course Ungraded Submissions' }
+  },
   data: () => ({
     isLoading: true,
     ungradedSubmissions: ''

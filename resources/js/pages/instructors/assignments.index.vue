@@ -631,6 +631,9 @@ export default {
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle
   },
+  metaInfo () {
+    return { title: 'Assignments' }
+  },
   data: () => ({
     view: 'main view',
     hasSubmissionsOrFileSubmissions: false,

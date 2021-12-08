@@ -189,7 +189,7 @@ export default {
   },
 
   metaInfo () {
-    return { title: this.$t('register') }
+    return { title: this.registrationTitle }
   },
   data: () => ({
     allFormErrors: [],

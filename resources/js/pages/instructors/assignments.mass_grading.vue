@@ -331,6 +331,9 @@ export default {
     FontAwesomeIcon,
     ToggleButton
   },
+  metaInfo () {
+    return { title: 'Mass Grading' }
+  },
   middleware: 'auth',
   data: () => ({
     toggleColors: window.config.toggleColors,

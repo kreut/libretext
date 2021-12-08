@@ -336,7 +336,7 @@
                       />
                     </a>
                   </span>
-                  <span v-if="user && user.role === 2">
+                <span v-if="user && user.role === 2">
 
                     <span class="pr-1">
                       <b-tooltip :target="getTooltipTarget('properties',course.id)"
@@ -769,7 +769,7 @@ export default {
     }
   },
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'My Courses' }
   }
 }
 </script>

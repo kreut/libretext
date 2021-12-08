@@ -365,6 +365,9 @@ export default {
     AllFormErrors,
     SolutionFileHtml
   },
+  metaInfo () {
+    return { title: 'Assignment - Summary' }
+  },
   middleware: 'auth',
   data: () => ({
     allFormErrors: [],

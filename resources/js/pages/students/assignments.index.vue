@@ -252,6 +252,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'My Assignments' }
+  },
   middleware: 'auth',
   data: () => ({
     assignmentGroupOptions: [],

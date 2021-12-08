@@ -105,6 +105,9 @@ export default {
     ShowPointsPerQuestionToggle,
     GradersCanSeeStudentNamesToggle
   },
+  metaInfo () {
+    return { title: 'Assignment Control Panel' }
+  },
   data: () => ({
     toggleColors: window.config.toggleColors,
     isLoading: true,

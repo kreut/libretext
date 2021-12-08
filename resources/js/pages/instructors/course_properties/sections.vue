@@ -249,6 +249,9 @@ export default {
     AllFormErrors,
     FontAwesomeIcon
   },
+  metaInfo () {
+    return { title: 'Course Sections' }
+  },
   data: () => ({
     copyIcon: faCopy,
     allFormErrors: [],

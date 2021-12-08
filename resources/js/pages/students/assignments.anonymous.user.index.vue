@@ -53,6 +53,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Assignments' }
+  },
   middleware: 'auth',
   data: () => ({
     courseName: '',

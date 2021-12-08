@@ -54,7 +54,7 @@ export default {
   scrollToTop: false,
   components: { AllFormErrors },
   metaInfo () {
-    return { title: this.$t('settings') }
+    return { title: 'Settings - Password' }
   },
 
   data: () => ({

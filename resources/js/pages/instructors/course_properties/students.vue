@@ -222,6 +222,9 @@ export default {
     FontAwesomeIcon,
     AllFormErrors
   },
+  metaInfo () {
+    return { title: 'Course Students' }
+  },
   data: () => ({
     allFormErrors: [],
     processingMoveStudent: false,

@@ -3782,7 +3782,7 @@ export default {
     }
   },
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'Assignment Questions' }
   }
 }
 </script>

@@ -43,6 +43,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Assignment Gradebook' }
+  },
   data: () => ({
     fields: [],
     items: [],

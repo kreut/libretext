@@ -254,7 +254,7 @@ export default {
     }
   },
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'My Learning Trees' }
   }
 }
 </script>

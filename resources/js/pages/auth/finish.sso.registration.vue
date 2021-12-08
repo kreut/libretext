@@ -81,6 +81,9 @@ export default {
   components: {
     AllFormErrors
   },
+  metaInfo () {
+    return { title: 'Finish SSO Registration' }
+  },
   data: () => ({
     allFormErrors: [],
     inIFrame: false,

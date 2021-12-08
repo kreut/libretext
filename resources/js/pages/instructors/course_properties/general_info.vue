@@ -33,6 +33,9 @@ import 'vue-loading-overlay/dist/vue-loading.css'
 
 export default {
   components: { CourseForm, Loading },
+  metaInfo () {
+    return { title: 'Course General Information' }
+  },
   middleware: 'auth',
   data: () => ({
     course: {},

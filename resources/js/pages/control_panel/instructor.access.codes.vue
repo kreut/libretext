@@ -30,6 +30,9 @@ export default {
     Loading,
     AccessCodes
   },
+  metaInfo () {
+    return { title: this.$t('Instructor Access Codes') }
+  },
   data: () => ({
     hasAccess: false,
     isLoading: true

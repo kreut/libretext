@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="View Question" />
+    <PageTitle title="View Question"/>
     <div>
       <iframe v-show="non_technology"
               :id="`non-technology-iframe-1`"
@@ -10,7 +10,7 @@
               style="width: 1px;min-width: 100%;"
       />
     </div>
-    <div v-html="technology_iframe" />
+    <div v-html="technology_iframe"/>
   </div>
 </template>
 <script>
@@ -21,14 +21,14 @@ import axios from 'axios'
 
 export default {
   middleware: 'auth',
-  computed: mapGetters({
-    user: 'auth/user'
-  }),
   data: () => ({
     technology_iframe: '',
     non_technology: '',
     non_technology_iframe_src: ''
 
+  }),
+  computed: mapGetters({
+    user: 'auth/user'
   }),
   async mounted () {
     if (this.user.role === 3) {
@@ -55,7 +55,7 @@ export default {
     }
   },
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'View Question' }
   }
 }
 </script>

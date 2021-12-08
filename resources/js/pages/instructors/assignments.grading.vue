@@ -708,6 +708,9 @@ export default {
     VueBootstrapTypeahead,
     ckeditor: CKEditor.component
   },
+  metaInfo () {
+    return { title: 'Assignment Grading' }
+  },
   data: () => ({
     toggleColors: window.config.toggleColors,
     questionSubmissionScoreErrorMessage: '',

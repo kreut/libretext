@@ -64,6 +64,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Find Learning Trees' }
+  },
   middleware: 'auth',
   data: () => ({
     gettingLearningTree: false,

@@ -104,6 +104,9 @@ export default {
   components: {
     Loading
   },
+  metaInfo () {
+    return { title: 'Course Grader Notifications' }
+  },
   data: () => ({
     headGrader: false,
     showForwardOptions: false,

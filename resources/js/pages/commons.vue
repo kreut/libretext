@@ -165,6 +165,9 @@ export default {
     ImportAsBetaText,
     Email
   },
+  metaInfo () {
+    return { title: 'The Commons' }
+  },
   data: () => ({
     oneButtonPerRow: false,
     oneCoursePerRow: false,

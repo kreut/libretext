@@ -391,6 +391,9 @@ export default {
     CannotDeleteAssessmentFromBetaAssignmentModal,
     SolutionFileHtml
   },
+  metaInfo () {
+    return { title: 'Assignment Questions' }
+  },
   data: () => ({
     isMe: () => window.config.isMe,
     confirmedRefreshQuestionsAndProperties: false,

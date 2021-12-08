@@ -20,7 +20,7 @@ import { mapGetters } from 'vuex'
 export default {
 
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'Home' }
   },
 
   data: () => ({

@@ -33,7 +33,7 @@
             :class="{ 'is-invalid': letterGradesForm.errors.has('letter_grades') }"
             @keydown="letterGradesForm.errors.clear('letter_grades')"
           />
-          <has-error :form="letterGradesForm" field="letter_grades" />
+          <has-error :form="letterGradesForm" field="letter_grades"/>
           <div slot="modal-footer">
             <b-btn size="sm" @click="$bvModal.hide('modal-letter-grades-editor')">
               Cancel
@@ -68,7 +68,13 @@
                 to customize the letter grades.
               </p>
               <p>
+<<<<<<< HEAD
                 <span class="font-italic">Show z-scores: </span>
+||||||| parent of ce25db3c... Accessibility: Added titles
+                Show z-scores:
+=======
+                Show z-scores:
+>>>>>>> ce25db3c... Accessibility: Added titles
                 <toggle-button
                   tabindex="0"
                   class="mt-2"
@@ -84,6 +90,7 @@
                 />
                 <br>
                 <span class="font-italic">Release weighted averages: </span>
+               Release weighted averages:
                 <toggle-button
                   tabindex="0"
                   class="mt-2"
@@ -154,6 +161,9 @@ export default {
   components: {
     ToggleButton,
     Loading
+  },
+  metaInfo () {
+    return { title: 'Course Letter Grades' }
   },
   data: () => ({
     toggleColors: window.config.toggleColors,

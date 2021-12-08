@@ -340,6 +340,9 @@ export default {
     Loading,
     ToggleButton
   },
+  metaInfo () {
+    return { title: 'Gradebook' }
+  },
   middleware: 'auth',
   data: () => ({
     toggleColors: window.config.toggleColors,

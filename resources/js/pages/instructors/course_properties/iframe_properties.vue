@@ -48,6 +48,9 @@
 import axios from 'axios'
 
 export default {
+  metaInfo () {
+    return { title: 'Course Embed Properties' }
+  },
   data: () => ({
     courseId: 0
   }),

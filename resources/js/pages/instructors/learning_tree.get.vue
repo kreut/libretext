@@ -48,9 +48,8 @@ import axios from 'axios'
 import { mapGetters } from 'vuex'
 
 export default {
-
   metaInfo () {
-    return { title: this.$t('home') }
+    return { title: 'Learning Tree' }
   },
   data: () => ({
     nodeSrc: '',
