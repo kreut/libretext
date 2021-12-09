@@ -1,7 +1,7 @@
 <template>
   <div>
     <b-tabs v-show="!isLoading" content-class="mt-3">
-      <b-tab title="Create New Question" :active="$route.params.tab === 'create-new-question'">
+      <b-tab title="New Question" :active="$route.params.tab === 'new-question'">
         <b-card header-html="<h2 class=&quot;h7&quot;>Create Question</h2>"
                 class="mb-4"
         >
@@ -13,7 +13,7 @@
       <b-tab :key="`my-questions-${numClicks}`" title="My Questions" :active="$route.params.tab === 'my-questions'" @click="numClicks++">
         <MyQuestions/>
       </b-tab>
-      <b-tab title="Bulk Import Questions">
+      <b-tab title="Bulk Import">
         <BulkImportQuestions/>
       </b-tab>
     </b-tabs>

@@ -139,7 +139,7 @@ export default {
     toggleColors: window.config.toggleColors,
     dashboards: [{ routePath: '/instructors/courses', text: 'My Courses' },
       { routePath: '/commons', text: 'The Commons' },
-      { routePath: '/question-editor/create-new-question', text: 'Question Editor' },
+      { routePath: '/question-editor/new-question', text: 'Question Editor' },
       { routePath: '/question-editor/my-questions', text: 'My Questions' },
       { routePath: '/instructors/learning-trees', text: 'Learning Trees' }],
     isAnonymousUser: false,
