@@ -57,7 +57,7 @@
               </template>
               <template v-slot:cell(actions)="data">
                 <div
-                  v-if="data.item.email ==='Default Question Editor has no email'"
+                  v-if="data.item.is_default_non_instructor_editor"
                 >
                   None
                 </div>

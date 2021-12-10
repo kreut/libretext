@@ -34,12 +34,17 @@ class QuestionEditorController extends Controller
             return $response;
         }
         try {
-            $question_editors = $user->where('role', 5)
+            $question_editors_info = $user->where('role', 5)
                 ->select('id',
                     'email',
                     'created_at',
                     DB::raw('CONCAT(first_name, " ", last_name) AS name'))
                 ->get();
+            $question_editors = [];
+            foreach ($question_editors_info as $key =>$question_editor_info){
+                $question_editors[$key] = $question_editor_info;
+                $question_editors[$key]->is_default_non_instructor_editor = Helper::defaultNonInstructorEditor()->id === $question_editor_info->id;
+            }
             $response['question_editors'] = $question_editors;
             $response['type'] = 'success';
         } catch (Exception $e) {
