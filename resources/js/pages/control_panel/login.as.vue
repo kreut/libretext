@@ -92,7 +92,7 @@ export default {
 
         if (data.type === 'success') {
           // Save the token.
-          this.$store.dispatch('auth/saveToken', {
+          await this.$store.dispatch('auth/saveToken', {
             token: data.token,
             remember: false
           })

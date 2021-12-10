@@ -17,11 +17,10 @@
         >
       </b-navbar-brand>
       <div v-if="logoLoaded" class="float-right p-2">
-        <div v-if="$route.name !== 'instructors.learning_trees.editor'">
-          <toggle-button
-            v-if="showToggleStudentView && (user !== null)"
+        <toggle-button
+          v-if="showToggleStudentView && (user !== null) && !['login.as','question.editor','instructors.learning_trees.editor'].includes($route.name)"
             tabindex="0"
-            class="mt-2"
+          class="mt-2"
             :width="140"
             :value="isInstructorView"
             :sync="true"
@@ -32,7 +31,7 @@
             :aria-label="isInstructorView ? 'Instructor view shown' : 'Student view shown'"
             @change="toggleStudentView()"
           />
-          <span v-if="isMe && (user !== null)">
+          <span v-if="isMe && (user !== null) && ('instructors.learning_trees.editor' !== $route.name)">
             <router-link :to="{ name: 'login.as'}">
               <b-button size="sm" variant="outline-primary">Control Panel</b-button>
             </router-link>

@@ -2,7 +2,7 @@
   <div>
     <div v-if="hasAccess">
       <div class="row">
-        <div class="mt-2 mb-2">
+        <div v-if="[1, 5].includes(user.id)" class="mt-2 mb-2">
           <card title="Control Panel" class="properties-card mt-3">
             <ul class="nav flex-column nav-pills">
               <li v-for="tab in tabs" :key="tab.route" class="nav-item">
@@ -15,12 +15,11 @@
         </div>
         <div class="col-md-9">
           <transition name="fade" mode="out-in">
-            <router-view/>
+            <router-view />
           </transition>
         </div>
       </div>
     </div>
-
   </div>
 </template>
 
@@ -41,42 +40,33 @@ export default {
     }),
     isMe: () => window.config.isMe,
     tabs () {
-      let tabs = [
+      return [
         {
           icon: '',
           name: 'Login As',
           route: 'login.as'
-        }]
-      if ([1, 5].includes(this.user.id) || true) {
-        tabs = ([
-          {
-            icon: '',
-            name: 'Login As',
-            route: 'login.as'
-          },
-          {
-            icon: '',
-            name: 'Refresh Question Requests',
-            route: 'refresh.question.requests'
-          },
-          {
-            icon: '',
-            name: 'LTI Integrations',
-            route: 'lti.integrations'
-          },
-          {
-            icon: '',
-            name: 'Instructor Access Codes',
-            route: 'instructorAccessCodes'
-          },
-          {
-            icon: '',
-            name: 'Non-Instructor Editors',
-            route: 'questionEditors'
-          }
-        ])
-      }
-      return tabs
+        },
+        {
+          icon: '',
+          name: 'Refresh Question Requests',
+          route: 'refresh.question.requests'
+        },
+        {
+          icon: '',
+          name: 'LTI Integrations',
+          route: 'lti.integrations'
+        },
+        {
+          icon: '',
+          name: 'Instructor Access Codes',
+          route: 'instructorAccessCodes'
+        },
+        {
+          icon: '',
+          name: 'Non-Instructor Editors',
+          route: 'questionEditors'
+        }
+      ]
     }
   },
   mounted () {
