@@ -1,6 +1,6 @@
 <template>
   <div>
-    <PageTitle title="Question Editors"/>
+    <PageTitle title="Non-Instructor Editors"/>
     <b-modal
       id="confirm-delete-question-editor"
       ref="modal"
@@ -39,7 +39,7 @@
       />
 
       <div v-show="!isLoading">
-        <b-card header="default" header-html="Question Editors" class="mb-3">
+        <b-card header="default" header-html="Non-Instructor Editors" class="mb-3">
           <div v-if="questionEditors.length">
             <b-table
               aria-label="Question Editors"
@@ -71,11 +71,11 @@
           </div>
           <div v-else>
             <b-alert show variant="info">
-              <span class="font-weight-bold">There are currently no question editors.</span>
+              <span class="font-weight-bold">There are currently no non-instructor editors.</span>
             </b-alert>
           </div>
         </b-card>
-        <AccessCodes access-code-type="question editor"/>
+        <AccessCodes access-code-type="non-instructor editor"/>
       </div>
     </div>
   </div>

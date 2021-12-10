@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 
 use App\Exceptions\Handler;
+use App\Helpers\Helper;
 use App\Question;
 use App\QuestionEditor;
 use App\User;
@@ -44,7 +45,7 @@ class QuestionEditorController extends Controller
         } catch (Exception $e) {
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error retrieving the question editors.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error retrieving the non-instructor editors.  Please try again or contact us for assistance.";
         }
         return $response;
 
@@ -62,7 +63,7 @@ class QuestionEditorController extends Controller
             return $response;
         }
         try {
-            $default_question_editor_user = User::where('email', 'Default Question Editor has no email')->first();
+            $default_question_editor_user = Helper::defaultNonInstructorEditor();
             DB::beginTransaction();
             $question->where('question_editor_user_id', $questionEditorUser->id)
                 ->update(['question_editor_user_id' => $default_question_editor_user->id,
@@ -75,7 +76,7 @@ class QuestionEditorController extends Controller
             DB::rollback();
             $h = new Handler(app());
             $h->report($e);
-            $response['message'] = "There was an error deleting the Question Editor.  Please try again or contact us for assistance.";
+            $response['message'] = "There was an error deleting the non-instructor editor.  Please try again or contact us for assistance.";
         }
         return $response;
 

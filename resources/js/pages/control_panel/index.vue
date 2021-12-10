@@ -71,7 +71,7 @@ export default {
           },
           {
             icon: '',
-            name: 'Question Editors',
+            name: 'Non-Instructor Editors',
             route: 'questionEditors'
           }
         ])

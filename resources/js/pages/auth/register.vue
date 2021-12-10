@@ -270,7 +270,7 @@ export default {
           this.isQuestionEditor = this.isStudent = this.isInstructor = false
           break
         case 'question editor':
-          this.registrationTitle = 'Question Editor Registration'
+          this.registrationTitle = 'Non-Instructor Editor Registration'
           this.isQuestionEditor = true
           this.isGrader = this.isStudent = this.isInstructor = false
       }

@@ -34,8 +34,8 @@ class QuestionEditorPolicy
             $message = "That user is not a question editor.";
             $authorize = false;
         }
-        if ($question_editor_user->email === 'Default Question Editor has no email') {
-            $message = "You cannot delete the default question editor.";
+        if ($question_editor_user->id === Helper::defaultNonInstructorEditor()->id) {
+            $message = "You cannot delete the default non-instructor editor.";
             $authorize = false;
         }
         return $authorize

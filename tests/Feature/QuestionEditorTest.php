@@ -60,7 +60,7 @@ class QuestionEditorTest extends TestCase
         $this->admin_user = factory(User::class)->create(['id' => 1]);
         $this->user = factory(User::class)->create();
         $this->student_user = factory(User::class)->create(['role' => 3]);
-        $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'email' => 'Default Question Editor has no email']);
+        $this->default_question_editor_user = factory(User::class)->create(['role' => 5, 'first_name' => 'Default Non-Instructor Editor']);
         $this->question_editor_user = factory(User::class)->create(['role' => 5]);
         $this->question = factory(Question::class)->create(['library' => 'adapt']);
 
@@ -110,7 +110,7 @@ class QuestionEditorTest extends TestCase
     public function one_cannot_delete_the_default_question_editor()
     {
         $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->default_question_editor_user->id}")
-            ->assertJson(['message' => "You cannot delete the default question editor."]);
+            ->assertJson(['message' => "You cannot delete the default non-instructor editor."]);
 
     }
 
@@ -438,14 +438,14 @@ class QuestionEditorTest extends TestCase
     public function only_question_editor_or_instructor_can_bulk_upload_h5p()
     {
 
-        $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
+        $this->actingAs($this->user)->postJson("/api/questions/h5p/108")
+            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/108']]);
+
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions/h5p/600")
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
-        $this->actingAs($this->question_editor_user)->postJson("/api/questions/h5p/601")
-            ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/601']]);
 
-
-        $this->actingAs($this->student_user)->postJson("/api/questions/h5p/601")
+        $this->actingAs($this->student_user)->postJson("/api/questions/h5p/600")
             ->assertJson(['message' => 'You are not allowed to bulk upload H5P questions.']);
 
     }

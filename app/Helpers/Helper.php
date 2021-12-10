@@ -13,6 +13,26 @@ class Helper
 
     }
 
+    public static function defaultNonInstructorEditor()
+    {
+        $id = 0;
+        switch (app()->environment()) {
+            case('local'):
+                $id = 1978;
+                break;
+            case('staging'):
+                $id = 1738;
+                break;
+            case('production'):
+                $id = 2000;
+                break;
+        }
+
+        return app()->environment('testing')
+            ? User::where('first_name', 'Default Non-Instructor Editor')->first()
+            : User::where('id', $id)->where('role', 5)->first();
+    }
+
     public static function getSubmissionType($value): string
     {
         $submission = [];

@@ -4,6 +4,8 @@ namespace Tests\Feature\Admin;
 
 use App\Traits\Test;
 use App\User;
+use Illuminate\Database\Eloquent\Collection;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Foundation\Testing\WithFaker;
 use Tests\TestCase;
@@ -13,11 +15,11 @@ class AccessCodeTest extends TestCase
     use Test;
 
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $admin_user;
     /**
-     * @var \Illuminate\Database\Eloquent\Collection|\Illuminate\Database\Eloquent\Model|mixed
+     * @var Collection|Model|mixed
      */
     private $user;
     /**
@@ -31,12 +33,22 @@ class AccessCodeTest extends TestCase
         parent::setUp();
         $this->admin_user = factory(User::class)->create(['id' => 1]);//Admin
         $this->user = factory(User::class)->create(['id' => 9999]);//not Admin
-        $this->types = ['instructor', 'question editor'];
+        $this->types = ['instructor', 'non-instructor editor'];
     }
 
     private function getTable($type): string
     {
-        return str_replace(' ', '_', $type) . '_access_codes';
+        switch ($type) {
+            case('instructor'):
+                $table = 'instructor_access_codes';
+                break;
+            case('non-instructor editor'):
+                $table = 'question_editor_access_codes';
+                break;
+            default:
+                $table = 'not a valid type';
+        }
+        return $table;
     }
 
     /** @test */

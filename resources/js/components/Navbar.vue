@@ -110,7 +110,7 @@
               </b-dropdown-item>
               <b-dropdown-item href="#">
                 <router-link :to="{ path: '/register/question-editor' }" class="dropdown-item pl-3">
-                  Question Editor
+                  Non-Instructor Editor
                 </router-link>
               </b-dropdown-item>
             </b-nav-item-dropdown>

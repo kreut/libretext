@@ -39,7 +39,7 @@
     </b-card>
     <b-card header="default" :header-html="getEmailTitle()" class="mb-5">
       <p>
-        Enter a comma separated list of emails. {{ getCapitalizedType() }}s will be sent an access code which they can use to
+        Enter a comma separated list of emails for sending {{ accessCodeType }} access codes which they can use to
         register. Access codes are valid for 48 hours.
       </p>
       <b-form-group
@@ -123,7 +123,7 @@ export default {
     accessCodes: []
   }),
   mounted () {
-    if (!['instructor', 'question editor'].includes(this.accessCodeType)) {
+    if (!['instructor', 'non-instructor editor'].includes(this.accessCodeType)) {
       this.$noty.error(`${this.accessCodeType} is not a valid access code type`)
       return false
     }
@@ -138,16 +138,16 @@ export default {
       return _.startCase(this.accessCodeType)
     },
     getFormTitle () {
-      return 'Create ' + _.startCase(this.accessCodeType) + ' Access Codes'
+      return 'Create Access Codes'
     },
     getCardTitle () {
-      return 'Create ' + _.startCase(this.accessCodeType) + ' Access Codes'
+      return 'Create Access Codes'
     },
     getEmailTitle () {
-      return 'Email ' + _.startCase(this.accessCodeType) + ' Access Codes'
+      return 'Email Access Codes'
     },
     getEmailAccessCodesButton () {
-      return 'Email ' + _.startCase(this.accessCodeType) + ' Access Codes'
+      return 'Email Access Codes'
     },
     async createAccessCodes () {
       try {

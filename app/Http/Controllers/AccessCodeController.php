@@ -93,13 +93,28 @@ class AccessCodeController extends Controller
             $beauty_mail = app()->make(\Snowfire\Beautymail\Beautymail::class);
 
             $to_email = $data['email'];
-            $access_code_link = request()->getSchemeAndHttpHost() . "/register/instructor/$access_code";
-            $beauty_mail->send('emails.instructor_access_code', ['access_code' =>  $access_code,'access_code_link' => $access_code_link], function ($message)
-            use ($to_email) {
+            $access_code_link = $email_template = $subject = '';
+            switch ($request->type) {
+                case('instructor'):
+                    $access_code_link = request()->getSchemeAndHttpHost() . "/register/instructor/$access_code";
+                    $email_template = 'emails.instructor_access_code';
+                    $subject = "Instructor Access Code";
+                    break;
+                case('non-instructor editor'):
+                    $access_code_link = request()->getSchemeAndHttpHost() . "/register/question-editor/$access_code";
+                    $email_template = 'emails.question_editor_access_code';
+                    $subject = "Non-Instructor Editor";
+                    break;
+            }
+
+
+            $beauty_mail->send($email_template, ['access_code' =>
+                $access_code,'access_code_link' => $access_code_link], function ($message)
+            use ($to_email, $subject) {
                 $message
                     ->from('adapt@noreply.libretexts.org', 'Adapt')
                     ->to($to_email)
-                    ->subject("Instructor Access Code")
+                    ->subject($subject)
                     ->replyTo('delmar@libretexts.org');
             });
             DB::commit();
@@ -118,7 +133,7 @@ class AccessCodeController extends Controller
             case('instructor'):
                 $model = new InstructorAccessCode();
                 break;
-            case('question editor'):
+            case('non-instructor editor'):
                 $model = new QuestionEditorAccessCode();
                 break;
             default:
