@@ -4,11 +4,13 @@
     <b-modal
       id="confirm-delete-question-editor"
       ref="modal"
-      title="Confirm Delete Question Editor"
+      title="Confirm Delete Non-Instructor Editor"
     >
-      <p>By deleting {{ questionEditorToRemove.name }} from the database, all of their questions
-        will be moved to the Default Question Editor's account. In addition, all of the questions will be changed
-        to public.</p>
+      <p>
+        By deleting <span class="font-weight-bold">{{ questionEditorToRemove.name }}</span> from the database, all of their questions
+        will be moved to the Default Non-Instructor Editor's account. In addition, all of the questions will be changed
+        to public.
+      </p>
 
       <template #modal-footer>
         <b-button
