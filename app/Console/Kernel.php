@@ -40,7 +40,7 @@ class Kernel extends ConsoleKernel
         }
 
         $schedule->command('import:allH5P')
-            ->hourlyAt(14);
+            ->daily();
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
