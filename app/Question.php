@@ -2,6 +2,7 @@
 
 namespace App;
 
+use Carbon\Carbon;
 use DOMDocument;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Http\Request;
@@ -81,7 +82,10 @@ class Question extends Model
                 $tag_id = $tag_in_db
                     ? $tag_in_db->id
                     : Tag::create(['tag' => $tag])->id;
-                DB::table('question_tag')->insert(['question_id' => $this->id, 'tag_id' => $tag_id]);
+                DB::table('question_tag')->insert(['question_id' => $this->id,
+                    'tag_id' => $tag_id,
+                    'created_at' => Carbon::now(),
+                    'updated_at' => Carbon::now()]);
             }
         }
     }
@@ -201,22 +205,40 @@ class Question extends Model
         $success = false;
         if ($info = json_decode($output, 1)) {
             $info = $info[0];
-            $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
-            $author = !$author ? $info['uid'] : ($author[0]->name ?? null);
-            $license = $this->_mapLicenseTextToValue($info['license']);
+            $author = $this->getH5PAuthor($info);
+            $license = $this->mapLicenseTextToValue($info['license']);
             $license_version = $license ? $info['license_version'] : null;
-            $title = $info['title_1'] ?? null;
-            if ($title) {
-                $title = str_replace(['&quot;', '&amp;quot;', '&amp;amp;'], ['"', '"', 'and'], $title);
-            }
+            $title = $this->getH5PTitle($info);
             $url = $this->getTechnologyURLFromTechnology('h5p', $h5p_id);
-            $tags = $info['field_tags'] ?? null;
-            if ($tags) {
-                $tags = explode(',', $tags);
-            }
+            $tags = $this->getH5PTags($info);
             $success = $info !== [];
         }
         return compact('author', 'license', 'license_version', 'title', 'url', 'tags', 'success');
+    }
+
+    public function getH5PTags($info)
+    {
+        $tags = $info['field_tags'] ?? null;
+        if ($tags) {
+            $tags = explode(',', $tags);
+        }
+        return $tags;
+    }
+
+    public function getH5PTitle($info)
+    {
+        $title = $info['title_1'] ?? null;
+        if ($title) {
+            $title = str_replace(['&quot;', '&amp;quot;', '&amp;amp;'], ['"', '"', 'and'], $title);
+        }
+        return $title;
+
+    }
+
+    public function getH5PAuthor($info)
+    {
+        $author = json_decode(str_replace(['&quot;', '&amp;amp;'], ['"', 'and'], $info['authors']));
+        return !$author ? $info['uid'] : ($author[0]->name ?? null);
     }
 
     /**
@@ -224,7 +246,7 @@ class Question extends Model
      * @return string|null
      * @throws Exception
      */
-    private function _mapLicenseTextToValue(string $license_text): ?string
+    public function mapLicenseTextToValue(string $license_text): ?string
     {
         try {
             $licenses = ['Public Domain' => 'publicdomain',

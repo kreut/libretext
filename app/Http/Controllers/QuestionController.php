@@ -453,9 +453,11 @@ class QuestionController extends Controller
                 $question->update($data);
             } else {
                 $question = Question::create($data);
+                $question->page_id = $question->id;
+                $question->save();
             }
             $question->addTags($tags);
-            $question->storeNonTechnologyText($non_technology_text, 'adapt', $data['page_id'], $libretext);
+            $question->storeNonTechnologyText($non_technology_text, 'adapt', $question->id, $libretext);
 
 
             DB::commit();
@@ -528,6 +530,8 @@ class QuestionController extends Controller
             DB::beginTransaction();
 
             $question = Question::create($data);
+            $question->page_id = $question->id;
+            $question->save();
             $question->addTags($tags);
 
             DB::commit();
