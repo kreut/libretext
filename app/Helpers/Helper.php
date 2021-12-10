@@ -18,13 +18,11 @@ class Helper
         $id = 0;
         switch (app()->environment()) {
             case('local'):
-                $id = 1978;
+            case('production'):
+                $id = 2000;
                 break;
             case('staging'):
                 $id = 1738;
-                break;
-            case('production'):
-                $id = 2000;
                 break;
         }
 

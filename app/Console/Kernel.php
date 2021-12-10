@@ -35,9 +35,12 @@ class Kernel extends ConsoleKernel
 
         if (env('APP_ENV') === 'local') {
             $schedule->command('backup:VaporDB')
-                ->dailyAt('13:00');
+                ->daily();
 
         }
+
+        $schedule->command('import:allH5P')
+            ->hourlyAt(14);
 
         if (env('APP_ENV') !== 'local') {
             $schedule->command('notify:LatestErrors')->everyFiveMinutes();
