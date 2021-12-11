@@ -163,7 +163,17 @@ class QuestionController extends Controller
                 }
 
                 if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Source']) {
-                    $messages[] = "Row $row_num is an exposition and is missing the source.";
+                    $messages[] = "Row $row_num is an exposition type question and is missing the source.";
+                }
+
+                if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && ($question['Auto-Graded Technology'] || $question['Technology ID/File Path'])) {
+                    $messages[] = "Row $row_num is an exposition type question but has an auto-graded technology.";
+                }
+
+                if ($import_template === 'advanced'
+                    && $question['Question Type*'] === 'exposition'
+                    && ($question['Text Question'] || $question['A11Y Question'] || $question['Answer'] || $question['Solution'] || $question['Hint'])) {
+                    $messages[] = "Row $row_num is an exposition type question and should not have Text Question, A11Y Question, Answer, Solution, or Hint.";
                 }
 
                 if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Source'] && !$question['Auto-Graded Technology']) {
@@ -175,7 +185,7 @@ class QuestionController extends Controller
                 }
 
                 $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
-                if ($import_template === 'advanced' && $question['Question Type*'] !== 'open_ended') {
+                if ($import_template === 'advanced' && $question['Auto-Graded Technology']) {
                     switch ($question['Auto-Graded Technology']) {
                         case('webwork'):
                             if (!$technology_id) {
@@ -185,7 +195,7 @@ class QuestionController extends Controller
                         case('h5p'):
                         case('imathas'):
                             if (!filter_var($technology_id, FILTER_VALIDATE_INT, ['options' => ['min_range' => 1]])) {
-                                $messages[] = "Row $row_num uses {$question['Technology']} and requires a positive integer as the Technology ID.";
+                                $messages[] = "Row $row_num uses {$question['Auto-Graded Technology']} and requires a positive integer as the Technology ID.";
                             }
                             break;
                         case(''):
@@ -206,20 +216,6 @@ class QuestionController extends Controller
 
             $response['questions_to_import'] = $bulk_import_questions;
             $response['type'] = 'success';
-            /*  "Title*" => ""
-            "Question Type*" => ""
-             "Source" => ""
-            "Auto-Graded Technology" => ""
-            "Technology ID/File Path" => ""
-            "Author" => "sfdsfs"
-            "License" => "a,b,c"
-            "License Version" => "this is the license"
-            "Tags" => ""some tags""
-            "Text Question" => ""
-            "A11Y Question" => ""
-            "Answer" => ""
-            "Solution" => ""
-            "Hint" => ""*/
 
         } catch (Exception $e) {
 

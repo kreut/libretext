@@ -48,6 +48,10 @@ class QuestionEditorTest extends TestCase
      * @var Collection|Model|mixed
      */
     private $default_question_editor_user;
+    /**
+     * @var \string[][]
+     */
+    private $exposition_csv_file_array;
 
     /**
      * @var Collection|Model|mixed
@@ -64,118 +68,47 @@ class QuestionEditorTest extends TestCase
         $this->question_editor_user = factory(User::class)->create(['role' => 5]);
         $this->question = factory(Question::class)->create(['library' => 'adapt']);
 
-        $this->csv_file_array = [["Public*" => "0",
+        $this->csv_file_array = [["Question Type*" => 'assessment',
+            "Public*" => "0",
             "Title*" => "Some Title",
-            "Question Type*" => "auto_graded",
-            "Technology" => "webwork",
+            'Source' => 'some source',
+            "Auto-Graded Technology" => "webwork",
             "Technology ID/File Path" => "some-file-path",
             "Author" => "",
             "License" => "ccby",
             "License Version" => "this is the license",
             "Tags" => "",
-            "Open-Ended Text" => "",
             "Text Question" => "",
             "A11Y Question" => "",
             "Answer" => "",
             "Solution" => "",
             "Hint" => "*"
         ]];
-        $this->question_to_store = ['public' => 1,
+
+        $this->exposition_csv_file_array = [["Question Type*" => 'exposition',
+            "Public*" => "0",
+            "Title*" => "Some Title",
+            'Source' => 'some source',
+            "Auto-Graded Technology" => "",
+            "Technology ID/File Path" => "",
+            "Author" => "",
+            "License" => "ccby",
+            "License Version" => "this is the license",
+            "Tags" => "",
+            "Text Question" => "",
+            "A11Y Question" => "",
+            "Answer" => "",
+            "Solution" => "",
+            "Hint" => ""
+        ]];
+
+        $this->question_to_store = ['question_type' => 'assessment',
+            'public' => 1,
             'title' => 'some title',
-            'question_type' => 'auto_graded',
             'technology' => 'webwork',
             'technology_id' => 'some file path',
             'tags' => []
         ];
-    }
-
-
-    /** @test */
-    public function non_admin_cannot_delete_question_editors()
-    {
-        $this->actingAs($this->user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
-            ->assertJson(['message' => 'You are not allowed to delete that user.']);
-
-    }
-
-    /** @test */
-    public function admin_can_delete_question_editors()
-    {
-        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
-            ->assertJson(['message' => "{$this->question_editor_user->first_name} {$this->question_editor_user->last_name} has been removed and all of their questions have been moved to the Default Question Editor."]);
-
-    }
-
-    /** @test */
-    public function one_cannot_delete_the_default_question_editor()
-    {
-        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->default_question_editor_user->id}")
-            ->assertJson(['message' => "You cannot delete the default non-instructor editor."]);
-
-    }
-
-    /** @test */
-    public function sdeleted_questions_move_to_the_default_question_editor_user_and_become_public()
-    {
-        $this->question_to_store['public'] = 0;
-        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
-            ->assertJson(['type' => "success"]);
-        $this->assertDatabaseHas('questions', [
-            'id' => Question::orderBy('id','desc')->first()->id,
-            'question_editor_user_id' => $this->default_question_editor_user->id,
-            'public' => 1]);
-
-    }
-
-
-    /** @test */
-    public function tags_are_correctly_added()
-    {
-        $this->question_to_store['tags'] = ['tag 1', 'tag 2', 'tag 3'];
-        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        $this->assertDatabaseCount('question_tag', 3);
-        $this->assertDatabaseCount('tags', 3);
-        $this->question_to_store['technology_id'] = 'file path 2';
-        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        $this->assertDatabaseCount('question_tag', 6);
-        //shouldn't have added more tags
-        $this->assertDatabaseCount('tags', 3);
-
-        $this->question_to_store['tags'] = ['tag 1', 'tag 2', 'tag 3', 'tag 4'];
-        $this->question_to_store['technology_id'] = 'file path 3';
-        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
-            ->assertJson(['type' => 'success']);
-        //4 more relationships
-        $this->assertDatabaseCount('question_tag', 10);
-        //one new tag
-        $this->assertDatabaseCount('tags', 4);
-        $last_submitted_id = Question::where('technology_id', 'file path 3')->first()->id;
-
-        $this->actingAs($this->user)->deleteJson("/api/questions/$last_submitted_id")
-            ->assertJson(['type' => 'info']);
-        $this->assertDatabaseCount('question_tag', 6);
-        $this->assertDatabaseCount('tags', 3);//should only be tag 1, tag 2, tag 3
-    }
-
-
-    /** @test */
-    public function non_admin_cannot_view_question_editors()
-    {
-
-        $this->actingAs($this->student_user)->getJson("/api/question-editor")
-            ->assertJson(['message' => 'You are not allowed to get the question editors.']);
-
-    }
-
-    /** @test */
-    public function admin_can_view_question_editors()
-    {
-        $this->actingAs($this->admin_user)->getJson("/api/question-editor")
-            ->assertJson(['type' => 'success']);
     }
 
 
@@ -206,7 +139,7 @@ class QuestionEditorTest extends TestCase
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => [['bad structure']]])
-            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Public*, Title*, Question Type*, Technology, Technology ID/File Path, Author, License, License Version, Tags, Open-Ended Text, Text Question, A11Y Question, Answer, Solution, Hint.']]);
+            ->assertJson(['message' => ['The CSV should have a first row with the following headings: Question Type*, Public*, Title*, Source, Auto-Graded Technology, Technology ID/File Path, Author, License, License Version, Tags, Text Question, A11Y Question, Answer, Solution, Hint.']]);
     }
 
     /** @test */
@@ -241,28 +174,54 @@ class QuestionEditorTest extends TestCase
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
-            ->assertJson(['message' => ['Row 2 has a Question Type of Bad Question Type but the valid question types are open_ended, auto_graded, or frankenstein.']]);
+            ->assertJson(['message' => ['Row 2 has a Question Type of Bad Question Type but the valid question types are assessment and exposition.']]);
     }
 
     /** @test */
-    public function open_ended_questions_need_text()
+    public function exposition_questions_need_source()
     {
-        $csv_file_array = $this->csv_file_array;
-        $csv_file_array[0]['Question Type*'] = 'open_ended';
-        $csv_file_array[0]['Open-Ended Text'] = '';
+        $csv_file_array = $this->exposition_csv_file_array;
+        $csv_file_array[0]['Question Type*'] = 'exposition';
+        $csv_file_array[0]['Source'] = '';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
                 'csv_file_array' => $csv_file_array])
-            ->assertJson(['message' => ['Row 2 is an open_ended question and is missing text.']]);
+            ->assertJson(['message' => ['Row 2 is an exposition type question and is missing the source.']]);
+
+    }
+
+    /** @test */
+    public function exposition_questions_and_cannot_have_autograded()
+    {
+        $csv_file_array = $this->exposition_csv_file_array;
+        $csv_file_array[0]['Auto-Graded Technology'] = 'webwork';
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 2 is an exposition type question but has an auto-graded technology.']]);
+
+    }
+
+    /** @test */
+    public function exposition_questions_and_cannot_have_extra_quetsion_columns()
+    {
+        $csv_file_array = $this->exposition_csv_file_array;
+        $csv_file_array[0]['Text Question'] = 'blah';
+
+        $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
+            ['import_template' => 'advanced',
+                'csv_file_array' => $csv_file_array])
+            ->assertJson(['message' => ['Row 2 is an exposition type question and should not have Text Question, A11Y Question, Answer, Solution, or Hint.']]);
+
     }
 
     /** @test */
     public function webwork_questions_need_file_paths()
     {
         $csv_file_array = $this->csv_file_array;
-        $csv_file_array[0]['Question Type*'] = 'auto_graded';
-        $csv_file_array[0]['Technology'] = 'webwork';
+        $csv_file_array[0]['Auto-Graded Technology'] = 'webwork';
         $csv_file_array[0]['Technology ID/File Path'] = "";
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
@@ -276,8 +235,7 @@ class QuestionEditorTest extends TestCase
     public function imathas_and_h5p_need_positive_integers_as_ids()
     {
         $csv_file_array = $this->csv_file_array;
-        $csv_file_array[0]['Question Type*'] = 'auto_graded';
-        $csv_file_array[0]['Technology'] = 'imathas';
+        $csv_file_array[0]['Auto-Graded Technology'] = 'imathas';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
@@ -289,8 +247,7 @@ class QuestionEditorTest extends TestCase
     public function technology_should_be_valid()
     {
         $csv_file_array = $this->csv_file_array;
-        $csv_file_array[0]['Question Type*'] = 'auto_graded';
-        $csv_file_array[0]['Technology'] = 'bogus technology';
+        $csv_file_array[0]['Auto-Graded Technology'] = 'bogus technology';
 
         $this->actingAs($this->user)->putJson("/api/questions/validate-bulk-import-questions",
             ['import_template' => 'advanced',
@@ -405,9 +362,9 @@ class QuestionEditorTest extends TestCase
     }
 
     /** @test */
-    public function open_ended_questions_requires_text()
+    public function exposition_questions_requires_text()
     {
-        $this->question_to_store['question_type'] = 'open_ended';
+        $this->question_to_store['question_type'] = 'exposition';
         $this->question_to_store['non_technology_text'] = '';
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
             ->assertJsonValidationErrors('non_technology_text');
@@ -416,7 +373,6 @@ class QuestionEditorTest extends TestCase
     /** @test */
     public function auto_graded_questions_require_technology_id()
     {
-        $this->question_to_store['question_type'] = 'auto_graded';
         $this->question_to_store['technology'] = 'h5p';
         $this->question_to_store['technology_id'] = '';
         $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
@@ -485,6 +441,95 @@ class QuestionEditorTest extends TestCase
         $this->actingAs($this->user)->postJson("/api/questions/h5p/600")
             ->assertJson(['h5p' => ['url' => 'https://studio.libretexts.org/h5p/600']]);
 
+    }
+
+
+    /** @test */
+    public function non_admin_cannot_delete_question_editors()
+    {
+        $this->actingAs($this->user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
+            ->assertJson(['message' => 'You are not allowed to delete that user.']);
+
+    }
+
+    /** @test */
+    public function admin_can_delete_question_editors()
+    {
+        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
+            ->assertJson(['message' => "{$this->question_editor_user->first_name} {$this->question_editor_user->last_name} has been removed and all of their questions have been moved to the Default Question Editor."]);
+
+    }
+
+    /** @test */
+    public function one_cannot_delete_the_default_question_editor()
+    {
+        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->default_question_editor_user->id}")
+            ->assertJson(['message' => "You cannot delete the default non-instructor editor."]);
+
+    }
+
+    /** @test */
+    public function deleted_questions_move_to_the_default_question_editor_user_and_become_public()
+    {
+        $this->question_to_store['public'] = 0;
+        $this->actingAs($this->question_editor_user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->actingAs($this->admin_user)->deleteJson("/api/question-editor/{$this->question_editor_user->id}")
+            ->assertJson(['type' => "success"]);
+        $this->assertDatabaseHas('questions', [
+            'id' => Question::orderBy('id', 'desc')->first()->id,
+            'question_editor_user_id' => $this->default_question_editor_user->id,
+            'public' => 1]);
+
+    }
+
+
+    /** @test */
+    public function tags_are_correctly_added()
+    {
+        $this->question_to_store['tags'] = ['tag 1', 'tag 2', 'tag 3'];
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseCount('question_tag', 3);
+        $this->assertDatabaseCount('tags', 3);
+        $this->question_to_store['technology_id'] = 'file path 2';
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        $this->assertDatabaseCount('question_tag', 6);
+        //shouldn't have added more tags
+        $this->assertDatabaseCount('tags', 3);
+
+        $this->question_to_store['tags'] = ['tag 1', 'tag 2', 'tag 3', 'tag 4'];
+        $this->question_to_store['technology_id'] = 'file path 3';
+        $this->actingAs($this->user)->postJson("/api/questions", $this->question_to_store)
+            ->assertJson(['type' => 'success']);
+        //4 more relationships
+        $this->assertDatabaseCount('question_tag', 10);
+        //one new tag
+        $this->assertDatabaseCount('tags', 4);
+        $last_submitted_id = Question::where('technology_id', 'file path 3')->first()->id;
+
+        $this->actingAs($this->user)->deleteJson("/api/questions/$last_submitted_id")
+            ->assertJson(['type' => 'info']);
+        $this->assertDatabaseCount('question_tag', 6);
+        $this->assertDatabaseCount('tags', 3);//should only be tag 1, tag 2, tag 3
+    }
+
+
+    /** @test */
+    public function non_admin_cannot_view_question_editors()
+    {
+
+        $this->actingAs($this->student_user)->getJson("/api/question-editor")
+            ->assertJson(['message' => 'You are not allowed to get the question editors.']);
+
+    }
+
+    /** @test */
+    public function admin_can_view_question_editors()
+    {
+        $this->actingAs($this->admin_user)->getJson("/api/question-editor")
+            ->assertJson(['type' => 'success']);
     }
 
 }
