@@ -33,7 +33,7 @@
         :items="questionsToDelete"
       >
         <template v-slot:cell(deleted_status)="data">
-          <span v-html="data.item.deleted_status" />
+          <span v-html="data.item.deleted_status"/>
         </template>
       </b-table>
       <template #modal-footer>
@@ -260,80 +260,80 @@ export default {
     ViewQuestions
   },
   data: () => ({
-    deletedQuestions: false,
-    deletingIndex: 1,
-    deletingQuestions: false,
-    numViewSelectedQuestionsClicked: 0,
-    questionToEdit: {},
-    deletedKey: 0,
-    questionsToDelete: [],
-    filteredItems: [],
-    selectedQuestionIds: [],
-    totalRows: 0,
-    filter: null,
-    currentPage: 1,
-    pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
-    perPage: 10,
-    question: {},
-    myQuestions: [],
-    isLoading: true,
-    questionsToDeleteFields: [
-      {
-        key: 'title',
-        isRowHeader: true
-      },
-      'technology',
-      {
-        key: 'tags',
-        formatter: value => {
-          return value.join(', ')
-        }
-      },
-      {
-        key: 'deleted_status',
-        label: 'Status'
-      }
-    ],
-    fields: [
-      {
-        key: 'title',
-        isRowHeader: true,
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'page_id',
-        sortable: true,
-        label: 'Page ID'
-      },
-      {
-        key: 'technology',
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'tags',
-        formatter: value => {
-          return value.join(', ')
+      deletedQuestions: false,
+      deletingIndex: 1,
+      deletingQuestions: false,
+      numViewSelectedQuestionsClicked: 0,
+      questionToEdit: {},
+      deletedKey: 0,
+      questionsToDelete: [],
+      filteredItems: [],
+      selectedQuestionIds: [],
+      totalRows: 0,
+      filter: null,
+      currentPage: 1,
+      pageOptions: [10, 50, 100, 500, { value: 10000, text: 'Show All' }],
+      perPage: 10,
+      question: {},
+      myQuestions: [],
+      isLoading: true,
+      questionsToDeleteFields: [
+        {
+          key: 'title',
+          isRowHeader: true
         },
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      {
-        key: 'public',
-        formatter: value => {
-          return parseInt(value) === 1 ? 'Yes' : 'No'
+        'technology',
+        {
+          key: 'tags',
+          formatter: value => {
+            return value.join(', ')
+          }
+        },
+        {
+          key: 'deleted_status',
+          label: 'Status'
         }
-      },
-      {
-        key: 'updated_at',
-        label: 'Last Updated',
-        sortable: true,
-        sortDirection: 'desc'
-      },
-      'actions'
-    ]
-  }
+      ],
+      fields: [
+        {
+          key: 'title',
+          isRowHeader: true,
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'page_id',
+          sortable: true,
+          label: 'Page ID'
+        },
+        {
+          key: 'technology',
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'tags',
+          formatter: value => {
+            return value.join(', ')
+          },
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        {
+          key: 'public',
+          formatter: value => {
+            return parseInt(value) === 1 ? 'Yes' : 'No'
+          }
+        },
+        {
+          key: 'updated_at',
+          label: 'Last Updated',
+          sortable: true,
+          sortDirection: 'desc'
+        },
+        'actions'
+      ]
+    }
   ),
   mounted () {
     this.getMyQuestions()
@@ -343,13 +343,7 @@ export default {
   methods: {
     async editQuestion (questionToEdit) {
       this.questionToEdit = questionToEdit
-      if (parseInt(this.questionToEdit.non_technology) === 0) {
-        this.questionToEdit.question_type = 'auto_graded'
-      } else {
-        this.questionToEdit.question_type =
-          this.questionToEdit.technology === 'text'
-            ? 'open_ended'
-            : 'frankenstein'
+      if (this.questionToEdit.non_technology_text) {
         await this.getNonTechnologyText()
       }
       this.$bvModal.show('modal-edit-question')
