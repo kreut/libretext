@@ -6,7 +6,7 @@
         label-cols-lg="2"
         label="Import Template"
       >
-        <b-form-row>
+        <b-form-row class="pt-2">
           <b-form-radio-group
             v-model="importTemplate"
             @change="setQuestionsToImport($event)"
@@ -61,21 +61,20 @@
             <li>
               Starred fields are required.
             </li>
-            <li>
-              Question Type should be either
+            <li v-if="importTemplate === 'advanced'">
+              Question Type should be either assessment or exposition.
+            </li>
+            <li v-if="importTemplate === 'advanced'">
+              Questions that are of type exposition should not have any associated technology nor should they contain Text Question, A11Y Question, Answer, Solution, or Hint
             </li>
             <li>
               Please enter 1 for yes and 0 for no in the Public* column.
             </li>
             <li v-if="importTemplate === 'advanced'">
-              Question type should be auto_graded, open_ended, or frankenstein.
+              Accepted technologies are webwork, imathas, h5p. This field may be left blank.
             </li>
             <li v-if="importTemplate === 'advanced'">
-              Accepted technologies are webwork, imathas, h5p. If the question type is open_ended, leave this field
-              blank.
-            </li>
-            <li v-if="importTemplate === 'advanced'">
-              The Non-technology text column is for open_ended or frankenstein questions.
+              The source column may be left blank for assessment question types.
             </li>
             <li>Tags should be a comma separated list: tag 1, tag 2, tag 3.</li>
             <li>Accepted licenses are {{ validLicenses }}.</li>
@@ -420,14 +419,14 @@ export default {
       for (let i = 0; i < this.questionsToImport.length; i++) {
         let question = this.questionsToImport[i]
         if (this.importTemplate === 'webwork') {
-          question['Technology'] = 'webwork'
+          question['Question Type*'] = 'assessment'
+          question['Auto-Graded Technology'] = 'webwork'
           question['Technology ID/File Path'] = question['File Path*']
           question['Non-Technology Text'] = null
           question['A11Y Question'] = null
           question['Answer'] = null
           question['Solution'] = null
           question['Hint'] = null
-          question['Question Type*'] = 'auto_graded'
         }
         try {
           questionForm = new Form({
