@@ -62,6 +62,9 @@
               Starred fields are required.
             </li>
             <li>
+              Question Type should be either
+            </li>
+            <li>
               Please enter 1 for yes and 0 for no in the Public* column.
             </li>
             <li v-if="importTemplate === 'advanced'">
@@ -428,21 +431,21 @@ export default {
         }
         try {
           questionForm = new Form({
+            question_type: question['Question Type*'],
             public: question['Public*'],
             title: question['Title*'],
-            author: question['Author'],
-            tags: question['Tags'],
-            technology: question['Technology'],
+            non_technology_text: question['Source'],
+            technology: question['Auto-Graded Technology'],
             technology_id: question['Technology ID/File Path'],
-            non_technology_text: question['Non-Technology Text'],
             text_question: question['Text Question'],
             a11y_question: question['A11Y Question'],
             answer_html: question['Answer'],
             solution_html: question['Solution'],
             hint: question['Hint'],
+            author: question['Author'],
+            tags: question['Tags'],
             license: question['License'],
-            license_version: question['License Version'],
-            question_type: question['Question Type*']
+            license_version: question['License Version']
           })
           const { data } = await questionForm.post('/api/questions')
           if (data.type === 'success') {
