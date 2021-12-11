@@ -405,6 +405,7 @@ class QuestionController extends Controller
 
         try {
             $data = $request->validated();
+            $technology_id = $data['technology_id'] ?? null;
             $extra_htmls = ['text_question' => 'Text Question',
                 'a11y_question' => 'A11Y Question',
                 'answer_html' => 'Answer',
@@ -426,10 +427,6 @@ class QuestionController extends Controller
                 }
             }
             unset($data['tags']);
-            if ($request->question_type === 'open_ended') {
-                $data['technology_id'] = null;
-                $data['technology'] = 'text';
-            }
 
 
             $data['page_id'] = $is_update
@@ -438,7 +435,7 @@ class QuestionController extends Controller
 
             $data['url'] = null;
 
-            $data['technology_iframe'] = $data['technology_id']
+            $data['technology_iframe'] = $technology_id
                 ? $question->getTechnologyIframeFromTechnology($data['technology'], $data['technology_id'])
                 : '';
 
@@ -463,7 +460,7 @@ class QuestionController extends Controller
             DB::commit();
             $action = $is_update ? 'updated' : 'created';
             $response['message'] = "The question has been $action.";
-            $response['url'] = $data['technology_id'] ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
+            $response['url'] = $technology_id ? $question->getTechnologyURLFromTechnology($data['technology'], $data['technology_id']) : null;
             $response['type'] = 'success';
         } catch (Exception $e) {
             $h = new Handler(app());

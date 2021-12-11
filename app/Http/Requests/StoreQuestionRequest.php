@@ -27,6 +27,7 @@ class StoreQuestionRequest extends FormRequest
     {
 
         $rules = [
+            'question_type' => Rule::in('assessment','exposition'),
             'public' => 'required',
             'title' => 'required|string',
             'tags' => 'nullable',
@@ -42,28 +43,30 @@ class StoreQuestionRequest extends FormRequest
 
         switch ($this->question_type) {
             case('assessment'):
-                $rules['non_technology_text'] = !$this->technology ? 'required' : 'nullable';
+                if ($this->technology === 'text') {
+                    $rules['non_technology_text'] = 'required';
+                    $rules['technology'] = 'nullable';
+                    $rules['technology_id'] = 'nullable';
+                   } else {
+                    $rules['non_technology_text'] = 'nullable';
+                    $rules['technology'] = ['required', Rule::in(['text','webwork', 'h5p', 'imathas'])];
+                    switch ($this->technology) {
+                        case('webwork'):
+                            $rules['technology_id'] = ['required', 'string'];
+                            break;
+                        case('h5p'):
+                        case('imathas'):
+                            $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
+                            break;
+                        case('text'):
+                            $rules['technology_id'] = ['nullable'];
+                    }
+                    $question_id = $this->id ?? null;
+                    $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
+                }
                 break;
             case('exposition'):
                 $rules['non_technology_text'] = 'required';
-        }
-
-        if ($this->technology) {
-            $rules['technology'] = ['required', Rule::in(['webwork', 'h5p', 'imathas'])];
-            switch ($this->technology) {
-                case('webwork'):
-                    $rules['technology_id'] = ['required', 'string'];
-                    break;
-                case('h5p'):
-                case('imathas'):
-                    $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
-                    break;
-                default:
-                    $rules['technology_id'] = ['nullable'];
-            }
-            $question_id = $this->id ?? null;
-            $rules['technology_id'][] = new AutoGradedDoesNotExist($this->technology, $question_id);
-
         }
 
 

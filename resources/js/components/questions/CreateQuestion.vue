@@ -4,44 +4,49 @@
     <ViewQuestions :key="questionToViewKey" :question-to-view="questionToView"
                    :modal-id="`question-to-view-questions-editor-${questionToViewKey}`"
     />
+    <RequiredText/>
     <b-form-group
       label-cols-sm="3"
       label-cols-lg="2"
       label-for="question_type"
+      :label="isEdit ? 'Question Type' : 'Question Type*'"
     >
-      <template slot="label">
-        Question Type*
-      </template>
       <b-form-row class="mt-2">
-        <b-form-radio-group
-          id="question_type"
-          v-model="questionForm.question_type"
-          stacked
-          @change="resetQuestionForm($event)"
-        >
-          <b-form-radio name="question_type" value="assessment">
-            Assessment
-            <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
-            <b-tooltip target="assessment-question-type-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Assessments can be used within assignments as questions or as root nodes in Learning Trees
-            </b-tooltip>
-          </b-form-radio>
-          <b-form-radio name="question_type" value="exposition">
-            Exposition
-            <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
-            <b-tooltip target="exposition-question-type-tooltip"
-                       delay="250"
-                       triggers="hover focus"
-            >
-              Expositions are used as tutorials within Learning Trees. They cannot be used as root nodes.
-            </b-tooltip>
-          </b-form-radio>
-        </b-form-radio-group>
+        <div v-if="!isEdit">
+          <b-form-radio-group
+            id="question_type"
+            v-model="questionForm.question_type"
+            stacked
+            @change="resetQuestionForm($event)"
+          >
+            <b-form-radio name="question_type" value="assessment">
+              Assessment
+              <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+              <b-tooltip target="assessment-question-type-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Assessments can be used within assignments as questions or as root nodes in Learning Trees
+              </b-tooltip>
+            </b-form-radio>
+            <b-form-radio name="question_type" value="exposition">
+              Exposition
+              <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+              <b-tooltip target="exposition-question-type-tooltip"
+                         delay="250"
+                         triggers="hover focus"
+              >
+                Expositions are used as tutorials within Learning Trees. They cannot be used as root nodes.
+              </b-tooltip>
+            </b-form-radio>
+          </b-form-radio-group>
+        </div>
+        <div v-else>
+          {{ questionForm.question_type.charAt(0).toUpperCase() + questionForm.question_type.slice(1) }}
+        </div>
       </b-form-row>
     </b-form-group>
+
     <div v-if="questionForm.question_type">
       <div v-if="questionForm.question_type === 'assessment'">
         <b-form-row>
@@ -59,7 +64,6 @@
         </b-form-row>
       </div>
       <b-form ref="form">
-        <RequiredText/>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
@@ -110,7 +114,7 @@
 
         <b-form-group
           label-for="non_technology_text"
-          label="Source"
+          :label="questionForm.question_type === 'assessment' ? 'Source' : 'Source*'"
         >
           <ckeditor
             id="non_technology_text"
@@ -133,7 +137,7 @@
           >
             <b-form-row>
               <div v-if="isEdit" class="pt-2">
-                {{ questionForm.technology }}
+                {{ autoGradedTechnologyOptions.find(option => option.value === questionForm.technology).text }}
               </div>
               <div v-else>
                 <b-form-select
@@ -148,11 +152,11 @@
             </b-form-row>
           </b-form-group>
           <b-form-group
-            v-if="questionForm.technology"
+            v-if="questionForm.technology !== 'text'"
             label-cols-sm="3"
             label-cols-lg="2"
             label-for="technology_id"
-            :label="getAutoGradedTechnologyLabel()"
+            :label="getTechnologyLabel()"
           >
             <b-form-row>
               <div v-if="isEdit" class="pt-2">
@@ -290,7 +294,7 @@ const defaultQuestionForm = {
   title: '',
   author: '',
   tags: [],
-  technology: null,
+  technology: 'text',
   technology_id: '',
   non_technology_text: '',
   text_question: null,
@@ -344,7 +348,7 @@ export default {
     questionForm: new Form(defaultQuestionForm),
     allFormErrors: [],
     autoGradedTechnologyOptions: [
-      { value: null, text: 'None' },
+      { value: 'text', text: 'None' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
@@ -396,8 +400,8 @@ export default {
       this.questionForm = new Form(defaultQuestionForm)
       this.questionForm.question_type = questionType
     },
-    getAutoGradedTechnologyLabel () {
-      return this.questionForm.auto_graded_technology === 'webwork' ? 'File Path' : 'ID'
+    getTechnologyLabel () {
+      return this.questionForm.technology === 'webwork' ? 'File Path' : 'ID'
     },
     getQuestionType () {
       if (this.questionForm.question_type === 'auto_graded') {
