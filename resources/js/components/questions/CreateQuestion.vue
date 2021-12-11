@@ -4,255 +4,273 @@
     <ViewQuestions :key="questionToViewKey" :question-to-view="questionToView"
                    :modal-id="`question-to-view-questions-editor-${questionToViewKey}`"
     />
-    <b-form-row>
-      <toggle-button
-        :width="135"
-        class="mt-2"
-        :value="view === 'basic'"
-        :sync="true"
-        :font-size="14"
-        :margin="4"
-        :color="toggleColors"
-        :labels="{checked: 'Basic View', unchecked: 'Advanced View'}"
-        @change="view = view === 'basic' ? 'advanced' : 'basic'"
-      />
-    </b-form-row>
-    <b-form ref="form">
-      <RequiredText/>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="public"
-      >
-        <template slot="label">
-          Public*
-          <QuestionCircleTooltip :id="'public-question-tooltip'"/>
-          <b-tooltip target="public-question-tooltip"
-                     delay="250"
-                     triggers="hover focus"
-          >
-            Questions that are public can be used by any instructor. Questions that are not public are only accessible
-            by you.
-          </b-tooltip>
-        </template>
-        <b-form-row class="mt-2">
-          <b-form-radio-group
-            id="public"
-            v-model="questionForm.public"
-          >
-            <b-form-radio name="question_type" value="1">
-              Yes
-            </b-form-radio>
-            <b-form-radio name="question_type" value="0">
-              No
-            </b-form-radio>
-          </b-form-radio-group>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="title"
-        label="Title*"
-      >
-        <b-form-row>
-          <b-form-input
-            id="title"
-            v-model="questionForm.title"
-            type="text"
-            :class="{ 'is-invalid': questionForm.errors.has('title') }"
-            @keydown="questionForm.errors.clear('title')"
-          />
-          <has-error :form="questionForm" field="title"/>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="question_type"
-        :label="isEdit ? 'Question Type' : 'Question Type*'"
-      >
-        <b-form-row class="mt-2">
-          <div v-if="isEdit">
-            {{ getQuestionType() }}
-          </div>
-          <div v-else>
-            <b-form-radio-group
-              v-model="questionForm.question_type"
+    <b-form-group
+      label-cols-sm="3"
+      label-cols-lg="2"
+      label-for="question_type"
+    >
+      <template slot="label">
+        Question Type*
+      </template>
+      <b-form-row class="mt-2">
+        <b-form-radio-group
+          id="question_type"
+          v-model="questionForm.question_type"
+          stacked
+          @change="resetQuestionForm($event)"
+        >
+          <b-form-radio name="question_type" value="assessment">
+            Assessment
+            <QuestionCircleTooltip :id="'assessment-question-type-tooltip'"/>
+            <b-tooltip target="assessment-question-type-tooltip"
+                       delay="250"
+                       triggers="hover focus"
             >
-              <b-form-radio name="question_type" value="auto_graded">
-                Auto-graded
-              </b-form-radio>
-              <b-form-radio name="question_type" value="open_ended">
-                Open-ended
-              </b-form-radio>
-              <b-form-radio name="question_type" value="frankenstein">
-                Frankenstein
-              </b-form-radio>
-            </b-form-radio-group>
-          </div>
+              Assessments can be used within assignments as questions or as root nodes in Learning Trees
+            </b-tooltip>
+          </b-form-radio>
+          <b-form-radio name="question_type" value="exposition">
+            Exposition
+            <QuestionCircleTooltip :id="'exposition-question-type-tooltip'"/>
+            <b-tooltip target="exposition-question-type-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Expositions are used as tutorials within Learning Trees. They cannot be used as root nodes.
+            </b-tooltip>
+          </b-form-radio>
+        </b-form-radio-group>
+      </b-form-row>
+    </b-form-group>
+    <div v-if="questionForm.question_type">
+      <div v-if="questionForm.question_type === 'assessment'">
+        <b-form-row>
+          <toggle-button
+            :width="135"
+            class="mt-2"
+            :value="view === 'basic'"
+            :sync="true"
+            :font-size="14"
+            :margin="4"
+            :color="toggleColors"
+            :labels="{checked: 'Basic View', unchecked: 'Advanced View'}"
+            @change="view = view === 'basic' ? 'advanced' : 'basic'"
+          />
         </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-show="questionForm.question_type !=='auto_graded'"
-        label-for="non_technology_text"
-        label="Text"
-      >
-        <ckeditor
-          id="non_technology_text"
-          v-model="questionForm.non_technology_text"
-          tabindex="0"
-          :config="richEditorConfig"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </b-form-group>
-      <div v-show="questionForm.question_type !=='open_ended'">
+      </div>
+      <b-form ref="form">
+        <RequiredText/>
         <b-form-group
           label-cols-sm="3"
           label-cols-lg="2"
-          label-for="technology"
-          :label="isEdit ? 'Technology' : 'Technology*'"
+          label-for="public"
         >
-          <b-form-row>
-            <div v-if="isEdit" class="pt-2">
-              {{ questionForm.technology }}
-            </div>
-            <div v-else>
-              <b-form-select
-                v-model="questionForm.technology"
-                style="width:110px"
-                title="technologies"
-                size="sm"
-                class="mt-2"
-                :options="autoGradedTechnologyOptions"
-              />
-            </div>
+          <template slot="label">
+            Public*
+            <QuestionCircleTooltip :id="'public-question-tooltip'"/>
+            <b-tooltip target="public-question-tooltip"
+                       delay="250"
+                       triggers="hover focus"
+            >
+              Questions that are public can be used by any instructor. Questions that are not public are only accessible
+              by you.
+            </b-tooltip>
+          </template>
+          <b-form-row class="mt-2">
+            <b-form-radio-group
+              id="public"
+              v-model="questionForm.public"
+            >
+              <b-form-radio name="public" value="1">
+                Yes
+              </b-form-radio>
+              <b-form-radio name="public" value="0">
+                No
+              </b-form-radio>
+            </b-form-radio-group>
           </b-form-row>
         </b-form-group>
         <b-form-group
-          v-if="questionForm.technology !== 'none'"
           label-cols-sm="3"
           label-cols-lg="2"
-          label-for="technology_id"
-          :label="getTechnologyLabel()"
+          label-for="title"
+          label="Title*"
         >
+          <b-form-row>
+            <b-form-input
+              id="title"
+              v-model="questionForm.title"
+              type="text"
+              :class="{ 'is-invalid': questionForm.errors.has('title') }"
+              @keydown="questionForm.errors.clear('title')"
+            />
+            <has-error :form="questionForm" field="title"/>
+          </b-form-row>
+        </b-form-group>
+
+        <b-form-group
+          label-for="non_technology_text"
+          label="Source"
+        >
+          <ckeditor
+            id="non_technology_text"
+            v-model="questionForm.non_technology_text"
+            tabindex="0"
+            :config="richEditorConfig"
+            :class="{ 'is-invalid': questionForm.errors.has('non_technology_text')}"
+            @namespaceloaded="onCKEditorNamespaceLoaded"
+            @ready="handleFixCKEditor()"
+            @keydown="questionForm.errors.clear('non_technology_text')"
+          />
+          <has-error :form="questionForm" field="non_technology_text"/>
+        </b-form-group>
+        <div v-if="questionForm.question_type === 'assessment'">
+          <b-form-group
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="technology"
+            :label="isEdit ? 'Auto-Graded Technology' : 'Auto-Graded Technology*'"
+          >
+            <b-form-row>
+              <div v-if="isEdit" class="pt-2">
+                {{ questionForm.technology }}
+              </div>
+              <div v-else>
+                <b-form-select
+                  v-model="questionForm.technology"
+                  style="width:110px"
+                  title="technologies"
+                  size="sm"
+                  class="mt-2"
+                  :options="autoGradedTechnologyOptions"
+                />
+              </div>
+            </b-form-row>
+          </b-form-group>
+          <b-form-group
+            v-if="questionForm.technology"
+            label-cols-sm="3"
+            label-cols-lg="2"
+            label-for="technology_id"
+            :label="getAutoGradedTechnologyLabel()"
+          >
             <b-form-row>
               <div v-if="isEdit" class="pt-2">
                 {{ questionForm.technology_id }}
               </div>
               <div v-else>
-              <b-form-input
-                id="technology_id"
-                v-model="questionForm.technology_id"
-                type="text"
-                :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
-                @keydown="questionForm.errors.clear('technology_id')"
-              />
-              <has-error :form="questionForm" field="technology_id"/>
+                <b-form-input
+                  id="technology_id"
+                  v-model="questionForm.technology_id"
+                  type="text"
+                  :class="{ 'is-invalid': questionForm.errors.has('technology_id'), 'numerical-input' : questionForm.technology !== 'webwork' }"
+                  @keydown="questionForm.errors.clear('technology_id')"
+                />
+                <has-error :form="questionForm" field="technology_id"/>
               </div>
             </b-form-row>
+          </b-form-group>
+        </div>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="author"
+          label="Author(s)"
+        >
+          <b-form-row>
+            <b-form-input
+              id="author"
+              v-model="questionForm.author"
+              type="text"
+              :class="{ 'is-invalid': questionForm.errors.has('author') }"
+              @keydown="questionForm.errors.clear('author')"
+            />
+            <has-error :form="questionForm" field="author"/>
+          </b-form-row>
         </b-form-group>
-      </div>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="author"
-        label="Author(s)"
-      >
-        <b-form-row>
-          <b-form-input
-            id="author"
-            v-model="questionForm.author"
-            type="text"
-            :class="{ 'is-invalid': questionForm.errors.has('author') }"
-            @keydown="questionForm.errors.clear('author')"
-          />
-          <has-error :form="questionForm" field="author"/>
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="license"
-        label="License"
-      >
-        <b-form-row>
-          <b-form-select v-model="questionForm.license"
-                         style="width:200px"
-                         title="license"
-                         size="sm"
-                         class="mt-2  mr-2"
-                         :options="licenseOptions"
-                         @change="updateLicenseVersions()"
-          />
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        v-if="licenseVersionOptions.length"
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="license_version"
-        label="License Version*"
-      >
-        <b-form-row>
-          <b-form-select v-model="questionForm.license_version"
-                         style="width:100px"
-                         title="license version"
-                         size="sm"
-                         class="mt-2"
-                         :options="licenseVersionOptions"
-          />
-        </b-form-row>
-      </b-form-group>
-      <b-form-group
-        label-cols-sm="3"
-        label-cols-lg="2"
-        label-for="tags"
-        label="Tags"
-      >
-        <b-form-row>
-          <b-form-input
-            id="tags"
-            v-model="tag"
-            style="width:200px"
-            type="text"
-            class="mr-2"
-            size="sm"
-          />
-          <b-button variant="outline-primary" size="sm" @click="addTag()">
-            Add Tag
-          </b-button>
-        </b-form-row>
-        <div class="d-flex flex-row">
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="license"
+          label="License"
+        >
+          <b-form-row>
+            <b-form-select v-model="questionForm.license"
+                           style="width:200px"
+                           title="license"
+                           size="sm"
+                           class="mt-2  mr-2"
+                           :options="licenseOptions"
+                           @change="updateLicenseVersions()"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          v-if="licenseVersionOptions.length"
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="license_version"
+          label="License Version*"
+        >
+          <b-form-row>
+            <b-form-select v-model="questionForm.license_version"
+                           style="width:100px"
+                           title="license version"
+                           size="sm"
+                           class="mt-2"
+                           :options="licenseVersionOptions"
+            />
+          </b-form-row>
+        </b-form-group>
+        <b-form-group
+          label-cols-sm="3"
+          label-cols-lg="2"
+          label-for="tags"
+          label="Tags"
+        >
+          <b-form-row>
+            <b-form-input
+              id="tags"
+              v-model="tag"
+              style="width:200px"
+              type="text"
+              class="mr-2"
+              size="sm"
+            />
+            <b-button variant="outline-primary" size="sm" @click="addTag()">
+              Add Tag
+            </b-button>
+          </b-form-row>
+          <div class="d-flex flex-row">
           <span v-for="chosenTag in questionForm.tags" :key="chosenTag" class="mt-2">
             <b-button size="sm" variant="secondary" class="mr-2" @click="removeTag(chosenTag)">{{
                 chosenTag
               }} x</b-button>
           </span>
-        </div>
-      </b-form-group>
-      <b-form-group
-        v-for="editorGroup in editorGroups"
-        v-show="view === 'advanced'" :key="editorGroup.id"
-        :label-for="editorGroup.id"
-        :label="editorGroup.label"
-      >
-        <ckeditor
-          id="text_question"
-          v-model="questionForm[editorGroup.id]"
-          tabindex="0"
-          :config="richEditorConfig"
-          @namespaceloaded="onCKEditorNamespaceLoaded"
-          @ready="handleFixCKEditor()"
-        />
-      </b-form-group>
-    </b-form>
-    <span class="float-right">
+          </div>
+        </b-form-group>
+        <b-form-group
+          v-for="editorGroup in editorGroups"
+          v-show="view === 'advanced'" :key="editorGroup.id"
+          :label-for="editorGroup.id"
+          :label="editorGroup.label"
+        >
+          <ckeditor
+            id="text_question"
+            v-model="questionForm[editorGroup.id]"
+            tabindex="0"
+            :config="richEditorConfig"
+            @namespaceloaded="onCKEditorNamespaceLoaded"
+            @ready="handleFixCKEditor()"
+          />
+        </b-form-group>
+      </b-form>
+      <span class="float-right">
       <b-button v-if="isEdit" size="sm" @click="$bvModal.hide('modal-edit-question')">Cancel</b-button>
       <b-button size="sm" variant="info" @click="previewQuestion"><span>Preview</span></b-button>
       <b-button size="sm" variant="primary" @click="saveQuestion"><span>Submit</span></b-button>
     </span>
+    </div>
   </div>
 </template>
 
@@ -267,11 +285,12 @@ import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestions from '~/components/ViewQuestions'
 
 const defaultQuestionForm = {
+  question_type: '',
   public: '0',
   title: '',
   author: '',
   tags: [],
-  technology: 'webwork',
+  technology: null,
   technology_id: '',
   non_technology_text: '',
   text_question: null,
@@ -280,8 +299,7 @@ const defaultQuestionForm = {
   solution_html: null,
   hint: null,
   license: null,
-  license_version: null,
-  question_type: 'auto_graded'
+  license_version: null
 }
 
 export default {
@@ -326,6 +344,7 @@ export default {
     questionForm: new Form(defaultQuestionForm),
     allFormErrors: [],
     autoGradedTechnologyOptions: [
+      { value: null, text: 'None' },
       { value: 'webwork', text: 'WeBWorK' },
       { value: 'h5p', text: 'H5P' },
       { value: 'imathas', text: 'IMathAS' }
@@ -373,12 +392,12 @@ export default {
     }
   },
   methods: {
-    getTechnologyLabel () {
-      let label = this.questionForm.technology === 'webwork' ? 'File Path' : 'ID'
-      if (!this.isEdit) {
-        label += 's'
-      }
-      return label
+    resetQuestionForm (questionType) {
+      this.questionForm = new Form(defaultQuestionForm)
+      this.questionForm.question_type = questionType
+    },
+    getAutoGradedTechnologyLabel () {
+      return this.questionForm.auto_graded_technology === 'webwork' ? 'File Path' : 'ID'
     },
     getQuestionType () {
       if (this.questionForm.question_type === 'auto_graded') {
@@ -418,7 +437,7 @@ export default {
           : await this.questionForm.post('/api/questions')
         this.$noty[data.type](data.message)
         if (data.type === 'success') {
-          this.questionForm = new Form(defaultQuestionForm)
+          this.resetQuestionForm(this.questionForm.question_type)
           this.tag = ''
           this.questionForm.tags.length = 0
           if (this.isEdit) {

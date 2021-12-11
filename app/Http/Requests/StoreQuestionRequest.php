@@ -40,19 +40,23 @@ class StoreQuestionRequest extends FormRequest
             'license_version' => 'nullable'
         ];
 
-        $rules['non_technology_text'] = $this->question_type === 'open_ended'
-            ? 'required|string|min:10'
-            : 'nullable';
+        switch ($this->question_type) {
+            case('assessment'):
+                $rules['non_technology_text'] = !$this->technology ? 'required' : 'nullable';
+                break;
+            case('exposition'):
+                $rules['non_technology_text'] = 'required';
+        }
 
-        if ($this->question_type !== 'open_ended') {
-            $rules['technology'] =['required', Rule::in(['webwork', 'h5p', 'imathas'])];
+        if ($this->technology) {
+            $rules['technology'] = ['required', Rule::in(['webwork', 'h5p', 'imathas'])];
             switch ($this->technology) {
                 case('webwork'):
-                    $rules['technology_id'] = ['required','string'];
+                    $rules['technology_id'] = ['required', 'string'];
                     break;
                 case('h5p'):
                 case('imathas'):
-                    $rules['technology_id'] = ['required','integer','not_in:0'];
+                    $rules['technology_id'] = ['required', 'integer', 'not_in:0'];
                     break;
                 default:
                     $rules['technology_id'] = ['nullable'];
@@ -68,9 +72,14 @@ class StoreQuestionRequest extends FormRequest
 
     public function messages()
     {
+        $messages = [];
 
-        return $this->technology === 'webwork' && $this->question_type !== 'open_ended'
-            ? ['technology_id.required' => 'The file path field is required.']
-            : [];
+        if ($this->technology === 'webwork') {
+            $messages['technology_id.required'] = 'The file path field is required.';
+        }
+        $messages['non_technology_text.required'] = $this->question_type === 'assessment'
+        ? 'Either the source field or the technology field is required.'
+        : 'The source field is required.';
+        return $messages;
     }
 }
