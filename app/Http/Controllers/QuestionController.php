@@ -36,9 +36,47 @@ class QuestionController extends Controller
     use DateFormatter;
 
     /**
+     * @var string[]
+     */
+    private $webwork_keys;
+    /**
+     * @var string[]
+     */
+    private $advanced_keys;
+
+    public function __construct()
+    {
+        $this->webwork_keys = ['Public*',
+            'Title*',
+            'File Path*',
+            'Author',
+            'License',
+            'License Version',
+            'Tags'];
+        $this->advanced_keys = ["Question Type*",
+            "Public*",
+            "Title*",
+            "Source",
+            "Auto-Graded Technology",
+            "Technology ID/File Path",
+            "Author",
+            "License",
+            "License Version",
+            "Tags",
+            "Text Question",
+            "A11Y Question",
+            "Answer",
+            "Solution",
+            "Hint"
+        ];
+
+    }
+
+    /**
      * @return array
      */
-    public function getValidLicenses(): array
+    public
+    function getValidLicenses(): array
     {
         $response['licenses'] = ['publicdomain', 'ccby', 'ccbynd', 'ccbync', 'ccbyncnd', 'cbyncsa', 'gnu', 'arr', 'gnufdl'];
         return $response;
@@ -50,7 +88,8 @@ class QuestionController extends Controller
      * @return array
      * @throws Exception
      */
-    public function validateBulkImportQuestions(Request $request, Question $question): array
+    public
+    function validateBulkImportQuestions(Request $request, Question $question): array
     {
         $import_template = $request->import_template;
         $response['type'] = 'error';
@@ -85,32 +124,11 @@ class QuestionController extends Controller
             }
             switch ($import_template) {
                 case('webwork'):
-                    $keys = ['Public*',
-                        'Title*',
-                        'File Path*',
-                        'Author',
-                        'License',
-                        'License Version',
-                        'Tags'];
+                    $keys = $this->webwork_keys;
                     break;
                 case('advanced'):
                 default:
-                    $keys = ["Public*",
-                        "Title*",
-                        "Question Type*",
-                        "Technology",
-                        "Technology ID/File Path",
-                        "Author",
-                        "License",
-                        "License Version",
-                        "Tags",
-                        "Open-Ended Text",
-                        "Text Question",
-                        "A11Y Question",
-                        "Answer",
-                        "Solution",
-                        "Hint"
-                    ];
+                    $keys = $this->advanced_keys;
 
             }
             $uploaded_keys = array_keys($bulk_import_questions[0]);
@@ -133,6 +151,9 @@ class QuestionController extends Controller
                     }
                 }
                 $row_num = $key + 2;
+                if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['assessment', 'exposition'])) {
+                    $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are assessment and exposition.";
+                }
 
                 if (!is_numeric($question['Public*']) || ((int)$question['Public*'] !== 0 && (int)$question['Public*'] !== 1)) {
                     $messages[] = "Row $row_num is missing a valid entry for Public (0 for no and 1 for yes).";
@@ -140,14 +161,13 @@ class QuestionController extends Controller
                 if (!$question['Title*']) {
                     $messages[] = "Row $row_num is missing a Title.";
                 }
-                if ($import_template === 'advanced' && !$question['Question Type*']) {
-                    $messages[] = "Row $row_num is missing a Question Type.";
+
+                if ($import_template === 'advanced' && $question['Question Type*'] === 'exposition' && !$question['Source']) {
+                    $messages[] = "Row $row_num is an exposition and is missing the source.";
                 }
-                if ($import_template === 'advanced' && !in_array($question['Question Type*'], ['open_ended', 'auto_graded', 'frankenstein'])) {
-                    $messages[] = "Row $row_num has a Question Type of {$question['Question Type*']} but the valid question types are open_ended, auto_graded, or frankenstein.";
-                }
-                if ($import_template === 'advanced' && $question['Question Type*'] === 'open_ended' && !$question['Open-Ended Text']) {
-                    $messages[] = "Row $row_num is an open_ended question and is missing text.";
+
+                if ($import_template === 'advanced' && $question['Question Type*'] === 'assessment' && !$question['Source'] && !$question['Auto-Graded Technology']) {
+                    $messages[] = "Row $row_num is an assessment and needs either an auto-graded technology or source.";
                 }
 
                 if ($import_template === 'webwork' && !$question['File Path*']) {
@@ -156,7 +176,7 @@ class QuestionController extends Controller
 
                 $technology_id = $import_template === 'webwork' ? $question['File Path*'] : $question['Technology ID/File Path'];
                 if ($import_template === 'advanced' && $question['Question Type*'] !== 'open_ended') {
-                    switch ($question['Technology']) {
+                    switch ($question['Auto-Graded Technology']) {
                         case('webwork'):
                             if (!$technology_id) {
                                 $messages[] = "Row $row_num uses webwork and is missing the File Path.";
@@ -172,7 +192,7 @@ class QuestionController extends Controller
                             //no technologu
                             break;
                         default:
-                            $messages[] = "Row $row_num is using an invalid technology: {$question['Technology']}.";
+                            $messages[] = "Row $row_num is using an invalid technology: {$question['Auto-Graded Technology']}.";
                     }
                 }
                 if ($question['License'] !== '' && !in_array($question['License'], $this->getValidLicenses()['licenses'])) {
@@ -188,13 +208,13 @@ class QuestionController extends Controller
             $response['type'] = 'success';
             /*  "Title*" => ""
             "Question Type*" => ""
-            "Technology" => ""
+             "Source" => ""
+            "Auto-Graded Technology" => ""
             "Technology ID/File Path" => ""
             "Author" => "sfdsfs"
             "License" => "a,b,c"
             "License Version" => "this is the license"
             "Tags" => ""some tags""
-            "Open-Ended Text" => ""
             "Text Question" => ""
             "A11Y Question" => ""
             "Answer" => ""
@@ -219,34 +239,15 @@ class QuestionController extends Controller
     public
     function getBulkUploadTemplate(string $import_template)
     {
+
         try {
             switch ($import_template) {
                 case('webwork'):
-                    $list = ['Public*',
-                        'Title*',
-                        'File Path*',
-                        'Author',
-                        'License',
-                        'License Version',
-                        'Tags'];
+                    $list = $this->webwork_keys;
                     break;
                 case('advanced'):
                 default:
-                    $list = ['Public*',
-                        'Title*',
-                        'Question Type*',
-                        'Technology',
-                        'Technology ID/File Path',
-                        'Author',
-                        'License',
-                        'License Version',
-                        'Tags',
-                        'Open-Ended Text',
-                        'Text Question',
-                        'A11Y Question',
-                        'Answer',
-                        'Solution',
-                        'Hint'];
+                    $list = $this->advanced_keys;
             }
             $efs_dir = '/mnt/local/';
             $is_efs = is_dir($efs_dir);
@@ -374,9 +375,10 @@ class QuestionController extends Controller
     /**
      * @throws Exception
      */
-    public function update(StoreQuestionRequest $request,
-                           Question             $question,
-                           Libretext            $libretext): array
+    public
+    function update(StoreQuestionRequest $request,
+                    Question             $question,
+                    Libretext            $libretext): array
     {
         return $this->store($request, $question, $libretext);
 
@@ -509,7 +511,7 @@ class QuestionController extends Controller
                 return $response;
             }
             $tags = $h5p['tags'];
-
+            $data['question_type'] = 'assessment';
             $data['license'] = $h5p['license'];
             $data['author'] = $h5p['author'];
             $data['title'] = $h5p['title'];
