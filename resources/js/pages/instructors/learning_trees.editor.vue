@@ -4,12 +4,19 @@
     <b-modal
       id="modal-update-node"
       ref="modal"
-      title="Node Contents"
+      title="Update Node"
       size="xl"
       :no-close-on-esc="true"
       hide-footer
     >
-        <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
+      <div v-if="!showUpdateNodeContents">
+        <div class="d-flex justify-content-center mb-3">
+          <div class="text-center">
+            <b-spinner variant="primary" label="Text Centered"></b-spinner> <span style="font-size:30px" class="text-primary"> Loading Contents</span>
+          </div>
+        </div>
+      </div>
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <hr>
         <b-form ref="form">
@@ -284,6 +291,7 @@ import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 import { h5pResizer } from '~/helpers/H5PResizer'
+
 export default {
 
   metaInfo () {
@@ -489,6 +497,7 @@ export default {
     async openUpdateNodeModal (nodeToUpdate) {
       this.nodeForm.errors.clear()
       this.showUpdateNodeContents = false
+      this.questionToView = {}
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
