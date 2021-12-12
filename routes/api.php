@@ -270,6 +270,8 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
 
     Route::get('/questions/{question}', 'QuestionController@show');
+    Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
+
     Route::post('/questions', 'QuestionController@store');
     Route::post('/questions/preview', 'QuestionController@preview');
     Route::post('/questions/h5p/{h5p}', 'QuestionController@storeH5P');

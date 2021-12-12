@@ -9,14 +9,8 @@
       :no-close-on-esc="true"
       hide-footer
     >
-      <iframe
-        :key="`node-iframe-${nodeIframeId}`"
-        v-resize="{ log: false }"
-        title="node"
-        width="100%"
-        :src="nodeSrc"
-        frameborder="0"
-      />
+      <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
+
       <hr>
       <b-form ref="form">
         <b-form-group
@@ -76,7 +70,7 @@
         a page id of {{ assessmentPageId }} and comes from the
         {{ assessmentLibrary }} library.
       </p>
-<RequiredText/>
+      <RequiredText/>
       <b-form ref="form">
         <b-form-group
           label-cols-sm="5"
@@ -225,7 +219,7 @@
                   size="sm"
                   @click="learningTreeId === 0 ? '' : deleteLearningTree()"
         >
-         Delete
+          Delete
         </b-button>
         <div id="search">
           <div class="mb-2 mr-2">
@@ -250,7 +244,7 @@
                       class="mr-2"
                       @click="!canUndo ? '' : undo()"
             >
-              <font-awesome-icon :icon="undoIcon" />
+              <font-awesome-icon :icon="undoIcon"/>
             </b-button>
           </div>
         </div>
@@ -274,6 +268,7 @@ import { FontAwesomeIcon } from '@fortawesome/vue-fontawesome'
 import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
+import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
 
 export default {
 
@@ -283,9 +278,11 @@ export default {
   components: {
     FontAwesomeIcon,
     ToggleButton,
-    AllFormErrors
+    AllFormErrors,
+    ViewQuestionWithoutModal
   },
   data: () => ({
+    questionToView: {},
     allFormErrors: [],
     isLearningTreeView: false,
     nodeSrc: '',
@@ -315,6 +312,7 @@ export default {
     learningTreeId: 0,
     library: null,
     libraryColors: {
+      'adapt': 'blue',
       'bio': '#00b224',
       'biz': 'rgb(32, 117, 55)',
       'chem': 'rgb(0, 191, 255)',
@@ -469,7 +467,7 @@ export default {
         this.$noty.error(error.message)
       }
     },
-    openUpdateNodeModal (nodeToUpdate) {
+    async openUpdateNodeModal (nodeToUpdate) {
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
@@ -478,9 +476,22 @@ export default {
       this.nodeForm.page_id = ''
       let library = this.nodeToUpdate.querySelector('input[name="library"]').value
       this.nodeForm.library = library
-
-      this.nodeSrc = `https://${library}.libretexts.org/@go/page/${pageId}?adaptView`
+      this.nodeForm.page_id = pageId
+      await this.getQuestionToView(library, pageId)
       this.nodeIframeId = `remediation-${library}-${pageId}`
+    },
+    async getQuestionToView (library, pageId) {
+      try {
+        const { data } = await axios.get(`/api/questions/${library}/${pageId}`)
+        console.log(data)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.questionToView = data.question
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     async submitUpdateNode (bvModalEvt) {
       bvModalEvt.preventDefault()

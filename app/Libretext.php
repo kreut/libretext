@@ -42,10 +42,12 @@ class Libretext extends Model
     /**
      * @return string[]
      */
-    public function libraries()
+    public function libraries(): array
     {
 
-        return ['Biology' => 'bio',
+        return [
+            'ADAPT' => 'adapt',
+            'Biology' => 'bio',
             'Business' => 'biz',
             'Chemistry' => 'chem',
             'English' => 'eng',

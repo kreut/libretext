@@ -1,5 +1,6 @@
 let libraries = [
   { value: null, text: 'Please select the library' },
+  { value: 'adapt', text: 'ADAPT' },
   { value: 'bio', text: 'Biology' },
   { value: 'biz', text: 'Business' },
   { value: 'chem', text: 'Chemistry' },

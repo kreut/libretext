@@ -965,6 +965,17 @@ class QuestionController extends Controller
 
     }
 
+    /**
+     * @param string $library
+     * @param int $page_id
+     * @param Question $question
+     * @return array
+     */
+    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
+    {
+        return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());
+    }
+
     public
     function show(Question $Question)
     {
