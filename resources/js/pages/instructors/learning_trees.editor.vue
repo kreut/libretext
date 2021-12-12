@@ -9,31 +9,30 @@
       :no-close-on-esc="true"
       hide-footer
     >
-      <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
-
-      <hr>
-      <b-form ref="form">
-        <b-form-group
-          label-cols-sm="2"
-          label-cols-lg="1"
-          label="Library"
-          label-for="node_library"
-        >
-          <div class="mb-2 mr-2" style="width: 300px">
-            <b-form-select id="node_library"
-                           v-model="nodeForm.library"
-                           :options="libraryOptions"
-                           :class="{ 'is-invalid': nodeForm.errors.has('library') }"
-                           @change="nodeForm.errors.clear('library')"
-            />
-            <has-error :form="nodeForm" field="library"/>
-          </div>
-        </b-form-group>
-        <b-form-group>
+        <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
+      <div v-if="showUpdateNodeContents">
+        <hr>
+        <b-form ref="form">
           <b-form-group
             label-cols-sm="2"
             label-cols-lg="1"
-            label="Page Id"
+            label="Library*"
+            label-for="node_library"
+          >
+            <div class="mb-2 mr-2" style="width: 300px">
+              <b-form-select id="node_library"
+                             v-model="nodeForm.library"
+                             :options="libraryOptions"
+                             :class="{ 'is-invalid': nodeForm.errors.has('library') }"
+                             @change="nodeForm.errors.clear('library')"
+              />
+              <has-error :form="nodeForm" field="library"/>
+            </div>
+          </b-form-group>
+          <b-form-group
+            label-cols-sm="2"
+            label-cols-lg="1"
+            label="Page Id*"
             label-for="page_id"
           >
             <b-form-input
@@ -46,16 +45,31 @@
             />
             <has-error :form="nodeForm" field="page_id"/>
           </b-form-group>
-        </b-form-group>
-      </b-form>
-      <div>
-        <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
-          Cancel
-        </b-button>
-        <b-button size="sm" variant="primary" @click="submitUpdateNode">
-          Update
-        </b-button>
+          <b-form-group>
+            <label for="branch_description">Branch Description*</label>
+            <b-form-textarea
+              id="branch_description"
+              v-model="nodeForm.branch_description"
+              type="text"
+              :class="{ 'is-invalid': nodeForm.errors.has('branch_description') }"
+              rows="3"
+              @keydown="nodeForm.errors.clear('branch_description')"
+            />
+
+            <has-error :form="nodeForm" field="branch_description"/>
+          </b-form-group>
+        </b-form>
+        <div>
+          <b-button size="sm" @click="$bvModal.hide('modal-update-node')">
+            Cancel
+          </b-button>
+          <b-button size="sm" variant="primary" @click="submitUpdateNode">
+            Update
+          </b-button>
+        </div>
       </div>
+
+
     </b-modal>
 
     <b-modal
@@ -269,7 +283,7 @@ import { faUndo } from '@fortawesome/free-solid-svg-icons'
 import AllFormErrors from '~/components/AllFormErrors'
 import { ToggleButton } from 'vue-js-toggle-button'
 import ViewQuestionWithoutModal from '~/components/ViewQuestionWithoutModal'
-
+import { h5pResizer } from '~/helpers/H5PResizer'
 export default {
 
   metaInfo () {
@@ -282,6 +296,7 @@ export default {
     ViewQuestionWithoutModal
   },
   data: () => ({
+    showUpdateNodeContents: false,
     questionToView: {},
     allFormErrors: [],
     isLearningTreeView: false,
@@ -291,7 +306,8 @@ export default {
     undoIcon: faUndo,
     nodeForm: new Form({
       library: null,
-      page_id: ''
+      page_id: '',
+      branch_description: ''
     }),
     nodeToUpdate: {},
     learningTreeForm: new Form({
@@ -335,6 +351,9 @@ export default {
   computed: mapGetters({
     user: 'auth/user'
   }),
+  created () {
+    h5pResizer()
+  },
   mounted () {
     if (this.user.role !== 2) {
       this.$noty.error('You do not have access to the Learning Tree Editor.')
@@ -468,6 +487,8 @@ export default {
       }
     },
     async openUpdateNodeModal (nodeToUpdate) {
+      this.nodeForm.errors.clear()
+      this.showUpdateNodeContents = false
       this.$bvModal.show('modal-update-node')
       this.nodeToUpdate = nodeToUpdate.closest('.block')
 
@@ -478,6 +499,8 @@ export default {
       this.nodeForm.library = library
       this.nodeForm.page_id = pageId
       await this.getQuestionToView(library, pageId)
+      await this.getBranchDescription(library, pageId)
+      this.showUpdateNodeContents = true
       this.nodeIframeId = `remediation-${library}-${pageId}`
     },
     async getQuestionToView (library, pageId) {
@@ -489,6 +512,19 @@ export default {
           return false
         }
         this.questionToView = data.question
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
+    },
+    async getBranchDescription (library, pageId) {
+      try {
+        const { data } = await axios.get(`/api/branches/description/${this.learningTreeId}/${library}/${pageId}`)
+        console.log(data)
+        if (data.type !== 'success') {
+          this.$noty.error(data.message)
+          return false
+        }
+        this.nodeForm.branch_description = data.description
       } catch (error) {
         this.$noty.error(error.message)
       }
