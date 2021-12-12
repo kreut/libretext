@@ -38,7 +38,7 @@ class LearningTreeController extends Controller
      * @throws Exception
      */
     public function import(ImportLearningTreesRequest $request,
-                           LearningTree $learningTree): array
+                           LearningTree               $learningTree): array
     {
 
         $response['type'] = 'error';
@@ -212,8 +212,8 @@ class LearningTreeController extends Controller
      * @return array
      * @throws Exception
      */
-    public function updateLearningTree(Request $request,
-                                       LearningTree $learningTree,
+    public function updateLearningTree(Request             $request,
+                                       LearningTree        $learningTree,
                                        LearningTreeHistory $learningTreeHistory)
     {
 
@@ -316,8 +316,8 @@ class LearningTreeController extends Controller
      * @throws Exception
      */
     public function storeLearningTreeInfo(StoreLearningTreeInfo $request,
-                                          LearningTree $learningTree,
-                                          LearningTreeHistory $learningTreeHistory): array
+                                          LearningTree          $learningTree,
+                                          LearningTreeHistory   $learningTreeHistory): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('store', $learningTree);
@@ -423,8 +423,8 @@ EOT;
         return $matches[0] ?? 'Could not find Page Id';
     }
 
-    public function show(Request $request,
-                         LearningTree $learningTree,
+    public function show(Request             $request,
+                         LearningTree        $learningTree,
                          LearningTreeHistory $learningTreeHistory)
     {
         //anybody who is logged in can do this!
@@ -499,8 +499,8 @@ EOT;
      * @return array
      * @throws Exception
      */
-    public function destroy(Request $request,
-                            LearningTree $learningTree,
+    public function destroy(Request             $request,
+                            LearningTree        $learningTree,
                             LearningTreeHistory $learningTreeHistory): array
     {
         //anybody who is logged in can do this!
@@ -572,11 +572,17 @@ EOT;
 
         $response['type'] = 'error';
         try {
-            $Libretext = new Libretext(['library' => $library]);
-            $contents = $Libretext->getContentsByPageId($pageId);
-            $response['body'] = $contents['body'];
-            $response['title'] = $contents['@title'] ?? 'Title';
-            $response['title'] = str_replace('"', '&quot;', $response['title']);
+            if ($library === 'adapt') {
+                $question = Question::where('library', 'adapt')->where('page_id', $pageId)->first();
+                $response['body'] = 'not sure what do to here';
+                $response['title'] = $question->title;
+            } else {
+                $Libretext = new Libretext(['library' => $library]);
+                $contents = $Libretext->getContentsByPageId($pageId);
+                $response['body'] = $contents['body'];
+                $response['title'] = $contents['@title'] ?? 'Title';
+                $response['title'] = str_replace('"', '&quot;', $response['title']);
+            }
             $response['type'] = 'success';
         } catch (Exception $e) {
             if (strpos($e->getMessage(), '403 Forbidden') === false) {
