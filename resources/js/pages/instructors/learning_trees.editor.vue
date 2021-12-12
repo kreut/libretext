@@ -203,7 +203,7 @@
     <div v-show="user.role === 2 && !isLearningTreeView" id="leftcard">
       <div id="actions">
         <b-button variant="success" size="sm" @click="initCreateNew">
-          Create New
+          New Tree
         </b-button>
         <b-button :class="{ 'disabled': learningTreeId === 0}"
                   :aria-disabled="learningTreeId === 0"
@@ -235,7 +235,7 @@
                       @click="addRemediation"
             >
               <b-spinner v-if="validatingLibraryAndPageId" small label="Spinning"/>
-              Get Node
+              New Node
             </b-button>
             <b-button size="sm"
                       variant="outline-info"
