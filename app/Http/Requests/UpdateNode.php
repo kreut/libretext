@@ -27,6 +27,7 @@ class UpdateNode extends FormRequest
     {
         $libretext = new Libretext();
         return  [
+            'branch_description'=> 'required',
             'page_id' => 'required|integer|min:0',
             'library' => ['required', Rule::in($libretext->libraries())]
         ];

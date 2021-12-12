@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 
+use App\Branch;
 use App\Http\Requests\ImportLearningTreesRequest;
 use App\Http\Requests\StoreLearningTreeInfo;
 use App\Http\Requests\UpdateLearningTreeInfo;
@@ -83,7 +84,14 @@ class LearningTreeController extends Controller
         return $response;
     }
 
-    public function updateNode(UpdateNode $request, LearningTree $learningTree)
+    /**
+     * @param UpdateNode $request
+     * @param LearningTree $learningTree
+     * @return array
+     * @throws Exception
+     */
+    public function updateNode(UpdateNode   $request,
+                               LearningTree $learningTree): array
     {
         $response['type'] = 'error';
         $authorized = Gate::inspect('updateNode', $learningTree);
@@ -98,11 +106,19 @@ class LearningTreeController extends Controller
         if ($message) {
             $response['message'] = $message;
             return $response;
-
         }
         try {
             $data = $request->validated();
+
             $validated_node = $this->validateLearningTreeNode($data['library'], $data['page_id']);
+            $question = DB::table('questions')
+                ->where('library', $data['library'])
+                ->where('page_id', $data['page_id'])
+                ->first();
+            if (!$question) {
+                $response['message'] = "No question exists with a library of {$data['library']} and a page id of {$data['page_id']}.'";
+                return $response;
+            }
             if ($validated_node['type'] === 'error') {
                 $response['message'] = $validated_node['message'];
                 return $response;
@@ -111,6 +127,22 @@ class LearningTreeController extends Controller
                 $response['message'] = "Are you sure that's a valid page id?  We're not finding any content on that page.";
                 return $response;
             }
+
+
+            $branch = DB::table('branches')
+                ->where('user_id', $request->user()->id)
+                ->where('learning_tree_id', $learningTree->id)
+                ->where('question_id', $question->id)
+                ->first();
+
+            if (!$branch) {
+                $branch = new Branch();
+                $branch->user_id = $request->user()->id;
+                $branch->learning_tree_id =  $learningTree->id;
+                $branch->question_id = $question->id;
+            }
+            $branch->description = $data['branch_description'];
+            $branch->save();
 
             $response['title'] = $validated_node['title'];
             $response['type'] = 'success';

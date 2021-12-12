@@ -269,6 +269,10 @@ Route::group(['middleware' => ['auth:api', 'throttle:240,1']], function () {
     Route::post('/questions/bulk-upload-template/{import_template}', 'QuestionController@getBulkUploadTemplate');
     Route::put('/questions/validate-bulk-import-questions', 'QuestionController@validateBulkImportQuestions');
 
+
+    Route::get('/branches/description/{learning_tree}/{library}/{page_id}', 'BranchController@getDescription');
+
+
     Route::get('/questions/{question}', 'QuestionController@show');
     Route::get('/questions/{library}/{page_id}', 'QuestionController@getQuestionByLibraryAndPageId');
 
