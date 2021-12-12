@@ -37,7 +37,13 @@
             </router-link>
           </span>
           <span v-if="user && user.role ===2">
-          <b-dropdown id="dropdown-right" right text="Dashboard" variant="primary" class="m-2" size="sm">
+          <b-dropdown v-show="'instructors.learning_trees.editor' !== $route.name"
+                      id="dropdown-right"
+                      right
+                      text="Dashboard"
+                      variant="primary"
+                      class="m-2"
+                      size="sm">
             <b-dropdown-item v-for="location in dashboards" :key="location.text"
                              :active="$route.path === location.routePath"
                              href="#" @click="$router.push({ path: location.routePath })"

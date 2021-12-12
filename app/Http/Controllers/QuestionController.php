@@ -968,11 +968,17 @@ class QuestionController extends Controller
     /**
      * @param string $library
      * @param int $page_id
-     * @param Question $question
+     * @param Question $Question
      * @return array
+     * @throws Exception
      */
-    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $question): array
+    public function getQuestionByLibraryAndPageId(string $library, int $page_id, Question $Question): array
     {
+        $question = $Question->where('library', $library)->where('page_id', $page_id)->first();
+        if (!$question) {
+            $question_id = $Question->getQuestionIdsByPageId($page_id, $library, false)[0];
+            $question = $Question->find($question_id);
+        }
         return $this->show($question->where('library', $library)->where('page_id', $page_id)->first());
     }
 
