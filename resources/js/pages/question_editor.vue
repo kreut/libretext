@@ -10,8 +10,12 @@
           </b-card-text>
         </b-card>
       </b-tab>
-      <b-tab :key="`my-questions-${numClicks}`" title="My Questions" :active="$route.params.tab === 'my-questions'" @click="numClicks++">
-        <MyQuestions/>
+      <b-tab :key="`my-questions-${numClicks}`" title="My Questions" :active="$route.params.tab === 'my-questions'"
+             @click="numClicks++"
+      >
+        <MyQuestions :key="`my-questions-${questionId}`"
+                     :question-id="questionId"
+        />
       </b-tab>
       <b-tab title="Bulk Import">
         <BulkImportQuestions/>
@@ -34,7 +38,8 @@ export default {
   },
   data: () => ({
     isLoading: true,
-    numClicks: 0
+    numClicks: 0,
+    questionId: 0
   }),
   computed: {
     ...mapGetters({
@@ -43,6 +48,9 @@ export default {
     isMe: () => window.config.isMe
   },
   mounted () {
+    if (this.$route.params.questionId) {
+      this.questionId = parseInt(this.$route.params.questionId)
+    }
     this.hasAccess = (this.user !== null) && (this.isMe || this.isQuestionEditor())
     if (!this.hasAccess) {
       this.$noty.error('You do not have access to this page.')

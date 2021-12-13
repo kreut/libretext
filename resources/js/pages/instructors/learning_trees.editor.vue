@@ -486,7 +486,7 @@ export default {
   methods: {
     editSource () {
       let url
-      url = this.questionToView.library === 'adapt'
+      url = this.questionToView.library !== 'adapt'
         ? '/question-editor/my-questions'
         : `https://${this.questionToView.library}.libretexts.org/@go/page/${this.questionToView.page_id}`
       alert(url)
@@ -539,6 +539,8 @@ export default {
           return false
         }
         this.questionToView = data.question
+        this.questionToView.library = library
+        this.questionToView.page_id = pageId
       } catch (error) {
         this.$noty.error(error.message)
       }

@@ -38,7 +38,7 @@ let control_panel_paths = [
       { path: 'question-editors', name: 'questionEditors', component: page('control_panel/question.editors.vue') }] }
 ]
 let general_paths  = [
-  { path: '/question-editor/:tab', name: 'question.editor', component: page('question_editor.vue') },
+  { path: '/question-editor/:tab/:questionId?', name: 'question.editor', component: page('question_editor.vue') },
   { path: '/lti/canvas/config/:campusId', name: 'lti_canvas_config', component: page('lti_canvas_config.vue') },
   { path: '/beta-assignments/redirect-error', name: 'beta_assignments_redirect_error', component: page('beta_assignments_redirect_error.vue') },
   { path: '/init-lms-assignment/:assignmentId', name: 'init_lms_assignment', component: page('init_lms_assignment.vue') },

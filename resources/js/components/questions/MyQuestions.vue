@@ -259,6 +259,12 @@ export default {
     CreateQuestion,
     ViewQuestions
   },
+  props: {
+    questionId: {
+      type: Number,
+      default: 0
+    }
+  },
   data: () => ({
       deletedQuestions: false,
       deletingIndex: 1,
@@ -420,6 +426,22 @@ export default {
           this.myQuestions = data.my_questions
           this.totalRows = this.myQuestions.length
           this.filteredItems = this.myQuestions
+
+          let questionToEdit = {}
+          if (this.questionId !== 0) {
+            for (let i = 0; i < this.myQuestions.length; i++) {
+              if (this.myQuestions[i].id === this.questionId) {
+                questionToEdit = this.myQuestions[i]
+              }
+            }
+            if (!Object.keys(questionToEdit).length) {
+              this.$noty.info(`Question ID ${this.questionId} does not seem to be in your list of questions.`)
+            }
+            this.questionId = 0 //just do it once or the modal will keep popping up
+          }
+          if (Object.keys(questionToEdit).length) {
+            await this.editQuestion(questionToEdit)
+          }
         } else {
           this.$noty.error(data.message)
         }
