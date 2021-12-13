@@ -176,7 +176,14 @@
             </template>
             <template v-slot:cell(title)="data">
               <input v-model="selectedQuestionIds" type="checkbox" :value="data.item.id" class="selected-question-id">
-              {{ data.item.title }}
+              <span v-if="data.item.technology !== 'h5p'">
+                {{ data.item.title }}
+                </span>
+              <span v-if="data.item.technology === 'h5p'">
+                  <a :href="`https://studio.libretexts.org/h5p/${data.item.technology_id}`" target="_blank">
+                  {{ data.item.title }}
+                  </a>
+                </span>
             </template>
             <template v-slot:cell(updated_at)="data">
               {{ $moment(data.item.updated_at, 'YYYY-MM-DD HH:mm:ss A').format('M/D/YY h:mm A') }}
