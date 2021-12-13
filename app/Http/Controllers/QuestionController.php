@@ -426,7 +426,6 @@ class QuestionController extends Controller
             }
             unset($data['tags']);
 
-
             $data['page_id'] = $is_update
                 ? Question::find($request->id)->page_id
                 : 1 + $question->where('library', 'adapt')->orderBy('id', 'desc')->value('page_id');
@@ -928,7 +927,7 @@ class QuestionController extends Controller
     public
     function preview(Request   $request,
                      Question  $question,
-                     Libretext $libretext)
+                     Libretext $libretext): array
     {
         $response['type'] = 'error';
         try {
@@ -942,7 +941,7 @@ class QuestionController extends Controller
                 $question['non_technology_iframe_src'] = $this->getLocallySavedPageIframeSrc($question);
             }
             $question['technology_iframe'] = null;
-            if ($request->question_type !== 'open_ended') {
+            if ($request->technology !== 'text') {
                 $technology_iframe = $question->getTechnologyIframeFromTechnology($request->technology, $request->technology_id);
                 $iframe_id = substr(sha1(mt_rand()), 17, 12);
                 $question['technology_iframe'] = $this->formatIframeSrc($technology_iframe, $iframe_id);

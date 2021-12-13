@@ -1,7 +1,8 @@
 <template>
   <div>
     <AllFormErrors :all-form-errors="allFormErrors" :modal-id="`modal-form-errors-questions-form-${questionsFormKey}`"/>
-    <ViewQuestions :key="questionToViewKey" :question-to-view="questionToView"
+    <ViewQuestions :key="questionToViewKey"
+                   :question-to-view="questionToView"
                    :modal-id="`question-to-view-questions-editor-${questionToViewKey}`"
     />
     <RequiredText/>
@@ -255,12 +256,13 @@
         </b-form-group>
         <b-form-group
           v-for="editorGroup in editorGroups"
-          v-show="view === 'advanced'" :key="editorGroup.id"
-          :label-for="editorGroup.id"
+          v-show="view === 'advanced'"
+          :key="editorGroup.id"
+          :label-for="editorGroup.label"
           :label="editorGroup.label"
         >
           <ckeditor
-            id="text_question"
+            :id="editorGroup.label"
             v-model="questionForm[editorGroup.id]"
             tabindex="0"
             :config="richEditorConfig"
@@ -415,8 +417,7 @@ export default {
       }
     },
     async previewQuestion () {
-      console.log(this.questionForm)
-      if (this.questionForm.question_type !== 'open_ended' && !this.questionForm.technology_id.length) {
+     if (this.questionForm.technology !== 'text' && !this.questionForm.technology_id.length) {
         let identifier = this.questionForm.technology === 'webwork' ? 'A File Path' : 'An ID'
         let message = `${identifier} is required to preview this question.`
         this.questionForm.errors.set('technology_id', message)

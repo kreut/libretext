@@ -349,7 +349,7 @@ export default {
   methods: {
     async editQuestion (questionToEdit) {
       this.questionToEdit = questionToEdit
-      if (this.questionToEdit.non_technology_text) {
+      if (this.questionToEdit.non_technology) {
         await this.getNonTechnologyText()
       }
       this.$bvModal.show('modal-edit-question')
@@ -358,7 +358,7 @@ export default {
       try {
         const { data } = await axios.get(`/api/get-locally-saved-page-contents/adapt/${this.questionToEdit.page_id}`)
         this.questionToEdit.non_technology_text = data
-        console.log(this.questionForm)
+        console.log(data)
       } catch (error) {
         this.$noty.error(error.message)
       }
