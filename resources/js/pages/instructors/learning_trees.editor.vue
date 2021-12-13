@@ -12,12 +12,19 @@
       <div v-if="!showUpdateNodeContents">
         <div class="d-flex justify-content-center mb-3">
           <div class="text-center">
-            <b-spinner variant="primary" label="Text Centered"></b-spinner> <span style="font-size:30px" class="text-primary"> Loading Contents</span>
+            <b-spinner variant="primary" label="Text Centered"></b-spinner>
+            <span style="font-size:30px" class="text-primary"> Loading Contents</span>
           </div>
         </div>
       </div>
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
+        <b-button size="sm" variant="info" @click="refreshQuestion">
+          Refresh Question
+        </b-button>
+        <b-button size="sm" variant="info" @click="editSource">
+          Edit Source
+        </b-button>
         <hr>
         <b-form ref="form">
           <b-form-group
@@ -477,6 +484,12 @@ export default {
     }
   },
   methods: {
+    editSource () {
+      console.log(this.questionToView)
+    },
+    refreshQuestion () {
+
+    },
     toggleLearningTreeView () {
       this.$emit('toggle-learning-tree-view', this.isLearningTreeView)
       this.isLearningTreeView = !this.isLearningTreeView
