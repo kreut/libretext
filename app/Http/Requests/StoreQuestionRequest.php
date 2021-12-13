@@ -67,6 +67,7 @@ class StoreQuestionRequest extends FormRequest
                 break;
             case('exposition'):
                 $rules['non_technology_text'] = 'required';
+                $rules['technology']= ['required', Rule::in(['text'])];
         }
 
 
