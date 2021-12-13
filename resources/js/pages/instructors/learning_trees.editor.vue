@@ -20,7 +20,7 @@
       <ViewQuestionWithoutModal :key="`question-to-view-${questionToView.id}`" :question-to-view="questionToView"/>
       <div v-if="showUpdateNodeContents">
         <b-button size="sm" variant="info" @click="refreshQuestion">
-          Refresh Question
+          Refresh
         </b-button>
         <b-button size="sm" variant="info" @click="editSource">
           Edit Source
@@ -492,8 +492,18 @@ export default {
       alert(url)
       window.open(url, '_blank')
     },
-    refreshQuestion () {
-
+    async refreshQuestion () {
+      try {
+        const { data } = await axios.post(`/api/questions/${this.questionToView.id}/refresh`)
+        if (data.type === 'error') {
+          this.$noty.error(data.message)
+          return false
+        }
+        await this.getQuestionToView(this.questionToView.library, this.questionToView.page_id)
+        this.$noty.success('The node has been refreshed.')
+      } catch (error) {
+        this.$noty.error(error.message)
+      }
     },
     toggleLearningTreeView () {
       this.$emit('toggle-learning-tree-view', this.isLearningTreeView)

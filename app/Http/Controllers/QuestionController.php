@@ -618,7 +618,8 @@ class QuestionController extends Controller
 
             DB::beginTransaction();
 
-            if ($request->update_scores && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
+            if ($request->update_scores
+                && !$assignmentSyncQuestion->questionHasAutoGradedOrFileSubmissionsInOtherAssignments($assignment, $question)) {
                 $assignmentSyncQuestion->updateAssignmentScoreBasedOnRemovedQuestion($assignment, $question);
 
                 DB::table('submissions')->where('assignment_id', $assignment->id)
