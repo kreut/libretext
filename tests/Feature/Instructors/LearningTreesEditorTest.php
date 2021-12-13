@@ -85,6 +85,7 @@ class LearningTreesEditorTest extends TestCase
             'learning_tree_id' => $this->learning_tree->id
         ]);
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->learning_tree_info['branch_description'] = 'Some description';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'message' => "It looks like you're using this Learning Tree in {$this->course->name} --- {$this->assignment->name}.  Please first remove that question from the assignment before attempting to update the node.",
@@ -124,6 +125,7 @@ class LearningTreesEditorTest extends TestCase
     public function non_owner_cannot_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->learning_tree_info['branch_description'] = 'Some description';
         $this->actingAs($this->user_2)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'message' => 'You are not allowed to update this node.',
@@ -135,10 +137,24 @@ class LearningTreesEditorTest extends TestCase
     public function owner_can_update_a_node()
     {
         $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->learning_tree_info['branch_description'] = 'Some description';
+        $this->learning_tree_info['node_type'] = 'assessment';
         $this->actingAs($this->user)->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
             ->assertJson([
                 'type' => 'success',
             ]);
+
+    }
+
+    /** @test */
+    public function branch_description_is_required()
+    {
+        $this->learning_tree_info['learning_tree'] = '{"key":"value"}';
+        $this->learning_tree_info['branch_description'] = '';
+        $this->learning_tree_info['node_type'] = 'assessment';
+        $this->actingAs($this->user)
+            ->patchJson("/api/learning-trees/nodes/{$this->learning_tree->id}", $this->learning_tree_info)
+            ->assertJsonValidationErrors('branch_description');
 
     }
 
